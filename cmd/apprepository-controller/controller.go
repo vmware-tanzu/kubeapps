@@ -489,6 +489,11 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace strin
 	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
 	// Add volumes
 	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
+	// Add nodeSelector
+	podTemplateSpec.Spec.NodeSelector = map[string]string{
+		"beta.kubernetes.io/arch": "amd64",
+		"beta.kubernetes.io/os":   "linux",
+	}
 
 	return batchv1.JobSpec{
 		Template: podTemplateSpec,
@@ -514,6 +519,10 @@ func cleanupJobSpec(repoName, repoNamespace string) batchv1.JobSpec {
 			Spec: corev1.PodSpec{
 				// If there's an issue, delay till the next cron
 				RestartPolicy: "Never",
+				NodeSelector: map[string]string{
+					"beta.kubernetes.io/arch": "amd64",
+					"beta.kubernetes.io/os":   "linux",
+				},
 				Containers: []corev1.Container{
 					{
 						Name:            "delete",

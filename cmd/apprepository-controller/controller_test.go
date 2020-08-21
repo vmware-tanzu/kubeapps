@@ -76,6 +76,10 @@ func Test_newCronJob(t *testing.T) {
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
+									NodeSelector: map[string]string{
+										"beta.kubernetes.io/arch": "amd64",
+										"beta.kubernetes.io/os":   "linux",
+									},
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -167,6 +171,10 @@ func Test_newCronJob(t *testing.T) {
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
+									NodeSelector: map[string]string{
+										"beta.kubernetes.io/arch": "amd64",
+										"beta.kubernetes.io/os":   "linux",
+									},
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -255,6 +263,10 @@ func Test_newCronJob(t *testing.T) {
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
+									NodeSelector: map[string]string{
+										"beta.kubernetes.io/arch": "amd64",
+										"beta.kubernetes.io/os":   "linux",
+									},
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -373,6 +385,10 @@ func Test_newSyncJob(t *testing.T) {
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
+							NodeSelector: map[string]string{
+								"beta.kubernetes.io/arch": "amd64",
+								"beta.kubernetes.io/os":   "linux",
+							},
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -440,6 +456,10 @@ func Test_newSyncJob(t *testing.T) {
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
+							NodeSelector: map[string]string{
+								"beta.kubernetes.io/arch": "amd64",
+								"beta.kubernetes.io/os":   "linux",
+							},
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -521,6 +541,10 @@ func Test_newSyncJob(t *testing.T) {
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
+							NodeSelector: map[string]string{
+								"beta.kubernetes.io/arch": "amd64",
+								"beta.kubernetes.io/os":   "linux",
+							},
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -609,6 +633,10 @@ func Test_newSyncJob(t *testing.T) {
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
+							NodeSelector: map[string]string{
+								"beta.kubernetes.io/arch": "amd64",
+								"beta.kubernetes.io/os":   "linux",
+							},
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -708,6 +736,10 @@ func Test_newSyncJob(t *testing.T) {
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
+							NodeSelector: map[string]string{
+								"beta.kubernetes.io/arch": "amd64",
+								"beta.kubernetes.io/os":   "linux",
+							},
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -825,6 +857,10 @@ func Test_newSyncJob(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
 							RestartPolicy: "OnFailure",
+							NodeSelector: map[string]string{
+								"beta.kubernetes.io/arch": "amd64",
+								"beta.kubernetes.io/os":   "linux",
+							},
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -902,6 +938,10 @@ func Test_newCleanupJob(t *testing.T) {
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							RestartPolicy: "Never",
+							NodeSelector: map[string]string{
+								"beta.kubernetes.io/arch": "amd64",
+								"beta.kubernetes.io/os":   "linux",
+							},
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
