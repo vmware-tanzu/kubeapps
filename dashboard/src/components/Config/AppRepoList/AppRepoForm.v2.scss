@@ -1,0 +1,63 @@
+.app-repo-form {
+  color: var(--clr-table-font-color, #666666);
+  white-space: normal;
+  text-align: left;
+  width: 97%;
+  h2 {
+    margin-top: 0;
+  }
+  .clr-control-container {
+    width: 100%;
+    padding-right: 2rem;
+    .clr-input {
+      width: 100%;
+    }
+    textarea {
+      width: 100%;
+    }
+  }
+  .clr-form-description {
+    font-size: smaller;
+    strong {
+      font-weight: var(--clr-forms-label-font-weight, 600);
+      color: var(--clr-forms-label-color, #454545);
+    }
+  }
+  .clr-form-columns {
+    width: 100%;
+    .column-valing-center {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .clr-control-label-radio {
+      font-weight: normal;
+      padding: 0.2rem;
+      input {
+        margin-right: 0.2rem;
+      }
+    }
+    .clr-control-label-checkbox {
+      font-weight: normal;
+      color: var(--clr-forms-label-color, #454545);
+      font-size: 0.65rem;
+    }
+  }
+  .clr-form-separator-sm {
+    margin-top: 0.3rem;
+    width: 100%;
+  }
+  .clr-form-separator {
+    margin-top: 1.2rem;
+    width: 100%;
+  }
+  .clr-checkbox-wrapper input[type="checkbox"] {
+    opacity: 1;
+  }
+  .secondary-input {
+    margin-top: 0.3rem;
+    padding: 0.6rem;
+    background-color: var(--clr-color-neutral-100);
+  }
+}

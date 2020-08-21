@@ -69,13 +69,5 @@ it("shows an error deleting a repo", () => {
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
-it("shows an error updating a repo", () => {
-  const wrapper = mountWrapper(
-    getStore({ repos: { errors: { update: new Error("boom!") } } }),
-    <AppRepoList {...defaultProps} />,
-  );
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
-});
-
 // TODO(andresmgot): Add test for the tables once global/namespaced repositories
 // are implemented.

@@ -25,6 +25,7 @@ import {
   refreshIcon,
   rewindIcon,
   searchIcon,
+  timesCircleIcon,
   timesIcon,
   trashIcon,
   uploadCloudIcon,
@@ -67,4 +68,5 @@ Icons.addIcons(
   backupRestoreIcon,
   refreshIcon,
   plusCircleIcon,
+  timesCircleIcon,
 );

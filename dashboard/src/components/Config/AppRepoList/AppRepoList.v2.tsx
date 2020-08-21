@@ -26,12 +26,19 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
   useEffect(() => {
     if (supportedCluster) {
       dispatch(actions.repos.fetchRepos(namespace));
-      dispatch(actions.repos.fetchImagePullSecrets(namespace));
     }
   }, [dispatch, namespace, supportedCluster]);
+
   const { errors, isFetching, repos, repoSecrets } = useSelector(
     (state: IStoreState) => state.repos,
   );
+
+  useEffect(() => {
+    if (repos) {
+      dispatch(actions.repos.fetchImagePullSecrets(namespace));
+    }
+  }, [dispatch, repos, namespace]);
+
   return (
     <>
       <PageHeader>
@@ -72,11 +79,6 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
           {errors.delete && (
             <Alert theme="danger">
               Found an error deleting the repository: {errors.delete.message}
-            </Alert>
-          )}
-          {errors.update && (
-            <Alert theme="danger">
-              Found an error updating the repositories: {errors.update.message}
             </Alert>
           )}
           {!errors.fetch && (

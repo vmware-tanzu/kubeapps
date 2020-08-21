@@ -2,13 +2,12 @@ import React, { useState } from "react";
 
 import actions from "actions";
 import { CdsButton, CdsIcon } from "components/Clarity/clarity";
-import Alert from "components/js/Alert";
 import Modal from "components/js/Modal/Modal";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IAppRepository, ISecret, IStoreState } from "../../../shared/types";
-import "./AppRepo.css";
+import "./AppRepoButton.v2.css";
 import { AppRepoForm } from "./AppRepoForm.v2";
 
 interface IAppRepoAddButtonProps {
@@ -32,8 +31,6 @@ export function AppRepoAddButton({
   const [modalIsOpen, setModalOpen] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
-  const { errors } = useSelector((state: IStoreState) => state.repos);
-
   const onSubmit = (
     name: string,
     url: string,
@@ -41,18 +38,33 @@ export function AppRepoAddButton({
     customCA: string,
     syncJobPodTemplate: string,
     registrySecrets: string[],
-  ) =>
-    dispatch(
-      actions.repos.updateRepo(
-        name,
-        namespace,
-        url,
-        authHeader,
-        customCA,
-        syncJobPodTemplate,
-        registrySecrets,
-      ),
-    );
+  ) => {
+    if (repo) {
+      return dispatch(
+        actions.repos.updateRepo(
+          name,
+          namespace,
+          url,
+          authHeader,
+          customCA,
+          syncJobPodTemplate,
+          registrySecrets,
+        ),
+      );
+    } else {
+      return dispatch(
+        actions.repos.installRepo(
+          name,
+          namespace,
+          url,
+          authHeader,
+          customCA,
+          syncJobPodTemplate,
+          registrySecrets,
+        ),
+      );
+    }
+  };
 
   return (
     <>
@@ -60,12 +72,15 @@ export function AppRepoAddButton({
         {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
         {text || "Add App Repository"}
       </CdsButton>
-      <Modal showModal={modalIsOpen} onModalClose={closeModal}>
-        {errors.create && (
-          <Alert theme="danger">
-            Found an error creating the repository: {errors.create.message}
-          </Alert>
-        )}
+      <Modal
+        staticBackdrop={false}
+        showModal={modalIsOpen}
+        onModalClose={closeModal}
+        modalSize="lg"
+      >
+        <div className="modal-close" onClick={closeModal}>
+          <CdsIcon shape="times-circle" size="md" solid={true} />
+        </div>
         <AppRepoForm
           onSubmit={onSubmit}
           onAfterInstall={closeModal}
