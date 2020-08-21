@@ -41,6 +41,11 @@ type appRepositoryResponse struct {
 	AppRepository v1alpha1.AppRepository `json:"appRepository"`
 }
 
+// appRepositoryListResponse is used to marshal the JSON response
+type appRepositoryListResponse struct {
+	AppRepositoryList v1alpha1.AppRepositoryList `json:"appRepository"`
+}
+
 // JSONError returns an error code and a JSON response
 func JSONError(w http.ResponseWriter, err interface{}, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -67,6 +72,35 @@ func getNamespaceAndCluster(req *http.Request) (string, string) {
 		requestCluster = kube.DefaultClusterName
 	}
 	return requestNamespace, requestCluster
+}
+
+// ListAppRepositories list app repositories
+func ListAppRepositories(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		requestNamespace, requestCluster := getNamespaceAndCluster(req)
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+
+		clientset, err := handler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		appRepos, err := clientset.ListAppRepositories(requestNamespace)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+		response := appRepositoryListResponse{
+			AppRepositoryList: *appRepos,
+		}
+		responseBody, err := json.Marshal(response)
+		if err != nil {
+			JSONError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(responseBody)
+	}
 }
 
 // CreateAppRepository creates App Repository
@@ -231,6 +265,7 @@ func SetupDefaultRoutes(r *mux.Router, additionalClusters kube.AdditionalCluster
 	}
 	// Deprecate non-cluster-aware URIs.
 	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
+	r.Methods("GET").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
 	r.Methods("PUT").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(UpdateAppRepository(backendHandler)))

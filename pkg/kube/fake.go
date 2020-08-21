@@ -45,6 +45,15 @@ func (c *FakeHandler) AsSVC() handler {
 	return c
 }
 
+// ListAppRepositories fake
+func (c *FakeHandler) ListAppRepositories(requestNamespace string) (*v1alpha1.AppRepositoryList, error) {
+	appRepos := &v1alpha1.AppRepositoryList{}
+	for _, repo := range c.AppRepos {
+		appRepos.Items = append(appRepos.Items, *repo)
+	}
+	return appRepos, c.Err
+}
+
 // CreateAppRepository fake
 func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	c.AppRepos = append(c.AppRepos, c.CreatedRepo)

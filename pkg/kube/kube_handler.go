@@ -165,6 +165,7 @@ type ValidationResponse struct {
 // this one and adds one method, to force call-sites to explicitly use a UserHandler
 // or ServiceHandler.
 type handler interface {
+	ListAppRepositories(requestNamespace string) (*v1alpha1.AppRepositoryList, error)
 	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
@@ -336,6 +337,14 @@ func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, reques
 		}
 	}
 	return nil
+}
+
+// ListAppRepositories list AppRepositories in a namespace, bypass RBAC if the requeste namespace is the global one
+func (a *userHandler) ListAppRepositories(requestNamespace string) (*v1alpha1.AppRepositoryList, error) {
+	if a.kubeappsNamespace == requestNamespace {
+		return a.svcClientset.KubeappsV1alpha1().AppRepositories(requestNamespace).List(context.TODO(), metav1.ListOptions{})
+	}
+	return a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).List(context.TODO(), metav1.ListOptions{})
 }
 
 // CreateAppRepository creates an AppRepository resource based on the request data
