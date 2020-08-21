@@ -1,6 +1,5 @@
-import React, { useRef } from "react";
+import React from "react";
 import PropTypes from "prop-types";
-import useOutsideClick from "../hooks/useOutsideClick/useOutsideClick";
 
 import { get } from "lodash-es";
 
@@ -22,9 +21,6 @@ const Modal = ({
   staticBackdrop,
 }) => {
   const onClose = () => onModalClose();
-  // Control when users click outside
-  const ref = useRef(null);
-  useOutsideClick(onClose, [ref], showModal);
 
   if (!showModal) {
     return null;
@@ -41,7 +37,7 @@ const Modal = ({
         role="dialog"
         aria-hidden={showModal}
       >
-        <div className="modal-content" ref={ref}>
+        <div className="modal-content">
           <div className="modal-header">
             {!hideCloseButton && (
               <button

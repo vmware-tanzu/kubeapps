@@ -72,7 +72,12 @@ export function AppRepoAddButton({
         {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
         {text || "Add App Repository"}
       </CdsButton>
-      <Modal showModal={modalIsOpen} onModalClose={closeModal} modalSize="lg">
+      <Modal
+        staticBackdrop={false}
+        showModal={modalIsOpen}
+        onModalClose={closeModal}
+        modalSize="lg"
+      >
         <div className="modal-close" onClick={closeModal}>
           <CdsIcon shape="times-circle" size="md" solid={true} />
         </div>

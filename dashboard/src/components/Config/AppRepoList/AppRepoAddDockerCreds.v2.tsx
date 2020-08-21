@@ -28,6 +28,7 @@ export function AppRepoAddDockerCreds({
   const [server, setServer] = useState("");
   const [showSecretSubForm, setShowSecretSubForm] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [currentImagePullSecrets, setCurrentImagePullSecrets] = useState(imagePullSecrets);
 
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => setUser(e.target.value);
   const handleSecretNameChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -52,8 +53,11 @@ export function AppRepoAddDockerCreds({
     );
     setCreating(false);
     if (success) {
-      // re-fetch secrets
-      dispatch(actions.repos.fetchImagePullSecrets(namespace));
+      // Re-fetching secrets cause a re-render and the modal to be closed,
+      // using local state to avoid that.
+      setCurrentImagePullSecrets(
+        currentImagePullSecrets.concat({ metadata: { name: secretName, namespace } } as ISecret),
+      );
       setUser("");
       setSecretName("");
       setPassword("");
@@ -65,8 +69,8 @@ export function AppRepoAddDockerCreds({
 
   return (
     <div className="clr-form-columns">
-      {imagePullSecrets.length > 0 ? (
-        imagePullSecrets.map(secret => {
+      {currentImagePullSecrets.length > 0 ? (
+        currentImagePullSecrets.map(secret => {
           return (
             <div key={secret.metadata.name} className="clr-checkbox-wrapper">
               <label

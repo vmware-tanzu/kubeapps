@@ -29,7 +29,6 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.repos = {
     ...actions.repos,
-    fetchImagePullSecrets: jest.fn(),
     createDockerRegistrySecret: jest.fn(),
   };
   const mockDispatch = jest.fn(r => r);
@@ -83,12 +82,10 @@ it("renders the form to create a registry secret", () => {
   expect(wrapper.text()).toContain("Secret Name");
 });
 
-it("submits the new secret and re-request the list", async () => {
-  const fetchImagePullSecrets = jest.fn();
+it("submits the new secret", async () => {
   const createDockerRegistrySecret = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    fetchImagePullSecrets,
     createDockerRegistrySecret,
   };
   const wrapper = shallow(<AppRepoAddDockerCreds {...defaultProps} />);
@@ -104,7 +101,7 @@ it("submits the new secret and re-request the list", async () => {
   const password = "pass";
   const email = "foo@bar.com";
   const server = "docker.io";
-  // wrapper.setState({ secretName, user, password, email, server, showSecretSubForm: true });
+
   wrapper
     .find("#kubeapps-docker-cred-secret-name")
     .simulate("change", { target: { value: secretName } });
@@ -122,7 +119,6 @@ it("submits the new secret and re-request the list", async () => {
   });
   wrapper.update();
 
-  expect(fetchImagePullSecrets).toHaveBeenCalledWith(defaultProps.namespace);
   expect(createDockerRegistrySecret).toHaveBeenCalledWith(
     secretName,
     user,
@@ -131,4 +127,6 @@ it("submits the new secret and re-request the list", async () => {
     server,
     defaultProps.namespace,
   );
+  // There should be a new item with the secret
+  expect(wrapper.find("#app-repo-secret-repo-1")).toExist();
 });

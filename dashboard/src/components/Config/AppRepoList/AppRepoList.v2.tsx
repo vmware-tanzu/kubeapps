@@ -26,12 +26,19 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
   useEffect(() => {
     if (supportedCluster) {
       dispatch(actions.repos.fetchRepos(namespace));
-      dispatch(actions.repos.fetchImagePullSecrets(namespace));
     }
   }, [dispatch, namespace, supportedCluster]);
+
   const { errors, isFetching, repos, repoSecrets } = useSelector(
     (state: IStoreState) => state.repos,
   );
+
+  useEffect(() => {
+    if (repos) {
+      dispatch(actions.repos.fetchImagePullSecrets(namespace));
+    }
+  }, [dispatch, repos, namespace]);
+
   return (
     <>
       <PageHeader>
