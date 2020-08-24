@@ -1,9 +1,5 @@
 import axios from "axios";
 
-interface ICluster {
-  name: string;
-}
-
 export interface IFeatureFlags {
   operators: boolean;
   ui: string;
@@ -19,7 +15,7 @@ export interface IConfig {
   oauthLogoutURI: string;
   error?: Error;
   featureFlags: IFeatureFlags;
-  clusters: ICluster[];
+  clusters: string[];
 }
 
 export default class Config {
