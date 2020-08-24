@@ -90,9 +90,68 @@ First your OIDC Provider needs to be configured so that tokens issued for the cl
 
 The second part of the additional configuration is to ensure that when Kubeapps' auth-proxy requests a token that it includes extra scopes, such as `audience:server:client_id:second-cluster` for each additional audience that it requires in the issued token. For example, you can view the [auth-proxy configuration used in the local development environment](/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml) and see the additional scopes included there to ensure that the `second-cluster` and `third-cluster` are included in the audience of the resulting token.
 
-## Updating multicluster options
+## Updating multi-cluster options
 
-TBD
+Updating the value of the `clusters` chart option is just like updating any other helm chart value:
+
+* Edit your file with the values
+* Upgrade the Kubeapps release with the new values, being sure to leave the chart version unchanged
+
+So if you had originally installed Kubeapps with a command like:
+
+```bash
+helm install kubeapps bitnami/kubeapps --namespace kubeapps --values ./path/to/my/values.yaml
+```
+
+then to modify the clusters configured for Kubeapps at some later point you will need to
+
+* edit the `./path/to/my/values.yaml`
+* find the exact chart version that you have installed with `helm list --namespace kubeapps`
+* "upgrade" to the new values with `helm upgrade kubeapps bitnami/kubeapps --version X.Y.Z --values ./path/to/my/values`, where the version `X.Y.Z` is the chart version found in the previous step.
+
+Once the pods have cycled, Kubeapps will be ready with your new configured clusters.
+
+## Running a local multi-cluster development environment
+
+You can run Kubeapps locally in a multi-cluster development environment from a linux environment (untested in other environments) with the following tools available:
+
+* `apt install build-essential` (or otherwise have the `make` tool available)
+* [Docker](https://docs.docker.com/get-docker/)
+* [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
+* [mkcert](https://github.com/FiloSottile/mkcert)
+
+Known limitations of the local development environment:
+
+* It assumes that the first docker container created will have the internal address 172.18.0.2 (ie. that it is the first docker container on the network). This is because Dex needs to be available on a URL that is resolveable both from pods within the cluster within the container as well as from the local host (so https://172.18.0.2:32000 is used)
+* Ports 80 and 443 are free. This is required to be able to use an ingress-controller with the local Kind cluster.
+* Dex currently runs with a CA cert shared from the first cluster (rather than created via mkcert) so you will see a warning when logging in to Dex.
+
+From the top-level directory of a local copy of the Kubeapps git repository, run:
+
+```bash
+make multi-cluster-kind
+```
+
+to create two local clusters (two docker containers) with their API servers configured to trust Dex running on the first cluster. To create dex, open-ldap and Kubeapps itself, run:
+
+```bash
+export KUBECONFIG=~/.kube/kind-config-kubeapps
+make deploy-dev
+```
+
+Once the kubeapps pods are all ready (check the pods in the `kubeapps` namespace) you can browse to `https://localhost` to access Kubeapps and login.
+
+When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of
+
+* kubeapps-operator@example.com:password
+* kubeapps-user@example.com:password
+
+or with LDAP as either of
+
+* kubeapps-operator-ldap@example.org:password
+* kubeapps-user-ldap@example.org:password
+
+to authenticate with the corresponding permissions.
 
 ## Limitations
 
