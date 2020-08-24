@@ -154,6 +154,16 @@ function Catalog(props: ICatalogProps) {
                     />
                   </div>
                 )}
+                {allCategories.length > 0 && (
+                  <div className="filter-section">
+                    <label className="filter-label">Category:</label>
+                    <FilterGroup
+                      name="category"
+                      options={allCategories}
+                      onChange={setCategoryFilter}
+                    />
+                  </div>
+                )}
                 {allRepos.length > 0 && (
                   <div className="filter-section">
                     <label>Application Repository:</label>
@@ -167,16 +177,6 @@ function Catalog(props: ICatalogProps) {
                       name="operator-provider"
                       options={allProviders}
                       onChange={setOperatorProviderFilter}
-                    />
-                  </div>
-                )}
-                {allCategories.length > 0 && (
-                  <div className="filter-section">
-                    <label className="filter-label">Category:</label>
-                    <FilterGroup
-                      name="category"
-                      options={allCategories}
-                      onChange={setCategoryFilter}
                     />
                   </div>
                 )}
