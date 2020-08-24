@@ -360,6 +360,8 @@ func TestAppRepositoryList(t *testing.T) {
 				fakecoreclientset.NewSimpleClientset(),
 				&fakeRest.RESTClient{},
 			}
+			// Depending on the namespace, we instantiate the svcClientset or the user clientset
+			// to ensure that we are using the expected clientset.
 			handler := userHandler{
 				kubeappsNamespace: kubeappsNamespace,
 				svcClientset:      cs,
