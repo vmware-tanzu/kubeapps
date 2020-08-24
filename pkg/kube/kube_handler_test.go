@@ -331,6 +331,60 @@ func TestAppRepositoryCreate(t *testing.T) {
 	}
 }
 
+func TestAppRepositoryList(t *testing.T) {
+	testCases := []struct {
+		name             string
+		requestNamespace string
+		existingRepos    map[string][]repoStub
+	}{
+		{
+			name:             "it gets repos from the global namespace",
+			requestNamespace: kubeappsNamespace,
+			existingRepos: map[string][]repoStub{
+				"kubeapps": {repoStub{name: "test-repo"}},
+			},
+		},
+		{
+			name:             "it gets repos from a namespace",
+			requestNamespace: "foo",
+			existingRepos: map[string][]repoStub{
+				"foo": {repoStub{name: "test-repo"}},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
+				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
+			}
+			// Depending on the namespace, we instantiate the svcClientset or the user clientset
+			// to ensure that we are using the expected clientset.
+			handler := userHandler{
+				kubeappsNamespace: kubeappsNamespace,
+				svcClientset:      cs,
+			}
+			if tc.requestNamespace != kubeappsNamespace {
+				handler = userHandler{
+					kubeappsNamespace: kubeappsNamespace,
+					clientset:         cs,
+				}
+			}
+
+			apprepos, err := handler.ListAppRepositories(tc.requestNamespace)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if got, want := len(apprepos.Items), len(tc.existingRepos[tc.requestNamespace]); got != want {
+				t.Errorf("expected %d repos, got %d", want, got)
+			}
+		})
+	}
+}
+
 func TestAppRepositoryUpdate(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
 	testCases := []struct {

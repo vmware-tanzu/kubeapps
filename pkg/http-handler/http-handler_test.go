@@ -72,6 +72,45 @@ func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError
 	}
 }
 
+func TestCreateListAppRepositories(t *testing.T) {
+	testCases := []struct {
+		name         string
+		appRepos     []*v1alpha1.AppRepository
+		err          error
+		expectedCode int
+	}{
+		{
+			name:         "it should return the list of repos",
+			expectedCode: 200,
+		},
+		{
+			name:         "it should return an error",
+			err:          fmt.Errorf("boom"),
+			expectedCode: 500,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			listFunc := ListAppRepositories(&kube.FakeHandler{AppRepos: []*v1alpha1.AppRepository{
+				{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			}, Err: tc.err})
+			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
+			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
+
+			response := httptest.NewRecorder()
+			listFunc(response, req)
+
+			if got, want := response.Code, tc.expectedCode; got != want {
+				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+
+			if response.Code != 200 {
+				checkError(t, response, tc.err)
+			}
+		})
+	}
+}
+
 func TestCreateAppRepository(t *testing.T) {
 	testCases := []struct {
 		name         string
