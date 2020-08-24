@@ -22,7 +22,7 @@ interface IRouteProps {
 function mapStateToProps({ charts, config }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     chartID: chartID(params),
-    chartNamespace: params.global === "global" ? config.namespace : params.namespace,
+    chartNamespace: params.global === "global" ? config.kubeappsNamespace : params.namespace,
     isFetching: charts.isFetching,
     cluster: params.cluster,
     namespace: params.namespace,

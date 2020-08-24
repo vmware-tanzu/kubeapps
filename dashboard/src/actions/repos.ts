@@ -205,7 +205,7 @@ function parsePodTemplate(syncJobPodTemplate: string) {
 function getTargetNS(getState: () => IStoreState, namespace: string) {
   let target = namespace;
   const {
-    config: { namespace: kubeappsNamespace },
+    config: { kubeappsNamespace },
   } = getState();
   if (namespace === definedNamespaces.all) {
     target = kubeappsNamespace;

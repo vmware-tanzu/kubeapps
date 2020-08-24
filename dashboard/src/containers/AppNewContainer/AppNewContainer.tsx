@@ -27,11 +27,11 @@ function mapStateToProps(
 ) {
   return {
     chartID: `${params.repo}/${params.id}`,
-    chartNamespace: params.global === "global" ? config.namespace : params.namespace,
+    chartNamespace: params.global === "global" ? config.kubeappsNamespace : params.namespace,
     cluster: params.cluster,
     chartVersion: params.version,
     error: apps.error,
-    kubeappsNamespace: config.namespace,
+    kubeappsNamespace: config.kubeappsNamespace,
     namespace: params.namespace,
     selected: charts.selected,
     chartsIsFetching: charts.isFetching,

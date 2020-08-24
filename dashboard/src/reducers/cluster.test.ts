@@ -309,22 +309,21 @@ describe("clusterReducer", () => {
 
   context("when RECEIVE_CONFIG", () => {
     const config = {
-      namespace: "kubeapps",
+      kubeappsNamespace: "kubeapps",
       appVersion: "dev",
       authProxyEnabled: false,
       oauthLoginURI: "",
       oauthLogoutURI: "",
       featureFlags: {
         operators: false,
+        ui: "hex",
       },
       clusters: [
         {
           name: "additionalCluster1",
-          apiServiceURL: "https://not-used-by-dashboard.example.com/",
         },
         {
           name: "additionalCluster2",
-          apiServiceURL: "https://not-used-by-dashboard.example.com/",
         },
       ],
     } as IConfig;

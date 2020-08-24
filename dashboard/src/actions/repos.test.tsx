@@ -25,7 +25,7 @@ spec:
 
 beforeEach(() => {
   store = mockStore({
-    config: { namespace: kubeappsNamespace },
+    config: { kubeappsNamespace },
     clusters: {
       currentCluster: "default",
       clusters: {
