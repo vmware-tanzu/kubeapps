@@ -318,10 +318,7 @@ describe("clusterReducer", () => {
         operators: false,
         ui: "hex",
       },
-      clusters: [
-        "additionalCluster1",
-        "additionalCluster2",
-      ],
+      clusters: ["additionalCluster1", "additionalCluster2"],
     } as IConfig;
     it("adds the additional clusters to the clusters state", () => {
       expect(
