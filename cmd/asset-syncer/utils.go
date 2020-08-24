@@ -195,6 +195,7 @@ func newChart(entry helmrepo.ChartVersions, r *models.Repo) models.Chart {
 	copier.Copy(&c.ChartVersions, entry)
 	c.Repo = r
 	c.ID = fmt.Sprintf("%s/%s", r.Name, c.Name)
+	c.Category = entry[0].Annotations["category"]
 	return c
 }
 

@@ -54,6 +54,7 @@ type Chart struct {
 	Icon            string             `json:"icon"`
 	RawIcon         []byte             `json:"raw_icon" bson:"raw_icon"`
 	IconContentType string             `json:"icon_content_type" bson:"icon_content_type,omitempty"`
+	Category        string             `json:"category"`
 	ChartVersions   []ChartVersion     `json:"chartVersions"`
 }
 
