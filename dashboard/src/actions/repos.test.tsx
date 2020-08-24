@@ -289,6 +289,39 @@ describe("fetchRepos", () => {
     await store.dispatch(repoActions.fetchRepos(namespace));
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("fetches repos from several namespaces", async () => {
+    AppRepository.list = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        return { items: [{ foo: "bar" }] };
+      })
+      .mockImplementationOnce(() => {
+        return { items: [{ bar: "foo" }] };
+      });
+
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestRepos),
+        payload: namespace,
+      },
+      {
+        type: getType(repoActions.requestRepos),
+        payload: "foo",
+      },
+      {
+        type: getType(repoActions.receiveReposSecrets),
+        payload: [],
+      },
+      {
+        type: getType(repoActions.receiveRepos),
+        payload: [{ foo: "bar" }, { bar: "foo" }],
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepos(namespace, "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
 });
 
 describe("installRepo", () => {

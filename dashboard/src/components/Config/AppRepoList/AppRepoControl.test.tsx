@@ -38,11 +38,13 @@ const defaultProps = {
   } as IAppRepository,
 };
 
-it("deletes the repo", () => {
+it("deletes the repo and refreshes list", async () => {
   const deleteRepo = jest.fn();
+  const fetchRepos = jest.fn();
   actions.repos = {
     ...actions.repos,
     deleteRepo,
+    fetchRepos,
   };
   const wrapper = mountWrapper(defaultStore, <AppRepoControl {...defaultProps} />);
   const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
@@ -58,10 +60,51 @@ it("deletes the repo", () => {
     .find(Modal)
     .find(CdsButton)
     .filterWhere(b => b.text() === "Delete");
-  act(() => {
-    (confirmButton.prop("onClick") as any)();
+  await act(async () => {
+    await (confirmButton.prop("onClick") as any)();
   });
   expect(deleteRepo).toHaveBeenCalled();
+  expect(fetchRepos).toHaveBeenCalledWith(defaultProps.kubeappsNamespace);
+});
+
+it("deletes the repo and refreshes list (in other namespace)", async () => {
+  const deleteRepo = jest.fn();
+  const fetchRepos = jest.fn();
+  actions.repos = {
+    ...actions.repos,
+    deleteRepo,
+    fetchRepos,
+  };
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoControl
+      {...defaultProps}
+      repo={
+        {
+          metadata: {
+            name: "bitnami",
+            namespace: "other",
+          },
+        } as IAppRepository
+      }
+    />,
+  );
+  const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
+  act(() => {
+    (deleteButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+
+  const confirmButton = wrapper
+    .find(ConfirmDialog)
+    .find(Modal)
+    .find(CdsButton)
+    .filterWhere(b => b.text() === "Delete");
+  await act(async () => {
+    await (confirmButton.prop("onClick") as any)();
+  });
+  expect(deleteRepo).toHaveBeenCalled();
+  expect(fetchRepos).toHaveBeenCalledWith("other", defaultProps.kubeappsNamespace);
 });
 
 it("refreshes the repo", () => {

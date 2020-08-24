@@ -5,10 +5,13 @@ import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import PageHeader from "components/PageHeader/PageHeader.v2";
 import { useDispatch, useSelector } from "react-redux";
-import { IStoreState } from "../../../shared/types";
+import { Link } from "react-router-dom";
+import { app } from "shared/url";
+import { IAppRepository, IStoreState } from "../../../shared/types";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper.v2";
 import { AppRepoAddButton } from "./AppRepoButton.v2";
 import { AppRepoControl } from "./AppRepoControl.v2";
+import { AppRepoDisabledControl } from "./AppRepoDisabledControl.v2";
 import "./AppRepoList.v2.css";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton.v2";
 
@@ -24,10 +27,14 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
   const supportedCluster = cluster === "default";
 
   useEffect(() => {
-    if (supportedCluster) {
-      dispatch(actions.repos.fetchRepos(namespace));
+    if (!supportedCluster || namespace === kubeappsNamespace) {
+      // If we are not in the supported cluster, only fetch global namespaces
+      // TODO(andresmgot): It will likely fail fetching secrets
+      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+    } else {
+      dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
     }
-  }, [dispatch, namespace, supportedCluster]);
+  }, [dispatch, namespace, kubeappsNamespace, supportedCluster]);
 
   const { errors, isFetching, repos, repoSecrets } = useSelector(
     (state: IStoreState) => state.repos,
@@ -39,6 +46,45 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
     }
   }, [dispatch, repos, namespace]);
 
+  const globalRepos: IAppRepository[] = [];
+  const namespaceRepos: IAppRepository[] = [];
+  repos.forEach(repo => {
+    repo.metadata.namespace === kubeappsNamespace
+      ? globalRepos.push(repo)
+      : namespaceRepos.push(repo);
+  });
+
+  const tableColumns = [
+    { accessor: "name", Header: "Name" },
+    { accessor: "url", Header: "URL" },
+    { accessor: "accessLevel", Header: "Access Level" },
+    { accessor: "namespace", Header: "Namespace" },
+    { accessor: "actions", Header: "Actions" },
+  ];
+  const getTableData = (targetRepos: IAppRepository[], disableControls: boolean) => {
+    return targetRepos.map(repo => {
+      return {
+        name: repo.metadata.name,
+        url: repo.spec?.url,
+        accessLevel: repo.spec?.auth?.header ? "Private" : "Public",
+        namespace: repo.metadata.namespace,
+        actions: disableControls ? (
+          <AppRepoDisabledControl />
+        ) : (
+          <AppRepoControl
+            repo={repo}
+            secret={repoSecrets.find(secret =>
+              secret.metadata.ownerReferences?.some(
+                ownerRef => ownerRef.name === repo.metadata.name,
+              ),
+            )}
+            namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
+          />
+        ),
+      };
+    });
+  };
   return (
     <>
       <PageHeader>
@@ -70,7 +116,7 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
           </p>
         </Alert>
       ) : (
-        <>
+        <div className="page-content">
           {errors.fetch && (
             <Alert theme="danger">
               Found an error fetching repositories: {errors.fetch.message}
@@ -84,41 +130,53 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
           {!errors.fetch && (
             <>
               <LoadingWrapper loaded={!isFetching}>
-                {/* TODO(andresmgot): Split between global and namespaced repositories */}
-                <Table
-                  valign="center"
-                  columns={[
-                    { accessor: "name", Header: "Name" },
-                    { accessor: "url", Header: "URL" },
-                    { accessor: "accessLevel", Header: "Access Level" },
-                    { accessor: "namespace", Header: "Namespace" },
-                    { accessor: "actions", Header: "Actions" },
-                  ]}
-                  data={repos.map(repo => {
-                    return {
-                      name: repo.metadata.name,
-                      url: repo.spec?.url,
-                      accessLevel: repo.spec?.auth?.header ? "Private" : "Public",
-                      namespace: repo.metadata.namespace,
-                      actions: (
-                        <AppRepoControl
-                          repo={repo}
-                          secret={repoSecrets.find(secret =>
-                            secret.metadata.ownerReferences?.some(
-                              ownerRef => ownerRef.name === repo.metadata.name,
-                            ),
-                          )}
-                          namespace={namespace}
-                          kubeappsNamespace={kubeappsNamespace}
-                        />
-                      ),
-                    };
-                  })}
-                />
+                <h3>Global Repositories</h3>
+                <p>
+                  Global repositories are available for all Kubeapps users.{" "}
+                  {namespace !== kubeappsNamespace && (
+                    <>
+                      Administrators can go to the{" "}
+                      <Link to={app.config.apprepositories("default", kubeappsNamespace)}>
+                        {kubeappsNamespace}
+                      </Link>{" "}
+                      namespace to manage them.
+                    </>
+                  )}
+                </p>
+                {globalRepos.length ? (
+                  <Table
+                    valign="center"
+                    columns={tableColumns}
+                    data={getTableData(globalRepos, namespace !== kubeappsNamespace)}
+                  />
+                ) : (
+                  <p>No global repositories found.</p>
+                )}
+                {namespace !== kubeappsNamespace && (
+                  <>
+                    <h3>Namespace Repositories</h3>
+                    <p>
+                      Namespaced Repositories are only available in the current namespace. To change
+                      the namespace, use the "Current Context" selector in the top navigation.
+                    </p>
+                    {namespaceRepos.length ? (
+                      <Table
+                        valign="center"
+                        columns={tableColumns}
+                        data={getTableData(namespaceRepos, false)}
+                      />
+                    ) : (
+                      <p>
+                        The current namespace doesn't have any repository. Click on the button "Add
+                        app repository" above to create the first one.
+                      </p>
+                    )}
+                  </>
+                )}
               </LoadingWrapper>
             </>
           )}
-        </>
+        </div>
       )}
     </>
   );
