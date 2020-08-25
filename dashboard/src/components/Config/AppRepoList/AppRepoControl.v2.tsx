@@ -2,11 +2,12 @@ import React, { useState } from "react";
 
 import { CdsButton } from "components/Clarity/clarity";
 import { useDispatch } from "react-redux";
-import { IAppRepository, ISecret } from "shared/types";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { IAppRepository, ISecret, IStoreState } from "shared/types";
 import actions from "../../../actions";
 import ConfirmDialog from "../../ConfirmDialog/ConfirmDialog.v2";
 import { AppRepoAddButton } from "./AppRepoButton.v2";
-
 import "./AppRepoControl.css";
 
 interface IAppRepoListItemProps {
@@ -26,11 +27,20 @@ export function AppRepoControl({
   const [refreshing, setRefreshing] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
-  const dispatch = useDispatch();
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const handleDeleteClick = (repoName: string, repoNamespace: string) => {
-    return () => {
-      dispatch(actions.repos.deleteRepo(repoName, repoNamespace));
+    return async () => {
+      await dispatch(actions.repos.deleteRepo(repoName, repoNamespace));
+      if (repoNamespace !== kubeappsNamespace) {
+        // Re-fetch repos in both namespaces because otherwise, the state
+        // will be updated only with the repos of repoNamespace and removing
+        // the global ones.
+        // TODO(andresmgot): This can be refactored once hex UI is dropped
+        dispatch(actions.repos.fetchRepos(repoNamespace, kubeappsNamespace));
+      } else {
+        dispatch(actions.repos.fetchRepos(repoNamespace));
+      }
       closeModal();
     };
   };

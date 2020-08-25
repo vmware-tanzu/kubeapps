@@ -30,6 +30,10 @@ export const requestRepos = createAction("REQUEST_REPOS", resolve => {
 export const receiveRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
 });
+export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
+  return (repos: IAppRepository[]) => resolve(repos);
+});
+
 export const receiveReposSecrets = createAction("RECEIVE_REPOS_SECRETS", resolve => {
   return (secrets: ISecret[]) => resolve(secrets);
 });
@@ -181,13 +185,26 @@ export const fetchRepoSecret = (
 // fetchRepos fetches the AppRepositories in a specified namespace.
 export const fetchRepos = (
   namespace: string,
+  ...otherNamespaces: string[]
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     try {
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(namespace);
-      dispatch(receiveRepos(repos.items));
       dispatch(fetchRepoSecrets(namespace));
+      if (!otherNamespaces || !otherNamespaces.length) {
+        dispatch(receiveRepos(repos.items));
+      } else {
+        let totalRepos = repos.items;
+        await Promise.all(
+          otherNamespaces.map(async otherNamespace => {
+            dispatch(requestRepos(otherNamespace));
+            const otherRepos = await AppRepository.list(otherNamespace);
+            totalRepos = totalRepos.concat(otherRepos.items);
+          }),
+        );
+        dispatch(receiveRepos(totalRepos));
+      }
     } catch (e) {
       dispatch(errorRepos(e, "fetch"));
     }

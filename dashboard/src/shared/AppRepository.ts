@@ -1,19 +1,16 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
-import { definedNamespaces } from "./Namespace";
-import { IAppRepositoryList, ICreateAppRepositoryResponse } from "./types";
+import { ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
 export class AppRepository {
   public static async list(namespace: string) {
-    const { data } = await axiosWithAuth.get<IAppRepositoryList>(
-      AppRepository.getResourceLink(namespace),
-    );
+    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(namespace));
     return data;
   }
 
   public static async get(name: string, namespace: string) {
-    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(name, namespace));
+    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(namespace, name));
     return data;
   }
 
@@ -21,7 +18,7 @@ export class AppRepository {
     const repo = await AppRepository.get(name, namespace);
     repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
     repo.spec.resyncRequests++;
-    const { data } = await axiosWithAuth.put(AppRepository.getSelfLink(name, namespace), repo);
+    const { data } = await axiosWithAuth.put(AppRepository.getSelfLink(namespace, name), repo);
     return data;
   }
 
@@ -80,12 +77,9 @@ export class AppRepository {
 
   private static APIBase: string = APIBase;
   private static APIEndpoint: string = `${AppRepository.APIBase}/apis/kubeapps.com/v1alpha1`;
-  private static getResourceLink(namespace?: string): string {
-    return `${AppRepository.APIEndpoint}/${
-      !namespace || namespace === definedNamespaces.all ? "" : `namespaces/${namespace}/`
-    }apprepositories`;
-  }
-  private static getSelfLink(name: string, namespace: string): string {
-    return `${AppRepository.APIEndpoint}/namespaces/${namespace}/apprepositories/${name}`;
+  private static getSelfLink(namespace: string, name?: string): string {
+    return `${AppRepository.APIEndpoint}/namespaces/${namespace}/apprepositories${
+      name ? `/${name}` : ""
+    }`;
   }
 }
