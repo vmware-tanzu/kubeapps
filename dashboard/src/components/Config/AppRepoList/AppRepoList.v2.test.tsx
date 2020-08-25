@@ -110,7 +110,7 @@ describe("global and namespaced repositories", () => {
     expect(
       wrapper
         .find("p")
-        .filterWhere(p => p.text().includes("The current namespace doesn't have any repository")),
+        .filterWhere(p => p.text().includes("The current namespace doesn't have any repositories")),
     ).toExist();
   });
 

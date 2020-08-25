@@ -33,7 +33,10 @@ export function AppRepoControl({
     return async () => {
       await dispatch(actions.repos.deleteRepo(repoName, repoNamespace));
       if (repoNamespace !== kubeappsNamespace) {
-        // Re-fetch repos in both namespaces
+        // Re-fetch repos in both namespaces because otherwise, the state
+        // will be updated only with the repos of repoNamespace and removing
+        // the global ones.
+        // TODO(andresmgot): This can be refactored once hex UI is dropped
         dispatch(actions.repos.fetchRepos(repoNamespace, kubeappsNamespace));
       } else {
         dispatch(actions.repos.fetchRepos(repoNamespace));

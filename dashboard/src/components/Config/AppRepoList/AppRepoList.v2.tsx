@@ -154,10 +154,11 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
                 )}
                 {namespace !== kubeappsNamespace && (
                   <>
-                    <h3>Namespace Repositories</h3>
+                    <h3>Namespace Repositories: {namespace}</h3>
                     <p>
-                      Namespaced Repositories are only available in the current namespace. To change
-                      the namespace, use the "Current Context" selector in the top navigation.
+                      Namespaced Repositories are available in the {namespace} namespace only. To
+                      switch to a different one, use the "Current Context" selector in the top
+                      navigation.
                     </p>
                     {namespaceRepos.length ? (
                       <Table
@@ -167,8 +168,8 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
                       />
                     ) : (
                       <p>
-                        The current namespace doesn't have any repository. Click on the button "Add
-                        app repository" above to create the first one.
+                        The current namespace doesn't have any repositories. Click on the button
+                        "Add app repository" above to create the first one.
                       </p>
                     )}
                   </>

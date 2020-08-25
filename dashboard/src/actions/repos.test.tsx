@@ -290,14 +290,14 @@ describe("fetchRepos", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("fetches repos from several namespaces", async () => {
+  it("fetches repos from several namespaces and joins them", async () => {
     AppRepository.list = jest
       .fn()
       .mockImplementationOnce(() => {
-        return { items: [{ foo: "bar" }] };
+        return { items: [{ name: "repo1" }] };
       })
       .mockImplementationOnce(() => {
-        return { items: [{ bar: "foo" }] };
+        return { items: [{ name: "repo2" }] };
       });
 
     const expectedActions = [
@@ -307,7 +307,7 @@ describe("fetchRepos", () => {
       },
       {
         type: getType(repoActions.requestRepos),
-        payload: "foo",
+        payload: "other-ns",
       },
       {
         type: getType(repoActions.receiveReposSecrets),
@@ -315,11 +315,11 @@ describe("fetchRepos", () => {
       },
       {
         type: getType(repoActions.receiveRepos),
-        payload: [{ foo: "bar" }, { bar: "foo" }],
+        payload: [{ name: "repo1" }, { name: "repo2" }],
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace, "foo"));
+    await store.dispatch(repoActions.fetchRepos(namespace, "other-ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
