@@ -9,7 +9,7 @@ import OperatorList from "../../components/OperatorList";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { operators, clusters: { currentCluster, clusters } }: IStoreState,
+  { operators, clusters: { currentCluster, clusters }, config }: IStoreState,
   { location }: RouteComponentProps<{}>,
 ) {
   return {
@@ -21,6 +21,7 @@ function mapStateToProps(
     error: operators.errors.operator.fetch,
     csvs: operators.csvs,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
+    UI: config.featureFlags.ui,
   };
 }
 

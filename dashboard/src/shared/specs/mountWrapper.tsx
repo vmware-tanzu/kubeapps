@@ -7,6 +7,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
 
+import { operatorsInitialState } from "reducers/operators";
 import { IAppRepository, ISecret, IStoreState } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
@@ -29,7 +30,7 @@ const initialState = {
     repoSecrets: [] as ISecret[],
     imagePullSecrets: [] as ISecret[],
   },
-  operators: {},
+  operators: cloneDeep(operatorsInitialState),
 } as IStoreState;
 
 export const defaultStore = mockStore(initialState);

@@ -28,7 +28,7 @@ function ChartReadme({ chartID, error, namespace, readme, version }: IChartReadm
   if (error) {
     if (error.toLocaleLowerCase().includes("not found")) {
       return (
-        <div className="readme-not-found">
+        <div className="section-not-found">
           <div>
             <CdsIcon shape="file" size="64" />
             <h4>No README found</h4>
