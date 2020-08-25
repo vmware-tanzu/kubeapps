@@ -93,6 +93,7 @@ const chartVersion = {
         description: "chart-description",
         keywords: [],
         maintainers: [],
+        category: "",
         repo: {
           name: "repo",
           url: "http://example.com",

@@ -77,6 +77,7 @@ export interface IChartAttributes {
   }>;
   repo: IRepo;
   sources: string[];
+  category: string;
 }
 
 export interface IChartState {

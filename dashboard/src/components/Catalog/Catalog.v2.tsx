@@ -1,5 +1,5 @@
 import { RouterAction } from "connected-react-router";
-import { uniq } from "lodash";
+import { flatten, get, intersection, uniq } from "lodash";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CdsIcon } from "../Clarity/clarity";
@@ -20,6 +20,16 @@ import { CdsButton } from "components/Clarity/clarity";
 import { app } from "shared/url";
 import "./Catalog.v2.css";
 import CatalogItems from "./CatalogItems";
+
+function categoryToReadable(category: string) {
+  return category === "" ? "Unknown" : category.replace(/([a-z])([A-Z][a-z])/g, "$1 $2").trimLeft();
+}
+
+function getOperatorCategories(c: IClusterServiceVersion): string[] {
+  return get(c, "metadata.annotations.categories", "")
+    .split(",")
+    .map((category: string) => categoryToReadable(category));
+}
 
 interface ICatalogProps {
   charts: IChartState;
@@ -54,10 +64,16 @@ function Catalog(props: ICatalogProps) {
   const [searchFilter, setSearchFilter] = useState(propsFilter);
   const [typeFilter, setTypeFilter] = useState([] as string[]);
   const [repoFilter, setRepoFilter] = useState([] as string[]);
+  const [categoryFilter, setCategoryFilter] = useState([] as string[]);
   const [operatorProviderFilter, setOperatorProviderFilter] = useState([] as string[]);
 
   const allRepos = uniq(charts.map(c => c.attributes.repo.name));
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
+  const allCategories = uniq(
+    charts
+      .map(c => categoryToReadable(c.attributes.category))
+      .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
+  ).sort();
 
   useEffect(() => {
     fetchCharts(namespace, repo);
@@ -72,7 +88,12 @@ function Catalog(props: ICatalogProps) {
     .filter(() => typeFilter.length === 0 || typeFilter.includes("Charts"))
     .filter(() => operatorProviderFilter.length === 0)
     .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
-    .filter(c => repoFilter.length === 0 || repoFilter.includes(c.attributes.repo.name));
+    .filter(c => repoFilter.length === 0 || repoFilter.includes(c.attributes.repo.name))
+    .filter(
+      c =>
+        categoryFilter.length === 0 ||
+        categoryFilter.includes(categoryToReadable(c.attributes.category)),
+    );
   const filteredCSVs = csvs
     .filter(() => typeFilter.length === 0 || typeFilter.includes("Operators"))
     .filter(() => repoFilter.length === 0)
@@ -81,6 +102,11 @@ function Catalog(props: ICatalogProps) {
       c =>
         operatorProviderFilter.length === 0 ||
         operatorProviderFilter.includes(c.spec.provider.name),
+    )
+    .filter(
+      c =>
+        categoryFilter.length === 0 ||
+        intersection(categoryFilter, getOperatorCategories(c)).length,
     );
 
   return (
@@ -125,6 +151,16 @@ function Catalog(props: ICatalogProps) {
                       name="apptype"
                       options={["Operators", "Charts"]}
                       onChange={setTypeFilter}
+                    />
+                  </div>
+                )}
+                {allCategories.length > 0 && (
+                  <div className="filter-section">
+                    <label className="filter-label">Category:</label>
+                    <FilterGroup
+                      name="category"
+                      options={allCategories}
+                      onChange={setCategoryFilter}
                     />
                   </div>
                 )}

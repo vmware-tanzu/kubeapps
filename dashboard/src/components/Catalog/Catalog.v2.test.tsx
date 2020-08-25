@@ -36,6 +36,7 @@ const chartItem = {
   attributes: {
     name: "foo",
     description: "",
+    category: "",
     repo: { name: "foo", namespace: "chart-namespace" },
   },
   relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
@@ -45,6 +46,7 @@ const chartItem2 = {
   attributes: {
     name: "bar",
     description: "",
+    category: "Database",
     repo: { name: "bar", namespace: "chart-namespace" },
   },
   relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
@@ -193,6 +195,77 @@ describe("filters by operator provider", () => {
     // The repo name is "foo"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you" } });
+    wrapper.update();
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+});
+
+describe("filters by category", () => {
+  it("renders a Unknown category if not set", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...defaultProps} charts={{ ...defaultChartState, items: [chartItem] }} />,
+    );
+    expect(wrapper.find("input").findWhere(i => i.prop("value") === "Unknown")).toExist();
+  });
+
+  it("filters a category", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...defaultProps}
+        charts={{ ...defaultChartState, items: [chartItem, chartItem2] }}
+      />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(2);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
+    input.simulate("change", { target: { value: "Database" } });
+    wrapper.update();
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("filters an operator category", () => {
+    const csvWithCat = {
+      ...csv,
+      metadata: {
+        name: "csv-cat",
+        annotations: {
+          categories: "E-Learning",
+        },
+      },
+    } as any;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...defaultProps} csvs={[csv, csvWithCat]} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(2);
+
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "E-Learning");
+    input.simulate("change", { target: { value: "E-Learning" } });
+    wrapper.update();
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("filters operator categories", () => {
+    const csvWithCat = {
+      ...csv,
+      metadata: {
+        name: "csv-cat",
+        annotations: {
+          categories: "DeveloperTools, Infrastructure",
+        },
+      },
+    } as any;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...defaultProps} csvs={[csv, csvWithCat]} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(2);
+
+    // Two categories extracted from the same CSV
+    expect(wrapper.find("input").findWhere(i => i.prop("value") === "Developer Tools")).toExist();
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Infrastructure");
+    input.simulate("change", { target: { value: "Infrastructure" } });
     wrapper.update();
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
