@@ -78,14 +78,18 @@ workflows:
             - build_go_images
             - build_dashboard
       - GKE_1_16_MASTER:
-          <<: *build_on_master
+          # TODO(andresmgot): Restore
+          # <<: *build_on_master
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
       - GKE_1_16_LATEST_RELEASE:
-          <<: *build_on_master
+          # TODO(andresmgot): Restore
+          # <<: *build_on_master
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
