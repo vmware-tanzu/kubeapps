@@ -1,5 +1,6 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import SearchFilter from "components/SearchFilter/SearchFilter.v2";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
@@ -83,10 +84,13 @@ const sampleCSV = {
   },
 } as any;
 
-// itBehavesLike("aLoadingComponent", {
-//   component: OperatorList,
-//   props: { ...defaultProps, isFetching: true },
-// });
+it("renders a LoadingWrapper if fetching", () => {
+  const wrapper = mountWrapper(
+    getStore({ operators: { isFetcing: true } }),
+    <OperatorList {...defaultProps} />,
+  );
+  expect(wrapper.find(LoadingWrapper)).toExist();
+});
 
 it("call the OLM check and render the NotFound message if not found", () => {
   const checkOLMInstalled = jest.fn();
@@ -206,7 +210,9 @@ describe("filter operators", () => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("foo");
     });
     wrapper.update();
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
   });
 
   it("setting the filter in the props", () => {
@@ -216,7 +222,9 @@ describe("filter operators", () => {
       }),
       <OperatorList {...defaultProps} filter="foo" />,
     );
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
   });
 
   it("show a message if the filter doesn't match any operator", () => {
@@ -242,7 +250,9 @@ describe("filter operators", () => {
     // Filter category "security"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "security");
     input.simulate("change", { target: { value: "security" } });
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
   });
 
   it("filters by capability", () => {
@@ -257,6 +267,8 @@ describe("filter operators", () => {
     // Filter by capability "Basic Install"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === BASIC_INSTALL);
     input.simulate("change", { target: { value: BASIC_INSTALL } });
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator2.metadata.name);
   });
 });
