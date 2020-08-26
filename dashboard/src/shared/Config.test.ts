@@ -27,7 +27,10 @@ describe("Config", () => {
 
   it("returns the overriden namespace if env variable provided", async () => {
     process.env.REACT_APP_KUBEAPPS_NS = "magic-playground";
-    expect(await Config.getConfig()).toEqual({ ...defaultJSON, namespace: "magic-playground" });
+    expect(await Config.getConfig()).toEqual({
+      ...defaultJSON,
+      kubeappsNamespace: "magic-playground",
+    });
   });
 
   it("does not returns the overriden namespace if NODE_ENV=production", async () => {

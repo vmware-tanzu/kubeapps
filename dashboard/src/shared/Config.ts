@@ -1,11 +1,5 @@
 import axios from "axios";
 
-interface ICluster {
-  name: string;
-  apiServiceURL: string;
-  certificateAuthorityData?: string;
-}
-
 export interface IFeatureFlags {
   operators: boolean;
   ui: string;
@@ -13,14 +7,15 @@ export interface IFeatureFlags {
 
 // IConfig is the configuration for Kubeapps
 export interface IConfig {
-  namespace: string;
+  kubeappsCluster: string;
+  kubeappsNamespace: string;
   appVersion: string;
   authProxyEnabled: boolean;
   oauthLoginURI: string;
   oauthLogoutURI: string;
   error?: Error;
   featureFlags: IFeatureFlags;
-  clusters: ICluster[];
+  clusters: string[];
 }
 
 export default class Config {
@@ -35,7 +30,7 @@ export default class Config {
     if (process.env.NODE_ENV !== "production") {
       data.appVersion = "DEVEL";
       if (process.env.REACT_APP_KUBEAPPS_NS) {
-        data.namespace = process.env.REACT_APP_KUBEAPPS_NS;
+        data.kubeappsNamespace = process.env.REACT_APP_KUBEAPPS_NS;
       }
     }
 

@@ -30,7 +30,7 @@ function mapStateToProps(
     reposIsFetching: repos.isFetching,
     appsError: apps.error,
     chartsError: charts.selected.error,
-    kubeappsNamespace: config.namespace,
+    kubeappsNamespace: config.kubeappsNamespace,
     namespace: params.namespace,
     cluster: params.cluster,
     releaseName: params.releaseName,

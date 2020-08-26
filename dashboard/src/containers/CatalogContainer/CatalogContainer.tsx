@@ -21,7 +21,7 @@ function mapStateToProps(
     csvs: operators.csvs,
     cluster: params.cluster,
     namespace: params.namespace,
-    kubeappsNamespace: config.namespace,
+    kubeappsNamespace: config.kubeappsNamespace,
     featureFlags: config.featureFlags,
     UI: config.featureFlags.ui,
   };

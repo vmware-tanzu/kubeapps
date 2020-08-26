@@ -9,7 +9,8 @@ export interface IConfigState extends IConfig {
 
 const initialState: IConfigState = {
   loaded: false,
-  namespace: "",
+  kubeappsCluster: "",
+  kubeappsNamespace: "",
   appVersion: "",
   authProxyEnabled: false,
   oauthLoginURI: "",
