@@ -122,17 +122,26 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *co
 func getProxyConfig(appRepo *v1alpha1.AppRepository) *httpproxy.Config {
 	template := appRepo.Spec.SyncJobPodTemplate
 	proxyConfig := httpproxy.Config{}
+	defaultToEnv := true
 	if len(template.Spec.Containers) > 0 {
 		for _, e := range template.Spec.Containers[0].Env {
 			switch e.Name {
 			case "http_proxy":
 				proxyConfig.HTTPProxy = e.Value
+				defaultToEnv = false
 			case "https_proxy":
 				proxyConfig.HTTPSProxy = e.Value
+				defaultToEnv = false
 			case "no_proxy":
 				proxyConfig.NoProxy = e.Value
+				defaultToEnv = false
 			}
 		}
 	}
+
+	if defaultToEnv {
+		return httpproxy.FromEnvironment()
+	}
+
 	return &proxyConfig
 }

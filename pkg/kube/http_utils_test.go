@@ -20,6 +20,7 @@ import (
 	"crypto/x509"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -269,13 +270,14 @@ func TestInitNetClient(t *testing.T) {
 func TestGetProxyConfig(t *testing.T) {
 
 	testCases := []struct {
-		name           string
-		envVars        []corev1.EnvVar
-		expectedConfig *httpproxy.Config
+		name             string
+		appRepoEnvVars   []corev1.EnvVar
+		containerEnvVars map[string]string
+		expectedConfig   *httpproxy.Config
 	}{
 		{
 			name: "configures when http_proxy specified",
-			envVars: []corev1.EnvVar{
+			appRepoEnvVars: []corev1.EnvVar{
 				{
 					Name:  "http_proxy",
 					Value: "http://proxied.example.com:8888",
@@ -287,7 +289,7 @@ func TestGetProxyConfig(t *testing.T) {
 		},
 		{
 			name: "configures when https_proxy specified",
-			envVars: []corev1.EnvVar{
+			appRepoEnvVars: []corev1.EnvVar{
 				{
 					Name:  "https_proxy",
 					Value: "https://proxied.example.com:8888",
@@ -299,7 +301,7 @@ func TestGetProxyConfig(t *testing.T) {
 		},
 		{
 			name: "configures all three when specified",
-			envVars: []corev1.EnvVar{
+			appRepoEnvVars: []corev1.EnvVar{
 				{
 					Name:  "http_proxy",
 					Value: "http://proxied.example.com:8888",
@@ -319,10 +321,39 @@ func TestGetProxyConfig(t *testing.T) {
 				NoProxy:    "http://some.example.com https://other.example.com",
 			},
 		},
+		{
+			name:           "returns a nil config when none specified in app repo or container",
+			expectedConfig: &httpproxy.Config{},
+		},
+		{
+			name: "defaults to the container environment proxy vars when set",
+			containerEnvVars: map[string]string{
+				"http_proxy": "http://container.example.com:9999",
+			},
+			expectedConfig: &httpproxy.Config{
+				HTTPProxy: "http://container.example.com:9999",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+
+			// Set the env for the test ensuring to restore after.
+			originalValues := map[string]string{}
+			for key, val := range tc.containerEnvVars {
+				originalVal, present := os.LookupEnv(key)
+				if present {
+					originalValues[key] = originalVal
+				}
+				os.Setenv(key, val)
+			}
+			defer func() {
+				for key, val := range originalValues {
+					os.Setenv(key, val)
+				}
+			}()
+
 			appRepo := &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "foo",
@@ -333,7 +364,7 @@ func TestGetProxyConfig(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Env: tc.envVars,
+									Env: tc.appRepoEnvVars,
 								},
 							},
 						},
