@@ -35,7 +35,7 @@ export interface IOperatorsState {
   resource?: IResource;
 }
 
-const initialState: IOperatorsState = {
+export const operatorsInitialState: IOperatorsState = {
   isFetching: false,
   isFetchingElem: {
     OLM: false,
@@ -66,7 +66,7 @@ function isFetching(state: IOperatorsState, item: string, fetching: boolean) {
 }
 
 const catalogReducer = (
-  state: IOperatorsState = initialState,
+  state: IOperatorsState = operatorsInitialState,
   action: OperatorAction | LocationChangeAction | NamespaceAction,
 ): IOperatorsState => {
   const { operators } = actions;
@@ -189,7 +189,7 @@ const catalogReducer = (
         errors: { operator: {}, csv: {}, resource: {} },
       };
     case getType(actions.namespace.setNamespace):
-      return { ...initialState, isOLMInstalled: state.isOLMInstalled };
+      return { ...operatorsInitialState, isOLMInstalled: state.isOLMInstalled };
     default:
       return { ...state };
   }

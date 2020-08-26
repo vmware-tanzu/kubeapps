@@ -24,3 +24,41 @@
 .layout > main {
   flex: 1;
 }
+
+.filters-menu {
+  padding-left: 1.2rem;
+  h5 {
+    text-transform: uppercase;
+    font-size: small;
+    font-weight: 500;
+  }
+  .filter-section {
+    font-weight: 500;
+    margin: 0.7rem 0 0.5rem 0;
+  }
+}
+
+.section-not-found {
+  display: grid;
+  justify-content: center;
+  margin-top: 1.8rem;
+  // align-items: center;
+  height: calc(100vh - 12rem);
+  text-align: center;
+  .section-description {
+    text-align: left;
+  }
+  img {
+    max-width: 400px;
+  }
+}
+
+.terminal-wrapper {
+  background: var(--clr-color-neutral-100);
+  color: var(--clr-color-on-neutral-100);
+  .terminal-code {
+    padding: 0.6rem;
+    white-space: pre-wrap;
+    text-align: left;
+  }
+}

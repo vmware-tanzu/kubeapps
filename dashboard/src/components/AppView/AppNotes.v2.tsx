@@ -12,7 +12,7 @@ function AppNotes(props: IAppNotesProps) {
   return notes ? (
     <>
       <h5 className="section-title">{title ? title : "Installation Notes"}</h5>
-      <section className="app-notes">
+      <section className="terminal-wrapper">
         <pre className="terminal-code">{notes}</pre>
       </section>
     </>

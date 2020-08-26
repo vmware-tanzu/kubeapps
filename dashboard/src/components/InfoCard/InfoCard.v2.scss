@@ -30,6 +30,7 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
+  overflow-x: auto;
   .kubeapps-card-footer-col1 {
     width: 100%;
     margin: 0 0.6rem 0 0.6rem;
