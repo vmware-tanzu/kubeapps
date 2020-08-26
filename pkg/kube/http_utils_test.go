@@ -19,6 +19,7 @@ package kube
 import (
 	"crypto/x509"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -61,6 +62,8 @@ func TestInitNetClient(t *testing.T) {
 		authHeaderSecretData = "really-secret-stuff"
 		customCASecretName   = "custom-ca-secret-name"
 		appRepoName          = "custom-repo"
+		requestURL           = "https://request.example.com/foo/bar"
+		proxyURL             = "https://proxy.example.com"
 	)
 
 	testCases := []struct {
@@ -70,6 +73,7 @@ func TestInitNetClient(t *testing.T) {
 		errorExpected    bool
 		numCertsExpected int
 		expectedHeaders  http.Header
+		expectProxied    bool
 	}{
 		{
 			name:             "default cert pool without auth",
@@ -145,7 +149,7 @@ func TestInitNetClient(t *testing.T) {
 								Env: []corev1.EnvVar{
 									{
 										Name:  "http_proxy",
-										Value: "http://172.17.0.2:8888",
+										Value: proxyURL,
 									},
 								},
 							},
@@ -153,6 +157,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
+			expectProxied:    true,
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 	}
@@ -234,6 +239,27 @@ func TestInitNetClient(t *testing.T) {
 			} else {
 				if ok {
 					t.Errorf("Authorization header present when non included in app repo")
+				}
+			}
+
+			// Verify that a URL is proxied or not, depending on the app repo configuration.
+			u, err := url.Parse(requestURL)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			requestURL, err := transport.Proxy(&http.Request{URL: u})
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			if tc.expectProxied {
+				if got, want := requestURL.String(), proxyURL; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
+			} else {
+				// The proxy function returns nil (with a nil error) if the
+				// request should not be proxied
+				if got := requestURL; got != nil {
+					t.Errorf("got: %q, want: nil", got)
 				}
 			}
 		})
