@@ -12,7 +12,7 @@ import CapabiliyLevel from "./OperatorCapabilityLevel";
 import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";
 
-interface IOperatorViewProps {
+export interface IOperatorViewProps {
   operatorName: string;
   operator?: IPackageManifest;
   getOperator: (namespace: string, name: string) => Promise<void>;
