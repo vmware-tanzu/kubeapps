@@ -7,8 +7,8 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
+import { push } from "connected-react-router";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
 import { Operators } from "../../shared/Operators";
 import { IStoreState } from "../../shared/types";
 import { api, app } from "../../shared/url";
@@ -46,6 +46,8 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
     }
   }, [dispatch, operator, namespace]);
 
+  const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
+
   if (cluster !== "default") {
     return <OperatorNotSupported namespace={namespace} />;
   }
@@ -78,11 +80,9 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
           version={currentCSVDesc.version}
           provider={operator.status.provider.name}
         >
-          <Link to={app.operators.new(cluster, namespace, operatorName)}>
-            <CdsButton status="primary" disabled={!!csv}>
-              <CdsIcon shape="deploy" inverse={true} /> Deploy
-            </CdsButton>
-          </Link>
+          <CdsButton status="primary" disabled={!!csv} onClick={redirect}>
+            <CdsIcon shape="deploy" inverse={true} /> Deploy
+          </CdsButton>
         </OperatorHeader>
       </div>
       <section>
@@ -93,11 +93,9 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
           <Column span={9}>
             <OperatorDescription description={currentCSVDesc.description} />
             <div className="after-readme-button">
-              <Link to={app.operators.new(cluster, namespace, operatorName)}>
-                <CdsButton status="primary" disabled={!!csv}>
-                  <CdsIcon shape="deploy" inverse={true} /> Deploy
-                </CdsButton>
-              </Link>
+              <CdsButton status="primary" disabled={!!csv} onClick={redirect}>
+                <CdsIcon shape="deploy" inverse={true} /> Deploy
+              </CdsButton>
             </div>
           </Column>
         </Row>
