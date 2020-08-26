@@ -14,7 +14,6 @@ import { IChartState, IChartVersion } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import ChartHeader from "./ChartHeader.v2";
 import ChartReadme from "./ChartReadme.v2";
-import "./ChartView.v2.css";
 
 export interface IChartViewProps {
   chartID: string;

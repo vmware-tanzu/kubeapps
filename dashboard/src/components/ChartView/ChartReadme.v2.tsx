@@ -6,7 +6,6 @@ import actions from "actions";
 import { CdsIcon } from "components/Clarity/clarity";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
-import "./ChartReadme.v2.css";
 import HeadingRenderer from "./HeadingRenderer";
 import LinkRenderer from "./LinkRenderer";
 import TableRenderer from "./TableRenderer";
