@@ -18,6 +18,7 @@ const defaultProps = {
   validate: jest.fn(),
   namespace: defaultNamespace,
   cluster: "default",
+  kubeappsCluster: "default",
   kubeappsNamespace: "kubeapps",
   displayReposPerNamespaceMsg: false,
   validating: false,

@@ -120,6 +120,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
     }
   }
   isInstalled={true}
+  kubeappsCluster="default"
   sync={[MockFunction]}
 >
   <section
@@ -361,6 +362,7 @@ exports[`when all the brokers are loaded shows a warning to install no service b
     }
   }
   isInstalled={true}
+  kubeappsCluster="default"
   sync={[MockFunction]}
 >
   <section
