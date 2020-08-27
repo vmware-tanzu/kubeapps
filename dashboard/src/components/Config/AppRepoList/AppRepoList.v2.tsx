@@ -18,13 +18,19 @@ import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton.v2";
 export interface IAppRepoListProps {
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   kubeappsNamespace: string;
 }
 
-function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProps) {
+function AppRepoList({
+  cluster,
+  namespace,
+  kubeappsCluster,
+  kubeappsNamespace,
+}: IAppRepoListProps) {
   const dispatch = useDispatch();
   // We do not currently support app repositories on additional clusters.
-  const supportedCluster = cluster === "default";
+  const supportedCluster = cluster === kubeappsCluster;
 
   useEffect(() => {
     if (!supportedCluster || namespace === kubeappsNamespace) {
@@ -133,15 +139,16 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
                 <h3>Global Repositories</h3>
                 <p>
                   Global repositories are available for all Kubeapps users.{" "}
-                  {namespace !== kubeappsNamespace && (
-                    <>
-                      Administrators can go to the{" "}
-                      <Link to={app.config.apprepositories("default", kubeappsNamespace)}>
-                        {kubeappsNamespace}
-                      </Link>{" "}
-                      namespace to manage them.
-                    </>
-                  )}
+                  {kubeappsCluster &&
+                    (kubeappsCluster !== cluster || namespace !== kubeappsNamespace) && (
+                      <>
+                        Administrators can go to the{" "}
+                        <Link to={app.config.apprepositories(kubeappsCluster, kubeappsNamespace)}>
+                          {kubeappsNamespace}
+                        </Link>{" "}
+                        namespace to manage them.
+                      </>
+                    )}
                 </p>
                 {globalRepos.length ? (
                   <Table

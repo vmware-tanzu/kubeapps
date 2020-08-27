@@ -21,6 +21,7 @@ let defaultProps = {
   checkCatalogInstalled: jest.fn(),
   isInstalled: true,
   cluster: "default",
+  kubeappsCluster: "default",
 };
 
 beforeEach(() => {
@@ -33,6 +34,7 @@ beforeEach(() => {
     checkCatalogInstalled: jest.fn(),
     isInstalled: true,
     cluster: "default",
+    kubeappsCluster: "default",
   };
 });
 
@@ -62,7 +64,7 @@ context("if the service brokers are accessed on an additional cluster", () => {
     const msgAlert = wrapper.find(MessageAlert);
     expect(msgAlert).toExist();
     expect(msgAlert.prop("header")).toEqual(
-      "Service brokers can be created on the default cluster only",
+      "Service brokers can be created on the cluster on which Kubeapps is installed only",
     );
   });
 
