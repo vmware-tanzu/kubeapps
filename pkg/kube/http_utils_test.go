@@ -268,7 +268,7 @@ func TestInitNetClient(t *testing.T) {
 }
 
 func TestGetProxyConfig(t *testing.T) {
-
+	proxyVars := []string{"http_proxy", "https_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"}
 	testCases := []struct {
 		name             string
 		appRepoEnvVars   []corev1.EnvVar
@@ -341,7 +341,7 @@ func TestGetProxyConfig(t *testing.T) {
 
 			// Set the env for the test ensuring to restore after.
 			originalValues := map[string]string{}
-			for _, key := range []string{"http_proxy", "https_proxy", "no_proxy"} {
+			for _, key := range proxyVars {
 				originalVal, ok := os.LookupEnv(key)
 				if ok {
 					originalValues[key] = originalVal
