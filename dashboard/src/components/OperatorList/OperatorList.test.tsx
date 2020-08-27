@@ -18,6 +18,7 @@ const defaultProps: IOperatorListProps = {
   operators: [],
   cluster: "default",
   namespace: "default",
+  kubeappsCluster: "default",
   getOperators: jest.fn(),
   getCSVs: jest.fn(),
   csvs: [],
