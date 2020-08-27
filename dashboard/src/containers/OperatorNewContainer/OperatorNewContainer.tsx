@@ -16,7 +16,7 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { operators, clusters: { currentCluster, clusters } }: IStoreState,
+  { operators, clusters: { currentCluster, clusters }, config }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
@@ -26,6 +26,7 @@ function mapStateToProps(
     operator: operators.operator,
     errors: operators.errors.operator,
     operatorName: params.operator,
+    UI: config.featureFlags.ui,
   };
 }
 

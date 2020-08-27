@@ -13,7 +13,7 @@ import OperatorHeader from "../OperatorView/OperatorHeader";
 
 import "./OperatorNew.css";
 
-interface IOperatorNewProps {
+export interface IOperatorNewProps {
   operatorName: string;
   operator?: IPackageManifest;
   getOperator: (namespace: string, name: string) => Promise<void>;
