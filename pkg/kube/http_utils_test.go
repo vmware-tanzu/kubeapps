@@ -341,12 +341,17 @@ func TestGetProxyConfig(t *testing.T) {
 
 			// Set the env for the test ensuring to restore after.
 			originalValues := map[string]string{}
-			for key, val := range tc.containerEnvVars {
-				originalVal, present := os.LookupEnv(key)
-				if present {
+			for _, key := range []string{"http_proxy", "https_proxy", "no_proxy"} {
+				originalVal, ok := os.LookupEnv(key)
+				if ok {
 					originalValues[key] = originalVal
+					os.Unsetenv(key)
 				}
-				os.Setenv(key, val)
+
+				value, ok := tc.containerEnvVars[key]
+				if ok {
+					os.Setenv(key, value)
+				}
 			}
 			defer func() {
 				for key, val := range originalValues {
