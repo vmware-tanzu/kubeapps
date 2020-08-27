@@ -309,6 +309,7 @@ describe("clusterReducer", () => {
 
   context("when RECEIVE_CONFIG", () => {
     const config = {
+      kubeappsCluster: "kubeappsCluster",
       kubeappsNamespace: "kubeapps",
       appVersion: "dev",
       authProxyEnabled: false,
@@ -328,6 +329,7 @@ describe("clusterReducer", () => {
         }),
       ).toEqual({
         ...initialTestState,
+        currentCluster: "kubeappsCluster",
         clusters: {
           ...initialTestState.clusters,
           additionalCluster1: {
@@ -354,7 +356,10 @@ describe("clusterReducer", () => {
           type: getType(actions.config.receiveConfig),
           payload: badConfig,
         }),
-      ).toEqual(initialTestState);
+      ).toEqual({
+        ...initialTestState,
+        currentCluster: "kubeappsCluster",
+      });
     });
   });
 });

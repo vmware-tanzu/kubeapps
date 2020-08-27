@@ -130,9 +130,12 @@ export function deprovision(
 export function sync(
   broker: IServiceBroker,
 ): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      config: { kubeappsCluster },
+    } = getState();
     try {
-      await ServiceCatalog.syncBroker(broker);
+      await ServiceCatalog.syncBroker(kubeappsCluster, broker);
     } catch (e) {
       dispatch(errorCatalog(e, "update"));
     }
@@ -142,13 +145,16 @@ export function sync(
 export function getBindings(
   ns?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      config: { kubeappsCluster },
+    } = getState();
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(requestBindingsWithSecrets());
     try {
-      const bindingsWithSecrets = await ServiceBinding.list(ns);
+      const bindingsWithSecrets = await ServiceBinding.list(kubeappsCluster, ns);
       dispatch(receiveBindingsWithSecrets(bindingsWithSecrets));
     } catch (e) {
       dispatch(errorCatalog(e, "fetch"));

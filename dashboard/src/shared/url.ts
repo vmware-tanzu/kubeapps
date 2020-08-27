@@ -128,8 +128,8 @@ export const api = {
       `${api.k8s.namespaces(cluster)}/${namespace}`,
     // clusterservicebrokers and operators operate on the default cluster only, currently.
     clusterservicebrokers: {
-      sync: (broker: IServiceBroker) =>
-        `${api.k8s.base("default")}/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/${
+      sync: (cluster: string, broker: IServiceBroker) =>
+        `${api.k8s.base(cluster)}/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/${
           broker.metadata.name
         }`,
     },
