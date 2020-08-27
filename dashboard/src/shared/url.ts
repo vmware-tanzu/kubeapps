@@ -134,13 +134,13 @@ export const api = {
         }`,
     },
     operators: {
-      operators: (namespace: string) =>
-        `${api.k8s.base("default")}/apis/packages.operators.coreos.com/v1/${withNS(
+      operators: (cluster: string, namespace: string) =>
+        `${api.k8s.base(cluster)}/apis/packages.operators.coreos.com/v1/${withNS(
           namespace,
         )}packagemanifests`,
-      operator: (namespace: string, name: string) =>
+      operator: (cluster: string, namespace: string, name: string) =>
         `${api.k8s.base(
-          "default",
+          cluster,
         )}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
       clusterServiceVersions: (namespace: string) =>
         `${api.k8s.base("default")}/apis/operators.coreos.com/v1alpha1/${withNS(

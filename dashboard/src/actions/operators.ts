@@ -120,12 +120,13 @@ const actions = [
 export type OperatorAction = ActionType<typeof actions[number]>;
 
 export function checkOLMInstalled(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(checkingOLM());
     try {
-      const installed = await Operators.isOLMInstalled(namespace);
+      const installed = await Operators.isOLMInstalled(cluster, namespace);
       if (installed) {
         dispatch(OLMInstalled());
       }
@@ -138,12 +139,13 @@ export function checkOLMInstalled(
 }
 
 export function getOperators(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestOperators());
     try {
-      const operators = await Operators.getOperators(namespace);
+      const operators = await Operators.getOperators(cluster, namespace);
       const sortedOp = operators.sort((o1, o2) => (o1.metadata.name > o2.metadata.name ? 1 : -1));
       dispatch(receiveOperators(sortedOp));
     } catch (e) {
@@ -153,13 +155,14 @@ export function getOperators(
 }
 
 export function getOperator(
+  cluster: string,
   namespace: string,
   operatorName: string,
 ): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestOperator());
     try {
-      const operator = await Operators.getOperator(namespace, operatorName);
+      const operator = await Operators.getOperator(cluster, namespace, operatorName);
       dispatch(receiveOperator(operator));
     } catch (e) {
       dispatch(errorOperators(e));

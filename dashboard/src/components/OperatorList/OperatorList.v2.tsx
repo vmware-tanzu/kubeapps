@@ -71,7 +71,7 @@ export default function OperatorList({
   }, [filter]);
 
   useEffect(() => {
-    dispatch(actions.operators.checkOLMInstalled(namespace));
+    dispatch(actions.operators.checkOLMInstalled(cluster, namespace));
   }, [dispatch, namespace]);
 
   const {
@@ -85,7 +85,7 @@ export default function OperatorList({
 
   useEffect(() => {
     if (isOLMInstalled) {
-      dispatch(actions.operators.getOperators(namespace));
+      dispatch(actions.operators.getOperators(cluster, namespace));
     }
   }, [dispatch, namespace, isOLMInstalled]);
 

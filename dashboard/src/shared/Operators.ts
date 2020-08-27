@@ -10,21 +10,23 @@ import {
 } from "./types";
 
 export class Operators {
-  public static async isOLMInstalled(namespace: string) {
-    const { status } = await axiosWithAuth.get(urls.api.k8s.operators.operators(namespace));
+  public static async isOLMInstalled(cluster: string, namespace: string) {
+    const { status } = await axiosWithAuth.get(
+      urls.api.k8s.operators.operators(cluster, namespace),
+    );
     return status === 200;
   }
 
-  public static async getOperators(namespace: string) {
+  public static async getOperators(cluster: string, namespace: string) {
     const { data } = await axiosWithAuth.get<IK8sList<IPackageManifest, {}>>(
-      urls.api.k8s.operators.operators(namespace),
+      urls.api.k8s.operators.operators(cluster, namespace),
     );
     return data.items;
   }
 
-  public static async getOperator(namespace: string, name: string) {
+  public static async getOperator(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<IPackageManifest>(
-      urls.api.k8s.operators.operator(namespace, name),
+      urls.api.k8s.operators.operator(cluster, namespace, name),
     );
     return data;
   }

@@ -27,7 +27,7 @@ describe("checkOLMInstalled", () => {
         type: getType(operatorActions.OLMInstalled),
       },
     ];
-    await store.dispatch(operatorActions.checkOLMInstalled("ns"));
+    await store.dispatch(operatorActions.checkOLMInstalled("default", "ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -44,7 +44,7 @@ describe("checkOLMInstalled", () => {
         payload: new Error("nope"),
       },
     ];
-    await store.dispatch(operatorActions.checkOLMInstalled("ns"));
+    await store.dispatch(operatorActions.checkOLMInstalled("default", "ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -64,7 +64,7 @@ describe("getOperators", () => {
         payload: sortedOperators,
       },
     ];
-    await store.dispatch(operatorActions.getOperators("default"));
+    await store.dispatch(operatorActions.getOperators("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -81,7 +81,7 @@ describe("getOperators", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getOperators("default"));
+    await store.dispatch(operatorActions.getOperators("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -99,7 +99,7 @@ describe("getOperator", () => {
         payload: op,
       },
     ];
-    await store.dispatch(operatorActions.getOperator("default", "foo"));
+    await store.dispatch(operatorActions.getOperator("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -116,7 +116,7 @@ describe("getOperator", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getOperator("default", "foo"));
+    await store.dispatch(operatorActions.getOperator("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

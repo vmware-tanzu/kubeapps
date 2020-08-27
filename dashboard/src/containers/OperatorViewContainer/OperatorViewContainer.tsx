@@ -33,8 +33,8 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    getOperator: (namespace: string, operatorName: string) =>
-      dispatch(actions.operators.getOperator(namespace, operatorName)),
+    getOperator: (cluster: string, namespace: string, operatorName: string) =>
+      dispatch(actions.operators.getOperator(cluster, namespace, operatorName)),
     push: (location: string) => dispatch(push(location)),
     getCSV: (namespace: string, name: string) =>
       dispatch(actions.operators.getCSV(namespace, name)),

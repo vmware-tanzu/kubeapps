@@ -58,7 +58,11 @@ it("displays an alert if rendered for an additional cluster", () => {
 it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   shallow(<OperatorView {...defaultProps} getOperator={getOperator} />);
-  expect(getOperator).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.operatorName);
+  expect(getOperator).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.operatorName,
+  );
 });
 
 it("tries to get the CSV for the current operator", () => {
