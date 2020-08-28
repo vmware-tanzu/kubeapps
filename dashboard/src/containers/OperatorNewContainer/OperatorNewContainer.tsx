@@ -27,6 +27,7 @@ function mapStateToProps(
     operator: operators.operator,
     errors: operators.errors.operator,
     operatorName: params.operator,
+    UI: config.featureFlags.ui,
   };
 }
 

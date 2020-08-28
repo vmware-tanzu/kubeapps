@@ -62,3 +62,39 @@
     text-align: left;
   }
 }
+
+.application-readme {
+  pre {
+    margin: 0.625em 0;
+    border-radius: 5px;
+    overflow: auto;
+    padding: 0.6rem;
+    background: var(--clr-color-neutral-1000);
+    color: var(--clr-color-on-neutral-1000);
+  }
+
+  blockquote {
+    margin: 1em 0 1em 0;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #f1f1f1;
+    padding: 0.1em 1em;
+    max-width: 100%;
+  }
+
+  blockquote:before,
+  blockquote:after {
+    background-image: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+}
+
+.after-readme-button {
+  padding: 1.2rem 0.6rem 1.2rem 0;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}

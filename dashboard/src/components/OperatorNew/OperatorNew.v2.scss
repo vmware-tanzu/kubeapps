@@ -1,0 +1,12 @@
+.disabled {
+  color: var(--clr-color-neutral-400);
+  cursor: not-allowed;
+  &-description {
+    margin-left: 1rem;
+    margin-top: -0.1rem;
+  }
+}
+
+.clr-control-container {
+  margin-top: 0.3rem;
+}

@@ -26,6 +26,7 @@
           max-height: 1rem;
           padding-right: 0.2rem;
           margin: 0;
+          max-width: 30px;
         }
         span {
           color: var(--clr-p1-color, #666666);
@@ -49,4 +50,13 @@
   margin: 0;
   margin-left: 0.6rem;
   padding-top: 0.2rem;
+}
+
+.header-version {
+  &-label {
+    color: var(--clr-h3-color, black);
+    font-weight: 500;
+    margin-right: 0.2rem;
+    margin-right: 0.6rem;
+  }
 }

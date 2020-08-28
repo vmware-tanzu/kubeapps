@@ -1,5 +1,5 @@
 {
-  "kubeapsCluster": "default",
+  "kubeappsCluster": "default",
   "kubeappsNamespace": "kubeapps",
   "appVersion": "DEVEL",
   "authProxyEnabled": false,

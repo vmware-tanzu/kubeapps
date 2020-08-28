@@ -1,0 +1,138 @@
+import actions from "actions";
+import { CdsButton } from "components/Clarity/clarity";
+import Alert from "components/js/Alert";
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
+import * as React from "react";
+import * as ReactRedux from "react-redux";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import OperatorDescription from "./OperatorDescription.v2";
+import OperatorView from "./OperatorView.v2";
+
+const defaultProps = {
+  operatorName: "foo",
+  cluster: initialState.config.kubeappsCluster,
+  namespace: "kubeapps",
+};
+
+const defaultOperator = {
+  metadata: {
+    name: "foo",
+    namespace: "kubeapps",
+  },
+  status: {
+    provider: {
+      name: "Kubeapps",
+    },
+    defaultChannel: "beta",
+    channels: [
+      {
+        name: "beta",
+        currentCSV: "foo.1.0.0",
+        currentCSVDesc: {
+          displayName: "Foo",
+          version: "1.0.0",
+          description: "this is a testing operator",
+          annotations: {
+            capabilities: "Basic Install",
+            repository: "github.com/kubeapps/kubeapps",
+            containerImage: "kubeapps/kubeapps",
+            createdAt: "one day",
+          },
+          installModes: [],
+        },
+      },
+    ],
+  },
+} as any;
+
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.operators };
+beforeEach(() => {
+  actions.operators = {
+    ...actions.operators,
+    getOperator: jest.fn(),
+    getCSV: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.operators = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
+
+it("displays an alert if rendered for an additional cluster", () => {
+  const props = { ...defaultProps, cluster: "other-cluster" };
+  const wrapper = mountWrapper(defaultStore, <OperatorView {...props} />);
+  expect(wrapper.find(OperatorNotSupported)).toExist();
+});
+
+it("calls getOperator when mounting the component", () => {
+  const getOperator = jest.fn();
+  actions.operators.getOperator = getOperator;
+  mountWrapper(defaultStore, <OperatorView {...defaultProps} />);
+  expect(getOperator).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.operatorName);
+});
+
+it("tries to get the CSV for the current operator", () => {
+  const getCSV = jest.fn();
+  actions.operators.getCSV = getCSV;
+  mountWrapper(
+    getStore({ operators: { operator: defaultOperator } }),
+    <OperatorView {...defaultProps} />,
+  );
+
+  expect(getCSV).toHaveBeenCalledWith(
+    defaultOperator.metadata.namespace,
+    defaultOperator.status.channels[0].currentCSV,
+  );
+});
+
+it("shows an error if it exists", () => {
+  const wrapper = mountWrapper(
+    getStore({ operators: { errors: { operator: { fetch: new Error("boom") } } } }),
+    <OperatorView {...defaultProps} />,
+  );
+  expect(wrapper.find(Alert)).toIncludeText("boom");
+});
+
+it("shows an error if the operator doesn't have any channel defined", () => {
+  const operator = {
+    status: {
+      channels: [],
+    },
+  };
+  const wrapper = mountWrapper(
+    getStore({ operators: { operator } }),
+    <OperatorView {...defaultProps} />,
+  );
+  expect(wrapper.find(Alert)).toIncludeText(
+    "Operator foo doesn't define a valid channel. This is needed to extract required info",
+  );
+});
+
+it("selects the default channel", () => {
+  const operator = {
+    ...defaultOperator,
+    status: {
+      ...defaultOperator.status,
+      channels: [{ name: "alpha" }, defaultOperator.status.channels[0]],
+    },
+  };
+  const wrapper = mountWrapper(
+    getStore({ operators: { operator } }),
+    <OperatorView {...defaultProps} />,
+  );
+  expect(wrapper.find(OperatorDescription).prop("description")).toEqual(
+    "this is a testing operator",
+  );
+});
+
+it("disables the Header deploy button if the CSV already exists", () => {
+  const wrapper = mountWrapper(
+    getStore({ operators: { operator: defaultOperator, csv: {} } }),
+    <OperatorView {...defaultProps} />,
+  );
+  wrapper.find(CdsButton).forEach(button => expect(button).toBeDisabled());
+});
