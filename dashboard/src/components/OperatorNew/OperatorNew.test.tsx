@@ -3,7 +3,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 import { NotFoundError } from "../../shared/types";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
-import OperatorNew from "./OperatorNew";
+import OperatorNew, { IOperatorNewProps } from "./OperatorNew";
 
 const defaultProps = {
   operatorName: "foo",
@@ -11,10 +11,11 @@ const defaultProps = {
   isFetching: false,
   cluster: "default",
   namespace: "kubeapps",
+  kubeappsCluster: "default",
   push: jest.fn(),
   createOperator: jest.fn(),
   errors: {},
-};
+} as IOperatorNewProps;
 
 const defaultOperator = {
   metadata: {

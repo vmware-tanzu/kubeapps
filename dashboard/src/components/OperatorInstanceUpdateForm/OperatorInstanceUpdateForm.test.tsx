@@ -11,6 +11,7 @@ const defaultProps: IOperatorInstanceUpgradeFormProps = {
   isFetching: false,
   cluster: "default",
   namespace: "kubeapps",
+  kubeappsCluster: "default",
   resourceName: "my-foo",
   getResource: jest.fn(),
   updateResource: jest.fn(),

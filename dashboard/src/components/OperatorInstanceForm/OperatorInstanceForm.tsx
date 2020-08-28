@@ -16,6 +16,7 @@ export interface IOperatorInstanceFormProps {
   isFetching: boolean;
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   getCSV: (namespace: string, csvName: string) => void;
   createResource: (
     namespace: string,
@@ -75,10 +76,18 @@ class DeploymentFormBody extends React.Component<
   }
 
   public render() {
-    const { isFetching, errors, csvName, crdName, cluster, namespace } = this.props;
+    const {
+      isFetching,
+      errors,
+      csvName,
+      crdName,
+      cluster,
+      namespace,
+      kubeappsCluster,
+    } = this.props;
     const { crd, defaultValues } = this.state;
-    if (cluster !== "default") {
-      return <OperatorNotSupported namespace={namespace} />;
+    if (cluster !== kubeappsCluster) {
+      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
     }
     if (!errors.fetch && !isFetching && !crd) {
       return (
