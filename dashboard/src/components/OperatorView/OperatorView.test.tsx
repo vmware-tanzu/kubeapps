@@ -71,6 +71,7 @@ it("tries to get the CSV for the current operator", () => {
   wrapper.setProps({ operator: defaultOperator });
 
   expect(getCSV).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultOperator.metadata.namespace,
     defaultOperator.status.channels[0].currentCSV,
   );

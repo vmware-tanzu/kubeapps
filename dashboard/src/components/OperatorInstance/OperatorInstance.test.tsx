@@ -43,6 +43,7 @@ it("gets a resource when loading the component", () => {
   const getResource = jest.fn();
   shallow(<OperatorInstance {...defaultProps} getResource={getResource} />);
   expect(getResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     defaultProps.csvName,
     defaultProps.crdName,

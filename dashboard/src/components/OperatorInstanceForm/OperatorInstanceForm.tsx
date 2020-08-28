@@ -17,7 +17,7 @@ export interface IOperatorInstanceFormProps {
   cluster: string;
   namespace: string;
   kubeappsCluster: string;
-  getCSV: (namespace: string, csvName: string) => void;
+  getCSV: (cluster: string, namespace: string, csvName: string) => void;
   createResource: (
     namespace: string,
     apiVersion: string,
@@ -46,8 +46,8 @@ class DeploymentFormBody extends React.Component<
   };
 
   public componentDidMount() {
-    const { getCSV, csvName, namespace } = this.props;
-    getCSV(namespace, csvName);
+    const { cluster, getCSV, csvName, namespace } = this.props;
+    getCSV(cluster, namespace, csvName);
   }
 
   public componentDidUpdate(prevProps: IOperatorInstanceFormProps) {

@@ -37,8 +37,8 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    getCSV: (namespace: string, name: string) =>
-      dispatch(actions.operators.getCSV(namespace, name)),
+    getCSV: (cluster: string, namespace: string, name: string) =>
+      dispatch(actions.operators.getCSV(cluster, namespace, name)),
     createResource: (namespace: string, apiVersion: string, resource: string, body: object) =>
       dispatch(actions.operators.createResource(namespace, apiVersion, resource, body)),
     push: (location: string) => dispatch(push(location)),

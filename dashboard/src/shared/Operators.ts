@@ -40,9 +40,9 @@ export class Operators {
     return data.items;
   }
 
-  public static async getCSV(namespace: string, name: string) {
+  public static async getCSV(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<IClusterServiceVersion>(
-      urls.api.k8s.operators.clusterServiceVersion(namespace, name),
+      urls.api.k8s.operators.clusterServiceVersion(cluster, namespace, name),
     );
     return data;
   }

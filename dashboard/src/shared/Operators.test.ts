@@ -71,7 +71,7 @@ it("get csv", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "default";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: csv });
-  expect(await Operators.getCSV(ns, "foo")).toEqual(csv);
+  expect(await Operators.getCSV("default", ns, "foo")).toEqual(csv);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
     `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions/foo`,

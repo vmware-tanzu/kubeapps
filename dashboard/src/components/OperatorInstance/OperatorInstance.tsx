@@ -27,6 +27,7 @@ export interface IOperatorInstanceProps {
   crdName: string;
   instanceName: string;
   getResource: (
+    cluster: string,
     namespace: string,
     csvName: string,
     crdName: string,
@@ -55,8 +56,8 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   };
 
   public componentDidMount() {
-    const { csvName, crdName, instanceName, namespace, getResource } = this.props;
-    getResource(namespace, csvName, crdName, instanceName);
+    const { cluster, csvName, crdName, instanceName, namespace, getResource } = this.props;
+    getResource(cluster, namespace, csvName, crdName, instanceName);
   }
 
   public componentDidUpdate(prevProps: IOperatorInstanceProps) {
@@ -71,7 +72,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
       csv,
     } = this.props;
     if (prevProps.namespace !== namespace) {
-      getResource(namespace, csvName, crdName, instanceName);
+      getResource(cluster, namespace, csvName, crdName, instanceName);
       return;
     }
     let crd = this.state.crd;

@@ -37,8 +37,14 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    getResource: (namespace: string, csvName: string, crdName: string, resourceName: string) =>
-      dispatch(actions.operators.getResource(namespace, csvName, crdName, resourceName)),
+    getResource: (
+      cluster: string,
+      namespace: string,
+      csvName: string,
+      crdName: string,
+      resourceName: string,
+    ) =>
+      dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName)),
     updateResource: (
       namespace: string,
       apiVersion: string,

@@ -22,7 +22,11 @@ export interface IOperatorViewProps {
   kubeappsCluster: string;
   error?: Error;
   push: (location: string) => RouterAction;
-  getCSV: (namespace: string, name: string) => Promise<IClusterServiceVersion | undefined>;
+  getCSV: (
+    cluster: string,
+    namespace: string,
+    name: string,
+  ) => Promise<IClusterServiceVersion | undefined>;
   csv?: IClusterServiceVersion;
 }
 
@@ -37,7 +41,7 @@ class OperatorView extends React.Component<IOperatorViewProps> {
     if (prevProps.operator !== this.props.operator && this.props.operator) {
       const defaultChannel = Operators.getDefaultChannel(this.props.operator);
       if (defaultChannel) {
-        getCSV(namespace, defaultChannel.currentCSV);
+        getCSV(cluster, namespace, defaultChannel.currentCSV);
       }
     }
     if (prevProps.namespace !== this.props.namespace) {

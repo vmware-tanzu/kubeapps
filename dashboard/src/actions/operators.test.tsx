@@ -171,7 +171,7 @@ describe("getCSV", () => {
         payload: csv,
       },
     ];
-    await store.dispatch(operatorActions.getCSV("default", "foo"));
+    await store.dispatch(operatorActions.getCSV("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -188,7 +188,7 @@ describe("getCSV", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getCSV("default", "foo"));
+    await store.dispatch(operatorActions.getCSV("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -360,7 +360,9 @@ describe("getResources", () => {
         payload: resource,
       },
     ];
-    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    await store.dispatch(
+      operatorActions.getResource("default", "default", "foo", "foo.kubeapps.com", "bar"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(Operators.getResource).toHaveBeenCalledWith(
       "default",
@@ -397,7 +399,9 @@ describe("getResources", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    await store.dispatch(
+      operatorActions.getResource("default", "default", "foo", "foo.kubeapps.com", "bar"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -418,7 +422,9 @@ describe("getResources", () => {
         payload: new Error("CSV foo not found in default"),
       },
     ];
-    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    await store.dispatch(
+      operatorActions.getResource("default", "default", "foo", "foo.kubeapps.com", "bar"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -447,7 +453,7 @@ describe("getResources", () => {
       },
     ];
     await store.dispatch(
-      operatorActions.getResource("default", "foo", "not-foo.kubeapps.com", "bar"),
+      operatorActions.getResource("default", "default", "foo", "not-foo.kubeapps.com", "bar"),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });

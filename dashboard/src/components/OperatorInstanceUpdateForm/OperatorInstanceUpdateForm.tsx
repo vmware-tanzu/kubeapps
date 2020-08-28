@@ -18,6 +18,7 @@ export interface IOperatorInstanceUpgradeFormProps {
   kubeappsCluster: string;
   resourceName: string;
   getResource: (
+    cluster: string,
     namespace: string,
     csvName: string,
     crdName: string,
@@ -52,8 +53,8 @@ class DeploymentFormBody extends React.Component<
   };
 
   public componentDidMount() {
-    const { csvName, crdName, resourceName, namespace, getResource } = this.props;
-    getResource(namespace, csvName, crdName, resourceName);
+    const { cluster, csvName, crdName, resourceName, namespace, getResource } = this.props;
+    getResource(cluster, namespace, csvName, crdName, resourceName);
   }
 
   public componentDidUpdate(prevProps: IOperatorInstanceUpgradeFormProps) {

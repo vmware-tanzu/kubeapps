@@ -47,7 +47,11 @@ it("displays an alert if rendered for an additional cluster", () => {
 it("retrieves CSV when mounted", () => {
   const getCSV = jest.fn();
   shallow(<OperatorInstanceForm {...defaultProps} getCSV={getCSV} />);
-  expect(getCSV).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.csvName);
+  expect(getCSV).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.csvName,
+  );
 });
 
 it("retrieves the example values and the target CRD from the given CSV", () => {

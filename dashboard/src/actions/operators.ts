@@ -188,13 +188,14 @@ export function getCSVs(
 }
 
 export function getCSV(
+  cluster: string,
   namespace: string,
   name: string,
 ): ThunkAction<Promise<IClusterServiceVersion | undefined>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCSV());
     try {
-      const csv = await Operators.getCSV(namespace, name);
+      const csv = await Operators.getCSV(cluster, namespace, name);
       dispatch(receiveCSV(csv));
       return csv;
     } catch (e) {
@@ -303,6 +304,7 @@ export function getResources(
 }
 
 export function getResource(
+  cluster: string,
   namespace: string,
   csvName: string,
   crdName: string,
@@ -310,7 +312,7 @@ export function getResource(
 ): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCustomResource());
-    const csv = await dispatch(getCSV(namespace, csvName));
+    const csv = await dispatch(getCSV(cluster, namespace, csvName));
     if (csv) {
       const crd = csv.spec.customresourcedefinitions.owned.find(c => c.name === crdName);
       if (crd) {
