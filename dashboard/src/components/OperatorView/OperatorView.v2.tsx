@@ -29,13 +29,16 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
   }, [dispatch, namespace, operatorName]);
 
   const {
-    operator,
-    isFetching,
-    errors: {
-      operator: { fetch: error },
+    operators: {
+      operator,
+      isFetching,
+      errors: {
+        operator: { fetch: error },
+      },
+      csv,
     },
-    csv,
-  } = useSelector((state: IStoreState) => state.operators);
+    config: { kubeappsCluster },
+  } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
     if (operator) {
@@ -48,7 +51,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
 
   const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
 
-  if (cluster !== "default") {
+  if (cluster !== kubeappsCluster) {
     return <OperatorNotSupported namespace={namespace} />;
   }
   if (error) {
