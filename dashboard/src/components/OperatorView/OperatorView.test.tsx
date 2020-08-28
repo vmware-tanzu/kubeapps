@@ -5,7 +5,7 @@ import { NotFoundError } from "../../shared/types";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";
-import OperatorView from "./OperatorView";
+import OperatorView, { IOperatorViewProps } from "./OperatorView";
 
 const defaultProps = {
   operatorName: "foo",
@@ -13,9 +13,10 @@ const defaultProps = {
   isFetching: false,
   cluster: "default",
   namespace: "kubeapps",
+  kubeappsCluster: "default",
   push: jest.fn(),
   getCSV: jest.fn(),
-};
+} as IOperatorViewProps;
 
 const defaultOperator = {
   metadata: {

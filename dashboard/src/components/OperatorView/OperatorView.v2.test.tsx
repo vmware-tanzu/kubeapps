@@ -4,13 +4,13 @@ import Alert from "components/js/Alert";
 import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import OperatorDescription from "./OperatorDescription.v2";
 import OperatorView from "./OperatorView.v2";
 
 const defaultProps = {
   operatorName: "foo",
-  cluster: "default",
+  cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
 };
 

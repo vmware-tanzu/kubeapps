@@ -20,6 +20,7 @@ export interface IOperatorNewProps {
   isFetching: boolean;
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   errors: IOperatorsStateError;
   createOperator: (
     namespace: string,
@@ -68,9 +69,18 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
   }
 
   public render() {
-    const { cluster, isFetching, namespace, operatorName, operator, errors, push } = this.props;
-    if (cluster !== "default") {
-      return <OperatorNotSupported namespace={namespace} />;
+    const {
+      cluster,
+      isFetching,
+      kubeappsCluster,
+      namespace,
+      operatorName,
+      operator,
+      errors,
+      push,
+    } = this.props;
+    if (cluster !== kubeappsCluster) {
+      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
     }
     const {
       updateChannel,

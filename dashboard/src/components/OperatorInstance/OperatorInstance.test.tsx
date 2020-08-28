@@ -18,6 +18,7 @@ const defaultProps: IOperatorInstanceProps = {
   isFetching: false,
   cluster: "default",
   namespace: "default",
+  kubeappsCluster: "default",
   csvName: "foo",
   crdName: "foo.kubeapps.com",
   instanceName: "foo-cluster",

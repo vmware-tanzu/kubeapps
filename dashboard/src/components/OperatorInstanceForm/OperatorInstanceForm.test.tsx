@@ -12,6 +12,7 @@ const defaultProps: IOperatorInstanceFormProps = {
   isFetching: false,
   cluster: "default",
   namespace: "kubeapps",
+  kubeappsCluster: "default",
   getCSV: jest.fn(),
   createResource: jest.fn(),
   push: jest.fn(),

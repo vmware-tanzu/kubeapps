@@ -15,6 +15,7 @@ function mapStateToProps(
   return {
     cluster: currentCluster,
     namespace: clusters[currentCluster].currentNamespace,
+    kubeappsCluster: config.kubeappsCluster,
     isFetching: operators.isFetching,
     isOLMInstalled: operators.isOLMInstalled,
     operators: operators.operators,

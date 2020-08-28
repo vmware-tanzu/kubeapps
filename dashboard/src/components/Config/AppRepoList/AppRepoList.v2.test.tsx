@@ -18,6 +18,7 @@ const defaultNamespace = "default-namespace";
 const defaultProps = {
   namespace: defaultNamespace,
   cluster: "default",
+  kubeappsCluster: "default",
   kubeappsNamespace: "kubeapps",
 };
 

@@ -22,6 +22,7 @@ export interface IOperatorInstanceProps {
   isFetching: boolean;
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   csvName: string;
   crdName: string;
   instanceName: string;
@@ -59,7 +60,16 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   }
 
   public componentDidUpdate(prevProps: IOperatorInstanceProps) {
-    const { csvName, crdName, instanceName, namespace, getResource, resource, csv } = this.props;
+    const {
+      cluster,
+      csvName,
+      crdName,
+      instanceName,
+      namespace,
+      getResource,
+      resource,
+      csv,
+    } = this.props;
     if (prevProps.namespace !== namespace) {
       getResource(namespace, csvName, crdName, instanceName);
       return;
@@ -85,25 +95,25 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
           crd.resources?.forEach(r => {
             switch (r.kind) {
               case "Deployment":
-                result.deployRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
+                result.deployRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
                 break;
               case "StatefulSet":
-                result.statefulSetRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
+                result.statefulSetRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
                 break;
               case "DaemonSet":
-                result.daemonSetRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
+                result.daemonSetRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
                 break;
               case "Service":
-                result.serviceRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
+                result.serviceRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
                 break;
               case "Ingress":
-                result.ingressRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
+                result.ingressRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
                 break;
               case "Secret":
-                result.secretRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
+                result.secretRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
                 break;
               default:
-                result.otherResources.push(fromCRD(r, "default", this.props.namespace, ownerRef));
+                result.otherResources.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
             }
           });
         } else {
@@ -111,37 +121,27 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
           // The CRD definition doesn't define any service so pull everything
           result = {
             deployRefs: [
-              fromCRD(
-                { ...emptyCRD, kind: "Deployment" },
-                "default",
-                this.props.namespace,
-                ownerRef,
-              ),
+              fromCRD({ ...emptyCRD, kind: "Deployment" }, cluster, this.props.namespace, ownerRef),
             ],
             ingressRefs: [
-              fromCRD({ ...emptyCRD, kind: "Ingress" }, "default", this.props.namespace, ownerRef),
+              fromCRD({ ...emptyCRD, kind: "Ingress" }, cluster, this.props.namespace, ownerRef),
             ],
             statefulSetRefs: [
               fromCRD(
                 { ...emptyCRD, kind: "StatefulSet" },
-                "default",
+                cluster,
                 this.props.namespace,
                 ownerRef,
               ),
             ],
             daemonSetRefs: [
-              fromCRD(
-                { ...emptyCRD, kind: "DaemonSet" },
-                "default",
-                this.props.namespace,
-                ownerRef,
-              ),
+              fromCRD({ ...emptyCRD, kind: "DaemonSet" }, cluster, this.props.namespace, ownerRef),
             ],
             serviceRefs: [
-              fromCRD({ ...emptyCRD, kind: "Service" }, "default", this.props.namespace, ownerRef),
+              fromCRD({ ...emptyCRD, kind: "Service" }, cluster, this.props.namespace, ownerRef),
             ],
             secretRefs: [
-              fromCRD({ ...emptyCRD, kind: "Secret" }, "default", this.props.namespace, ownerRef),
+              fromCRD({ ...emptyCRD, kind: "Secret" }, cluster, this.props.namespace, ownerRef),
             ],
             otherResources: [],
           };
@@ -162,10 +162,11 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
       crdName,
       cluster,
       namespace,
+      kubeappsCluster,
       push,
     } = this.props;
-    if (cluster !== "default") {
-      return <OperatorNotSupported namespace={namespace} />;
+    if (cluster !== kubeappsCluster) {
+      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
     }
     const { resources } = this.state;
     const onUpdateClick = () =>
@@ -284,14 +285,12 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   };
 
   private handleDeleteClick = async () => {
-    const { cluster, namespace, resource } = this.props;
+    const { kubeappsCluster, namespace, resource } = this.props;
     const { crd } = this.state;
     const deleted = await this.props.deleteResource(namespace, crd!.name.split(".")[0], resource!);
     this.closeModal();
     if (deleted) {
-      // TODO: The operator routes do not currently include the cluster so ensure
-      // it has a default.
-      this.props.push(app.apps.list(cluster || "default", namespace));
+      this.props.push(app.apps.list(kubeappsCluster, namespace));
     }
   };
 }
