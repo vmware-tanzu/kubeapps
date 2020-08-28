@@ -40,7 +40,7 @@ context("when changing props", () => {
     );
     wrapper.setProps({ namespace: "foo" });
     expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("defaultc", "foo", undefined);
-    expect(getCustomResources).toHaveBeenCalledWith("foo");
+    expect(getCustomResources).toHaveBeenCalledWith("defaultc", "foo");
   });
 
   it("should update the filter", () => {

@@ -40,7 +40,7 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  getCSVs: (namespace: string) => void;
+  getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
   featureFlags: IFeatureFlags;
 }
@@ -77,8 +77,8 @@ function Catalog(props: ICatalogProps) {
 
   useEffect(() => {
     fetchCharts(namespace, repo);
-    getCSVs(namespace);
-  }, [namespace, repo, fetchCharts, getCSVs]);
+    getCSVs(cluster, namespace);
+  }, [cluster, namespace, repo, fetchCharts, getCSVs]);
 
   useEffect(() => {
     setSearchFilter(propsFilter);

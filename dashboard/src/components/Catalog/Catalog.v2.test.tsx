@@ -81,7 +81,7 @@ const populatedProps = {
 it("retrieves csvs in the namespace", () => {
   const getCSVs = jest.fn();
   mountWrapper(defaultStore, <Catalog {...populatedProps} getCSVs={getCSVs} />);
-  expect(getCSVs).toHaveBeenCalledWith(defaultProps.namespace);
+  expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, defaultProps.namespace);
 });
 
 it("shows all the elements", () => {

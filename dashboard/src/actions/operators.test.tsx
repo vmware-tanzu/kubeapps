@@ -136,7 +136,7 @@ describe("getCSVs", () => {
         payload: sortedCSVs,
       },
     ];
-    await store.dispatch(operatorActions.getCSVs("default"));
+    await store.dispatch(operatorActions.getCSVs("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -153,7 +153,7 @@ describe("getCSVs", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getCSVs("default"));
+    await store.dispatch(operatorActions.getCSVs("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -292,7 +292,7 @@ describe("getResources", () => {
         payload: [resource],
       },
     ];
-    await store.dispatch(operatorActions.getResources("default"));
+    await store.dispatch(operatorActions.getResources("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(Operators.listResources).toHaveBeenCalledWith("default", "kubeapps.com/v1alpha1", "foo");
   });
@@ -328,7 +328,7 @@ describe("getResources", () => {
         payload: [],
       },
     ];
-    await store.dispatch(operatorActions.getResources("default"));
+    await store.dispatch(operatorActions.getResources("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

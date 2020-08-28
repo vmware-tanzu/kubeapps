@@ -142,8 +142,8 @@ export const api = {
         `${api.k8s.base(
           cluster,
         )}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
-      clusterServiceVersions: (namespace: string) =>
-        `${api.k8s.base("default")}/apis/operators.coreos.com/v1alpha1/${withNS(
+      clusterServiceVersions: (cluster: string, namespace: string) =>
+        `${api.k8s.base(cluster)}/apis/operators.coreos.com/v1alpha1/${withNS(
           namespace,
         )}clusterserviceversions`,
       clusterServiceVersion: (cluster: string, namespace: string, name: string) =>

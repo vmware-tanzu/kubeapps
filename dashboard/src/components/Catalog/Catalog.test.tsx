@@ -70,7 +70,7 @@ describe("componentDidMount", () => {
         featureFlags={{ ...defaultProps.featureFlags, operators: true }}
       />,
     );
-    expect(getCSVs).toHaveBeenCalledWith(namespace);
+    expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, namespace);
   });
 });
 
@@ -85,7 +85,7 @@ describe("componentDidUpdate", () => {
       />,
     );
     wrapper.setProps({ namespace: "a-different-one" });
-    expect(getCSVs).toHaveBeenCalledWith("a-different-one");
+    expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, "a-different-one");
   });
 });
 

@@ -32,7 +32,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       dispatch(actions.operators.checkOLMInstalled(cluster, namespace)),
     getOperators: (cluster: string, namespace: string) =>
       dispatch(actions.operators.getOperators(cluster, namespace)),
-    getCSVs: (namespace: string) => dispatch(actions.operators.getCSVs(namespace)),
+    getCSVs: (cluster: string, namespace: string) =>
+      dispatch(actions.operators.getCSVs(cluster, namespace)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }

@@ -171,12 +171,13 @@ export function getOperator(
 }
 
 export function getCSVs(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<IClusterServiceVersion[]>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCSVs());
     try {
-      const csvs = await Operators.getCSVs(namespace);
+      const csvs = await Operators.getCSVs(cluster, namespace);
       const sortedCSVs = csvs.sort((o1, o2) => (o1.metadata.name > o2.metadata.name ? 1 : -1));
       dispatch(receiveCSVs(sortedCSVs));
       return sortedCSVs;
@@ -275,11 +276,12 @@ function parseCRD(crdName: string) {
 }
 
 export function getResources(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<IResource[]>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCustomResources());
-    const csvs = await dispatch(getCSVs(namespace));
+    const csvs = await dispatch(getCSVs(cluster, namespace));
     let resources: IResource[] = [];
     const csvPromises = csvs.map(async csv => {
       const crdPromises = csv.spec.customresourcedefinitions.owned.map(async crd => {

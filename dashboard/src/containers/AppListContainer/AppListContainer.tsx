@@ -31,7 +31,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchAppsWithUpdateInfo: (cluster: string, ns: string, all: boolean) =>
       dispatch(actions.apps.fetchAppsWithUpdateInfo(cluster, ns, all)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
-    getCustomResources: (namespace: string) => dispatch(actions.operators.getResources(namespace)),
+    getCustomResources: (cluster: string, namespace: string) =>
+      dispatch(actions.operators.getResources(cluster, namespace)),
   };
 }
 

@@ -26,7 +26,7 @@ export interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  getCSVs: (namespace: string) => void;
+  getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
   featureFlags: IFeatureFlags;
 }
@@ -45,11 +45,11 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
   };
 
   public componentDidMount() {
-    const { repo, fetchCharts, filter, namespace, getCSVs, featureFlags } = this.props;
+    const { repo, fetchCharts, filter, cluster, namespace, getCSVs, featureFlags } = this.props;
     this.setState({ filter });
     fetchCharts(namespace, repo);
     if (featureFlags.operators) {
-      getCSVs(namespace);
+      getCSVs(cluster, namespace);
     }
   }
 
@@ -61,7 +61,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
       this.props.fetchCharts(this.props.namespace, this.props.repo);
     }
     if (this.props.namespace !== prevProps.namespace && this.props.featureFlags.operators) {
-      this.props.getCSVs(this.props.namespace);
+      this.props.getCSVs(this.props.cluster, this.props.namespace);
     }
   }
 

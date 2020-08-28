@@ -43,7 +43,7 @@ context("when changing props", () => {
       </Router>,
     );
     expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("defaultc", "foo", true);
-    expect(getCustomResources).toHaveBeenCalledWith("foo");
+    expect(getCustomResources).toHaveBeenCalledWith("defaultc", "foo");
   });
 
   it("should update the filter", () => {

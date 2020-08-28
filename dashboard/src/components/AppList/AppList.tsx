@@ -20,7 +20,7 @@ export interface IAppListProps {
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
-  getCustomResources: (ns: string) => void;
+  getCustomResources: (cluster: string, ns: string) => void;
   customResources: IResource[];
   isFetchingResources: boolean;
   csvs: IClusterServiceVersion[];
@@ -44,7 +44,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     } = this.props;
     fetchAppsWithUpdateInfo(cluster, namespace, apps.listingAll);
     if (this.props.featureFlags.operators) {
-      getCustomResources(namespace);
+      getCustomResources(cluster, namespace);
     }
     this.setState({ filter });
   }
@@ -66,7 +66,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     ) {
       fetchAppsWithUpdateInfo(cluster, namespace, listingAll);
       if (this.props.featureFlags.operators) {
-        getCustomResources(namespace);
+        getCustomResources(cluster, namespace);
       }
     }
     if (prevProps.filter !== filter) {
