@@ -15,6 +15,7 @@ export interface IOperatorInstanceFormProps {
   namespace: string;
   handleDeploy: (resource: IResource) => void;
   defaultValues: string;
+  deployedValues?: string;
 }
 
 export interface IOperatorInstanceFormBodyState {
@@ -29,6 +30,7 @@ function DeploymentFormBody({
   isFetching,
   namespace,
   handleDeploy,
+  deployedValues,
 }: IOperatorInstanceFormProps) {
   const [values, setValues] = useState(defaultValues);
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -41,8 +43,8 @@ function DeploymentFormBody({
   };
 
   useEffect(() => {
-    setValues(defaultValues);
-  }, [defaultValues]);
+    setValues(deployedValues || defaultValues);
+  }, [defaultValues, deployedValues]);
 
   const restoreDefaultValues = () => {
     setValues(defaultValues);
@@ -98,10 +100,18 @@ function DeploymentFormBody({
                 key="advanced-deployment-form"
               />,
               <Differential
-                title="Difference from example defaults"
-                oldValues={defaultValues}
+                title={
+                  deployedValues
+                    ? "Difference from deployed values"
+                    : "Difference from example defaults"
+                }
+                oldValues={deployedValues || defaultValues}
                 newValues={values}
-                emptyDiffText="No changes detected from example defaults"
+                emptyDiffText={
+                  deployedValues
+                    ? "No changes detected from deployed values"
+                    : "No changes detected from example defaults"
+                }
                 key="differential-selector"
               />,
             ]}

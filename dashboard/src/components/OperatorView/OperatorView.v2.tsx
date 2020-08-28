@@ -52,7 +52,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
   const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
 
   if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported namespace={namespace} />;
+    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
   }
   if (error) {
     return (

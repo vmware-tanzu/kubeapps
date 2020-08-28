@@ -73,7 +73,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
   }, [operator]);
 
   if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported namespace={namespace} />;
+    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
   }
   if (errors.fetch) {
     return (
