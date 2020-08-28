@@ -7,7 +7,7 @@ import "ace-builds/src-noconflict/theme-xcode";
 export interface IAdvancedDeploymentForm {
   appValues?: string;
   handleValuesChange: (value: string) => void;
-  children: JSX.Element;
+  children?: JSX.Element;
 }
 
 function AdvancedDeploymentForm(props: IAdvancedDeploymentForm) {

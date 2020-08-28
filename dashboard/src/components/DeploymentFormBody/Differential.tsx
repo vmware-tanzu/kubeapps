@@ -22,9 +22,9 @@ class Differential extends React.Component<IDifferentialProps> {
       maxLineSizeInBlockForComparison: 20,
     });
     return (
-      <div className="diff">
+      <div className="diff deployment-form-tabs-data">
         {oldValues === newValues ? (
-          <p>{emptyDiffText}</p>
+          <span>{emptyDiffText}</span>
         ) : (
           <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
         )}

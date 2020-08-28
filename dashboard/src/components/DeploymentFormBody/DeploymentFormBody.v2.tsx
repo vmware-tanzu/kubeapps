@@ -10,7 +10,6 @@ import ConfirmDialog from "../ConfirmDialog/ConfirmDialog.v2";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm.v2";
 import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm.v2";
-import "./DeploymentFormBody.v2.css";
 import DifferentialSelector from "./DifferentialSelector";
 
 export interface IDeploymentFormBodyProps {

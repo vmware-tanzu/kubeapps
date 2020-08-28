@@ -78,10 +78,9 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
     <section>
       <div className="header-button">
         <OperatorHeader
-          id={operator.metadata.name}
+          title={`${operator.metadata.name} by ${operator.status.provider.name}`}
           icon={api.operators.operatorIcon(namespace, operator.metadata.name)}
           version={currentCSVDesc.version}
-          provider={operator.status.provider.name}
         >
           <CdsButton status="primary" disabled={!!csv} onClick={redirect}>
             <CdsIcon shape="deploy" inverse={true} /> Deploy

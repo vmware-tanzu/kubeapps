@@ -2,7 +2,7 @@
 
 exports[`should render a diff between two strings 1`] = `
 <div
-  className="diff"
+  className="diff deployment-form-tabs-data"
 >
   <div
     dangerouslySetInnerHTML={

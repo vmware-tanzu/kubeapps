@@ -3,10 +3,9 @@ import * as React from "react";
 import OperatorHeader from "./OperatorHeader.v2";
 
 const defaultProps = {
-  id: "foo",
+  title: "foo by Kubeapps",
   icon: "/path/to/icon.png",
   version: "1.0.0",
-  provider: "Kubeapps",
 };
 
 it("fallbacks to the default icon if not set", () => {
