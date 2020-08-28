@@ -75,13 +75,16 @@ export default function OperatorList({
   }, [dispatch, namespace]);
 
   const {
-    operators,
-    isFetching,
-    errors: {
-      operator: { fetch: error },
+    operators: {
+      operators,
+      isFetching,
+      errors: {
+        operator: { fetch: error },
+      },
+      isOLMInstalled,
     },
-    isOLMInstalled,
-  } = useSelector((state: IStoreState) => state.operators);
+    config: { kubeappsCluster },
+  } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
     if (isOLMInstalled) {
@@ -89,7 +92,7 @@ export default function OperatorList({
     }
   }, [dispatch, namespace, isOLMInstalled]);
 
-  if (cluster !== "default") {
+  if (cluster !== kubeappsCluster) {
     return <OperatorNotSupported namespace={namespace} />;
   }
 

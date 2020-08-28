@@ -54,10 +54,13 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
   }, [dispatch, namespace, operatorName]);
 
   const {
-    operator,
-    isFetching,
-    errors: { operator: errors },
-  } = useSelector((state: IStoreState) => state.operators);
+    operators: {
+      operator,
+      isFetching,
+      errors: { operator: errors },
+    },
+    config: { kubeappsCluster },
+  } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
     if (operator) {
@@ -69,7 +72,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     }
   }, [operator]);
 
-  if (cluster !== "default") {
+  if (cluster !== kubeappsCluster) {
     return <OperatorNotSupported namespace={namespace} />;
   }
   if (errors.fetch) {

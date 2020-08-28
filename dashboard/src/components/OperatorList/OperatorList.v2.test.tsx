@@ -5,7 +5,7 @@ import SearchFilter from "components/SearchFilter/SearchFilter.v2";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageManifest } from "../../shared/types";
 import { CardGrid } from "../Card";
 import InfoCard from "../InfoCard/InfoCard.v2";
@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 const defaultProps: IOperatorListProps = {
-  cluster: "default",
+  cluster: initialState.config.kubeappsCluster,
   namespace: "default",
   filter: "",
   pushSearchFilter: jest.fn(),

@@ -4,14 +4,14 @@ import Alert from "components/js/Alert";
 import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import OperatorNew from "./OperatorNew.v2";
 
 const defaultProps = {
   operatorName: "foo",
   getOperator: jest.fn(),
   isFetching: false,
-  cluster: "default",
+  cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
   push: jest.fn(),
   createOperator: jest.fn(),
