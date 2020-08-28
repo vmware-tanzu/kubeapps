@@ -34,38 +34,35 @@ it("get operators", async () => {
 
 it("get operator", async () => {
   const operator = { metadata: { name: "foo" } } as IPackageManifest;
-  const cluster = "default";
   const ns = "default";
   const opName = "foo";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: operator });
   expect(await Operators.getOperator(cluster, ns, opName)).toEqual(operator);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    `api/clusters/default/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests/${opName}`,
+    `api/clusters/defaultc/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests/${opName}`,
   );
 });
 
 it("get csvs", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "default";
-  const cluster = "default";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [csv] } });
   expect(await Operators.getCSVs(cluster, ns)).toEqual([csv]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions`,
+    `api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions`,
   );
 });
 
 it("get global csvs", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "_all";
-  const cluster = "default";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [csv] } });
   expect(await Operators.getCSVs(cluster, ns)).toEqual([csv]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    "api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/operators/clusterserviceversions",
+    "api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/namespaces/operators/clusterserviceversions",
   );
 });
 
@@ -73,10 +70,10 @@ it("get csv", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "default";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: csv });
-  expect(await Operators.getCSV("default", ns, "foo")).toEqual(csv);
+  expect(await Operators.getCSV(cluster, ns, "foo")).toEqual(csv);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions/foo`,
+    `api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions/foo`,
   );
 });
 
@@ -84,10 +81,10 @@ it("creates a resource", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
   axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
-  expect(await Operators.createResource(ns, "v1", "pods", resource)).toEqual(resource);
+  expect(await Operators.createResource(cluster, ns, "v1", "pods", resource)).toEqual(resource);
   expect(axiosWithAuth.post).toHaveBeenCalled();
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/v1/namespaces/${ns}/pods`,
+    `api/clusters/defaultc/apis/v1/namespaces/${ns}/pods`,
     resource,
   ]);
 });
@@ -96,10 +93,10 @@ it("list resources", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [resource] } });
-  expect(await Operators.listResources(ns, "v1", "pods")).toEqual({ items: [resource] });
+  expect(await Operators.listResources(cluster, ns, "v1", "pods")).toEqual({ items: [resource] });
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/v1/namespaces/${ns}/pods`,
+    `api/clusters/defaultc/apis/v1/namespaces/${ns}/pods`,
   ]);
 });
 
@@ -107,10 +104,10 @@ it("get a resource", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: resource });
-  expect(await Operators.getResource(ns, "v1", "pods", "foo")).toEqual(resource);
+  expect(await Operators.getResource(cluster, ns, "v1", "pods", "foo")).toEqual(resource);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/v1/namespaces/${ns}/pods/foo`,
+    `api/clusters/defaultc/apis/v1/namespaces/${ns}/pods/foo`,
   ]);
 });
 
@@ -118,10 +115,10 @@ it("deletes a resource", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
   axiosWithAuth.delete = jest.fn().mockReturnValue({ data: resource });
-  expect(await Operators.deleteResource(ns, "v1", "pods", "foo")).toEqual(resource);
+  expect(await Operators.deleteResource(cluster, ns, "v1", "pods", "foo")).toEqual(resource);
   expect(axiosWithAuth.delete).toHaveBeenCalled();
   expect((axiosWithAuth.delete as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/v1/namespaces/${ns}/pods/foo`,
+    `api/clusters/defaultc/apis/v1/namespaces/${ns}/pods/foo`,
   ]);
 });
 
@@ -130,15 +127,16 @@ it("updates a resource", async () => {
   const ns = "default";
   axiosWithAuth.put = jest.fn().mockReturnValue({ data: resource });
   expect(
-    await Operators.updateResource(ns, "v1", "pods", resource.metadata.name, resource),
+    await Operators.updateResource(cluster, ns, "v1", "pods", resource.metadata.name, resource),
   ).toEqual(resource);
   expect(axiosWithAuth.post).toHaveBeenCalled();
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/v1/namespaces/${ns}/pods`,
+    `api/clusters/defaultc/apis/v1/namespaces/${ns}/pods`,
     resource,
   ]);
 });
 
+const cluster = "defaultc";
 const namespace = "default";
 const subscription = {
   apiVersion: "operators.coreos.com/v1alpha1",
@@ -173,20 +171,20 @@ it("creates an operatorgroup and a subscription", async () => {
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: operatorGroups });
   const resource = { metadata: { name: "foo" } } as IResource;
   axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
-  expect(await Operators.createOperator(namespace, "foo", "alpha", "Manual", "foo.1.0.0")).toEqual(
-    resource,
-  );
+  expect(
+    await Operators.createOperator(cluster, namespace, "foo", "alpha", "Manual", "foo.1.0.0"),
+  ).toEqual(resource);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+    `api/clusters/defaultc/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
   ]);
   expect(axiosWithAuth.post).toHaveBeenCalledTimes(2);
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+    `api/clusters/defaultc/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
     operatorgroup,
   ]);
   expect((axiosWithAuth.post as jest.Mock).mock.calls[1]).toEqual([
-    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
+    `api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
     subscription,
   ]);
 });
@@ -196,16 +194,16 @@ it("creates only a subscription if the operator group already exists", async () 
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: operatorGroups });
   const resource = { metadata: { name: "foo" } } as IResource;
   axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
-  expect(await Operators.createOperator(namespace, "foo", "alpha", "Manual", "foo.1.0.0")).toEqual(
-    resource,
-  );
+  expect(
+    await Operators.createOperator(cluster, namespace, "foo", "alpha", "Manual", "foo.1.0.0"),
+  ).toEqual(resource);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+    `api/clusters/defaultc/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
   ]);
   expect(axiosWithAuth.post).toHaveBeenCalledTimes(1);
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
+    `api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
     subscription,
   ]);
 });
@@ -216,7 +214,7 @@ it("creates only a subscription if the namespace is operators", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
   expect(
-    await Operators.createOperator("operators", "foo", "alpha", "Manual", "foo.1.0.0"),
+    await Operators.createOperator(cluster, "operators", "foo", "alpha", "Manual", "foo.1.0.0"),
   ).toEqual(resource);
   expect(axiosWithAuth.get).not.toHaveBeenCalled();
   expect(axiosWithAuth.post).toHaveBeenCalledTimes(1);

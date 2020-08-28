@@ -44,8 +44,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       resourceName: string,
     ) =>
       dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName)),
-    deleteResource: (namespace: string, crdName: string, resource: IResource) =>
-      dispatch(actions.operators.deleteResource(namespace, crdName, resource)),
+    deleteResource: (cluster: string, namespace: string, crdName: string, resource: IResource) =>
+      dispatch(actions.operators.deleteResource(cluster, namespace, crdName, resource)),
     push: (location: string) => dispatch(push(location)),
   };
 }

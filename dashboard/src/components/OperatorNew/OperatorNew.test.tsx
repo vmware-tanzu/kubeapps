@@ -142,6 +142,13 @@ it("deploys an operator", async () => {
   const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
   await onSubmit();
 
-  expect(createOperator).toHaveBeenCalledWith("operators", "foo", "beta", "Automatic", "foo.1.0.0");
+  expect(createOperator).toHaveBeenCalledWith(
+    "default",
+    "operators",
+    "foo",
+    "beta",
+    "Automatic",
+    "foo.1.0.0",
+  );
   expect(push).toHaveBeenCalledWith("/c/default/ns/operators/operators");
 });

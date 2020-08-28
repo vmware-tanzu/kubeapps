@@ -150,17 +150,23 @@ export const api = {
         `${api.k8s.base(
           cluster,
         )}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions/${name}`,
-      resources: (namespace: string, apiVersion: string, resource: string) =>
-        `${api.k8s.base("default")}/apis/${apiVersion}/${withNS(namespace)}${resource}`,
-      resource: (namespace: string, apiVersion: string, resource: string, name: string) =>
-        `${api.k8s.base("default")}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
-      operatorGroups: (namespace: string) =>
+      resources: (cluster: string, namespace: string, apiVersion: string, resource: string) =>
+        `${api.k8s.base(cluster)}/apis/${apiVersion}/${withNS(namespace)}${resource}`,
+      resource: (
+        cluster: string,
+        namespace: string,
+        apiVersion: string,
+        resource: string,
+        name: string,
+      ) =>
+        `${api.k8s.base(cluster)}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
+      operatorGroups: (cluster: string, namespace: string) =>
         `${api.k8s.base(
-          "default",
+          cluster,
         )}/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
-      subscription: (namespace: string, name: string) =>
+      subscription: (cluster: string, namespace: string, name: string) =>
         `${api.k8s.base(
-          "default",
+          cluster,
         )}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/${name}`,
     },
     secrets: (cluster: string, namespace: string) =>

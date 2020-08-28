@@ -115,7 +115,12 @@ describe("renders a resource", () => {
     const dialog = wrapper.find(ConfirmDialog);
     expect(dialog.prop("modalIsOpen")).toEqual(true);
     (dialog.prop("onConfirm") as any)();
-    expect(deleteResource).toHaveBeenCalledWith(defaultProps.namespace, "foo", resource);
+    expect(deleteResource).toHaveBeenCalledWith(
+      defaultProps.cluster,
+      defaultProps.namespace,
+      "foo",
+      resource,
+    );
     // wait async calls
     await new Promise(r => r());
     expect(push).toHaveBeenCalledWith(app.apps.list(defaultProps.cluster, defaultProps.namespace));

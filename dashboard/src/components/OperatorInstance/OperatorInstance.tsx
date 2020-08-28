@@ -33,7 +33,12 @@ export interface IOperatorInstanceProps {
     crdName: string,
     resourceName: string,
   ) => Promise<void>;
-  deleteResource: (namespace: string, crdName: string, resource: IResource) => Promise<boolean>;
+  deleteResource: (
+    cluster: string,
+    namespace: string,
+    crdName: string,
+    resource: IResource,
+  ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   errors: {
     fetch?: Error;
@@ -286,9 +291,14 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   };
 
   private handleDeleteClick = async () => {
-    const { kubeappsCluster, namespace, resource } = this.props;
+    const { kubeappsCluster, cluster, namespace, resource } = this.props;
     const { crd } = this.state;
-    const deleted = await this.props.deleteResource(namespace, crd!.name.split(".")[0], resource!);
+    const deleted = await this.props.deleteResource(
+      cluster,
+      namespace,
+      crd!.name.split(".")[0],
+      resource!,
+    );
     this.closeModal();
     if (deleted) {
       this.props.push(app.apps.list(kubeappsCluster, namespace));

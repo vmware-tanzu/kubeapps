@@ -206,7 +206,7 @@ describe("createResource", () => {
         payload: resource,
       },
     ];
-    await store.dispatch(operatorActions.createResource("default", "v1", "pods", {}));
+    await store.dispatch(operatorActions.createResource("default", "default", "v1", "pods", {}));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -223,7 +223,7 @@ describe("createResource", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.createResource("default", "v1", "pods", {}));
+    await store.dispatch(operatorActions.createResource("default", "default", "v1", "pods", {}));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -241,7 +241,9 @@ describe("updateResource", () => {
         payload: resource,
       },
     ];
-    await store.dispatch(operatorActions.updateResource("default", "v1", "pods", "foo", {}));
+    await store.dispatch(
+      operatorActions.updateResource("default", "default", "v1", "pods", "foo", {}),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -258,7 +260,9 @@ describe("updateResource", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.updateResource("default", "v1", "pods", "foo", {}));
+    await store.dispatch(
+      operatorActions.updateResource("default", "default", "v1", "pods", "foo", {}),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -294,7 +298,12 @@ describe("getResources", () => {
     ];
     await store.dispatch(operatorActions.getResources("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Operators.listResources).toHaveBeenCalledWith("default", "kubeapps.com/v1alpha1", "foo");
+    expect(Operators.listResources).toHaveBeenCalledWith(
+      "default",
+      "default",
+      "kubeapps.com/v1alpha1",
+      "foo",
+    );
   });
 
   it("dispatches an error if listing resources fail", async () => {
@@ -365,6 +374,7 @@ describe("getResources", () => {
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(Operators.getResource).toHaveBeenCalledWith(
+      "default",
       "default",
       "kubeapps.com/v1alpha1",
       "foo",
@@ -471,7 +481,7 @@ describe("deleteResource", () => {
         type: getType(operatorActions.resourceDeleted),
       },
     ];
-    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    await store.dispatch(operatorActions.deleteResource("default", "default", "foos", resource));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -489,7 +499,7 @@ describe("deleteResource", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    await store.dispatch(operatorActions.deleteResource("default", "default", "foos", resource));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -508,7 +518,7 @@ describe("createOperator", () => {
       },
     ];
     await store.dispatch(
-      operatorActions.createOperator("default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
+      operatorActions.createOperator("default", "default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -527,7 +537,7 @@ describe("createOperator", () => {
       },
     ];
     await store.dispatch(
-      operatorActions.createOperator("default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
+      operatorActions.createOperator("default", "default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });

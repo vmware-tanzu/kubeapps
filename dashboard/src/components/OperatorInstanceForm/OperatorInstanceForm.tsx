@@ -19,6 +19,7 @@ export interface IOperatorInstanceFormProps {
   kubeappsCluster: string;
   getCSV: (cluster: string, namespace: string, csvName: string) => void;
   createResource: (
+    cluster: string,
     namespace: string,
     apiVersion: string,
     resource: string,
@@ -129,7 +130,13 @@ class DeploymentFormBody extends React.Component<
       throw new Error(`Missing CRD (${JSON.stringify(crd)}) or CSV (${JSON.stringify(csv)})`);
     }
     const resourceType = crd.name.split(".")[0];
-    const created = await createResource(namespace, resource.apiVersion, resourceType, resource);
+    const created = await createResource(
+      cluster,
+      namespace,
+      resource.apiVersion,
+      resourceType,
+      resource,
+    );
     if (created) {
       push(
         url.app.operatorInstances.view(

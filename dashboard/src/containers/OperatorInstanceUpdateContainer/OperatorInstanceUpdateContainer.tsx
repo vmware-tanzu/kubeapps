@@ -46,6 +46,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     ) =>
       dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName)),
     updateResource: (
+      cluster: string,
       namespace: string,
       apiVersion: string,
       resource: string,
@@ -53,7 +54,14 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       body: object,
     ) =>
       dispatch(
-        actions.operators.updateResource(namespace, apiVersion, resource, resourceName, body),
+        actions.operators.updateResource(
+          cluster,
+          namespace,
+          apiVersion,
+          resource,
+          resourceName,
+          body,
+        ),
       ),
     push: (location: string) => dispatch(push(location)),
   };

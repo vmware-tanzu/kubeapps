@@ -103,6 +103,7 @@ it("should submit the form", () => {
     },
   };
   expect(createResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     resource.apiVersion,
     defaultCRD.name,

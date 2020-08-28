@@ -25,6 +25,7 @@ export interface IOperatorInstanceUpgradeFormProps {
     resourceName: string,
   ) => Promise<void>;
   updateResource: (
+    cluster: string,
     namespace: string,
     apiVersion: string,
     resource: string,
@@ -109,6 +110,7 @@ class DeploymentFormBody extends React.Component<
     const { updateResource, crdName, resourceName, cluster, namespace, push, csvName } = this.props;
 
     const created = await updateResource(
+      cluster,
       namespace,
       resource.apiVersion,
       crdName.split(".")[0],

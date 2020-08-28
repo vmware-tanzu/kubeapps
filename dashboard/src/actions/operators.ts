@@ -207,6 +207,7 @@ export function getCSV(
 }
 
 export function createResource(
+  cluster: string,
   namespace: string,
   apiVersion: string,
   resource: string,
@@ -215,7 +216,7 @@ export function createResource(
   return async dispatch => {
     dispatch(creatingResource());
     try {
-      const r = await Operators.createResource(namespace, apiVersion, resource, body);
+      const r = await Operators.createResource(cluster, namespace, apiVersion, resource, body);
       dispatch(resourceCreated(r));
       return true;
     } catch (e) {
@@ -226,6 +227,7 @@ export function createResource(
 }
 
 export function deleteResource(
+  cluster: string,
   namespace: string,
   plural: string,
   resource: IResource,
@@ -234,6 +236,7 @@ export function deleteResource(
     dispatch(deletingResource());
     try {
       await Operators.deleteResource(
+        cluster,
         namespace,
         resource.apiVersion,
         plural,
@@ -249,6 +252,7 @@ export function deleteResource(
 }
 
 export function updateResource(
+  cluster: string,
   namespace: string,
   apiVersion: string,
   resource: string,
@@ -258,7 +262,14 @@ export function updateResource(
   return async dispatch => {
     dispatch(updatingResource());
     try {
-      const r = await Operators.updateResource(namespace, apiVersion, resource, name, body);
+      const r = await Operators.updateResource(
+        cluster,
+        namespace,
+        apiVersion,
+        resource,
+        name,
+        body,
+      );
       dispatch(resourceUpdated(r));
       return true;
     } catch (e) {
@@ -288,6 +299,7 @@ export function getResources(
         const { plural, group } = parseCRD(crd.name);
         try {
           const csvResources = await Operators.listResources(
+            cluster,
             namespace,
             `${group}/${crd.version}`,
             plural,
@@ -321,6 +333,7 @@ export function getResource(
         const { plural, group } = parseCRD(crd.name);
         try {
           const resource = await Operators.getResource(
+            cluster,
             namespace,
             `${group}/${crd.version}`,
             plural,
@@ -344,6 +357,7 @@ export function getResource(
 }
 
 export function createOperator(
+  cluster: string,
   namespace: string,
   name: string,
   channel: string,
@@ -353,7 +367,14 @@ export function createOperator(
   return async dispatch => {
     dispatch(creatingOperator());
     try {
-      const r = await Operators.createOperator(namespace, name, channel, installPlanApproval, csv);
+      const r = await Operators.createOperator(
+        cluster,
+        namespace,
+        name,
+        channel,
+        installPlanApproval,
+        csv,
+      );
       dispatch(operatorCreated(r));
       return true;
     } catch (e) {

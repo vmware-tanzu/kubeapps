@@ -69,6 +69,7 @@ it("should submit the form", () => {
   form.simulate("submit", { preventDefault: jest.fn() });
 
   expect(updateResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     defaultResource.apiVersion,
     defaultProps.crdName,
