@@ -15,6 +15,7 @@ export interface IOperatorInstanceUpgradeFormProps {
   isFetching: boolean;
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   resourceName: string;
   getResource: (
     namespace: string,
@@ -65,11 +66,20 @@ class DeploymentFormBody extends React.Component<
   }
 
   public render() {
-    const { isFetching, errors, resourceName, cluster, namespace, resource, csvName } = this.props;
+    const {
+      isFetching,
+      errors,
+      resourceName,
+      cluster,
+      namespace,
+      kubeappsCluster,
+      resource,
+      csvName,
+    } = this.props;
     const { defaultValues } = this.state;
 
-    if (cluster !== "default") {
-      return <OperatorNotSupported namespace={namespace} />;
+    if (cluster !== kubeappsCluster) {
+      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
     }
 
     if (!errors.fetch && !isFetching && !resource) {

@@ -46,6 +46,7 @@ export interface IAppRepoListProps {
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   kubeappsNamespace: string;
   displayReposPerNamespaceMsg: boolean;
   isFetching: boolean;
@@ -118,6 +119,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       update,
       cluster,
       namespace,
+      kubeappsCluster,
       kubeappsNamespace,
       displayReposPerNamespaceMsg,
       isFetching,
@@ -134,22 +136,26 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
     const renderNamespace = namespace === definedNamespaces.all;
 
     // We do not currently support app repositories on additional clusters.
-    if (cluster !== "default") {
+    if (cluster !== kubeappsCluster) {
       return (
         <MessageAlert header="AppRepositories can be created on the default cluster only">
           <div>
             <p className="margin-v-normal">
               Kubeapps' multi-cluster support currently enables creation of custom app repositories
-              on the default cluster only.
+              on the cluster on which Kubeapps is installed.
             </p>
             <p className="margin-v-normal">
-              You cannot currently create an app repository on an additional cluster, but you can
-              create an app repository with charts available for installation across clusters and
-              namespaces in the{" "}
-              <Link to={url.app.config.apprepositories("default", definedNamespaces.all)}>
-                default cluster's app repository listing for all namespaces
-              </Link>
-              .
+              You cannot currently create an app repository on an additional cluster.
+              {kubeappsCluster && (
+                <>
+                  You can create an app repository with charts available for installation across
+                  clusters and namespaces on the{" "}
+                  <Link to={url.app.config.apprepositories(kubeappsCluster, definedNamespaces.all)}>
+                    cluster on which Kubeapps is installed
+                  </Link>
+                  , if you have the appropriate authorization.
+                </>
+              )}
             </p>
           </div>
         </MessageAlert>

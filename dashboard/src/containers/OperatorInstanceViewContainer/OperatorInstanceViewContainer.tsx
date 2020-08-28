@@ -17,12 +17,13 @@ interface IRouteProps {
   };
 }
 function mapStateToProps(
-  { apps, clusters: { currentCluster, clusters }, operators }: IStoreState,
+  { apps, clusters: { currentCluster, clusters }, config, operators }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
     cluster: currentCluster,
     namespace: clusters[currentCluster].currentNamespace,
+    kubeappsCluster: config.kubeappsCluster,
     csvName: params.csv,
     crdName: params.crd,
     instanceName: params.instanceName,

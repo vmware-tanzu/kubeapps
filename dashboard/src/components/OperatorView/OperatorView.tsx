@@ -19,6 +19,7 @@ export interface IOperatorViewProps {
   isFetching: boolean;
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   error?: Error;
   push: (location: string) => RouterAction;
   getCSV: (namespace: string, name: string) => Promise<IClusterServiceVersion | undefined>;
@@ -45,9 +46,19 @@ class OperatorView extends React.Component<IOperatorViewProps> {
   }
 
   public render() {
-    const { isFetching, cluster, namespace, operatorName, operator, error, push, csv } = this.props;
-    if (cluster !== "default") {
-      return <OperatorNotSupported namespace={namespace} />;
+    const {
+      isFetching,
+      cluster,
+      namespace,
+      kubeappsCluster,
+      operatorName,
+      operator,
+      error,
+      push,
+      csv,
+    } = this.props;
+    if (cluster !== kubeappsCluster) {
+      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
     }
     if (error) {
       return <ErrorSelector error={error} resource={`Operator ${operatorName}`} />;

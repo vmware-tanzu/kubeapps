@@ -7,12 +7,13 @@ import ServiceBrokerList from "../../components/Config/ServiceBrokerList";
 import { IServiceBroker } from "../../shared/ServiceCatalog";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ catalog, clusters }: IStoreState) {
+function mapStateToProps({ catalog, config, clusters }: IStoreState) {
   return {
     brokers: catalog.brokers,
     errors: catalog.errors,
     isInstalled: catalog.isServiceCatalogInstalled,
     cluster: clusters.currentCluster,
+    kubeappsCluster: config.kubeappsCluster,
   };
 }
 

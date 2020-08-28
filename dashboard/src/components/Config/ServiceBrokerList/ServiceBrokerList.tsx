@@ -27,6 +27,7 @@ interface IServiceBrokerListProps {
   checkCatalogInstalled: () => Promise<any>;
   isInstalled: boolean;
   cluster: string;
+  kubeappsCluster: string;
 }
 
 export const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -101,21 +102,35 @@ class ServiceBrokerList extends React.Component<IServiceBrokerListProps> {
   }
 
   private renderBody(body: React.ReactFragment) {
-    const { cluster, isInstalled } = this.props;
-    if (cluster !== "default") {
-      return (
-        <MessageAlert header="Service brokers can be created on the default cluster only">
-          <div>
-            <p className="margin-v-normal">
-              Kubeapps' Service Broker support enables the addition of{" "}
-              <Link to={url.app.config.brokers("default")}>
-                service brokers on the default cluster only
-              </Link>
-              .
-            </p>
-          </div>
-        </MessageAlert>
-      );
+    const { cluster, isInstalled, kubeappsCluster } = this.props;
+    if (cluster !== kubeappsCluster) {
+      if (kubeappsCluster) {
+        return (
+          <MessageAlert header="Service brokers can be created on the cluster on which Kubeapps is installed only">
+            <div>
+              <p className="margin-v-normal">
+                Kubeapps' Service Broker support enables the addition of{" "}
+                <Link to={url.app.config.brokers(kubeappsCluster)}>
+                  service brokers on the cluster on which Kubeapps is installed only
+                </Link>
+                .
+              </p>
+            </div>
+          </MessageAlert>
+        );
+      } else {
+        return (
+          <MessageAlert header="Service brokers are not supported on this installation">
+            <div>
+              <p className="margin-v-normal">
+                Kubeapps' Service Broker support enables the addition of service brokers on the
+                cluster on which Kubeapps is installed only. This installation of Kubeapps is
+                configured without access to that cluster.
+              </p>
+            </div>
+          </MessageAlert>
+        );
+      }
     }
 
     if (!isInstalled) {

@@ -107,9 +107,9 @@ describe("deleteRepo", () => {
     it("dispatches requestRepos with current namespace", async () => {
       const storeWithFlag: any = mockStore({
         clusters: {
-          currentCluster: "default",
+          currentCluster: "defaultCluster",
           clusters: {
-            default: {
+            defaultCluster: {
               currentNamespace,
             },
           },

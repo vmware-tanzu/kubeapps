@@ -33,6 +33,7 @@ export interface IOperatorListProps {
   isOLMInstalled: boolean;
   cluster: string;
   namespace: string;
+  kubeappsCluster: string;
   getOperators: (namespace: string) => Promise<void>;
   operators: IPackageManifest[];
   error?: Error;
@@ -110,9 +111,9 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
   }
 
   public render() {
-    const { cluster, namespace, isFetching, pushSearchFilter } = this.props;
-    if (cluster !== "default") {
-      return <OperatorNotSupported namespace={namespace} />;
+    const { cluster, kubeappsCluster, namespace, isFetching, pushSearchFilter } = this.props;
+    if (cluster !== kubeappsCluster) {
+      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
     }
     return (
       <div>
