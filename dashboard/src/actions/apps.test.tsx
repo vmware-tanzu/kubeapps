@@ -9,6 +9,7 @@ import { definedNamespaces } from "../shared/Namespace";
 import { IAppState, UnprocessableEntity } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
+const kubeappsNamespace = "kubeapps";
 
 let store: any;
 
@@ -24,6 +25,7 @@ beforeEach(() => {
     },
     config: {
       namespace: "kubeapps-ns",
+      kubeappsNamespace,
     },
   });
 });
@@ -132,6 +134,53 @@ describe("fetches applications", () => {
         },
       ];
       await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
+      expect(store.getActions()).toEqual(expectedActions);
+    });
+
+    it("gets a chart latest version from the kubeapps ns", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: {
+            latestChartVersion: { data: { app_version: "1.0.0", version: "1.1.0" } },
+          },
+        },
+      ];
+      Chart.listWithFilters = jest.fn(
+        (namespace: string, name: string, version: string, appVersion: string) => {
+          if (namespace === kubeappsNamespace) {
+            return chartUpdatesResponse;
+          }
+          return [];
+        },
+      ) as any;
+      App.listApps = jest.fn().mockReturnValue(appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        { type: getType(actions.apps.requestAppUpdateInfo) },
+        {
+          type: getType(actions.apps.receiveAppUpdateInfo),
+          payload: {
+            releaseName: "foobar",
+            updateInfo: {
+              upToDate: false,
+              appLatestVersion: "1.0.0",
+              chartLatestVersion: "1.1.0",
+              repository: { name: "bar" },
+            },
+          },
+        },
+      ];
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
+      // await is not really waiting for the body of getAppUpdateInfo
+      // await wait(1);
       expect(store.getActions()).toEqual(expectedActions);
     });
 

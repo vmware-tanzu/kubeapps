@@ -9,6 +9,7 @@ import { definedNamespaces } from "../shared/Namespace";
 import { validate } from "../shared/schema";
 import {
   IAppOverview,
+  IChart,
   IChartUpdateInfo,
   IChartVersion,
   IRelease,
@@ -104,6 +105,24 @@ export function getApp(
   };
 }
 
+function findUpdateInfo(charts: IChart[], currentVersion: string) {
+  const sortedCharts = charts.sort((a, b) =>
+    semver.compare(
+      a.relationships.latestChartVersion.data.version,
+      b.relationships.latestChartVersion.data.version,
+    ),
+  );
+  const chartLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
+  const appLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.app_version;
+  // Initialize updateInfo with the latest chart found
+  return {
+    upToDate: semver.gte(currentVersion, chartLatestVersion),
+    chartLatestVersion,
+    appLatestVersion,
+    repository: sortedCharts[0].attributes.repo,
+  };
+}
+
 function getAppUpdateInfo(
   namespace: string,
   releaseName: string,
@@ -114,6 +133,7 @@ function getAppUpdateInfo(
   return async (dispatch, getState) => {
     dispatch(requestAppUpdateInfo());
     try {
+      const kubeappsNamespace = getState().config.kubeappsNamespace;
       const chartsInfo = await Chart.listWithFilters(
         namespace,
         chartName,
@@ -127,21 +147,19 @@ function getAppUpdateInfo(
         appLatestVersion: "",
       };
       if (chartsInfo.length > 0) {
-        const sortedCharts = chartsInfo.sort((a, b) =>
-          semver.compare(
-            a.relationships.latestChartVersion.data.version,
-            b.relationships.latestChartVersion.data.version,
-          ),
+        updateInfo = findUpdateInfo(chartsInfo, currentVersion);
+      }
+      if (!updateInfo.appLatestVersion) {
+        const globalChartsInfo = await Chart.listWithFilters(
+          kubeappsNamespace,
+          chartName,
+          currentVersion,
+          appVersion,
         );
-        const chartLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
-        const appLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.app_version;
-        // Initialize updateInfo with the latest chart found
-        updateInfo = {
-          upToDate: semver.gte(currentVersion, chartLatestVersion),
-          chartLatestVersion,
-          appLatestVersion,
-          repository: sortedCharts[0].attributes.repo,
-        };
+        if (globalChartsInfo.length > 0) {
+          // Falback to global charts if the chart is present there
+          updateInfo = findUpdateInfo(globalChartsInfo, currentVersion);
+        }
       }
       dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
     } catch (e) {
@@ -237,14 +255,16 @@ export function fetchAppsWithUpdateInfo(
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     const apps = await dispatch(fetchApps(cluster, namespace, all));
-    apps.forEach(app =>
-      dispatch(
-        getAppUpdateInfo(
-          namespace,
-          app.releaseName,
-          app.chartMetadata.name,
-          app.chartMetadata.version,
-          app.chartMetadata.appVersion,
+    await Promise.all(
+      apps.map(app =>
+        dispatch(
+          getAppUpdateInfo(
+            namespace,
+            app.releaseName,
+            app.chartMetadata.name,
+            app.chartMetadata.version,
+            app.chartMetadata.appVersion,
+          ),
         ),
       ),
     );
