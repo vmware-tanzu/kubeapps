@@ -114,3 +114,19 @@
     }
   }
 }
+
+.appview-separator {
+  border-bottom: 2px solid #f1f1f1;
+  padding-bottom: 1.2rem;
+}
+
+.appview-first-row {
+  display: flex;
+  section {
+    margin-right: 2rem;
+  }
+}
+
+.section-title {
+  font-weight: 600;
+}

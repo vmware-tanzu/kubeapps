@@ -1,7 +1,5 @@
 import * as React from "react";
 
-import "./AppNotes.v2.css";
-
 interface IAppNotesProps {
   title?: string;
   notes?: string | null;

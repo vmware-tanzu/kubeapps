@@ -23,7 +23,6 @@ import RollbackButton from "./AppControls/RollbackButton/RollbackButton.v2";
 import AppNotes from "./AppNotes.v2";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues.v2";
-import "./AppView.v2.css";
 import ChartInfo from "./ChartInfo/ChartInfo.v2";
 import ResourceTabs from "./ResourceTabs";
 
@@ -44,7 +43,7 @@ export interface IAppViewProps {
   push: (location: string) => RouterAction;
 }
 
-interface IAppViewResourceRefs {
+export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
   statefulsets: ResourceRef[];
   daemonsets: ResourceRef[];
