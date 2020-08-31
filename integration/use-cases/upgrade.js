@@ -1,13 +1,11 @@
 test("Upgrades an application", async () => {
-  await page.goto(getUrl("/#/login"));
+  await page.goto(getUrl("/#/c/default/ns/default/catalog"));
 
   await expect(page).toFillForm("form", {
     token: process.env.EDIT_TOKEN
   });
 
   await expect(page).toClick("button", { text: "Login" });
-
-  await expect(page).toClick("a", { text: "Catalog" });
 
   await expect(page).toClick("a", { text: "apache" });
 

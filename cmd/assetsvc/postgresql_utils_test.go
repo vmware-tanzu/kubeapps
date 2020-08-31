@@ -171,7 +171,7 @@ func Test_getChartWithFilters(t *testing.T) {
 		},
 	}
 	chartsResponse = []*models.Chart{&dbChart}
-	m.On("QueryAllCharts", "SELECT info FROM charts WHERE repo_namespace = $1 AND info ->> 'name' = $2", []interface{}{"namespace", "foo"})
+	m.On("QueryAllCharts", "SELECT info FROM charts WHERE info ->> 'name' = $1 AND (repo_namespace = $2 OR repo_namespace = $3) ORDER BY info ->> 'ID' ASC", []interface{}{"foo", "namespace", "kubeapps"})
 
 	charts, err := pg.getChartsWithFilters("namespace", "foo", "1.0.0", "1.0.1")
 	if err != nil {

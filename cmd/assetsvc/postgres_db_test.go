@@ -396,3 +396,115 @@ func TestGetPaginatedChartList(t *testing.T) {
 		})
 	}
 }
+
+func TestGetChartsWithFilters(t *testing.T) {
+	pgtest.SkipIfNoDB(t)
+	const (
+		repoName1     = "repo-name-1"
+		repoName2     = "repo-name-2"
+		namespaceName = "namespace-name"
+	)
+
+	chartVersion := models.ChartVersion{
+		Digest:     "abc-123",
+		Version:    "1.0chart",
+		AppVersion: "2.0app",
+	}
+
+	chartVersions := []models.ChartVersion{chartVersion}
+
+	chartWithVersionRepo1 := models.Chart{ID: repoName1 + "/chart-1", Name: "chart-1", ChartVersions: chartVersions}
+	chartWithVersionRepo2 := models.Chart{ID: repoName2 + "/chart-1", Name: "chart-1", ChartVersions: chartVersions}
+
+	testCases := []struct {
+		name string
+		// existingCharts is a map of charts per namespace and repo
+		existingCharts map[string]map[string][]models.Chart
+		namespace      string
+		chartName      string
+		chartVersion   string
+		appVersion     string
+		expectedCharts []*models.Chart
+		expectedErr    error
+	}{
+		{
+			name: "returns charts in the specific namespace",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: {
+					repoName1: {chartWithVersionRepo1},
+					"other-repo": []models.Chart{
+						{ID: "other-repo/other-chart", Name: "other-chart"},
+					},
+				},
+				"other-namespace": {
+					repoName1: {chartWithVersionRepo1},
+				},
+			},
+			namespace:    namespaceName,
+			chartName:    chartWithVersionRepo1.Name,
+			chartVersion: chartWithVersionRepo1.ChartVersions[0].Version,
+			appVersion:   chartWithVersionRepo1.ChartVersions[0].AppVersion,
+			expectedCharts: []*models.Chart{
+				&chartWithVersionRepo1,
+			},
+		},
+		{
+			name: "returns charts from different repos in the specific namespace",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: {
+					repoName1:    {chartWithVersionRepo1},
+					"other-repo": {chartWithVersionRepo2},
+				},
+			},
+			namespace:    namespaceName,
+			chartName:    chartWithVersionRepo1.Name,
+			chartVersion: chartWithVersionRepo1.ChartVersions[0].Version,
+			appVersion:   chartWithVersionRepo1.ChartVersions[0].AppVersion,
+			expectedCharts: []*models.Chart{
+				&chartWithVersionRepo1,
+				&chartWithVersionRepo2,
+			},
+		},
+		{
+			name: "includes charts from global repositories",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: {
+					repoName1: {chartWithVersionRepo1},
+				},
+				dbutilstest.KubeappsTestNamespace: {
+					"other-repo": {chartWithVersionRepo2},
+				},
+			},
+			namespace:    namespaceName,
+			chartName:    chartWithVersionRepo1.Name,
+			chartVersion: chartWithVersionRepo1.ChartVersions[0].Version,
+			appVersion:   chartWithVersionRepo1.ChartVersions[0].AppVersion,
+			expectedCharts: []*models.Chart{
+				&chartWithVersionRepo1,
+				&chartWithVersionRepo2,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pam, cleanup := getInitializedManager(t)
+			defer cleanup()
+			for namespace, chartsPerRepo := range tc.existingCharts {
+				for repo, charts := range chartsPerRepo {
+					pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repo, Namespace: namespace})
+				}
+			}
+
+			charts, err := pam.getChartsWithFilters(tc.namespace, tc.chartName, tc.chartVersion, tc.appVersion)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := charts, tc.expectedCharts; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+
+	}
+}
