@@ -15,7 +15,12 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import * as url from "shared/url";
 import placeholder from "../../placeholder.png";
-import { IClusterServiceVersionCRD, IResource, IStoreState } from "../../shared/types";
+import {
+  IClusterServiceVersion,
+  IClusterServiceVersionCRD,
+  IResource,
+  IStoreState,
+} from "../../shared/types";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody.v2";
 
 export interface IOperatorInstanceFormProps {
@@ -28,6 +33,39 @@ export interface IOperatorInstanceFormProps {
 export interface IOperatorInstanceFormBodyState {
   defaultValues: string;
   crd?: IClusterServiceVersionCRD;
+}
+
+export function parseCSV(
+  csv: IClusterServiceVersion,
+  crdName: string,
+  setIcon: (icon: string) => void,
+  setCRD: (crd: IClusterServiceVersionCRD) => void,
+  setDefaultValues: (v: string) => void,
+) {
+  const ownedCRDs = get(
+    csv,
+    "spec.customresourcedefinitions.owned",
+    [],
+  ) as IClusterServiceVersionCRD[];
+  const csvIcon = get(csv, "spec.icon[0]");
+  if (csvIcon) {
+    setIcon(`data:${csvIcon.mediatype};base64,${csvIcon.base64data}`);
+  }
+  ownedCRDs.forEach(ownedCRD => {
+    if (ownedCRD.name === crdName) {
+      setCRD(ownedCRD);
+      // Got the target CRD, extract the example
+      const kind = ownedCRD.kind;
+      const rawExamples = get(csv, 'metadata.annotations["alm-examples"]', "[]");
+      const examples = JSON.parse(rawExamples) as IResource[];
+      examples.forEach(example => {
+        if (example.kind === kind) {
+          // Found the example, set the default values
+          setDefaultValues(yaml.safeDump(example));
+        }
+      });
+    }
+  });
 }
 
 export default function DeploymentFormBody({
@@ -59,35 +97,12 @@ export default function DeploymentFormBody({
 
   useEffect(() => {
     if (csv) {
-      const ownedCRDs = get(
-        csv,
-        "spec.customresourcedefinitions.owned",
-        [],
-      ) as IClusterServiceVersionCRD[];
-      const csvIcon = get(csv, "spec.icon[0]");
-      if (csvIcon) {
-        setIcon(`data:${csvIcon.mediatype};base64,${csvIcon.base64data}`);
-      }
-      ownedCRDs.forEach(ownedCRD => {
-        if (ownedCRD.name === crdName) {
-          setCRD(ownedCRD);
-          // Got the target CRD, extract the example
-          const kind = ownedCRD.kind;
-          const rawExamples = get(csv, 'metadata.annotations["alm-examples"]', "[]");
-          const examples = JSON.parse(rawExamples) as IResource[];
-          examples.forEach(example => {
-            if (example.kind === kind) {
-              // Found the example, set the default values
-              setDefaultValues(yaml.safeDump(example));
-            }
-          });
-        }
-      });
+      parseCSV(csv, crdName, setIcon, setCRD, setDefaultValues);
     }
   }, [csv, crdName]);
 
   if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported namespace={namespace} />;
+    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
   }
   if (!fetchError && !isFetching && !crd) {
     return (

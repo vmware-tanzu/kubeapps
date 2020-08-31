@@ -93,7 +93,7 @@ export default function OperatorList({
   }, [dispatch, namespace, isOLMInstalled]);
 
   if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported namespace={namespace} />;
+    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
   }
 
   const allCapabilities = [
