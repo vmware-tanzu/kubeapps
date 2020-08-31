@@ -132,12 +132,18 @@ func (m *mongodbAssetManager) getChartsWithFilters(namespace, name, version, app
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
-	err := db.C(chartCollection).Find(bson.M{
+	matcher := bson.M{
 		"repo.namespace": namespace,
 		"name":           name,
 		"chartversions": bson.M{
 			"$elemMatch": bson.M{"version": version, "appversion": appVersion},
-		}}).Select(bson.M{
+		},
+	}
+	if namespace != dbutils.AllNamespaces {
+		matcher["repo.namespace"] = bson.M{"$in": []string{namespace, m.KubeappsNamespace}}
+	}
+
+	err := db.C(chartCollection).Find(matcher).Select(bson.M{
 		"name": 1, "repo": 1,
 		"chartversions": bson.M{"$slice": 1},
 	}).All(&charts)
