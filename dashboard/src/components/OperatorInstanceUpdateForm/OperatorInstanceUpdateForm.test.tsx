@@ -1,8 +1,8 @@
 import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { mount, shallow } from "enzyme";
 import * as React from "react";
-import OperatorInstanceUpdateForm from ".";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
+import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
 import { IOperatorInstanceUpgradeFormProps } from "./OperatorInstanceUpdateForm";
 
 const defaultProps: IOperatorInstanceUpgradeFormProps = {

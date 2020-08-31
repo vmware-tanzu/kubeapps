@@ -9,25 +9,38 @@ import { IStoreState } from "shared/types";
 import CapabiliyLevel from "./OperatorCapabilityLevel.v2";
 
 export default function OperatorSummary() {
-  const { operator, isFetching } = useSelector((state: IStoreState) => state.operators);
-  if (isFetching || !operator) {
+  const { operator, isFetching, csv } = useSelector((state: IStoreState) => state.operators);
+  if (isFetching || (!operator && !csv)) {
     return <LoadingWrapper />;
   }
-  const channel = Operators.getDefaultChannel(operator);
-  if (!channel || !channel.currentCSVDesc) {
-    return (
-      <Alert theme="danger">
-        Operator {operator.metadata.name} doesn't define a valid channel. This is needed to extract
-        required info.
-      </Alert>
-    );
+  let capabilityLevel = "";
+  let repository = "";
+  let provider = "";
+  let containerImage = "";
+  let createdAt = "";
+  if (operator) {
+    const channel = Operators.getDefaultChannel(operator);
+    if (!channel || !channel.currentCSVDesc) {
+      return (
+        <Alert theme="danger">
+          Operator {operator.metadata.name} doesn't define a valid channel. This is needed to
+          extract required info.
+        </Alert>
+      );
+    }
+    const { currentCSVDesc } = channel;
+    capabilityLevel = get(currentCSVDesc, "annotations.capabilities", BASIC_INSTALL);
+    repository = get(currentCSVDesc, "annotations.repository", "");
+    provider = get(operator, "status.provider.name", "");
+    containerImage = get(currentCSVDesc, "annotations.containerImage", "");
+    createdAt = get(currentCSVDesc, "annotations.createdAt", "");
+  } else if (csv) {
+    capabilityLevel = get(csv, "metadata.annotations.capabilities", BASIC_INSTALL);
+    repository = get(csv, "metadata.annotations.repository", "");
+    provider = get(csv, "spec.provider.name", "");
+    containerImage = get(csv, "metadata.annotations.containerImage", "");
+    createdAt = get(csv, "metadata.annotations.createdAt", "");
   }
-  const { currentCSVDesc } = channel;
-  const capabilityLevel = get(currentCSVDesc, "annotations.capabilities", BASIC_INSTALL);
-  const repository = get(currentCSVDesc, "annotations.repository", "");
-  const provider = get(operator, "status.provider.name", "");
-  const containerImage = get(currentCSVDesc, "annotations.containerImage", "");
-  const createdAt = get(currentCSVDesc, "annotations.createdAt", "");
   return (
     <div className="left-menu">
       <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
@@ -56,7 +69,7 @@ export default function OperatorSummary() {
             Provider
           </h5>
           <div>
-            <span>{operator.status.provider.name}</span>
+            <span>{provider}</span>
           </div>
         </section>
       )}
@@ -66,7 +79,7 @@ export default function OperatorSummary() {
             Container Image
           </h5>
           <div>
-            <span>{currentCSVDesc.annotations.containerImage}</span>
+            <span>{containerImage}</span>
           </div>
         </section>
       )}
@@ -76,7 +89,7 @@ export default function OperatorSummary() {
             Created At
           </h5>
           <div>
-            <span>{currentCSVDesc.annotations.createdAt}</span>
+            <span>{createdAt}</span>
           </div>
         </section>
       )}

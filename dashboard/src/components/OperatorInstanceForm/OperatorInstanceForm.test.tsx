@@ -1,10 +1,9 @@
 import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { mount, shallow } from "enzyme";
 import * as React from "react";
-import OperatorInstanceForm from ".";
 import { IClusterServiceVersion } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
-import { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
+import OperatorInstanceForm, { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
 
 const defaultProps: IOperatorInstanceFormProps = {
   csvName: "foo",

@@ -32,6 +32,7 @@ function mapStateToProps(
     },
     csvName: params.csv,
     crdName: params.crd,
+    UI: config.featureFlags.ui,
   };
 }
 
