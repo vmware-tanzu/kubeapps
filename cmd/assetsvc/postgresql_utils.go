@@ -160,7 +160,16 @@ func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, 
 }
 
 func (m *postgresAssetManager) getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error) {
-	charts, err := m.QueryAllCharts(fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND info ->> 'name' = $2", dbutils.ChartTable), namespace, name)
+	clauses := []string{"info ->> 'name' = $1"}
+	queryParams := []interface{}{name, namespace}
+	if namespace != dbutils.AllNamespaces {
+		queryParams = append(queryParams, m.GetKubeappsNamespace())
+		clauses = append(clauses, "(repo_namespace = $2 OR repo_namespace = $3)")
+	} else {
+		clauses = append(clauses, "repo_namespace = $2")
+	}
+	dbQuery := fmt.Sprintf("SELECT info FROM %s WHERE %s ORDER BY info ->> 'ID' ASC", dbutils.ChartTable, strings.Join(clauses, " AND "))
+	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
 	if err != nil {
 		return nil, err
 	}

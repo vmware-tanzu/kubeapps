@@ -400,7 +400,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 func TestGetChartsWithFilters(t *testing.T) {
 	pgtest.SkipIfNoDB(t)
 	const (
-		repoName1     = "repo-name"
+		repoName1     = "repo-name-1"
 		repoName2     = "repo-name-2"
 		namespaceName = "namespace-name"
 	)
