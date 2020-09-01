@@ -139,11 +139,11 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Upgrading Helm Release")
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, h.ChartClient, requireV1Support)
-	ch := chartMulti.Helm2Chart
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
+	ch := chartMulti.Helm2Chart
 	manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
