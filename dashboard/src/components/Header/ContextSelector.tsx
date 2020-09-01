@@ -102,7 +102,12 @@ function ContextSelector({
             <CdsIcon size="sm" shape="cluster" inverse={true} />
             <span className="kubeapps-dropdown-text">Cluster</span>
             <div className="clr-select-wrapper">
-              <select name="clusters" className="clr-page-size-select" onChange={selectCluster}>
+              <select
+                name="clusters"
+                className="clr-page-size-select"
+                onChange={selectCluster}
+                value={cluster}
+              >
                 {Object.keys(clusters.clusters).map(c => {
                   return (
                     <option key={`kubeapps-dropdown-cluster-${c}`} value={c}>

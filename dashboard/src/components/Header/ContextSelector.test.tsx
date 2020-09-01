@@ -81,6 +81,33 @@ it("selects a different namespace", () => {
   expect(setNamespace).toHaveBeenCalledWith("other");
 });
 
+it("shows the current cluster", () => {
+  const clusters = {
+    currentCluster: "bar",
+    clusters: {
+      foo: {
+        currentNamespace: "default",
+        namespaces: ["default"],
+      },
+      bar: {
+        currentNamespace: "default",
+        namespaces: ["default"],
+      },
+    },
+  } as IClustersState;
+  const wrapper = mount(
+    <Provider store={defaultStore}>
+      <ContextSelector {...defaultProps} clusters={clusters} />
+    </Provider>,
+  );
+  expect(
+    wrapper
+      .find("select")
+      .at(0)
+      .prop("value"),
+  ).toBe("bar");
+});
+
 it("shows the current namespace", () => {
   const props = cloneDeep(defaultProps);
   props.clusters.clusters.default.currentNamespace = "other";
