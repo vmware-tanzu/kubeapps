@@ -1,8 +1,7 @@
+import Alert from "components/js/Alert";
 import { mount } from "enzyme";
 import * as React from "react";
-import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAlert";
-import { UnexpectedErrorAlert } from "../ErrorAlert";
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary from "./ErrorBoundary.v2";
 
 // tslint:disable:no-console
 const consoleOrig = console.error;
@@ -33,9 +32,9 @@ describe("ErrorBoundary around a component", () => {
     );
 
     // Shows a generic error message
-    const errorMessage = wrapper.find(UnexpectedErrorAlert);
+    const errorMessage = wrapper.find(Alert);
     expect(errorMessage).toExist();
-    expect(errorMessage.props().showGenericMessage).toBe(true);
+    expect(errorMessage.prop("theme")).toBe("danger");
 
     // Sets the internal state
     expect(wrapper.state("error")).toEqual(exampleError);
@@ -57,7 +56,7 @@ describe("ErrorBoundary around a component", () => {
     expect(wrapper.find(".no-error")).toExist();
 
     // Does not show a error message
-    const errorMessage = wrapper.find(UnexpectedErrorAlert);
+    const errorMessage = wrapper.find(Alert);
     expect(errorMessage).not.toExist();
 
     // the state is null
@@ -70,5 +69,5 @@ describe("ErrorBoundary around a component", () => {
 
 it("renders an error if it exists as a property", () => {
   const wrapper = mount(<ErrorBoundary error={new Error("boom!")} children={<></>} />);
-  expect(wrapper.find(UnexpectedErrorPage).text()).toContain("boom!");
+  expect(wrapper.find(Alert).text()).toContain("boom!");
 });

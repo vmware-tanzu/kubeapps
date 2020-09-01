@@ -8,13 +8,14 @@ interface IErrorBoundaryProps {
 }
 
 function mapStateToProps(
-  { clusters: { currentCluster, clusters } }: IStoreState,
+  { clusters: { currentCluster, clusters }, config }: IStoreState,
   { children }: IErrorBoundaryProps,
 ) {
   const cluster = clusters[currentCluster];
   return {
     error: cluster.error && cluster.error.error,
     children,
+    UI: config.featureFlags.ui,
   };
 }
 

@@ -3,7 +3,7 @@ import * as React from "react";
 import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAlert";
 import { UnexpectedErrorAlert } from "../ErrorAlert";
 
-interface IErrorBoundaryProps {
+export interface IErrorBoundaryProps {
   error?: Error;
   children: React.ReactChildren | React.ReactNode | string;
 }
