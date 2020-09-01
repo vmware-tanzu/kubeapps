@@ -76,7 +76,10 @@ export default function ChartHeader({
                     name="chart-versions"
                     className="clr-page-size-select"
                     onChange={onSelect}
-                    value={currentVersion}
+                    defaultValue={
+                      currentVersion ||
+                      (versions.length ? versions[0].attributes.version : undefined)
+                    }
                   >
                     {versions.map(v => {
                       return (
