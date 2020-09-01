@@ -72,8 +72,13 @@ it("gets resource and CSV", () => {
   actions.operators.getResource = getResource;
   actions.operators.getCSV = getCSV;
   mountWrapper(defaultStore, <OperatorInstanceUpdateForm {...defaultProps} />);
-  expect(getCSV).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.csvName);
+  expect(getCSV).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.csvName,
+  );
   expect(getResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     defaultProps.csvName,
     defaultProps.crdName,
@@ -119,6 +124,7 @@ it("should submit the form", () => {
   form.simulate("submit", { preventDefault: jest.fn() });
 
   expect(updateResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     defaultResource.apiVersion,
     defaultProps.crdName,

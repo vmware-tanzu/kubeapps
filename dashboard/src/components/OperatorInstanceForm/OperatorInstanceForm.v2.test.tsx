@@ -87,7 +87,11 @@ it("retrieves CSV when mounted", () => {
   const getCSV = jest.fn();
   actions.operators.getCSV = getCSV;
   mountWrapper(defaultStore, <OperatorInstanceForm {...defaultProps} />);
-  expect(getCSV).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.csvName);
+  expect(getCSV).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.csvName,
+  );
 });
 
 it("retrieves the example values and the target CRD from the given CSV", () => {
@@ -144,6 +148,7 @@ it("should submit the form", () => {
     },
   };
   expect(createResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     resource.apiVersion,
     defaultCRD.name,

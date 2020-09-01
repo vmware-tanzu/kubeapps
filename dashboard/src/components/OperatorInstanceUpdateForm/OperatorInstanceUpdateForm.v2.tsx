@@ -40,9 +40,9 @@ function OperatorInstanceUpdateForm({
   const [icon, setIcon] = useState(placeholder);
 
   useEffect(() => {
-    dispatch(actions.operators.getResource(namespace, csvName, crdName, resourceName));
-    dispatch(actions.operators.getCSV(namespace, csvName));
-  }, [dispatch, namespace, csvName, crdName, resourceName]);
+    dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName));
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+  }, [dispatch, cluster, namespace, csvName, crdName, resourceName]);
 
   const {
     operators: {
@@ -79,6 +79,7 @@ function OperatorInstanceUpdateForm({
   const handleDeploy = async (updatedResource: IResource) => {
     const created = await dispatch(
       actions.operators.updateResource(
+        cluster,
         namespace,
         updatedResource.apiVersion,
         crdName.split(".")[0],

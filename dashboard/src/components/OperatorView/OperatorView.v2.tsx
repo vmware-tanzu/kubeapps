@@ -25,8 +25,8 @@ interface IOperatorViewProps {
 export default function OperatorView({ operatorName, cluster, namespace }: IOperatorViewProps) {
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(actions.operators.getOperator(namespace, operatorName));
-  }, [dispatch, namespace, operatorName]);
+    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+  }, [dispatch, cluster, namespace, operatorName]);
 
   const {
     operators: {
@@ -44,10 +44,10 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
     if (operator) {
       const defaultChannel = Operators.getDefaultChannel(operator);
       if (defaultChannel) {
-        dispatch(actions.operators.getCSV(namespace, defaultChannel.currentCSV));
+        dispatch(actions.operators.getCSV(cluster, namespace, defaultChannel.currentCSV));
       }
     }
-  }, [dispatch, operator, namespace]);
+  }, [dispatch, operator, cluster, namespace]);
 
   const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
 

@@ -22,12 +22,13 @@ import "./OperatorNew.v2.css";
 interface IOperatorNewProps {
   operatorName: string;
   operator?: IPackageManifest;
-  getOperator: (namespace: string, name: string) => Promise<void>;
+  getOperator: (cluster: string, namespace: string, name: string) => Promise<void>;
   isFetching: boolean;
   cluster: string;
   namespace: string;
   errors: IOperatorsStateError;
   createOperator: (
+    cluster: string,
     namespace: string,
     name: string,
     channel: string,
@@ -50,8 +51,8 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
   const [approvalStrategyAutomatic, setApprovalStrategyAutomatic] = useState(true);
 
   useEffect(() => {
-    dispatch(actions.operators.getOperator(namespace, operatorName));
-  }, [dispatch, namespace, operatorName]);
+    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+  }, [dispatch, cluster, namespace, operatorName]);
 
   const {
     operators: {
@@ -127,6 +128,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     const approvalStrategy = approvalStrategyAutomatic ? "Automatic" : "Manual";
     const deployed = await dispatch(
       actions.operators.createOperator(
+        cluster,
         targetNS,
         operator!.metadata.name,
         updateChannel!.name,
