@@ -40,7 +40,7 @@ export function parseCSV(
   crdName: string,
   setIcon: (icon: string) => void,
   setCRD: (crd: IClusterServiceVersionCRD) => void,
-  setDefaultValues: (v: string) => void,
+  setDefaultValues?: (v: string) => void,
 ) {
   const ownedCRDs = get(
     csv,
@@ -55,15 +55,17 @@ export function parseCSV(
     if (ownedCRD.name === crdName) {
       setCRD(ownedCRD);
       // Got the target CRD, extract the example
-      const kind = ownedCRD.kind;
-      const rawExamples = get(csv, 'metadata.annotations["alm-examples"]', "[]");
-      const examples = JSON.parse(rawExamples) as IResource[];
-      examples.forEach(example => {
-        if (example.kind === kind) {
-          // Found the example, set the default values
-          setDefaultValues(yaml.safeDump(example));
-        }
-      });
+      if (setDefaultValues) {
+        const kind = ownedCRD.kind;
+        const rawExamples = get(csv, 'metadata.annotations["alm-examples"]', "[]");
+        const examples = JSON.parse(rawExamples) as IResource[];
+        examples.forEach(example => {
+          if (example.kind === kind) {
+            // Found the example, set the default values
+            setDefaultValues(yaml.safeDump(example));
+          }
+        });
+      }
     }
   });
 }

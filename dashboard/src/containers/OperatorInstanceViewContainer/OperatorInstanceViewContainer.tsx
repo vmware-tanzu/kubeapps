@@ -31,6 +31,7 @@ function mapStateToProps(
     resource: operators.resource,
     csv: operators.csv,
     errors: operators.errors.resource,
+    UI: config.featureFlags.ui,
   };
 }
 
