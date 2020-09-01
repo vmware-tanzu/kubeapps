@@ -52,7 +52,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
 
   useEffect(() => {
     dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
-  }, [dispatch, namespace, operatorName]);
+  }, [dispatch, cluster, namespace, operatorName]);
 
   const {
     operators: {

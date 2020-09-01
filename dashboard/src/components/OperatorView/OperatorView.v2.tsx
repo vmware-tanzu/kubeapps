@@ -26,7 +26,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
-  }, [dispatch, namespace, operatorName]);
+  }, [dispatch, cluster, namespace, operatorName]);
 
   const {
     operators: {
@@ -47,7 +47,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
         dispatch(actions.operators.getCSV(cluster, namespace, defaultChannel.currentCSV));
       }
     }
-  }, [dispatch, operator, namespace]);
+  }, [dispatch, operator, cluster, namespace]);
 
   const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
 

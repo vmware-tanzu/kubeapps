@@ -81,7 +81,7 @@ export default function DeploymentFormBody({
 
   useEffect(() => {
     dispatch(actions.operators.getCSV(cluster, namespace, csvName));
-  }, [dispatch, namespace, csvName]);
+  }, [cluster, dispatch, namespace, csvName]);
 
   const {
     operators: {
