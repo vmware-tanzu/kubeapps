@@ -5,6 +5,7 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
 import { CdsButton } from "components/Clarity/clarity";
+import { cloneDeep } from "lodash";
 import { act } from "react-dom/test-utils";
 import { IClustersState } from "reducers/cluster";
 import ContextSelector from "./ContextSelector";
@@ -78,4 +79,47 @@ it("selects a different namespace", () => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
   });
   expect(setNamespace).toHaveBeenCalledWith("other");
+});
+
+it("shows the current cluster", () => {
+  const clusters = {
+    currentCluster: "bar",
+    clusters: {
+      foo: {
+        currentNamespace: "default",
+        namespaces: ["default"],
+      },
+      bar: {
+        currentNamespace: "default",
+        namespaces: ["default"],
+      },
+    },
+  } as IClustersState;
+  const wrapper = mount(
+    <Provider store={defaultStore}>
+      <ContextSelector {...defaultProps} clusters={clusters} />
+    </Provider>,
+  );
+  expect(
+    wrapper
+      .find("select")
+      .at(0)
+      .prop("value"),
+  ).toBe("bar");
+});
+
+it("shows the current namespace", () => {
+  const props = cloneDeep(defaultProps);
+  props.clusters.clusters.default.currentNamespace = "other";
+  const wrapper = mount(
+    <Provider store={defaultStore}>
+      <ContextSelector {...props} />
+    </Provider>,
+  );
+  expect(
+    wrapper
+      .find("select")
+      .at(1)
+      .prop("value"),
+  ).toBe("other");
 });

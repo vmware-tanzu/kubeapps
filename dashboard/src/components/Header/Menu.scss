@@ -8,14 +8,14 @@
 
 .kubeapps-menu {
   display: flex;
-  opacity: 75%;
+  opacity: 0.75;
   align-items: center;
   &:hover {
-    opacity: 100%;
+    opacity: 1;
     background-color: #25333d;
   }
   &.open {
-    opacity: 100%;
+    opacity: 1;
     background-color: #25333d;
   }
   button {
