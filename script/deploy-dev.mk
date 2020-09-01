@@ -26,12 +26,26 @@ deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 		--key ./devel/localhost-key.pem \
 		--cert ./devel/localhost-cert.pem
 
+template-test:
+	helm template kubeapps ./chart/kubeapps --namespace kubeapps \
+		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
+		--set useHelm3=true --show-only templates/kubeapps-frontend-config.yaml
+
+upgrade:
+	helm upgrade kubeapps ./chart/kubeapps --namespace kubeapps \
+		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
+		--set useHelm3=true --set featureFlags.ui=clarity
+
 deploy-dev: deploy-dependencies
 	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set useHelm3=true
+		--set useHelm3=true --set featureFlags.ui=clarity
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"

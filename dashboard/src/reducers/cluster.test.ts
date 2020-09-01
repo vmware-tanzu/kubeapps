@@ -321,7 +321,7 @@ describe("clusterReducer", () => {
       },
       clusters: ["additionalCluster1", "additionalCluster2"],
     } as IConfig;
-    it("adds the additional clusters to the clusters state", () => {
+    it("re-writes the clusters to match the config.clusters state", () => {
       expect(
         clusterReducer(initialTestState, {
           type: getType(actions.config.receiveConfig),
@@ -331,7 +331,6 @@ describe("clusterReducer", () => {
         ...initialTestState,
         currentCluster: "kubeappsCluster",
         clusters: {
-          ...initialTestState.clusters,
           additionalCluster1: {
             currentNamespace: "default",
             namespaces: [],
@@ -344,22 +343,26 @@ describe("clusterReducer", () => {
       } as IClustersState);
     });
 
-    it("does not error if there is not feature flag", () => {
-      const badConfig = {
+    it("creates a default cluster if no clusters defined", () => {
+      const configNoClusters = {
         ...config,
+        clusters: [],
       };
-      // Manually delete clusters so typescript doesn't complain
-      // while still allowing us to test the case where it is not present.
-      delete badConfig.clusters;
       expect(
         clusterReducer(initialTestState, {
           type: getType(actions.config.receiveConfig),
-          payload: badConfig,
+          payload: configNoClusters,
         }),
       ).toEqual({
         ...initialTestState,
         currentCluster: "kubeappsCluster",
-      });
+        clusters: {
+          default: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+        },
+      } as IClustersState);
     });
   });
 });

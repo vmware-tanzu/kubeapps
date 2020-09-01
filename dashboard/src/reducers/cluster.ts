@@ -146,17 +146,21 @@ const clusterReducer = (
       }
       break;
     case getType(actions.config.receiveConfig):
-      // Initialize the additional clusters when receiving the config.
-      const clusters = {
-        ...state.clusters,
-      };
+      // Initialize the clusters when receiving the config.
       const config = action.payload as IConfig;
+      const clusters: IClustersMap = {};
       config.clusters?.forEach(cluster => {
         clusters[cluster] = {
           currentNamespace: "default",
           namespaces: [],
         };
       });
+      if (Object.keys(clusters).length === 0) {
+        clusters.default = {
+          currentNamespace: "default",
+          namespaces: [],
+        };
+      }
       return {
         ...state,
         currentCluster: action.payload.kubeappsCluster,
