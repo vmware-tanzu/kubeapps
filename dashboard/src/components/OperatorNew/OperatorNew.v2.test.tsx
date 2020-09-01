@@ -75,7 +75,11 @@ it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   actions.operators.getOperator = getOperator;
   mountWrapper(defaultStore, <OperatorNew {...defaultProps} />);
-  expect(getOperator).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.operatorName);
+  expect(getOperator).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.operatorName,
+  );
 });
 
 it("parses the default channel when receiving the operator", () => {
@@ -139,5 +143,12 @@ it("deploys an operator", async () => {
   const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
   await onSubmit();
 
-  expect(createOperator).toHaveBeenCalledWith("kubeapps", "foo", "beta", "Automatic", "foo.1.0.0");
+  expect(createOperator).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    "kubeapps",
+    "foo",
+    "beta",
+    "Automatic",
+    "foo.1.0.0",
+  );
 });

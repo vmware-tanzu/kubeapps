@@ -72,7 +72,11 @@ it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   actions.operators.getOperator = getOperator;
   mountWrapper(defaultStore, <OperatorView {...defaultProps} />);
-  expect(getOperator).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.operatorName);
+  expect(getOperator).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.operatorName,
+  );
 });
 
 it("tries to get the CSV for the current operator", () => {
@@ -84,6 +88,7 @@ it("tries to get the CSV for the current operator", () => {
   );
 
   expect(getCSV).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultOperator.metadata.namespace,
     defaultOperator.status.channels[0].currentCSV,
   );

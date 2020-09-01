@@ -80,7 +80,7 @@ export default function DeploymentFormBody({
   const [icon, setIcon] = useState(placeholder);
 
   useEffect(() => {
-    dispatch(actions.operators.getCSV(namespace, csvName));
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
   }, [dispatch, namespace, csvName]);
 
   const {
@@ -119,7 +119,13 @@ export default function DeploymentFormBody({
     }
     const resourceType = crd.name.split(".")[0];
     const created = await dispatch(
-      actions.operators.createResource(namespace, resource.apiVersion, resourceType, resource),
+      actions.operators.createResource(
+        cluster,
+        namespace,
+        resource.apiVersion,
+        resourceType,
+        resource,
+      ),
     );
     if (created) {
       dispatch(
