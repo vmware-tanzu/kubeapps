@@ -36,10 +36,16 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    getResource: (namespace: string, csvName: string, crdName: string, resourceName: string) =>
-      dispatch(actions.operators.getResource(namespace, csvName, crdName, resourceName)),
-    deleteResource: (namespace: string, crdName: string, resource: IResource) =>
-      dispatch(actions.operators.deleteResource(namespace, crdName, resource)),
+    getResource: (
+      cluster: string,
+      namespace: string,
+      csvName: string,
+      crdName: string,
+      resourceName: string,
+    ) =>
+      dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName)),
+    deleteResource: (cluster: string, namespace: string, crdName: string, resource: IResource) =>
+      dispatch(actions.operators.deleteResource(cluster, namespace, crdName, resource)),
     push: (location: string) => dispatch(push(location)),
   };
 }

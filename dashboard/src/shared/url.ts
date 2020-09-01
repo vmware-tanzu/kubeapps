@@ -128,39 +128,45 @@ export const api = {
       `${api.k8s.namespaces(cluster)}/${namespace}`,
     // clusterservicebrokers and operators operate on the default cluster only, currently.
     clusterservicebrokers: {
-      sync: (broker: IServiceBroker) =>
-        `${api.k8s.base("default")}/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/${
+      sync: (cluster: string, broker: IServiceBroker) =>
+        `${api.k8s.base(cluster)}/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/${
           broker.metadata.name
         }`,
     },
     operators: {
-      operators: (namespace: string) =>
-        `${api.k8s.base("default")}/apis/packages.operators.coreos.com/v1/${withNS(
+      operators: (cluster: string, namespace: string) =>
+        `${api.k8s.base(cluster)}/apis/packages.operators.coreos.com/v1/${withNS(
           namespace,
         )}packagemanifests`,
-      operator: (namespace: string, name: string) =>
+      operator: (cluster: string, namespace: string, name: string) =>
         `${api.k8s.base(
-          "default",
+          cluster,
         )}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
-      clusterServiceVersions: (namespace: string) =>
-        `${api.k8s.base("default")}/apis/operators.coreos.com/v1alpha1/${withNS(
+      clusterServiceVersions: (cluster: string, namespace: string) =>
+        `${api.k8s.base(cluster)}/apis/operators.coreos.com/v1alpha1/${withNS(
           namespace,
         )}clusterserviceversions`,
-      clusterServiceVersion: (namespace: string, name: string) =>
+      clusterServiceVersion: (cluster: string, namespace: string, name: string) =>
         `${api.k8s.base(
-          "default",
+          cluster,
         )}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions/${name}`,
-      resources: (namespace: string, apiVersion: string, resource: string) =>
-        `${api.k8s.base("default")}/apis/${apiVersion}/${withNS(namespace)}${resource}`,
-      resource: (namespace: string, apiVersion: string, resource: string, name: string) =>
-        `${api.k8s.base("default")}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
-      operatorGroups: (namespace: string) =>
+      resources: (cluster: string, namespace: string, apiVersion: string, resource: string) =>
+        `${api.k8s.base(cluster)}/apis/${apiVersion}/${withNS(namespace)}${resource}`,
+      resource: (
+        cluster: string,
+        namespace: string,
+        apiVersion: string,
+        resource: string,
+        name: string,
+      ) =>
+        `${api.k8s.base(cluster)}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
+      operatorGroups: (cluster: string, namespace: string) =>
         `${api.k8s.base(
-          "default",
+          cluster,
         )}/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
-      subscription: (namespace: string, name: string) =>
+      subscription: (cluster: string, namespace: string, name: string) =>
         `${api.k8s.base(
-          "default",
+          cluster,
         )}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/${name}`,
     },
     secrets: (cluster: string, namespace: string) =>

@@ -83,7 +83,10 @@ export class ServiceBinding {
     return data;
   }
 
-  public static async list(namespace?: string): Promise<IServiceBindingWithSecret[]> {
+  public static async list(
+    cluster: string,
+    namespace?: string,
+  ): Promise<IServiceBindingWithSecret[]> {
     const bindings = await ServiceCatalog.getItems<IServiceBinding>("servicebindings", namespace);
 
     return Promise.all(
@@ -91,7 +94,7 @@ export class ServiceBinding {
         const { secretName } = binding.spec;
         const ns = binding.metadata.namespace;
         return axiosWithAuth
-          .get<IK8sApiSecretResponse>(url.api.k8s.secret("default", ns, secretName))
+          .get<IK8sApiSecretResponse>(url.api.k8s.secret(cluster, ns, secretName))
           .then(response => {
             return { binding, secret: response.data };
           })

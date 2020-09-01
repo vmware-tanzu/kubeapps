@@ -159,6 +159,7 @@ const clusterReducer = (
       });
       return {
         ...state,
+        currentCluster: action.payload.kubeappsCluster,
         clusters,
       };
     default:

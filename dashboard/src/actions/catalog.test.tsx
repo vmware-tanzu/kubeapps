@@ -18,6 +18,7 @@ const clusterClass = { metadata: { name: "cluster-class" } } as any;
 let store: any;
 const testArgs = {
   releaseName: "my-release",
+  kubeappsCluster: "kubeappsCluster",
   namespace: "my-namespace",
   className: "my-class",
   planName: "myPlan",
@@ -29,7 +30,11 @@ let boomFn: any;
 const errorPayload = (op: string) => ({ err: new Error("Boom!"), op });
 
 beforeEach(() => {
-  store = mockStore();
+  store = mockStore({
+    config: {
+      kubeappsCluster: testArgs.kubeappsCluster,
+    },
+  });
 
   ServiceInstance.create = jest.fn().mockImplementationOnce(() => {
     return { metadata: { name: testArgs.instanceName } };
@@ -330,7 +335,7 @@ describe("sync", () => {
   it("calls ServiceCatalog.syncBroker if no error", async () => {
     await store.dispatch(provisionCMD);
     expect(store.getActions().length).toBe(0);
-    expect(ServiceCatalog.syncBroker).toHaveBeenCalledWith(broker);
+    expect(ServiceCatalog.syncBroker).toHaveBeenCalledWith(testArgs.kubeappsCluster, broker);
   });
 
   it("dispatches errorCatalog if error", async () => {
@@ -364,7 +369,7 @@ describe("getBindings", () => {
 
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
-    expect(ServiceBinding.list).toHaveBeenCalledWith(testArgs.namespace);
+    expect(ServiceBinding.list).toHaveBeenCalledWith(testArgs.kubeappsCluster, testArgs.namespace);
   });
 
   it("dispatches requestBindingsWithSecrets and errorCatalog if error", async () => {

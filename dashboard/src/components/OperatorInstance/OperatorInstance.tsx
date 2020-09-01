@@ -27,12 +27,18 @@ export interface IOperatorInstanceProps {
   crdName: string;
   instanceName: string;
   getResource: (
+    cluster: string,
     namespace: string,
     csvName: string,
     crdName: string,
     resourceName: string,
   ) => Promise<void>;
-  deleteResource: (namespace: string, crdName: string, resource: IResource) => Promise<boolean>;
+  deleteResource: (
+    cluster: string,
+    namespace: string,
+    crdName: string,
+    resource: IResource,
+  ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   errors: {
     fetch?: Error;
@@ -55,8 +61,8 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   };
 
   public componentDidMount() {
-    const { csvName, crdName, instanceName, namespace, getResource } = this.props;
-    getResource(namespace, csvName, crdName, instanceName);
+    const { cluster, csvName, crdName, instanceName, namespace, getResource } = this.props;
+    getResource(cluster, namespace, csvName, crdName, instanceName);
   }
 
   public componentDidUpdate(prevProps: IOperatorInstanceProps) {
@@ -71,7 +77,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
       csv,
     } = this.props;
     if (prevProps.namespace !== namespace) {
-      getResource(namespace, csvName, crdName, instanceName);
+      getResource(cluster, namespace, csvName, crdName, instanceName);
       return;
     }
     let crd = this.state.crd;
@@ -285,9 +291,14 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   };
 
   private handleDeleteClick = async () => {
-    const { kubeappsCluster, namespace, resource } = this.props;
+    const { kubeappsCluster, cluster, namespace, resource } = this.props;
     const { crd } = this.state;
-    const deleted = await this.props.deleteResource(namespace, crd!.name.split(".")[0], resource!);
+    const deleted = await this.props.deleteResource(
+      cluster,
+      namespace,
+      crd!.name.split(".")[0],
+      resource!,
+    );
     this.closeModal();
     if (deleted) {
       this.props.push(app.apps.list(kubeappsCluster, namespace));

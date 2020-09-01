@@ -37,6 +37,7 @@ it("gets a resource", () => {
   const getResource = jest.fn();
   shallow(<OperatorInstanceUpdateForm {...defaultProps} getResource={getResource} />);
   expect(getResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     defaultProps.csvName,
     defaultProps.crdName,
@@ -68,6 +69,7 @@ it("should submit the form", () => {
   form.simulate("submit", { preventDefault: jest.fn() });
 
   expect(updateResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     defaultResource.apiVersion,
     defaultProps.crdName,

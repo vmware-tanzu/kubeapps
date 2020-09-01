@@ -29,15 +29,15 @@ import "./OperatorList.css";
 
 export interface IOperatorListProps {
   isFetching: boolean;
-  checkOLMInstalled: (namespace: string) => Promise<boolean>;
+  checkOLMInstalled: (cluster: string, namespace: string) => Promise<boolean>;
   isOLMInstalled: boolean;
   cluster: string;
   namespace: string;
   kubeappsCluster: string;
-  getOperators: (namespace: string) => Promise<void>;
+  getOperators: (cluster: string, namespace: string) => Promise<void>;
   operators: IPackageManifest[];
   error?: Error;
-  getCSVs: (namespace: string) => Promise<IClusterServiceVersion[]>;
+  getCSVs: (cluster: string, namespace: string) => Promise<IClusterServiceVersion[]>;
   csvs: IClusterServiceVersion[];
   filter: string;
   pushSearchFilter: (filter: string) => RouterAction;
@@ -81,20 +81,20 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
   };
 
   public componentDidMount() {
-    this.props.checkOLMInstalled(this.props.namespace);
-    this.props.getOperators(this.props.namespace);
-    this.props.getCSVs(this.props.namespace);
+    this.props.checkOLMInstalled(this.props.cluster, this.props.namespace);
+    this.props.getOperators(this.props.cluster, this.props.namespace);
+    this.props.getCSVs(this.props.cluster, this.props.namespace);
     this.setState({ filter: this.props.filter });
   }
 
   public componentDidUpdate(prevProps: IOperatorListProps) {
     if (prevProps.namespace !== this.props.namespace) {
-      this.props.getOperators(this.props.namespace);
-      this.props.getCSVs(this.props.namespace);
+      this.props.getOperators(this.props.cluster, this.props.namespace);
+      this.props.getCSVs(this.props.cluster, this.props.namespace);
     }
     if (this.props.filter !== prevProps.filter) {
-      this.props.getOperators(this.props.namespace);
-      this.props.getCSVs(this.props.namespace);
+      this.props.getOperators(this.props.cluster, this.props.namespace);
+      this.props.getCSVs(this.props.cluster, this.props.namespace);
       this.setState({ filter: this.props.filter });
     }
 

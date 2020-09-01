@@ -27,7 +27,7 @@ describe("checkOLMInstalled", () => {
         type: getType(operatorActions.OLMInstalled),
       },
     ];
-    await store.dispatch(operatorActions.checkOLMInstalled("ns"));
+    await store.dispatch(operatorActions.checkOLMInstalled("default", "ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -44,7 +44,7 @@ describe("checkOLMInstalled", () => {
         payload: new Error("nope"),
       },
     ];
-    await store.dispatch(operatorActions.checkOLMInstalled("ns"));
+    await store.dispatch(operatorActions.checkOLMInstalled("default", "ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -64,7 +64,7 @@ describe("getOperators", () => {
         payload: sortedOperators,
       },
     ];
-    await store.dispatch(operatorActions.getOperators("default"));
+    await store.dispatch(operatorActions.getOperators("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -81,7 +81,7 @@ describe("getOperators", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getOperators("default"));
+    await store.dispatch(operatorActions.getOperators("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -99,7 +99,7 @@ describe("getOperator", () => {
         payload: op,
       },
     ];
-    await store.dispatch(operatorActions.getOperator("default", "foo"));
+    await store.dispatch(operatorActions.getOperator("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -116,7 +116,7 @@ describe("getOperator", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getOperator("default", "foo"));
+    await store.dispatch(operatorActions.getOperator("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -136,7 +136,7 @@ describe("getCSVs", () => {
         payload: sortedCSVs,
       },
     ];
-    await store.dispatch(operatorActions.getCSVs("default"));
+    await store.dispatch(operatorActions.getCSVs("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -153,7 +153,7 @@ describe("getCSVs", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getCSVs("default"));
+    await store.dispatch(operatorActions.getCSVs("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -171,7 +171,7 @@ describe("getCSV", () => {
         payload: csv,
       },
     ];
-    await store.dispatch(operatorActions.getCSV("default", "foo"));
+    await store.dispatch(operatorActions.getCSV("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -188,7 +188,7 @@ describe("getCSV", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getCSV("default", "foo"));
+    await store.dispatch(operatorActions.getCSV("default", "default", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -206,7 +206,7 @@ describe("createResource", () => {
         payload: resource,
       },
     ];
-    await store.dispatch(operatorActions.createResource("default", "v1", "pods", {}));
+    await store.dispatch(operatorActions.createResource("default", "default", "v1", "pods", {}));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -223,7 +223,7 @@ describe("createResource", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.createResource("default", "v1", "pods", {}));
+    await store.dispatch(operatorActions.createResource("default", "default", "v1", "pods", {}));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -241,7 +241,9 @@ describe("updateResource", () => {
         payload: resource,
       },
     ];
-    await store.dispatch(operatorActions.updateResource("default", "v1", "pods", "foo", {}));
+    await store.dispatch(
+      operatorActions.updateResource("default", "default", "v1", "pods", "foo", {}),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -258,7 +260,9 @@ describe("updateResource", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.updateResource("default", "v1", "pods", "foo", {}));
+    await store.dispatch(
+      operatorActions.updateResource("default", "default", "v1", "pods", "foo", {}),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -292,9 +296,14 @@ describe("getResources", () => {
         payload: [resource],
       },
     ];
-    await store.dispatch(operatorActions.getResources("default"));
+    await store.dispatch(operatorActions.getResources("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Operators.listResources).toHaveBeenCalledWith("default", "kubeapps.com/v1alpha1", "foo");
+    expect(Operators.listResources).toHaveBeenCalledWith(
+      "default",
+      "default",
+      "kubeapps.com/v1alpha1",
+      "foo",
+    );
   });
 
   it("dispatches an error if listing resources fail", async () => {
@@ -328,7 +337,7 @@ describe("getResources", () => {
         payload: [],
       },
     ];
-    await store.dispatch(operatorActions.getResources("default"));
+    await store.dispatch(operatorActions.getResources("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -360,9 +369,12 @@ describe("getResources", () => {
         payload: resource,
       },
     ];
-    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    await store.dispatch(
+      operatorActions.getResource("default", "default", "foo", "foo.kubeapps.com", "bar"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(Operators.getResource).toHaveBeenCalledWith(
+      "default",
       "default",
       "kubeapps.com/v1alpha1",
       "foo",
@@ -397,7 +409,9 @@ describe("getResources", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    await store.dispatch(
+      operatorActions.getResource("default", "default", "foo", "foo.kubeapps.com", "bar"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -418,7 +432,9 @@ describe("getResources", () => {
         payload: new Error("CSV foo not found in default"),
       },
     ];
-    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    await store.dispatch(
+      operatorActions.getResource("default", "default", "foo", "foo.kubeapps.com", "bar"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -447,7 +463,7 @@ describe("getResources", () => {
       },
     ];
     await store.dispatch(
-      operatorActions.getResource("default", "foo", "not-foo.kubeapps.com", "bar"),
+      operatorActions.getResource("default", "default", "foo", "not-foo.kubeapps.com", "bar"),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -465,7 +481,7 @@ describe("deleteResource", () => {
         type: getType(operatorActions.resourceDeleted),
       },
     ];
-    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    await store.dispatch(operatorActions.deleteResource("default", "default", "foos", resource));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -483,7 +499,7 @@ describe("deleteResource", () => {
         payload: new Error("Boom!"),
       },
     ];
-    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    await store.dispatch(operatorActions.deleteResource("default", "default", "foos", resource));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -502,7 +518,7 @@ describe("createOperator", () => {
       },
     ];
     await store.dispatch(
-      operatorActions.createOperator("default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
+      operatorActions.createOperator("default", "default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -521,7 +537,7 @@ describe("createOperator", () => {
       },
     ];
     await store.dispatch(
-      operatorActions.createOperator("default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
+      operatorActions.createOperator("default", "default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });

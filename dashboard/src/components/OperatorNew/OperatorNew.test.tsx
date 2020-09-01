@@ -57,15 +57,27 @@ it("displays an alert if rendered for an additional cluster", () => {
 it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   shallow(<OperatorNew {...defaultProps} getOperator={getOperator} />);
-  expect(getOperator).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.operatorName);
+  expect(getOperator).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.operatorName,
+  );
 });
 
 it("calls getOperator when changing the namespace the component", () => {
   const getOperator = jest.fn();
   const wrapper = shallow(<OperatorNew {...defaultProps} getOperator={getOperator} />);
-  expect(getOperator).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.operatorName);
+  expect(getOperator).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.operatorName,
+  );
   wrapper.setProps({ namespace: "foo" });
-  expect(getOperator).toHaveBeenCalledWith("foo", defaultProps.operatorName);
+  expect(getOperator).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.operatorName,
+  );
 });
 
 it("parses the default channel when receiving the operator", () => {
@@ -130,6 +142,13 @@ it("deploys an operator", async () => {
   const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
   await onSubmit();
 
-  expect(createOperator).toHaveBeenCalledWith("operators", "foo", "beta", "Automatic", "foo.1.0.0");
+  expect(createOperator).toHaveBeenCalledWith(
+    "default",
+    "operators",
+    "foo",
+    "beta",
+    "Automatic",
+    "foo.1.0.0",
+  );
   expect(push).toHaveBeenCalledWith("/c/default/ns/operators/operators");
 });

@@ -33,9 +33,10 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    getOperator: (namespace: string, operatorName: string) =>
-      dispatch(actions.operators.getOperator(namespace, operatorName)),
+    getOperator: (cluster: string, namespace: string, operatorName: string) =>
+      dispatch(actions.operators.getOperator(cluster, namespace, operatorName)),
     createOperator: (
+      cluster: string,
       namespace: string,
       name: string,
       channel: string,
@@ -43,7 +44,14 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       csv: string,
     ) =>
       dispatch(
-        actions.operators.createOperator(namespace, name, channel, installPlanApproval, csv),
+        actions.operators.createOperator(
+          cluster,
+          namespace,
+          name,
+          channel,
+          installPlanApproval,
+          csv,
+        ),
       ),
     push: (location: string) => dispatch(push(location)),
   };

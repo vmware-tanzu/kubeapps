@@ -15,33 +15,37 @@ import OperatorHeader from "./OperatorHeader";
 export interface IOperatorViewProps {
   operatorName: string;
   operator?: IPackageManifest;
-  getOperator: (namespace: string, name: string) => Promise<void>;
+  getOperator: (cluster: string, namespace: string, name: string) => Promise<void>;
   isFetching: boolean;
   cluster: string;
   namespace: string;
   kubeappsCluster: string;
   error?: Error;
   push: (location: string) => RouterAction;
-  getCSV: (namespace: string, name: string) => Promise<IClusterServiceVersion | undefined>;
+  getCSV: (
+    cluster: string,
+    namespace: string,
+    name: string,
+  ) => Promise<IClusterServiceVersion | undefined>;
   csv?: IClusterServiceVersion;
 }
 
 class OperatorView extends React.Component<IOperatorViewProps> {
   public componentDidMount() {
-    const { operatorName, namespace, getOperator } = this.props;
-    getOperator(namespace, operatorName);
+    const { cluster, operatorName, namespace, getOperator } = this.props;
+    getOperator(cluster, namespace, operatorName);
   }
 
   public componentDidUpdate(prevProps: IOperatorViewProps) {
-    const { namespace, getOperator, getCSV } = this.props;
+    const { cluster, namespace, getOperator, getCSV } = this.props;
     if (prevProps.operator !== this.props.operator && this.props.operator) {
       const defaultChannel = Operators.getDefaultChannel(this.props.operator);
       if (defaultChannel) {
-        getCSV(namespace, defaultChannel.currentCSV);
+        getCSV(cluster, namespace, defaultChannel.currentCSV);
       }
     }
     if (prevProps.namespace !== this.props.namespace) {
-      getOperator(this.props.namespace, this.props.operatorName);
+      getOperator(cluster, this.props.namespace, this.props.operatorName);
     }
   }
 

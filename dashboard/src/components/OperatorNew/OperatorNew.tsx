@@ -16,13 +16,14 @@ import "./OperatorNew.css";
 export interface IOperatorNewProps {
   operatorName: string;
   operator?: IPackageManifest;
-  getOperator: (namespace: string, name: string) => Promise<void>;
+  getOperator: (cluster: string, namespace: string, name: string) => Promise<void>;
   isFetching: boolean;
   cluster: string;
   namespace: string;
   kubeappsCluster: string;
   errors: IOperatorsStateError;
   createOperator: (
+    cluster: string,
     namespace: string,
     name: string,
     channel: string,
@@ -49,8 +50,8 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
   };
 
   public componentDidMount() {
-    const { operatorName, namespace, getOperator } = this.props;
-    getOperator(namespace, operatorName);
+    const { cluster, operatorName, namespace, getOperator } = this.props;
+    getOperator(cluster, namespace, operatorName);
   }
 
   public componentDidUpdate(prevProps: IOperatorNewProps) {
@@ -64,7 +65,7 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
       });
     }
     if (prevProps.namespace !== this.props.namespace) {
-      this.props.getOperator(this.props.namespace, this.props.operatorName);
+      this.props.getOperator(this.props.cluster, this.props.namespace, this.props.operatorName);
     }
   }
 
@@ -265,6 +266,7 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
     const targetNS = installationModeGlobal ? "operators" : namespace;
     const approvalStrategy = approvalStrategyAutomatic ? "Automatic" : "Manual";
     const deployed = await createOperator(
+      cluster,
       targetNS,
       operator!.metadata.name,
       updateChannel!.name,

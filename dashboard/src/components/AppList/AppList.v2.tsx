@@ -23,7 +23,7 @@ export interface IAppListProps {
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
-  getCustomResources: (ns: string) => void;
+  getCustomResources: (cluster: string, ns: string) => void;
   customResources: IResource[];
   isFetchingResources: boolean;
   csvs: IClusterServiceVersion[];
@@ -49,7 +49,7 @@ function AppList(props: IAppListProps) {
 
   useEffect(() => {
     fetchAppsWithUpdateInfo(cluster, namespace, true);
-    getCustomResources(namespace);
+    getCustomResources(cluster, namespace);
   }, [cluster, namespace, fetchAppsWithUpdateInfo, getCustomResources]);
 
   useEffect(() => {

@@ -120,12 +120,13 @@ const actions = [
 export type OperatorAction = ActionType<typeof actions[number]>;
 
 export function checkOLMInstalled(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(checkingOLM());
     try {
-      const installed = await Operators.isOLMInstalled(namespace);
+      const installed = await Operators.isOLMInstalled(cluster, namespace);
       if (installed) {
         dispatch(OLMInstalled());
       }
@@ -138,12 +139,13 @@ export function checkOLMInstalled(
 }
 
 export function getOperators(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestOperators());
     try {
-      const operators = await Operators.getOperators(namespace);
+      const operators = await Operators.getOperators(cluster, namespace);
       const sortedOp = operators.sort((o1, o2) => (o1.metadata.name > o2.metadata.name ? 1 : -1));
       dispatch(receiveOperators(sortedOp));
     } catch (e) {
@@ -153,13 +155,14 @@ export function getOperators(
 }
 
 export function getOperator(
+  cluster: string,
   namespace: string,
   operatorName: string,
 ): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestOperator());
     try {
-      const operator = await Operators.getOperator(namespace, operatorName);
+      const operator = await Operators.getOperator(cluster, namespace, operatorName);
       dispatch(receiveOperator(operator));
     } catch (e) {
       dispatch(errorOperators(e));
@@ -168,12 +171,13 @@ export function getOperator(
 }
 
 export function getCSVs(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<IClusterServiceVersion[]>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCSVs());
     try {
-      const csvs = await Operators.getCSVs(namespace);
+      const csvs = await Operators.getCSVs(cluster, namespace);
       const sortedCSVs = csvs.sort((o1, o2) => (o1.metadata.name > o2.metadata.name ? 1 : -1));
       dispatch(receiveCSVs(sortedCSVs));
       return sortedCSVs;
@@ -185,13 +189,14 @@ export function getCSVs(
 }
 
 export function getCSV(
+  cluster: string,
   namespace: string,
   name: string,
 ): ThunkAction<Promise<IClusterServiceVersion | undefined>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCSV());
     try {
-      const csv = await Operators.getCSV(namespace, name);
+      const csv = await Operators.getCSV(cluster, namespace, name);
       dispatch(receiveCSV(csv));
       return csv;
     } catch (e) {
@@ -202,6 +207,7 @@ export function getCSV(
 }
 
 export function createResource(
+  cluster: string,
   namespace: string,
   apiVersion: string,
   resource: string,
@@ -210,7 +216,7 @@ export function createResource(
   return async dispatch => {
     dispatch(creatingResource());
     try {
-      const r = await Operators.createResource(namespace, apiVersion, resource, body);
+      const r = await Operators.createResource(cluster, namespace, apiVersion, resource, body);
       dispatch(resourceCreated(r));
       return true;
     } catch (e) {
@@ -221,6 +227,7 @@ export function createResource(
 }
 
 export function deleteResource(
+  cluster: string,
   namespace: string,
   plural: string,
   resource: IResource,
@@ -229,6 +236,7 @@ export function deleteResource(
     dispatch(deletingResource());
     try {
       await Operators.deleteResource(
+        cluster,
         namespace,
         resource.apiVersion,
         plural,
@@ -244,6 +252,7 @@ export function deleteResource(
 }
 
 export function updateResource(
+  cluster: string,
   namespace: string,
   apiVersion: string,
   resource: string,
@@ -253,7 +262,14 @@ export function updateResource(
   return async dispatch => {
     dispatch(updatingResource());
     try {
-      const r = await Operators.updateResource(namespace, apiVersion, resource, name, body);
+      const r = await Operators.updateResource(
+        cluster,
+        namespace,
+        apiVersion,
+        resource,
+        name,
+        body,
+      );
       dispatch(resourceUpdated(r));
       return true;
     } catch (e) {
@@ -271,17 +287,19 @@ function parseCRD(crdName: string) {
 }
 
 export function getResources(
+  cluster: string,
   namespace: string,
 ): ThunkAction<Promise<IResource[]>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCustomResources());
-    const csvs = await dispatch(getCSVs(namespace));
+    const csvs = await dispatch(getCSVs(cluster, namespace));
     let resources: IResource[] = [];
     const csvPromises = csvs.map(async csv => {
       const crdPromises = csv.spec.customresourcedefinitions.owned.map(async crd => {
         const { plural, group } = parseCRD(crd.name);
         try {
           const csvResources = await Operators.listResources(
+            cluster,
             namespace,
             `${group}/${crd.version}`,
             plural,
@@ -300,6 +318,7 @@ export function getResources(
 }
 
 export function getResource(
+  cluster: string,
   namespace: string,
   csvName: string,
   crdName: string,
@@ -307,13 +326,14 @@ export function getResource(
 ): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCustomResource());
-    const csv = await dispatch(getCSV(namespace, csvName));
+    const csv = await dispatch(getCSV(cluster, namespace, csvName));
     if (csv) {
       const crd = csv.spec.customresourcedefinitions.owned.find(c => c.name === crdName);
       if (crd) {
         const { plural, group } = parseCRD(crd.name);
         try {
           const resource = await Operators.getResource(
+            cluster,
             namespace,
             `${group}/${crd.version}`,
             plural,
@@ -337,6 +357,7 @@ export function getResource(
 }
 
 export function createOperator(
+  cluster: string,
   namespace: string,
   name: string,
   channel: string,
@@ -346,7 +367,14 @@ export function createOperator(
   return async dispatch => {
     dispatch(creatingOperator());
     try {
-      const r = await Operators.createOperator(namespace, name, channel, installPlanApproval, csv);
+      const r = await Operators.createOperator(
+        cluster,
+        namespace,
+        name,
+        channel,
+        installPlanApproval,
+        csv,
+      );
       dispatch(operatorCreated(r));
       return true;
     } catch (e) {
