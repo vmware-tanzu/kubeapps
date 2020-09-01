@@ -4,14 +4,14 @@
 }
 
 .kubeapps-dropdown {
-  opacity: 75%;
+  opacity: 0.75;
   padding-left: 0.5rem;
   &:hover {
-    opacity: 100%;
+    opacity: 1;
     background-color: #25333d;
   }
   &.open {
-    opacity: 100%;
+    opacity: 1;
     background-color: #25333d;
   }
   button {

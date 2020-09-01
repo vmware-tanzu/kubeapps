@@ -117,7 +117,12 @@ function ContextSelector({
             <CdsIcon size="sm" shape="file-group" inverse={true} />
             <span className="kubeapps-dropdown-text">Namespace</span>
             <div className="clr-select-wrapper">
-              <select name="namespaces" className="clr-page-size-select" onChange={selectNamespace}>
+              <select
+                name="namespaces"
+                className="clr-page-size-select"
+                onChange={selectNamespace}
+                value={namespace}
+              >
                 {clusters.clusters[cluster].namespaces.map(n => {
                   return (
                     <option key={`kubeapps-dropdown-namespace-${n}`} value={n}>
