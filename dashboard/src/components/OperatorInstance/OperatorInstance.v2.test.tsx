@@ -115,8 +115,13 @@ it("retrieves CSV and resource when mounted", () => {
   actions.operators.getCSV = getCSV;
   actions.operators.getResource = getResource;
   mountWrapper(defaultStore, <OperatorInstance {...defaultProps} />);
-  expect(getCSV).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.csvName);
+  expect(getCSV).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.csvName,
+  );
   expect(getResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     defaultProps.csvName,
     defaultProps.crdName,
@@ -176,7 +181,12 @@ it("deletes the resource", async () => {
   await act(async () => {
     await (dialog.prop("onConfirm") as any)();
   });
-  expect(deleteResource).toHaveBeenCalledWith(defaultProps.namespace, "foo", resource);
+  expect(deleteResource).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    "foo",
+    resource,
+  );
 });
 
 it("updates the state with the CRD resources", () => {

@@ -143,9 +143,9 @@ function OperatorInstance({
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
-    dispatch(actions.operators.getResource(namespace, csvName, crdName, instanceName));
-    dispatch(actions.operators.getCSV(namespace, csvName));
-  }, [dispatch, namespace, csvName, crdName, instanceName]);
+    dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, instanceName));
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+  }, [dispatch, cluster, namespace, csvName, crdName, instanceName]);
 
   useEffect(() => {
     if (csv) {
@@ -170,7 +170,7 @@ function OperatorInstance({
   const handleDeleteClick = async () => {
     setDeleting(true);
     const deleted = await dispatch(
-      actions.operators.deleteResource(namespace, crd!.name.split(".")[0], resource!),
+      actions.operators.deleteResource(cluster, namespace, crd!.name.split(".")[0], resource!),
     );
     setDeleting(false);
     closeModal();
