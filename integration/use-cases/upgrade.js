@@ -1,5 +1,5 @@
 test("Upgrades an application", async () => {
-  await page.goto(getUrl("/#/c/default/ns/default/catalog"));
+  await page.goto(getUrl("/#/c/default/ns/default/catalog/bitnami"));
 
   await expect(page).toFillForm("form", {
     token: process.env.EDIT_TOKEN
