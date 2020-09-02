@@ -146,7 +146,9 @@ export default function OperatorList({
         </div>
       </Alert>
       <LoadingWrapper loaded={!isFetching}>
-        {error && <Alert theme="danger">Found en error fetching operators: {error.message}</Alert>}
+        {error && (
+          <Alert theme="danger">An error occurred while fetching Operators: {error.message}</Alert>
+        )}
         {!isOLMInstalled ? (
           <OLMNotFound />
         ) : operators.length === 0 ? (

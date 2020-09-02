@@ -91,7 +91,11 @@ function AppUpgrade({
   }, [getDeployedChartVersion, app, chart, repoName, repoNamespace]);
 
   if (appsError) {
-    return <Alert theme="danger">Found error: {appsError.message}</Alert>;
+    return (
+      <Alert theme="danger">
+        An error occurred while processing the application: {appsError.message}
+      </Alert>
+    );
   }
   if (appsIsFetching || !app || !app.updateInfo) {
     return <LoadingWrapper loaded={false} />;
