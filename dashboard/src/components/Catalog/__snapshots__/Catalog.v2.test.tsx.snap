@@ -2,22 +2,17 @@
 
 exports[`when fetching apps loading spinner matches the snapshot 1`] = `
 <section>
-  <PageHeader>
-    <Row
-      list={false}
-    >
-      <h1>
-        Catalog
-      </h1>
+  <PageHeader
+    filter={
       <SearchFilter
-        key="searchFilter"
         onChange={[Function]}
         onSubmit={[MockFunction]}
         placeholder="search charts..."
         value=""
       />
-    </Row>
-  </PageHeader>
+    }
+    title="Catalog"
+  />
   <LoadingWrapper
     loaded={false}
   >

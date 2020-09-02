@@ -2,34 +2,10 @@
 
 exports[`when an error is present matches the snapshot 1`] = `
 <section>
-  <PageHeader>
-    <Column
-      listItem={false}
-      span={10}
-    >
-      <Row
-        list={false}
-      >
-        <h1>
-          Applications
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search apps..."
-          value=""
-        />
-      </Row>
-    </Column>
-    <Column
-      listItem={false}
-      span={2}
-    >
-      <div
-        className="header-button"
-      >
-        <Link
+  <PageHeader
+    buttons={
+      Array [
+        <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
           <ReactWrapperComponent
@@ -41,10 +17,19 @@ exports[`when an error is present matches the snapshot 1`] = `
             />
              Deploy
           </ReactWrapperComponent>
-        </Link>
-      </div>
-    </Column>
-  </PageHeader>
+        </ForwardRef>,
+      ]
+    }
+    filter={
+      <SearchFilter
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search apps..."
+        value=""
+      />
+    }
+    title="Applications"
+  />
   <LoadingWrapper
     loaded={true}
   >
@@ -62,34 +47,10 @@ exports[`when an error is present matches the snapshot 1`] = `
 
 exports[`when an error is present renders a generic error message 1`] = `
 <section>
-  <PageHeader>
-    <Column
-      listItem={false}
-      span={10}
-    >
-      <Row
-        list={false}
-      >
-        <h1>
-          Applications
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search apps..."
-          value=""
-        />
-      </Row>
-    </Column>
-    <Column
-      listItem={false}
-      span={2}
-    >
-      <div
-        className="header-button"
-      >
-        <Link
+  <PageHeader
+    buttons={
+      Array [
+        <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
           <ReactWrapperComponent
@@ -101,10 +62,19 @@ exports[`when an error is present renders a generic error message 1`] = `
             />
              Deploy
           </ReactWrapperComponent>
-        </Link>
-      </div>
-    </Column>
-  </PageHeader>
+        </ForwardRef>,
+      ]
+    }
+    filter={
+      <SearchFilter
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search apps..."
+        value=""
+      />
+    }
+    title="Applications"
+  />
   <LoadingWrapper
     loaded={true}
   >
@@ -122,34 +92,10 @@ exports[`when an error is present renders a generic error message 1`] = `
 
 exports[`when apps available matches the snapshot 1`] = `
 <section>
-  <PageHeader>
-    <Column
-      listItem={false}
-      span={10}
-    >
-      <Row
-        list={false}
-      >
-        <h1>
-          Applications
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search apps..."
-          value=""
-        />
-      </Row>
-    </Column>
-    <Column
-      listItem={false}
-      span={2}
-    >
-      <div
-        className="header-button"
-      >
-        <Link
+  <PageHeader
+    buttons={
+      Array [
+        <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
           <ReactWrapperComponent
@@ -161,10 +107,19 @@ exports[`when apps available matches the snapshot 1`] = `
             />
              Deploy
           </ReactWrapperComponent>
-        </Link>
-      </div>
-    </Column>
-  </PageHeader>
+        </ForwardRef>,
+      ]
+    }
+    filter={
+      <SearchFilter
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search apps..."
+        value=""
+      />
+    }
+    title="Applications"
+  />
   <LoadingWrapper
     loaded={true}
   >
@@ -195,34 +150,10 @@ exports[`when apps available matches the snapshot 1`] = `
 
 exports[`when custom resources available matches the snapshot 1`] = `
 <section>
-  <PageHeader>
-    <Column
-      listItem={false}
-      span={10}
-    >
-      <Row
-        list={false}
-      >
-        <h1>
-          Applications
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search apps..."
-          value=""
-        />
-      </Row>
-    </Column>
-    <Column
-      listItem={false}
-      span={2}
-    >
-      <div
-        className="header-button"
-      >
-        <Link
+  <PageHeader
+    buttons={
+      Array [
+        <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
           <ReactWrapperComponent
@@ -234,10 +165,19 @@ exports[`when custom resources available matches the snapshot 1`] = `
             />
              Deploy
           </ReactWrapperComponent>
-        </Link>
-      </div>
-    </Column>
-  </PageHeader>
+        </ForwardRef>,
+      ]
+    }
+    filter={
+      <SearchFilter
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search apps..."
+        value=""
+      />
+    }
+    title="Applications"
+  />
   <LoadingWrapper
     loaded={true}
   >
@@ -281,34 +221,10 @@ exports[`when custom resources available matches the snapshot 1`] = `
 
 exports[`when fetched but not apps available matches the snapshot 1`] = `
 <section>
-  <PageHeader>
-    <Column
-      listItem={false}
-      span={10}
-    >
-      <Row
-        list={false}
-      >
-        <h1>
-          Applications
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search apps..."
-          value=""
-        />
-      </Row>
-    </Column>
-    <Column
-      listItem={false}
-      span={2}
-    >
-      <div
-        className="header-button"
-      >
-        <Link
+  <PageHeader
+    buttons={
+      Array [
+        <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
           <ReactWrapperComponent
@@ -320,10 +236,19 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
             />
              Deploy
           </ReactWrapperComponent>
-        </Link>
-      </div>
-    </Column>
-  </PageHeader>
+        </ForwardRef>,
+      ]
+    }
+    filter={
+      <SearchFilter
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search apps..."
+        value=""
+      />
+    }
+    title="Applications"
+  />
   <LoadingWrapper
     loaded={true}
   >
@@ -342,34 +267,10 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
 
 exports[`while fetching apps loading spinner matches the snapshot 1`] = `
 <section>
-  <PageHeader>
-    <Column
-      listItem={false}
-      span={10}
-    >
-      <Row
-        list={false}
-      >
-        <h1>
-          Applications
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search apps..."
-          value=""
-        />
-      </Row>
-    </Column>
-    <Column
-      listItem={false}
-      span={2}
-    >
-      <div
-        className="header-button"
-      >
-        <Link
+  <PageHeader
+    buttons={
+      Array [
+        <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
           <ReactWrapperComponent
@@ -381,10 +282,19 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
             />
              Deploy
           </ReactWrapperComponent>
-        </Link>
-      </div>
-    </Column>
-  </PageHeader>
+        </ForwardRef>,
+      ]
+    }
+    filter={
+      <SearchFilter
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search apps..."
+        value=""
+      />
+    }
+    title="Applications"
+  />
   <LoadingWrapper
     loaded={false}
   >
@@ -402,34 +312,10 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
 
 exports[`while fetching apps loading spinner matches the snapshot 2`] = `
 <section>
-  <PageHeader>
-    <Column
-      listItem={false}
-      span={10}
-    >
-      <Row
-        list={false}
-      >
-        <h1>
-          Applications
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search apps..."
-          value=""
-        />
-      </Row>
-    </Column>
-    <Column
-      listItem={false}
-      span={2}
-    >
-      <div
-        className="header-button"
-      >
-        <Link
+  <PageHeader
+    buttons={
+      Array [
+        <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
           <ReactWrapperComponent
@@ -441,10 +327,19 @@ exports[`while fetching apps loading spinner matches the snapshot 2`] = `
             />
              Deploy
           </ReactWrapperComponent>
-        </Link>
-      </div>
-    </Column>
-  </PageHeader>
+        </ForwardRef>,
+      ]
+    }
+    filter={
+      <SearchFilter
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search apps..."
+        value=""
+      />
+    }
+    title="Applications"
+  />
   <LoadingWrapper
     loaded={false}
   >

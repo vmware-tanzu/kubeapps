@@ -12,7 +12,6 @@ import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader.v2";
 import { Link } from "react-router-dom";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import helmIcon from "../../icons/helm.svg";
 import ResourceRef from "../../shared/ResourceRef";
 import { IK8sList, IRelease, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
@@ -162,8 +161,33 @@ export default function AppView({
   const icon = get(app, "chart.metadata.icon", placeholder);
   return (
     <section>
-      <PageHeader>
-        <div className="kubeapps-header-content">
+      <PageHeader
+        title={releaseName}
+        titleSize="md"
+        helm={true}
+        icon={icon}
+        buttons={[
+          <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)} key="upgrade-button">
+            <CdsButton status="primary">
+              <CdsIcon shape="upload-cloud" inverse={true} /> Upgrade
+            </CdsButton>
+          </Link>,
+          <RollbackButton
+            key="rollback-button"
+            cluster={cluster}
+            namespace={namespace}
+            releaseName={releaseName}
+            revision={app?.version || 0}
+          />,
+          <DeleteButton
+            key="delete-button"
+            cluster={cluster}
+            namespace={namespace}
+            releaseName={releaseName}
+          />,
+        ]}
+      />
+      {/* <div className="kubeapps-header-content">
           <Row>
             <Column span={7}>
               <Row>
@@ -207,7 +231,7 @@ export default function AppView({
             </Column>
           </Row>
         </div>
-      </PageHeader>
+      </PageHeader> */}
 
       {error && <Alert theme="danger">Found an error: {error.message}</Alert>}
       {deleteError && (

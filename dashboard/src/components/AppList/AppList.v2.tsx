@@ -6,12 +6,10 @@ import { CdsButton, CdsIcon } from "../Clarity/clarity";
 import { IFeatureFlags } from "../../shared/Config";
 import { IAppState, IClusterServiceVersion, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
-import Column from "../js/Column";
 import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
 
 import Alert from "components/js/Alert";
-import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import "./AppList.v2.css";
 import AppListGrid from "./AppListGrid";
@@ -58,29 +56,25 @@ function AppList(props: IAppListProps) {
 
   return (
     <section>
-      <PageHeader>
-        <Column span={10}>
-          <Row>
-            <h1>Applications</h1>
-            <SearchFilter
-              key="searchFilter"
-              placeholder="search apps..."
-              onChange={setFilter}
-              value={filter}
-              onSubmit={pushSearchFilter}
-            />
-          </Row>
-        </Column>
-        <Column span={2}>
-          <div className="header-button">
-            <Link to={url.app.catalog(cluster, namespace)}>
-              <CdsButton status="primary">
-                <CdsIcon shape="deploy" inverse={true} /> Deploy
-              </CdsButton>
-            </Link>
-          </div>
-        </Column>
-      </PageHeader>
+      <PageHeader
+        title="Applications"
+        filter={
+          <SearchFilter
+            key="searchFilter"
+            placeholder="search apps..."
+            onChange={setFilter}
+            value={filter}
+            onSubmit={pushSearchFilter}
+          />
+        }
+        buttons={[
+          <Link to={url.app.catalog(cluster, namespace)} key="deploy-button">
+            <CdsButton status="primary">
+              <CdsIcon shape="deploy" inverse={true} /> Deploy
+            </CdsButton>
+          </Link>,
+        ]}
+      />
       <LoadingWrapper loaded={!isFetching && !isFetchingResources}>
         {error ? (
           <Alert theme="danger">Unable to list apps: {error.message}</Alert>

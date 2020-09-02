@@ -111,9 +111,9 @@ function Catalog(props: ICatalogProps) {
 
   return (
     <section>
-      <PageHeader>
-        <Row>
-          <h1>Catalog</h1>
+      <PageHeader
+        title="Catalog"
+        filter={
           <SearchFilter
             key="searchFilter"
             placeholder="search charts..."
@@ -121,8 +121,8 @@ function Catalog(props: ICatalogProps) {
             value={searchFilter}
             onSubmit={pushSearchFilter}
           />
-        </Row>
-      </PageHeader>
+        }
+      />
       <LoadingWrapper loaded={!isFetching}>
         {error && (
           <Alert theme="danger">Found en error fetching the catalog: {error.message}</Alert>

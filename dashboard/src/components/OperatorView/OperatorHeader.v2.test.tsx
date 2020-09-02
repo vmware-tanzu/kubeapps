@@ -1,4 +1,4 @@
-import { mount, shallow } from "enzyme";
+import { mount } from "enzyme";
 import * as React from "react";
 import OperatorHeader from "./OperatorHeader.v2";
 
@@ -9,7 +9,7 @@ const defaultProps = {
 };
 
 it("fallbacks to the default icon if not set", () => {
-  const wrapper = shallow(<OperatorHeader {...defaultProps} icon={undefined} />);
+  const wrapper = mount(<OperatorHeader {...defaultProps} icon={undefined} />);
   expect(
     wrapper
       .find("img")
@@ -24,11 +24,9 @@ it("includes the id, provider and version", () => {
   expect(wrapper).toIncludeText("Operator Version: 1.0.0");
 });
 
-it("renders children component", () => {
-  const wrapper = shallow(
-    <OperatorHeader {...defaultProps}>
-      <div id="foo" />
-    </OperatorHeader>,
+it("renders buttons", () => {
+  const wrapper = mount(
+    <OperatorHeader {...defaultProps} buttons={[<div key="foo" id="foo" />]} />,
   );
   expect(wrapper.find("#foo")).toExist();
 });
