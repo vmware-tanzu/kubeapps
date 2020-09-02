@@ -27,7 +27,7 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 )
 
-const clustersCAFilesPrefix = "/etc/clusters-cafiles"
+const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
 
 var (
 	additionalClustersConfigPath string
