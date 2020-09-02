@@ -66,14 +66,22 @@ context("while fetching apps", () => {
   });
 
   it("renders a Application header", () => {
-    const wrapper = shallow(<AppList {...props} />);
+    const wrapper = mount(
+      <Router>
+        <AppList {...props} />
+      </Router>,
+    );
     expect(wrapper.find("h1").text()).toContain("Applications");
   });
 
   it("shows the search filter and deploy button", () => {
-    const wrapper = shallow(<AppList {...props} />);
+    const wrapper = mount(
+      <Router>
+        <AppList {...props} />
+      </Router>,
+    );
     expect(wrapper.find("SearchFilter")).toExist();
-    expect(wrapper.find("Link").findWhere(l => l.text().includes("Deploy"))).toExist();
+    expect(wrapper.find("Link")).toExist();
   });
 });
 
@@ -97,9 +105,13 @@ context("when fetched but not apps available", () => {
   });
 
   it("shows the search filter and deploy button", () => {
-    const wrapper = shallow(<AppList {...props} />);
+    const wrapper = mount(
+      <Router>
+        <AppList {...props} />
+      </Router>,
+    );
     expect(wrapper.find("SearchFilter")).toExist();
-    expect(wrapper.find("Link").findWhere(l => l.text().includes("Deploy"))).toExist();
+    expect(wrapper.find("Link")).toExist();
   });
 });
 
@@ -121,7 +133,11 @@ context("when an error is present", () => {
   });
 
   it("renders a Application header", () => {
-    const wrapper = shallow(<AppList {...props} />);
+    const wrapper = mount(
+      <Router>
+        <AppList {...props} />
+      </Router>,
+    );
     expect(wrapper.find("h1").text()).toContain("Applications");
   });
 });

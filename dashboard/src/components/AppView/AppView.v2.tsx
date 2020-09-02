@@ -187,52 +187,6 @@ export default function AppView({
           />,
         ]}
       />
-      {/* <div className="kubeapps-header-content">
-          <Row>
-            <Column span={7}>
-              <Row>
-                <img src={icon} alt="app-icon" />
-                <div className="kubeapps-title-block">
-                  <h3>{releaseName}</h3>
-                  <div className="kubeapps-header-subtitle">
-                    <img src={helmIcon} alt="helm-icon" />
-                    <span>Helm Chart</span>
-                  </div>
-                </div>
-              </Row>
-            </Column>
-            <Column span={5}>
-              <div className="control-buttons">
-                <Row>
-                  <div className="header-button">
-                    <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
-                      <CdsButton status="primary">
-                        <CdsIcon shape="upload-cloud" inverse={true} /> Upgrade
-                      </CdsButton>
-                    </Link>
-                  </div>
-                  <div className="header-button">
-                    <RollbackButton
-                      cluster={cluster}
-                      namespace={namespace}
-                      releaseName={releaseName}
-                      revision={app?.version || 0}
-                    />
-                  </div>
-                  <div className="header-button">
-                    <DeleteButton
-                      cluster={cluster}
-                      namespace={namespace}
-                      releaseName={releaseName}
-                    />
-                  </div>
-                </Row>
-              </div>
-            </Column>
-          </Row>
-        </div>
-      </PageHeader> */}
-
       {error && <Alert theme="danger">Found an error: {error.message}</Alert>}
       {deleteError && (
         <Alert theme="danger">
