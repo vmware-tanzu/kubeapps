@@ -61,7 +61,8 @@ func main() {
 		log.Fatal("POD_NAMESPACE should be defined")
 	}
 
-	var clustersConfig kube.ClustersConfig
+	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
+	clustersConfig := kube.ClustersConfig{KubeappsClusterName: "default"}
 	// TODO(absoludity): remove support for --additional-clusters-config-path once we're +2 releases away.
 	if clustersConfigPath == "" && additionalClustersConfigPath != "" {
 		clustersConfigPath = additionalClustersConfigPath
