@@ -30,13 +30,14 @@ import (
 const clustersCAFilesPrefix = "/etc/clusters-cafiles"
 
 var (
-	clustersConfigPath string
-	assetsvcURL        string
-	helmDriverArg      string
-	listLimit          int
-	settings           environment.EnvSettings
-	timeout            int64
-	userAgentComment   string
+	additionalClustersConfigPath string
+	clustersConfigPath           string
+	assetsvcURL                  string
+	helmDriverArg                string
+	listLimit                    int
+	settings                     environment.EnvSettings
+	timeout                      int64
+	userAgentComment             string
 )
 
 func init() {
@@ -48,6 +49,7 @@ func init() {
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&clustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
+	pflag.StringVar(&additionalClustersConfigPath, "additional-clusters-config-path", "", "Configuration for clusters")
 }
 
 func main() {
@@ -60,6 +62,10 @@ func main() {
 	}
 
 	var clustersConfig kube.ClustersConfig
+	// TODO(absoludity): remove support for --additional-clusters-config-path once we're +2 releases away.
+	if clustersConfigPath == "" && additionalClustersConfigPath != "" {
+		clustersConfigPath = additionalClustersConfigPath
+	}
 	if clustersConfigPath != "" {
 		var err error
 		var cleanupCAFiles func()
