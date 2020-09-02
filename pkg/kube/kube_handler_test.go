@@ -868,6 +868,7 @@ func TestGetNamespaces(t *testing.T) {
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
 				kubeappsNamespace:  "kubeapps",
 				svcClientset:       svcClientSet,
+				clustersConfig:     ClustersConfig{KubeappsClusterName: "default"},
 			}
 
 			userHandler, err := handler.AsUser("token", "default")
@@ -1000,18 +1001,19 @@ func TestValidateAppRepository(t *testing.T) {
 
 func TestNewClusterConfig(t *testing.T) {
 	testCases := []struct {
-		name               string
-		token              string
-		cluster            string
-		additionalClusters AdditionalClustersConfig
-		inClusterConfig    *rest.Config
-		expectedConfig     *rest.Config
-		errorExpected      bool
+		name            string
+		token           string
+		cluster         string
+		clustersConfig  ClustersConfig
+		inClusterConfig *rest.Config
+		expectedConfig  *rest.Config
+		errorExpected   bool
 	}{
 		{
-			name:    "returns an in-cluster with explicit token for the default cluster",
-			token:   "token-1",
-			cluster: "default",
+			name:           "returns an in-cluster with explicit token for the default cluster",
+			token:          "token-1",
+			cluster:        "default",
+			clustersConfig: ClustersConfig{KubeappsClusterName: "default"},
 			inClusterConfig: &rest.Config{
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
@@ -1025,11 +1027,14 @@ func TestNewClusterConfig(t *testing.T) {
 			name:    "returns a config setup for an additional cluster",
 			token:   "token-1",
 			cluster: "cluster-1",
-			additionalClusters: AdditionalClustersConfig{
-				"cluster-1": {
-					APIServiceURL:            "https://cluster-1.example.com:7890",
-					CertificateAuthorityData: "ca-file-data",
-					CAFile:                   "/tmp/ca-file-data",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"cluster-1": {
+						APIServiceURL:            "https://cluster-1.example.com:7890",
+						CertificateAuthorityData: "ca-file-data",
+						CAFile:                   "/tmp/ca-file-data",
+					},
 				},
 			},
 			inClusterConfig: &rest.Config{
@@ -1054,9 +1059,12 @@ func TestNewClusterConfig(t *testing.T) {
 			name:    "assumes a public cert if no ca data provided",
 			token:   "token-1",
 			cluster: "cluster-1",
-			additionalClusters: AdditionalClustersConfig{
-				"cluster-1": {
-					APIServiceURL: "https://cluster-1.example.com:7890",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"cluster-1": {
+						APIServiceURL: "https://cluster-1.example.com:7890",
+					},
 				},
 			},
 			inClusterConfig: &rest.Config{
@@ -1083,7 +1091,7 @@ func TestNewClusterConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			config, err := NewClusterConfig(tc.inClusterConfig, tc.token, tc.cluster, tc.additionalClusters)
+			config, err := NewClusterConfig(tc.inClusterConfig, tc.token, tc.cluster, tc.clustersConfig)
 			if got, want := err != nil, tc.errorExpected; got != want {
 				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
 			}

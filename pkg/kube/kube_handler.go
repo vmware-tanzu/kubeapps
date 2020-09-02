@@ -41,13 +41,8 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-const (
-	// DefaultClusterName is the string used to identify the internal cluster.
-	DefaultClusterName = "default"
-)
-
-// AdditionalClusterConfig contains required info to talk to additional clusters.
-type AdditionalClusterConfig struct {
+// ClusterConfig contains required info to talk to additional clusters.
+type ClusterConfig struct {
 	Name                     string `json:"name"`
 	APIServiceURL            string `json:"apiServiceURL"`
 	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
@@ -67,20 +62,23 @@ type AdditionalClusterConfig struct {
 	Insecure bool `json:"insecure"`
 }
 
-// AdditionalClustersConfig is an alias for a map of additional cluster configs.
-type AdditionalClustersConfig map[string]AdditionalClusterConfig
+// ClustersConfig is an alias for a map of additional cluster configs.
+type ClustersConfig struct {
+	KubeappsClusterName string
+	Clusters            map[string]ClusterConfig
+}
 
 // NewClusterConfig returns a copy of an in-cluster config with a custom token and/or custom cluster host
-func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string, additionalClusters AdditionalClustersConfig) (*rest.Config, error) {
+func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string, clustersConfig ClustersConfig) (*rest.Config, error) {
 	config := rest.CopyConfig(inClusterConfig)
 	config.BearerToken = token
 	config.BearerTokenFile = ""
 
-	if cluster == DefaultClusterName {
+	if cluster == clustersConfig.KubeappsClusterName {
 		return config, nil
 	}
 
-	additionalCluster, ok := additionalClusters[cluster]
+	additionalCluster, ok := clustersConfig.Clusters[cluster]
 	if !ok {
 		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
 	}
@@ -130,7 +128,7 @@ type kubeHandler struct {
 	svcClientset combinedClientsetInterface
 
 	// Configuration for additional clusters which may be requested.
-	additionalClustersConfig AdditionalClustersConfig
+	clustersConfig ClustersConfig
 
 	// clientsetForConfig is a field on the struct only so it can be switched
 	// for a fake version when testing. NewAppRepositoryhandler sets it to the
@@ -183,7 +181,7 @@ type AuthHandler interface {
 }
 
 func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
-	config, err := NewClusterConfig(&a.config, token, cluster, a.additionalClustersConfig)
+	config, err := NewClusterConfig(&a.config, token, cluster, a.clustersConfig)
 	if err != nil {
 		log.Errorf("unable to create config: %v", err)
 		return nil, err
@@ -200,10 +198,10 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 	// iff the users own credential does not suffice. If a service token is not configured
 	// for the cluster, the namespace selector remains unpopulated.
 	var svcClientset combinedClientsetInterface
-	if cluster == DefaultClusterName {
+	if cluster == a.clustersConfig.KubeappsClusterName {
 		svcClientset = a.svcClientset
 	} else {
-		additionalCluster, ok := a.additionalClustersConfig[cluster]
+		additionalCluster, ok := a.clustersConfig.Clusters[cluster]
 		if !ok {
 			return nil, fmt.Errorf("cluster %q has no configuration", cluster)
 		}
@@ -253,7 +251,7 @@ var ErrGlobalRepositoryWithSecrets = fmt.Errorf("docker registry secrets cannot 
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
-func NewHandler(kubeappsNamespace string, additionalClusters AdditionalClustersConfig) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace string, clustersConfig ClustersConfig) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -285,9 +283,9 @@ func NewHandler(kubeappsNamespace string, additionalClusters AdditionalClustersC
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
-		clientsetForConfig:       clientsetForConfig,
-		svcClientset:             svcClientset,
-		additionalClustersConfig: additionalClusters,
+		clientsetForConfig: clientsetForConfig,
+		svcClientset:       svcClientset,
+		clustersConfig:     clustersConfig,
 	}, nil
 }
 

@@ -171,7 +171,7 @@ func TestParseDetails(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ch := ChartClient{}
+			ch := Client{}
 			details, err := ch.ParseDetails([]byte(tc.data))
 
 			if tc.err {
@@ -333,7 +333,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			Spec: tc.appRepoSpec,
 		}}
 
-		chUtils := ChartClient{
+		chUtils := Client{
 			appRepoHandler:    &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos},
 			kubeappsNamespace: metav1.NamespaceSystem,
 		}
@@ -488,7 +488,7 @@ func TestGetChart(t *testing.T) {
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
-			chUtils := ChartClient{
+			chUtils := Client{
 				userAgent: tc.userAgent,
 				appRepo: &appRepov1.AppRepository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -779,7 +779,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &kube.FakeHandler{Secrets: tc.existingSecrets}
 
-			secretsPerDomain, err := getRegistrySecretsPerDomain(tc.secretNames, namespace, "token", client)
+			secretsPerDomain, err := getRegistrySecretsPerDomain(tc.secretNames, "default", namespace, "token", client)
 			if got, want := err != nil, tc.expectError; !cmp.Equal(got, want) {
 				t.Fatalf("got: %t, want: %t, err was: %+v", got, want, err)
 			}
