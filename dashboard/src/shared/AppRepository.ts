@@ -18,7 +18,10 @@ export class AppRepository {
     const repo = await AppRepository.get(cluster, name, namespace);
     repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
     repo.spec.resyncRequests++;
-    const { data } = await axiosWithAuth.put(AppRepository.getSelfLink(cluster, namespace, name), repo);
+    const { data } = await axiosWithAuth.put(
+      AppRepository.getSelfLink(cluster, namespace, name),
+      repo,
+    );
     return data;
   }
 
@@ -70,7 +73,12 @@ export class AppRepository {
     return data;
   }
 
-  public static async validate(cluster: string, repoURL: string, authHeader: string, customCA: string) {
+  public static async validate(
+    cluster: string,
+    repoURL: string,
+    authHeader: string,
+    customCA: string,
+  ) {
     const { data } = await axiosWithAuth.post<any>(url.backend.apprepositories.validate(cluster), {
       appRepository: { repoURL, authHeader, customCA },
     });
@@ -78,8 +86,8 @@ export class AppRepository {
   }
 
   private static APIEndpoint(cluster: string): string {
-    return `${APIBase(cluster)}/apis/kubeapps.com/v1alpha1`
-  };
+    return `${APIBase(cluster)}/apis/kubeapps.com/v1alpha1`;
+  }
   private static getSelfLink(cluster: string, namespace: string, name?: string): string {
     return `${AppRepository.APIEndpoint(cluster)}/namespaces/${namespace}/apprepositories${
       name ? `/${name}` : ""

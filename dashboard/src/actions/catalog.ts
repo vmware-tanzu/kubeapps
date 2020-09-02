@@ -68,10 +68,20 @@ export function provision(
   planName: string,
   parameters: {},
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     try {
       const filteredParams = helpers.object.removeEmptyFields(parameters);
-      await ServiceInstance.create(releaseName, namespace, className, planName, filteredParams);
+      await ServiceInstance.create(
+        currentCluster,
+        releaseName,
+        namespace,
+        className,
+        planName,
+        filteredParams,
+      );
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
@@ -86,10 +96,19 @@ export function addBinding(
   namespace: string,
   parameters: {},
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     try {
       const filteredParams = helpers.object.removeEmptyFields(parameters);
-      await ServiceBinding.create(bindingName, instanceName, namespace, filteredParams);
+      await ServiceBinding.create(
+        bindingName,
+        instanceName,
+        currentCluster,
+        namespace,
+        filteredParams,
+      );
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
@@ -102,9 +121,12 @@ export function removeBinding(
   name: string,
   namespace: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     try {
-      await ServiceBinding.delete(name, namespace);
+      await ServiceBinding.delete(currentCluster, name, namespace);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "delete"));
@@ -116,9 +138,12 @@ export function removeBinding(
 export function deprovision(
   instance: IServiceInstance,
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     try {
-      await ServiceCatalog.deprovisionInstance(instance);
+      await ServiceCatalog.deprovisionInstance(currentCluster, instance);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "deprovision"));
@@ -163,10 +188,13 @@ export function getBindings(
 }
 
 export function getBrokers(): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     dispatch(requestBrokers());
     try {
-      const brokers = await ServiceCatalog.getServiceBrokers();
+      const brokers = await ServiceCatalog.getServiceBrokers(currentCluster);
       dispatch(receiveBrokers(brokers));
     } catch (e) {
       dispatch(errorCatalog(e, "fetch"));
@@ -175,10 +203,13 @@ export function getBrokers(): ThunkAction<Promise<void>, IStoreState, null, Serv
 }
 
 export function getClasses(): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     dispatch(requestClasses());
     try {
-      const classes = await ServiceCatalog.getServiceClasses();
+      const classes = await ServiceCatalog.getServiceClasses(currentCluster);
       dispatch(receiveClasses(classes));
     } catch (e) {
       dispatch(errorCatalog(e, "fetch"));
@@ -189,13 +220,16 @@ export function getClasses(): ThunkAction<Promise<void>, IStoreState, null, Serv
 export function getInstances(
   ns?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(requestInstances());
     try {
-      const instances = await ServiceInstance.list(ns);
+      const instances = await ServiceInstance.list(currentCluster, ns);
       dispatch(receiveInstances(instances));
     } catch (e) {
       dispatch(errorCatalog(e, "fetch"));
@@ -204,10 +238,13 @@ export function getInstances(
 }
 
 export function getPlans(): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
     dispatch(requestPlans());
     try {
-      const plans = await ServiceCatalog.getServicePlans();
+      const plans = await ServiceCatalog.getServicePlans(currentCluster);
       dispatch(receivePlans(plans));
     } catch (e) {
       dispatch(errorCatalog(e, "fetch"));
@@ -221,8 +258,11 @@ export function checkCatalogInstalled(): ThunkAction<
   null,
   ServiceCatalogAction
 > {
-  return async dispatch => {
-    const isServiceCatalogInstalled = await ServiceCatalog.isCatalogInstalled();
+  return async (dispatch, getState) => {
+    const {
+      clusters: { currentCluster },
+    } = getState();
+    const isServiceCatalogInstalled = await ServiceCatalog.isCatalogInstalled(currentCluster);
     isServiceCatalogInstalled ? dispatch(installed()) : dispatch(notInstalled());
     return isServiceCatalogInstalled;
   };

@@ -141,9 +141,7 @@ export const resyncRepo = (
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: {
-        currentCluster,
-      },
+      clusters: { currentCluster },
     } = getState();
     try {
       await AppRepository.resync(currentCluster, name, namespace);
@@ -201,9 +199,7 @@ export const fetchRepos = (
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: {
-        currentCluster,
-      },
+      clusters: { currentCluster },
     } = getState();
     try {
       dispatch(requestRepos(namespace));
@@ -258,9 +254,7 @@ export const installRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: {
-        currentCluster,
-      },
+      clusters: { currentCluster },
     } = getState();
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
@@ -297,9 +291,7 @@ export const updateRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: {
-        currentCluster,
-      },
+      clusters: { currentCluster },
     } = getState();
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
@@ -347,9 +339,7 @@ export const validateRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: {
-        currentCluster,
-      },
+      clusters: { currentCluster },
     } = getState();
     try {
       dispatch(repoValidating());
@@ -375,9 +365,7 @@ export function checkChart(
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async (dispatch, getState) => {
     const {
-      clusters: {
-        currentCluster,
-      },
+      clusters: { currentCluster },
     } = getState();
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(currentCluster, repo, repoNamespace);

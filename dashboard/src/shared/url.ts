@@ -74,8 +74,10 @@ export const backend = {
     list: (cluster: string) => `api/v1/clusters/${cluster}/namespaces`,
   },
   apprepositories: {
-    base: (cluster: string, namespace: string) => `api/v1/clusters/${cluster}/namespaces/${namespace}/apprepositories`,
-    create: (cluster: string, namespace: string) => backend.apprepositories.base(cluster, namespace),
+    base: (cluster: string, namespace: string) =>
+      `api/v1/clusters/${cluster}/namespaces/${namespace}/apprepositories`,
+    create: (cluster: string, namespace: string) =>
+      backend.apprepositories.base(cluster, namespace),
     validate: (cluster: string) => `${backend.apprepositories.base(cluster, "kubeapps")}/validate`,
     delete: (cluster: string, name: string, namespace: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/${name}`,

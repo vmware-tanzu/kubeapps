@@ -52,10 +52,11 @@ export class ServiceBinding {
   public static async create(
     bindingName: string,
     instanceRefName: string,
+    cluster: string,
     namespace: string,
     parameters: {},
   ) {
-    const u = ServiceBinding.getLink(namespace);
+    const u = ServiceBinding.getLink(cluster, namespace);
     const { data } = await axiosWithAuth.post<IServiceBinding>(u, {
       apiVersion: "servicecatalog.k8s.io/v1beta1",
       kind: "ServiceBinding",
@@ -72,13 +73,13 @@ export class ServiceBinding {
     return data;
   }
 
-  public static async delete(name: string, namespace: string) {
-    const u = this.getLink(namespace, name);
+  public static async delete(cluster: string, name: string, namespace: string) {
+    const u = this.getLink(cluster, namespace, name);
     return axiosWithAuth.delete(u);
   }
 
-  public static async get(namespace: string, name: string) {
-    const u = this.getLink(namespace, name);
+  public static async get(cluster: string, namespace: string, name: string) {
+    const u = this.getLink(cluster, namespace, name);
     const { data } = await axiosWithAuth.get<IServiceBinding>(u);
     return data;
   }
@@ -87,7 +88,11 @@ export class ServiceBinding {
     cluster: string,
     namespace?: string,
   ): Promise<IServiceBindingWithSecret[]> {
-    const bindings = await ServiceCatalog.getItems<IServiceBinding>("servicebindings", namespace);
+    const bindings = await ServiceCatalog.getItems<IServiceBinding>(
+      cluster,
+      "servicebindings",
+      namespace,
+    );
 
     return Promise.all(
       bindings.map(binding => {
@@ -106,8 +111,8 @@ export class ServiceBinding {
     );
   }
 
-  private static getLink(namespace?: string, name?: string): string {
-    return `${APIBase}/apis/servicecatalog.k8s.io/v1beta1${
+  private static getLink(cluster: string, namespace?: string, name?: string): string {
+    return `${APIBase(cluster)}/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/servicebindings${name ? `/${name}` : ""}`;
   }
