@@ -125,7 +125,7 @@ export const deleteRepo = (
       },
     } = getState();
     try {
-      await AppRepository.delete(name, namespace);
+      await AppRepository.delete(currentCluster, name, namespace);
       dispatch(fetchRepos(currentNamespace));
       return true;
     } catch (e) {
@@ -139,9 +139,14 @@ export const resyncRepo = (
   name: string,
   namespace: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: {
+        currentCluster,
+      },
+    } = getState();
     try {
-      await AppRepository.resync(name, namespace);
+      await AppRepository.resync(currentCluster, name, namespace);
     } catch (e) {
       dispatch(errorRepos(e, "update"));
     }
@@ -195,9 +200,14 @@ export const fetchRepos = (
   ...otherNamespaces: string[]
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
+    const {
+      clusters: {
+        currentCluster,
+      },
+    } = getState();
     try {
       dispatch(requestRepos(namespace));
-      const repos = await AppRepository.list(namespace);
+      const repos = await AppRepository.list(currentCluster, namespace);
       dispatch(fetchRepoSecrets(namespace));
       if (!otherNamespaces || !otherNamespaces.length) {
         dispatch(receiveRepos(repos.items));
@@ -206,7 +216,7 @@ export const fetchRepos = (
         await Promise.all(
           otherNamespaces.map(async otherNamespace => {
             dispatch(requestRepos(otherNamespace));
-            const otherRepos = await AppRepository.list(otherNamespace);
+            const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
             totalRepos = totalRepos.concat(otherRepos.items);
           }),
         );
@@ -247,11 +257,17 @@ export const installRepo = (
   registrySecrets: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
+    const {
+      clusters: {
+        currentCluster,
+      },
+    } = getState();
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
       const ns = getTargetNS(getState, namespace);
       dispatch(addRepo());
       const data = await AppRepository.create(
+        currentCluster,
         name,
         ns,
         repoURL,
@@ -280,11 +296,17 @@ export const updateRepo = (
   registrySecrets: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
+    const {
+      clusters: {
+        currentCluster,
+      },
+    } = getState();
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
       const ns = getTargetNS(getState, namespace);
       dispatch(requestRepoUpdate());
       const data = await AppRepository.update(
+        currentCluster,
         name,
         ns,
         repoURL,
@@ -323,10 +345,15 @@ export const validateRepo = (
   authHeader: string,
   customCA: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const {
+      clusters: {
+        currentCluster,
+      },
+    } = getState();
     try {
       dispatch(repoValidating());
-      const data = await AppRepository.validate(repoURL, authHeader, customCA);
+      const data = await AppRepository.validate(currentCluster, repoURL, authHeader, customCA);
       if (data.code === 200) {
         dispatch(repoValidated(data));
         return true;
@@ -347,8 +374,13 @@ export function checkChart(
   chartName: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async (dispatch, getState) => {
+    const {
+      clusters: {
+        currentCluster,
+      },
+    } = getState();
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(repo, repoNamespace);
+    const appRepository = await AppRepository.get(currentCluster, repo, repoNamespace);
     try {
       await Chart.fetchChartVersions(repoNamespace, `${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));

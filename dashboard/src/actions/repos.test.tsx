@@ -200,8 +200,8 @@ describe("resyncAllRepos", () => {
     );
 
     expect(appRepoGetMock).toHaveBeenCalledTimes(2);
-    expect(appRepoGetMock.mock.calls[0]).toEqual(["foo", "namespace-1"]);
-    expect(appRepoGetMock.mock.calls[1]).toEqual(["bar", "namespace-2"]);
+    expect(appRepoGetMock.mock.calls[0]).toEqual(["default", "foo", "namespace-1"]);
+    expect(appRepoGetMock.mock.calls[1]).toEqual(["default", "bar", "namespace-2"]);
   });
 });
 
@@ -349,6 +349,7 @@ describe("installRepo", () => {
     it("calls AppRepository create including a auth struct", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
+        "default",
         "my-repo",
         "my-namespace",
         "http://foo.bar",
@@ -379,6 +380,7 @@ describe("installRepo", () => {
     it("calls AppRepository create including a auth struct", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
+        "default",
         "my-repo",
         "my-namespace",
         "http://foo.bar",
@@ -409,6 +411,7 @@ describe("installRepo", () => {
         );
 
         expect(AppRepository.create).toHaveBeenCalledWith(
+          "default",
           "my-repo",
           "my-namespace",
           "http://foo.bar",
@@ -446,6 +449,7 @@ describe("installRepo", () => {
     it("calls AppRepository create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
       expect(AppRepository.create).toHaveBeenCalledWith(
+        "default",
         "my-repo",
         "my-namespace",
         "http://foo.bar",
@@ -511,6 +515,7 @@ describe("installRepo", () => {
     );
 
     expect(AppRepository.create).toHaveBeenCalledWith(
+      "default",
       "my-repo",
       "kubeapps-namespace",
       "http://foo.bar",
@@ -527,6 +532,7 @@ describe("installRepo", () => {
     );
 
     expect(AppRepository.create).toHaveBeenCalledWith(
+      "default",
       "my-repo",
       "kubeapps-namespace",
       "http://foo.bar",
@@ -576,6 +582,7 @@ describe("updateRepo", () => {
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(AppRepository.update).toHaveBeenCalledWith(
+      "default",
       "my-repo",
       "my-namespace",
       "http://foo.bar",
@@ -623,6 +630,7 @@ describe("updateRepo", () => {
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(AppRepository.update).toHaveBeenCalledWith(
+      "default",
       "my-repo",
       "my-namespace",
       "http://foo.bar",

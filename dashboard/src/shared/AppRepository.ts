@@ -4,25 +4,26 @@ import { ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
 export class AppRepository {
-  public static async list(namespace: string) {
-    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(namespace));
+  public static async list(cluster: string, namespace: string) {
+    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(cluster, namespace));
     return data;
   }
 
-  public static async get(name: string, namespace: string) {
-    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(namespace, name));
+  public static async get(cluster: string, name: string, namespace: string) {
+    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(cluster, namespace, name));
     return data;
   }
 
-  public static async resync(name: string, namespace: string) {
-    const repo = await AppRepository.get(name, namespace);
+  public static async resync(cluster: string, name: string, namespace: string) {
+    const repo = await AppRepository.get(cluster, name, namespace);
     repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
     repo.spec.resyncRequests++;
-    const { data } = await axiosWithAuth.put(AppRepository.getSelfLink(namespace, name), repo);
+    const { data } = await axiosWithAuth.put(AppRepository.getSelfLink(cluster, namespace, name), repo);
     return data;
   }
 
   public static async update(
+    cluster: string,
     name: string,
     namespace: string,
     repoURL: string,
@@ -32,7 +33,7 @@ export class AppRepository {
     registrySecrets: string[],
   ) {
     const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
-      url.backend.apprepositories.update(namespace, name),
+      url.backend.apprepositories.update(cluster, namespace, name),
       {
         appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate, registrySecrets },
       },
@@ -40,9 +41,9 @@ export class AppRepository {
     return data;
   }
 
-  public static async delete(name: string, namespace: string) {
+  public static async delete(cluster: string, name: string, namespace: string) {
     const { data } = await axiosWithAuth.delete(
-      url.backend.apprepositories.delete(name, namespace),
+      url.backend.apprepositories.delete(cluster, name, namespace),
     );
     return data;
   }
@@ -51,6 +52,7 @@ export class AppRepository {
   // TODO(mnelson) Update other endpoints to similarly use the backend API, removing the need
   // for direct k8s api access (for this resource, at least).
   public static async create(
+    cluster: string,
     name: string,
     namespace: string,
     repoURL: string,
@@ -60,7 +62,7 @@ export class AppRepository {
     registrySecrets: string[],
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
-      url.backend.apprepositories.create(namespace),
+      url.backend.apprepositories.create(cluster, namespace),
       {
         appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate, registrySecrets },
       },
@@ -68,17 +70,18 @@ export class AppRepository {
     return data;
   }
 
-  public static async validate(repoURL: string, authHeader: string, customCA: string) {
-    const { data } = await axiosWithAuth.post<any>(url.backend.apprepositories.validate(), {
+  public static async validate(cluster: string, repoURL: string, authHeader: string, customCA: string) {
+    const { data } = await axiosWithAuth.post<any>(url.backend.apprepositories.validate(cluster), {
       appRepository: { repoURL, authHeader, customCA },
     });
     return data;
   }
 
-  private static APIBase: string = APIBase;
-  private static APIEndpoint: string = `${AppRepository.APIBase}/apis/kubeapps.com/v1alpha1`;
-  private static getSelfLink(namespace: string, name?: string): string {
-    return `${AppRepository.APIEndpoint}/namespaces/${namespace}/apprepositories${
+  private static APIEndpoint(cluster: string): string {
+    return `${APIBase(cluster)}/apis/kubeapps.com/v1alpha1`
+  };
+  private static getSelfLink(cluster: string, namespace: string, name?: string): string {
+    return `${AppRepository.APIEndpoint(cluster)}/namespaces/${namespace}/apprepositories${
       name ? `/${name}` : ""
     }`;
   }
