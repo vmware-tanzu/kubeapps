@@ -153,7 +153,7 @@ function UpgradeForm({
   };
 
   if (error) {
-    return <Alert theme="danger">Found error: {error.message}</Alert>;
+    return <Alert theme="danger">An error occurred: {error.message}</Alert>;
   }
   if (selected.versions.length === 0 || !version) {
     return <LoadingWrapper loaded={false} />;

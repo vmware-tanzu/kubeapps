@@ -79,14 +79,14 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
   if (errors.fetch) {
     return (
       <Alert theme="danger">
-        Found an error when fetching {operatorName}: {errors.fetch.message}
+        An error occurred while fetching the operator {operatorName}: {errors.fetch.message}
       </Alert>
     );
   }
   if (errors.create) {
     return (
       <Alert theme="danger">
-        Found an error when creating {operatorName}: {errors.create.message}
+        An error occurred while creating the operator {operatorName}: {errors.create.message}
       </Alert>
     );
   }
@@ -96,8 +96,8 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
   if (!updateChannel) {
     return (
       <Alert theme="danger">
-        Operator {operatorName} doesn't define a valid channel. This is needed to extract required
-        info.
+        The Operator {operatorName} doesn't define a valid channel. This is needed to extract
+        required info.
       </Alert>
     );
   }

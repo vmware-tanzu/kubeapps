@@ -28,7 +28,7 @@ function ConfirmDialog({
 }: IConfirmDialogProps) {
   return (
     <Modal showModal={modalIsOpen} onModalClose={closeModal}>
-      {error && <Alert theme="danger">Found error: {error.message}</Alert>}
+      {error && <Alert theme="danger">An error ocurred: {error.message}</Alert>}
       {loading === true ? (
         <div className="confirmation-modal">
           <span>Loading, please wait</span>

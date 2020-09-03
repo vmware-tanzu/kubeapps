@@ -150,11 +150,13 @@ export default function DeploymentFormBody({
       <section>
         {fetchError && (
           <Alert theme="danger">
-            Found an error fetching the ClusterServiceVersion: {fetchError.message}
+            An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
           </Alert>
         )}
         {createError && (
-          <Alert theme="danger">Found an error creating the instance: {createError.message}</Alert>
+          <Alert theme="danger">
+            An error occurred while creating the instance: {createError.message}
+          </Alert>
         )}
         <Row>
           <Column span={3}>

@@ -127,7 +127,7 @@ function DeploymentForm({
             <ChartSummary version={version} chartAttrs={chartAttrs} />
           </Column>
           <Column span={9}>
-            {error && <Alert theme="danger">Found an error: {error.message}</Alert>}
+            {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
             <form onSubmit={handleDeploy}>
               <div>
                 <label

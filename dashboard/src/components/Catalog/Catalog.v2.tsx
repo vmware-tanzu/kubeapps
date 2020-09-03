@@ -125,7 +125,9 @@ function Catalog(props: ICatalogProps) {
       </PageHeader>
       <LoadingWrapper loaded={!isFetching}>
         {error && (
-          <Alert theme="danger">Found en error fetching the catalog: {error.message}</Alert>
+          <Alert theme="danger">
+            An error occurred while fetching the catalog: {error.message}
+          </Alert>
         )}
         {charts.length === 0 && csvs.length === 0 ? (
           <div className="empty-catalog">
