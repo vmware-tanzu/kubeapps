@@ -67,10 +67,7 @@ func returnK8sError(err error, w http.ResponseWriter) {
 
 func getNamespaceAndCluster(req *http.Request) (string, string) {
 	requestNamespace := mux.Vars(req)["namespace"]
-	requestCluster, ok := mux.Vars(req)["cluster"]
-	if !ok {
-		requestCluster = kube.DefaultClusterName
-	}
+	requestCluster := mux.Vars(req)["cluster"]
 	return requestNamespace, requestCluster
 }
 
@@ -258,8 +255,8 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 }
 
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router, additionalClusters kube.AdditionalClustersConfig) error {
-	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), additionalClusters)
+func SetupDefaultRoutes(r *mux.Router, clustersConfig kube.ClustersConfig) error {
+	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), clustersConfig)
 	if err != nil {
 		return err
 	}

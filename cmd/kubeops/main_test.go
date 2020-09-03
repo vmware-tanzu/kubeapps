@@ -10,41 +10,55 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
-func TestParseAdditionalClusterConfig(t *testing.T) {
+func TestParseClusterConfig(t *testing.T) {
 	testCases := []struct {
 		name           string
 		configJSON     string
 		expectedErr    bool
-		expectedConfig kube.AdditionalClustersConfig
+		expectedConfig kube.ClustersConfig
 	}{
 		{
-			name:       "parses a single additional cluster",
+			name:       "defaults the kubeapps cluster when passed an empty list of clusters",
+			configJSON: `[]`,
+			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters:            map[string]kube.ClusterConfig{},
+			},
+		},
+		{
+			name:       "parses a single cluster",
 			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd"}]`,
-			expectedConfig: kube.AdditionalClustersConfig{
-				"cluster-2": {
-					Name:                     "cluster-2",
-					APIServiceURL:            "https://example.com",
-					CertificateAuthorityData: "ca-cert-data\n",
-					ServiceToken:             "abcd",
+			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]kube.ClusterConfig{
+					"cluster-2": {
+						Name:                     "cluster-2",
+						APIServiceURL:            "https://example.com",
+						CertificateAuthorityData: "ca-cert-data\n",
+						ServiceToken:             "abcd",
+					},
 				},
 			},
 		},
 		{
-			name: "parses multiple additional clusters",
+			name: "parses multiple clusters",
 			configJSON: `[
 	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="},
 	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
 ]`,
-			expectedConfig: kube.AdditionalClustersConfig{
-				"cluster-2": {
-					Name:                     "cluster-2",
-					APIServiceURL:            "https://example.com/cluster-2",
-					CertificateAuthorityData: "ca-cert-data\n",
-				},
-				"cluster-3": {
-					Name:                     "cluster-3",
-					APIServiceURL:            "https://example.com/cluster-3",
-					CertificateAuthorityData: "ca-cert-data-additional\n",
+			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]kube.ClusterConfig{
+					"cluster-2": {
+						Name:                     "cluster-2",
+						APIServiceURL:            "https://example.com/cluster-2",
+						CertificateAuthorityData: "ca-cert-data\n",
+					},
+					"cluster-3": {
+						Name:                     "cluster-3",
+						APIServiceURL:            "https://example.com/cluster-3",
+						CertificateAuthorityData: "ca-cert-data-additional\n",
+					},
 				},
 			},
 		},
@@ -60,26 +74,28 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 		},
 	}
 
-	ignoreCAFile := cmpopts.IgnoreFields(kube.AdditionalClusterConfig{}, "CAFile")
+	ignoreCAFile := cmpopts.IgnoreFields(kube.ClusterConfig{}, "CAFile")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 
-			config, deferFn, err := parseAdditionalClusterConfig(path, "/tmp")
+			config, deferFn, err := parseClusterConfig(path, "/tmp")
 			if got, want := err != nil, tc.expectedErr; got != want {
-				t.Errorf("got: %t, want: %t", got, want)
+				t.Errorf("got: %t, want: %t: err: %+v", got, want, err)
 			}
-			defer deferFn()
+			if !tc.expectedErr {
+				defer deferFn()
+			}
 
 			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got, ignoreCAFile) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreCAFile))
 			}
 
-			for clusterName, clusterConfig := range tc.expectedConfig {
+			for clusterName, clusterConfig := range tc.expectedConfig.Clusters {
 				if clusterConfig.CertificateAuthorityData != "" {
-					fileCAData, err := ioutil.ReadFile(config[clusterName].CAFile)
+					fileCAData, err := ioutil.ReadFile(config.Clusters[clusterName].CAFile)
 					if err != nil {
 						t.Fatalf("%+v", err)
 					}

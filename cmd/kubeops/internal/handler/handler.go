@@ -38,11 +38,11 @@ type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request,
 
 // Options represents options that can be created without a bearer token, i.e. once at application startup.
 type Options struct {
-	ListLimit          int
-	Timeout            int64
-	UserAgent          string
-	KubeappsNamespace  string
-	AdditionalClusters kube.AdditionalClustersConfig
+	ListLimit         int
+	Timeout           int64
+	UserAgent         string
+	KubeappsNamespace string
+	ClustersConfig    kube.ClustersConfig
 }
 
 // Config represents data needed by each handler to be able to create Helm 3 actions.
@@ -63,7 +63,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			// for now.
 			cluster, ok := params[clusterParam]
 			if !ok {
-				cluster = kube.DefaultClusterName
+				cluster = options.ClustersConfig.KubeappsClusterName
 			}
 			namespace := params[namespaceParam]
 			token := auth.ExtractToken(req.Header.Get(authHeader))
@@ -75,7 +75,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, cluster, options.AdditionalClusters)
+			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, cluster, options.ClustersConfig)
 			if err != nil {
 				log.Errorf("Failed to create in-cluster config with user token: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
@@ -94,7 +94,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace, options.AdditionalClusters)
+			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace, options.ClustersConfig)
 			if err != nil {
 				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
@@ -104,7 +104,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(kubeHandler, options.KubeappsNamespace, options.UserAgent),
+				ChartClient:  chartUtils.NewChartClient(kubeHandler, options.ClustersConfig.KubeappsClusterName, options.KubeappsNamespace, options.UserAgent),
 			}
 			f(cfg, w, req, params)
 		}

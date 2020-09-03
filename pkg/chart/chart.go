@@ -94,20 +94,22 @@ type Resolver interface {
 	RegistrySecretsPerDomain() map[string]string
 }
 
-// ChartClient struct contains the clients required to retrieve charts info
-type ChartClient struct {
+// Client struct contains the clients required to retrieve charts info
+type Client struct {
 	appRepoHandler           kube.AuthHandler
 	userAgent                string
+	kubeappsCluster          string
 	kubeappsNamespace        string
 	appRepo                  *appRepov1.AppRepository
 	registrySecretsPerDomain map[string]string
 }
 
 // NewChartClient returns a new ChartClient
-func NewChartClient(appRepoHandler kube.AuthHandler, kubeappsNamespace, userAgent string) *ChartClient {
-	return &ChartClient{
+func NewChartClient(appRepoHandler kube.AuthHandler, kubeappsCluster, kubeappsNamespace, userAgent string) *Client {
+	return &Client{
 		appRepoHandler:    appRepoHandler,
 		userAgent:         userAgent,
+		kubeappsCluster:   kubeappsCluster,
 		kubeappsNamespace: kubeappsNamespace,
 	}
 }
@@ -259,7 +261,7 @@ func fetchChart(netClient *kube.HTTPClient, chartURL string, requireV1Support bo
 }
 
 // ParseDetails return Chart details
-func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
+func (c *Client) ParseDetails(data []byte) (*Details, error) {
 	details := &Details{}
 	err := json.Unmarshal(data, details)
 	if err != nil {
@@ -277,10 +279,10 @@ func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
-func (c *ChartClient) parseDetailsForHTTPClient(details *Details, userAuthToken string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
+func (c *Client) parseDetailsForHTTPClient(details *Details, userAuthToken string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	client, err := c.appRepoHandler.AsUser(userAuthToken, kube.DefaultClusterName)
+	client, err := c.appRepoHandler.AsUser(userAuthToken, c.kubeappsCluster)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
 	}
@@ -318,13 +320,13 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details, userAuthToken 
 
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *ChartClient) InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error) {
+func (c *Client) InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error) {
 	appRepo, caCertSecret, authSecret, err := c.parseDetailsForHTTPClient(details, userAuthToken)
 	if err != nil {
 		return nil, err
 	}
 
-	c.registrySecretsPerDomain, err = getRegistrySecretsPerDomain(c.appRepo.Spec.DockerRegistrySecrets, details.AppRepositoryResourceNamespace, userAuthToken, c.appRepoHandler)
+	c.registrySecretsPerDomain, err = getRegistrySecretsPerDomain(c.appRepo.Spec.DockerRegistrySecrets, c.kubeappsCluster, details.AppRepositoryResourceNamespace, userAuthToken, c.appRepoHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +336,7 @@ func (c *ChartClient) InitNetClient(details *Details, userAuthToken string) (kub
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *ChartClient) GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error) {
+func (c *Client) GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error) {
 	indexURL := strings.TrimSuffix(strings.TrimSpace(c.appRepo.Spec.URL), "/") + "/index.yaml"
 
 	repoIndex, err := fetchRepoIndex(&netClient, indexURL)
@@ -361,13 +363,13 @@ func (c *ChartClient) GetChart(details *Details, netClient kube.HTTPClient, requ
 //
 // These are actually calculated during InitNetClient when we already have a
 // k8s client with the user token.
-func (c *ChartClient) RegistrySecretsPerDomain() map[string]string {
+func (c *Client) RegistrySecretsPerDomain() map[string]string {
 	return c.registrySecretsPerDomain
 }
 
-func getRegistrySecretsPerDomain(appRepoSecrets []string, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
+func getRegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
 	secretsPerDomain := map[string]string{}
-	client, err := authHandler.AsUser(token, kube.DefaultClusterName)
+	client, err := authHandler.AsUser(token, cluster)
 	if err != nil {
 		return nil, err
 	}
