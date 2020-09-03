@@ -5,6 +5,7 @@ import { IAppOverview } from "../../shared/types";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard.v2";
 
+import Tooltip from "components/js/Tooltip";
 import "./AppListItem.v2.css";
 
 export interface IAppListItemProps {
@@ -16,13 +17,38 @@ function AppListItem(props: IAppListItemProps) {
   const { app, cluster } = props;
   const icon = app.icon ? app.icon : placeholder;
   const appStatus = app.status.toLocaleLowerCase();
+  let tooltip = <></>;
   const updateAvailable = app.updateInfo && !app.updateInfo.error && !app.updateInfo.upToDate;
-  let tag2Content;
+  // let tag2Content;
   if (app.updateInfo && updateAvailable) {
     if (app.updateInfo.appLatestVersion !== app.chartMetadata.appVersion) {
-      tag2Content = `New App: ${app.updateInfo.appLatestVersion}`;
+      tooltip = (
+        <div className="color-icon-info">
+          <Tooltip
+            label="update-tooltip"
+            id={`${app.releaseName}-update-tooltip`}
+            icon="circle-arrow"
+            position="top-left"
+            iconProps={{ solid: true, size: "md", color: "blue" }}
+          >
+            New App Version: {app.updateInfo.appLatestVersion}
+          </Tooltip>
+        </div>
+      );
     } else {
-      tag2Content = `New Chart: ${app.updateInfo.chartLatestVersion}`;
+      tooltip = (
+        <div className="color-icon-info">
+          <Tooltip
+            label="update-tooltip"
+            id={`${app.releaseName}-update-tooltip`}
+            icon="circle-arrow"
+            position="top-left"
+            iconProps={{ solid: true, size: "md" }}
+          >
+            New Chart Version: {app.updateInfo.chartLatestVersion}
+          </Tooltip>
+        </div>
+      );
     }
   }
   return (
@@ -33,16 +59,16 @@ function AppListItem(props: IAppListItemProps) {
       icon={icon}
       info={
         <div>
-          <span>App: {app.chartMetadata.appVersion}</span>
+          <span>App: {app.chartMetadata.name}</span>
           <br />
-          <span>Chart: {app.chartMetadata.version}</span>
+          <span>Chart: {app.chartMetadata.appVersion}</span>
         </div>
       }
       description={app.chartMetadata.description}
-      tag1Content={`Status: ${appStatus}`}
+      tag1Content={appStatus}
       tag1Class={appStatus === "deployed" ? "label-success" : "label-warning"}
-      tag2Content={tag2Content}
-      subIcon={helmIcon}
+      tooltip={tooltip}
+      bgIcon={helmIcon}
     />
   );
 }

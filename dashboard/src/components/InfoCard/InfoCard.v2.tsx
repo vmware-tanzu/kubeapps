@@ -12,8 +12,9 @@ export interface IInfoCardProps {
   info: string | JSX.Element;
   link?: string;
   icon?: string;
-  subIcon?: string;
+  bgIcon?: string;
   description?: string | JSX.Element;
+  tooltip?: JSX.Element;
   tag1Class?: string;
   tag1Content?: string | JSX.Element;
   tag2Class?: string;
@@ -26,11 +27,12 @@ function InfoCard(props: IInfoCardProps) {
     link,
     info,
     description,
+    tooltip,
     tag1Content,
     tag1Class,
     tag2Content,
     tag2Class,
-    subIcon,
+    bgIcon,
   } = props;
   const icon = props.icon ? props.icon : placeholder;
   return (
@@ -38,22 +40,29 @@ function InfoCard(props: IInfoCardProps) {
       <Card clickable={true}>
         <Link to={link || "#"}>
           <CardHeader>
-            <>
+            <div className="info-card-header">
               <div className="card-title">{title}</div>
-              {subIcon && <img src={subIcon} alt="icon" />}
-            </>
+              {tooltip ? <div className="card-tooltip">{tooltip}</div> : <></>}
+            </div>
           </CardHeader>
           <CardBlock>
-            <Row>
-              <Column span={3}>
-                <div className="card-icon">
-                  <img src={icon} alt="icon" sizes="64px" />
+            <div className="info-card-block">
+              <div className="card-icon">
+                <img src={icon} alt="icon" />
+              </div>
+              <div className="card-description-wrapper">
+                <div className="card-description">
+                  <span>{description}</span>
                 </div>
-              </Column>
-              <Column span={9}>
-                <span>{description}</span>
-              </Column>
-            </Row>
+              </div>
+              {bgIcon ? (
+                <div className="bg-img">
+                  <img src={bgIcon} alt="bg-img" />
+                </div>
+              ) : (
+                <></>
+              )}
+            </div>
           </CardBlock>
           <CardFooter>
             <Row>

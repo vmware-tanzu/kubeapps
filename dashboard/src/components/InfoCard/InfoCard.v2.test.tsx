@@ -77,3 +77,18 @@ it("should parse a description as JSX.Element", () => {
   const wrapper = shallow(<InfoCard title="foo" info="foobar" description={desc} />);
   expect(wrapper.find(".description").text()).toBe("This is a description");
 });
+
+it("should parse an icon", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" />);
+  expect(wrapper.find("img")).toExist();
+});
+
+it("should parse a background img", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" bgIcon="img.png" />);
+  expect(wrapper.find(".bg-img").find("img")).toExist();
+});
+
+it("should parse a tooltip component", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" tooltip={<div id="foo" />} />);
+  expect(wrapper.find(".info-card-header").find("#foo")).toExist();
+});
