@@ -19,7 +19,6 @@ function AppListItem(props: IAppListItemProps) {
   const appStatus = app.status.toLocaleLowerCase();
   let tooltip = <></>;
   const updateAvailable = app.updateInfo && !app.updateInfo.error && !app.updateInfo.upToDate;
-  // let tag2Content;
   if (app.updateInfo && updateAvailable) {
     if (app.updateInfo.appLatestVersion !== app.chartMetadata.appVersion) {
       tooltip = (
@@ -59,9 +58,12 @@ function AppListItem(props: IAppListItemProps) {
       icon={icon}
       info={
         <div>
-          <span>App: {app.chartMetadata.name}</span>
+          <span>
+            App: {app.chartMetadata.name}{" "}
+            {app.chartMetadata.appVersion ? `v${app.chartMetadata.appVersion}` : ""}
+          </span>
           <br />
-          <span>Chart: {app.chartMetadata.appVersion}</span>
+          <span>Chart: {app.chartMetadata.version}</span>
         </div>
       }
       description={app.chartMetadata.description}
