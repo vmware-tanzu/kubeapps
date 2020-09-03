@@ -79,8 +79,6 @@ func init() {
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&assetsvcURL, "assetsvc-url", "http://kubeapps-internal-assetsvc:8080", "URL to the internal assetsvc")
-	// Probably need to tell tiller-proxy what the kubeappsCluster is named.
-	// If so, set the same on kubeops
 }
 
 func main() {
@@ -135,7 +133,7 @@ func main() {
 		log.Fatalf("POD_NAMESPACE should be defined")
 	}
 
-	kubeHandler, err := kube.NewHandler(kubeappsNamespace, kube.ClustersConfig{})
+	kubeHandler, err := kube.NewHandler(kubeappsNamespace, kube.ClustersConfig{KubeappsClusterName: "default"})
 	if err != nil {
 		log.Fatalf("Failed to create handler: %v", err)
 	}
@@ -174,7 +172,7 @@ func main() {
 	apiv1.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.DeleteRelease))
 
 	// Backend routes unrelated to tiller-proxy functionality.
-	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), kube.ClustersConfig{})
+	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), kube.ClustersConfig{KubeappsClusterName: "default"})
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}
