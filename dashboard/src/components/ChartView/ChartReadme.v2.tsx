@@ -2,8 +2,8 @@ import React, { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { useDispatch } from "react-redux";
 
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
-import { CdsIcon } from "components/Clarity/clarity";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import HeadingRenderer from "./HeadingRenderer";

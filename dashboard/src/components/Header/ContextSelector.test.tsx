@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
-import { CdsButton } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
 import { cloneDeep } from "lodash";
 import { act } from "react-dom/test-utils";
 import { IClustersState } from "reducers/cluster";

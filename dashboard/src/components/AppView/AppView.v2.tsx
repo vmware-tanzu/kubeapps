@@ -1,10 +1,11 @@
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import { RouterAction } from "connected-react-router";
 import { assignWith } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
 import * as yaml from "yaml";
 import placeholder from "../../placeholder.png";
-import { CdsButton, CdsIcon } from "../Clarity/clarity";
 
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";

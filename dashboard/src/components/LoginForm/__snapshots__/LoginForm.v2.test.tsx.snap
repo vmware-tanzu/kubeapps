@@ -19,7 +19,7 @@ exports[`oauth login form renders a login button link 1`] = `
         rel="noopener noreferrer"
         target="_blank"
       >
-        <ReactWrapperComponent
+        <CdsIcon
           shape="info-circle"
         />
         More Info
@@ -118,14 +118,14 @@ exports[`token login form displays an error if the authentication error is passe
             <div
               className="login-submit-button"
             >
-              <ReactWrapperComponent
+              <CdsButton
                 id="login-submit-button"
                 status="primary"
               >
                 <cds-button>
                   Submit
                 </cds-button>
-              </ReactWrapperComponent>
+              </CdsButton>
             </div>
           </div>
         </section>
@@ -138,11 +138,11 @@ exports[`token login form displays an error if the authentication error is passe
           rel="noopener noreferrer"
           target="_blank"
         >
-          <ReactWrapperComponent
+          <CdsIcon
             shape="info-circle"
           >
             <cds-icon />
-          </ReactWrapperComponent>
+          </CdsIcon>
           More Info
         </a>
       </div>
@@ -171,7 +171,7 @@ exports[`token login form renders a token login form 1`] = `
         rel="noopener noreferrer"
         target="_blank"
       >
-        <ReactWrapperComponent
+        <CdsIcon
           shape="info-circle"
         />
         More Info

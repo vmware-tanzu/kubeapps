@@ -19,7 +19,7 @@ exports[`when fetching apps loading spinner matches the snapshot 1`] = `
     <div
       className="empty-catalog"
     >
-      <ReactWrapperComponent
+      <CdsIcon
         shape="bundle"
       />
       <p>
@@ -31,9 +31,9 @@ exports[`when fetching apps loading spinner matches the snapshot 1`] = `
       <Link
         to="/c/default/ns/kubeapps/config/repos"
       >
-        <ReactWrapperComponent>
+        <CdsButton>
           Manage App Repositories
-        </ReactWrapperComponent>
+        </CdsButton>
       </Link>
     </div>
   </LoadingWrapper>

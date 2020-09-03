@@ -2,7 +2,8 @@ import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 
-import { CdsButton, CdsIcon } from "../Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 
 import { IClustersState } from "../../reducers/cluster";
@@ -45,7 +46,7 @@ function Menu({ clusters, defaultNamespace, appVersion, logout }: IContextSelect
           </Row>
         </button>
         <CSSTransition in={open} timeout={200} classNames="transition-drawer">
-          <div className="dropdown-menu dropdown-configuration-menu" role="menu">
+          <div className="dropdown-menu dropdown-configuration-menu" role="menu" hidden={!open}>
             <div>
               <label className="dropdown-menu-padding dropdown-menu-label">Administration</label>
               <Link

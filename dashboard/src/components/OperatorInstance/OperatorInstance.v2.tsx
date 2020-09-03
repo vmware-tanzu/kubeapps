@@ -1,8 +1,9 @@
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
 import AppNotes from "components/AppView/AppNotes.v2";
 import AppSecrets from "components/AppView/AppSecrets";
 import { IAppViewResourceRefs } from "components/AppView/AppView.v2";
-import { CdsButton, CdsIcon } from "components/Clarity/clarity";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";

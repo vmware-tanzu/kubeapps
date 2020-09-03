@@ -1,4 +1,4 @@
-import { CdsButton } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog.v2";
 import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm.v2";
 import Alert from "components/js/Alert";

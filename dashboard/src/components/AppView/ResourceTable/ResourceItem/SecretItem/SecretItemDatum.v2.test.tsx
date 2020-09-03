@@ -1,7 +1,7 @@
 import { mount } from "enzyme";
 import * as React from "react";
 
-import { CdsIcon } from "components/Clarity/clarity";
+import { CdsIcon } from "@clr/react/icon";
 import SecretItemDatum from "./SecretItemDatum.v2";
 
 const testProps = {

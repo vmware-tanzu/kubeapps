@@ -7,7 +7,7 @@ exports[`renders a deleting status 1`] = `
   <div
     className="color-icon-danger"
   >
-    <ReactWrapperComponent
+    <CdsIcon
       shape="exclamation-triangle"
       size="md"
       solid={true}
@@ -24,7 +24,7 @@ exports[`renders a failed status 1`] = `
   <div
     className="color-icon-warning"
   >
-    <ReactWrapperComponent
+    <CdsIcon
       shape="exclamation-triangle"
       size="md"
       solid={true}

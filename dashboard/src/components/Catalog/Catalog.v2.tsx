@@ -1,8 +1,8 @@
+import { CdsIcon } from "@clr/react/icon";
 import { RouterAction } from "connected-react-router";
 import { flatten, get, intersection, uniq } from "lodash";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CdsIcon } from "../Clarity/clarity";
 
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
@@ -16,7 +16,7 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
 
-import { CdsButton } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
 import { app } from "shared/url";
 import "./Catalog.v2.css";
 import CatalogItems from "./CatalogItems";

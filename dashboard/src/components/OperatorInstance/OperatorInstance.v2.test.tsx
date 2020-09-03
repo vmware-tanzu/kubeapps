@@ -1,10 +1,10 @@
+import { CdsButton } from "@clr/react/button";
 import actions from "actions";
 import AccessURLTable from "components/AppView/AccessURLTable/AccessURLTable.v2";
 import AppNotes from "components/AppView/AppNotes.v2";
 import AppSecrets from "components/AppView/AppSecrets";
 import AppValues from "components/AppView/AppValues/AppValues.v2";
 import ResourceTabs from "components/AppView/ResourceTabs";
-import { CdsButton } from "components/Clarity/clarity";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog.v2";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";

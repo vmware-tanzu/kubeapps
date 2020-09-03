@@ -1,7 +1,8 @@
 import Tabs from "components/Tabs";
 import React, { useEffect, useState } from "react";
 
-import { CdsButton, CdsIcon } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import Alert from "components/js/Alert";
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";

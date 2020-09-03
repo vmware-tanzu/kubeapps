@@ -1,6 +1,6 @@
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
 import CardGrid from "components/Card/CardGrid.v2";
-import { CdsIcon } from "components/Clarity/clarity";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";

@@ -14,7 +14,7 @@ exports[`Alert renders the required HTML structure 1`] = `
       <div
         className="alert-icon-wrapper"
       >
-        <ReactWrapperComponent
+        <CdsIcon
           aria-hidden="true"
           class="alert-icon"
           shape="info-circle"

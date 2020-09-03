@@ -1,4 +1,4 @@
-import { CdsButton } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
 import { mount } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";

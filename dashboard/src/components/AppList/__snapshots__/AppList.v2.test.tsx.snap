@@ -8,15 +8,15 @@ exports[`when an error is present matches the snapshot 1`] = `
         <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
-          <ReactWrapperComponent
+          <CdsButton
             status="primary"
           >
-            <ReactWrapperComponent
+            <CdsIcon
               inverse={true}
               shape="deploy"
             />
              Deploy
-          </ReactWrapperComponent>
+          </CdsButton>
         </ForwardRef>,
       ]
     }
@@ -53,15 +53,15 @@ exports[`when an error is present renders a generic error message 1`] = `
         <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
-          <ReactWrapperComponent
+          <CdsButton
             status="primary"
           >
-            <ReactWrapperComponent
+            <CdsIcon
               inverse={true}
               shape="deploy"
             />
              Deploy
-          </ReactWrapperComponent>
+          </CdsButton>
         </ForwardRef>,
       ]
     }
@@ -98,15 +98,15 @@ exports[`when apps available matches the snapshot 1`] = `
         <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
-          <ReactWrapperComponent
+          <CdsButton
             status="primary"
           >
-            <ReactWrapperComponent
+            <CdsIcon
               inverse={true}
               shape="deploy"
             />
              Deploy
-          </ReactWrapperComponent>
+          </CdsButton>
         </ForwardRef>,
       ]
     }
@@ -156,15 +156,15 @@ exports[`when custom resources available matches the snapshot 1`] = `
         <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
-          <ReactWrapperComponent
+          <CdsButton
             status="primary"
           >
-            <ReactWrapperComponent
+            <CdsIcon
               inverse={true}
               shape="deploy"
             />
              Deploy
-          </ReactWrapperComponent>
+          </CdsButton>
         </ForwardRef>,
       ]
     }
@@ -227,15 +227,15 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
         <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
-          <ReactWrapperComponent
+          <CdsButton
             status="primary"
           >
-            <ReactWrapperComponent
+            <CdsIcon
               inverse={true}
               shape="deploy"
             />
              Deploy
-          </ReactWrapperComponent>
+          </CdsButton>
         </ForwardRef>,
       ]
     }
@@ -273,15 +273,15 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
         <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
-          <ReactWrapperComponent
+          <CdsButton
             status="primary"
           >
-            <ReactWrapperComponent
+            <CdsIcon
               inverse={true}
               shape="deploy"
             />
              Deploy
-          </ReactWrapperComponent>
+          </CdsButton>
         </ForwardRef>,
       ]
     }
@@ -318,15 +318,15 @@ exports[`while fetching apps loading spinner matches the snapshot 2`] = `
         <ForwardRef
           to="/c/defaultc/ns/default/catalog"
         >
-          <ReactWrapperComponent
+          <CdsButton
             status="primary"
           >
-            <ReactWrapperComponent
+            <CdsIcon
               inverse={true}
               shape="deploy"
             />
              Deploy
-          </ReactWrapperComponent>
+          </CdsButton>
         </ForwardRef>,
       ]
     }

@@ -1,5 +1,5 @@
+import { CdsButton } from "@clr/react/button";
 import actions from "actions";
-import { CdsButton } from "components/Clarity/clarity";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
