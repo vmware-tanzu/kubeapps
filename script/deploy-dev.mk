@@ -26,20 +26,6 @@ deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 		--key ./devel/localhost-key.pem \
 		--cert ./devel/localhost-cert.pem
 
-template-test:
-	helm template kubeapps ./chart/kubeapps --namespace kubeapps \
-		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set useHelm3=true --show-only templates/kubeapps-frontend-config.yaml
-
-upgrade:
-	helm upgrade kubeapps ./chart/kubeapps --namespace kubeapps \
-		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set useHelm3=true --set featureFlags.ui=clarity
-
 deploy-dev: deploy-dependencies
 	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
