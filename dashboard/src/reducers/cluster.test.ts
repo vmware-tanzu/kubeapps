@@ -309,7 +309,7 @@ describe("clusterReducer", () => {
 
   context("when RECEIVE_CONFIG", () => {
     const config = {
-      kubeappsCluster: "kubeappsCluster",
+      kubeappsCluster: "",
       kubeappsNamespace: "kubeapps",
       appVersion: "dev",
       authProxyEnabled: false,
@@ -329,7 +329,7 @@ describe("clusterReducer", () => {
         }),
       ).toEqual({
         ...initialTestState,
-        currentCluster: "kubeappsCluster",
+        currentCluster: "additionalCluster1",
         clusters: {
           additionalCluster1: {
             currentNamespace: "default",
@@ -343,21 +343,29 @@ describe("clusterReducer", () => {
       } as IClustersState);
     });
 
-    it("creates a default cluster if no clusters defined", () => {
-      const configNoClusters = {
+    it("sets the current cluster to the first cluster in the list", () => {
+      const configClusters = {
         ...config,
-        clusters: [],
+        clusters: ["one", "two", "three"],
       };
       expect(
         clusterReducer(initialTestState, {
           type: getType(actions.config.receiveConfig),
-          payload: configNoClusters,
+          payload: configClusters,
         }),
       ).toEqual({
         ...initialTestState,
-        currentCluster: "kubeappsCluster",
+        currentCluster: "one",
         clusters: {
-          default: {
+          one: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          two: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          three: {
             currentNamespace: "default",
             namespaces: [],
           },

@@ -155,15 +155,10 @@ const clusterReducer = (
           namespaces: [],
         };
       });
-      if (Object.keys(clusters).length === 0) {
-        clusters.default = {
-          currentNamespace: "default",
-          namespaces: [],
-        };
-      }
+
       return {
         ...state,
-        currentCluster: action.payload.kubeappsCluster,
+        currentCluster: config.clusters[0],
         clusters,
       };
     default:
