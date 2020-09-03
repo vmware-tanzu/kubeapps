@@ -120,9 +120,9 @@ export default function OperatorList({
 
   return (
     <section>
-      <PageHeader>
-        <Row>
-          <h1>Operators</h1>
+      <PageHeader
+        title="Operators"
+        filter={
           <SearchFilter
             key="searchFilter"
             placeholder="search charts..."
@@ -130,8 +130,8 @@ export default function OperatorList({
             value={searchFilter}
             onSubmit={pushSearchFilter}
           />
-        </Row>
-      </PageHeader>
+        }
+      />
       <Alert theme="warning">
         <div>
           Operators integration is under heavy development and currently in beta state. If you find

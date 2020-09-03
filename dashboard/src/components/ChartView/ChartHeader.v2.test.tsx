@@ -1,4 +1,4 @@
-import { mount, shallow } from "enzyme";
+import { mount } from "enzyme";
 import * as React from "react";
 import ChartHeader from "./ChartHeader.v2";
 
@@ -34,7 +34,7 @@ it("displays the appVersion", () => {
 });
 
 it("uses the icon", () => {
-  const wrapper = shallow(<ChartHeader {...testProps} />);
+  const wrapper = mount(<ChartHeader {...testProps} />);
   const icon = wrapper.find("img").filterWhere(i => i.prop("alt") === "app-icon");
   expect(icon.exists()).toBe(true);
   expect(icon.props()).toMatchObject({ src: "api/assetsvc/test.jpg" });

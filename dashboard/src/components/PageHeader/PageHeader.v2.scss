@@ -1,7 +1,7 @@
 .kubeapps-header {
   width: 100%;
   height: 4rem;
-  padding: 0.6rem;
+  padding-top: 0.3rem;
   border-bottom: 2px solid #f1f1f1;
   background-color: white;
 
@@ -11,26 +11,35 @@
   }
   .kubeapps-header-content {
     width: 100%;
-    .kubeapps-title-block {
+    .kubeapps-title-section {
       display: flex;
-      flex-direction: column;
-      justify-content: center;
-      h3 {
-        margin-left: 1rem;
-        font-weight: 500;
-        margin-top: 0;
-      }
-      .kubeapps-header-subtitle {
-        margin-left: 1rem;
-        img {
-          max-height: 1rem;
-          padding-right: 0.2rem;
+      min-height: 60px;
+      .kubeapps-title-block {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        h1 {
           margin: 0;
-          max-width: 30px;
+          margin-left: 0.6rem;
+          padding-top: 0.2rem;
         }
-        span {
-          color: var(--clr-p1-color, #666666);
-          padding-top: 0.1rem;
+        h3 {
+          margin-left: 1rem;
+          font-weight: 500;
+          margin-top: 0;
+        }
+        .kubeapps-header-subtitle {
+          margin-left: 1rem;
+          img {
+            max-height: 1rem;
+            padding-right: 0.2rem;
+            margin: 0;
+            max-width: 30px;
+          }
+          span {
+            color: var(--clr-p1-color, #666666);
+            padding-top: 0.1rem;
+          }
         }
       }
     }
@@ -44,12 +53,6 @@
       }
     }
   }
-}
-
-.kubeapps-header h1 {
-  margin: 0;
-  margin-left: 0.6rem;
-  padding-top: 0.2rem;
 }
 
 .header-version {

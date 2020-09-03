@@ -93,19 +93,17 @@ function AppRepoList({
   };
   return (
     <>
-      <PageHeader>
-        <div className="app-repo-list-header">
-          <h1>Application Repositories</h1>
-          <div className="header-button">
-            {supportedCluster && (
-              <>
-                <AppRepoAddButton namespace={namespace} kubeappsNamespace={kubeappsNamespace} />
-                <AppRepoRefreshAllButton />
-              </>
-            )}
-          </div>
-        </div>
-      </PageHeader>
+      <PageHeader
+        title="Application Repositories"
+        buttons={[
+          <AppRepoAddButton
+            key="add-repo-button"
+            namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
+          />,
+          <AppRepoRefreshAllButton key="refresh-all-button" />,
+        ]}
+      />
       {!supportedCluster ? (
         <Alert theme="warning">
           <h5>App Repositories are available on the default cluster only</h5>

@@ -69,13 +69,18 @@ function ChartView({
   return (
     <section>
       <div className="header-button">
-        <ChartHeader chartAttrs={chartAttrs} versions={versions} onSelect={selectVersion}>
-          <Link to={app.apps.new(cluster, namespace, version, version.attributes.version)}>
-            <CdsButton status="primary">
-              <CdsIcon shape="deploy" inverse={true} /> Deploy
-            </CdsButton>
-          </Link>
-        </ChartHeader>
+        <ChartHeader
+          chartAttrs={chartAttrs}
+          versions={versions}
+          onSelect={selectVersion}
+          deployButton={
+            <Link to={app.apps.new(cluster, namespace, version, version.attributes.version)}>
+              <CdsButton status="primary">
+                <CdsIcon shape="deploy" inverse={true} /> Deploy
+              </CdsButton>
+            </Link>
+          }
+        />
       </div>
 
       <section>

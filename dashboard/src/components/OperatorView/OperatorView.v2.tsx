@@ -76,17 +76,16 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
   const { currentCSVDesc } = channel;
   return (
     <section>
-      <div className="header-button">
-        <OperatorHeader
-          title={`${operator.metadata.name} by ${operator.status.provider.name}`}
-          icon={api.operators.operatorIcon(namespace, operator.metadata.name)}
-          version={currentCSVDesc.version}
-        >
-          <CdsButton status="primary" disabled={!!csv} onClick={redirect}>
+      <OperatorHeader
+        title={`${operator.metadata.name} by ${operator.status.provider.name}`}
+        icon={api.operators.operatorIcon(namespace, operator.metadata.name)}
+        version={currentCSVDesc.version}
+        buttons={[
+          <CdsButton key="deploy-button" status="primary" disabled={!!csv} onClick={redirect}>
             <CdsIcon shape="deploy" inverse={true} /> Deploy
-          </CdsButton>
-        </OperatorHeader>
-      </div>
+          </CdsButton>,
+        ]}
+      />
       <section>
         <Row>
           <Column span={3}>

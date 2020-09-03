@@ -182,31 +182,26 @@ function OperatorInstance({
   const error = errors.fetch || errors.delete || errors.update;
   return (
     <section>
+      <ConfirmDialog
+        onConfirm={handleDeleteClick}
+        modalIsOpen={modalIsOpen}
+        loading={deleting}
+        confirmationText="Are you sure you want to delete the resource?"
+        closeModal={closeModal}
+      />
       <OperatorHeader
         title={`${instanceName} (${crd?.kind})`}
         icon={icon}
         version={csv?.spec.version}
-      >
-        <Row>
-          <div className="header-button">
-            <CdsButton status="primary" onClick={onUpdateClick}>
-              <CdsIcon shape="upload-cloud" inverse={true} /> Update
-            </CdsButton>
-          </div>
-          <div className="header-button">
-            <CdsButton status="primary" onClick={openModal}>
-              <CdsIcon shape="trash" inverse={true} /> Delete
-            </CdsButton>
-          </div>
-          <ConfirmDialog
-            onConfirm={handleDeleteClick}
-            modalIsOpen={modalIsOpen}
-            loading={deleting}
-            confirmationText="Are you sure you want to delete the resource?"
-            closeModal={closeModal}
-          />
-        </Row>
-      </OperatorHeader>
+        buttons={[
+          <CdsButton key="update-button" status="primary" onClick={onUpdateClick}>
+            <CdsIcon shape="upload-cloud" inverse={true} /> Update
+          </CdsButton>,
+          <CdsButton key="delete-button" status="primary" onClick={openModal}>
+            <CdsIcon shape="trash" inverse={true} /> Delete
+          </CdsButton>,
+        ]}
+      />
       <section>
         <LoadingWrapper loaded={!isFetching}>
           {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}

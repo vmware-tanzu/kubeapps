@@ -12,7 +12,6 @@ import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader.v2";
 import { Link } from "react-router-dom";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import helmIcon from "../../icons/helm.svg";
 import ResourceRef from "../../shared/ResourceRef";
 import { IK8sList, IRelease, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
@@ -162,54 +161,34 @@ export default function AppView({
   const icon = get(app, "chart.metadata.icon", placeholder);
   return (
     <section>
-      <PageHeader>
-        <div className="kubeapps-header-content">
-          <Row>
-            <Column span={7}>
-              <Row>
-                <img src={icon} alt="app-icon" />
-                <div className="kubeapps-title-block">
-                  <h3>{releaseName}</h3>
-                  <div className="kubeapps-header-subtitle">
-                    <img src={helmIcon} alt="helm-icon" />
-                    <span>Helm Chart</span>
-                  </div>
-                </div>
-              </Row>
-            </Column>
-            <Column span={5}>
-              <div className="control-buttons">
-                <Row>
-                  <div className="header-button">
-                    <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
-                      <CdsButton status="primary">
-                        <CdsIcon shape="upload-cloud" inverse={true} /> Upgrade
-                      </CdsButton>
-                    </Link>
-                  </div>
-                  <div className="header-button">
-                    <RollbackButton
-                      cluster={cluster}
-                      namespace={namespace}
-                      releaseName={releaseName}
-                      revision={app?.version || 0}
-                    />
-                  </div>
-                  <div className="header-button">
-                    <DeleteButton
-                      cluster={cluster}
-                      namespace={namespace}
-                      releaseName={releaseName}
-                    />
-                  </div>
-                </Row>
-              </div>
-            </Column>
-          </Row>
-        </div>
-      </PageHeader>
-
+      <PageHeader
+        title={releaseName}
+        titleSize="md"
+        helm={true}
+        icon={icon}
+        buttons={[
+          <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)} key="upgrade-button">
+            <CdsButton status="primary">
+              <CdsIcon shape="upload-cloud" inverse={true} /> Upgrade
+            </CdsButton>
+          </Link>,
+          <RollbackButton
+            key="rollback-button"
+            cluster={cluster}
+            namespace={namespace}
+            releaseName={releaseName}
+            revision={app?.version || 0}
+          />,
+          <DeleteButton
+            key="delete-button"
+            cluster={cluster}
+            namespace={namespace}
+            releaseName={releaseName}
+          />,
+        ]}
+      />
       {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+
       {deleteError && (
         <Alert theme="danger">
           Unable to delete the application. Received: {deleteError.message}
