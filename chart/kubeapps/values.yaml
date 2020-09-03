@@ -20,7 +20,6 @@ allowNamespaceDiscovery: true
 enableIPv6: false
 
 ## clusters can be configured with a list of clusters that Kubeapps can target for deployments.
-## If empty, Kubeapps will only target the cluster on which Kubeapps is itself installed.
 ## When populated with a single cluster (as it is by default), Kubeapps will not allow users to
 ## change the target cluster. When populated with multiple clusters, Kubeapps will present the clusters to
 ## the user as potential targets for install or browsing.
@@ -32,6 +31,7 @@ enableIPv6: false
 ## kubectl --kubeconfig ~/.kube/kind-config-kubeapps-additional config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}'
 #
 # clusters:
+# - name: default
 # - name: second-cluster
 #   apiServiceURL: https://second-cluster:6443
 #   # certificateAuthorityData is required for secure communication with the additional API server.

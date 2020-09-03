@@ -18,18 +18,9 @@ func TestParseClusterConfig(t *testing.T) {
 		expectedConfig kube.ClustersConfig
 	}{
 		{
-			name:       "defaults the kubeapps cluster when passed an empty list of clusters",
-			configJSON: `[]`,
-			expectedConfig: kube.ClustersConfig{
-				KubeappsClusterName: "default",
-				Clusters:            map[string]kube.ClusterConfig{},
-			},
-		},
-		{
 			name:       "parses a single cluster",
 			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd"}]`,
 			expectedConfig: kube.ClustersConfig{
-				KubeappsClusterName: "default",
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
 						Name:                     "cluster-2",
@@ -47,7 +38,6 @@ func TestParseClusterConfig(t *testing.T) {
 	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
 ]`,
 			expectedConfig: kube.ClustersConfig{
-				KubeappsClusterName: "default",
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
 						Name:                     "cluster-2",
@@ -63,6 +53,33 @@ func TestParseClusterConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "parses a cluster without a service URL as the Kubeapps cluster",
+			configJSON: `[
+       {"name": "cluster-1" },
+       {"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="},
+       {"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
+]`,
+			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "cluster-1",
+				Clusters: map[string]kube.ClusterConfig{
+					"cluster-1": {
+						Name: "cluster-1",
+					},
+					"cluster-2": {
+						Name:                     "cluster-2",
+						APIServiceURL:            "https://example.com/cluster-2",
+						CertificateAuthorityData: "ca-cert-data\n",
+					},
+					"cluster-3": {
+						Name:                     "cluster-3",
+						APIServiceURL:            "https://example.com/cluster-3",
+						CertificateAuthorityData: "ca-cert-data-additional\n",
+					},
+				},
+			},
+		},
+
+		{
 			name:        "errors if the cluster configs cannot be parsed",
 			configJSON:  `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "extracomma",}]`,
 			expectedErr: true,
@@ -70,6 +87,14 @@ func TestParseClusterConfig(t *testing.T) {
 		{
 			name:        "errors if any CAData cannot be decoded",
 			configJSON:  `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "not-base64-encoded"}]`,
+			expectedErr: true,
+		},
+		{
+			name: "errors if more than one cluster without an api service URL is configured",
+			configJSON: `[
+       {"name": "cluster-1" },
+       {"name": "cluster-2" }
+]`,
 			expectedErr: true,
 		},
 	}

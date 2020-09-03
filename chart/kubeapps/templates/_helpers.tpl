@@ -249,23 +249,29 @@ Usage:
 {{- end -}}
 
 {{/*
-Sets the value of kubeappsCluster based on the configured clusters by finding the cluster without
+Returns the kubeappsCluster based on the configured clusters by finding the cluster without
 a defined apiServiceURL.
 */}}
 {{- define "kubeapps.kubeappsCluster" -}}
-    {{- $clusterName := "" }}
+    {{- $kubeappsCluster := "" }}
+    {{- if eq (len .Values.clusters) 0 }}
+        {{- fail "At least one cluster must be defined." }}
+    {{- end }}
     {{- range .Values.clusters }}
-        {{- if eq .apiServiceURL "" }}
-            {{- if eq $clusterName "" }}
-                {{- $clusterName = .name }}
+        {{- if eq (.apiServiceURL | toString) "<nil>" }}
+            {{- if eq $kubeappsCluster "" }}
+                {{- $kubeappsCluster = .name }}
             {{- else }}
                 {{- fail "Only one cluster can be specified without an apiServiceURL to refer to the cluster on which Kubeapps is installed." }}
             {{- end }}
         {{- end }}
     {{- end }}
-    {{- $clusterName }}
+    {{- $kubeappsCluster }}
 {{- end -}}
 
+{{/*
+Returns a JSON list of cluster names only (without sensitive tokens etc.)
+*/}}
 {{- define "kubeapps.clusterNames" -}}
     {{- $sanitizedClusters := list }}
     {{- range .Values.clusters }}

@@ -64,6 +64,8 @@ var (
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 
 	assetsvcURL string
+
+	kubeappsClusterName string
 )
 
 func init() {
@@ -79,6 +81,7 @@ func init() {
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&assetsvcURL, "assetsvc-url", "http://kubeapps-internal-assetsvc:8080", "URL to the internal assetsvc")
+	pflag.StringVar(&kubeappsClusterName, "kubeapps-cluster-name", "default", "name assigned from .Values.clusters to the cluster on which kubeapps is installed")
 }
 
 func main() {
@@ -133,12 +136,12 @@ func main() {
 		log.Fatalf("POD_NAMESPACE should be defined")
 	}
 
-	kubeHandler, err := kube.NewHandler(kubeappsNamespace, kube.ClustersConfig{KubeappsClusterName: "default"})
+	kubeHandler, err := kube.NewHandler(kubeappsNamespace, kube.ClustersConfig{KubeappsClusterName: kubeappsClusterName})
 	if err != nil {
 		log.Fatalf("Failed to create handler: %v", err)
 	}
 
-	chartClient := chartUtils.NewChartClient(kubeHandler, "default", kubeappsNamespace, userAgent())
+	chartClient := chartUtils.NewChartClient(kubeHandler, kubeappsClusterName, kubeappsNamespace, userAgent())
 
 	r := mux.NewRouter()
 
@@ -172,7 +175,7 @@ func main() {
 	apiv1.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.DeleteRelease))
 
 	// Backend routes unrelated to tiller-proxy functionality.
-	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), kube.ClustersConfig{KubeappsClusterName: "default"})
+	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), kube.ClustersConfig{KubeappsClusterName: kubeappsClusterName})
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}
