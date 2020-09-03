@@ -187,7 +187,8 @@ export default function AppView({
           />,
         ]}
       />
-      {error && <Alert theme="danger">Found an error: {error.message}</Alert>}
+      {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+
       {deleteError && (
         <Alert theme="danger">
           Unable to delete the application. Received: {deleteError.message}

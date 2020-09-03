@@ -204,7 +204,7 @@ function OperatorInstance({
       />
       <section>
         <LoadingWrapper loaded={!isFetching}>
-          {error && <Alert theme="danger">Found an error: {error.message}</Alert>}
+          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
           {resource && (
             <Row>
               <Column span={3}>

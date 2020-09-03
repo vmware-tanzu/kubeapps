@@ -231,7 +231,7 @@ describe("AppViewComponent", () => {
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();
-      expect(err.html()).toContain("Found an error: Boom!");
+      expect(err.html()).toContain("Boom!");
     });
 
     it("renders a delete-error", () => {

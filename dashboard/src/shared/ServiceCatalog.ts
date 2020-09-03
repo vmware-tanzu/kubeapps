@@ -7,20 +7,20 @@ import { IServiceInstance } from "./ServiceInstance";
 import { IK8sList, IStatus } from "./types";
 
 export class ServiceCatalog {
-  public static async getServiceClasses() {
-    return this.getItems<IClusterServiceClass>("clusterserviceclasses");
+  public static async getServiceClasses(cluster: string) {
+    return this.getItems<IClusterServiceClass>(cluster, "clusterserviceclasses");
   }
 
-  public static async getServiceBrokers() {
-    return this.getItems<IServiceBroker>("clusterservicebrokers");
+  public static async getServiceBrokers(cluster: string) {
+    return this.getItems<IServiceBroker>(cluster, "clusterservicebrokers");
   }
 
-  public static async getServicePlans() {
-    return this.getItems<IServicePlan>("clusterserviceplans");
+  public static async getServicePlans(cluster: string) {
+    return this.getItems<IServicePlan>(cluster, "clusterserviceplans");
   }
 
-  public static async deprovisionInstance(instance: IServiceInstance) {
-    const { data } = await axiosWithAuth.delete(`${APIBase}${instance.metadata.selfLink}`);
+  public static async deprovisionInstance(cluster: string, instance: IServiceInstance) {
+    const { data } = await axiosWithAuth.delete(`${APIBase(cluster)}${instance.metadata.selfLink}`);
     return data;
   }
 
@@ -40,24 +40,30 @@ export class ServiceCatalog {
     return data;
   }
 
-  public static async isCatalogInstalled(): Promise<boolean> {
+  public static async isCatalogInstalled(cluster: string): Promise<boolean> {
     try {
-      const { status } = await axiosWithAuth.get(this.endpoint);
+      const { status } = await axiosWithAuth.get(this.endpoint(cluster));
       return status === 200;
     } catch (err) {
       return false;
     }
   }
 
-  public static async getItems<T>(resource: string, namespace?: string): Promise<T[]> {
+  public static async getItems<T>(
+    cluster: string,
+    resource: string,
+    namespace?: string,
+  ): Promise<T[]> {
     const response = await axiosWithAuth.get<IK8sList<T, {}>>(
-      this.endpoint + (namespace ? `/namespaces/${namespace}` : "") + `/${resource}`,
+      this.endpoint(cluster) + (namespace ? `/namespaces/${namespace}` : "") + `/${resource}`,
     );
     const json = response.data;
     return json.items;
   }
 
-  private static endpoint: string = `${APIBase}/apis/servicecatalog.k8s.io/v1beta1`;
+  private static endpoint(cluster: string): string {
+    return `${APIBase(cluster)}/apis/servicecatalog.k8s.io/v1beta1`;
+  }
 }
 export interface IK8sApiListResponse<T> {
   kind: string;

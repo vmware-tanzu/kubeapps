@@ -27,10 +27,11 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 )
 
-const additionalClustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
+const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
 
 var (
 	additionalClustersConfigPath string
+	clustersConfigPath           string
 	assetsvcURL                  string
 	helmDriverArg                string
 	listLimit                    int
@@ -47,7 +48,8 @@ func init() {
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
-	pflag.StringVar(&additionalClustersConfigPath, "additional-clusters-config-path", "", "Configuration for additional clusters")
+	pflag.StringVar(&clustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
+	pflag.StringVar(&additionalClustersConfigPath, "additional-clusters-config-path", "", "Configuration for clusters")
 }
 
 func main() {
@@ -59,11 +61,16 @@ func main() {
 		log.Fatal("POD_NAMESPACE should be defined")
 	}
 
-	var additionalClusters map[string]kube.AdditionalClusterConfig
-	if additionalClustersConfigPath != "" {
+	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
+	clustersConfig := kube.ClustersConfig{KubeappsClusterName: "default"}
+	// TODO(absoludity): remove support for --additional-clusters-config-path once we're +2 releases away.
+	if clustersConfigPath == "" && additionalClustersConfigPath != "" {
+		clustersConfigPath = additionalClustersConfigPath
+	}
+	if clustersConfigPath != "" {
 		var err error
 		var cleanupCAFiles func()
-		additionalClusters, cleanupCAFiles, err = parseAdditionalClusterConfig(additionalClustersConfigPath, additionalClustersCAFilesPrefix)
+		clustersConfig, cleanupCAFiles, err = parseClusterConfig(clustersConfigPath, clustersCAFilesPrefix)
 		if err != nil {
 			log.Fatalf("unable to parse additional clusters config: %+v", err)
 		}
@@ -71,10 +78,10 @@ func main() {
 	}
 
 	options := handler.Options{
-		ListLimit:          listLimit,
-		Timeout:            timeout,
-		KubeappsNamespace:  kubeappsNamespace,
-		AdditionalClusters: additionalClusters,
+		ListLimit:         listLimit,
+		Timeout:           timeout,
+		KubeappsNamespace: kubeappsNamespace,
+		ClustersConfig:    clustersConfig,
 	}
 
 	storageForDriver := agent.StorageForSecrets
@@ -112,7 +119,7 @@ func main() {
 	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), additionalClusters)
+	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), clustersConfig)
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}
@@ -178,29 +185,29 @@ func main() {
 	os.Exit(0)
 }
 
-func parseAdditionalClusterConfig(configPath, caFilesPrefix string) (kube.AdditionalClustersConfig, func(), error) {
+func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, func(), error) {
 	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
 	if err != nil {
-		return nil, func() {}, err
+		return kube.ClustersConfig{}, func() {}, err
 	}
 	deferFn := func() { os.RemoveAll(caFilesDir) }
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return nil, deferFn, err
+		return kube.ClustersConfig{}, deferFn, err
 	}
 
-	var clusterConfigs []kube.AdditionalClusterConfig
+	var clusterConfigs []kube.ClusterConfig
 	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
-		return nil, deferFn, err
+		return kube.ClustersConfig{}, deferFn, err
 	}
 
-	configs := kube.AdditionalClustersConfig{}
+	configs := kube.ClustersConfig{KubeappsClusterName: "default", Clusters: map[string]kube.ClusterConfig{}}
 	for _, c := range clusterConfigs {
 		// We need to decode the base64-encoded cadata from the input.
 		if c.CertificateAuthorityData != "" {
 			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
 			if err != nil {
-				return nil, deferFn, err
+				return kube.ClustersConfig{}, deferFn, err
 			}
 			c.CertificateAuthorityData = string(decodedCAData)
 
@@ -210,10 +217,10 @@ func parseAdditionalClusterConfig(configPath, caFilesPrefix string) (kube.Additi
 			c.CAFile = filepath.Join(caFilesDir, c.Name)
 			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
 			if err != nil {
-				return nil, deferFn, err
+				return kube.ClustersConfig{}, deferFn, err
 			}
 		}
-		configs[c.Name] = c
+		configs.Clusters[c.Name] = c
 	}
 	return configs, deferFn, nil
 }

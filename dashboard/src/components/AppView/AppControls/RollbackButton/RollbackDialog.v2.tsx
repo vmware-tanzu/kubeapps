@@ -35,7 +35,7 @@ function RollbackDialog({
   }
   return (
     <div className="rollback-menu">
-      {error && <Alert theme="danger">Found error: {error.message}</Alert>}
+      {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
       {loading && <p className="rollback-menu-text">Loading, please wait.</p>}
       <LoadingWrapper loaded={!loading}>
         {disableRollback ? (

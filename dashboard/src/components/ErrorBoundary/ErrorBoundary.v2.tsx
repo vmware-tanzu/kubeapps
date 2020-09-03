@@ -21,10 +21,10 @@ class ErrorBoundary extends React.Component<IErrorBoundaryProps, IErrorBoundaryS
     const { error: stateError } = this.state;
     const { error: propsError } = this.props;
     if (propsError) {
-      return <Alert theme="danger">Found an error: {propsError.message}</Alert>;
+      return <Alert theme="danger">An error occurred: {propsError.message}</Alert>;
     }
     if (stateError) {
-      return <Alert theme="danger">Found an error: {stateError.message}</Alert>;
+      return <Alert theme="danger">An error occurred: {stateError.message}</Alert>;
     }
     return this.props.children;
   }

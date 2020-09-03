@@ -30,13 +30,14 @@ export interface IServiceInstance {
 
 export class ServiceInstance {
   public static async create(
+    cluster: string,
     releaseName: string,
     namespace: string,
     className: string,
     planName: string,
     parameters: {},
   ) {
-    const { data } = await axiosWithAuth.post<IStatus>(this.getLink(namespace), {
+    const { data } = await axiosWithAuth.post<IStatus>(this.getLink(cluster, namespace), {
       apiVersion: "servicecatalog.k8s.io/v1beta1",
       kind: "ServiceInstance",
       metadata: {
@@ -51,22 +52,27 @@ export class ServiceInstance {
     return data;
   }
 
-  public static async get(namespace?: string, name?: string): Promise<IServiceInstance> {
-    const url = this.getLink(namespace, name);
+  public static async get(
+    cluster: string,
+    namespace?: string,
+    name?: string,
+  ): Promise<IServiceInstance> {
+    const url = this.getLink(cluster, namespace, name);
     const { data } = await axiosWithAuth.get<IServiceInstance>(url);
     return data;
   }
 
-  public static async list(namespace?: string): Promise<IServiceInstance[]> {
+  public static async list(cluster: string, namespace?: string): Promise<IServiceInstance[]> {
     const instances = await ServiceCatalog.getItems<IServiceInstance>(
+      cluster,
       "serviceinstances",
       namespace,
     );
     return instances;
   }
 
-  private static getLink(namespace?: string, name?: string): string {
-    return `${APIBase}/apis/servicecatalog.k8s.io/v1beta1${
+  private static getLink(cluster: string, namespace?: string, name?: string): string {
+    return `${APIBase(cluster)}/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/serviceinstances${name ? `/${name}` : ""}`;
   }

@@ -56,7 +56,7 @@ function SelectRepoForm({
 
   return (
     <LoadingWrapper loaded={!isFetching}>
-      {repoError && <Alert theme="danger">Found error: {repoError.message}</Alert>}
+      {repoError && <Alert theme="danger">An error occurred: {repoError.message}</Alert>}
       {!repoError && repos.length === 0 && (
         <Alert theme="warning">
           <h5>Chart repositories not found.</h5>
@@ -69,7 +69,7 @@ function SelectRepoForm({
       )}
       {repos.length > 0 && (
         <div className="select-repo-form">
-          {error && <Alert theme="danger">Found error: {error.message}</Alert>}
+          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
           <h2>Select the source repository of {chartName}</h2>
           <label className="select-repo-form-label" htmlFor="chartRepoName">
             Chart Repository Name *

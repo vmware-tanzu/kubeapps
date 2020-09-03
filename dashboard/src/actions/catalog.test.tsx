@@ -34,6 +34,9 @@ beforeEach(() => {
     config: {
       kubeappsCluster: testArgs.kubeappsCluster,
     },
+    clusters: {
+      currentCluster: testArgs.kubeappsCluster,
+    },
   });
 
   ServiceInstance.create = jest.fn().mockImplementationOnce(() => {
@@ -149,6 +152,7 @@ describe("provision", () => {
 
     expect(store.getActions().length).toBe(0);
     expect(ServiceInstance.create).toHaveBeenCalledWith(
+      testArgs.kubeappsCluster,
       testArgs.releaseName,
       testArgs.namespace,
       testArgs.className,
@@ -197,6 +201,7 @@ describe("provision", () => {
     );
     await store.dispatch(cmd);
     expect(ServiceInstance.create).toHaveBeenCalledWith(
+      testArgs.kubeappsCluster,
       testArgs.releaseName,
       testArgs.namespace,
       testArgs.className,
@@ -214,7 +219,10 @@ describe("deprovision", () => {
     expect(res).toBe(true);
 
     expect(store.getActions().length).toBe(0);
-    expect(ServiceCatalog.deprovisionInstance).toHaveBeenCalledWith(serviceInstance);
+    expect(ServiceCatalog.deprovisionInstance).toHaveBeenCalledWith(
+      testArgs.kubeappsCluster,
+      serviceInstance,
+    );
   });
 
   it("dispatches errorCatalog if error", async () => {
@@ -248,6 +256,7 @@ describe("addBinding", () => {
     expect(ServiceBinding.create).toHaveBeenCalledWith(
       testArgs.bindingName,
       testArgs.instanceName,
+      testArgs.kubeappsCluster,
       testArgs.namespace,
       testArgs.params,
     );
@@ -297,6 +306,7 @@ describe("addBinding", () => {
     expect(ServiceBinding.create).toHaveBeenCalledWith(
       testArgs.bindingName,
       testArgs.instanceName,
+      testArgs.kubeappsCluster,
       testArgs.namespace,
       expectedParams,
     );
@@ -311,7 +321,11 @@ describe("removeBinding", () => {
     expect(res).toBe(true);
 
     expect(store.getActions().length).toBe(0);
-    expect(ServiceBinding.delete).toHaveBeenCalledWith(testArgs.bindingName, testArgs.namespace);
+    expect(ServiceBinding.delete).toHaveBeenCalledWith(
+      testArgs.kubeappsCluster,
+      testArgs.bindingName,
+      testArgs.namespace,
+    );
   });
 
   it("dispatches errorCatalog if error", async () => {
@@ -480,7 +494,7 @@ describe("getInstances", () => {
 
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
-    expect(ServiceInstance.list).toHaveBeenCalledWith(testArgs.namespace);
+    expect(ServiceInstance.list).toHaveBeenCalledWith(testArgs.kubeappsCluster, testArgs.namespace);
   });
 
   it("dispatches requestInstances and errorCatalog if error", async () => {

@@ -5,7 +5,7 @@ import { ResourceKindsWithAPIVersions } from "./ResourceAPIVersion";
 import { isNamespaced, ResourceKind, ResourceKindsWithPlurals } from "./ResourceKinds";
 import { IK8sList, IResource } from "./types";
 
-export const APIBase = "api/clusters/default";
+export const APIBase = (cluster: string) => `api/clusters/${cluster}`;
 export let WebSocketAPIBase: string;
 if (window.location.protocol === "https:") {
   WebSocketAPIBase = `wss://${window.location.host}${window.location.pathname}`;

@@ -123,12 +123,12 @@ function AppRepoList({
         <div className="page-content">
           {errors.fetch && (
             <Alert theme="danger">
-              Found an error fetching repositories: {errors.fetch.message}
+              An error occurred while fetching repositories: {errors.fetch.message}
             </Alert>
           )}
           {errors.delete && (
             <Alert theme="danger">
-              Found an error deleting the repository: {errors.delete.message}
+              An error occurred while deleting the repository: {errors.delete.message}
             </Alert>
           )}
           {!errors.fetch && (

@@ -33,19 +33,26 @@ export interface IClusterServiceClass {
 }
 
 export class ClusterServiceClass {
-  public static async get(namespace?: string, name?: string): Promise<IClusterServiceClass> {
-    const url = this.getLink(namespace, name);
+  public static async get(
+    cluster: string,
+    namespace?: string,
+    name?: string,
+  ): Promise<IClusterServiceClass> {
+    const url = this.getLink(cluster, namespace, name);
     const { data } = await axiosWithAuth.get<IClusterServiceClass>(url);
     return data;
   }
 
-  public static async list(namespace?: string): Promise<IClusterServiceClass[]> {
-    const instances = await ServiceCatalog.getItems<IClusterServiceClass>("serviceinstances");
+  public static async list(cluster: string, namespace?: string): Promise<IClusterServiceClass[]> {
+    const instances = await ServiceCatalog.getItems<IClusterServiceClass>(
+      cluster,
+      "serviceinstances",
+    );
     return instances;
   }
 
-  private static getLink(namespace?: string, name?: string): string {
-    return `${APIBase}/apis/servicecatalog.k8s.io/v1beta1${
+  private static getLink(cluster: string, namespace?: string, name?: string): string {
+    return `${APIBase(cluster)}/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/clusterserviceclasses${name ? `/${name}` : ""}`;
   }

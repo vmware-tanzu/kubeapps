@@ -57,7 +57,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
   if (error) {
     return (
       <Alert theme="danger">
-        Found an error while fetching {operatorName}: {error.message}
+        An error occurred while fetching the Operator {operatorName}: {error.message}
       </Alert>
     );
   }
