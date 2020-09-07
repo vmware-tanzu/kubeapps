@@ -51,7 +51,7 @@ export const filterNames = {
   OPERATOR_PROVIDER: "Provider",
 };
 
-function initialFilterState() {
+export function initialFilterState() {
   const result = {};
   Object.values(filterNames).forEach(f => (result[f] = []));
   return result;
@@ -61,7 +61,9 @@ export function filtersToQuery(filters: any) {
   let query = "";
   const activeFilters = Object.keys(filters).filter(f => filters[f].length);
   if (activeFilters.length) {
-    const filterQueries = activeFilters.map(filter => `${filter}=${filters[filter].join(",")}`);
+    const filterQueries = activeFilters.map(
+      filter => `${filter}=${filters[filter].map((f: string) => encodeURIComponent(f)).join(",")}`,
+    );
     query = "?" + filterQueries.join("&");
   }
   return query;
