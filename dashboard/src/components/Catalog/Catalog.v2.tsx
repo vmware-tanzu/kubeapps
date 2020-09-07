@@ -57,7 +57,7 @@ function initialFilterState() {
   return result;
 }
 
-function filtersToQuery(filters: any) {
+export function filtersToQuery(filters: any) {
   let query = "";
   const activeFilters = Object.keys(filters).filter(f => filters[f].length);
   if (activeFilters.length) {

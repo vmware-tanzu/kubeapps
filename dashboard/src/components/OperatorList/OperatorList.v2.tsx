@@ -2,6 +2,7 @@ import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
 import CardGrid from "components/Card/CardGrid.v2";
+import { filtersToQuery } from "components/Catalog/Catalog.v2";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -67,16 +68,6 @@ function initialFilterState() {
   const result = {};
   Object.values(filterNames).forEach(f => (result[f] = []));
   return result;
-}
-
-function filtersToQuery(filters: any) {
-  let query = "";
-  const activeFilters = Object.keys(filters).filter(f => filters[f].length);
-  if (activeFilters.length) {
-    const filterQueries = activeFilters.map(filter => `${filter}=${filters[filter].join(",")}`);
-    query = "?" + filterQueries.join("&");
-  }
-  return query;
 }
 
 export default function OperatorList({
