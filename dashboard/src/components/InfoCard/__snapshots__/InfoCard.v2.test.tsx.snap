@@ -23,36 +23,37 @@ exports[`should render a Card 1`] = `
         noBorder={false}
       >
         <div
-          className="card-title"
+          className="info-card-header"
         >
-          foo
+          <div
+            className="card-title"
+          >
+            foo
+          </div>
         </div>
       </CardHeader>
       <CardBlock>
-        <Row
-          list={false}
+        <div
+          className="info-card-block"
         >
-          <Column
-            listItem={false}
-            span={3}
+          <div
+            className="card-icon"
+          >
+            <img
+              alt="icon"
+              src="an-icon.png"
+            />
+          </div>
+          <div
+            className="card-description-wrapper"
           >
             <div
-              className="card-icon"
+              className="card-description"
             >
-              <img
-                alt="icon"
-                sizes="64px"
-                src="an-icon.png"
-              />
+              <span />
             </div>
-          </Column>
-          <Column
-            listItem={false}
-            span={9}
-          >
-            <span />
-          </Column>
-        </Row>
+          </div>
+        </div>
       </CardBlock>
       <CardFooter>
         <Row

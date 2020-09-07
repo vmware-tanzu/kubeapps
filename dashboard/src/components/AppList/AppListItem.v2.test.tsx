@@ -1,5 +1,7 @@
+import Tooltip from "components/js/Tooltip";
 import { shallow } from "enzyme";
 import * as React from "react";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
 import InfoCard from "../InfoCard/InfoCard.v2";
 import AppListItem, { IAppListItemProps } from "./AppListItem.v2";
@@ -31,13 +33,12 @@ it("renders an app item", () => {
       defaultProps.app.releaseName,
     ),
     tag1Class: "label-success",
-    tag1Content: "Status: deployed",
-    tag2Content: undefined,
+    tag1Content: "deployed",
     title: defaultProps.app.releaseName,
   });
 });
 
-it("should add a second label with the chart update available", () => {
+it("should add a tooltip with the chart update available", () => {
   const props = {
     ...defaultProps,
     app: {
@@ -53,9 +54,9 @@ it("should add a second label with the chart update available", () => {
       },
     },
   } as IAppListItemProps;
-  const wrapper = shallow(<AppListItem {...props} />);
-  const card = wrapper.find(InfoCard);
-  expect(card.prop("tag2Content")).toBe("New Chart: 1.1.0");
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  const tooltip = wrapper.find(Tooltip);
+  expect(tooltip.text()).toBe("New Chart Version: 1.1.0");
 });
 
 it("should add a second label with the app update available", () => {
@@ -74,7 +75,7 @@ it("should add a second label with the app update available", () => {
       },
     },
   } as IAppListItemProps;
-  const wrapper = shallow(<AppListItem {...props} />);
-  const card = wrapper.find(InfoCard);
-  expect(card.prop("tag2Content")).toBe("New App: 1.1.0");
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  const tooltip = wrapper.find(Tooltip);
+  expect(tooltip.text()).toBe("New App Version: 1.1.0");
 });
