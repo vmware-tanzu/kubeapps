@@ -13,7 +13,7 @@ export default function OperatorCatalogItem(props: IOperatorCatalogItem) {
   const csvName = props.csv.split(".")[0];
   const tag1 = <span>{csvName}</span>;
   const link = app.operatorInstances.new(cluster, namespace, csv, id);
-  const subIcon = operatorIcon;
+  const bgIcon = operatorIcon;
   return (
     <InfoCard
       key={id}
@@ -23,7 +23,7 @@ export default function OperatorCatalogItem(props: IOperatorCatalogItem) {
       icon={iconSrc}
       description={trimDescription(description)}
       tag1Content={tag1}
-      subIcon={subIcon}
+      bgIcon={bgIcon}
     />
   );
 }

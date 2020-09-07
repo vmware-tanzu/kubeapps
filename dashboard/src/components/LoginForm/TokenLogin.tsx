@@ -1,5 +1,5 @@
+import { CdsButton } from "@clr/react/button";
 import * as React from "react";
-import { CdsButton } from "../Clarity/clarity";
 
 interface ILoginFormProps {
   token: string;

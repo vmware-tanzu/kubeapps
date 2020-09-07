@@ -1,4 +1,4 @@
-import { CdsButton } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
 import Alert from "components/js/Alert";
 import Modal from "components/js/Modal/Modal";
 import React from "react";

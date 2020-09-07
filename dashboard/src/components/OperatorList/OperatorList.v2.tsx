@@ -1,6 +1,7 @@
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
 import CardGrid from "components/Card/CardGrid.v2";
-import { CdsButton, CdsIcon } from "components/Clarity/clarity";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";

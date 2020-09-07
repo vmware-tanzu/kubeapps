@@ -2,8 +2,9 @@ import { push } from "connected-react-router";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import { IClustersState } from "../../reducers/cluster";
-import { CdsButton, CdsIcon } from "../Clarity/clarity";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 
 import Column from "components/js/Column";
@@ -94,7 +95,7 @@ function ContextSelector({
             </Column>
           </Row>
         </button>
-        <div className="dropdown-menu" role="menu">
+        <div className="dropdown-menu" role="menu" hidden={!open}>
           <span className="context-selector-header dropdown-menu-padding">
             Select a cluster and a namespace to manage applications
           </span>

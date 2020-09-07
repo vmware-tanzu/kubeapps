@@ -13,7 +13,7 @@ export default function ChartCatalogItem(props: IChartCatalogItem) {
   const iconSrc = icon || placeholder;
   const cluster = useSelector((state: IStoreState) => state.clusters.currentCluster);
   const link = url.app.charts.get(cluster, namespace, name, repo || ({} as IRepo));
-  const subIcon = helmIcon;
+  const bgIcon = helmIcon;
 
   return (
     <InfoCard
@@ -24,7 +24,7 @@ export default function ChartCatalogItem(props: IChartCatalogItem) {
       icon={iconSrc}
       description={trimDescription(description)}
       tag1Content={<span>{repo.name}</span>}
-      subIcon={subIcon}
+      bgIcon={bgIcon}
     />
   );
 }

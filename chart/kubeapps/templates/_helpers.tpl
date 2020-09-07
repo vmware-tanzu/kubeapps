@@ -247,3 +247,35 @@ Usage:
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
 {{- end -}}
+
+{{/*
+Returns the kubeappsCluster based on the configured clusters by finding the cluster without
+a defined apiServiceURL.
+*/}}
+{{- define "kubeapps.kubeappsCluster" -}}
+    {{- $kubeappsCluster := "" }}
+    {{- if eq (len .Values.clusters) 0 }}
+        {{- fail "At least one cluster must be defined." }}
+    {{- end }}
+    {{- range .Values.clusters }}
+        {{- if eq (.apiServiceURL | toString) "<nil>" }}
+            {{- if eq $kubeappsCluster "" }}
+                {{- $kubeappsCluster = .name }}
+            {{- else }}
+                {{- fail "Only one cluster can be specified without an apiServiceURL to refer to the cluster on which Kubeapps is installed." }}
+            {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- $kubeappsCluster }}
+{{- end -}}
+
+{{/*
+Returns a JSON list of cluster names only (without sensitive tokens etc.)
+*/}}
+{{- define "kubeapps.clusterNames" -}}
+    {{- $sanitizedClusters := list }}
+    {{- range .Values.clusters }}
+    {{- $sanitizedClusters = append $sanitizedClusters .name }}
+    {{- end }}
+    {{- $sanitizedClusters | toJson }}
+{{- end -}}

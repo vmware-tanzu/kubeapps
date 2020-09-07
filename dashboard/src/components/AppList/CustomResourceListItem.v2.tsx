@@ -41,11 +41,10 @@ function CustomResourceListItem(props: ICustomResourceListItemProps) {
       info={
         <>
           <div>App: {resource.kind}</div>
-          <div>Operator: v{csv.spec.version || "-"}</div>
+          <div>Operator: {csv.spec.version || "-"}</div>
         </>
       }
-      tag1Content={csv.metadata.name.split(".")[0]}
-      subIcon={operatorIcon}
+      bgIcon={operatorIcon}
     />
   );
 }

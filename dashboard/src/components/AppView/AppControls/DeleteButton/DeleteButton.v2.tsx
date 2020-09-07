@@ -1,5 +1,6 @@
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
-import { CdsButton, CdsIcon } from "components/Clarity/clarity";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog.v2";
 import { push } from "connected-react-router";
 import React, { useState } from "react";

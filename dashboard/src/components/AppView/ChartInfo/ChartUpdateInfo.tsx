@@ -1,4 +1,4 @@
-import { CdsIcon } from "components/Clarity/clarity";
+import { CdsIcon } from "@clr/react/icon";
 import * as React from "react";
 
 import { hapi } from "shared/hapi/release";

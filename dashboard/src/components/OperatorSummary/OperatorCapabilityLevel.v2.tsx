@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { CdsIcon } from "components/Clarity/clarity";
+import { CdsIcon } from "@clr/react/icon";
 import "./CapabilityLevel.css";
 
 interface IOperatorCapabilitiesProps {

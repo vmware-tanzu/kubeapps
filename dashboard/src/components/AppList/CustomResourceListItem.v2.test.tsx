@@ -49,7 +49,6 @@ it("renders an cr item", () => {
       crd.name,
       resource.metadata.name,
     ),
-    tag1Content: "bar",
     title: resource.metadata.name,
   });
 });

@@ -1,24 +1,22 @@
-import { push } from "connected-react-router";
-import { flatten, get, intersection, uniq, without } from "lodash";
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { CdsIcon } from "../Clarity/clarity";
-
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import { push } from "connected-react-router";
+import { flatten, get, intersection, uniq, without } from "lodash";
+import React, { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 import { IFeatureFlags } from "shared/Config";
+import { app } from "shared/url";
 import { IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import CardGrid from "../Card/CardGrid.v2";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
-
-import { CdsButton } from "components/Clarity/clarity";
-import { useDispatch } from "react-redux";
-import { app } from "shared/url";
 import "./Catalog.v2.css";
 import CatalogItems from "./CatalogItems";
 

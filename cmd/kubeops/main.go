@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -201,8 +202,16 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 		return kube.ClustersConfig{}, deferFn, err
 	}
 
-	configs := kube.ClustersConfig{KubeappsClusterName: "default", Clusters: map[string]kube.ClusterConfig{}}
+	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
 	for _, c := range clusterConfigs {
+		if c.APIServiceURL == "" {
+			if configs.KubeappsClusterName == "" {
+				configs.KubeappsClusterName = c.Name
+			} else {
+				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured without an apiServiceURL, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
+			}
+		}
+
 		// We need to decode the base64-encoded cadata from the input.
 		if c.CertificateAuthorityData != "" {
 			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)

@@ -1,5 +1,5 @@
+import { CdsButton } from "@clr/react/button";
 import actions from "actions";
-import { CdsButton } from "components/Clarity/clarity";
 import { shallow } from "enzyme";
 import * as React from "react";
 import { act } from "react-dom/test-utils";

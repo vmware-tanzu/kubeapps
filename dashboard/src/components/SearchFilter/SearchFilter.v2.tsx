@@ -1,5 +1,5 @@
+import { CdsIcon } from "@clr/react/icon";
 import * as React from "react";
-import { CdsIcon } from "../Clarity/clarity";
 import Input from "../js/Input";
 
 import Column from "components/js/Column";

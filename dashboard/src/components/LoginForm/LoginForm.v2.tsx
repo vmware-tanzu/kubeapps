@@ -1,8 +1,8 @@
+import { CdsIcon } from "@clr/react/icon";
 import { Location } from "history";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { Redirect } from "react-router";
-import { CdsIcon } from "../Clarity/clarity";
 
 import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.v2.css";

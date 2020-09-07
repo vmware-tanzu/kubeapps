@@ -1,6 +1,6 @@
 import React from "react";
 
-import { CdsButton } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
 
 import "./AppRepoControl.css";
 

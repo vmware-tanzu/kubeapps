@@ -1,5 +1,5 @@
+import { CdsButton } from "@clr/react/button";
 import actions from "actions";
-import { CdsButton } from "components/Clarity/clarity";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog.v2";
 import Alert from "components/js/Alert";
 import * as React from "react";

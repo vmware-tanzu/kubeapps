@@ -5,6 +5,7 @@ import { getType } from "typesafe-actions";
 import { IConfig } from "shared/Config";
 import { definedNamespaces } from "shared/Namespace";
 import actions from "../actions";
+import { Auth } from "../shared/Auth";
 import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState, initialState } from "./cluster";
 
@@ -309,7 +310,7 @@ describe("clusterReducer", () => {
 
   context("when RECEIVE_CONFIG", () => {
     const config = {
-      kubeappsCluster: "kubeappsCluster",
+      kubeappsCluster: "",
       kubeappsNamespace: "kubeapps",
       appVersion: "dev",
       authProxyEnabled: false,
@@ -321,7 +322,7 @@ describe("clusterReducer", () => {
       },
       clusters: ["additionalCluster1", "additionalCluster2"],
     } as IConfig;
-    it("adds the additional clusters to the clusters state", () => {
+    it("re-writes the clusters to match the config.clusters state", () => {
       expect(
         clusterReducer(initialTestState, {
           type: getType(actions.config.receiveConfig),
@@ -329,9 +330,8 @@ describe("clusterReducer", () => {
         }),
       ).toEqual({
         ...initialTestState,
-        currentCluster: "kubeappsCluster",
+        currentCluster: "additionalCluster1",
         clusters: {
-          ...initialTestState.clusters,
           additionalCluster1: {
             currentNamespace: "default",
             namespaces: [],
@@ -344,22 +344,69 @@ describe("clusterReducer", () => {
       } as IClustersState);
     });
 
-    it("does not error if there is not feature flag", () => {
-      const badConfig = {
+    it("sets the current cluster to the first cluster in the list", () => {
+      const configClusters = {
         ...config,
+        clusters: ["one", "two", "three"],
       };
-      // Manually delete clusters so typescript doesn't complain
-      // while still allowing us to test the case where it is not present.
-      delete badConfig.clusters;
       expect(
         clusterReducer(initialTestState, {
           type: getType(actions.config.receiveConfig),
-          payload: badConfig,
+          payload: configClusters,
+        }),
+      ).toEqual({
+        ...initialTestState,
+        currentCluster: "one",
+        clusters: {
+          one: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          two: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          three: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("uses default namespace from token for kubeapps cluster", () => {
+      const configWithKubeappsCluster = {
+        ...config,
+        kubeappsCluster: "kubeappsCluster",
+        clusters: ["kubeappsCluster", ...config.clusters],
+      };
+      const spyOnDefaultNamespaceFromToken = jest
+        .spyOn(Auth, "defaultNamespaceFromToken")
+        .mockReturnValue("kubeapps");
+      expect(
+        clusterReducer(initialTestState, {
+          type: getType(actions.config.receiveConfig),
+          payload: configWithKubeappsCluster,
         }),
       ).toEqual({
         ...initialTestState,
         currentCluster: "kubeappsCluster",
-      });
+        clusters: {
+          additionalCluster1: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          additionalCluster2: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          kubeappsCluster: {
+            currentNamespace: "kubeapps",
+            namespaces: [],
+          },
+        },
+      } as IClustersState);
+      spyOnDefaultNamespaceFromToken.mockRestore();
     });
   });
 });

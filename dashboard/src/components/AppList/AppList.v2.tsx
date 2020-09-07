@@ -1,7 +1,8 @@
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CdsButton, CdsIcon } from "../Clarity/clarity";
 
 import { IFeatureFlags } from "../../shared/Config";
 import { IAppState, IClusterServiceVersion, IResource } from "../../shared/types";
