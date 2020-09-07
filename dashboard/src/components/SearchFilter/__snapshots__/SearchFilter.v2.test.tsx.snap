@@ -16,7 +16,7 @@ exports[`should render a PageHeader 1`] = `
         listItem={false}
         span={1}
       >
-        <ReactWrapperComponent
+        <CdsIcon
           shape="search"
           size="sm"
         />

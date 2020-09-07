@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
-import { CdsButton, CdsIcon } from "components/Clarity/clarity";
 import Modal from "components/js/Modal/Modal";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";

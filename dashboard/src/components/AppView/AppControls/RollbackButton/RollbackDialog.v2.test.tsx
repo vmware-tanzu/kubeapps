@@ -1,4 +1,4 @@
-import { CdsButton } from "components/Clarity/clarity";
+import { CdsButton } from "@clr/react/button";
 import { mount, shallow } from "enzyme";
 import * as React from "react";
 import { act } from "react-dom/test-utils";

@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
-import { CdsButton, CdsIcon } from "components/Clarity/clarity";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";

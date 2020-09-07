@@ -1,8 +1,8 @@
+import { CdsIcon } from "@clr/react/icon";
 import { flatten } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
 import PieChart from "react-minimal-pie-chart";
-import { CdsIcon } from "../Clarity/clarity";
 
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import ReactTooltip from "react-tooltip";

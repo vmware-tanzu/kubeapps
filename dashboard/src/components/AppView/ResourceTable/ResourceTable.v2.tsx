@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from "react";
 import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 
+import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
-import { CdsIcon } from "components/Clarity/clarity";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import { useDispatch, useSelector } from "react-redux";

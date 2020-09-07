@@ -280,14 +280,14 @@ exports[`when the app contains ingresses should show the table with available in
                             onMouseLeave={[Function]}
                             role="tooltip"
                           >
-                            <ReactWrapperComponent
+                            <CdsIcon
                               role="none"
                               shape="help"
                               size="sm"
                               solid={true}
                             >
                               <cds-icon />
-                            </ReactWrapperComponent>
+                            </CdsIcon>
                             <span
                               aria-hidden={true}
                               className="tooltip-content"
@@ -935,14 +935,14 @@ exports[`when the app contains services and ingresses should show the table with
                             onMouseLeave={[Function]}
                             role="tooltip"
                           >
-                            <ReactWrapperComponent
+                            <CdsIcon
                               role="none"
                               shape="help"
                               size="sm"
                               solid={true}
                             >
                               <cds-icon />
-                            </ReactWrapperComponent>
+                            </CdsIcon>
                             <span
                               aria-hidden={true}
                               className="tooltip-content"
