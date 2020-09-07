@@ -48,7 +48,7 @@ spec:
             - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
             - --assetsvc-url=http://{{ template "kubeapps.assetsvc.fullname" . }}:{{ .Values.assetsvc.service.port }}
             {{- if .Values.clusters }}
-            - --additional-clusters-config-path=/config/additional-clusters.conf
+            - --clusters-config-path=/config/clusters.conf
             {{- end }}
           {{- if .Values.clusters }}
           volumeMounts:

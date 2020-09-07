@@ -146,20 +146,23 @@ const clusterReducer = (
       }
       break;
     case getType(actions.config.receiveConfig):
-      // Initialize the additional clusters when receiving the config.
-      const clusters = {
-        ...state.clusters,
-      };
+      // Initialize the clusters when receiving the config.
       const config = action.payload as IConfig;
-      config.clusters?.forEach(cluster => {
+      const clusters: IClustersMap = {};
+      config.clusters.forEach(cluster => {
+        const currentNamespace =
+          cluster === config.kubeappsCluster
+            ? Auth.defaultNamespaceFromToken(Auth.getAuthToken() || "")
+            : "default";
         clusters[cluster] = {
-          currentNamespace: "default",
+          currentNamespace,
           namespaces: [],
         };
       });
+
       return {
         ...state,
-        currentCluster: action.payload.kubeappsCluster,
+        currentCluster: config.clusters[0],
         clusters,
       };
     default:

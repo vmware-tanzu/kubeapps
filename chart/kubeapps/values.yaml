@@ -20,17 +20,18 @@ allowNamespaceDiscovery: true
 enableIPv6: false
 
 ## clusters can be configured with a list of clusters that Kubeapps can target for deployments.
-## This is an alpha feature and the semantics are expected to change slightly in future releases.
-## If empty, Kubeapps will target the cluster on which it is installed only.
-## When populated, Kubeapps will currently present the listed clusters in addition to the default
-## cluster on which Kubeapps is installed. In the future a populated list here will be definitive, so that
-## it is possible to configure Kubeapps to target other clusters only (ie. not target the cluster on which
-## Kubeapps is installed), as per https://github.com/kubeapps/kubeapps/issues/1942 .
+## When populated with a single cluster (as it is by default), Kubeapps will not allow users to
+## change the target cluster. When populated with multiple clusters, Kubeapps will present the clusters to
+## the user as potential targets for install or browsing.
+## Note that you can define a single cluster without an apiServiceURL and the chart will assume this is
+## the name you are assigning to the cluster on which Kubeapps is itself installed. Specifying more than
+## one cluster without an apiServiceURL will cause the chart display an error.
 ## The base64-encoded certificateAuthorityData can be obtained from the additional cluster's kube config
 ## file, for example:
 ## kubectl --kubeconfig ~/.kube/kind-config-kubeapps-additional config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}'
 #
 # clusters:
+# - name: default
 # - name: second-cluster
 #   apiServiceURL: https://second-cluster:6443
 #   # certificateAuthorityData is required for secure communication with the additional API server.
@@ -38,7 +39,8 @@ enableIPv6: false
 #   # serviceToken is an optional token configured to allow LIST namespaces only on the additional cluster
 #   # so that the UI can present a list of (only) those namespaces to which the user has access.
 #   serviceToken: ...
-clusters: []
+clusters:
+  - name: default
 
 ## The frontend service is the main reverse proxy used to access the Kubeapps UI
 ## To expose Kubeapps externally either configure the ingress object below or
