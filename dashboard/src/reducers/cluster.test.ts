@@ -5,6 +5,7 @@ import { getType } from "typesafe-actions";
 import { IConfig } from "shared/Config";
 import { definedNamespaces } from "shared/Namespace";
 import actions from "../actions";
+import { Auth } from "../shared/Auth";
 import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState, initialState } from "./cluster";
 
@@ -371,6 +372,41 @@ describe("clusterReducer", () => {
           },
         },
       } as IClustersState);
+    });
+
+    it("uses default namespace from token for kubeapps cluster", () => {
+      const configWithKubeappsCluster = {
+        ...config,
+        kubeappsCluster: "kubeappsCluster",
+        clusters: ["kubeappsCluster", ...config.clusters],
+      };
+      const spyOnDefaultNamespaceFromToken = jest
+        .spyOn(Auth, "defaultNamespaceFromToken")
+        .mockReturnValue("kubeapps");
+      expect(
+        clusterReducer(initialTestState, {
+          type: getType(actions.config.receiveConfig),
+          payload: configWithKubeappsCluster,
+        }),
+      ).toEqual({
+        ...initialTestState,
+        currentCluster: "kubeappsCluster",
+        clusters: {
+          additionalCluster1: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          additionalCluster2: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          kubeappsCluster: {
+            currentNamespace: "kubeapps",
+            namespaces: [],
+          },
+        },
+      } as IClustersState);
+      spyOnDefaultNamespaceFromToken.mockRestore();
     });
   });
 });

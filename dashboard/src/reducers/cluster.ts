@@ -149,9 +149,13 @@ const clusterReducer = (
       // Initialize the clusters when receiving the config.
       const config = action.payload as IConfig;
       const clusters: IClustersMap = {};
-      config.clusters?.forEach(cluster => {
+      config.clusters.forEach(cluster => {
+        const currentNamespace =
+          cluster === config.kubeappsCluster
+            ? Auth.defaultNamespaceFromToken(Auth.getAuthToken() || "")
+            : "default";
         clusters[cluster] = {
-          currentNamespace: "default",
+          currentNamespace,
           namespaces: [],
         };
       });
