@@ -1,15 +1,13 @@
-import context from "jest-plugin-context";
 import * as React from "react";
 
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard.v2";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import itBehavesLike from "../../shared/specs";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
-import Catalog from "./Catalog.v2";
+import Catalog, { filterNames } from "./Catalog.v2";
 
 const defaultChartState = {
   isFetching: false,
@@ -21,7 +19,7 @@ const defaultChartState = {
 const defaultProps = {
   charts: defaultChartState,
   repo: "",
-  filter: "",
+  filter: {},
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
@@ -109,16 +107,20 @@ it("should render an error if it exists", () => {
   expect(error).toIncludeText("Boom!");
 });
 
-context("when fetching apps", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: Catalog,
-    props: { ...defaultProps, charts: { isFetching: true, items: [], selected: {} } },
-  });
+it("behaves like a loading wrapper", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...populatedProps} charts={{ isFetching: true, items: [], selected: {} } as any} />,
+  );
+  expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
 describe("filters by the searched item", () => {
   it("filters using prop", () => {
-    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} filter={"bar"} />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ Search: "bar" }} />,
+    );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 
@@ -135,39 +137,79 @@ describe("filters by the searched item", () => {
 describe("filters by application type", () => {
   it("doesn't show the filter if there are no csvs", () => {
     const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} csvs={[]} />);
-    expect(wrapper.find(FilterGroup).findWhere(g => g.prop("name") === "apptype")).not.toExist();
+    expect(
+      wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.TYPE),
+    ).not.toExist();
   });
 
   it("filters only charts", () => {
-    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} />);
-    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
-    input.simulate("change", { target: { value: "Charts" } });
-    wrapper.update();
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ Type: "Charts" }} />,
+    );
     expect(wrapper.find(InfoCard)).toHaveLength(2);
   });
 
+  it("push filter for only charts", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
+    input.simulate("change", { target: { value: "Charts" } });
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Type=Charts"],
+      method: "push",
+    });
+  });
+
   it("filters only operators", () => {
-    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ Type: "Operators" }} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("push filter for only operators", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
     input.simulate("change", { target: { value: "Operators" } });
-    wrapper.update();
-    expect(wrapper.find(InfoCard)).toHaveLength(1);
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Type=Operators"],
+      method: "push",
+    });
   });
 });
 
 describe("filters by application repository", () => {
   it("doesn't show the filter if there are no apps", () => {
     const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
-    expect(wrapper.find(FilterGroup).findWhere(g => g.prop("name") === "apprepo")).not.toExist();
+    expect(
+      wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.REPO),
+    ).not.toExist();
   });
 
   it("filters by repo", () => {
-    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ [filterNames.REPO]: "foo" }} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("push filter for repo", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
     // The repo name is "foo"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
     input.simulate("change", { target: { value: "foo" } });
-    wrapper.update();
-    expect(wrapper.find(InfoCard)).toHaveLength(1);
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Repository=foo"],
+      method: "push",
+    });
   });
 });
 
@@ -175,27 +217,43 @@ describe("filters by operator provider", () => {
   it("doesn't show the filter if there are no csvs", () => {
     const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
     expect(
-      wrapper.find(FilterGroup).findWhere(g => g.prop("name") === "operator-provider"),
+      wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.OPERATOR_PROVIDER),
     ).not.toExist();
   });
 
-  it("filters by operator provider", () => {
-    const csv2 = {
-      metadata: {
-        name: "csv2",
+  const csv2 = {
+    metadata: {
+      name: "csv2",
+    },
+    spec: {
+      ...csv.spec,
+      provider: {
+        name: "you",
       },
-      spec: {
-        ...csv.spec,
-        provider: {
-          name: "you",
-        },
-      },
-    } as any;
-    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} csvs={[csv, csv2]} />);
-    // The repo name is "foo"
+    },
+  } as any;
+
+  it("push filter for operator provider", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} csvs={[csv, csv2]} />);
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you" } });
-    wrapper.update();
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Provider=you"],
+      method: "push",
+    });
+  });
+
+  it("filters by operator provider", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...populatedProps}
+        csvs={[csv, csv2]}
+        filter={{ [filterNames.OPERATOR_PROVIDER]: "you" }}
+      />,
+    );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 });
@@ -209,9 +267,10 @@ describe("filters by category", () => {
     expect(wrapper.find("input").findWhere(i => i.prop("value") === "Unknown")).toExist();
   });
 
-  it("filters a category", () => {
+  it("push filter for category", () => {
+    const store = getStore({});
     const wrapper = mountWrapper(
-      defaultStore,
+      store,
       <Catalog
         {...defaultProps}
         charts={{ ...defaultChartState, items: [chartItem, chartItem2] }}
@@ -220,7 +279,22 @@ describe("filters by category", () => {
     expect(wrapper.find(InfoCard)).toHaveLength(2);
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
     input.simulate("change", { target: { value: "Database" } });
-    wrapper.update();
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Category=Database"],
+      method: "push",
+    });
+  });
+
+  it("filters a category", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...defaultProps}
+        charts={{ ...defaultChartState, items: [chartItem, chartItem2] }}
+        filter={{ [filterNames.CATEGORY]: "Database" }}
+      />,
+    );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 
@@ -236,13 +310,12 @@ describe("filters by category", () => {
     } as any;
     const wrapper = mountWrapper(
       defaultStore,
-      <Catalog {...defaultProps} csvs={[csv, csvWithCat]} />,
+      <Catalog
+        {...defaultProps}
+        csvs={[csv, csvWithCat]}
+        filter={{ [filterNames.CATEGORY]: "E-Learning" }}
+      />,
     );
-    expect(wrapper.find(InfoCard)).toHaveLength(2);
-
-    const input = wrapper.find("input").findWhere(i => i.prop("value") === "E-Learning");
-    input.simulate("change", { target: { value: "E-Learning" } });
-    wrapper.update();
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 
@@ -258,15 +331,12 @@ describe("filters by category", () => {
     } as any;
     const wrapper = mountWrapper(
       defaultStore,
-      <Catalog {...defaultProps} csvs={[csv, csvWithCat]} />,
+      <Catalog
+        {...defaultProps}
+        csvs={[csv, csvWithCat]}
+        filter={{ [filterNames.CATEGORY]: "Developer Tools,Infrastructure" }}
+      />,
     );
-    expect(wrapper.find(InfoCard)).toHaveLength(2);
-
-    // Two categories extracted from the same CSV
-    expect(wrapper.find("input").findWhere(i => i.prop("value") === "Developer Tools")).toExist();
-    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Infrastructure");
-    input.simulate("change", { target: { value: "Infrastructure" } });
-    wrapper.update();
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 });

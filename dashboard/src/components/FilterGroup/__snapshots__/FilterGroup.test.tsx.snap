@@ -37,8 +37,10 @@ exports[`renders a multicheckbox 1`] = `
       }
     >
       <FilterGroup
+        currentFilters={Array []}
         name="test"
-        onChange={[MockFunction]}
+        onAddFilter={[MockFunction]}
+        onRemoveFilter={[MockFunction]}
         options={
           Array [
             "foo",

@@ -130,3 +130,10 @@
 .section-title {
   font-weight: 600;
 }
+
+.filter-summary {
+  padding: 1.2rem 0 0 1.2rem;
+  cds-icon {
+    cursor: pointer;
+  }
+}

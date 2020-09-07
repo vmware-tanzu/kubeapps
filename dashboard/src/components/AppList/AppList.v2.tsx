@@ -44,6 +44,7 @@ function AppList(props: IAppListProps) {
     appVersion,
     csvs,
   } = props;
+  const submitFilters = () => pushSearchFilter(filter);
 
   useEffect(() => {
     fetchAppsWithUpdateInfo(cluster, namespace, true);
@@ -64,7 +65,7 @@ function AppList(props: IAppListProps) {
             placeholder="search apps..."
             onChange={setFilter}
             value={filter}
-            onSubmit={pushSearchFilter}
+            submitFilters={submitFilters}
           />
         }
         buttons={[

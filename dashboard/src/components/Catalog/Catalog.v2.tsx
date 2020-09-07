@@ -1,5 +1,5 @@
-import { RouterAction } from "connected-react-router";
-import { flatten, get, intersection, uniq } from "lodash";
+import { push } from "connected-react-router";
+import { flatten, get, intersection, uniq, without } from "lodash";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CdsIcon } from "../Clarity/clarity";
@@ -17,6 +17,7 @@ import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
 
 import { CdsButton } from "components/Clarity/clarity";
+import { useDispatch } from "react-redux";
 import { app } from "shared/url";
 import "./Catalog.v2.css";
 import CatalogItems from "./CatalogItems";
@@ -34,15 +35,38 @@ function getOperatorCategories(c: IClusterServiceVersion): string[] {
 interface ICatalogProps {
   charts: IChartState;
   repo: string;
-  filter: string;
+  filter: { [name: string]: string };
   fetchCharts: (namespace: string, repo: string) => void;
-  pushSearchFilter: (filter: string) => RouterAction;
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
   featureFlags: IFeatureFlags;
+}
+
+export const filterNames = {
+  SEARCH: "Search",
+  TYPE: "Type",
+  REPO: "Repository",
+  CATEGORY: "Category",
+  OPERATOR_PROVIDER: "Provider",
+};
+
+function initialFilterState() {
+  const result = {};
+  Object.values(filterNames).forEach(f => (result[f] = []));
+  return result;
+}
+
+function filtersToQuery(filters: any) {
+  let query = "";
+  const activeFilters = Object.keys(filters).filter(f => filters[f].length);
+  if (activeFilters.length) {
+    const filterQueries = activeFilters.map(filter => `${filter}=${filters[filter].join(",")}`);
+    query = "?" + filterQueries.join("&");
+  }
+  return query;
 }
 
 function Catalog(props: ICatalogProps) {
@@ -55,17 +79,49 @@ function Catalog(props: ICatalogProps) {
     fetchCharts,
     cluster,
     namespace,
-    pushSearchFilter,
     getCSVs,
     csvs,
     repo,
     filter: propsFilter,
   } = props;
-  const [searchFilter, setSearchFilter] = useState(propsFilter);
-  const [typeFilter, setTypeFilter] = useState([] as string[]);
-  const [repoFilter, setRepoFilter] = useState([] as string[]);
-  const [categoryFilter, setCategoryFilter] = useState([] as string[]);
-  const [operatorProviderFilter, setOperatorProviderFilter] = useState([] as string[]);
+  const dispatch = useDispatch();
+  const [filters, setFilters] = useState(initialFilterState());
+
+  useEffect(() => {
+    const newFilters = {};
+    Object.keys(propsFilter).forEach(filter => {
+      newFilters[filter] = propsFilter[filter].split(",");
+    });
+    setFilters({
+      ...initialFilterState(),
+      ...newFilters,
+    });
+  }, [propsFilter]);
+
+  const pushFilters = (newFilters: any) => {
+    dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
+  };
+  const addFilter = (type: string, value: string) => {
+    pushFilters({
+      ...filters,
+      [type]: filters[type].concat(value),
+    });
+  };
+  const removeFilter = (type: string, value: string) => {
+    pushFilters({
+      ...filters,
+      [type]: without(filters[type], value),
+    });
+  };
+  const removeFilterFunc = (type: string, value: string) => {
+    return () => removeFilter(type, value);
+  };
+  const clearAllFilters = () => {
+    pushFilters({});
+  };
+  const submitFilters = () => {
+    pushFilters(filters);
+  };
 
   const allRepos = uniq(charts.map(c => c.attributes.repo.name));
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
@@ -80,33 +136,47 @@ function Catalog(props: ICatalogProps) {
     getCSVs(cluster, namespace);
   }, [cluster, namespace, repo, fetchCharts, getCSVs]);
 
-  useEffect(() => {
-    setSearchFilter(propsFilter);
-  }, [propsFilter]);
+  // Only one search filter can be set
+  const searchFilter = filters[filterNames.SEARCH][0] || "";
+  const setSearchFilter = (searchTerm: string) => {
+    setFilters({
+      ...filters,
+      [filterNames.SEARCH]: [searchTerm],
+    });
+  };
 
   const filteredCharts = charts
-    .filter(() => typeFilter.length === 0 || typeFilter.includes("Charts"))
-    .filter(() => operatorProviderFilter.length === 0)
+    .filter(
+      () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
+    )
+    .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
     .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
-    .filter(c => repoFilter.length === 0 || repoFilter.includes(c.attributes.repo.name))
     .filter(
       c =>
-        categoryFilter.length === 0 ||
-        categoryFilter.includes(categoryToReadable(c.attributes.category)),
-    );
-  const filteredCSVs = csvs
-    .filter(() => typeFilter.length === 0 || typeFilter.includes("Operators"))
-    .filter(() => repoFilter.length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name))
-    .filter(
-      c =>
-        operatorProviderFilter.length === 0 ||
-        operatorProviderFilter.includes(c.spec.provider.name),
+        filters[filterNames.REPO].length === 0 ||
+        filters[filterNames.REPO].includes(c.attributes.repo.name),
     )
     .filter(
       c =>
-        categoryFilter.length === 0 ||
-        intersection(categoryFilter, getOperatorCategories(c)).length,
+        filters[filterNames.CATEGORY].length === 0 ||
+        filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
+    );
+  const filteredCSVs = csvs
+    .filter(
+      () =>
+        filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Operators"),
+    )
+    .filter(() => filters[filterNames.REPO].length === 0)
+    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name))
+    .filter(
+      c =>
+        filters[filterNames.OPERATOR_PROVIDER].length === 0 ||
+        filters[filterNames.OPERATOR_PROVIDER].includes(c.spec.provider.name),
+    )
+    .filter(
+      c =>
+        filters[filterNames.CATEGORY].length === 0 ||
+        intersection(filters[filterNames.CATEGORY], getOperatorCategories(c)).length,
     );
 
   return (
@@ -119,7 +189,7 @@ function Catalog(props: ICatalogProps) {
             placeholder="search charts..."
             onChange={setSearchFilter}
             value={searchFilter}
-            onSubmit={pushSearchFilter}
+            submitFilters={submitFilters}
           />
         }
       />
@@ -145,54 +215,93 @@ function Catalog(props: ICatalogProps) {
           <Row>
             <Column span={2}>
               <div className="filters-menu">
-                <h5>Filters</h5>
+                <h5>
+                  Filters{" "}
+                  {flatten(Object.values(filters)).length ? (
+                    <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
+                      Clear All
+                    </CdsButton>
+                  ) : (
+                    <></>
+                  )}{" "}
+                </h5>
                 {csvs.length > 0 && (
                   <div className="filter-section">
-                    <label>Application Type:</label>
+                    <label>Application Type</label>
                     <FilterGroup
-                      name="apptype"
+                      name={filterNames.TYPE}
                       options={["Operators", "Charts"]}
-                      onChange={setTypeFilter}
+                      currentFilters={filters[filterNames.TYPE]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
                     />
                   </div>
                 )}
                 {allCategories.length > 0 && (
                   <div className="filter-section">
-                    <label className="filter-label">Category:</label>
+                    <label className="filter-label">Category</label>
                     <FilterGroup
-                      name="category"
+                      name={filterNames.CATEGORY}
                       options={allCategories}
-                      onChange={setCategoryFilter}
+                      currentFilters={filters[filterNames.CATEGORY]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
                     />
                   </div>
                 )}
                 {allRepos.length > 0 && (
                   <div className="filter-section">
-                    <label>Application Repository:</label>
-                    <FilterGroup name="apprepo" options={allRepos} onChange={setRepoFilter} />
+                    <label>Application Repository</label>
+                    <FilterGroup
+                      name={filterNames.REPO}
+                      options={allRepos}
+                      currentFilters={filters[filterNames.REPO]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
                   </div>
                 )}
                 {allProviders.length > 0 && (
                   <div className="filter-section">
-                    <label className="filter-label">Operator Provider:</label>
+                    <label className="filter-label">Operator Provider</label>
                     <FilterGroup
-                      name="operator-provider"
+                      name={filterNames.OPERATOR_PROVIDER}
                       options={allProviders}
-                      onChange={setOperatorProviderFilter}
+                      currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
                     />
                   </div>
                 )}
               </div>
             </Column>
             <Column span={10}>
-              <CardGrid>
-                <CatalogItems
-                  charts={filteredCharts}
-                  csvs={filteredCSVs}
-                  cluster={cluster}
-                  namespace={namespace}
-                />
-              </CardGrid>
+              <>
+                <div className="filter-summary">
+                  {Object.keys(filters).map(filterName => {
+                    if (filters[filterName].length) {
+                      return filters[filterName].map((filterValue: string, i: number) => (
+                        <span key={`${filterName}-${filterValue}`} className="label label-info">
+                          {filterName}: {filterValue}{" "}
+                          <CdsIcon
+                            shape="times"
+                            onClick={removeFilterFunc(filterName, filterValue)}
+                          />
+                        </span>
+                      ));
+                    }
+                    return null;
+                  })}
+                </div>
+                <CardGrid>
+                  <CatalogItems
+                    charts={filteredCharts}
+                    csvs={filteredCSVs}
+                    cluster={cluster}
+                    namespace={namespace}
+                  />
+                </CardGrid>
+              </>
             </Column>
           </Row>
         )}

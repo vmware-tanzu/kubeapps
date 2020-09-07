@@ -8,7 +8,9 @@ import FilterGroup from "./FilterGroup";
 const defaultProps = {
   name: "test",
   options: ["foo", "bar"],
-  onChange: jest.fn(),
+  currentFilters: [],
+  onAddFilter: jest.fn(),
+  onRemoveFilter: jest.fn(),
 };
 
 it("renders a multicheckbox", () => {
@@ -17,24 +19,34 @@ it("renders a multicheckbox", () => {
 });
 
 it("calls onChange function", () => {
-  const onChange = jest.fn();
-  const wrapper = mountWrapper(defaultStore, <FilterGroup {...defaultProps} onChange={onChange} />);
+  const currentFilters: string[] = [];
+  const onAddFilter = jest.fn((n, f) => currentFilters.push(f));
+  const onRemoveFilter = jest.fn();
+  const wrapper = mountWrapper(
+    defaultStore,
+    <FilterGroup
+      {...defaultProps}
+      currentFilters={currentFilters}
+      onAddFilter={onAddFilter}
+      onRemoveFilter={onRemoveFilter}
+    />,
+  );
   act(() => {
     wrapper.find(MultiCheckbox).prop("onChange")({ target: { value: "foo" } });
   });
-  expect(onChange).toHaveBeenCalledWith(["foo"]);
+  expect(onAddFilter).toHaveBeenCalledWith("test", "foo");
   // Force re-render
-  wrapper.setProps({ ...defaultProps, onChange });
+  wrapper.setProps({ ...defaultProps, onAddFilter, onRemoveFilter });
   // Adds a new item to the filter
   act(() => {
     wrapper.find(MultiCheckbox).prop("onChange")({ target: { value: "bar" } });
   });
-  expect(onChange).toHaveBeenCalledWith(["foo", "bar"]);
+  expect(onAddFilter).toHaveBeenCalledWith("test", "bar");
   // Force re-render
-  wrapper.setProps({ ...defaultProps, onChange });
+  wrapper.setProps({ ...defaultProps, onAddFilter, onRemoveFilter });
   // Removes an item
   act(() => {
     wrapper.find(MultiCheckbox).prop("onChange")({ target: { value: "foo" } });
   });
-  expect(onChange).toHaveBeenCalledWith(["bar"]);
+  expect(onRemoveFilter).toHaveBeenCalledWith("test", "foo");
 });

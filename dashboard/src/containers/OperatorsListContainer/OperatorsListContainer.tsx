@@ -21,7 +21,7 @@ function mapStateToProps(
     operators: operators.operators,
     error: operators.errors.operator.fetch,
     csvs: operators.csvs,
-    filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
+    filter: qs.parse(location.search, { ignoreQueryPrefix: true }),
     UI: config.featureFlags.ui,
   };
 }

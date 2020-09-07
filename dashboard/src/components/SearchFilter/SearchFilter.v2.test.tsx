@@ -7,7 +7,7 @@ const defaultProps: ISearchFilterProps = {
   value: "",
   placeholder: "search!",
   onChange: jest.fn(),
-  onSubmit: jest.fn(),
+  submitFilters: jest.fn(),
 };
 
 it("should render a PageHeader", () => {
@@ -25,7 +25,7 @@ it("changes the filter", () => {
 
 it("should render a PageHeader", () => {
   const onSubmit = jest.fn();
-  const wrapper = shallow(<SearchFilter {...defaultProps} value="test" onSubmit={onSubmit} />);
+  const wrapper = shallow(<SearchFilter {...defaultProps} value="test" submitFilters={onSubmit} />);
   wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
-  expect(onSubmit).toHaveBeenCalledWith("test");
+  expect(onSubmit).toHaveBeenCalled();
 });
