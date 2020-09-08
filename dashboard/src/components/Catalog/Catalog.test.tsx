@@ -21,7 +21,7 @@ const defaultChartState = {
 const defaultProps = {
   charts: defaultChartState,
   repo: "",
-  filter: { q: "" },
+  filter: {},
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
