@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 
 import actions from "actions";
+import { filterNames, filtersToQuery } from "components/Catalog/Catalog.v2";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import PageHeader from "components/PageHeader/PageHeader.v2";
@@ -70,7 +71,16 @@ function AppRepoList({
   const getTableData = (targetRepos: IAppRepository[], disableControls: boolean) => {
     return targetRepos.map(repo => {
       return {
-        name: repo.metadata.name,
+        name: (
+          <Link
+            to={
+              app.catalog(cluster, namespace) +
+              filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
+            }
+          >
+            {repo.metadata.name}
+          </Link>
+        ),
         url: repo.spec?.url,
         accessLevel: repo.spec?.auth?.header ? "Private" : "Public",
         namespace: repo.metadata.namespace,
