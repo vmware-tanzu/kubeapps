@@ -11,7 +11,7 @@ export interface ISearchFilterProps {
   className?: string;
   placeholder: string;
   onChange: (filter: string) => void;
-  onSubmit: (filter: string) => void;
+  submitFilters: () => void;
 }
 
 function SearchFilter(props: ISearchFilterProps) {
@@ -20,7 +20,7 @@ function SearchFilter(props: ISearchFilterProps) {
   };
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    props.onSubmit(props.value);
+    props.submitFilters();
   };
   return (
     <div className="search-box">

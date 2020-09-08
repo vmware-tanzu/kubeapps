@@ -1,5 +1,5 @@
 import { RouterAction } from "connected-react-router";
-import { flatten, intersection, uniq } from "lodash";
+import { flatten, intersection, isEqual, uniq } from "lodash";
 import * as React from "react";
 
 import {
@@ -39,7 +39,7 @@ export interface IOperatorListProps {
   error?: Error;
   getCSVs: (cluster: string, namespace: string) => Promise<IClusterServiceVersion[]>;
   csvs: IClusterServiceVersion[];
-  filter: string;
+  filter: { [name: string]: string };
   pushSearchFilter: (filter: string) => RouterAction;
 }
 
@@ -84,7 +84,7 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
     this.props.checkOLMInstalled(this.props.cluster, this.props.namespace);
     this.props.getOperators(this.props.cluster, this.props.namespace);
     this.props.getCSVs(this.props.cluster, this.props.namespace);
-    this.setState({ filter: this.props.filter });
+    this.setState({ filter: this.props.filter.q });
   }
 
   public componentDidUpdate(prevProps: IOperatorListProps) {
@@ -92,10 +92,10 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
       this.props.getOperators(this.props.cluster, this.props.namespace);
       this.props.getCSVs(this.props.cluster, this.props.namespace);
     }
-    if (this.props.filter !== prevProps.filter) {
+    if (!isEqual(this.props.filter, prevProps.filter)) {
       this.props.getOperators(this.props.cluster, this.props.namespace);
       this.props.getCSVs(this.props.cluster, this.props.namespace);
-      this.setState({ filter: this.props.filter });
+      this.setState({ filter: this.props.filter.q });
     }
 
     if (this.props.operators !== prevProps.operators) {

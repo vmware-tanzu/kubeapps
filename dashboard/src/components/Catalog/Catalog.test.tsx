@@ -21,7 +21,7 @@ const defaultChartState = {
 const defaultProps = {
   charts: defaultChartState,
   repo: "",
-  filter: "",
+  filter: {},
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
@@ -33,7 +33,7 @@ const defaultProps = {
 };
 
 it("propagates the filter from the props", () => {
-  const wrapper = shallow(<Catalog {...defaultProps} filter="foo" />);
+  const wrapper = shallow(<Catalog {...defaultProps} filter={{ q: "foo" }} />);
   expect(wrapper.state("filter")).toBe("foo");
 });
 
@@ -47,7 +47,7 @@ it("reloads charts when the repo changes", () => {
 
 it("updates the filter from props", () => {
   const wrapper = shallow(<Catalog {...defaultProps} />);
-  wrapper.setProps({ filter: "foo" });
+  wrapper.setProps({ filter: { q: "foo" } });
   expect(wrapper.state("filter")).toBe("foo");
 });
 
@@ -239,7 +239,9 @@ describe("renderization", () => {
 
     it("should filter apps", () => {
       // Filter "foo" app
-      const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} filter="foo" />);
+      const wrapper = shallow(
+        <Catalog {...defaultProps} charts={chartState} filter={{ q: "foo" }} />,
+      );
 
       const cardGrid = wrapper.find(CardGrid);
       expect(cardGrid).toExist();

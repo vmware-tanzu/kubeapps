@@ -22,7 +22,7 @@ const defaultProps: IOperatorListProps = {
   getOperators: jest.fn(),
   getCSVs: jest.fn(),
   csvs: [],
-  filter: "",
+  filter: { q: "" },
   pushSearchFilter: jest.fn(),
 };
 
@@ -221,7 +221,7 @@ describe("filter operators", () => {
       />,
     );
     expect(wrapper.find(InfoCard).length).toBe(2);
-    wrapper.setProps({ filter: "foo" });
+    wrapper.setProps({ filter: { q: "foo" } });
     expect(wrapper.find(InfoCard).length).toBe(1);
   });
 
@@ -235,7 +235,7 @@ describe("filter operators", () => {
       />,
     );
     expect(wrapper.find(InfoCard).length).toBe(2);
-    wrapper.setProps({ filter: "nope" });
+    wrapper.setProps({ filter: { q: "nope" } });
     expect(wrapper.find(InfoCard)).not.toExist();
     expect(
       wrapper

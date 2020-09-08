@@ -16,7 +16,7 @@ function mapStateToProps(
 ) {
   return {
     charts,
-    filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
+    filter: qs.parse(location.search, { ignoreQueryPrefix: true }),
     repo: params.repo,
     csvs: operators.csvs,
     cluster: params.cluster,

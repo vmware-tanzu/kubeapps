@@ -1,31 +1,42 @@
-import React, { useState } from "react";
+import React from "react";
 
 import MultiCheckbox from "components/js/MultiCheckbox";
 
 interface IFilterGroupProps {
   name: string;
   options: string[];
-  onChange: (newValue: string[]) => void;
+  currentFilters: string[];
+  onAddFilter: (type: string, value: string) => void;
+  onRemoveFilter: (etype: string, value: string) => void;
 }
 
-function FilterGroup({ name, options, onChange: propsOnChange }: IFilterGroupProps) {
-  const [value, setValue] = useState([] as string[]);
+function FilterGroup({
+  name,
+  currentFilters,
+  options,
+  onAddFilter,
+  onRemoveFilter,
+}: IFilterGroupProps) {
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value: targetValue } = e.target;
-    const index = value.indexOf(targetValue);
-    let newValue = [];
+    const index = currentFilters.indexOf(targetValue);
     if (index > -1) {
       // Already checked, remove
-      value.splice(index, 1);
-      newValue = [...value];
+      onRemoveFilter(name, targetValue);
     } else {
       // Not checked, add
-      newValue = value.concat(targetValue);
+      onAddFilter(name, targetValue);
     }
-    setValue(newValue);
-    propsOnChange(newValue);
   };
-  return <MultiCheckbox name={name} options={options} span={1} value={value} onChange={onChange} />;
+  return (
+    <MultiCheckbox
+      name={name}
+      options={options}
+      span={1}
+      value={currentFilters}
+      onChange={onChange}
+    />
+  );
 }
 
 export default FilterGroup;

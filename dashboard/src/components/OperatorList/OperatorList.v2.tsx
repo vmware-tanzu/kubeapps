@@ -1,14 +1,17 @@
+import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
 import CardGrid from "components/Card/CardGrid.v2";
+import { filtersToQuery } from "components/Catalog/Catalog.v2";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import { RouterAction } from "connected-react-router";
-import { flatten, intersection, uniq } from "lodash";
+import { push } from "connected-react-router";
+import { flatten, get, intersection, uniq, without } from "lodash";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { app } from "shared/url";
 import { IPackageManifestStatus, IStoreState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
@@ -28,15 +31,7 @@ import OperatorNotSupported from "./OperatorsNotSupported.v2";
 export interface IOperatorListProps {
   cluster: string;
   namespace: string;
-  filter: string;
-  pushSearchFilter: (filter: string) => RouterAction;
-}
-
-export interface IOperatorListState {
-  filter: string;
-  categories: string[];
-  filterCategories: { [key: string]: boolean };
-  filterCapabilities: { [key: string]: boolean };
+  filter: { [name: string]: string };
 }
 
 function getDefaultChannel(packageStatus: IPackageManifestStatus) {
@@ -47,28 +42,86 @@ function getDefaultChannel(packageStatus: IPackageManifestStatus) {
 
 function getCategories(packageStatus: IPackageManifestStatus) {
   const channel = getDefaultChannel(packageStatus);
-  return channel.currentCSVDesc.annotations.categories.split(",").map(c => c.trim());
+  return get(channel, "currentCSVDesc.annotations.categories", [])
+    .split(",")
+    .map((c: string) => c.trim());
 }
 
 function getCapabilities(packageStatus: IPackageManifestStatus) {
   const channel = getDefaultChannel(packageStatus);
-  return channel.currentCSVDesc.annotations.capabilities;
+  return get(channel, "currentCSVDesc.annotations.capabilities", BASIC_INSTALL);
+}
+
+function getProvider(packageStatus: IPackageManifestStatus) {
+  const channel = getDefaultChannel(packageStatus);
+  return get(channel, "currentCSVDesc.provider.name", "");
+}
+
+export const filterNames = {
+  SEARCH: "Search",
+  CAPABILITY: "Capability",
+  CATEGORY: "Category",
+  PROVIDER: "Provider",
+};
+
+function initialFilterState() {
+  const result = {};
+  Object.values(filterNames).forEach(f => (result[f] = []));
+  return result;
 }
 
 export default function OperatorList({
   cluster,
   namespace,
-  filter,
-  pushSearchFilter,
+  filter: propsFilter,
 }: IOperatorListProps) {
   const dispatch = useDispatch();
-  const [searchFilter, setSearchFilter] = useState(filter);
-  const [categoryFilter, setCategoryFilter] = useState([] as string[]);
-  const [capabilitiesFilter, setCapabilitiesFilter] = useState([] as string[]);
+  const [filters, setFilters] = useState(initialFilterState());
 
   useEffect(() => {
-    setSearchFilter(filter);
-  }, [filter]);
+    const newFilters = {};
+    Object.keys(propsFilter).forEach(filter => {
+      newFilters[filter] = propsFilter[filter].split(",");
+    });
+    setFilters({
+      ...initialFilterState(),
+      ...newFilters,
+    });
+  }, [propsFilter]);
+
+  const pushFilters = (newFilters: any) => {
+    dispatch(push(app.operators.list(cluster, namespace) + filtersToQuery(newFilters)));
+  };
+  const addFilter = (type: string, value: string) => {
+    pushFilters({
+      ...filters,
+      [type]: filters[type].concat(value),
+    });
+  };
+  const removeFilter = (type: string, value: string) => {
+    pushFilters({
+      ...filters,
+      [type]: without(filters[type], value),
+    });
+  };
+  const removeFilterFunc = (type: string, value: string) => {
+    return () => removeFilter(type, value);
+  };
+  const clearAllFilters = () => {
+    pushFilters({});
+  };
+  const submitFilters = () => {
+    pushFilters(filters);
+  };
+
+  // Only one search filter can be set
+  const searchFilter = filters[filterNames.SEARCH][0] || "";
+  const setSearchFilter = (searchTerm: string) => {
+    setFilters({
+      ...filters,
+      [filterNames.SEARCH]: [searchTerm],
+    });
+  };
 
   useEffect(() => {
     dispatch(actions.operators.checkOLMInstalled(cluster, namespace));
@@ -106,16 +159,24 @@ export default function OperatorList({
   const allCategories = uniq(
     flatten(operators.map(operator => getCategories(operator.status))),
   ).sort();
+  const allProviders = uniq(operators.map(operator => getProvider(operator.status))).sort();
 
   const filteredOperators = operators
     .filter(
       c =>
-        capabilitiesFilter.length === 0 || capabilitiesFilter.includes(getCapabilities(c.status)),
+        filters[filterNames.CAPABILITY].length === 0 ||
+        filters[filterNames.CAPABILITY].includes(getCapabilities(c.status)),
     )
     .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name))
     .filter(
       c =>
-        categoryFilter.length === 0 || intersection(categoryFilter, getCategories(c.status)).length,
+        filters[filterNames.CATEGORY].length === 0 ||
+        intersection(filters[filterNames.CATEGORY], getCategories(c.status)).length,
+    )
+    .filter(
+      c =>
+        filters[filterNames.PROVIDER].length === 0 ||
+        filters[filterNames.PROVIDER].includes(getProvider(c.status)),
     );
 
   return (
@@ -128,7 +189,7 @@ export default function OperatorList({
             placeholder="search charts..."
             onChange={setSearchFilter}
             value={searchFilter}
-            onSubmit={pushSearchFilter}
+            submitFilters={submitFilters}
           />
         }
       />
@@ -166,37 +227,80 @@ export default function OperatorList({
           <Row>
             <Column span={2}>
               <div className="filters-menu">
-                <h5>Filters</h5>
+                <h5>
+                  Filters{" "}
+                  {flatten(Object.values(filters)).length ? (
+                    <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
+                      Clear All
+                    </CdsButton>
+                  ) : (
+                    <></>
+                  )}{" "}
+                </h5>
                 {allCategories.length > 0 && (
                   <div className="filter-section">
-                    <label className="filter-label">Category:</label>
+                    <label className="filter-label">Category</label>
                     <FilterGroup
-                      name="category"
+                      name={filterNames.CATEGORY}
                       options={allCategories}
-                      onChange={setCategoryFilter}
+                      currentFilters={filters[filterNames.CATEGORY]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
                     />
                   </div>
                 )}
                 {allCapabilities.length > 0 && (
                   <div className="filter-section">
-                    <label>Application Repository:</label>
+                    <label>Capability</label>
                     <FilterGroup
-                      name="apprepo"
+                      name={filterNames.CAPABILITY}
                       options={allCapabilities}
-                      onChange={setCapabilitiesFilter}
+                      currentFilters={filters[filterNames.CAPABILITY]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </div>
+                )}
+                {allProviders.length > 0 && (
+                  <div className="filter-section">
+                    <label>Provider</label>
+                    <FilterGroup
+                      name={filterNames.PROVIDER}
+                      options={allProviders}
+                      currentFilters={filters[filterNames.PROVIDER]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
                     />
                   </div>
                 )}
               </div>
             </Column>
             <Column span={10}>
-              <CardGrid>
-                <OperatorItems
-                  operators={filteredOperators}
-                  cluster={cluster}
-                  namespace={namespace}
-                />
-              </CardGrid>
+              <>
+                <div className="filter-summary">
+                  {Object.keys(filters).map(filterName => {
+                    if (filters[filterName].length) {
+                      return filters[filterName].map((filterValue: string) => (
+                        <span key={`${filterName}-${filterValue}`} className="label label-info">
+                          {filterName}: {filterValue}{" "}
+                          <CdsIcon
+                            shape="times"
+                            onClick={removeFilterFunc(filterName, filterValue)}
+                          />
+                        </span>
+                      ));
+                    }
+                    return null;
+                  })}
+                </div>
+                <CardGrid>
+                  <OperatorItems
+                    operators={filteredOperators}
+                    cluster={cluster}
+                    namespace={namespace}
+                  />
+                </CardGrid>
+              </>
             </Column>
           </Row>
         )}

@@ -20,7 +20,7 @@ import CatalogItem, {
 export interface ICatalogProps {
   charts: IChartState;
   repo: string;
-  filter: string;
+  filter: { [name: string]: string };
   fetchCharts: (namespace: string, repo: string) => void;
   pushSearchFilter: (filter: string) => RouterAction;
   cluster: string;
@@ -46,7 +46,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
 
   public componentDidMount() {
     const { repo, fetchCharts, filter, cluster, namespace, getCSVs, featureFlags } = this.props;
-    this.setState({ filter });
+    this.setState({ filter: filter.q || "" });
     fetchCharts(namespace, repo);
     if (featureFlags.operators) {
       getCSVs(cluster, namespace);
@@ -55,7 +55,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
 
   public componentDidUpdate(prevProps: ICatalogProps) {
     if (this.props.filter !== prevProps.filter) {
-      this.setState({ filter: this.props.filter });
+      this.setState({ filter: this.props.filter.q || "" });
     }
     if (this.props.repo !== prevProps.repo || this.props.namespace !== prevProps.namespace) {
       this.props.fetchCharts(this.props.namespace, this.props.repo);

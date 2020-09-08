@@ -11,7 +11,7 @@ import { CardGrid } from "../Card";
 import InfoCard from "../InfoCard/InfoCard.v2";
 import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLevel";
 import OLMNotFound from "./OLMNotFound.v2";
-import OperatorList, { IOperatorListProps } from "./OperatorList.v2";
+import OperatorList, { filterNames, IOperatorListProps } from "./OperatorList.v2";
 import OperatorNotSupported from "./OperatorsNotSupported.v2";
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -35,8 +35,7 @@ afterEach(() => {
 const defaultProps: IOperatorListProps = {
   cluster: initialState.config.kubeappsCluster,
   namespace: "default",
-  filter: "",
-  pushSearchFilter: jest.fn(),
+  filter: {},
 };
 
 const sampleOperator = {
@@ -220,7 +219,7 @@ describe("filter operators", () => {
       getStore({
         operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
       }),
-      <OperatorList {...defaultProps} filter="foo" />,
+      <OperatorList {...defaultProps} filter={{ [filterNames.SEARCH]: "foo" }} />,
     );
     const operator = wrapper.find(InfoCard);
     expect(operator.length).toBe(1);
@@ -232,7 +231,7 @@ describe("filter operators", () => {
       getStore({
         operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
       }),
-      <OperatorList {...defaultProps} filter="nope" />,
+      <OperatorList {...defaultProps} filter={{ [filterNames.SEARCH]: "nope" }} />,
     );
     expect(wrapper.find(InfoCard)).not.toExist();
     expect(wrapper).toIncludeText("No operator matches the current filter");
@@ -243,13 +242,8 @@ describe("filter operators", () => {
       getStore({
         operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
       }),
-      <OperatorList {...defaultProps} />,
+      <OperatorList {...defaultProps} filter={{ [filterNames.CATEGORY]: "security" }} />,
     );
-    expect(wrapper.find(InfoCard).length).toBe(2);
-
-    // Filter category "security"
-    const input = wrapper.find("input").findWhere(i => i.prop("value") === "security");
-    input.simulate("change", { target: { value: "security" } });
     const operator = wrapper.find(InfoCard);
     expect(operator.length).toBe(1);
     expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
@@ -260,13 +254,8 @@ describe("filter operators", () => {
       getStore({
         operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
       }),
-      <OperatorList {...defaultProps} />,
+      <OperatorList {...defaultProps} filter={{ [filterNames.CAPABILITY]: BASIC_INSTALL }} />,
     );
-    expect(wrapper.find(InfoCard).length).toBe(2);
-
-    // Filter by capability "Basic Install"
-    const input = wrapper.find("input").findWhere(i => i.prop("value") === BASIC_INSTALL);
-    input.simulate("change", { target: { value: BASIC_INSTALL } });
     const operator = wrapper.find(InfoCard);
     expect(operator.length).toBe(1);
     expect(operator.prop("title")).toBe(sampleOperator2.metadata.name);

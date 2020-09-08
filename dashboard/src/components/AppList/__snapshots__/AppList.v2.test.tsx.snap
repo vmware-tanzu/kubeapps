@@ -23,8 +23,8 @@ exports[`when an error is present matches the snapshot 1`] = `
     filter={
       <SearchFilter
         onChange={[Function]}
-        onSubmit={[MockFunction]}
         placeholder="search apps..."
+        submitFilters={[Function]}
         value=""
       />
     }
@@ -68,8 +68,8 @@ exports[`when an error is present renders a generic error message 1`] = `
     filter={
       <SearchFilter
         onChange={[Function]}
-        onSubmit={[MockFunction]}
         placeholder="search apps..."
+        submitFilters={[Function]}
         value=""
       />
     }
@@ -113,8 +113,8 @@ exports[`when apps available matches the snapshot 1`] = `
     filter={
       <SearchFilter
         onChange={[Function]}
-        onSubmit={[MockFunction]}
         placeholder="search apps..."
+        submitFilters={[Function]}
         value=""
       />
     }
@@ -171,8 +171,8 @@ exports[`when custom resources available matches the snapshot 1`] = `
     filter={
       <SearchFilter
         onChange={[Function]}
-        onSubmit={[MockFunction]}
         placeholder="search apps..."
+        submitFilters={[Function]}
         value=""
       />
     }
@@ -242,8 +242,8 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
     filter={
       <SearchFilter
         onChange={[Function]}
-        onSubmit={[MockFunction]}
         placeholder="search apps..."
+        submitFilters={[Function]}
         value=""
       />
     }
@@ -288,8 +288,8 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
     filter={
       <SearchFilter
         onChange={[Function]}
-        onSubmit={[MockFunction]}
         placeholder="search apps..."
+        submitFilters={[Function]}
         value=""
       />
     }
@@ -333,8 +333,8 @@ exports[`while fetching apps loading spinner matches the snapshot 2`] = `
     filter={
       <SearchFilter
         onChange={[Function]}
-        onSubmit={[MockFunction]}
         placeholder="search apps..."
+        submitFilters={[Function]}
         value=""
       />
     }
