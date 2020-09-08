@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { IFeatureFlags } from "shared/Config";
+import { definedNamespaces } from "shared/Namespace";
 import { app } from "shared/url";
 import { IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
@@ -199,7 +200,16 @@ function Catalog(props: ICatalogProps) {
             An error occurred while fetching the catalog: {error.message}
           </Alert>
         )}
-        {charts.length === 0 && csvs.length === 0 ? (
+        {namespace === definedNamespaces.all ? (
+          <div className="empty-catalog">
+            <CdsIcon shape="file-group" />
+            <h4>A valid namespace should be selected.</h4>
+            <p>
+              In order to show the catalog of applications available, a namespace must be selected
+              using the selector in the top right corner.
+            </p>
+          </div>
+        ) : charts.length === 0 && csvs.length === 0 ? (
           <div className="empty-catalog">
             <CdsIcon shape="bundle" />
             <p>The current catalog is empty.</p>
