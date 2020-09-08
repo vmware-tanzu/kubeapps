@@ -4,10 +4,10 @@ import { cloneDeep } from "lodash";
 import * as React from "react";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
+import { IClustersState } from "reducers/cluster";
+import { operatorsInitialState } from "reducers/operators";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
-
-import { operatorsInitialState } from "reducers/operators";
 import { IAppRepository, ISecret, IStoreState } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
@@ -23,7 +23,13 @@ export const initialState = {
   },
   clusters: {
     currentCluster: "default-cluster",
-  },
+    clusters: {
+      "default-cluster": {
+        currentNamespace: "default",
+        namespaces: ["default", "other"],
+      },
+    },
+  } as IClustersState,
   repos: {
     errors: {},
     repos: [] as IAppRepository[],
