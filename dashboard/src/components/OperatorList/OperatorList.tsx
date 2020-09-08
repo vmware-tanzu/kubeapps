@@ -1,5 +1,5 @@
 import { RouterAction } from "connected-react-router";
-import { flatten, intersection, uniq } from "lodash";
+import { flatten, intersection, isEqual, uniq } from "lodash";
 import * as React from "react";
 
 import {
@@ -92,7 +92,7 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
       this.props.getOperators(this.props.cluster, this.props.namespace);
       this.props.getCSVs(this.props.cluster, this.props.namespace);
     }
-    if (this.props.filter !== prevProps.filter) {
+    if (!isEqual(this.props.filter, prevProps.filter)) {
       this.props.getOperators(this.props.cluster, this.props.namespace);
       this.props.getCSVs(this.props.cluster, this.props.namespace);
       this.setState({ filter: this.props.filter.q });
