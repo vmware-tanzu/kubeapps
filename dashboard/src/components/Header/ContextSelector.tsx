@@ -47,6 +47,10 @@ function ContextSelector({
     }
   }, [fetchNamespaces, namespaceSelected, getNamespace, clusters.currentCluster]);
 
+  useEffect(() => {
+    setStateNamespace(namespaceSelected);
+  }, [namespaceSelected]);
+
   const toggleOpen = () => setOpen(!open);
   const selectCluster = (event: React.ChangeEvent<HTMLSelectElement>) =>
     setStateCluster(event.target.value);
@@ -81,7 +85,9 @@ function ContextSelector({
                   </label>
                   <CdsIcon size="sm" shape="file-group" inverse={true} />
                   <label htmlFor="namespaces" className="kubeapps-dropdown-text">
-                    {namespaceSelected}
+                    {namespaceSelected === definedNamespaces.all
+                      ? "All Namespaces"
+                      : namespaceSelected}
                   </label>
                 </div>
               </div>
@@ -136,6 +142,9 @@ function ContextSelector({
                     </option>
                   );
                 })}
+                <option key="kubeapps-dropdown-namespace-_all" value={definedNamespaces.all}>
+                  All Namespaces
+                </option>
               </select>
             </div>
           </div>

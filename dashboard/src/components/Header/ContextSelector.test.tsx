@@ -8,6 +8,7 @@ import { CdsButton } from "@clr/react/button";
 import { cloneDeep } from "lodash";
 import { act } from "react-dom/test-utils";
 import { IClustersState } from "reducers/cluster";
+import { definedNamespaces } from "shared/Namespace";
 import ContextSelector from "./ContextSelector";
 
 const mockStore = configureMockStore([thunk]);
@@ -122,4 +123,23 @@ it("shows the current namespace", () => {
       .at(1)
       .prop("value"),
   ).toBe("other");
+});
+
+it("includes all namespaces", () => {
+  const props = cloneDeep(defaultProps);
+  props.clusters.clusters.default.currentNamespace = definedNamespaces.all;
+  const wrapper = mount(
+    <Provider store={defaultStore}>
+      <ContextSelector {...props} />
+    </Provider>,
+  );
+  expect(wrapper.find("label").findWhere(l => l.prop("htmlFor") === "namespaces")).toIncludeText(
+    "All Namespaces",
+  );
+  expect(
+    wrapper
+      .find("select")
+      .find("option")
+      .filterWhere(op => op.prop("value") === definedNamespaces.all),
+  ).toExist();
 });
