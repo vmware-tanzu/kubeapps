@@ -94,6 +94,15 @@
     color: var(--clr-color-on-neutral-1000);
   }
 
+  ul {
+    margin-top: 0.6rem;
+    li {
+      p {
+        display: inline;
+      }
+    }
+  }
+
   blockquote {
     margin: 1em 0 1em 0;
     border-radius: 5px;
@@ -101,6 +110,12 @@
     background-color: #f1f1f1;
     padding: 0.1em 1em;
     max-width: 100%;
+    p:first-child {
+      margin-top: 0.6rem;
+    }
+    p:last-child {
+      margin-bottom: 0.6rem;
+    }
   }
 
   blockquote:before,
