@@ -56,3 +56,12 @@
     }
   }
 }
+
+.kubeapps-create-new-ns {
+  display: flex;
+  justify-content: flex-end;
+  cds-button {
+    --color: var(--clr-header-font-color, #fafafa);
+    outline: 0px;
+  }
+}
