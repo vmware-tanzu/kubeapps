@@ -1,63 +1,51 @@
-import { mount } from "enzyme";
-import * as React from "react";
-import { Provider } from "react-redux";
-import configureMockStore from "redux-mock-store";
-import thunk from "redux-thunk";
-
 import { CdsButton } from "@clr/react/button";
+import { CdsModal } from "@clr/react/modal";
+import actions from "actions";
+import Alert from "components/js/Alert";
 import { cloneDeep } from "lodash";
+import * as React from "react";
 import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
 import { IClustersState } from "reducers/cluster";
 import { definedNamespaces } from "shared/Namespace";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import ContextSelector from "./ContextSelector";
 
-const mockStore = configureMockStore([thunk]);
-const defaultStore = mockStore({});
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.operators };
+beforeEach(() => {
+  actions.namespace = {
+    ...actions.namespace,
+    fetchNamespaces: jest.fn(),
+    getNamespace: jest.fn(),
+    setNamespace: jest.fn(),
+    createNamespace: jest.fn(),
+  };
+  const mockDispatch = jest.fn(res => res);
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
 
-const defaultProps = {
-  fetchNamespaces: jest.fn(),
-  clusters: {
-    currentCluster: "default",
-    clusters: {
-      default: {
-        currentNamespace: "default",
-        namespaces: ["default", "other"],
-      },
-    },
-  } as IClustersState,
-  defaultNamespace: "kubeapps-user",
-  setNamespace: jest.fn(),
-  createNamespace: jest.fn(),
-  getNamespace: jest.fn(),
-};
+afterEach(() => {
+  actions.operators = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
 
 it("fetches namespaces", () => {
   const fetchNamespaces = jest.fn();
   const getNamespace = jest.fn();
-  mount(
-    <Provider store={defaultStore}>
-      <ContextSelector
-        {...defaultProps}
-        fetchNamespaces={fetchNamespaces}
-        getNamespace={getNamespace}
-      />
-      ,
-    </Provider>,
-  );
+  actions.namespace.fetchNamespaces = fetchNamespaces;
+  actions.namespace.getNamespace = getNamespace;
+  mountWrapper(defaultStore, <ContextSelector />);
 
   expect(fetchNamespaces).toHaveBeenCalled();
   expect(getNamespace).toHaveBeenCalledWith(
-    defaultProps.clusters.currentCluster,
-    defaultProps.clusters.clusters.default.currentNamespace,
+    initialState.clusters.currentCluster,
+    initialState.clusters.clusters[initialState.clusters.currentCluster].currentNamespace,
   );
 });
 
 it("opens the dropdown menu", () => {
-  const wrapper = mount(
-    <Provider store={defaultStore}>
-      <ContextSelector {...defaultProps} />
-    </Provider>,
-  );
+  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
   expect(wrapper.find(".dropdown")).not.toHaveClassName("open");
   const menu = wrapper.find("button");
   menu.simulate("click");
@@ -67,17 +55,20 @@ it("opens the dropdown menu", () => {
 
 it("selects a different namespace", () => {
   const setNamespace = jest.fn();
-  const wrapper = mount(
-    <Provider store={defaultStore}>
-      <ContextSelector {...defaultProps} setNamespace={setNamespace} />
-    </Provider>,
-  );
+  actions.namespace = {
+    ...actions.namespace,
+    setNamespace,
+  };
+  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
   wrapper
     .find("select")
     .findWhere(s => s.prop("name") === "namespaces")
     .simulate("change", { target: { value: "other" } });
   act(() => {
-    (wrapper.find(CdsButton).prop("onClick") as any)();
+    (wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.text() === "Change Context")
+      .prop("onClick") as any)();
   });
   expect(setNamespace).toHaveBeenCalledWith("other");
 });
@@ -96,11 +87,7 @@ it("shows the current cluster", () => {
       },
     },
   } as IClustersState;
-  const wrapper = mount(
-    <Provider store={defaultStore}>
-      <ContextSelector {...defaultProps} clusters={clusters} />
-    </Provider>,
-  );
+  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
   expect(
     wrapper
       .find("select")
@@ -110,13 +97,9 @@ it("shows the current cluster", () => {
 });
 
 it("shows the current namespace", () => {
-  const props = cloneDeep(defaultProps);
-  props.clusters.clusters.default.currentNamespace = "other";
-  const wrapper = mount(
-    <Provider store={defaultStore}>
-      <ContextSelector {...props} />
-    </Provider>,
-  );
+  const clusters = cloneDeep(initialState.clusters);
+  clusters.clusters[clusters.currentCluster].currentNamespace = "other";
+  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
   expect(
     wrapper
       .find("select")
@@ -126,13 +109,9 @@ it("shows the current namespace", () => {
 });
 
 it("includes all namespaces", () => {
-  const props = cloneDeep(defaultProps);
-  props.clusters.clusters.default.currentNamespace = definedNamespaces.all;
-  const wrapper = mount(
-    <Provider store={defaultStore}>
-      <ContextSelector {...props} />
-    </Provider>,
-  );
+  const clusters = cloneDeep(initialState.clusters);
+  clusters.clusters[clusters.currentCluster].currentNamespace = definedNamespaces.all;
+  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
   expect(wrapper.find("label").findWhere(l => l.prop("htmlFor") === "namespaces")).toIncludeText(
     "All Namespaces",
   );
@@ -142,4 +121,38 @@ it("includes all namespaces", () => {
       .find("option")
       .filterWhere(op => op.prop("value") === definedNamespaces.all),
   ).toExist();
+});
+
+it("submits the form to create a new namespace", () => {
+  const createNamespace = jest.fn();
+  actions.namespace.createNamespace = createNamespace;
+  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
+
+  const modalButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Create Namespace");
+  act(() => {
+    (modalButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+  expect(wrapper.find(CdsModal)).toHaveProp("hidden", false);
+
+  act(() => {
+    wrapper.find("input").simulate("change", { target: { value: "new-ns" } });
+  });
+  wrapper.update();
+
+  act(() => {
+    wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
+  });
+  wrapper.update();
+
+  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns");
+});
+
+it("shows an error creating a namespace", () => {
+  const clusters = cloneDeep(initialState.clusters);
+  clusters.clusters[clusters.currentCluster].error = { error: new Error("Boom"), action: "create" };
+
+  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  // The error will be within the modal
+  expect(wrapper.find(CdsModal).find(Alert)).toExist();
 });

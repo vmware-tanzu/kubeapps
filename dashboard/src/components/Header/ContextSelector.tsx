@@ -1,51 +1,48 @@
+import { CdsButton } from "@clr/react/button";
+import { CdsFormGroup } from "@clr/react/forms";
+import { CdsIcon } from "@clr/react/icon";
+import { CdsInput } from "@clr/react/input";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@clr/react/modal";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
 import { push } from "connected-react-router";
 import React, { useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
-
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
-import { IClustersState } from "../../reducers/cluster";
-import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
-
-import Column from "components/js/Column";
+import { useDispatch, useSelector } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import { definedNamespaces } from "shared/Namespace";
+import { IStoreState } from "shared/types";
 import { app } from "shared/url";
+import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import Row from "../js/Row";
 import "./ContextSelector.css";
 
-export interface IContextSelectorProps {
-  clusters: IClustersState;
-  defaultNamespace: string;
-  fetchNamespaces: (cluster: string) => void;
-  createNamespace: (cluster: string, ns: string) => Promise<boolean>;
-  getNamespace: (cluster: string, ns: string) => void;
-  setNamespace: (ns: string) => void;
-}
-
-function ContextSelector({
-  clusters,
-  defaultNamespace,
-  fetchNamespaces,
-  createNamespace,
-  getNamespace,
-  setNamespace,
-}: IContextSelectorProps) {
-  const dispatch = useDispatch();
-  const [open, setOpen] = useState(false);
+function ContextSelector() {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const {
+    clusters,
+    auth: { defaultNamespace },
+  } = useSelector((state: IStoreState) => state);
   const currentCluster = clusters.clusters[clusters.currentCluster];
   const namespaceSelected = currentCluster.currentNamespace || defaultNamespace;
+  const error = currentCluster.error;
+  const [open, setOpen] = useState(false);
   const [cluster, setStateCluster] = useState(clusters.currentCluster);
   const [namespace, setStateNamespace] = useState(namespaceSelected);
+  const [newNSModalIsOpen, setNewNSModalIsOpen] = useState(false);
+  const [newNS, setNewNS] = useState("");
+
   // Control when users click outside
   const ref = useRef(null);
   useOutsideClick(setOpen, [ref], open);
 
   useEffect(() => {
-    fetchNamespaces(clusters.currentCluster);
+    dispatch(actions.namespace.fetchNamespaces(clusters.currentCluster));
     if (namespaceSelected !== definedNamespaces.all) {
-      getNamespace(clusters.currentCluster, namespaceSelected);
+      dispatch(actions.namespace.getNamespace(clusters.currentCluster, namespaceSelected));
     }
-  }, [fetchNamespaces, namespaceSelected, getNamespace, clusters.currentCluster]);
+  }, [dispatch, namespaceSelected, clusters.currentCluster]);
 
   useEffect(() => {
     setStateNamespace(namespaceSelected);
@@ -57,9 +54,23 @@ function ContextSelector({
   const selectNamespace = (event: React.ChangeEvent<HTMLSelectElement>) =>
     setStateNamespace(event.target.value);
   const changeContext = () => {
-    setNamespace(namespace);
+    dispatch(actions.namespace.setNamespace(namespace));
     dispatch(push(app.apps.list(cluster, namespace)));
     setOpen(false);
+  };
+  const openNewNSModal = () => setNewNSModalIsOpen(true);
+  const closeNewNSModal = () => setNewNSModalIsOpen(false);
+  const onChangeNewNS = (event: React.ChangeEvent<HTMLInputElement>) =>
+    setNewNS(event.target.value);
+  const createNewNS = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const created = await dispatch(actions.namespace.createNamespace(cluster, newNS));
+    if (created) {
+      closeNewNSModal();
+      dispatch(actions.namespace.setNamespace(newNS));
+      dispatch(push(app.apps.list(cluster, newNS)));
+      setOpen(false);
+    }
   };
 
   return (
@@ -146,6 +157,28 @@ function ContextSelector({
                   All Namespaces
                 </option>
               </select>
+            </div>
+            <div className="kubeapps-create-new-ns">
+              <CdsModal hidden={!newNSModalIsOpen} closable={true} onCloseChange={closeNewNSModal}>
+                <CdsModalHeader>Create a New Namespace</CdsModalHeader>
+                {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
+                <form onSubmit={createNewNS}>
+                  <CdsModalContent>
+                    <CdsFormGroup>
+                      <CdsInput>
+                        <label>Name:</label>
+                        <input type="text" required={true} onChange={onChangeNewNS} />
+                      </CdsInput>
+                    </CdsFormGroup>
+                  </CdsModalContent>
+                  <CdsModalActions>
+                    <CdsButton type="submit">Submit</CdsButton>
+                  </CdsModalActions>
+                </form>
+              </CdsModal>
+              <CdsButton status="inverse" size="sm" action="flat" onClick={openNewNSModal}>
+                Create Namespace
+              </CdsButton>
             </div>
           </div>
           <div className="dropdown-menu-padding">

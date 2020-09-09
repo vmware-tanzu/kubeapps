@@ -10,29 +10,15 @@ import Menu from "./Menu";
 
 interface IHeaderProps {
   authenticated: boolean;
-  fetchNamespaces: (cluster: string) => void;
   logout: () => void;
   clusters: IClustersState;
   defaultNamespace: string;
   appVersion: string;
   push: (path: string) => void;
-  setNamespace: (ns: string) => void;
-  createNamespace: (cluster: string, ns: string) => Promise<boolean>;
-  getNamespace: (cluster: string, ns: string) => void;
 }
 
 function Header(props: IHeaderProps) {
-  const {
-    appVersion,
-    clusters,
-    authenticated: showNav,
-    defaultNamespace,
-    fetchNamespaces,
-    createNamespace,
-    getNamespace,
-    setNamespace,
-    logout,
-  } = props;
+  const { appVersion, clusters, authenticated: showNav, defaultNamespace, logout } = props;
   const cluster = clusters.clusters[clusters.currentCluster];
 
   const routesToRender = [
@@ -75,14 +61,7 @@ function Header(props: IHeaderProps) {
           )}
           {showNav && (
             <section className="header-actions">
-              <ContextSelector
-                clusters={clusters}
-                fetchNamespaces={fetchNamespaces}
-                getNamespace={getNamespace}
-                createNamespace={createNamespace}
-                defaultNamespace={defaultNamespace}
-                setNamespace={setNamespace}
-              />
+              <ContextSelector />
               <Menu
                 clusters={clusters}
                 defaultNamespace={defaultNamespace}
