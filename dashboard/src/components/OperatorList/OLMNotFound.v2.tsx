@@ -24,19 +24,9 @@ export default function OLMNotFound() {
             rel="noopener noreferrer"
           >
             the installation instructions
-          </a>{" "}
-          or execute the following command in a terminal with <code>kubectl</code> available and
-          configured:
+          </a>
+          .
         </p>
-        <section className="terminal-wrapper">
-          <pre className="terminal-code">
-            curl -L
-            https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/install.sh
-            -o install.sh <br />
-            chmod +x install.sh <br />
-            ./install.sh 0.15.1
-          </pre>
-        </section>
       </div>
     </div>
   );
