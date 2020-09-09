@@ -84,6 +84,15 @@ export const errorOperatorCreate = createAction("ERROR_OPERATOR_CREATE", resolve
   return (err: Error) => resolve(err);
 });
 
+export const requestSubscriptions = createAction("REQUEST_SUBSCRIPTIONS");
+export const receiveSubscriptions = createAction("RECEIVE_SUBSCRIPTIONS", resolve => {
+  return (resources: IResource[]) => resolve(resources);
+});
+
+export const errorSubscriptionList = createAction("ERROR_SUBSCRIPTIONS", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 const actions = [
   checkingOLM,
   OLMInstalled,
@@ -115,6 +124,9 @@ const actions = [
   creatingOperator,
   operatorCreated,
   errorOperatorCreate,
+  requestSubscriptions,
+  receiveSubscriptions,
+  errorSubscriptionList,
 ];
 
 export type OperatorAction = ActionType<typeof actions[number]>;
@@ -379,6 +391,23 @@ export function createOperator(
       return true;
     } catch (e) {
       dispatch(errorOperatorCreate(e));
+      return false;
+    }
+  };
+}
+
+export function listSubscriptions(
+  cluster: string,
+  namespace: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(requestSubscriptions());
+    try {
+      const r = await Operators.listSubscriptions(cluster, namespace);
+      dispatch(receiveSubscriptions(r.items));
+      return true;
+    } catch (e) {
+      dispatch(errorSubscriptionList(e));
       return false;
     }
   };

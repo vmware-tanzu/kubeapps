@@ -1,14 +1,12 @@
+import Row from "components/js/Row";
 import * as React from "react";
 import { Link } from "react-router-dom";
-
 import { IAppOverview, IClusterServiceVersion, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
 import { escapeRegExp } from "../../shared/utils";
-import CardGrid from "../Card/CardGrid.v2";
-import AppListItem from "./AppListItem.v2";
-
 import Alert from "../js/Alert";
 import "./AppList.v2.css";
+import AppListItem from "./AppListItem.v2";
 import CustomResourceListItem from "./CustomResourceListItem.v2";
 
 export interface IAppListProps {
@@ -51,7 +49,7 @@ function AppListGrid(props: IAppListProps) {
     );
   }
   return (
-    <CardGrid>
+    <Row>
       <>
         {filteredReleases.map(r => {
           return <AppListItem key={r.releaseName} app={r} cluster={cluster} />;
@@ -70,7 +68,7 @@ function AppListGrid(props: IAppListProps) {
           );
         })}
       </>
-    </CardGrid>
+    </Row>
   );
 }
 

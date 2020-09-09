@@ -542,3 +542,38 @@ describe("createOperator", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("listSubscriptions", () => {
+  it("list subscriptions", async () => {
+    const subscriptions = [{}] as IResource[];
+    Operators.listSubscriptions = jest.fn().mockReturnValue({ items: subscriptions });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestSubscriptions),
+      },
+      {
+        type: getType(operatorActions.receiveSubscriptions),
+        payload: subscriptions,
+      },
+    ];
+    await store.dispatch(operatorActions.listSubscriptions("default", "default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.listSubscriptions = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestSubscriptions),
+      },
+      {
+        type: getType(operatorActions.errorSubscriptionList),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.listSubscriptions("default", "default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

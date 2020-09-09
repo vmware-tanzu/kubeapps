@@ -134,9 +134,14 @@ it("selects the default channel", () => {
   );
 });
 
-it("disables the Header deploy button if the CSV already exists", () => {
+it("disables the Header deploy button if the subscription already exists", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { operator: defaultOperator, csv: {} } }),
+    getStore({
+      operators: {
+        operator: defaultOperator,
+        subscriptions: [{ spec: { name: defaultOperator.metadata.name } }],
+      },
+    }),
     <OperatorView {...defaultProps} />,
   );
   wrapper.find(CdsButton).forEach(button => expect(button).toBeDisabled());
