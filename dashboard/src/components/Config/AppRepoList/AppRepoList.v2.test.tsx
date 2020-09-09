@@ -126,9 +126,12 @@ describe("global and namespaced repositories", () => {
     );
 
     // A link to manage the repos should exist
-    expect(wrapper.find(Link).prop("to")).toBe(
-      app.config.apprepositories("default", defaultProps.kubeappsNamespace),
-    );
+    expect(
+      wrapper
+        .find("p")
+        .find(Link)
+        .prop("to"),
+    ).toBe(app.config.apprepositories("default", defaultProps.kubeappsNamespace));
     expect(wrapper.find(Table)).toHaveLength(1);
     // The control buttons should be disabled
     expect(wrapper.find(AppRepoDisabledControl)).toExist();
@@ -150,7 +153,7 @@ describe("global and namespaced repositories", () => {
     );
 
     // A link to manage the repos should not exist since we are already there
-    expect(wrapper.find(Link)).not.toExist();
+    expect(wrapper.find("p").find(Link)).not.toExist();
     expect(wrapper.find(Table)).toHaveLength(1);
     // The control buttons should be enabled
     expect(wrapper.find(AppRepoDisabledControl)).not.toExist();
@@ -187,5 +190,22 @@ describe("global and namespaced repositories", () => {
         .at(1)
         .find(AppRepoControl),
     ).toExist();
+  });
+
+  it("shows a link to the repo catalog", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        repos: {
+          repos: [namespacedRepo],
+        },
+      }),
+      <AppRepoList {...defaultProps} namespace={namespacedRepo.metadata.namespace} />,
+    );
+    expect(
+      wrapper
+        .find(Table)
+        .find(Link)
+        .prop("to"),
+    ).toEqual("/c/default/ns/default-namespace/catalog?Repository=my-repo");
   });
 });
