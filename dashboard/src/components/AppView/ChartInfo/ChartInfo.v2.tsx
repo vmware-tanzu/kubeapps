@@ -26,6 +26,7 @@ function ChartInfo({ app }: IChartInfoProps) {
               Chart Version: <strong>{metadata.version}</strong>
             </span>
           </div>
+          <ChartUpdateInfo app={app} />
         </section>
       )}
       {metadata && (
@@ -36,7 +37,6 @@ function ChartInfo({ app }: IChartInfoProps) {
           <span>{metadata.description}</span>
         </section>
       )}
-      <ChartUpdateInfo app={app} />
     </section>
   );
 }
