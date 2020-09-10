@@ -15,13 +15,15 @@ describe("catalogReducer", () => {
         operator: false,
         csv: false,
         resource: false,
+        subscriptions: false,
       },
       isFetching: false,
       isOLMInstalled: false,
       operators: [],
       csvs: [],
-      errors: { operator: {}, resource: {}, csv: {} },
+      errors: { operator: {}, resource: {}, csv: {}, subscriptions: {} },
       resources: [],
+      subscriptions: [],
     };
   });
 
@@ -53,6 +55,9 @@ describe("catalogReducer", () => {
       creatingOperator: getType(actions.operators.creatingOperator),
       operatorCreated: getType(actions.operators.operatorCreated),
       errorOperatorCreate: getType(actions.operators.errorOperatorCreate),
+      receiveSubscriptions: getType(actions.operators.receiveSubscriptions),
+      requestSubscriptions: getType(actions.operators.requestSubscriptions),
+      errorSubscriptionList: getType(actions.operators.errorSubscriptionList),
     };
 
     describe("reducer actions", () => {
@@ -64,7 +69,13 @@ describe("catalogReducer", () => {
         ).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: true, operator: false, csv: false, resource: false },
+          isFetchingElem: {
+            OLM: true,
+            operator: false,
+            csv: false,
+            resource: false,
+            subscriptions: false,
+          },
         });
       });
 
@@ -75,7 +86,13 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: true, operator: false, csv: false, resource: false },
+          isFetchingElem: {
+            OLM: true,
+            operator: false,
+            csv: false,
+            resource: false,
+            subscriptions: false,
+          },
         });
         expect(
           operatorReducer(undefined, {
@@ -92,7 +109,13 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+          isFetchingElem: {
+            OLM: false,
+            operator: true,
+            csv: false,
+            resource: false,
+            subscriptions: false,
+          },
         });
         expect(
           operatorReducer(undefined, {
@@ -109,7 +132,13 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+          isFetchingElem: {
+            OLM: false,
+            operator: true,
+            csv: false,
+            resource: false,
+            subscriptions: false,
+          },
         });
         expect(
           operatorReducer(undefined, {
@@ -147,7 +176,13 @@ describe("catalogReducer", () => {
             {
               ...initialState,
               isFetching: true,
-              isFetchingElem: { OLM: true, operator: false, csv: false, resource: false },
+              isFetchingElem: {
+                OLM: true,
+                operator: false,
+                csv: false,
+                resource: false,
+                subscriptions: false,
+              },
               errors: { ...initialState.errors, operator: { fetch: new Error("Boom!") } },
               operators: [{} as any],
             },
@@ -166,7 +201,13 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+          isFetchingElem: {
+            OLM: false,
+            operator: true,
+            csv: false,
+            resource: false,
+            subscriptions: false,
+          },
         });
         expect(
           operatorReducer(undefined, {
@@ -184,7 +225,13 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: false, operator: false, csv: true, resource: false },
+          isFetchingElem: {
+            OLM: false,
+            operator: false,
+            csv: true,
+            resource: false,
+            subscriptions: false,
+          },
         });
         expect(
           operatorReducer(undefined, {
@@ -201,7 +248,13 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: false, operator: false, csv: true, resource: false },
+          isFetchingElem: {
+            OLM: false,
+            operator: false,
+            csv: true,
+            resource: false,
+            subscriptions: false,
+          },
         });
         expect(
           operatorReducer(undefined, {
@@ -223,7 +276,13 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { OLM: false, operator: false, csv: true, resource: false },
+          isFetchingElem: {
+            OLM: false,
+            operator: false,
+            csv: true,
+            resource: false,
+            subscriptions: false,
+          },
         });
         expect(
           operatorReducer(undefined, {
@@ -242,7 +301,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: true,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -259,7 +324,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: true,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -281,7 +352,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: true,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -298,7 +375,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: true,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -320,7 +403,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: true,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -337,7 +426,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: true,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -356,7 +451,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: true, operator: true, csv: false, resource: false },
+        isFetchingElem: {
+          OLM: true,
+          operator: true,
+          csv: false,
+          resource: false,
+          subscriptions: false,
+        },
       });
       state = operatorReducer(state, {
         type: actionTypes.OLMInstalled as any,
@@ -376,7 +477,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+        isFetchingElem: {
+          OLM: false,
+          operator: true,
+          csv: false,
+          resource: false,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -393,7 +500,13 @@ describe("catalogReducer", () => {
       expect(state).toEqual({
         ...initialState,
         isFetching: true,
-        isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+        isFetchingElem: {
+          OLM: false,
+          operator: true,
+          csv: false,
+          resource: false,
+          subscriptions: false,
+        },
       });
       expect(
         operatorReducer(undefined, {
@@ -404,6 +517,57 @@ describe("catalogReducer", () => {
         ...initialState,
         isFetching: false,
         errors: { ...initialState.errors, operator: { create: new Error("Boom!") } },
+      });
+    });
+
+    it("list subscriptions", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.requestSubscriptions as any,
+      });
+      const resource = [{}] as IResource[];
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: false,
+          subscriptions: true,
+        },
+      });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.receiveSubscriptions as any,
+          payload: resource,
+        }),
+      ).toEqual({ ...initialState, subscriptions: resource, isFetching: false });
+    });
+
+    it("sets an error listing subscriptions", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.requestSubscriptions as any,
+      });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: {
+          OLM: false,
+          operator: false,
+          csv: false,
+          resource: false,
+          subscriptions: true,
+        },
+      });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.errorSubscriptionList as any,
+          payload: new Error("Boom!"),
+        }),
+      ).toEqual({
+        ...initialState,
+        isFetching: false,
+        errors: { ...initialState.errors, subscriptions: { fetch: new Error("Boom!") } },
       });
     });
   });

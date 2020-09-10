@@ -27,6 +27,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+    dispatch(actions.operators.listSubscriptions(cluster, namespace));
   }, [dispatch, cluster, namespace, operatorName]);
 
   const {
@@ -36,7 +37,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
       errors: {
         operator: { fetch: error },
       },
-      csv,
+      subscriptions,
     },
     config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
@@ -75,6 +76,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
     );
   }
   const { currentCSVDesc } = channel;
+  const alreadyInstalled = subscriptions.some(s => s.spec.name === operator.metadata.name);
   return (
     <section>
       <OperatorHeader
@@ -82,7 +84,12 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
         icon={api.operators.operatorIcon(namespace, operator.metadata.name)}
         version={currentCSVDesc.version}
         buttons={[
-          <CdsButton key="deploy-button" status="primary" disabled={!!csv} onClick={redirect}>
+          <CdsButton
+            key="deploy-button"
+            status="primary"
+            disabled={alreadyInstalled}
+            onClick={redirect}
+          >
             <CdsIcon shape="deploy" inverse={true} /> Deploy
           </CdsButton>,
         ]}
@@ -95,7 +102,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
           <Column span={9}>
             <OperatorDescription description={currentCSVDesc.description} />
             <div className="after-readme-button">
-              <CdsButton status="primary" disabled={!!csv} onClick={redirect}>
+              <CdsButton status="primary" disabled={alreadyInstalled} onClick={redirect}>
                 <CdsIcon shape="deploy" inverse={true} /> Deploy
               </CdsButton>
             </div>

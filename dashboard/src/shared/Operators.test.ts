@@ -220,6 +220,16 @@ it("creates only a subscription if the namespace is operators", async () => {
   expect(axiosWithAuth.post).toHaveBeenCalledTimes(1);
 });
 
+it("list subscriptions", async () => {
+  const subscriptions = { items: [] };
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: subscriptions });
+  expect(await Operators.listSubscriptions(cluster, namespace)).toEqual(subscriptions);
+  expect(axiosWithAuth.get).toHaveBeenCalled();
+  expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
+    `api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions`,
+  ]);
+});
+
 it("finds a default channel", () => {
   const operator = {
     status: {

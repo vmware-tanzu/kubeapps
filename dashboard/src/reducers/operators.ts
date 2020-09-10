@@ -20,6 +20,7 @@ export interface IOperatorsState {
     operator: boolean;
     csv: boolean;
     resource: boolean;
+    subscriptions: boolean;
   };
   isOLMInstalled: boolean;
   operators: IResource[];
@@ -28,11 +29,13 @@ export interface IOperatorsState {
     operator: IOperatorsStateError;
     csv: IOperatorsStateError;
     resource: IOperatorsStateError;
+    subscriptions: IOperatorsStateError;
   };
   csvs: IClusterServiceVersion[];
   csv?: IClusterServiceVersion;
   resources: IResource[];
   resource?: IResource;
+  subscriptions: IResource[];
 }
 
 export const operatorsInitialState: IOperatorsState = {
@@ -42,6 +45,7 @@ export const operatorsInitialState: IOperatorsState = {
     operator: false,
     csv: false,
     resource: false,
+    subscriptions: false,
   },
   isOLMInstalled: false,
   operators: [],
@@ -50,8 +54,10 @@ export const operatorsInitialState: IOperatorsState = {
     operator: {},
     csv: {},
     resource: {},
+    subscriptions: {},
   },
   resources: [],
+  subscriptions: [],
 };
 
 function isFetching(state: IOperatorsState, item: string, fetching: boolean) {
@@ -182,11 +188,26 @@ const catalogReducer = (
         ...isFetching(state, "operator", false),
         errors: { ...state.errors, operator: { create: action.payload } },
       };
+    case getType(operators.requestSubscriptions):
+      return { ...state, ...isFetching(state, "subscriptions", true) };
+    case getType(operators.receiveSubscriptions):
+      return {
+        ...state,
+        ...isFetching(state, "subscriptions", false),
+        subscriptions: action.payload,
+      };
+    case getType(operators.errorSubscriptionList):
+      return {
+        ...state,
+        ...isFetching(state, "subscriptions", false),
+        resource: undefined,
+        errors: { ...state.errors, subscriptions: { fetch: action.payload } },
+      };
     case LOCATION_CHANGE:
       return {
         ...state,
         isOLMInstalled: state.isOLMInstalled,
-        errors: { operator: {}, csv: {}, resource: {} },
+        errors: { operator: {}, csv: {}, resource: {}, subscriptions: {} },
       };
     case getType(actions.namespace.setNamespace):
       return { ...operatorsInitialState, isOLMInstalled: state.isOLMInstalled };

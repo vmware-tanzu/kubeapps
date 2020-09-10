@@ -7,10 +7,10 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageManifest } from "../../shared/types";
-import { CardGrid } from "../Card";
 import InfoCard from "../InfoCard/InfoCard.v2";
 import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLevel";
 import OLMNotFound from "./OLMNotFound.v2";
+import OperatorItems from "./OperatorItems";
 import OperatorList, { filterNames, IOperatorListProps } from "./OperatorList.v2";
 import OperatorNotSupported from "./OperatorsNotSupported.v2";
 
@@ -63,24 +63,9 @@ const sampleOperator = {
   },
 } as IPackageManifest;
 
-const sampleCSV = {
+const sampleSubscription = {
   metadata: { name: "kubeapps-operator" },
-  spec: {
-    icon: [{}],
-    provider: {
-      name: "kubeapps",
-    },
-    customresourcedefinitions: {
-      owned: [
-        {
-          name: "foo.kubeapps.com",
-          version: "v1alpha1",
-          kind: "Foo",
-          resources: [{ kind: "Deployment" }],
-        },
-      ],
-    },
-  },
+  spec: { name: "foo" },
 } as any;
 
 it("renders a LoadingWrapper if fetching", () => {
@@ -135,11 +120,14 @@ it("render the operator list", () => {
   expect(wrapper.find(InfoCard)).toExist();
 });
 
-// TODO(andresmgot): Enable when the list of installed vs available is ready
-xit("render the operator list with installed operators", () => {
+it("render the operator list with installed operators", () => {
   const wrapper = mountWrapper(
     getStore({
-      operators: { isOLMInstalled: true, operators: [sampleOperator], csvs: [sampleCSV] },
+      operators: {
+        isOLMInstalled: true,
+        operators: [sampleOperator],
+        subscriptions: [sampleSubscription],
+      },
     }),
     <OperatorList {...defaultProps} />,
   );
@@ -147,16 +135,13 @@ xit("render the operator list with installed operators", () => {
   expect(wrapper.find(InfoCard)).toExist();
   // The section "Available operators" should be empty since all the ops are installed
   expect(wrapper.find("h3").filterWhere(c => c.text() === "Installed")).toExist();
-  expect(
-    wrapper
-      .find(CardGrid)
-      .last()
-      .children(),
-  ).not.toExist();
-  expect(wrapper).toMatchSnapshot();
+  const operatorLists = wrapper.find(OperatorItems);
+  expect(operatorLists).toHaveLength(2);
+  expect(operatorLists.at(0)).toHaveProp("operators", [sampleOperator]);
+  expect(operatorLists.at(1)).toHaveProp("operators", []);
 });
 
-xit("render the operator list without installed operators", () => {
+it("render the operator list without installed operators", () => {
   const wrapper = mountWrapper(
     getStore({ operators: { isOLMInstalled: true, operators: [sampleOperator] } }),
     <OperatorList {...defaultProps} />,
@@ -165,13 +150,9 @@ xit("render the operator list without installed operators", () => {
   expect(wrapper.find(InfoCard)).toExist();
   // The section "Available operators" should not be empty since the operator is not installed
   expect(wrapper.find("h3").filterWhere(c => c.text() === "Installed")).not.toExist();
-  expect(
-    wrapper
-      .find(CardGrid)
-      .last()
-      .children(),
-  ).toExist();
-  expect(wrapper).toMatchSnapshot();
+  const operatorLists = wrapper.find(OperatorItems);
+  expect(operatorLists).toHaveLength(1);
+  expect(operatorLists.at(0)).toHaveProp("operators", [sampleOperator]);
 });
 
 describe("filter operators", () => {

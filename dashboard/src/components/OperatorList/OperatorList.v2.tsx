@@ -1,7 +1,6 @@
 import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
-import CardGrid from "components/Card/CardGrid.v2";
 import { filtersToQuery } from "components/Catalog/Catalog.v2";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
@@ -12,7 +11,7 @@ import { flatten, get, intersection, uniq, without } from "lodash";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { app } from "shared/url";
-import { IPackageManifestStatus, IStoreState } from "../../shared/types";
+import { IPackageManifest, IPackageManifestStatus, IStoreState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import {
@@ -132,16 +131,20 @@ export default function OperatorList({
       operators,
       isFetching,
       errors: {
-        operator: { fetch: error },
+        operator: { fetch: opError },
+        subscriptions: { fetch: subsError },
       },
+      subscriptions,
       isOLMInstalled,
     },
     config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
+  const error = opError || subsError;
 
   useEffect(() => {
     if (isOLMInstalled) {
       dispatch(actions.operators.getOperators(cluster, namespace));
+      dispatch(actions.operators.listSubscriptions(cluster, namespace));
     }
   }, [dispatch, cluster, namespace, isOLMInstalled]);
 
@@ -161,6 +164,9 @@ export default function OperatorList({
   ).sort();
   const allProviders = uniq(operators.map(operator => getProvider(operator.status))).sort();
 
+  const subscriptionNames = subscriptions.map(subscription => subscription.spec.name);
+  const installedOperators: IPackageManifest[] = [];
+  const availableOperators: IPackageManifest[] = [];
   const filteredOperators = operators
     .filter(
       c =>
@@ -178,6 +184,13 @@ export default function OperatorList({
         filters[filterNames.PROVIDER].length === 0 ||
         filters[filterNames.PROVIDER].includes(getProvider(c.status)),
     );
+  filteredOperators.forEach(operator => {
+    if (subscriptionNames.includes(operator.metadata.name)) {
+      installedOperators.push(operator);
+    } else {
+      availableOperators.push(operator);
+    }
+  });
 
   return (
     <section>
@@ -293,13 +306,26 @@ export default function OperatorList({
                     return null;
                   })}
                 </div>
-                <CardGrid>
+                {installedOperators.length > 0 && (
+                  <>
+                    <h3>Installed</h3>
+                    <Row>
+                      <OperatorItems
+                        operators={installedOperators}
+                        cluster={cluster}
+                        namespace={namespace}
+                      />
+                    </Row>
+                  </>
+                )}
+                <h3>Available Operators</h3>
+                <Row>
                   <OperatorItems
-                    operators={filteredOperators}
+                    operators={availableOperators}
                     cluster={cluster}
                     namespace={namespace}
                   />
-                </CardGrid>
+                </Row>
               </>
             </Column>
           </Row>

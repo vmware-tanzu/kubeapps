@@ -166,6 +166,10 @@ export const api = {
         `${api.k8s.base(
           cluster,
         )}/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+      subscriptions: (cluster: string, namespace: string) =>
+        `${api.k8s.base(
+          cluster,
+        )}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions`,
       subscription: (cluster: string, namespace: string, name: string) =>
         `${api.k8s.base(
           cluster,

@@ -147,6 +147,13 @@ export class Operators {
     return result;
   }
 
+  public static async listSubscriptions(cluster: string, namespace: string) {
+    const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
+      urls.api.k8s.operators.subscriptions(cluster, namespace),
+    );
+    return data;
+  }
+
   public static getDefaultChannel(operator: IPackageManifest) {
     return operator.status.channels.find(ch => ch.name === operator.status.defaultChannel);
   }

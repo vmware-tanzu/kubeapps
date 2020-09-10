@@ -14,7 +14,6 @@ import { definedNamespaces } from "shared/Namespace";
 import { app } from "shared/url";
 import { IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
-import CardGrid from "../Card/CardGrid.v2";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
@@ -303,14 +302,14 @@ function Catalog(props: ICatalogProps) {
                     return null;
                   })}
                 </div>
-                <CardGrid>
+                <Row>
                   <CatalogItems
                     charts={filteredCharts}
                     csvs={filteredCSVs}
                     cluster={cluster}
                     namespace={namespace}
                   />
-                </CardGrid>
+                </Row>
               </>
             </Column>
           </Row>
