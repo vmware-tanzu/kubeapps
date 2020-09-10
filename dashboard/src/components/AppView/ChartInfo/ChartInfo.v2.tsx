@@ -5,9 +5,10 @@ import ChartUpdateInfo from "./ChartUpdateInfo";
 
 interface IChartInfoProps {
   app: IRelease;
+  cluster: string;
 }
 
-function ChartInfo({ app }: IChartInfoProps) {
+function ChartInfo({ app, cluster }: IChartInfoProps) {
   const metadata = app.chart && app.chart.metadata;
   return (
     <section className="left-menu">
@@ -26,7 +27,7 @@ function ChartInfo({ app }: IChartInfoProps) {
               Chart Version: <strong>{metadata.version}</strong>
             </span>
           </div>
-          <ChartUpdateInfo app={app} />
+          <ChartUpdateInfo app={app} cluster={cluster} />
         </section>
       )}
       {metadata && (

@@ -2,14 +2,23 @@ import { CdsIcon } from "@clr/react/icon";
 import * as React from "react";
 
 import Alert from "components/js/Alert";
+import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";
 import { IChartUpdateInfo, IRelease } from "shared/types";
+import { app as appURL } from "shared/url";
 
 interface IChartInfoProps {
+  cluster: string;
   app: IRelease;
 }
 
-function getUpdateInfo(updateInfo: IChartUpdateInfo, chartMetadata: hapi.chart.IMetadata) {
+function getUpdateInfo(
+  name: string,
+  namespace: string,
+  cluster: string,
+  updateInfo: IChartUpdateInfo,
+  chartMetadata: hapi.chart.IMetadata,
+) {
   if (updateInfo.error) {
     // Unable to get info, return error
     return (
@@ -31,25 +40,32 @@ function getUpdateInfo(updateInfo: IChartUpdateInfo, chartMetadata: hapi.chart.I
     // There is a new application version
     return (
       <Alert>
-        A new app version is available: <strong>{updateInfo.appLatestVersion}</strong>.
+        A new app version is available: <strong>{updateInfo.appLatestVersion}</strong>.{" "}
+        <Link to={appURL.apps.upgrade(cluster, namespace, name)}>Update Now</Link>
       </Alert>
     );
   }
   // There is a new chart version
   return (
     <Alert>
-      A new chart version is available: <strong>{updateInfo.chartLatestVersion}</strong>.
+      A new chart version is available: <strong>{updateInfo.chartLatestVersion}</strong>.{" "}
+      <Link to={appURL.apps.upgrade(cluster, namespace, name)}>Update Now</Link>
     </Alert>
   );
 }
 
-export default function ChartUpdateInfo(props: IChartInfoProps) {
-  const { app } = props;
+export default function ChartUpdateInfo({ app, cluster }: IChartInfoProps) {
   let updateInfo = null;
   // If update is not set yet we cannot know if there is
   // an update available or not
   if (app.updateInfo && app.chart?.metadata) {
-    updateInfo = getUpdateInfo(app.updateInfo, app.chart.metadata);
+    updateInfo = getUpdateInfo(
+      app.name,
+      app.namespace,
+      cluster,
+      app.updateInfo,
+      app.chart.metadata,
+    );
   }
   return updateInfo;
 }

@@ -200,7 +200,7 @@ export default function AppView({
       ) : (
         <Row>
           <Column span={3}>
-            <ChartInfo app={app} />
+            <ChartInfo app={app} cluster={cluster} />
           </Column>
           <Column span={9}>
             <div className="appview-separator">
