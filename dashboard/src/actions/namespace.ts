@@ -13,7 +13,7 @@ export const receiveNamespace = createAction("RECEIVE_NAMESPACE", resolve => {
 });
 
 export const setNamespace = createAction("SET_NAMESPACE", resolve => {
-  return (namespace: string) => resolve(namespace);
+  return (cluster: string, namespace: string) => resolve({ cluster, namespace });
 });
 
 export const postNamespace = createAction("CREATE_NAMESPACE", resolve => {

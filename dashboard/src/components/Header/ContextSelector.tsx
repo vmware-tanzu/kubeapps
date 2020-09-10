@@ -48,13 +48,19 @@ function ContextSelector() {
     setStateNamespace(namespaceSelected);
   }, [namespaceSelected]);
 
+  useEffect(() => {
+    setStateNamespace(clusters.clusters[cluster].currentNamespace);
+  }, [clusters.clusters, cluster]);
+
   const toggleOpen = () => setOpen(!open);
-  const selectCluster = (event: React.ChangeEvent<HTMLSelectElement>) =>
+  const selectCluster = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setStateCluster(event.target.value);
+    dispatch(actions.namespace.fetchNamespaces(event.target.value));
+  };
   const selectNamespace = (event: React.ChangeEvent<HTMLSelectElement>) =>
     setStateNamespace(event.target.value);
   const changeContext = () => {
-    dispatch(actions.namespace.setNamespace(namespace));
+    dispatch(actions.namespace.setNamespace(cluster, namespace));
     dispatch(push(app.apps.list(cluster, namespace)));
     setOpen(false);
   };
@@ -67,7 +73,7 @@ function ContextSelector() {
     const created = await dispatch(actions.namespace.createNamespace(cluster, newNS));
     if (created) {
       closeNewNSModal();
-      dispatch(actions.namespace.setNamespace(newNS));
+      dispatch(actions.namespace.setNamespace(cluster, newNS));
       dispatch(push(app.apps.list(cluster, newNS)));
       setOpen(false);
     }
