@@ -44,7 +44,11 @@ const clusterReducer = (
 ): IClustersState => {
   switch (action.type) {
     case getType(actions.namespace.receiveNamespace):
-      if (!state.clusters.default.namespaces.includes(action.payload.namespace.metadata.name)) {
+      if (
+        !state.clusters[action.payload.cluster].namespaces.includes(
+          action.payload.namespace.metadata.name,
+        )
+      ) {
         return {
           ...state,
           clusters: {
@@ -75,11 +79,12 @@ const clusterReducer = (
     case getType(actions.namespace.setNamespace):
       return {
         ...state,
+        currentCluster: action.payload.cluster,
         clusters: {
           ...state.clusters,
-          [state.currentCluster]: {
+          [action.payload.cluster]: {
             ...state.clusters[state.currentCluster],
-            currentNamespace: action.payload,
+            currentNamespace: action.payload.namespace,
             error: undefined,
           },
         },

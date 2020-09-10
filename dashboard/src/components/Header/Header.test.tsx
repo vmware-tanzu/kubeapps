@@ -149,7 +149,7 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
   const onChange = namespaceSelector.prop("onChange") as (ns: any) => void;
   onChange("bar");
 
-  expect(setNamespace).toHaveBeenCalledWith("bar");
+  expect(setNamespace).toHaveBeenCalledWith("default", "bar");
   expect(getNamespace).toHaveBeenCalledWith("default", "bar");
   expect(createNamespace).not.toHaveBeenCalled();
 });
@@ -180,7 +180,7 @@ it("doesn't call getNamespace when selecting all namespaces", () => {
   const onChange = namespaceSelector.prop("onChange") as (ns: any) => void;
   onChange("_all");
 
-  expect(setNamespace).toHaveBeenCalledWith("_all");
+  expect(setNamespace).toHaveBeenCalledWith("default", "_all");
   expect(getNamespace).not.toHaveBeenCalled();
 });
 

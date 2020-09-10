@@ -70,7 +70,7 @@ it("selects a different namespace", () => {
       .filterWhere(b => b.text() === "Change Context")
       .prop("onClick") as any)();
   });
-  expect(setNamespace).toHaveBeenCalledWith("other");
+  expect(setNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "other");
 });
 
 it("shows the current cluster", () => {

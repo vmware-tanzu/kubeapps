@@ -205,7 +205,7 @@ describe("clusterReducer", () => {
           },
           {
             type: getType(actions.namespace.setNamespace),
-            payload: "default",
+            payload: { cluster: "initial-cluster", namespace: "default" },
           },
         ),
       ).toEqual({

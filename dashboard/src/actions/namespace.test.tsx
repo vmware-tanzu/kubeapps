@@ -32,7 +32,12 @@ interface ITestCase {
 }
 
 const actionTestCases: ITestCase[] = [
-  { name: "setNamespace", action: setNamespace, args: ["jack"], payload: "jack" },
+  {
+    name: "setNamespace",
+    action: setNamespace,
+    args: ["default", "jack"],
+    payload: { cluster: "default", namespace: "jack" },
+  },
   {
     name: "receiveNamespces",
     action: receiveNamespaces,

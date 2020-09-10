@@ -21,7 +21,7 @@ export interface IHeaderProps {
   defaultNamespace: string;
   pathname: string;
   push: (path: string) => void;
-  setNamespace: (ns: string) => void;
+  setNamespace: (cluster: string, ns: string) => void;
   createNamespace: (cluster: string, ns: string) => Promise<boolean>;
   getNamespace: (cluster: string, ns: string) => void;
   featureFlags: IFeatureFlags;
@@ -213,7 +213,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       getNamespace,
     } = this.props;
     const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
-    setNamespace(ns);
+    setNamespace(currentCluster, ns);
     if (ns !== definedNamespaces.all) {
       getNamespace(currentCluster, ns);
     }
