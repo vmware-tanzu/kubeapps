@@ -146,7 +146,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     <section>
       <OperatorHeader
         title={`${operator.metadata.name} by ${operator.status.provider.name}`}
-        icon={api.operators.operatorIcon(namespace, operator.metadata.name)}
+        icon={api.operators.operatorIcon(cluster, namespace, operator.metadata.name)}
         version={currentCSVDesc.version}
       />
       <section>

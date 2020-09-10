@@ -220,9 +220,6 @@ export default function OperatorList({
         </div>
       </Alert>
       <LoadingWrapper loaded={!isFetching}>
-        {error && (
-          <Alert theme="danger">An error occurred while fetching Operators: {error.message}</Alert>
-        )}
         {!isOLMInstalled ? (
           <OLMNotFound />
         ) : operators.length === 0 ? (
@@ -238,6 +235,11 @@ export default function OperatorList({
           </div>
         ) : (
           <Row>
+            {error && (
+              <Alert theme="danger">
+                An error occurred while fetching Operators: {error.message}
+              </Alert>
+            )}
             <Column span={2}>
               <div className="filters-menu">
                 <h5>

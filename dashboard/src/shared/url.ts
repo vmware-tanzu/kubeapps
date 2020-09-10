@@ -182,7 +182,7 @@ export const api = {
   },
 
   operators: {
-    operatorIcon: (namespace: string, name: string) =>
-      `api/v1/namespaces/${namespace}/operator/${name}/logo`,
+    operatorIcon: (cluster: string, namespace: string, name: string) =>
+      `api/v1/clusters/${cluster}/namespaces/${namespace}/operator/${name}/logo`,
   },
 };

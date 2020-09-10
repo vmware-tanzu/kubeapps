@@ -24,7 +24,7 @@ export default function OperatorItems({ operators, cluster, namespace }: ICatalo
             key={operator.metadata.name}
             link={app.operators.view(cluster, namespace, operator.metadata.name)}
             title={operator.metadata.name}
-            icon={api.operators.operatorIcon(namespace, operator.metadata.name)}
+            icon={api.operators.operatorIcon(cluster, namespace, operator.metadata.name)}
             info={`v${channel?.currentCSVDesc.version}`}
             tag1Content={operator.status.provider.name}
             description={trimDescription(channel?.currentCSVDesc.annotations.description || "")}

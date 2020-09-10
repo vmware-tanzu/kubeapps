@@ -85,7 +85,11 @@ class OperatorView extends React.Component<IOperatorViewProps> {
         <OperatorHeader
           id={operator.metadata.name}
           description={currentCSVDesc.displayName}
-          icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
+          icon={api.operators.operatorIcon(
+            this.props.cluster,
+            this.props.namespace,
+            operator.metadata.name,
+          )}
           version={currentCSVDesc.version}
           cluster={cluster}
           namespace={namespace}
