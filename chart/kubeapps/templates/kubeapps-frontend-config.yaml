@@ -41,7 +41,7 @@ data:
     server {
       listen 8080;
   {{- if .Values.frontend.largeClientHeaderBuffers }}
-      large_client_header_buffers {{ .Values.frontend.largeClientHeaderBuffers | quote }}
+      large_client_header_buffers {{ .Values.frontend.largeClientHeaderBuffers | quote }};
   {{- end }}
   {{- if .Values.enableIPv6 }}
       listen [::]:8080;
