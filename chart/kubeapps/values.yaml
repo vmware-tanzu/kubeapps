@@ -204,9 +204,8 @@ frontend:
   proxypassAccessTokenAsBearer: false
   ## Set large_client_header_buffers in nginx config
   ## Can be required when using OIDC or LDAP due to large cookies
-  ## Example value: "4 32k"
   #
-  largeClientHeaderBuffers: ""
+  largeClientHeaderBuffers: "4 32k"
 
 ## AppRepository Controller is the controller used to manage the repositories to
 ## sync. Set apprepository.initialRepos to configure the initial set of
