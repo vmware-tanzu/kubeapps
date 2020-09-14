@@ -186,7 +186,7 @@ exports[`render the operator list with installed operators 1`] = `
             </h3>
             <CardGrid>
               <InfoCard
-                icon="api/v1/namespaces/default/operator/foo/logo"
+                icon="api/v1/clusters/default/namespaces/default/operator/foo/logo"
                 info="v1.0.0"
                 key="foo"
                 link="/c/default/ns/default/operators/foo"
@@ -353,7 +353,7 @@ exports[`render the operator list without installed operators 1`] = `
             </h3>
             <CardGrid>
               <InfoCard
-                icon="api/v1/namespaces/default/operator/foo/logo"
+                icon="api/v1/clusters/default/namespaces/default/operator/foo/logo"
                 info="v1.0.0"
                 key="foo"
                 link="/c/default/ns/default/operators/foo"
