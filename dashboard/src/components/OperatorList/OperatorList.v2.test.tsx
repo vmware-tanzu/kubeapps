@@ -92,7 +92,9 @@ it("displays an alert if rendered for an additional cluster", () => {
 
 it("renders an error", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { errors: { operator: { fetch: new Error("Forbidden!") } } } }),
+    getStore({
+      operators: { isOLMInstalled: true, errors: { operator: { fetch: new Error("Forbidden!") } } },
+    }),
     <OperatorList {...defaultProps} />,
   );
   const error = wrapper.find(Alert).filterWhere(a => a.prop("theme") === "danger");

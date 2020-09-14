@@ -287,7 +287,11 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
                       operator.metadata.name,
                     )}
                     title={operator.metadata.name}
-                    icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
+                    icon={api.operators.operatorIcon(
+                      this.props.cluster,
+                      this.props.namespace,
+                      operator.metadata.name,
+                    )}
                     info={`v${operator.status.channels[0].currentCSVDesc.version}`}
                     tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
                     tag2Content={operator.status.provider.name}
@@ -309,7 +313,11 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
                   operator.metadata.name,
                 )}
                 title={operator.metadata.name}
-                icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
+                icon={api.operators.operatorIcon(
+                  this.props.cluster,
+                  this.props.namespace,
+                  operator.metadata.name,
+                )}
                 info={`v${operator.status.channels[0].currentCSVDesc.version}`}
                 tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
                 tag2Content={operator.status.provider.name}

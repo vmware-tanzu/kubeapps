@@ -12,14 +12,16 @@ interface IOperatorNotSupportedProps {
 function OperatorNotSupported(props: IOperatorNotSupportedProps) {
   return (
     <Alert theme="warning">
-      <h5>Operators are supported on the cluster on which Kubeapps is installed only</h5>
-      <p>
+      <h6 style={{ marginTop: 0 }}>
+        Operators are supported on the cluster on which Kubeapps is installed only
+      </h6>
+      <span>
         Kubeapps' Operator support enables the addition of{" "}
         <Link to={url.app.operators.list(props.kubeappsCluster, props.namespace)}>
           operators on the cluster on which Kubeapps is installed only
         </Link>
         .
-      </p>
+      </span>
     </Alert>
   );
 }

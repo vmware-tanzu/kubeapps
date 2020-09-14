@@ -81,7 +81,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
     <section>
       <OperatorHeader
         title={`${operator.metadata.name} by ${operator.status.provider.name}`}
-        icon={api.operators.operatorIcon(namespace, operator.metadata.name)}
+        icon={api.operators.operatorIcon(cluster, namespace, operator.metadata.name)}
         version={currentCSVDesc.version}
         buttons={[
           <CdsButton

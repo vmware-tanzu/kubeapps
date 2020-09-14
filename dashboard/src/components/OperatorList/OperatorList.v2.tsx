@@ -220,115 +220,121 @@ export default function OperatorList({
         </div>
       </Alert>
       <LoadingWrapper loaded={!isFetching}>
-        {error && (
-          <Alert theme="danger">An error occurred while fetching Operators: {error.message}</Alert>
-        )}
         {!isOLMInstalled ? (
           <OLMNotFound />
-        ) : operators.length === 0 ? (
-          <div className="section-not-found">
-            <div>
-              <CdsIcon shape="bundle" size="64" />
-              <h4>The list of Operators is empty</h4>
-              <p>
-                This may mean that the OLM is still populating the catalog or that it found an
-                error. Check the OLM logs for more information.
-              </p>
-            </div>
-          </div>
         ) : (
-          <Row>
-            <Column span={2}>
-              <div className="filters-menu">
-                <h5>
-                  Filters{" "}
-                  {flatten(Object.values(filters)).length ? (
-                    <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
-                      Clear All
-                    </CdsButton>
-                  ) : (
-                    <></>
-                  )}{" "}
-                </h5>
-                {allCategories.length > 0 && (
-                  <div className="filter-section">
-                    <label className="filter-label">Category</label>
-                    <FilterGroup
-                      name={filterNames.CATEGORY}
-                      options={allCategories}
-                      currentFilters={filters[filterNames.CATEGORY]}
-                      onAddFilter={addFilter}
-                      onRemoveFilter={removeFilter}
-                    />
-                  </div>
-                )}
-                {allCapabilities.length > 0 && (
-                  <div className="filter-section">
-                    <label>Capability</label>
-                    <FilterGroup
-                      name={filterNames.CAPABILITY}
-                      options={allCapabilities}
-                      currentFilters={filters[filterNames.CAPABILITY]}
-                      onAddFilter={addFilter}
-                      onRemoveFilter={removeFilter}
-                    />
-                  </div>
-                )}
-                {allProviders.length > 0 && (
-                  <div className="filter-section">
-                    <label>Provider</label>
-                    <FilterGroup
-                      name={filterNames.PROVIDER}
-                      options={allProviders}
-                      currentFilters={filters[filterNames.PROVIDER]}
-                      onAddFilter={addFilter}
-                      onRemoveFilter={removeFilter}
-                    />
-                  </div>
-                )}
-              </div>
-            </Column>
-            <Column span={10}>
-              <>
-                <div className="filter-summary">
-                  {Object.keys(filters).map(filterName => {
-                    if (filters[filterName].length) {
-                      return filters[filterName].map((filterValue: string) => (
-                        <span key={`${filterName}-${filterValue}`} className="label label-info">
-                          {filterName}: {filterValue}{" "}
-                          <CdsIcon
-                            shape="times"
-                            onClick={removeFilterFunc(filterName, filterValue)}
-                          />
-                        </span>
-                      ));
-                    }
-                    return null;
-                  })}
+          <>
+            {error && (
+              <Alert theme="danger">
+                An error occurred while fetching Operators: {error.message}
+              </Alert>
+            )}
+            {operators.length === 0 ? (
+              <div className="section-not-found">
+                <div>
+                  <CdsIcon shape="bundle" size="64" />
+                  <h4>The list of Operators is empty</h4>
+                  <p>
+                    This may mean that the OLM is still populating the catalog or that it found an
+                    error. Check the OLM logs for more information.
+                  </p>
                 </div>
-                {installedOperators.length > 0 && (
+              </div>
+            ) : (
+              <Row>
+                <Column span={2}>
+                  <div className="filters-menu">
+                    <h5>
+                      Filters{" "}
+                      {flatten(Object.values(filters)).length ? (
+                        <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
+                          Clear All
+                        </CdsButton>
+                      ) : (
+                        <></>
+                      )}{" "}
+                    </h5>
+                    {allCategories.length > 0 && (
+                      <div className="filter-section">
+                        <label className="filter-label">Category</label>
+                        <FilterGroup
+                          name={filterNames.CATEGORY}
+                          options={allCategories}
+                          currentFilters={filters[filterNames.CATEGORY]}
+                          onAddFilter={addFilter}
+                          onRemoveFilter={removeFilter}
+                        />
+                      </div>
+                    )}
+                    {allCapabilities.length > 0 && (
+                      <div className="filter-section">
+                        <label>Capability</label>
+                        <FilterGroup
+                          name={filterNames.CAPABILITY}
+                          options={allCapabilities}
+                          currentFilters={filters[filterNames.CAPABILITY]}
+                          onAddFilter={addFilter}
+                          onRemoveFilter={removeFilter}
+                        />
+                      </div>
+                    )}
+                    {allProviders.length > 0 && (
+                      <div className="filter-section">
+                        <label>Provider</label>
+                        <FilterGroup
+                          name={filterNames.PROVIDER}
+                          options={allProviders}
+                          currentFilters={filters[filterNames.PROVIDER]}
+                          onAddFilter={addFilter}
+                          onRemoveFilter={removeFilter}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </Column>
+                <Column span={10}>
                   <>
-                    <h3>Installed</h3>
+                    <div className="filter-summary">
+                      {Object.keys(filters).map(filterName => {
+                        if (filters[filterName].length) {
+                          return filters[filterName].map((filterValue: string) => (
+                            <span key={`${filterName}-${filterValue}`} className="label label-info">
+                              {filterName}: {filterValue}{" "}
+                              <CdsIcon
+                                shape="times"
+                                onClick={removeFilterFunc(filterName, filterValue)}
+                              />
+                            </span>
+                          ));
+                        }
+                        return null;
+                      })}
+                    </div>
+                    {installedOperators.length > 0 && (
+                      <>
+                        <h3>Installed</h3>
+                        <Row>
+                          <OperatorItems
+                            operators={installedOperators}
+                            cluster={cluster}
+                            namespace={namespace}
+                          />
+                        </Row>
+                      </>
+                    )}
+                    <h3>Available Operators</h3>
                     <Row>
                       <OperatorItems
-                        operators={installedOperators}
+                        operators={availableOperators}
                         cluster={cluster}
                         namespace={namespace}
                       />
                     </Row>
                   </>
-                )}
-                <h3>Available Operators</h3>
-                <Row>
-                  <OperatorItems
-                    operators={availableOperators}
-                    cluster={cluster}
-                    namespace={namespace}
-                  />
-                </Row>
-              </>
-            </Column>
-          </Row>
+                </Column>
+              </Row>
+            )}
+          </>
         )}
       </LoadingWrapper>
     </section>
