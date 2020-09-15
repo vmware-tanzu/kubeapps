@@ -158,6 +158,26 @@ describe("when receiving new props", () => {
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("a: b\nc: d\n");
   });
 
+  it("should get new deployed values", () => {
+    const deployedValues = "a: b\n";
+    const wrapper = mount(
+      <UpgradeForm
+        {...populatedProps}
+        appCurrentValues={deployedValues}
+        deployed={{ values: deployedValues }}
+      />,
+    );
+    expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toEqual(deployedValues);
+
+    const newDeployedValues = "a: B\n";
+    wrapper.setProps({
+      appCurrentValues: newDeployedValues,
+      deployed: { values: newDeployedValues },
+    });
+    wrapper.update();
+    expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toEqual(newDeployedValues);
+  });
+
   it("won't apply changes if the values have been manually modified", () => {
     const userValues = "a: b\n";
     const wrapper = mount(<UpgradeForm {...populatedProps} />);
