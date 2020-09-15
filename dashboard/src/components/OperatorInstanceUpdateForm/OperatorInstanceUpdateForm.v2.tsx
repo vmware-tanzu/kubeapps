@@ -7,7 +7,6 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm.v2";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader.v2";
 import { useDispatch, useSelector } from "react-redux";
@@ -53,7 +52,6 @@ function OperatorInstanceUpdateForm({
         resource: { fetch: fetchError, update: updateError },
       },
     },
-    config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
@@ -67,10 +65,6 @@ function OperatorInstanceUpdateForm({
       parseCSV(csv, crdName, setIcon, setCRD, setDefaultValues);
     }
   }, [csv, crdName]);
-
-  if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-  }
 
   if (!fetchError && !isFetching && !resource) {
     return <Alert>Resource {resourceName} not found</Alert>;

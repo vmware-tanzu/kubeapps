@@ -12,7 +12,6 @@ import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLev
 import OLMNotFound from "./OLMNotFound.v2";
 import OperatorItems from "./OperatorItems";
 import OperatorList, { filterNames, IOperatorListProps } from "./OperatorList.v2";
-import OperatorNotSupported from "./OperatorsNotSupported.v2";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.operators };
@@ -82,12 +81,6 @@ it("call the OLM check and render the NotFound message if not found", () => {
   const wrapper = mountWrapper(defaultStore, <OperatorList {...defaultProps} />);
   expect(checkOLMInstalled).toHaveBeenCalled();
   expect(wrapper.find(OLMNotFound)).toExist();
-});
-
-it("displays an alert if rendered for an additional cluster", () => {
-  const props = { ...defaultProps, cluster: "other-cluster" };
-  const wrapper = mountWrapper(defaultStore, <OperatorList {...props} />);
-  expect(wrapper.find(OperatorNotSupported)).toExist();
 });
 
 it("renders an error", () => {

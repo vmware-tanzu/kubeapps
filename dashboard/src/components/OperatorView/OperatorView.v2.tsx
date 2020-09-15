@@ -6,7 +6,6 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import { push } from "connected-react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -39,7 +38,6 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
       },
       subscriptions,
     },
-    config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
@@ -53,9 +51,6 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
 
   const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
 
-  if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-  }
   if (error) {
     return (
       <Alert theme="danger">

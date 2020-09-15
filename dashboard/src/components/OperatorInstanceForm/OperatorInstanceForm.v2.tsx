@@ -7,7 +7,6 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader.v2";
 import { useDispatch, useSelector } from "react-redux";
@@ -94,7 +93,6 @@ export default function DeploymentFormBody({
         resource: { create: createError },
       },
     },
-    config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
@@ -103,9 +101,6 @@ export default function DeploymentFormBody({
     }
   }, [csv, crdName]);
 
-  if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-  }
   if (!fetchError && !isFetching && !crd) {
     return (
       <Alert theme="danger">
