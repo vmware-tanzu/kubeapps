@@ -71,13 +71,14 @@ function dispatchError(dispatch: Dispatch, err: Error) {
 }
 
 export function fetchCharts(
+  cluster: string,
   namespace: string,
   repo: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
-      const charts = await Chart.fetchCharts(namespace, repo);
+      const charts = await Chart.fetchCharts(cluster, namespace, repo);
       if (charts) {
         dispatch(receiveCharts(charts));
       }
@@ -88,13 +89,14 @@ export function fetchCharts(
 }
 
 export function fetchChartVersions(
+  cluster: string,
   namespace: string,
   id: string,
 ): ThunkAction<Promise<IChartVersion[]>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
-      const versions = await Chart.fetchChartVersions(namespace, id);
+      const versions = await Chart.fetchChartVersions(cluster, namespace, id);
       if (versions) {
         dispatch(receiveChartVersions(versions));
       }
@@ -106,14 +108,14 @@ export function fetchChartVersions(
   };
 }
 
-async function getChart(namespace: string, id: string, version: string) {
+async function getChart(cluster: string, namespace: string, id: string, version: string) {
   let values = "";
   let schema = {};
-  const chartVersion = await Chart.getChartVersion(namespace, id, version);
+  const chartVersion = await Chart.getChartVersion(cluster, namespace, id, version);
   if (chartVersion) {
     try {
-      values = await Chart.getValues(namespace, id, version);
-      schema = await Chart.getSchema(namespace, id, version);
+      values = await Chart.getValues(cluster, namespace, id, version);
+      schema = await Chart.getSchema(cluster, namespace, id, version);
     } catch (e) {
       if (e.constructor !== NotFoundError) {
         throw e;
@@ -124,6 +126,7 @@ async function getChart(namespace: string, id: string, version: string) {
 }
 
 export function getChartVersion(
+  cluster: string,
   namespace: string,
   id: string,
   version: string,
@@ -131,7 +134,7 @@ export function getChartVersion(
   return async dispatch => {
     try {
       dispatch(requestCharts());
-      const { chartVersion, values, schema } = await getChart(namespace, id, version);
+      const { chartVersion, values, schema } = await getChart(cluster, namespace, id, version);
       if (chartVersion) {
         dispatch(selectChartVersion(chartVersion, values, schema));
       }
@@ -142,6 +145,7 @@ export function getChartVersion(
 }
 
 export function getDeployedChartVersion(
+  cluster: string,
   namespace: string,
   id: string,
   version: string,
@@ -149,7 +153,7 @@ export function getDeployedChartVersion(
   return async dispatch => {
     try {
       dispatch(requestDeployedChartVersion());
-      const { chartVersion, values, schema } = await getChart(namespace, id, version);
+      const { chartVersion, values, schema } = await getChart(cluster, namespace, id, version);
       if (chartVersion) {
         dispatch(receiveDeployedChartVersion(chartVersion, values, schema));
       }
@@ -160,12 +164,15 @@ export function getDeployedChartVersion(
 }
 
 export function fetchChartVersionsAndSelectVersion(
+  cluster: string,
   namespace: string,
   id: string,
   version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    const versions = (await dispatch(fetchChartVersions(namespace, id))) as IChartVersion[];
+    const versions = (await dispatch(
+      fetchChartVersions(cluster, namespace, id),
+    )) as IChartVersion[];
     if (versions.length > 0) {
       let cv: IChartVersion = versions[0];
       if (version) {
@@ -181,13 +188,14 @@ export function fetchChartVersionsAndSelectVersion(
 }
 
 export function getChartReadme(
+  cluster: string,
   namespace: string,
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const readme = await Chart.getReadme(namespace, id, version);
+      const readme = await Chart.getReadme(cluster, namespace, id, version);
       dispatch(selectReadme(readme));
     } catch (e) {
       dispatch(errorReadme(e.toString()));

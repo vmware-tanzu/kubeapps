@@ -141,7 +141,14 @@ func main() {
 	assetsvcRouter.Methods("GET").Path("/v1/ns/{namespace}/assets/{repo}/{id}/logo").Handler(negroni.New(
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
+	assetsvcRouter.Methods("GET").Path("/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{id}/logo").Handler(negroni.New(
+		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
+	))
 	assetsvcRouter.PathPrefix("/v1/ns/{namespace}/").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
+	))
+	assetsvcRouter.PathPrefix("/v1/clusters/{cluster}/namespaces/{namespace}/").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))

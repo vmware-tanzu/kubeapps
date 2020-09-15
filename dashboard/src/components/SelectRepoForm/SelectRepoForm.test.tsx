@@ -57,6 +57,7 @@ it("should select a repo", () => {
   const select = wrapper.find("select");
   select.simulate("change", { target: { value: "bitnami" } });
   expect(checkChart).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.namespace,
     "bitnami",
     defaultProps.chartName,

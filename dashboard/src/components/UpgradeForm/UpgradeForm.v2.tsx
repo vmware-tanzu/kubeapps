@@ -38,8 +38,8 @@ export interface IUpgradeFormProps {
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
-  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
+  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -88,8 +88,8 @@ function UpgradeForm({
   const { version } = selected;
 
   useEffect(() => {
-    fetchChartVersions(repoNamespace, chartID);
-  }, [fetchChartVersions, repoNamespace, chartID]);
+    fetchChartVersions(cluster, repoNamespace, chartID);
+  }, [fetchChartVersions, cluster, repoNamespace, chartID]);
 
   useEffect(() => {
     if (deployed.values && !modifications) {
@@ -106,9 +106,9 @@ function UpgradeForm({
 
   useEffect(() => {
     if (deployed.chartVersion?.attributes.version) {
-      getChartVersion(repoNamespace, chartID, deployed.chartVersion?.attributes.version);
+      getChartVersion(cluster, repoNamespace, chartID, deployed.chartVersion?.attributes.version);
     }
-  }, [getChartVersion, repoNamespace, chartID, deployed.chartVersion]);
+  }, [getChartVersion, cluster, repoNamespace, chartID, deployed.chartVersion]);
 
   useEffect(() => {
     if (!valuesModified && selected.values) {
@@ -129,7 +129,7 @@ function UpgradeForm({
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    getChartVersion(repoNamespace, chartID, e.currentTarget.value);
+    getChartVersion(cluster, repoNamespace, chartID, e.currentTarget.value);
   };
 
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {

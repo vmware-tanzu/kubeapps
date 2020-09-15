@@ -62,7 +62,7 @@ it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
   const spy = jest.fn();
   actions.charts.fetchChartVersionsAndSelectVersion = spy;
   mountWrapper(defaultStore, <ChartView {...props} />);
-  expect(spy).toHaveBeenCalledWith("kubeapps-namespace", "testrepo/test", undefined);
+  expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, "testrepo/test", undefined);
 });
 
 describe("when receiving new props", () => {

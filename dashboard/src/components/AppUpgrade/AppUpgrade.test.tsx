@@ -241,6 +241,7 @@ describe("when receiving new props", () => {
     wrapper.setProps({ repoName: "stable", app });
     wrapper.update();
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
       defaultProps.repoNamespace,
       "stable/bar",
       "1.0.0",
@@ -264,6 +265,7 @@ describe("when receiving new props", () => {
     wrapper.setProps({ repoName: "stable" });
     wrapper.update();
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
       defaultProps.repoNamespace,
       "stable/bar",
       "1.0.0",
@@ -285,6 +287,7 @@ describe("when receiving new props", () => {
     );
     wrapper.setProps({ repoName: "stable", app });
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
       defaultProps.repoNamespace,
       "stable/bar",
       "1.0.0",
@@ -300,6 +303,7 @@ describe("when receiving new props", () => {
     } as IRelease;
     wrapper.setProps({ app: app2 });
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
       defaultProps.repoNamespace,
       "stable/foobar",
       "1.0.0",

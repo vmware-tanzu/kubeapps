@@ -61,10 +61,10 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
           schema,
         ),
       ),
-    fetchChartVersions: (namespace: string, id: string) =>
-      dispatch(actions.charts.fetchChartVersions(namespace, id)),
-    getChartVersion: (namespace: string, id: string, version: string) =>
-      dispatch(actions.charts.getChartVersion(namespace, id, version)),
+    fetchChartVersions: (cluster: string, namespace: string, id: string) =>
+      dispatch(actions.charts.fetchChartVersions(cluster, namespace, id)),
+    getChartVersion: (cluster: string, namespace: string, id: string, version: string) =>
+      dispatch(actions.charts.getChartVersion(cluster, namespace, id, version)),
     push: (location: string) => dispatch(push(location)),
   };
 }

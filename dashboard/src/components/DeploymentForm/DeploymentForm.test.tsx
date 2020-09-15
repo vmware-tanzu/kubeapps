@@ -45,6 +45,7 @@ it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
   shallow(<DeploymentForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
   expect(fetchChartVersions).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.chartNamespace,
     defaultProps.chartID,
   );

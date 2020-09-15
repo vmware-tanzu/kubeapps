@@ -12,12 +12,17 @@ import "./ChartView.css";
 export interface IChartViewProps {
   chartID: string;
   chartNamespace: string;
-  fetchChartVersionsAndSelectVersion: (namespace: string, id: string, version?: string) => void;
+  fetchChartVersionsAndSelectVersion: (
+    cluster: string,
+    namespace: string,
+    id: string,
+    version?: string,
+  ) => void;
   isFetching: boolean;
   selected: IChartState["selected"];
   selectChartVersion: (version: IChartVersion) => any;
   resetChartVersion: () => any;
-  getChartReadme: (namespace: string, version: string) => any;
+  getChartReadme: (cluster: string, namespace: string, version: string) => any;
   namespace: string;
   cluster: string;
   version: string | undefined;
@@ -25,8 +30,14 @@ export interface IChartViewProps {
 
 class ChartView extends React.Component<IChartViewProps> {
   public componentDidMount() {
-    const { chartID, chartNamespace, fetchChartVersionsAndSelectVersion, version } = this.props;
-    fetchChartVersionsAndSelectVersion(chartNamespace, chartID, version);
+    const {
+      chartID,
+      chartNamespace,
+      cluster,
+      fetchChartVersionsAndSelectVersion,
+      version,
+    } = this.props;
+    fetchChartVersionsAndSelectVersion(cluster, chartNamespace, chartID, version);
   }
 
   public componentDidUpdate(prevProps: IChartViewProps) {
@@ -76,6 +87,7 @@ class ChartView extends React.Component<IChartViewProps> {
                   readme={readme}
                   hasError={!!readmeError}
                   version={version.attributes.version}
+                  cluster={cluster}
                   chartNamespace={chartNamespace}
                 />
               </div>

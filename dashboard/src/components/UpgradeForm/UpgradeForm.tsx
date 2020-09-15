@@ -35,8 +35,8 @@ export interface IUpgradeFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
-  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
+  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
 }
 
 interface IUpgradeFormState {
@@ -56,7 +56,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
 
   public componentDidMount() {
     const chartID = `${this.props.repo}/${this.props.chartName}`;
-    this.props.fetchChartVersions(this.props.repoNamespace, chartID);
+    this.props.fetchChartVersions(this.props.cluster, this.props.repoNamespace, chartID);
   }
 
   public componentDidUpdate = (prevProps: IUpgradeFormProps) => {

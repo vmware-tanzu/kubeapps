@@ -29,10 +29,15 @@ export interface IAppUpgradeProps {
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
+  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
-  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
-  getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
+  getDeployedChartVersion: (
+    cluster: string,
+    namespace: string,
+    id: string,
+    chartVersion: string,
+  ) => void;
   push: (location: string) => RouterAction;
   // repo selector properties
   reposIsFetching: boolean;
@@ -40,7 +45,7 @@ export interface IAppUpgradeProps {
   chartsError: Error | undefined;
   repo: IAppRepository;
   repos: IAppRepository[];
-  checkChart: (namespace: string, repo: string, chartName: string) => any;
+  checkChart: (cluster: string, namespace: string, repo: string, chartName: string) => any;
   fetchRepositories: (namespace: string) => void;
 }
 
@@ -86,9 +91,9 @@ function AppUpgrade({
       chart.metadata.version
     ) {
       const chartID = `${repoName}/${chart.metadata.name}`;
-      getDeployedChartVersion(repoNamespace, chartID, chart.metadata.version);
+      getDeployedChartVersion(cluster, repoNamespace, chartID, chart.metadata.version);
     }
-  }, [getDeployedChartVersion, app, chart, repoName, repoNamespace]);
+  }, [getDeployedChartVersion, app, chart, repoName, repoNamespace, cluster]);
 
   if (appsError) {
     return (

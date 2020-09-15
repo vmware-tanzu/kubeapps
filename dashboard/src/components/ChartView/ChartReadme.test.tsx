@@ -9,9 +9,11 @@ import itBehavesLike from "../../shared/specs";
 
 import ChartReadme from "./ChartReadme";
 
+const cluster = "default";
 const chartNamespace = "chart-namespace";
 const version = "1.2.3";
 const defaultProps = {
+  cluster,
   chartNamespace,
   hasError: false,
   version,
@@ -34,12 +36,12 @@ describe("getChartReadme", () => {
   const wrapper = shallow(<ChartReadme {...props} />);
 
   it("gets triggered when mounting", () => {
-    expect(spy).toHaveBeenCalledWith(chartNamespace, version);
+    expect(spy).toHaveBeenCalledWith(cluster, chartNamespace, version);
   });
 
   it("gets triggered after changing version", () => {
     wrapper.setProps({ version: "1.2.4" });
-    expect(spy).toHaveBeenCalledWith(chartNamespace, "1.2.4");
+    expect(spy).toHaveBeenCalledWith(cluster, chartNamespace, "1.2.4");
   });
 
   it("does not get triggered when version doesn't change", () => {

@@ -37,10 +37,15 @@ function mapDispatchToProps(
   { match: { params } }: IRouteProps,
 ) {
   return {
-    fetchChartVersionsAndSelectVersion: (namespace: string, id: string, version?: string) =>
-      dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, id, version)),
-    getChartReadme: (namespace: string, version: string) =>
-      dispatch(actions.charts.getChartReadme(namespace, chartID(params), version)),
+    fetchChartVersionsAndSelectVersion: (
+      cluster: string,
+      namespace: string,
+      id: string,
+      version?: string,
+    ) =>
+      dispatch(actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, id, version)),
+    getChartReadme: (cluster: string, namespace: string, version: string) =>
+      dispatch(actions.charts.getChartReadme(cluster, namespace, chartID(params), version)),
     resetChartVersion: () => dispatch(actions.charts.resetChartVersion()),
     selectChartVersion: (version: IChartVersion) =>
       dispatch(actions.charts.selectChartVersion(version)),

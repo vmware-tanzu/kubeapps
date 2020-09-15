@@ -11,6 +11,7 @@ import LinkRenderer from "./LinkRenderer";
 import TableRenderer from "./TableRenderer";
 
 interface IChartReadmeProps {
+  cluster: string;
   namespace: string;
   chartID: string;
   version: string;
@@ -18,10 +19,10 @@ interface IChartReadmeProps {
   readme?: string;
 }
 
-function ChartReadme({ chartID, error, namespace, readme, version }: IChartReadmeProps) {
+function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IChartReadmeProps) {
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(actions.charts.getChartReadme(namespace, chartID, version));
+    dispatch(actions.charts.getChartReadme(cluster, namespace, chartID, version));
   }, [dispatch, namespace, chartID, version]);
 
   if (error) {

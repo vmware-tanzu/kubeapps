@@ -105,6 +105,7 @@ export function getApp(
 }
 
 function getAppUpdateInfo(
+  cluster: string,
   namespace: string,
   releaseName: string,
   chartName: string,
@@ -115,6 +116,7 @@ function getAppUpdateInfo(
     dispatch(requestAppUpdateInfo());
     try {
       const chartsInfo = await Chart.listWithFilters(
+        cluster,
         namespace,
         chartName,
         currentVersion,
@@ -175,6 +177,7 @@ export function getAppWithUpdateInfo(
       ) {
         dispatch(
           getAppUpdateInfo(
+            cluster,
             namespace,
             app.name,
             app.chart.metadata.name,
@@ -240,6 +243,7 @@ export function fetchAppsWithUpdateInfo(
     apps.forEach(app =>
       dispatch(
         getAppUpdateInfo(
+          cluster,
           namespace,
           app.releaseName,
           app.chartMetadata.name,

@@ -35,8 +35,8 @@ export interface IDeploymentFormProps {
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
-  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
+  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
   namespace: string;
 }
 
@@ -61,7 +61,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public componentDidMount() {
-    this.props.fetchChartVersions(this.props.chartNamespace, this.props.chartID);
+    this.props.fetchChartVersions(
+      this.props.cluster,
+      this.props.chartNamespace,
+      this.props.chartID,
+    );
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {

@@ -223,6 +223,7 @@ describe("when receiving new props", () => {
       />,
     );
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
       defaultProps.repoNamespace,
       "stable/bar",
       "1.0.0",
@@ -249,6 +250,7 @@ describe("when receiving new props", () => {
       />,
     );
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
       defaultProps.repoNamespace,
       "stable/bar",
       "1.0.0",

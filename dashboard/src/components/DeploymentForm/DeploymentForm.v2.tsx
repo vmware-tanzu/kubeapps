@@ -36,8 +36,8 @@ export interface IDeploymentFormProps {
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
-  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
+  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
   namespace: string;
 }
 
@@ -62,8 +62,8 @@ function DeploymentForm({
   const dispatch = useDispatch();
 
   useEffect(() => {
-    fetchChartVersions(chartNamespace, chartID);
-  }, [fetchChartVersions, chartNamespace, chartID]);
+    fetchChartVersions(cluster, chartNamespace, chartID);
+  }, [fetchChartVersions, cluster, chartNamespace, chartID]);
 
   useEffect(() => {
     if (!valuesModified) {
@@ -71,8 +71,8 @@ function DeploymentForm({
     }
   }, [selected.values, valuesModified]);
   useEffect(() => {
-    dispatch(actions.charts.getChartVersion(chartNamespace, chartID, chartVersion));
-  }, [chartNamespace, chartID, chartVersion, dispatch]);
+    dispatch(actions.charts.getChartVersion(cluster, chartNamespace, chartID, chartVersion));
+  }, [cluster, chartNamespace, chartID, chartVersion, dispatch]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
