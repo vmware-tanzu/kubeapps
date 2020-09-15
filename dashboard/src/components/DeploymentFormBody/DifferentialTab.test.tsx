@@ -45,6 +45,23 @@ describe("when installing", () => {
     wrapper.update();
     expect(wrapper.find(CdsIcon).prop("hidden")).toBe(true);
   });
+
+  it("settind default values removes the icon", () => {
+    const wrapper = mount(
+      <DifferentialTab
+        deploymentEvent="install"
+        deployedValues=""
+        defaultValues="foo"
+        appValues="bar"
+      />,
+    );
+    expect(wrapper.find(CdsIcon).prop("hidden")).toBe(false);
+    act(() => {
+      wrapper.setProps({ appValues: "foo" });
+    });
+    wrapper.update();
+    expect(wrapper.find(CdsIcon).prop("hidden")).toBe(true);
+  });
 });
 
 describe("when upgrading", () => {

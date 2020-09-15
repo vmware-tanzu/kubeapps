@@ -31,8 +31,12 @@ export default function DifferentialTab({
     }
   }, [deployedValues, defaultValues, deploymentEvent]);
   useEffect(() => {
-    if (oldValues !== "" && oldValues !== appValues) {
-      setNewChanges(true);
+    if (oldValues !== "") {
+      if (oldValues !== appValues) {
+        setNewChanges(true);
+      } else {
+        setNewChanges(false);
+      }
     }
   }, [oldValues, appValues]);
   return (
