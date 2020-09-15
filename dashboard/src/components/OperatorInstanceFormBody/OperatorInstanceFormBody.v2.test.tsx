@@ -1,4 +1,3 @@
-import { CdsButton } from "@clr/react/button";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog.v2";
 import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm.v2";
 import Alert from "components/js/Alert";
@@ -41,7 +40,7 @@ it("restores the default values", async () => {
   expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("not-foo");
 
   const restoreButton = wrapper
-    .find(CdsButton)
+    .find("button")
     .filterWhere(b => b.text().includes("Restore Defaults"));
   act(() => {
     restoreButton.simulate("click");
