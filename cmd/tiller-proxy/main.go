@@ -193,8 +193,13 @@ func main() {
 	assetsvcRouter := r.PathPrefix(assetsvcPrefix).Subrouter()
 	// Logos don't require authentication so bypass that step
 	assetsvcRouter.Methods("GET").Path("/v1/ns/{ns}/assets/{repo}/{id}/logo").Handler(http.StripPrefix(assetsvcPrefix, assetsvcProxy))
+	assetsvcRouter.Methods("GET").Path("/v1/clusters/{cluster}/namespaces/{ns}/assets/{repo}/{id}/logo").Handler(http.StripPrefix(assetsvcPrefix, assetsvcProxy))
 	authGate := auth.AuthGate(kubeappsNamespace)
 	assetsvcRouter.PathPrefix("/v1/ns/{namespace}/").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
+	))
+	assetsvcRouter.PathPrefix("/v1/clusters/{cluster}/namespaces/{namespace}/").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
