@@ -6,6 +6,7 @@ import * as YAML from "yaml";
 
 import ChartSummary from "components/Catalog/ChartSummary";
 import ChartHeader from "components/ChartView/ChartHeader.v2";
+import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
@@ -14,6 +15,7 @@ import { IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody.v2";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
+import "./UpgradeForm.v2.css";
 
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
@@ -168,6 +170,7 @@ function UpgradeForm({
         versions={selected.versions}
         onSelect={selectVersion}
         currentVersion={deployed.chartVersion?.attributes.version}
+        selectedVersion={selected.version?.attributes.version}
       />
       {isDeploying && (
         <h3 className="center" style={{ marginBottom: "1.2rem" }}>
@@ -181,6 +184,18 @@ function UpgradeForm({
           </Column>
           <Column span={9}>
             <form onSubmit={handleDeploy}>
+              <div className="upgrade-form-version-selector">
+                <label className="centered deployment-form-label deployment-form-label-text-param">
+                  Version To Upgrade
+                </label>
+                <ChartVersionSelector
+                  versions={selected.versions}
+                  selectedVersion={selected.version?.attributes.version}
+                  onSelect={selectVersion}
+                  currentVersion={deployed.chartVersion?.attributes.version}
+                  chartAttrs={chartAttrs}
+                />
+              </div>
               <DeploymentFormBody
                 deploymentEvent="upgrade"
                 chartID={chartID}

@@ -54,7 +54,7 @@ it("uses the first version as default in the select input", () => {
     },
   ];
   const wrapper = mount(<ChartHeader {...testProps} versions={versions} />);
-  expect(wrapper.find("select").prop("defaultValue")).toBe("1.2.3");
+  expect(wrapper.find("select").prop("value")).toBe("1.2.3");
 });
 
 it("uses the current version as default in the select input", () => {
@@ -71,5 +71,5 @@ it("uses the current version as default in the select input", () => {
     },
   ];
   const wrapper = mount(<ChartHeader {...testProps} versions={versions} currentVersion="1.2.4" />);
-  expect(wrapper.find("select").prop("defaultValue")).toBe("1.2.4");
+  expect(wrapper.find("select").prop("value")).toBe("1.2.4");
 });
