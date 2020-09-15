@@ -3,6 +3,7 @@ import { Diff2Html } from "diff2html";
 import * as React from "react";
 
 import "diff2html/dist/diff2html.css";
+import "./Differential.css";
 
 export interface IDifferentialProps {
   title: string;
