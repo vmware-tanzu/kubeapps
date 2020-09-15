@@ -371,24 +371,7 @@ exports[`renders a basic deployment with a email 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "wordpressEmail",
-            "value": "user@example.com",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -408,24 +391,7 @@ exports[`renders a basic deployment with a email 1`] = `
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "wordpressEmail",
-                  "value": "user@example.com",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressEmail-0"
         param={
@@ -449,24 +415,7 @@ exports[`renders a basic deployment with a email 1`] = `
           key="wordpressEmail-0"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "wordpressEmail",
-                      "value": "user@example.com",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="wordpressEmail-0"
             inputType="string"
             label="wordpressEmail"
@@ -487,7 +436,7 @@ exports[`renders a basic deployment with a email 1`] = `
               <input
                 className="clr-input deployment-form-text-input"
                 id="wordpressEmail-0"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="user@example.com"
               />
@@ -702,25 +651,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "replicas",
-            "type": "integer",
-            "value": 1,
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -741,25 +672,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "replicas",
-                  "type": "integer",
-                  "value": 1,
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="replicas-0"
         param={
@@ -785,25 +698,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
           key="replicas-0"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "replicas",
-                      "type": "integer",
-                      "value": 1,
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="replicas-0"
             inputType="number"
             label="replicas"
@@ -825,7 +720,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
               <input
                 className="clr-input deployment-form-text-input"
                 id="replicas-0"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="number"
                 value={1}
               />
@@ -845,25 +740,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "blogName",
-            "type": "string",
-            "value": "my-blog",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -884,25 +761,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "blogName",
-                  "type": "string",
-                  "value": "my-blog",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="blogName-0"
         param={
@@ -928,25 +787,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
           key="blogName-0"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "blogName",
-                      "type": "string",
-                      "value": "my-blog",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="blogName-0"
             inputType="string"
             label="blogName"
@@ -968,7 +809,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
               <input
                 className="clr-input deployment-form-text-input"
                 id="blogName-0"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="my-blog"
               />
@@ -1722,24 +1563,7 @@ exports[`renders a basic deployment with a password 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "wordpressPassword",
-            "value": "sserpdrow",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -1759,24 +1583,7 @@ exports[`renders a basic deployment with a password 1`] = `
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "wordpressPassword",
-                  "value": "sserpdrow",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressPassword-0"
         param={
@@ -1800,24 +1607,7 @@ exports[`renders a basic deployment with a password 1`] = `
           key="wordpressPassword-0"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "wordpressPassword",
-                      "value": "sserpdrow",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="wordpressPassword-0"
             inputType="string"
             label="wordpressPassword"
@@ -1838,7 +1628,7 @@ exports[`renders a basic deployment with a password 1`] = `
               <input
                 className="clr-input deployment-form-text-input"
                 id="wordpressPassword-0"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="sserpdrow"
               />
@@ -1858,24 +1648,7 @@ exports[`renders a basic deployment with a username 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "wordpressUsername",
-            "value": "user",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -1895,24 +1668,7 @@ exports[`renders a basic deployment with a username 1`] = `
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "wordpressUsername",
-                  "value": "user",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressUsername-0"
         param={
@@ -1936,24 +1692,7 @@ exports[`renders a basic deployment with a username 1`] = `
           key="wordpressUsername-0"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "wordpressUsername",
-                      "value": "user",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="wordpressUsername-0"
             inputType="string"
             label="wordpressUsername"
@@ -1974,7 +1713,7 @@ exports[`renders a basic deployment with a username 1`] = `
               <input
                 className="clr-input deployment-form-text-input"
                 id="wordpressUsername-0"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="user"
               />
@@ -1994,40 +1733,7 @@ exports[`renders a basic deployment with custom configuration 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "configuration",
-            "render": "textArea",
-            "type": "string",
-            "value": "First line
-Second line",
-          },
-        ],
-        Array [
-          Object {
-            "path": "configuration",
-            "render": "textArea",
-            "type": "string",
-            "value": "First line
-Second line",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -2050,40 +1756,7 @@ Second line",
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "configuration",
-                  "render": "textArea",
-                  "type": "string",
-                  "value": "First line
-Second line",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "configuration",
-                  "render": "textArea",
-                  "type": "string",
-                  "value": "First line
-Second line",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="configuration-0"
         param={
@@ -2113,40 +1786,7 @@ Second line",
           key="configuration-0"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "configuration",
-                      "render": "textArea",
-                      "type": "string",
-                      "value": "First line
-Second line",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "configuration",
-                      "render": "textArea",
-                      "type": "string",
-                      "value": "First line
-Second line",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="configuration-0"
             inputType="textarea"
             label="configuration"
@@ -2169,7 +1809,7 @@ Second line",
               </label>
               <textarea
                 id="configuration-0"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 value="First line
 Second line"
               />
@@ -2574,55 +2214,7 @@ exports[`renders a basic deployment with username, password, email and a generic
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "wordpressUsername",
-            "value": "user",
-          },
-        ],
-        Array [
-          Object {
-            "path": "wordpressPassword",
-            "value": "sserpdrow",
-          },
-        ],
-        Array [
-          Object {
-            "path": "wordpressEmail",
-            "value": "user@example.com",
-          },
-        ],
-        Array [
-          Object {
-            "path": "blogName",
-            "type": "string",
-            "value": "my-blog",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -2655,55 +2247,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "wordpressUsername",
-                  "value": "user",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressPassword",
-                  "value": "sserpdrow",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressEmail",
-                  "value": "user@example.com",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "blogName",
-                  "type": "string",
-                  "value": "my-blog",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressUsername-0"
         param={
@@ -2740,55 +2284,7 @@ exports[`renders a basic deployment with username, password, email and a generic
           key="wordpressUsername-0"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "wordpressUsername",
-                      "value": "user",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressPassword",
-                      "value": "sserpdrow",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressEmail",
-                      "value": "user@example.com",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "blogName",
-                      "type": "string",
-                      "value": "my-blog",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="wordpressUsername-0"
             inputType="string"
             label="wordpressUsername"
@@ -2809,7 +2305,7 @@ exports[`renders a basic deployment with username, password, email and a generic
               <input
                 className="clr-input deployment-form-text-input"
                 id="wordpressUsername-0"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="user"
               />
@@ -2827,55 +2323,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "wordpressUsername",
-                  "value": "user",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressPassword",
-                  "value": "sserpdrow",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressEmail",
-                  "value": "user@example.com",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "blogName",
-                  "type": "string",
-                  "value": "my-blog",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressPassword-1"
         param={
@@ -2912,55 +2360,7 @@ exports[`renders a basic deployment with username, password, email and a generic
           key="wordpressPassword-1"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "wordpressUsername",
-                      "value": "user",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressPassword",
-                      "value": "sserpdrow",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressEmail",
-                      "value": "user@example.com",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "blogName",
-                      "type": "string",
-                      "value": "my-blog",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="wordpressPassword-1"
             inputType="string"
             label="wordpressPassword"
@@ -2981,7 +2381,7 @@ exports[`renders a basic deployment with username, password, email and a generic
               <input
                 className="clr-input deployment-form-text-input"
                 id="wordpressPassword-1"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="sserpdrow"
               />
@@ -2999,55 +2399,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "wordpressUsername",
-                  "value": "user",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressPassword",
-                  "value": "sserpdrow",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressEmail",
-                  "value": "user@example.com",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "blogName",
-                  "type": "string",
-                  "value": "my-blog",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressEmail-2"
         param={
@@ -3084,55 +2436,7 @@ exports[`renders a basic deployment with username, password, email and a generic
           key="wordpressEmail-2"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "wordpressUsername",
-                      "value": "user",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressPassword",
-                      "value": "sserpdrow",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressEmail",
-                      "value": "user@example.com",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "blogName",
-                      "type": "string",
-                      "value": "my-blog",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="wordpressEmail-2"
             inputType="string"
             label="wordpressEmail"
@@ -3153,7 +2457,7 @@ exports[`renders a basic deployment with username, password, email and a generic
               <input
                 className="clr-input deployment-form-text-input"
                 id="wordpressEmail-2"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="user@example.com"
               />
@@ -3171,55 +2475,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       <Param
         appValues=""
         deploymentEvent="install"
-        handleBasicFormParamChange={
-          [MockFunction] {
-            "calls": Array [
-              Array [
-                Object {
-                  "path": "wordpressUsername",
-                  "value": "user",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressPassword",
-                  "value": "sserpdrow",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "wordpressEmail",
-                  "value": "user@example.com",
-                },
-              ],
-              Array [
-                Object {
-                  "path": "blogName",
-                  "type": "string",
-                  "value": "my-blog",
-                },
-              ],
-            ],
-            "results": Array [
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-              Object {
-                "type": "return",
-                "value": [MockFunction],
-              },
-            ],
-          }
-        }
+        handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="blogName-3"
         param={
@@ -3257,55 +2513,7 @@ exports[`renders a basic deployment with username, password, email and a generic
           key="blogName-3"
         >
           <TextParam
-            handleBasicFormParamChange={
-              [MockFunction] {
-                "calls": Array [
-                  Array [
-                    Object {
-                      "path": "wordpressUsername",
-                      "value": "user",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressPassword",
-                      "value": "sserpdrow",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "wordpressEmail",
-                      "value": "user@example.com",
-                    },
-                  ],
-                  Array [
-                    Object {
-                      "path": "blogName",
-                      "type": "string",
-                      "value": "my-blog",
-                    },
-                  ],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                  Object {
-                    "type": "return",
-                    "value": [MockFunction],
-                  },
-                ],
-              }
-            }
+            handleBasicFormParamChange={[MockFunction]}
             id="blogName-3"
             inputType="string"
             label="blogName"
@@ -3327,7 +2535,7 @@ exports[`renders a basic deployment with username, password, email and a generic
               <input
                 className="clr-input deployment-form-text-input"
                 id="blogName-3"
-                onChange={[MockFunction]}
+                onChange={[Function]}
                 type="string"
                 value="my-blog"
               />

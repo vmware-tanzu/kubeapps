@@ -6,6 +6,8 @@ import { DeploymentEvent, IBasicFormParam, IBasicFormSliderParam } from "shared/
 import BasicDeploymentForm from "./BasicDeploymentForm.v2";
 import Subsection from "./Subsection.v2";
 
+jest.useFakeTimers();
+
 const defaultProps = {
   deploymentEvent: "install" as DeploymentEvent,
   params: [],
@@ -153,6 +155,7 @@ const defaultProps = {
       input.simulate("change");
       const mockCalls = handleBasicFormParamChange.mock.calls;
       expect(mockCalls[i]).toEqual([param]);
+      jest.runAllTimers();
       expect(onChange.mock.calls.length).toBe(i + 1);
     });
   });
