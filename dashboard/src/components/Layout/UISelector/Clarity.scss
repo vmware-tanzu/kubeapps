@@ -29,3 +29,11 @@
   justify-content: center;
   align-items: center;
 }
+
+.notification-icon {
+  cds-icon {
+    --color: hsl(48, 95%, 48%);
+    width: 7px;
+    margin-left: 3px;
+  }
+}

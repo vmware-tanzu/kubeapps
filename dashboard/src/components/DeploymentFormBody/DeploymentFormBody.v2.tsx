@@ -12,6 +12,7 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm.v2";
 import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm.v2";
 import DifferentialSelector from "./DifferentialSelector";
+import DifferentialTab from "./DifferentialTab";
 
 export interface IDeploymentFormBodyProps {
   deploymentEvent: DeploymentEvent;
@@ -98,7 +99,16 @@ function DeploymentFormBody({
   if (chartsIsFetching || !version || !versions.length) {
     return <LoadingWrapper />;
   }
-  const tabColumns = ["YAML", "Changes"] as Array<string | JSX.Element | JSX.Element[]>;
+  const tabColumns = [
+    "YAML",
+    <DifferentialTab
+      key="differential-selector"
+      deploymentEvent={deploymentEvent}
+      defaultValues={selected.values || ""}
+      deployedValues={deployedValues || ""}
+      appValues={appValues}
+    />,
+  ] as Array<string | JSX.Element | JSX.Element[]>;
   const tabData = [
     <AdvancedDeploymentForm
       appValues={appValues}

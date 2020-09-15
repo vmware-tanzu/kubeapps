@@ -5,6 +5,7 @@ import {
   bundleIcon,
   checkCircleIcon,
   circleArrowIcon,
+  circleIcon,
   ClarityIcons as Icons,
   clusterIcon,
   copyToClipboardIcon,
@@ -63,6 +64,7 @@ Icons.addIcons(
   timesCircleIcon,
   uploadCloudIcon,
   successStandardIcon,
+  circleIcon,
 );
 const CSSSelector: React.FC = () => null;
 

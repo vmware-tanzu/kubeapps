@@ -1,5 +1,6 @@
 import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
+import DifferentialTab from "components/DeploymentFormBody/DifferentialTab";
 import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
 import * as yaml from "js-yaml";
@@ -93,7 +94,16 @@ function DeploymentFormBody({
         <div className="deployment-form-tabs">
           <Tabs
             id="deployment-form-body-tabs"
-            columns={["YAML", "Changes"]}
+            columns={[
+              "YAML",
+              <DifferentialTab
+                key="differential-selector"
+                deploymentEvent={deployedValues ? "upgrade" : "install"}
+                defaultValues={defaultValues}
+                deployedValues={deployedValues || ""}
+                appValues={values}
+              />,
+            ]}
             data={[
               <AdvancedDeploymentForm
                 appValues={values}
