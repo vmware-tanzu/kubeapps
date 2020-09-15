@@ -164,7 +164,7 @@ class DeploymentFormBody extends React.Component<
     const { cluster, namespace, selected, deploymentEvent } = this.props;
 
     if (deploymentEvent === "upgrade") {
-      const { cluster, chartID, chartNamespace, getChartVersion } = this.props;
+      const { chartID, chartNamespace, getChartVersion } = this.props;
       getChartVersion(cluster, chartNamespace, chartID, e.currentTarget.value);
     } else {
       this.props.push(

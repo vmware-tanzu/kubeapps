@@ -56,7 +56,7 @@ function ChartView({
     return () => {
       dispatch(actions.charts.resetChartVersion());
     };
-  }, [chartNamespace, chartID, versionStr, dispatch]);
+  }, [cluster, chartNamespace, chartID, versionStr, dispatch]);
 
   useEffect(() => {
     callSelectChartVersion(versionStr || "", versions, dispatch);
