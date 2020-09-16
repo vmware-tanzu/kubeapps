@@ -186,7 +186,7 @@ function UpgradeForm({
             <form onSubmit={handleDeploy}>
               <div className="upgrade-form-version-selector">
                 <label className="centered deployment-form-label deployment-form-label-text-param">
-                  Version To Upgrade
+                  Upgrade to Version
                 </label>
                 <ChartVersionSelector
                   versions={selected.versions}
