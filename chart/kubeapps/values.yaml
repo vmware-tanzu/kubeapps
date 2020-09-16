@@ -572,46 +572,10 @@ dashboard:
   ##
   tolerations: {}
 
-## MongoDB chart configuration
-## ref: https://github.com/bitnami/charts/blob/master/bitnami/mongodb/values.yaml
-##
-mongodb:
-  ## Whether to deploy a mongodb server to satisfy the applications database requirements.
-  enabled: false
-  ## Kubeapps uses MongoDB as a cache and persistence is not required
-  ##
-  persistence:
-    enabled: false
-    size: 8Gi
-  ## MongoDB credentials are handled by kubeapps to facilitate upgrades
-  ##
-  auth:
-    existingSecret: kubeapps-mongodb
-  ## Pod Security Context
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-  ##
-  securityContext:
-    enabled: false
-  ## MongoDB containers' resource requests and limits
-  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-  ##
-  resources:
-    ## Default values set based on usage data from running Kubeapps instances
-    ## ref: https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
-    ##
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 50m
-      memory: 256Mi
-
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
 ##
 postgresql:
-  ## Whether to deploy a postgresql server to satisfy the applications database requirements.
-  enabled: true
   ## Enable replication for high availability
   replication:
     enabled: true
