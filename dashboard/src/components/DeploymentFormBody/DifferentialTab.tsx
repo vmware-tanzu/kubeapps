@@ -22,10 +22,10 @@ export default function DifferentialTab({
   useEffect(() => {
     if (deploymentEvent === "upgrade") {
       // If there are already some deployed values (upgrade scenario)
-      // We compare the values from the old release and the new one
+      // We compare the values from the previously deployed release and the new one
       setOldValues(deployedValues);
     } else {
-      // If it's a new deployment, we show the different from the default
+      // If it's a new deployment, we show the difference from the default
       // values for the selected version
       setOldValues(defaultValues || "");
     }

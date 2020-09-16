@@ -46,7 +46,7 @@ describe("when installing", () => {
     expect(wrapper.find(CdsIcon).prop("hidden")).toBe(true);
   });
 
-  it("settind default values removes the icon", () => {
+  it("setting default values removes the icon", () => {
     const wrapper = mount(
       <DifferentialTab
         deploymentEvent="install"
