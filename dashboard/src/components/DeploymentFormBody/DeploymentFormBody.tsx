@@ -32,7 +32,7 @@ export interface IDeploymentFormBodyProps {
   appValues: string;
   push: (location: string) => RouterAction;
   goBack?: () => RouterAction;
-  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
   setValues: (values: string) => void;
   setValuesModified: () => void;
 }
@@ -53,16 +53,24 @@ class DeploymentFormBody extends React.Component<
   };
 
   public componentDidMount() {
-    const { chartID, chartNamespace, getChartVersion, chartVersion, selected } = this.props;
+    const {
+      chartID,
+      chartNamespace,
+      cluster,
+      getChartVersion,
+      chartVersion,
+      selected,
+    } = this.props;
     const { version } = selected;
     if (!version || version.id !== chartID) {
       // The chart version may have been already populated from the ChartView
-      getChartVersion(chartNamespace, chartID, chartVersion);
+      getChartVersion(cluster, chartNamespace, chartID, chartVersion);
     }
   }
 
   public componentDidUpdate = (prevProps: IDeploymentFormBodyProps) => {
     const {
+      cluster,
       chartID,
       chartNamespace,
       chartVersion,
@@ -73,7 +81,7 @@ class DeploymentFormBody extends React.Component<
 
     if (chartVersion !== prevProps.chartVersion) {
       // New version detected
-      getChartVersion(chartNamespace, chartID, chartVersion);
+      getChartVersion(cluster, chartNamespace, chartID, chartVersion);
       return;
     }
 
@@ -157,7 +165,7 @@ class DeploymentFormBody extends React.Component<
 
     if (deploymentEvent === "upgrade") {
       const { chartID, chartNamespace, getChartVersion } = this.props;
-      getChartVersion(chartNamespace, chartID, e.currentTarget.value);
+      getChartVersion(cluster, chartNamespace, chartID, e.currentTarget.value);
     } else {
       this.props.push(
         url.app.apps.new(cluster, namespace, selected.version!, e.currentTarget.value),

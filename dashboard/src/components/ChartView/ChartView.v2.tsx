@@ -46,12 +46,17 @@ function ChartView({
   const { version, readme, error, readmeError, versions } = selected;
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(chartNamespace, chartID, versionStr),
+      actions.charts.fetchChartVersionsAndSelectVersion(
+        cluster,
+        chartNamespace,
+        chartID,
+        versionStr,
+      ),
     );
     return () => {
       dispatch(actions.charts.resetChartVersion());
     };
-  }, [chartNamespace, chartID, versionStr, dispatch]);
+  }, [cluster, chartNamespace, chartID, versionStr, dispatch]);
 
   useEffect(() => {
     callSelectChartVersion(versionStr || "", versions, dispatch);
@@ -94,6 +99,7 @@ function ChartView({
               readme={readme}
               error={readmeError}
               version={version.attributes.version}
+              cluster={cluster}
               namespace={chartNamespace}
               chartID={chartID}
             />

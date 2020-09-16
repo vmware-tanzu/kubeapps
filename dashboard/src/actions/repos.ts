@@ -359,18 +359,16 @@ export const validateRepo = (
 };
 
 export function checkChart(
+  cluster: string,
   repoNamespace: string,
   repo: string,
   chartName: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(currentCluster, repo, repoNamespace);
+    const appRepository = await AppRepository.get(cluster, repo, repoNamespace);
     try {
-      await Chart.fetchChartVersions(repoNamespace, `${repo}/${chartName}`);
+      await Chart.fetchChartVersions(cluster, repoNamespace, `${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));
       return true;
     } catch (e) {

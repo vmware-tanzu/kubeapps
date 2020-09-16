@@ -8,9 +8,11 @@ import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import ChartReadme from "./ChartReadme.v2";
 
+const cluster = "default";
 const namespace = "chart-namespace";
 const version = "1.2.3";
 const defaultProps = {
+  cluster,
   namespace,
   version,
   chartID: "stable/wordpress",
@@ -42,6 +44,7 @@ describe("getChartReadme", () => {
   it("gets triggered when mounting", () => {
     mountWrapper(defaultStore, <ChartReadme {...defaultProps} />);
     expect(actions.charts.getChartReadme).toHaveBeenCalledWith(
+      cluster,
       namespace,
       defaultProps.chartID,
       version,

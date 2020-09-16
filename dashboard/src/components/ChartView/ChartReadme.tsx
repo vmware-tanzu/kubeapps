@@ -9,23 +9,24 @@ import "./ChartReadme.css";
 import LinkRenderer from "./LinkRenderer";
 
 interface IChartReadmeProps {
-  getChartReadme: (namespace: string, version: string) => void;
+  getChartReadme: (cluster: string, namespace: string, version: string) => void;
   hasError: boolean;
   readme?: string;
   version: string;
+  cluster: string;
   chartNamespace: string;
 }
 
 class ChartReadme extends React.Component<IChartReadmeProps> {
   public componentDidMount() {
-    const { getChartReadme, chartNamespace, version } = this.props;
-    getChartReadme(chartNamespace, version);
+    const { getChartReadme, cluster, chartNamespace, version } = this.props;
+    getChartReadme(cluster, chartNamespace, version);
   }
 
   public componentDidUpdate(prevProps: IChartReadmeProps) {
-    const { getChartReadme, chartNamespace, version } = this.props;
+    const { getChartReadme, cluster, chartNamespace, version } = this.props;
     if (version !== prevProps.version) {
-      getChartReadme(chartNamespace, version);
+      getChartReadme(cluster, chartNamespace, version);
     }
   }
 

@@ -29,10 +29,15 @@ export interface IAppUpgradeProps {
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
+  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
-  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
-  getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
+  getDeployedChartVersion: (
+    cluster: string,
+    namespace: string,
+    id: string,
+    chartVersion: string,
+  ) => void;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
   // repo selector properties
@@ -42,7 +47,7 @@ export interface IAppUpgradeProps {
   chartsError: Error | undefined;
   repo: IAppRepository;
   repos: IAppRepository[];
-  checkChart: (namespace: string, repo: string, chartName: string) => any;
+  checkChart: (cluster: string, namespace: string, repo: string, chartName: string) => any;
   fetchRepositories: (namespace: string) => void;
 }
 
@@ -53,7 +58,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
   }
 
   public componentDidUpdate(prevProps: IAppUpgradeProps) {
-    const { app, repoName, repoNamespace } = this.props;
+    const { app, repoName, repoNamespace, cluster } = this.props;
     if (app && repoName && repoNamespace) {
       const { chart } = app;
       if (
@@ -64,7 +69,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
         (prevProps.app !== app || prevProps.repoName !== repoName)
       ) {
         const chartID = `${repoName}/${chart.metadata.name}`;
-        this.props.getDeployedChartVersion(repoNamespace, chartID, chart.metadata.version);
+        this.props.getDeployedChartVersion(cluster, repoNamespace, chartID, chart.metadata.version);
       }
     }
   }

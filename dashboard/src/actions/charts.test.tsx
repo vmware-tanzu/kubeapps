@@ -13,6 +13,7 @@ let store: any;
 let response: any;
 
 const namespace = "chart-namespace";
+const cluster = "default";
 
 beforeEach(() => {
   store = mockStore();
@@ -38,9 +39,11 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.receiveCharts), payload: response },
     ];
-    await store.dispatch(actions.charts.fetchCharts(namespace, "foo"));
+    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo`);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo`,
+    );
   });
 
   it("returns a 404 error", async () => {
@@ -55,7 +58,7 @@ describe("fetchCharts", () => {
       throw new Error("could not find chart");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchCharts(namespace, "foo"));
+    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -68,7 +71,7 @@ describe("fetchCharts", () => {
       throw new Error("something went wrong");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchCharts(namespace, "foo"));
+    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -80,10 +83,10 @@ describe("fetchChartVersions", () => {
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.receiveChartVersions), payload: response },
     ];
-    await store.dispatch(actions.charts.fetchChartVersions(namespace, "foo"));
+    await store.dispatch(actions.charts.fetchChartVersions(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
     );
   });
 });
@@ -98,10 +101,10 @@ describe("getChartVersion", () => {
         payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions/1.0.0`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions/1.0.0`,
     );
   });
 
@@ -115,11 +118,11 @@ describe("getChartVersion", () => {
       },
     ];
     await store.dispatch(
-      actions.charts.getChartVersion(namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
+      actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions/1.0.0-alpha%2B1.2.3-beta2`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions/1.0.0-alpha%2B1.2.3-beta2`,
     );
   });
 
@@ -152,7 +155,7 @@ describe("getChartVersion", () => {
         payload: { chartVersion: { id: "foo" }, values: "foo: bar", schema: { properties: "foo" } },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -181,7 +184,7 @@ describe("getChartVersion", () => {
         payload: { chartVersion: { id: "foo" }, values: "", schema: {} },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -208,7 +211,7 @@ describe("getChartVersion", () => {
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
     ];
-    await store.dispatch(actions.charts.getChartVersion(namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -222,11 +225,11 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       { type: getType(actions.charts.selectChartVersion), payload: { chartVersion: response[0] } },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"),
+      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", "1.0.0"),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
     );
   });
 
@@ -244,11 +247,11 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     });
     axiosWithAuth.get = axiosGetMock;
     await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"),
+      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", "1.0.0"),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
     );
   });
 });
@@ -263,7 +266,9 @@ describe("getDeployedChartVersion", () => {
         payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
       },
     ];
-    await store.dispatch(actions.charts.getDeployedChartVersion(namespace, "foo", "1.0.0"));
+    await store.dispatch(
+      actions.charts.getDeployedChartVersion(cluster, namespace, "foo", "1.0.0"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

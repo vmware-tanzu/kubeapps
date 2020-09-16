@@ -58,6 +58,7 @@ it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
   mount(<UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
   expect(fetchChartVersions).toHaveBeenCalledWith(
+    defaultProps.cluster,
     defaultProps.repoNamespace,
     `${defaultProps.repo}/${defaultProps.chartName}`,
   );

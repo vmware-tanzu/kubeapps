@@ -34,7 +34,7 @@ interface ICatalogProps {
   charts: IChartState;
   repo: string;
   filter: { [name: string]: string };
-  fetchCharts: (namespace: string, repo: string) => void;
+  fetchCharts: (cluster: string, namespace: string, repo: string) => void;
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
@@ -132,7 +132,7 @@ function Catalog(props: ICatalogProps) {
   ).sort();
 
   useEffect(() => {
-    fetchCharts(namespace, repo);
+    fetchCharts(cluster, namespace, repo);
     getCSVs(cluster, namespace);
   }, [cluster, namespace, repo, fetchCharts, getCSVs]);
 

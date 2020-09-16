@@ -42,7 +42,7 @@ it("reloads charts when the repo changes", () => {
   const wrapper = shallow(<Catalog {...defaultProps} fetchCharts={fetchCharts} />);
   wrapper.setProps({ ...defaultProps, fetchCharts, repo: "bitnami" });
   expect(fetchCharts.mock.calls.length).toBe(2);
-  expect(fetchCharts.mock.calls[1]).toEqual(["kubeapps", "bitnami"]);
+  expect(fetchCharts.mock.calls[1]).toEqual([defaultProps.cluster, "kubeapps", "bitnami"]);
 });
 
 it("updates the filter from props", () => {

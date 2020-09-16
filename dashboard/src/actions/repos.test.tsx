@@ -683,9 +683,15 @@ describe("checkChart", () => {
       },
     ];
 
-    await store.dispatch(repoActions.checkChart("other-namespace", "my-repo", "my-chart"));
+    await store.dispatch(
+      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith("other-namespace", "my-repo/my-chart");
+    expect(Chart.fetchChartVersions).toBeCalledWith(
+      "default",
+      "other-namespace",
+      "my-repo/my-chart",
+    );
   });
 
   it("dispatches requestRepo and errorChart if error fetching", async () => {
@@ -703,9 +709,15 @@ describe("checkChart", () => {
       },
     ];
 
-    await store.dispatch(repoActions.checkChart("other-namespace", "my-repo", "my-chart"));
+    await store.dispatch(
+      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith("other-namespace", "my-repo/my-chart");
+    expect(Chart.fetchChartVersions).toBeCalledWith(
+      "default",
+      "other-namespace",
+      "my-repo/my-chart",
+    );
   });
 });
 

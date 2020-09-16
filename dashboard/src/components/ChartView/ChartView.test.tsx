@@ -50,7 +50,7 @@ const defaultSelected: IChartState["selected"] = {
 it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
   const spy = jest.fn();
   shallow(<ChartView {...props} fetchChartVersionsAndSelectVersion={spy} />);
-  expect(spy).toHaveBeenCalledWith("kubeapps-namespace", "testrepo/test", undefined);
+  expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, props.chartID, undefined);
 });
 
 describe("when receiving new props", () => {
