@@ -33,7 +33,7 @@ helm install kubeapps --namespace kubeapps bitnami/kubeapps --set useHelm3=true
 
 This chart bootstraps a [Kubeapps](https://kubeapps.com) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-It also packages the [Bitnami MongoDB chart](https://github.com/bitnami/charts/tree/master/bitnami/mongodb) or the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/tree/master/bitnami/postgresql) which is required for bootstrapping a deployment for the database requirements of the Kubeapps application.
+It also packages the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/tree/master/bitnami/postgresql) which is required for bootstrapping a deployment for the database requirements of the Kubeapps application.
 
 ## Prerequisites
 
@@ -93,12 +93,6 @@ helm install kubeapps --namespace kubeapps -f custom-values.yaml bitnami/kubeapp
 ### Configuring Initial Repositories
 
 By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts) and the [Kubernetes Service Catalog charts](https://github.com/kubernetes-incubator/service-catalog). To change these defaults, override with your desired parameters the `apprepository.initialRepos` object present in the [values.yaml](values.yaml) file.
-
-### Configuring the database to use
-
-Kubeapps supports two database types: MongoDB or PostgreSQL. By default MongoDB is installed. If you want to enable PostgreSQL instead set the following values when installing the application: `mongodb.enabled=false` and `postresql.enabled=true`.
-
-> **Note**: Changing the database type when upgrading is not supported.
 
 ### Enabling Operators
 

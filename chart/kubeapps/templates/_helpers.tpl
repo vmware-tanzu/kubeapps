@@ -76,16 +76,6 @@ Also, we can't use a single if because lazy evaluation is not an option
 {{- end -}}
 
 {{/*
-Create a default fully qualified app name for MongoDB dependency.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "kubeapps.mongodb.fullname" -}}
-{{- $name := default "mongodb" .Values.mongodb.nameOverride -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-
-{{/*
 Create a default fully qualified app name for PostgreSQL dependency.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
