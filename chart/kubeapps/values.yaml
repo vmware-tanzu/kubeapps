@@ -27,7 +27,7 @@ enableIPv6: false
 ## the name you are assigning to the cluster on which Kubeapps is itself installed. Specifying more than
 ## one cluster without an apiServiceURL will cause the chart display an error.
 ## The base64-encoded certificateAuthorityData can be obtained from the additional cluster's kube config
-## file, for example:
+## file, for example, to get the ca data for the 0th cluster in your config (adjust the index 0 as necessary):
 ## kubectl --kubeconfig ~/.kube/kind-config-kubeapps-additional config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}'
 #
 # clusters:

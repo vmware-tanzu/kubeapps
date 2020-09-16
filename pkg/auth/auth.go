@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 	authorizationapi "k8s.io/api/authorization/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -91,14 +92,15 @@ type Checker interface {
 }
 
 // NewAuth creates an auth agent
-func NewAuth(token string) (*UserAuth, error) {
+func NewAuth(token, clusterName string, clustersConfig kube.ClustersConfig) (*UserAuth, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
-	// Overwrite default token
-	config.BearerToken = token
-	config.BearerTokenFile = "" // https://github.com/kubeapps/kubeapps/pull/1359#issuecomment-564077326
+	config, err = kube.NewClusterConfig(config, token, clusterName, clustersConfig)
+	if err != nil {
+		return nil, err
+	}
 	kubeClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err

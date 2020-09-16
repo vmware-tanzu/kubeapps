@@ -30,6 +30,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	authFake "github.com/kubeapps/kubeapps/pkg/auth/fake"
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	proxyFake "github.com/kubeapps/kubeapps/pkg/proxy/fake"
 )
 
@@ -412,7 +413,7 @@ func TestActions(t *testing.T) {
 				ProxyClient: proxy,
 			}
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
-			handler.CheckerForRequest = func(req *http.Request) (auth.Checker, error) {
+			handler.CheckerForRequest = func(clustersConfig kube.ClustersConfig, req *http.Request) (auth.Checker, error) {
 				return &authFake.FakeAuth{
 					ForbiddenActions: test.ForbiddenActions,
 				}, nil
