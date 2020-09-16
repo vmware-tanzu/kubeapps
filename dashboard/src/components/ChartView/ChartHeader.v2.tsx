@@ -3,6 +3,7 @@ import PageHeader from "components/PageHeader/PageHeader.v2";
 import React from "react";
 import { IChartAttributes, IChartVersion } from "shared/types";
 import placeholder from "../../placeholder.png";
+import ChartVersionSelector from "./ChartVersionSelector";
 
 import "./ChartHeader.v2.css";
 
@@ -12,6 +13,7 @@ interface IChartHeaderProps {
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
   currentVersion?: string;
+  selectedVersion?: string;
   deployButton?: JSX.Element;
 }
 
@@ -22,6 +24,7 @@ export default function ChartHeader({
   releaseName,
   currentVersion,
   deployButton,
+  selectedVersion,
 }: IChartHeaderProps) {
   return (
     <PageHeader
@@ -54,28 +57,13 @@ export default function ChartHeader({
               .{" "}
             </Tooltip>
           </label>
-          <div className="clr-select-wrapper">
-            <select
-              name="chart-versions"
-              className="clr-page-size-select"
-              onChange={onSelect}
-              defaultValue={
-                currentVersion || (versions.length ? versions[0].attributes.version : undefined)
-              }
-            >
-              {versions.map(v => {
-                return (
-                  <option
-                    key={`chart-version-selector-${v.attributes.version}`}
-                    value={v.attributes.version}
-                  >
-                    {v.attributes.version} / App Version {v.attributes.app_version}
-                    {currentVersion === v.attributes.version ? " (current)" : ""}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
+          <ChartVersionSelector
+            versions={versions}
+            onSelect={onSelect}
+            selectedVersion={selectedVersion}
+            currentVersion={currentVersion}
+            chartAttrs={chartAttrs}
+          />
         </>
       }
       buttons={deployButton ? [deployButton] : undefined}

@@ -116,7 +116,12 @@ function DeploymentForm({
   const chartAttrs = version.relationships.chart.data;
   return (
     <section>
-      <ChartHeader chartAttrs={chartAttrs} versions={selected.versions} onSelect={selectVersion} />
+      <ChartHeader
+        chartAttrs={chartAttrs}
+        versions={selected.versions}
+        onSelect={selectVersion}
+        selectedVersion={selected.version?.attributes.version}
+      />
       {isDeploying && (
         <h3 className="center" style={{ marginBottom: "1.2rem" }}>
           Hang tight, the application is being deployed...

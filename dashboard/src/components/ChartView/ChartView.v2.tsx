@@ -86,6 +86,7 @@ function ChartView({
               </CdsButton>
             </Link>
           }
+          selectedVersion={selected.version?.attributes.version}
         />
       </div>
 
