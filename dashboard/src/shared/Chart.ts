@@ -65,7 +65,7 @@ export default class Chart {
     const url = `${URL.api.charts.base(
       cluster,
       namespace,
-    )}?name=${name}&version=${encodeURIComponent(version)}&appversion=${appVersion}`;
+    )}/charts?name=${name}&version=${encodeURIComponent(version)}&appversion=${appVersion}`;
     const { data } = await axiosWithAuth.get<{ data: IChart[] }>(url);
     return data.data;
   }

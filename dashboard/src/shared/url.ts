@@ -99,27 +99,27 @@ export const kubeops = {
 export const api = {
   charts: {
     base: (cluster: string, namespace: string) =>
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}`,
     get: (cluster: string, namespace: string, id: string) =>
-      `${api.charts.base(cluster, namespace)}/${id}`,
+      `${api.charts.base(cluster, namespace)}/charts/${id}`,
+    getVersion: (cluster: string, namespace: string, id: string, version: string) =>
+      `${api.charts.get(cluster, namespace, id)}/versions/${encodeURIComponent(version)}`,
+    list: (cluster: string, namespace: string, repo?: string) =>
+      `${api.charts.base(cluster, namespace)}/charts${repo ? `/${repo}` : ""}`,
+    listVersions: (cluster: string, namespace: string, id: string) =>
+      `${api.charts.get(cluster, namespace, id)}/versions`,
     getReadme: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/${id}/versions/${encodeURIComponent(
+      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
         version,
       )}/README.md`,
     getValues: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/${id}/versions/${encodeURIComponent(
+      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
         version,
       )}/values.yaml`,
     getSchema: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/${id}/versions/${encodeURIComponent(
+      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
         version,
       )}/values.schema.json`,
-    getVersion: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/${id}/versions/${encodeURIComponent(version)}`,
-    list: (cluster: string, namespace: string, repo?: string) =>
-      `${api.charts.base(cluster, namespace)}${repo ? `/${repo}` : ""}`,
-    listVersions: (cluster: string, namespace: string, id: string) =>
-      `${api.charts.get(cluster, namespace, id)}/versions`,
   },
 
   // URLs which are accessing the k8s API server directly are grouped together

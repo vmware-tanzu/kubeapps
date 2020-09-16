@@ -137,8 +137,9 @@ func main() {
 	assetsvcProxy := httputil.NewSingleHostReverseProxy(parsedAssetsvcURL)
 	assetsvcPrefix := "/assetsvc"
 	assetsvcRouter := r.PathPrefix(assetsvcPrefix).Subrouter()
-	// Logos don't require authentication so bypass that step
-	assetsvcRouter.Methods("GET").Path("/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{id}/logo").Handler(negroni.New(
+	// Logos don't require authentication so bypass that step. Nor are they cluster-aware as they're
+	// embedded as links in the stored chart data.
+	assetsvcRouter.Methods("GET").Path("/v1/ns/{namespace}/assets/{repo}/{id}/logo").Handler(negroni.New(
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
 	assetsvcRouter.PathPrefix("/v1/clusters/{cluster}/namespaces/{namespace}/").Handler(negroni.New(

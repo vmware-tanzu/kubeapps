@@ -298,7 +298,9 @@ func Test_GetChartVersion(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/clusters/default/namespaces/assets/{repo}/{chartName}/logo-160x160-fit.png endpoint
+// tests both the GET /{apiVersion}/clusters/default/namespaces/{namespace}/assets/{repo}/{chartName}/logo-160x160-fit.png endpoint
+// and the non-cluster /{apiVersion}/ns/{namespace}/assets/{repo}/{chartName}/logo-160x160-fit.png endpoint
+
 func Test_GetChartIcon(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -341,12 +343,17 @@ func Test_GetChartIcon(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/assets/" + tt.chart.ID + "/logo")
-			assert.NoError(t, err)
-			defer res.Body.Close()
+			for _, path := range []string{
+				"/clusters/default/namespaces/kubeapps/assets/",
+				"/ns/kubeapps/assets/",
+			} {
+				res, err := http.Get(ts.URL + pathPrefix + path + tt.chart.ID + "/logo")
+				assert.NoError(t, err)
+				defer res.Body.Close()
 
-			m.AssertExpectations(t)
-			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
+				m.AssertExpectations(t)
+				assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
+			}
 		})
 	}
 }
