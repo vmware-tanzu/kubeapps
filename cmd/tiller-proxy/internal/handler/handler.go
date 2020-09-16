@@ -25,6 +25,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	proxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -47,6 +48,7 @@ type TillerProxy struct {
 	ListLimit         int
 	ChartClient       chartUtils.Resolver
 	ProxyClient       proxy.TillerClient
+	ClustersConfig    kube.ClustersConfig
 }
 
 func (h *TillerProxy) logStatus(name string) {
@@ -272,7 +274,7 @@ func (h *TillerProxy) forbiddenActionsForRelease(req *http.Request, namespace, v
 }
 
 func (h *TillerProxy) forbiddenActionsForManifest(req *http.Request, namespace, verb, manifest string) ([]auth.Action, error) {
-	userAuth, err := h.CheckerForRequest(req)
+	userAuth, err := h.CheckerForRequest(h.ClustersConfig, req)
 	if err != nil {
 		return nil, err
 	}

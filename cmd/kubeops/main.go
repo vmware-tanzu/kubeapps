@@ -129,7 +129,7 @@ func main() {
 	// TODO(mnelson) remove this reverse proxy once the haproxy frontend
 	// proxies requests directly to the assetsvc. Move the authz to the
 	// assetsvc itself.
-	authGate := auth.AuthGate(kubeappsNamespace)
+	authGate := auth.AuthGate(clustersConfig, kubeappsNamespace)
 	parsedAssetsvcURL, err := url.Parse(assetsvcURL)
 	if err != nil {
 		log.Fatalf("Unable to parse the assetsvc URL: %v", err)
