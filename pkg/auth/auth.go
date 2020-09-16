@@ -118,7 +118,6 @@ func NewAuth(token, clusterName string, clustersConfig kube.ClustersConfig) (*Us
 // ValidateForNamespace checks if the user can access secrets in the given
 // namespace, as a check of whether they can view the namespace.
 func (u *UserAuth) ValidateForNamespace(namespace string) (bool, error) {
-
 	return u.k8sAuth.CanI("get", "", "secrets", namespace)
 }
 
