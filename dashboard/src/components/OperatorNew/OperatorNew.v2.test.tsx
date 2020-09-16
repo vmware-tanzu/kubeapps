@@ -1,7 +1,6 @@
 import { CdsButton } from "@clr/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
@@ -63,12 +62,6 @@ beforeEach(() => {
 afterEach(() => {
   actions.operators = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-});
-
-it("displays an alert if rendered for an additional cluster", () => {
-  const props = { ...defaultProps, cluster: "other-cluster" };
-  const wrapper = mountWrapper(defaultStore, <OperatorNew {...props} />);
-  expect(wrapper.find(OperatorNotSupported)).toExist();
 });
 
 it("calls getOperator when mounting the component", () => {

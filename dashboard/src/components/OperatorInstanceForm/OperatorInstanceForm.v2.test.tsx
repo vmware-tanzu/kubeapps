@@ -2,7 +2,6 @@ import actions from "actions";
 import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm.v2";
 import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody.v2";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -50,12 +49,6 @@ beforeEach(() => {
 afterEach(() => {
   actions.operators = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-});
-
-it("displays an alert if rendered for an additional cluster", () => {
-  const props = { ...defaultProps, cluster: "other-cluster" };
-  const wrapper = mountWrapper(defaultStore, <OperatorInstanceForm {...props} />);
-  expect(wrapper.find(OperatorNotSupported)).toExist();
 });
 
 it("renders a fetch error", () => {

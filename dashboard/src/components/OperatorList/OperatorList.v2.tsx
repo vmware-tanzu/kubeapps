@@ -25,7 +25,6 @@ import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
 import OLMNotFound from "./OLMNotFound.v2";
 import OperatorItems from "./OperatorItems";
-import OperatorNotSupported from "./OperatorsNotSupported.v2";
 
 export interface IOperatorListProps {
   cluster: string;
@@ -137,7 +136,6 @@ export default function OperatorList({
       subscriptions,
       isOLMInstalled,
     },
-    config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
   const error = opError || subsError;
 
@@ -147,10 +145,6 @@ export default function OperatorList({
       dispatch(actions.operators.listSubscriptions(cluster, namespace));
     }
   }, [dispatch, cluster, namespace, isOLMInstalled]);
-
-  if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-  }
 
   const allCapabilities = [
     BASIC_INSTALL,

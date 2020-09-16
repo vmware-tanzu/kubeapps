@@ -8,7 +8,6 @@ import ResourceTabs from "components/AppView/ResourceTabs";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog.v2";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
@@ -63,12 +62,6 @@ beforeEach(() => {
 afterEach(() => {
   actions.operators = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-});
-
-it("displays an alert if rendered for an additional cluster", () => {
-  const props = { ...defaultProps, cluster: "other-cluster" };
-  const wrapper = mountWrapper(defaultStore, <OperatorInstance {...props} />);
-  expect(wrapper.find(OperatorNotSupported)).toExist();
 });
 
 it("renders a fetch error", () => {

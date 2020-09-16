@@ -5,7 +5,6 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import { push, RouterAction } from "connected-react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -60,7 +59,6 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
       isFetching,
       errors: { operator: errors },
     },
-    config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
@@ -73,9 +71,6 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     }
   }, [operator]);
 
-  if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-  }
   if (errors.fetch) {
     return (
       <Alert theme="danger">

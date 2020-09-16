@@ -8,7 +8,6 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm.v2";
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported.v2";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader.v2";
 import { push } from "connected-react-router";
@@ -140,7 +139,6 @@ function OperatorInstance({
       resource,
       errors: { resource: errors },
     },
-    config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
@@ -160,10 +158,6 @@ function OperatorInstance({
     }
   }, [crd, resource, cluster, namespace]);
 
-  if (cluster !== kubeappsCluster) {
-    return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-  }
-
   const onUpdateClick = () =>
     dispatch(
       push(app.operatorInstances.update(cluster, namespace, csvName, crdName, instanceName)),
@@ -176,7 +170,7 @@ function OperatorInstance({
     setDeleting(false);
     closeModal();
     if (deleted) {
-      dispatch(push(app.apps.list(kubeappsCluster, namespace)));
+      dispatch(push(app.apps.list(cluster, namespace)));
     }
   };
 
