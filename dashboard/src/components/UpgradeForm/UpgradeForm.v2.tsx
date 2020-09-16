@@ -105,7 +105,7 @@ function UpgradeForm({
 
   useEffect(() => {
     if (deployed.values) {
-      // Calculate modifications from the default values
+      // Apply modifications to deployed values
       const values = applyModifications(modifications || [], deployed.values);
       setDeployedValues(values);
     }
