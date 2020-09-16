@@ -97,10 +97,10 @@ func NewAuth(token, clusterName string, clustersConfig kube.ClustersConfig) (*Us
 	if err != nil {
 		return nil, err
 	}
-	// config, err = kube.NewClusterConfig(config, token, clusterName, clustersConfig)
-	// Overwrite default token
-	config.BearerToken = token
-	config.BearerTokenFile = "" // https://github.com/kubeapps/kubeapps/pull/1359#issuecomment-564077326
+	config, err = kube.NewClusterConfig(config, token, clusterName, clustersConfig)
+	if err != nil {
+		return nil, err
+	}
 	kubeClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -118,6 +118,7 @@ func NewAuth(token, clusterName string, clustersConfig kube.ClustersConfig) (*Us
 // ValidateForNamespace checks if the user can access secrets in the given
 // namespace, as a check of whether they can view the namespace.
 func (u *UserAuth) ValidateForNamespace(namespace string) (bool, error) {
+
 	return u.k8sAuth.CanI("get", "", "secrets", namespace)
 }
 
