@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
 import Alert from "components/js/Alert";
+import { isEqual } from "lodash";
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
@@ -38,15 +39,14 @@ function DeploymentFormBody({
 }: IDeploymentFormBodyProps) {
   const [basicFormParameters, setBasicFormParameters] = useState([] as IBasicFormParam[]);
   const [restoreModalIsOpen, setRestoreModalOpen] = useState(false);
-  const [formParamsPopulated, setFormParamsPopulated] = useState(false);
   const { version, versions, schema } = selected;
 
   useEffect(() => {
-    if (appValues !== "" && !formParamsPopulated) {
-      setBasicFormParameters(retrieveBasicFormParams(appValues, schema));
-      setFormParamsPopulated(true);
+    const params = retrieveBasicFormParams(appValues, schema);
+    if (!isEqual(params, basicFormParameters)) {
+      setBasicFormParameters(params);
     }
-  }, [setBasicFormParameters, schema, appValues, formParamsPopulated]);
+  }, [setBasicFormParameters, schema, appValues, basicFormParameters]);
 
   const handleValuesChange = (value: string) => {
     setValues(value);

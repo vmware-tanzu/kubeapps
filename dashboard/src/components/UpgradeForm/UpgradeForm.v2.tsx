@@ -100,9 +100,16 @@ function UpgradeForm({
       const values = applyModifications(newModifications, deployed.values);
       setModifications(newModifications);
       setAppValues(values);
-      setDeployedValues(values);
     }
   }, [deployed.values, appCurrentValues, modifications]);
+
+  useEffect(() => {
+    if (deployed.values) {
+      // Apply modifications to deployed values
+      const values = applyModifications(modifications || [], deployed.values);
+      setDeployedValues(values);
+    }
+  }, [deployed.values, modifications]);
 
   useEffect(() => {
     if (deployed.chartVersion?.attributes.version) {
