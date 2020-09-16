@@ -147,9 +147,19 @@ function DeploymentFormBody({
         <CdsButton status="primary" type="submit">
           <CdsIcon shape="deploy" inverse={true} /> Deploy v{version.attributes.version}
         </CdsButton>
-        <CdsButton action="outline" type="button" onClick={openRestoreDefaultValuesModal}>
-          <CdsIcon shape="backup-restore" inverse={true} /> Restore Defaults
-        </CdsButton>
+        {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
+            https://github.com/vmware/clarity/issues/5038
+          */}
+        <span className="color-icon-info">
+          <button
+            className="btn btn-info-outline"
+            type="button"
+            onClick={openRestoreDefaultValuesModal}
+            style={{ marginTop: "-22px" }}
+          >
+            <CdsIcon shape="backup-restore" /> Restore Defaults
+          </button>
+        </span>
       </div>
     </div>
   );
