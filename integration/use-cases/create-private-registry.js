@@ -84,13 +84,24 @@ test("Creates a private registry", async () => {
   // Upgrade apache and verify.
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
-  await expect(page).toMatch("Upgrade to Version");
-  await expect(page).toMatch("7.3.15 / App Version 2.4.43");
+  let chartVersionElement = await expect(page).toMatchElement(
+    'select[name="chart-versions"]'
+  );
+  let chartVersionElementContent = await chartVersionElement.getProperty(
+    "value"
+  );
+  let chartVersionValue = await chartVersionElementContent.jsonValue();
+  expect(chartVersionValue).toEqual("7.3.15");
 
   await expect(page).toSelect('select[name="chart-versions"]', "7.3.16");
 
-  await expect(page).toMatch("Upgrade to Version");
-  await expect(page).toMatch("7.3.16 / App Version 2.4.43");
+  // Ensure that the new value is selected
+  chartVersionElement = await expect(page).toMatchElement(
+    'select[name="chart-versions"]'
+  );
+  chartVersionElementContent = await chartVersionElement.getProperty("value");
+  chartVersionValue = await chartVersionElementContent.jsonValue();
+  expect(chartVersionValue).toEqual("7.3.16");
 
   await expect(page).toClick("li", { text: "Changes" });
 

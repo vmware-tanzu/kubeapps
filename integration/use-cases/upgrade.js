@@ -51,5 +51,5 @@ test("Upgrades an application", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Up to date", { timeout: 10000 });
+  await expect(page).toMatch("Up to date", { timeout: 60000 });
 });
