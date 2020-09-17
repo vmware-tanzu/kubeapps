@@ -136,7 +136,16 @@ func main() {
 		log.Fatalf("POD_NAMESPACE should be defined")
 	}
 
-	kubeHandler, err := kube.NewHandler(kubeappsNamespace, kube.ClustersConfig{KubeappsClusterName: kubeappsClusterName})
+	// Tiller proxy does not support multi-cluster.
+	clustersConfig := kube.ClustersConfig{
+		KubeappsClusterName: kubeappsClusterName,
+		Clusters: map[string]kube.ClusterConfig{
+			kubeappsClusterName: {
+				Name: kubeappsClusterName,
+			},
+		},
+	}
+	kubeHandler, err := kube.NewHandler(kubeappsNamespace, clustersConfig)
 	if err != nil {
 		log.Fatalf("Failed to create handler: %v", err)
 	}
@@ -156,6 +165,7 @@ func main() {
 		ListLimit:         listLimit,
 		ChartClient:       chartClient,
 		ProxyClient:       proxy,
+		ClustersConfig:    clustersConfig,
 	}
 
 	// Routes
@@ -175,7 +185,7 @@ func main() {
 	apiv1.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.DeleteRelease))
 
 	// Backend routes unrelated to tiller-proxy functionality.
-	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), kube.ClustersConfig{KubeappsClusterName: kubeappsClusterName})
+	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), clustersConfig)
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}
@@ -194,7 +204,8 @@ func main() {
 	// Logos don't require authentication so bypass that step. Nor are they cluster-aware as they're
 	// embedded as links in the stored chart data.
 	assetsvcRouter.Methods("GET").Path("/v1/ns/{ns}/assets/{repo}/{id}/logo").Handler(http.StripPrefix(assetsvcPrefix, assetsvcProxy))
-	authGate := auth.AuthGate(kubeappsNamespace)
+
+	authGate := auth.AuthGate(clustersConfig, kubeappsNamespace)
 	assetsvcRouter.PathPrefix("/v1/clusters/{cluster}/namespaces/{namespace}/").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
