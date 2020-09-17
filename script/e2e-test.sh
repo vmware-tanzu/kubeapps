@@ -21,8 +21,6 @@ set -o pipefail
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 DEV_TAG=${1:?missing dev tag}
 IMG_MODIFIER=${2:-""}
-CERTS_DIR="${ROOT_DIR}/script/test-certs"
-HELM_CLIENT_TLS_FLAGS=("--tls" "--tls-cert" "${CERTS_DIR}/helm.cert.pem" "--tls-key" "${CERTS_DIR}/helm.key.pem")
 
 # Load Generic Libraries
 # shellcheck disable=SC1090
@@ -43,37 +41,7 @@ HELM_CLIENT_TLS_FLAGS=("--tls" "--tls-cert" "${CERTS_DIR}/helm.cert.pem" "--tls-
 #########################
 testHelm() {
   info "Running Helm tests..."
-  if [[ "$HELM_VERSION" =~ "v2" ]]; then
-    helm test "${HELM_CLIENT_TLS_FLAGS[@]}" kubeapps-ci --cleanup
-  else
-    helm test -n kubeapps kubeapps-ci
-  fi
-}
-
-########################
-# Init Tiller with TLS support on clusters with RBAC enabled
-# Globals: None
-# Arguments: None
-# Returns: None
-#########################
-tiller-init-rbac() {
-    info "Installing Tiller..."
-    kubectl create serviceaccount -n kube-system tiller
-    kubectl create clusterrolebinding tiller-cluster-rule \
-      --clusterrole=cluster-admin \
-      --serviceaccount=kube-system:tiller
-    # The flag --wait is not available when using TLS flags
-    # ref: https://github.com/helm/helm/issues/4050
-    helm init \
-      --service-account tiller \
-      --tiller-tls \
-      --tiller-tls-cert "${CERTS_DIR}/tiller.cert.pem" \
-      --tiller-tls-key "${CERTS_DIR}/tiller.key.pem" \
-      --tiller-tls-verify \
-      --tls-ca-cert "${CERTS_DIR}/ca.cert.pem"
-    info "Waiting for Tiller to be ready ... "
-    # Retries 60 times with 1 second interval
-    retry_while "helm version ${HELM_CLIENT_TLS_FLAGS[*]} --tiller-connection-timeout 1" "60" "1"
+  helm test -n kubeapps kubeapps-ci
 }
 
 ########################
@@ -123,20 +91,11 @@ installChartmuseum() {
     info "Installing ChartMuseum ..."
     helm repo add stable https://kubernetes-charts.storage.googleapis.com
     helm repo up
-    if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-      helm install --name chartmuseum --namespace kubeapps stable/chartmuseum \
-        "${HELM_CLIENT_TLS_FLAGS[@]}" \
-        --set env.open.DISABLE_API=false \
-        --set persistence.enabled=true \
-        --set secret.AUTH_USER=$user \
-        --set secret.AUTH_PASS=$password
-    else
-      helm install chartmuseum --namespace kubeapps stable/chartmuseum \
-        --set env.open.DISABLE_API=false \
-        --set persistence.enabled=true \
-        --set secret.AUTH_USER=$user \
-        --set secret.AUTH_PASS=$password
-    fi
+    helm install chartmuseum --namespace kubeapps stable/chartmuseum \
+      --set env.open.DISABLE_API=false \
+      --set persistence.enabled=true \
+      --set secret.AUTH_USER=$user \
+      --set secret.AUTH_PASS=$password
     kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
 }
 
@@ -175,23 +134,12 @@ installOrUpgradeKubeapps() {
     local chartSource=$1
     # Install Kubeapps
     info "Installing Kubeapps..."
-    if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-      helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
-        "${HELM_CLIENT_TLS_FLAGS[@]}" \
-        --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
-        --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
-        --set featureFlags.operators=true \
-        ${invalidateCacheFlag} \
-        "${img_flags[@]}" \
-        "${db_flags[@]}"
-    else
-      helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
-        ${invalidateCacheFlag} \
-        "${img_flags[@]}" \
-        "${db_flags[@]}" \
-        --set featureFlags.operators=true \
-        --set useHelm3=true
-    fi
+    helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
+      ${invalidateCacheFlag} \
+      "${img_flags[@]}" \
+      "${db_flags[@]}" \
+      --set featureFlags.operators=true \
+      --set featureFlags.ui=clarity
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -215,7 +163,6 @@ images=(
   "asset-syncer"
   "assetsvc"
   "dashboard"
-  "tiller-proxy"
   "kubeops"
 )
 images=("${images[@]/#/${image_prefix}}")
@@ -229,8 +176,6 @@ img_flags=(
   "--set" "assetsvc.image.repository=${images[2]}"
   "--set" "dashboard.image.tag=${DEV_TAG}"
   "--set" "dashboard.image.repository=${images[3]}"
-  "--set" "tillerProxy.image.tag=${DEV_TAG}"
-  "--set" "tillerProxy.image.repository=${images[4]}"
   "--set" "kubeops.image.tag=${DEV_TAG}"
   "--set" "kubeops.image.repository=${images[5]}"
 )
@@ -241,10 +186,6 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   invalidateCacheFlag="--set featureFlags.invalidateCache=true"
 fi
 
-if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-  # Init Tiller
-  tiller-init-rbac
-fi
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
@@ -264,11 +205,7 @@ pushChart apache 7.3.16 admin password
 info ""
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$DEV_TAG"
-if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-  k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy "$DEV_TAG"
-else
-  k8s_ensure_image kubeapps kubeapps-ci-internal-kubeops "$DEV_TAG"
-fi
+k8s_ensure_image kubeapps kubeapps-ci-internal-kubeops "$DEV_TAG"
 
 # Wait for Kubeapps Pods
 info "Waiting for Kubeapps components to be ready..."
@@ -282,11 +219,7 @@ for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
   info "Deployment ${dep} ready"
 done
-if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-  k8s_wait_for_deployment kubeapps kubeapps-ci-internal-tiller-proxy
-else
-  k8s_wait_for_deployment kubeapps kubeapps-ci-internal-kubeops
-fi
+k8s_wait_for_deployment kubeapps kubeapps-ci-internal-kubeops
 
 # Wait for Kubeapps Jobs
 # Clean up existing jobs
@@ -327,8 +260,6 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
     echo
     warn "LOGS for assetsvc tests --------"
     kubectl logs kubeapps-ci-assetsvc-test --namespace kubeapps
-    warn "LOGS for tiller-proxy tests --------"
-    kubectl logs kubeapps-ci-tiller-proxy-test --namespace kubeapps
     warn "LOGS for dashboard tests --------"
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
@@ -356,10 +287,6 @@ testsToIgnore=()
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
 if [[ -n "${GKE_BRANCH-}" ]]; then
   testsToIgnore=("operator-deployment.js" "${testsToIgnore[@]}")
-fi
-## Support for Docker registry secrets are not supported for Helm2, skipping that test
-if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-  testsToIgnore=("create-private-registry.js" "${testsToIgnore[@]}")
 fi
 ignoreFlag=""
 if [[ "${#testsToIgnore[@]}" > "0" ]]; then

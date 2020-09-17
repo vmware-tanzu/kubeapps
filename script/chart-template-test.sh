@@ -22,6 +22,3 @@ helm dep up $CHART_DIR
 
 # tests
 helm template $CHART_DIR
-helm template --set tillerProxy.tls.key="my-key" --set tillerProxy.tls.cert="my-cert" $CHART_DIR
-helm template --set tillerProxy.tls.verify=false --set tillerProxy.tls.key="my-key" --set tillerProxy.tls.cert="my-cert" $CHART_DIR
-helm template --set tillerProxy.tls.verify=true --set tillerProxy.tls.key="my-key" --set tillerProxy.tls.cert="my-cert" --set tillerProxy.tls.ca="my-ca" $CHART_DIR

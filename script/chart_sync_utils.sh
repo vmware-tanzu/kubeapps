@@ -84,7 +84,6 @@ updateRepo() {
     rm "${targetChartPath}/Chart.yaml.bk"
     # Replace images for the latest available
     replaceImage dashboard "${targetChartPath}/values.yaml"
-    replaceImage tiller-proxy "${targetChartPath}/values.yaml"
     replaceImage apprepository-controller "${targetChartPath}/values.yaml"
     replaceImage asset-syncer "${targetChartPath}/values.yaml"
     replaceImage assetsvc "${targetChartPath}/values.yaml"
