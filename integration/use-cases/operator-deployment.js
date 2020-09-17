@@ -7,15 +7,17 @@ test("Deploys an Operator", async () => {
     token: process.env.ADMIN_TOKEN,
   });
 
-  await expect(page).toClick("button", { text: "Login" });
+  await page.evaluate(() =>
+    document.querySelector("#login-submit-button").click()
+  );
 
   // Browse operator
   await expect(page).toClick("a", { text: "prometheus" });
 
-  await expect(page).toClick("button", { text: "Deploy" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   // Deploy the Operator
-  await expect(page).toClick("button", { text: "Submit" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await utils.retryAndRefresh(page, 10, async () => {
     // The CSV takes a bit to get populated
@@ -27,41 +29,38 @@ test("Deploys an Operator", async () => {
 
   await utils.retryAndRefresh(page, 10, async () => {
     // Filter out charts to search only for the prometheus operator
-    await expect(page).toClick(".checkbox", { text: "Charts" });
+    await expect(page).toClick("label", { text: "Operators" });
 
     await expect(page).toMatch("Prometheus");
   });
 
-  // Deploy Operator instance
-  await expect(page).toClick("a", { text: "Catalog" });
-
-  await expect(page).toMatch("Charts");
-
-  // Filter out charts
-  await expect(page).toClick(".checkbox", { text: "Charts" });
-
   await expect(page).toClick("a", { text: "Prometheus" });
 
-  await expect(page).toClick("button", { text: "Submit" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Installation Values", { timeout: 60000 });
+  await expect(page).toMatch("Installation Values");
 
   // Update
-  await expect(page).toClick("button", { text: "Update" });
+  await expect(page).toClick("cds-button", { text: "Update" });
 
-  await expect(page).toClick("button", { text: "Submit" });
+  await expect(page).toMatch("creationTimestamp");
 
-  await expect(page).toMatch("Ready", { timeout: 60000 });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
+
+  await expect(page).toMatch("Ready");
 
   // Delete
-  await expect(page).toClick("button", { text: "Delete" });
+  await expect(page).toClick("cds-button", { text: "Delete" });
 
-  await expect(page).toMatch("Are you sure you want to delete this?");
+  await expect(page).toMatch("Are you sure you want to delete the resource?");
 
-  await expect(page).toClick("button.button.button-primary.button-danger", {
-    text: "Delete",
-  });
+  await expect(page).toClick(
+    "div.modal-dialog.modal-md > div > div.modal-body > div > div > cds-button:nth-child(2)",
+    {
+      text: "Delete",
+    }
+  );
 
   // Goes back to application list
-  await expect(page).toMatch("Deploy App", { timeout: 60000 });
+  await expect(page).toMatch("Applications", { timeout: 60000 });
 });

@@ -270,7 +270,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
               </div>
               <div className="clr-form-control">
                 <CdsButton type="submit" disabled={disableInstall}>
-                  Submit
+                  Deploy
                 </CdsButton>
               </div>
             </form>

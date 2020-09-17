@@ -113,7 +113,7 @@ it("submits the new secret", async () => {
   wrapper.find("#kubeapps-docker-cred-email").simulate("change", { target: { value: email } });
   wrapper.update();
 
-  const submit = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Submit"));
+  const submit = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Create"));
   await act(async () => {
     await (submit.prop("onClick") as () => Promise<any>)();
   });

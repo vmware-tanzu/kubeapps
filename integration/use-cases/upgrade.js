@@ -1,18 +1,20 @@
 test("Upgrades an application", async () => {
-  await page.goto(getUrl("/#/c/default/ns/default/catalog/bitnami"));
+  await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami"));
 
   await expect(page).toFillForm("form", {
-    token: process.env.EDIT_TOKEN
+    token: process.env.EDIT_TOKEN,
   });
 
-  await expect(page).toClick("button", { text: "Login" });
+  await page.evaluate(() =>
+    document.querySelector("#login-submit-button").click()
+  );
 
   await expect(page).toClick("a", { text: "apache" });
 
-  await expect(page).toClick("button", { text: "Deploy" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   const chartVersionElement = await expect(page).toMatchElement(
-    "#chartVersion"
+    'select[name="chart-versions"]'
   );
   const chartVersionElementContent = await chartVersionElement.getProperty(
     "textContent"
@@ -20,7 +22,7 @@ test("Upgrades an application", async () => {
   const chartVersionValue = await chartVersionElementContent.jsonValue();
   const latestChartVersion = chartVersionValue.split(" ")[0];
 
-  await expect(page).toSelect("#chartVersion", "7.3.2");
+  await expect(page).toSelect('select[name="chart-versions"]', "7.3.2");
   await expect(page).toMatchElement("#replicaCount-1");
 
   // Increase the number of replicas
@@ -32,21 +34,22 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("li", { text: "Changes" });
   await expect(page).toMatch("replicaCount: 2");
 
-  await expect(page).toClick(".button-primary");
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Update Available", { timeout: 60000 });
+  await expect(page).toMatch("Update Now", { timeout: 60000 });
 
-  await expect(page).toClick(".upgrade-button");
-
-  await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
-
-  await expect(page).toSelect("#chartVersion", latestChartVersion);
+  await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
-  // From comments at https://github.com/puppeteer/puppeteer/issues/3347, try using a
-  // selector rather than element / text for click event.
-  await expect(page).toClick(".button-primary");
+  await expect(page).toSelect(
+    'select[name="chart-versions"]',
+    latestChartVersion
+  );
+
+  await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
+
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatch("Up to date", { timeout: 10000 });
 });

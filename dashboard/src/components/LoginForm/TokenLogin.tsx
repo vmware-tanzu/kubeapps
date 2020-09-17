@@ -26,6 +26,7 @@ function TokenLogin(props: ILoginFormProps) {
               <input
                 type="password"
                 id="token"
+                name="token"
                 placeholder="Paste token here"
                 className="clr-input"
                 required={true}

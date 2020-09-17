@@ -8,6 +8,7 @@ import {
   ConflictError,
   ForbiddenError,
   InternalServerError,
+  IRBACRole,
   IStoreState,
   NotFoundError,
   UnauthorizedError,
@@ -65,6 +66,23 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
           // A 403 directly from the auth proxy requires reauthentication.
           if (Auth.usingOIDCToken() && Auth.is403FromAuthProxy(response)) {
             dispatchErrorAndLogout(message);
+          }
+          try {
+            const jsonMessage = JSON.parse(message) as IRBACRole[];
+            return Promise.reject(
+              new ForbiddenError(
+                `Forbidden error, missing permissions: ${jsonMessage
+                  .map(forbiddenAction => {
+                    const { apiGroup, resource, namespace, clusterWide, verbs } = forbiddenAction;
+                    return `apiGroup: "${apiGroup}", resource: "${resource}", action: "${verbs.join(
+                      ", ",
+                    )}", ${clusterWide ? "in all namespaces" : `namespace: ${namespace}`}`;
+                  })
+                  .join("; ")}`,
+              ),
+            );
+          } catch (e) {
+            // Not a json error
           }
           return Promise.reject(new ForbiddenError(message));
         case 404:

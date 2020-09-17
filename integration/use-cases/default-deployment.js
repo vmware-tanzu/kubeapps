@@ -5,15 +5,20 @@ test("Deploys an application with the values by default", async () => {
     token: process.env.ADMIN_TOKEN,
   });
 
-  await expect(page).toClick("button", { text: "Login" });
+  // I am not sure why, but clicking on the Login button causes an error
+  // "Node is either not visible or not an HTMLElement"
+  // https://github.com/puppeteer/puppeteer/issues/2977
+  await page.evaluate(() =>
+    document.querySelector("#login-submit-button").click()
+  );
 
   await expect(page).toClick("a", { text: "Catalog" });
 
   await expect(page).toClick("a", { text: "apache", timeout: 60000 });
 
-  await expect(page).toClick("button", { text: "Deploy" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toClick("button", { text: "Submit" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatch("Ready", { timeout: 60000 });
 });

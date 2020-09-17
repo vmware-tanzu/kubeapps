@@ -10,8 +10,9 @@ import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import { useSelector } from "react-redux";
 import { deleteValue, setValue } from "../../shared/schema";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody.v2";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
@@ -88,6 +89,12 @@ function UpgradeForm({
 
   const chartID = `${repo}/${chartName}`;
   const { version } = selected;
+
+  const {
+    apps: { isFetching: appsFetching },
+    charts: { isFetching: chartsFetching },
+  } = useSelector((state: IStoreState) => state);
+  const isFetching = appsFetching || chartsFetching;
 
   useEffect(() => {
     fetchChartVersions(cluster, repoNamespace, chartID);
@@ -171,52 +178,54 @@ function UpgradeForm({
   const chartAttrs = version.relationships.chart.data;
   return (
     <section>
-      <ChartHeader
-        releaseName={releaseName}
-        chartAttrs={chartAttrs}
-        versions={selected.versions}
-        onSelect={selectVersion}
-        currentVersion={deployed.chartVersion?.attributes.version}
-        selectedVersion={selected.version?.attributes.version}
-      />
-      {isDeploying && (
-        <h3 className="center" style={{ marginBottom: "1.2rem" }}>
-          Hang tight, the application is being deployed...
-        </h3>
-      )}
-      <LoadingWrapper loaded={!isDeploying}>
-        <Row>
-          <Column span={3}>
-            <ChartSummary version={version} chartAttrs={chartAttrs} />
-          </Column>
-          <Column span={9}>
-            <form onSubmit={handleDeploy}>
-              <div className="upgrade-form-version-selector">
-                <label className="centered deployment-form-label deployment-form-label-text-param">
-                  Upgrade to Version
-                </label>
-                <ChartVersionSelector
-                  versions={selected.versions}
-                  selectedVersion={selected.version?.attributes.version}
-                  onSelect={selectVersion}
-                  currentVersion={deployed.chartVersion?.attributes.version}
-                  chartAttrs={chartAttrs}
+      <LoadingWrapper loaded={!isFetching}>
+        <ChartHeader
+          releaseName={releaseName}
+          chartAttrs={chartAttrs}
+          versions={selected.versions}
+          onSelect={selectVersion}
+          currentVersion={deployed.chartVersion?.attributes.version}
+          selectedVersion={selected.version?.attributes.version}
+        />
+        {isDeploying && (
+          <h3 className="center" style={{ marginBottom: "1.2rem" }}>
+            Hang tight, the application is being deployed...
+          </h3>
+        )}
+        <LoadingWrapper loaded={!isDeploying}>
+          <Row>
+            <Column span={3}>
+              <ChartSummary version={version} chartAttrs={chartAttrs} />
+            </Column>
+            <Column span={9}>
+              <form onSubmit={handleDeploy}>
+                <div className="upgrade-form-version-selector">
+                  <label className="centered deployment-form-label deployment-form-label-text-param">
+                    Upgrade to Version
+                  </label>
+                  <ChartVersionSelector
+                    versions={selected.versions}
+                    selectedVersion={selected.version?.attributes.version}
+                    onSelect={selectVersion}
+                    currentVersion={deployed.chartVersion?.attributes.version}
+                    chartAttrs={chartAttrs}
+                  />
+                </div>
+                <DeploymentFormBody
+                  deploymentEvent="upgrade"
+                  chartID={chartID}
+                  chartVersion={appCurrentVersion}
+                  deployedValues={deployedValues}
+                  chartsIsFetching={chartsIsFetching}
+                  selected={selected}
+                  setValues={handleValuesChange}
+                  appValues={appValues}
+                  setValuesModified={setValuesModifiedTrue}
                 />
-              </div>
-              <DeploymentFormBody
-                deploymentEvent="upgrade"
-                chartID={chartID}
-                chartVersion={appCurrentVersion}
-                deployedValues={deployedValues}
-                chartsIsFetching={chartsIsFetching}
-                selected={selected}
-                setValues={handleValuesChange}
-                appValues={appValues}
-                setValuesModified={setValuesModifiedTrue}
-              />
-            </form>
-          </Column>
-        </Row>
+              </form>
+            </Column>
+          </Row>
+        </LoadingWrapper>
       </LoadingWrapper>
     </section>
   );
