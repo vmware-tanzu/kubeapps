@@ -182,8 +182,13 @@ export function AppRepoAddDockerCreds({
             </div>
           </div>
           <div className="clr-form-separator">
-            <CdsButton type="button" disabled={creating} onClick={handleInstallClick}>
-              {creating ? "Creating..." : "Create"}
+            <CdsButton
+              type="button"
+              disabled={creating}
+              onClick={handleInstallClick}
+              id="submit-docker-creds"
+            >
+              {creating ? "Creating..." : "Submit"}
             </CdsButton>
             <CdsButton onClick={toggleCredSubForm} type="button" action="outline">
               Cancel
