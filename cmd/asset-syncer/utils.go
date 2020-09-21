@@ -179,7 +179,7 @@ func chartsFromIndex(index *helmrepo.IndexFile, r *models.Repo) []models.Chart {
 		}
 		charts = append(charts, newChart(entry, r))
 	}
-	sort.Slice(charts, func(i, j int) bool { return charts[i].ID < charts[j].Name })
+	sort.Slice(charts, func(i, j int) bool { return charts[i].ID < charts[j].ID })
 	return charts
 }
 
