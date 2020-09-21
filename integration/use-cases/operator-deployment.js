@@ -30,12 +30,11 @@ test("Deploys an Operator", async () => {
   await utils.retryAndRefresh(page, 10, async () => {
     // Filter out charts to search only for the prometheus operator
     await expect(page).toClick("label", { text: "Operators" });
-    await expect(page).toClick("label", { text: "Monitoring" });
 
     await expect(page).toMatch("Prometheus");
-  });
 
-  await expect(page).toClick("a", { text: "Prometheus" });
+    await expect(page).toClick(".info-card-header", { text: "Prometheus" });
+  });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
