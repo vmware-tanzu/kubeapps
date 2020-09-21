@@ -177,7 +177,7 @@ img_flags=(
   "--set" "dashboard.image.tag=${DEV_TAG}"
   "--set" "dashboard.image.repository=${images[3]}"
   "--set" "kubeops.image.tag=${DEV_TAG}"
-  "--set" "kubeops.image.repository=${images[5]}"
+  "--set" "kubeops.image.repository=${images[4]}"
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
