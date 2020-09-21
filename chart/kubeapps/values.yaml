@@ -8,10 +8,6 @@
 #     - myRegistryKeySecretName
 #   storageClass: myStorageClass
 
-## Enable this feature flag to use Kubeapps with Helm 3 support.
-## If you set it to true, Kubeapps will not work with releases installed with Helm 2.
-useHelm3: false
-
 ## Disable this feature flag to disallow users to discover available namespaces (only the ones they have access).
 ## When set to true, Kubeapps creates a ClusterRole to be able to list namespaces.
 allowNamespaceDiscovery: true
@@ -323,7 +319,6 @@ hooks:
   tolerations: {}
 
 # Kubeops is an interface between the Kubeapps Dashboard and Helm 3/Kubernetes.
-# Set useHelm3 to true to use Kubeops instead of Tiller Proxy.
 kubeops:
   replicaCount: 2
   image:
@@ -362,87 +357,6 @@ kubeops:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-
-## Tiller Proxy is a secure REST API on top of Helm's Tiller component used to
-## manage Helm chart releases in the cluster from Kubeapps. Set tillerProxy.host
-## to configure a different Tiller host to use.
-##
-tillerProxy:
-  replicaCount: 2
-
-  ## Bitnami Kubeapps Tiller Proxy image
-  ## ref: https://hub.docker.com/r/bitnami/kubeapps-tiller-proxy/tags/
-  ##
-  image:
-    registry: docker.io
-    repository: kubeapps/tiller-proxy
-    tag: latest
-    ## Specify a imagePullPolicy
-    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-    ##
-    pullPolicy: IfNotPresent
-
-  ## Tiller Proxy service parameters
-  ##
-  service:
-    ## HTTP Port
-    ##
-    port: 8080
-  host: tiller-deploy.kube-system:44134
-
-  ## TLS parameters
-  ##
-  tls: {}
-  #  ca:
-  #  cert:
-  #  key:
-  #  verify: false
-
-  ## It's possible to modify the default timeout for install/upgrade/rollback/delete apps
-  ## (Default: 300s)
-  # timeout: 300
-
-  ## Tiller Proxy containers' resource requests and limits
-  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-  ##
-  resources:
-    ## Default values set based on usage data from running Kubeapps instances
-    ## ref: https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
-    ##
-    limits:
-      cpu: 250m
-      memory: 256Mi
-    requests:
-      cpu: 25m
-      memory: 32Mi
-  ## Tiller Proxy containers' liveness and readiness probes
-  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
-  ##
-  livenessProbe:
-    httpGet:
-      path: /live
-      port: 8080
-    initialDelaySeconds: 60
-    timeoutSeconds: 5
-  readinessProbe:
-    httpGet:
-      path: /ready
-      port: 8080
-    initialDelaySeconds: 0
-    timeoutSeconds: 5
-
-  ## Affinity for Tiller Proxy pods assignment
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-  ##
-  affinity: {}
-  ## Node labels for Tiller Proxy pods assignment. Evaluated as a template.
-  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  ## Tolerations for Tiller Proxy pods assignment. Evaluated as a template.
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: {}
 
 ## Assetsvc is used to serve assets metadata over a REST API.
 ##

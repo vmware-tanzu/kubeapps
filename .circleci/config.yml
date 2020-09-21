@@ -35,14 +35,7 @@ workflows:
           <<: *build_always
       - build_dashboard:
           <<: *build_always
-      - local_e2e_tests_postgresql_helm2:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - local_e2e_tests_postgresql_helm3:
+      - local_e2e_tests:
           <<: *build_always
           requires:
             - test_go
@@ -80,8 +73,7 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
-            - local_e2e_tests_postgresql_helm2
-            - local_e2e_tests_postgresql_helm3
+            - local_e2e_tests
             - GKE_1_15_MASTER
             - GKE_1_15_LATEST_RELEASE
             - GKE_1_16_MASTER
@@ -89,8 +81,7 @@ workflows:
       - push_images:
           <<: *build_on_master
           requires:
-            - local_e2e_tests_postgresql_helm2
-            - local_e2e_tests_postgresql_helm3
+            - local_e2e_tests
             - GKE_1_15_MASTER
             - GKE_1_15_LATEST_RELEASE
             - GKE_1_16_MASTER
@@ -98,8 +89,7 @@ workflows:
       - release:
           <<: *build_on_tag
           requires:
-            - local_e2e_tests_postgresql_helm2
-            - local_e2e_tests_postgresql_helm3
+            - local_e2e_tests
             - GKE_1_15_MASTER
             - GKE_1_15_LATEST_RELEASE
             - GKE_1_16_MASTER
@@ -298,13 +288,7 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  local_e2e_tests_postgresql_helm2:
-    machine: true
-    environment:
-      HELM_VERSION: "v2.16.3"
-      KUBEAPPS_DB: "postgresql"
-    <<: *local_e2e_steps
-  local_e2e_tests_postgresql_helm3:
+  local_e2e_tests:
     machine: true
     environment:
       HELM_VERSION: "v3.0.2"

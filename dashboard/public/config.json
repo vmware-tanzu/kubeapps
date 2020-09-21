@@ -7,7 +7,7 @@
   "oauthLogoutURI": "/oauth2/sign_out",
   "featureFlags": {
     "operators": true,
-    "ui": "hex"
+    "ui": "clarity"
   },
-  "clusters": []
+  "clusters": ["default"]
 }

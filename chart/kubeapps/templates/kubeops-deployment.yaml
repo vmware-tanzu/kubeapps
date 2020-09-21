@@ -1,4 +1,3 @@
-{{- if .Values.useHelm3 -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -82,5 +81,3 @@ spec:
         - name: ca-certs
           emptyDir: {}
       {{- end }}
-
-{{- end }}{{/* matches useHelm3 */}}
