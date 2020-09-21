@@ -138,8 +138,7 @@ installOrUpgradeKubeapps() {
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
       "${db_flags[@]}" \
-      --set featureFlags.operators=true \
-      --set featureFlags.ui=clarity
+      --set featureFlags.operators=true
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
