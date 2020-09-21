@@ -8,20 +8,15 @@ test("Creates a private registry", async () => {
     token: process.env.ADMIN_TOKEN,
   });
 
-  await expect(page).toClick("button", { text: "Login" });
+  await page.evaluate(() =>
+    document.querySelector("#login-submit-button").click()
+  );
 
-  await expect(page).toClick("button", { text: "Add App Repository" });
+  await expect(page).toClick("cds-button", { text: "Add App Repository" });
 
-  try {
-    await expect(page).toMatch("Install Repo");
-  } catch (e) {
-    // The Modal sometimes fail to be opened, click the button again
-    await expect(page).toClick("button", { text: "Add App Repository" });
-
-    await expect(page).toMatch("Install Repo");
-  }
-
-  await page.type("#kubeapps-repo-name", "my-repo");
+  const randomNumber = Math.floor(Math.random() * Math.floor(100));
+  const repoName = "my-repo-" + randomNumber;
+  await page.type("#kubeapps-repo-name", repoName);
 
   await page.type(
     "#kubeapps-repo-url",
@@ -35,9 +30,8 @@ test("Creates a private registry", async () => {
   await page.type("#kubeapps-repo-password", "password");
 
   // Open form to create a new secret
-  const randomNumber = Math.floor(Math.random() * Math.floor(100));
   const secret = "my-repo-secret" + randomNumber;
-  await expect(page).toClick("button", { text: "Add new credentials" });
+  await expect(page).toClick("cds-button", { text: "Add new credentials" });
   await page.type("#kubeapps-docker-cred-secret-name", secret);
   await page.type(
     "#kubeapps-docker-cred-server",
@@ -46,16 +40,14 @@ test("Creates a private registry", async () => {
   await page.type("#kubeapps-docker-cred-username", "user");
   await page.type("#kubeapps-docker-cred-password", "password");
   await page.type("#kubeapps-docker-cred-email", "user@example.com");
-  await expect(page).toClick("button", { text: "Submit" });
+  await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
 
   // Select the new secret
   await expect(page).toClick("label", { text: secret });
 
-  // Similar to the above click for an App Repository, the click on
-  // the Install Repo doesn't always register (in fact, from the
-  // screenshot on failure, it appears to focus the button only (hover css applied)
-  await expect(page).toClick("button", { text: "Install Repo" });
-  await expect(page).toClick("a", { text: "my-repo" });
+  await expect(page).toClick("cds-button", { text: "Install Repo" });
+
+  await expect(page).toClick("a", { text: repoName });
 
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("apache", { timeout: 2000 });
@@ -63,15 +55,15 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("a", { text: "apache", timeout: 60000 });
 
-  await expect(page).toClick("button", { text: "Deploy" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toSelect("#chartVersion", "7.3.15");
+  await expect(page).toSelect('select[name="chart-versions"]', "7.3.15");
   const appName = "my-app" + randomNumber;
   await page.type("#releaseName", appName);
 
-  await expect(page).toClick("button", { text: "Submit" });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Update Available", { timeout: 60000 });
+  await expect(page).toMatch("Update Now", { timeout: 60000 });
 
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the kubernetes API to get info of the
@@ -90,16 +82,37 @@ test("Creates a private registry", async () => {
   ]);
 
   // Upgrade apache and verify.
-  await expect(page).toClick(".upgrade-button");
+  await expect(page).toClick("cds-button", { text: "Upgrade" });
 
-  await expect(page).toSelect("#chartVersion", "7.3.16");
+  let chartVersionElement = await expect(page).toMatchElement(
+    'select[name="chart-versions"]'
+  );
+  let chartVersionElementContent = await chartVersionElement.getProperty(
+    "value"
+  );
+  let chartVersionValue = await chartVersionElementContent.jsonValue();
+  expect(chartVersionValue).toEqual("7.3.15");
+
+  // TODO(andresmgot): Avoid race condition for selecting the latest version
+  // but going back to the previous version
+  await new Promise((r) => setTimeout(r, 1000));
+
+  await expect(page).toSelect('select[name="chart-versions"]', "7.3.16");
+
+  // Ensure that the new value is selected
+  chartVersionElement = await expect(page).toMatchElement(
+    'select[name="chart-versions"]'
+  );
+  chartVersionElementContent = await chartVersionElement.getProperty("value");
+  chartVersionValue = await chartVersionElementContent.jsonValue();
+  expect(chartVersionValue).toEqual("7.3.16");
 
   await expect(page).toClick("li", { text: "Changes" });
 
   await expect(page).toMatch("tag: 2.4.43-debian-10-r54");
 
-  await expect(page).toClick(".button-primary");
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatch("Up to date", { timeout: 60000 });
-  await expect(page).toMatch("Ready", { timeout: 60000 });
+  await expect(page).toMatch("Ready");
 });

@@ -181,6 +181,7 @@ installOrUpgradeKubeapps() {
         --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
         --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
         --set featureFlags.operators=true \
+        --set featureFlags.ui=clarity \
         ${invalidateCacheFlag} \
         "${img_flags[@]}" \
         "${db_flags[@]}"
@@ -190,13 +191,14 @@ installOrUpgradeKubeapps() {
         "${img_flags[@]}" \
         "${db_flags[@]}" \
         --set featureFlags.operators=true \
+        --set featureFlags.ui=clarity \
         --set useHelm3=true
     fi
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
-  installOLM 0.15.1
+  installOLM 0.16.1
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"

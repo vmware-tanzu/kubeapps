@@ -403,8 +403,14 @@ export function listSubscriptions(
   return async dispatch => {
     dispatch(requestSubscriptions());
     try {
-      const r = await Operators.listSubscriptions(cluster, namespace);
-      dispatch(receiveSubscriptions(r.items));
+      // First, request global subscriptions
+      const globalSubs = await Operators.listSubscriptions(cluster, "operators");
+      let items = globalSubs.items;
+      if (namespace !== "operators") {
+        const r = await Operators.listSubscriptions(cluster, namespace);
+        items = items.concat(r.items);
+      }
+      dispatch(receiveSubscriptions(items));
       return true;
     } catch (e) {
       dispatch(errorSubscriptionList(e));
