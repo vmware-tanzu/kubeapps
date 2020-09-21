@@ -1,9 +1,9 @@
-import { mount, shallow } from "enzyme";
 import * as React from "react";
-import itBehavesLike from "../../shared/specs";
 
 import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import { act } from "react-dom/test-utils";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody.v2";
@@ -49,14 +49,53 @@ const populatedProps = {
   selected: { versions, version: versions[0], schema },
 };
 
-itBehavesLike("aLoadingComponent", {
-  component: UpgradeForm,
-  props: { ...defaultProps, selected: { versions: [] } },
+describe("it behaves like a loading component", () => {
+  it("if the app is being fetched", () => {
+    expect(
+      mountWrapper(
+        getStore({ apps: { isFetching: true } }),
+        <UpgradeForm {...defaultProps} />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
+
+  it("if the chart is being fetched", () => {
+    expect(
+      mountWrapper(
+        getStore({ charts: { isFetching: true } }),
+        <UpgradeForm {...defaultProps} />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
+
+  it("if there are no versions", () => {
+    expect(
+      mountWrapper(
+        defaultStore,
+        <UpgradeForm {...defaultProps} selected={{ ...defaultProps.selected, versions: [] }} />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
+
+  it("if there is no version", () => {
+    expect(
+      mountWrapper(
+        defaultStore,
+        <UpgradeForm
+          {...defaultProps}
+          selected={{ ...defaultProps.selected, version: undefined }}
+        />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
 });
 
 it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
-  mount(<UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
+  mountWrapper(
+    defaultStore,
+    <UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />,
+  );
   expect(fetchChartVersions).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.repoNamespace,
@@ -66,7 +105,8 @@ it("fetches the available versions", () => {
 
 describe("renders an error", () => {
   it("renders an alert if the deployment failed", () => {
-    const wrapper = shallow(
+    const wrapper = mountWrapper(
+      defaultStore,
       <UpgradeForm
         {...defaultProps}
         selected={
@@ -87,13 +127,13 @@ it("defaults the upgrade version to the current version", () => {
   // helm upgrade is the only way to update the values.yaml, so upgrade is
   // often used by users to update values only, so we can't default to the
   // latest version on the assumption that they always want to upgrade.
-  const wrapper = shallow(<UpgradeForm {...populatedProps} />);
+  const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
 
   expect(wrapper.find(DeploymentFormBody).prop("chartVersion")).toBe("1.0.0");
 });
 
 it("forwards the appValues when modified", () => {
-  const wrapper = shallow(<UpgradeForm {...populatedProps} />);
+  const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
   const handleValuesChange: (v: string) => void = wrapper
     .find(DeploymentFormBody)
     .prop("setValues");
@@ -107,7 +147,8 @@ it("triggers an upgrade when submitting the form", async () => {
   const appValues = "foo: bar";
   const upgradeApp = jest.fn().mockReturnValue(true);
   const push = jest.fn();
-  const wrapper = mount(
+  const wrapper = mountWrapper(
+    defaultStore,
     <UpgradeForm {...populatedProps} upgradeApp={upgradeApp} push={push} namespace={namespace} />,
   );
   const handleValuesChange: (v: string) => void = wrapper
@@ -137,7 +178,10 @@ describe("when receiving new props", () => {
   it("should calculate the modifications from the default and the current values", () => {
     const currentValues = "a: b\nc: d\n";
     const defaultValues = "a: b\n";
-    const wrapper = mount(<UpgradeForm {...populatedProps} appCurrentValues={currentValues} />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <UpgradeForm {...populatedProps} appCurrentValues={currentValues} />,
+    );
     wrapper.setProps({ deployed: { values: defaultValues } });
 
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(currentValues);
@@ -147,41 +191,21 @@ describe("when receiving new props", () => {
     const defaultValues = "a: b\n";
     const deployedValues = "a: B\n";
     const currentValues = "a: B\nc: d\n";
-    const wrapper = mount(
+    const wrapper = mountWrapper(
+      defaultStore,
       <UpgradeForm
         {...populatedProps}
         deployed={{ values: deployedValues }}
         appCurrentValues={currentValues}
+        selected={{ versions, version: versions[1], values: defaultValues }}
       />,
     );
-    wrapper.setProps({ selected: { versions, version: versions[1], values: defaultValues } });
-    wrapper.update();
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("a: b\nc: d\n");
-  });
-
-  it("should get new deployed values", () => {
-    const deployedValues = "a: b\n";
-    const wrapper = mount(
-      <UpgradeForm
-        {...populatedProps}
-        appCurrentValues={deployedValues}
-        deployed={{ values: deployedValues }}
-      />,
-    );
-    expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toEqual(deployedValues);
-
-    const newDeployedValues = "a: B\n";
-    wrapper.setProps({
-      appCurrentValues: newDeployedValues,
-      deployed: { values: newDeployedValues },
-    });
-    wrapper.update();
-    expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toEqual(newDeployedValues);
   });
 
   it("won't apply changes if the values have been manually modified", () => {
     const userValues = "a: b\n";
-    const wrapper = mount(<UpgradeForm {...populatedProps} />);
+    const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
     act(() => {
       const handleValuesChange: (v: string) => void = wrapper
         .find(DeploymentFormBody)
@@ -284,21 +308,23 @@ describe("when receiving new props", () => {
         version: versions[1],
         values: t.newDefaultValues,
       };
-      const wrapper = mount(
-        <UpgradeForm {...populatedProps} appCurrentValues={t.deployedValues} />,
+      const wrapper = mountWrapper(
+        defaultStore,
+        <UpgradeForm
+          {...populatedProps}
+          appCurrentValues={t.deployedValues}
+          deployed={deployed}
+          selected={newSelected}
+        />,
       );
-      wrapper.setProps({ deployed });
-
-      // Apply new version
-      wrapper.setProps({ selected: newSelected });
-      wrapper.update();
       expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(t.result);
     });
   });
 });
 
 it("shows, by default, the default values of the deployed chart plus any modification", () => {
-  const wrapper = mount(
+  const wrapper = mountWrapper(
+    defaultStore,
     <UpgradeForm
       {...populatedProps}
       deployed={{ values: "# A comment\nfoo: bar\n" }}

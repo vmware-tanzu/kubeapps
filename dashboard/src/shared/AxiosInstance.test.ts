@@ -181,4 +181,22 @@ describe("createAxiosInterceptorWithAuth", () => {
     }
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
+
+  it("parses a forbidden response", async () => {
+    moxios.stubRequest(testPath, {
+      response: {
+        message:
+          '[{"apiGroup": "v1", "resource": "secrets", "namespace": "default", "verbs": ["list", "get"]}]',
+      },
+      status: 403,
+    });
+
+    try {
+      await axios.get(testPath);
+    } catch (error) {
+      expect(error.message).toBe(
+        'Forbidden error, missing permissions: apiGroup: "v1", resource: "secrets", action: "list, get", namespace: default',
+      );
+    }
+  });
 });

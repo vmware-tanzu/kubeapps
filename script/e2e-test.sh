@@ -138,12 +138,13 @@ installOrUpgradeKubeapps() {
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
       "${db_flags[@]}" \
+      --set featureFlags.ui=clarity \
       --set featureFlags.operators=true
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
-  installOLM 0.15.1
+  installOLM 0.16.1
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"

@@ -544,7 +544,7 @@ describe("createOperator", () => {
 });
 
 describe("listSubscriptions", () => {
-  it("list subscriptions", async () => {
+  it("list subscriptions in the global namespace", async () => {
     const subscriptions = [{}] as IResource[];
     Operators.listSubscriptions = jest.fn().mockReturnValue({ items: subscriptions });
     const expectedActions = [
@@ -554,6 +554,26 @@ describe("listSubscriptions", () => {
       {
         type: getType(operatorActions.receiveSubscriptions),
         payload: subscriptions,
+      },
+    ];
+    await store.dispatch(operatorActions.listSubscriptions("default", "operators"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("list subscriptions in both the global and a single namespace", async () => {
+    const subscriptions1 = [{ metadata: { name: "foo" } }] as IResource[];
+    const subscriptions2 = [{ metadata: { name: "bar" } }] as IResource[];
+    Operators.listSubscriptions = jest
+      .fn()
+      .mockReturnValueOnce({ items: subscriptions1 })
+      .mockReturnValueOnce({ items: subscriptions2 });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestSubscriptions),
+      },
+      {
+        type: getType(operatorActions.receiveSubscriptions),
+        payload: subscriptions1.concat(subscriptions2),
       },
     ];
     await store.dispatch(operatorActions.listSubscriptions("default", "default"));

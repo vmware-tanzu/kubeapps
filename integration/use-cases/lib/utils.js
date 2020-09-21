@@ -21,4 +21,7 @@ module.exports = {
       }
     }
   },
+  click: async (page, document, selector) => {
+    page.evaluate(() => document.querySelector(selector).click());
+  },
 };

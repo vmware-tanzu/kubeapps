@@ -101,6 +101,7 @@ exports[`token login form displays an error if the authentication error is passe
                   <input
                     className="clr-input"
                     id="token"
+                    name="token"
                     onChange={[Function]}
                     placeholder="Paste token here"
                     required={true}
