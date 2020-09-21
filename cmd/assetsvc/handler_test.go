@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"image/color"
@@ -26,13 +27,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/disintegration/imaging"
-	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/common/datastore/mockstore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 type bodyAPIListResponse struct {
@@ -48,11 +47,12 @@ var chartsList []*models.Chart
 var cc count
 
 const (
-	testChartReadme = "# Quickstart\n\n```bash\nhelm install my-repo/my-chart\n```"
-	testChartValues = "image:\n  registry: docker.io\n  repository: my-repo/my-chart\n  tag: 0.1.0"
-	testChartSchema = `{"properties": {"type": "object"}}`
-	namespace       = "kubeapps-namespace"
-	testRepoName    = "my-repo"
+	testChartReadme   = "# Quickstart\n\n```bash\nhelm install my-repo/my-chart\n```"
+	testChartValues   = "image:\n  registry: docker.io\n  repository: my-repo/my-chart\n  tag: 0.1.0"
+	testChartSchema   = `{"properties": {"type": "object"}}`
+	namespace         = "namespace"
+	kubeappsNamespace = "kubeapps-namespace"
+	testRepoName      = "my-repo"
 )
 
 var testRepo *models.Repo = &models.Repo{Name: testRepoName, Namespace: namespace}
@@ -64,11 +64,18 @@ func iconBytes() []byte {
 	return b.Bytes()
 }
 
-func getMockManager(m *mock.Mock) *mongodbAssetManager {
-	dbSession := mockstore.NewMockSession(m)
-	man := dbutils.NewMongoDBManager(datastore.Config{}, "kubeapps")
-	man.DBSession = dbSession
-	return &mongodbAssetManager{man}
+func setMockManager(t *testing.T) (sqlmock.Sqlmock, func()) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	// TODO(absoludity): Let's not use globals for storing state like this.
+	origManager := manager
+
+	manager = &postgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: kubeappsNamespace}}
+
+	return mock, func() { db.Close(); manager = origManager }
 }
 
 func Test_chartAttributes(t *testing.T) {
@@ -255,45 +262,46 @@ func Test_newChartVersionListResponse(t *testing.T) {
 func Test_listCharts(t *testing.T) {
 	tests := []struct {
 		name   string
-		query  string
 		charts []*models.Chart
 		meta   meta
 	}{
-		{"no charts", "", []*models.Chart{}, meta{1}},
-		{"one chart", "", []*models.Chart{
+		{"no charts", []*models.Chart{}, meta{1}},
+		{"one chart", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}, meta{1}},
-		{"two charts", "", []*models.Chart{
+		{"two charts", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, meta{1}},
-		// Pagination tests
-		{"four charts with pagination", "?size=2", []*models.Chart{
+		{"four charts", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{2}},
+		}, meta{1}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
-			m.On("All", &chartsList).Run(func(args mock.Arguments) {
-				*args.Get(0).(*[]*models.Chart) = tt.charts
-			})
-			if tt.query != "" {
-				m.On("One", &cc).Run(func(args mock.Arguments) {
-					*args.Get(0).(*count) = count{len(tt.charts)}
-				})
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			rows := sqlmock.NewRows([]string{"info"})
+			for _, chart := range tt.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
 			}
+			mock.ExpectQuery("SELECT info FROM").
+				WithArgs(namespace, kubeappsNamespace).
+				WillReturnRows(rows)
 
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/charts"+tt.query, nil)
+			req := httptest.NewRequest("GET", "/charts", nil)
 			listCharts(w, req, Params{"namespace": namespace})
 
-			m.AssertExpectations(t)
 			assert.Equal(t, http.StatusOK, w.Code)
 
 			var b bodyAPIListResponse
@@ -335,32 +343,39 @@ func Test_listRepoCharts(t *testing.T) {
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{2}},
+		}, meta{1}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
 
-			m.On("All", &chartsList).Run(func(args mock.Arguments) {
-				*args.Get(0).(*[]*models.Chart) = tt.charts
-			})
-			if tt.query != "" {
-				m.On("One", &cc).Run(func(args mock.Arguments) {
-					*args.Get(0).(*count) = count{len(tt.charts)}
-				})
+			rows := sqlmock.NewRows([]string{"info"})
+			for _, chart := range tt.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
 			}
+			expectedParams := []driver.Value{namespace, kubeappsNamespace}
+			if tt.repo != "" {
+				expectedParams = append(expectedParams, tt.repo)
+			}
+			mock.ExpectQuery("SELECT info FROM charts").
+				WithArgs(expectedParams...).
+				WillReturnRows(rows)
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/charts/"+tt.repo+tt.query, nil)
 			params := Params{
-				"repo": "my-repo",
+				"repo":      "my-repo",
+				"namespace": namespace,
 			}
 
 			listCharts(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, http.StatusOK, w.Code)
 
 			var b bodyAPIListResponse
@@ -406,15 +421,19 @@ func Test_getChart(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
 
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
+				WithArgs(namespace, tt.chart.ID)
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
 			w := httptest.NewRecorder()
@@ -428,7 +447,6 @@ func Test_getChart(t *testing.T) {
 
 			getChart(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, w.Code)
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIResponse
@@ -471,28 +489,33 @@ func Test_listChartVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
+				WithArgs(namespace, tt.chart.ID)
 
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/charts/"+tt.chart.ID+"/versions", nil)
 			parts := strings.Split(tt.chart.ID, "/")
 			params := Params{
+				"namespace": namespace,
 				"repo":      parts[0],
 				"chartName": parts[1],
 			}
 
 			listChartVersions(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, w.Code)
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIListResponse
@@ -537,21 +560,27 @@ func Test_getChartVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
+				WithArgs(namespace, tt.chart.ID)
 
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version, nil)
 			parts := strings.Split(tt.chart.ID, "/")
 			params := Params{
+				"namespace": namespace,
 				"repo":      parts[0],
 				"chartName": parts[1],
 				"version":   tt.chart.ChartVersions[0].Version,
@@ -559,7 +588,6 @@ func Test_getChartVersion(t *testing.T) {
 
 			getChartVersion(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, w.Code)
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIResponse
@@ -607,15 +635,20 @@ func Test_getChartIcon(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
+				WithArgs(namespace, tt.chart.ID)
 
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
 			w := httptest.NewRecorder()
@@ -624,11 +657,11 @@ func Test_getChartIcon(t *testing.T) {
 			params := Params{
 				"repo":      parts[0],
 				"chartName": parts[1],
+				"namespace": namespace,
 			}
 
 			getChartIcon(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
 				assert.Equal(t, w.Body.Bytes(), tt.chart.RawIcon, "raw icon data should match")
@@ -671,15 +704,20 @@ func Test_getChartVersionReadme(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM files").
+				WithArgs(namespace, tt.files.ID+"-0.1.0")
 
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.ChartFiles{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.ChartFiles) = tt.files
-				})
+				filesJSON, err := json.Marshal(tt.files)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(filesJSON))
 			}
 
 			w := httptest.NewRecorder()
@@ -689,11 +727,11 @@ func Test_getChartVersionReadme(t *testing.T) {
 				"repo":      parts[0],
 				"chartName": parts[1],
 				"version":   "0.1.0",
+				"namespace": namespace,
 			}
 
 			getChartVersionReadme(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
 				assert.Equal(t, string(w.Body.Bytes()), tt.files.Readme, "content of the readme should match")
@@ -735,15 +773,20 @@ func Test_getChartVersionValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM files").
+				WithArgs(namespace, tt.files.ID+"-"+tt.version)
 
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.ChartFiles{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.ChartFiles) = tt.files
-				})
+				filesJSON, err := json.Marshal(tt.files)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(filesJSON))
 			}
 
 			w := httptest.NewRecorder()
@@ -752,12 +795,12 @@ func Test_getChartVersionValues(t *testing.T) {
 			params := Params{
 				"repo":      parts[0],
 				"chartName": parts[1],
-				"version":   "0.1.0",
+				"version":   tt.version,
+				"namespace": namespace,
 			}
 
 			getChartVersionValues(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
 				assert.Equal(t, string(w.Body.Bytes()), tt.files.Values, "content of values.yaml should match")
@@ -799,15 +842,20 @@ func Test_getChartVersionSchema(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM files").
+				WithArgs(namespace, tt.files.ID+"-"+tt.version)
 
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.ChartFiles{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.ChartFiles) = tt.files
-				})
+				filesJSON, err := json.Marshal(tt.files)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(filesJSON))
 			}
 
 			w := httptest.NewRecorder()
@@ -816,12 +864,12 @@ func Test_getChartVersionSchema(t *testing.T) {
 			params := Params{
 				"repo":      parts[0],
 				"chartName": parts[1],
-				"version":   "0.1.0",
+				"version":   tt.version,
+				"namespace": namespace,
 			}
 
 			getChartVersionSchema(w, req, params)
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
 				assert.Equal(t, string(w.Body.Bytes()), tt.files.Schema, "content of values.schema.json should match")
@@ -841,22 +889,27 @@ func Test_findLatestChart(t *testing.T) {
 				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
 			},
 		}
-		charts := []*models.Chart{chart}
 		reqVersion := "1.0.0"
 		reqAppVersion := "0.1.0"
 
-		var m mock.Mock
-		manager = getMockManager(&m)
-		m.On("All", &chartsList).Run(func(args mock.Arguments) {
-			*args.Get(0).(*[]*models.Chart) = charts
-		})
+		mock, cleanup := setMockManager(t)
+		defer cleanup()
+
+		chartJSON, err := json.Marshal(chart)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		mock.ExpectQuery("SELECT info FROM charts WHERE info*").
+			WithArgs("foo", "namespace", kubeappsNamespace).
+			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/charts?name="+chart.Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
 		params := Params{
-			"name":       chart.Name,
+			"chartName":  chart.Name,
 			"version":    reqVersion,
 			"appversion": reqAppVersion,
+			"namespace":  namespace,
 		}
 
 		listChartsWithFilters(w, req, params)
@@ -880,18 +933,28 @@ func Test_findLatestChart(t *testing.T) {
 		reqVersion := "1.0.0"
 		reqAppVersion := "0.1.0"
 
-		var m mock.Mock
-		manager = getMockManager(&m)
-		m.On("All", &chartsList).Run(func(args mock.Arguments) {
-			*args.Get(0).(*[]*models.Chart) = charts
-		})
+		mock, cleanup := setMockManager(t)
+		defer cleanup()
+
+		rows := sqlmock.NewRows([]string{"info"})
+		for _, chart := range charts {
+			chartJSON, err := json.Marshal(chart)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			rows.AddRow(string(chartJSON))
+		}
+		mock.ExpectQuery("SELECT info FROM charts WHERE info*").
+			WithArgs("foo", "namespace", kubeappsNamespace).
+			WillReturnRows(rows)
 
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/charts?name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
 		params := Params{
-			"name":       charts[0].Name,
+			"chartName":  charts[0].Name,
 			"version":    reqVersion,
 			"appversion": reqAppVersion,
+			"namespace":  namespace,
 		}
 
 		listChartsWithFilters(w, req, params)
@@ -916,18 +979,28 @@ func Test_findLatestChart(t *testing.T) {
 		reqVersion := "1.0.0"
 		reqAppVersion := "0.1.0"
 
-		var m mock.Mock
-		manager = getMockManager(&m)
-		m.On("All", &chartsList).Run(func(args mock.Arguments) {
-			*args.Get(0).(*[]*models.Chart) = charts
-		})
+		mock, cleanup := setMockManager(t)
+		defer cleanup()
+
+		rows := sqlmock.NewRows([]string{"info"})
+		for _, chart := range charts {
+			chartJSON, err := json.Marshal(chart)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			rows.AddRow(string(chartJSON))
+		}
+		mock.ExpectQuery("SELECT info FROM charts WHERE info*").
+			WithArgs("foo", "namespace", kubeappsNamespace).
+			WillReturnRows(rows)
 
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/charts?showDuplicates=true&name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
 		params := Params{
-			"name":       charts[0].Name,
+			"chartName":  charts[0].Name,
 			"version":    reqVersion,
 			"appversion": reqAppVersion,
+			"namespace":  namespace,
 		}
 
 		listChartsWithFilters(w, req, params)

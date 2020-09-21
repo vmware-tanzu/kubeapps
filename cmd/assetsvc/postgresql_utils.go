@@ -71,7 +71,7 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, repoQuery)
 	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
 	if err != nil {
-		return nil, 0, nil
+		return nil, 0, err
 	}
 	if !showDuplicates {
 		// Group by unique digest for the latest version (remove duplicates)

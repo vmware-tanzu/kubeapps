@@ -62,7 +62,7 @@ type PostgresAssetManagerIface interface {
 type PostgresAssetManager struct {
 	connStr           string
 	DB                PostgresDB
-	kubeappsNamespace string
+	KubeappsNamespace string
 }
 
 // NewPGManager creates an asset manager for PG
@@ -219,5 +219,5 @@ func (m *PostgresAssetManager) GetDB() PostgresDB {
 }
 
 func (m *PostgresAssetManager) GetKubeappsNamespace() string {
-	return m.kubeappsNamespace
+	return m.KubeappsNamespace
 }

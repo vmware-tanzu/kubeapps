@@ -137,7 +137,6 @@ installOrUpgradeKubeapps() {
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
-      "${db_flags[@]}" \
       --set featureFlags.ui=clarity \
       --set featureFlags.operators=true
 }
@@ -151,9 +150,6 @@ info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
 info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
-
-db_flags=("--set" "mongodb.enabled=true" "--set" "postgresql.enabled=false")
-[[ "${KUBEAPPS_DB:-}" == "postgresql" ]] && db_flags=("--set" "mongodb.enabled=false" "--set" "postgresql.enabled=true")
 
 # Use dev images or Bitnami if testing the latest release
 image_prefix="kubeapps/"

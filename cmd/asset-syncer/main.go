@@ -23,7 +23,6 @@ import (
 )
 
 var (
-	databaseType     string
 	databaseURL      string
 	databaseName     string
 	databaseUser     string
@@ -48,7 +47,6 @@ func main() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&databaseType, "database-type", "mongodb", "Database to use. Choice: mongodb, postgresql")
 	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost", "Database URL")
 	rootCmd.PersistentFlags().StringVar(&databaseName, "database-name", "charts", "Name of the database to use")
 	rootCmd.PersistentFlags().StringVar(&databaseUser, "database-user", "", "Database user")

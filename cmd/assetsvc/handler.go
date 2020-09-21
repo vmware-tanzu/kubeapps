@@ -182,7 +182,7 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 
-	if chart.RawIcon == nil {
+	if len(chart.RawIcon) == 0 {
 		http.NotFound(w, req)
 		return
 	}
