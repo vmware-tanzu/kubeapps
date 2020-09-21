@@ -40,7 +40,6 @@ spec:
           command:
             - /assetsvc
           args:
-            - --database-type=postgresql
             - --database-user=postgres
             - --database-name=assets
             - --database-url={{ template "kubeapps.postgresql.fullname" . }}-headless:5432
