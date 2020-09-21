@@ -8,7 +8,7 @@ Please refer to the [Kubeapps Dashboard Developer Guide](dashboard.md) for the d
 
 ### assetsvc
 
-The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server.
+The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a Postgresql server.
 
 Please refer to the [Kubeapps assetsvc Developer Guide](assetsvc.md) for the developer setup.
 

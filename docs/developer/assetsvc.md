@@ -1,6 +1,6 @@
 # Kubeapps assetsvc Developer Guide
 
-The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server.
+The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a Postgresql server.
 
 ## Prerequisites
 
@@ -44,14 +44,6 @@ This builds the `assetsvc` Docker image.
 ### Running in development
 
 #### Option 1: Using Telepresence (recommended)
-
-When using MongoDB:
-
-```bash
-telepresence --swap-deployment kubeapps-internal-assetsvc --namespace kubeapps --expose 8080:8080 --docker-run --rm -ti kubeapps/assetsvc /assetsvc --database-user=root --database-url=kubeapps-mongodb --database-type=mongodb --database-name=charts
-```
-
-When using PostgreSQL:
 
 ```bash
 telepresence --swap-deployment kubeapps-internal-assetsvc --namespace kubeapps --expose 8080:8080 --docker-run --rm -ti kubeapps/assetsvc /assetsvc --database-user=postgres --database-url=kubeapps-postgresql:5432 --database-type=postgresql --database-name=assets
