@@ -614,7 +614,6 @@ func apprepoCleanupJobArgs(repoName, repoNamespace string) []string {
 
 func dbFlags() []string {
 	return []string{
-		"--database-type=" + dbType,
 		"--database-url=" + dbURL,
 		"--database-user=" + dbUser,
 		"--database-name=" + dbName,

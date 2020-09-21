@@ -44,7 +44,6 @@ spec:
             - /asset-syncer
           args:
             - invalidate-cache
-            - --database-type=postgresql
             - --database-url={{ template "kubeapps.postgresql.fullname" . }}:5432
             - --database-user=postgres
             - --database-name=assets
