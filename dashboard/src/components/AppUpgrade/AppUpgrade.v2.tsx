@@ -88,21 +88,12 @@ function AppUpgrade({
       chart.metadata &&
       chart.metadata &&
       chart.metadata.name &&
-      chart.metadata.version &&
-      !deployed.chartVersion
+      chart.metadata.version
     ) {
       const chartID = `${repoName}/${chart.metadata.name}`;
       getDeployedChartVersion(cluster, repoNamespace, chartID, chart.metadata.version);
     }
-  }, [
-    getDeployedChartVersion,
-    app,
-    chart,
-    repoName,
-    repoNamespace,
-    cluster,
-    deployed.chartVersion,
-  ]);
+  }, [getDeployedChartVersion, app, chart, repoName, repoNamespace, cluster]);
 
   if (appsError) {
     return (

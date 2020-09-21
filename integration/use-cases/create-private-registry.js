@@ -40,7 +40,7 @@ test("Creates a private registry", async () => {
   await page.type("#kubeapps-docker-cred-username", "user");
   await page.type("#kubeapps-docker-cred-password", "password");
   await page.type("#kubeapps-docker-cred-email", "user@example.com");
-  await expect(page).toClick("#submit-docker-creds");
+  await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
 
   // Select the new secret
   await expect(page).toClick("label", { text: secret });
@@ -92,6 +92,10 @@ test("Creates a private registry", async () => {
   );
   let chartVersionValue = await chartVersionElementContent.jsonValue();
   expect(chartVersionValue).toEqual("7.3.15");
+
+  // TODO(andresmgot): Avoid race condition for selecting the latest version
+  // but going back to the previous version
+  await new Promise((r) => setTimeout(r, 1000));
 
   await expect(page).toSelect('select[name="chart-versions"]', "7.3.16");
 
