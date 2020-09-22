@@ -5,7 +5,7 @@ import actions from "../actions";
 import { AppsAction } from "../actions/apps";
 import { IAppState, IRelease } from "../shared/types";
 
-const initialState: IAppState = {
+export const initialState: IAppState = {
   isFetching: false,
   items: [],
   listingAll: false,

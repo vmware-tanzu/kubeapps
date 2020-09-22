@@ -5,7 +5,7 @@ import actions from "../actions";
 import { KubeAction } from "../actions/kube";
 import { IK8sList, IKubeState, IResource } from "../shared/types";
 
-const initialState: IKubeState = {
+export const initialState: IKubeState = {
   items: {},
   sockets: {},
 };

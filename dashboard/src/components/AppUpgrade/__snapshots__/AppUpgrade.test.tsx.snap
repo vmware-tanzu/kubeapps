@@ -9,20 +9,7 @@ exports[`loading spinner matches the snapshot 1`] = `
 exports[`renders the repo selection form if not introduced 1`] = `
 <SelectRepoForm
   chartName="bar"
-  checkChart={[MockFunction]}
   cluster="default"
-  fetchRepositories={[MockFunction]}
-  isFetching={false}
   namespace="default"
-  repo={Object {}}
-  repos={
-    Array [
-      Object {
-        "metadata": Object {
-          "name": "stable",
-        },
-      },
-    ]
-  }
 />
 `;

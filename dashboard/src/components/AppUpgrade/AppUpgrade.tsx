@@ -133,18 +133,7 @@ function AppUpgrade({
   }
 
   return (
-    <SelectRepoForm
-      isFetching={reposIsFetching}
-      cluster={cluster}
-      error={chartsError}
-      namespace={namespace}
-      repoError={repoError}
-      repo={repo}
-      repos={repos}
-      chartName={chart?.metadata?.name!}
-      checkChart={checkChart}
-      fetchRepositories={fetchRepositories}
-    />
+    <SelectRepoForm cluster={cluster} namespace={namespace} chartName={chart?.metadata?.name!} />
   );
 }
 

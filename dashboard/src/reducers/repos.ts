@@ -34,7 +34,7 @@ export interface IAppRepositoryState {
   redirectTo?: string;
 }
 
-const initialState: IAppRepositoryState = {
+export const initialState: IAppRepositoryState = {
   addingRepo: false,
   errors: {},
   form: {
