@@ -192,7 +192,7 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
   installOrUpgradeKubeapps bitnami/kubeapps
   # Due to a breaking change in PG chart 9.X, we need to delete the statefulset before upgrading
   # This can be removed after the release 2.0.0
-  kubectl delete statefulset -n kubeapps kubeapps-postgresql-master kubeapps-postgresql-slave
+  kubectl delete statefulset -n kubeapps --all
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
