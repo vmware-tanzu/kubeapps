@@ -1,22 +1,18 @@
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
-import { mount, shallow } from "enzyme";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import * as React from "react";
-import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
+import * as ReactRedux from "react-redux";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
 import { IOperatorInstanceUpgradeFormProps } from "./OperatorInstanceUpdateForm";
 
 const defaultProps: IOperatorInstanceUpgradeFormProps = {
   csvName: "foo",
   crdName: "foo-cluster",
-  isFetching: false,
-  cluster: "default",
+  cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
-  kubeappsCluster: "default",
   resourceName: "my-foo",
-  getResource: jest.fn(),
-  updateResource: jest.fn(),
-  push: jest.fn(),
-  errors: {},
 };
 
 const defaultResource = {
@@ -27,15 +23,53 @@ const defaultResource = {
   },
 } as any;
 
-it("displays an alert if rendered for an additional cluster", () => {
-  const props = { ...defaultProps, cluster: "other-cluster" };
-  const wrapper = shallow(<OperatorInstanceUpdateForm {...props} />);
-  expect(wrapper.find(OperatorNotSupported)).toExist();
+const defaultCRD = {
+  name: defaultProps.crdName,
+  kind: "Foo",
+  description: "useful description",
+} as any;
+
+const defaultCSV = {
+  metadata: {
+    annotations: {
+      "alm-examples": '[{"kind": "Foo", "apiVersion": "v1"}]',
+    },
+  },
+  spec: {
+    customresourcedefinitions: {
+      owned: [defaultCRD],
+    },
+  },
+} as any;
+
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.operators };
+beforeEach(() => {
+  actions.operators = {
+    ...actions.operators,
+    getCSV: jest.fn(),
+    getResource: jest.fn(),
+  };
+  const mockDispatch = jest.fn(res => res);
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
 });
 
-it("gets a resource", () => {
+afterEach(() => {
+  actions.operators = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
+
+it("gets resource and CSV", () => {
   const getResource = jest.fn();
-  shallow(<OperatorInstanceUpdateForm {...defaultProps} getResource={getResource} />);
+  const getCSV = jest.fn();
+  actions.operators.getResource = getResource;
+  actions.operators.getCSV = getCSV;
+  mountWrapper(defaultStore, <OperatorInstanceUpdateForm {...defaultProps} />);
+  expect(getCSV).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.namespace,
+    defaultProps.csvName,
+  );
   expect(getResource).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.namespace,
@@ -45,25 +79,39 @@ it("gets a resource", () => {
   );
 });
 
-it("set defaultValues", () => {
-  const wrapper = shallow(<OperatorInstanceUpdateForm {...defaultProps} />);
-  wrapper.setProps({ resource: defaultResource });
-  expect(wrapper.state()).toMatchObject({
-    defaultValues: "kind: Foo\napiVersion: v1\nmetadata:\n  name: my-foo\n",
+it("set default and deployed values", () => {
+  const wrapper = mountWrapper(
+    getStore({
+      operators: {
+        resource: defaultResource,
+        csv: defaultCSV,
+      },
+    }),
+    <OperatorInstanceUpdateForm {...defaultProps} />,
+  );
+  expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
+    defaultValues: "kind: Foo\napiVersion: v1\n",
+    deployedValues: "kind: Foo\napiVersion: v1\nmetadata:\n  name: my-foo\n",
   });
 });
 
 it("renders an error if the resource is not populated", () => {
-  const wrapper = shallow(<OperatorInstanceUpdateForm {...defaultProps} />);
-  expect(wrapper.find(NotFoundErrorPage)).toExist();
+  const wrapper = mountWrapper(defaultStore, <OperatorInstanceUpdateForm {...defaultProps} />);
+  expect(wrapper.find(Alert)).toIncludeText("Resource my-foo not found");
 });
 
 it("should submit the form", () => {
   const updateResource = jest.fn();
-  const wrapper = mount(
-    <OperatorInstanceUpdateForm {...defaultProps} updateResource={updateResource} />,
+  actions.operators.updateResource = updateResource;
+  const wrapper = mountWrapper(
+    getStore({
+      operators: {
+        resource: defaultResource,
+        csv: defaultCSV,
+      },
+    }),
+    <OperatorInstanceUpdateForm {...defaultProps} />,
   );
-  wrapper.setProps({ resource: defaultResource });
 
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });

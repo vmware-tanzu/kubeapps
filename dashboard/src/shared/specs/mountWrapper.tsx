@@ -1,3 +1,4 @@
+import { RouterState } from "connected-react-router";
 import { mount } from "enzyme";
 import { merge } from "lodash";
 import { cloneDeep } from "lodash";
@@ -8,14 +9,13 @@ import { IClustersState } from "reducers/cluster";
 import { operatorsInitialState } from "reducers/operators";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
-import { IAppRepository, ISecret, IStoreState } from "../../shared/types";
+import { IAppRepository, ISecret } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
 export const initialState = {
   apps: {},
   auth: {},
-  catalog: {},
   charts: {},
   config: { featureFlags: {}, kubeappsCluster: "default-cluster" },
   kube: {
@@ -37,7 +37,8 @@ export const initialState = {
     imagePullSecrets: [] as ISecret[],
   },
   operators: cloneDeep(operatorsInitialState),
-} as IStoreState;
+  router: {} as RouterState,
+} as any;
 
 export const defaultStore = mockStore(initialState);
 

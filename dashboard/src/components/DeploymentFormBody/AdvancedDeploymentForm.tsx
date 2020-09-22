@@ -7,27 +7,32 @@ import "ace-builds/src-noconflict/theme-xcode";
 export interface IAdvancedDeploymentForm {
   appValues?: string;
   handleValuesChange: (value: string) => void;
+  children?: JSX.Element;
 }
 
-class AdvancedDeploymentForm extends React.Component<IAdvancedDeploymentForm> {
-  public render() {
-    return (
-      <div className="margin-t-normal">
-        <AceEditor
-          mode="yaml"
-          theme="xcode"
-          width="100%"
-          onChange={this.props.handleValuesChange}
-          setOptions={{ showPrintMargin: false }}
-          editorProps={{ $blockScrolling: Infinity }}
-          value={this.props.appValues}
-          className="editor"
-          fontSize="15px"
-        />
-        {this.props.children}
-      </div>
-    );
-  }
+function AdvancedDeploymentForm(props: IAdvancedDeploymentForm) {
+  let timeout: NodeJS.Timeout;
+  const onChange = (value: string) => {
+    // Gather changes before submitting
+    clearTimeout(timeout);
+    timeout = setTimeout(() => props.handleValuesChange(value), 500);
+  };
+  return (
+    <div className="deployment-form-tabs-data">
+      <AceEditor
+        mode="yaml"
+        theme="xcode"
+        width="100%"
+        onChange={onChange}
+        setOptions={{ showPrintMargin: false }}
+        editorProps={{ $blockScrolling: Infinity }}
+        value={props.appValues}
+        className="editor"
+        fontSize="15px"
+      />
+      {props.children}
+    </div>
+  );
 }
 
 export default AdvancedDeploymentForm;

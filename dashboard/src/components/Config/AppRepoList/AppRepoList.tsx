@@ -1,262 +1,201 @@
-import * as React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
 
-import * as url from "shared/url";
-import { definedNamespaces } from "../../../shared/Namespace";
-import { IAppRepository, IAppRepositoryKey, IRBACRole, ISecret } from "../../../shared/types";
-import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
-import LoadingWrapper from "../../LoadingWrapper";
+import actions from "actions";
+import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
+import Alert from "components/js/Alert";
+import Table from "components/js/Table";
+import PageHeader from "components/PageHeader/PageHeader";
+import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { app } from "shared/url";
+import { IAppRepository, IStoreState } from "../../../shared/types";
+import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
-import { AppRepoListItem } from "./AppRepoListItem";
+import { AppRepoControl } from "./AppRepoControl";
+import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
+import "./AppRepoList.css";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
 
 export interface IAppRepoListProps {
-  errors: {
-    create?: Error;
-    delete?: Error;
-    fetch?: Error;
-    update?: Error;
-    validate?: Error;
-  };
-  repos: IAppRepository[];
-  repoSecrets: ISecret[];
-  fetchRepos: (namespace: string) => void;
-  deleteRepo: (name: string, namespace: string) => Promise<boolean>;
-  resyncRepo: (name: string, namespace: string) => void;
-  resyncAllRepos: (repos: IAppRepositoryKey[]) => void;
-  install: (
-    name: string,
-    namespace: string,
-    url: string,
-    authHeader: string,
-    customCA: string,
-    syncJobPodTemplate: string,
-    registrySecrets: string[],
-  ) => Promise<boolean>;
-  update: (
-    name: string,
-    namespace: string,
-    url: string,
-    authHeader: string,
-    customCA: string,
-    syncJobPodTemplate: string,
-    registrySecrets: string[],
-  ) => Promise<boolean>;
-  validating: boolean;
-  validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   cluster: string;
   namespace: string;
   kubeappsCluster: string;
   kubeappsNamespace: string;
-  displayReposPerNamespaceMsg: boolean;
-  isFetching: boolean;
-  imagePullSecrets: ISecret[];
-  fetchImagePullSecrets: (namespace: string) => void;
-  createDockerRegistrySecret: (
-    name: string,
-    user: string,
-    password: string,
-    email: string,
-    server: string,
-    namespace: string,
-  ) => Promise<boolean>;
 }
 
-const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
-  delete: [
-    {
-      apiGroup: "kubeapps.com",
-      resource: "apprepositories",
-      verbs: ["delete"],
-    },
-  ],
-  update: [
-    {
-      apiGroup: "kubeapps.com",
-      resource: "apprepositories",
-      verbs: ["get, update"],
-    },
-  ],
-  fetch: [
-    {
-      apiGroup: "kubeapps.com",
-      resource: "apprepositories",
-      verbs: ["list"],
-    },
-  ],
-};
+function AppRepoList({
+  cluster,
+  namespace,
+  kubeappsCluster,
+  kubeappsNamespace,
+}: IAppRepoListProps) {
+  const dispatch = useDispatch();
+  // We do not currently support app repositories on additional clusters.
+  const supportedCluster = cluster === kubeappsCluster;
 
-class AppRepoList extends React.Component<IAppRepoListProps> {
-  public componentDidMount() {
-    this.props.fetchRepos(this.props.namespace);
-    this.props.fetchImagePullSecrets(this.props.namespace);
-  }
-
-  public componentDidUpdate(prevProps: IAppRepoListProps) {
-    const {
-      cluster,
-      errors: { fetch },
-      fetchRepos,
-      fetchImagePullSecrets,
-      namespace,
-    } = this.props;
-    // refetch if namespace changes or if error removed due to location change
-    if (
-      prevProps.namespace !== namespace ||
-      prevProps.cluster !== cluster ||
-      (prevProps.errors.fetch && !fetch)
-    ) {
-      fetchRepos(namespace);
-      fetchImagePullSecrets(namespace);
+  useEffect(() => {
+    if (!supportedCluster || namespace === kubeappsNamespace) {
+      // If we are not in the supported cluster, only fetch global namespaces
+      // TODO(andresmgot): It will likely fail fetching secrets
+      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+    } else {
+      dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
     }
-  }
+  }, [dispatch, namespace, kubeappsNamespace, supportedCluster]);
 
-  public render() {
-    const {
-      errors,
-      repos,
-      install,
-      update,
-      cluster,
-      namespace,
-      kubeappsCluster,
-      kubeappsNamespace,
-      displayReposPerNamespaceMsg,
-      isFetching,
-      deleteRepo,
-      resyncRepo,
-      resyncAllRepos,
-      validate,
-      repoSecrets,
-      validating,
-      imagePullSecrets,
-      fetchImagePullSecrets,
-      createDockerRegistrySecret,
-    } = this.props;
-    const renderNamespace = namespace === definedNamespaces.all;
+  const { errors, isFetching, repos, repoSecrets } = useSelector(
+    (state: IStoreState) => state.repos,
+  );
 
-    // We do not currently support app repositories on additional clusters.
-    if (cluster !== kubeappsCluster) {
-      return (
-        <MessageAlert header="AppRepositories can be created on the default cluster only">
-          <div>
-            <p className="margin-v-normal">
-              Kubeapps' multi-cluster support currently enables creation of custom app repositories
-              on the cluster on which Kubeapps is installed.
-            </p>
-            <p className="margin-v-normal">
-              You cannot currently create an app repository on an additional cluster.
-              {kubeappsCluster && (
-                <>
-                  You can create an app repository with charts available for installation across
-                  clusters and namespaces on the{" "}
-                  <Link to={url.app.config.apprepositories(kubeappsCluster, definedNamespaces.all)}>
-                    cluster on which Kubeapps is installed
-                  </Link>
-                  , if you have the appropriate authorization.
-                </>
-              )}
-            </p>
-          </div>
-        </MessageAlert>
-      );
+  useEffect(() => {
+    if (repos) {
+      dispatch(actions.repos.fetchImagePullSecrets(namespace));
     }
+  }, [dispatch, repos, namespace]);
 
-    return (
-      <div className="app-repo-list">
-        <h1>App Repositories</h1>
-        {errors.fetch && this.renderError("fetch")}
-        {errors.delete && this.renderError("delete")}
-        {errors.update && this.renderError("update")}
-        {!errors.fetch && (
-          <>
-            <LoadingWrapper loaded={!isFetching}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Repo</th>
-                    {renderNamespace && <th>Namespace</th>}
-                    <th>URL</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {repos.map(repo => (
-                    <AppRepoListItem
-                      key={repo.metadata.uid}
-                      deleteRepo={deleteRepo}
-                      resyncRepo={resyncRepo}
-                      repo={repo}
-                      renderNamespace={renderNamespace}
-                      cluster={cluster}
-                      namespace={namespace}
-                      kubeappsNamespace={kubeappsNamespace}
-                      errors={errors}
-                      validating={validating}
-                      validate={validate}
-                      secret={repoSecrets.find(secret =>
-                        secret.metadata.ownerReferences?.some(
-                          ownerRef => ownerRef.name === repo.metadata.name,
-                        ),
-                      )}
-                      update={update}
-                      imagePullSecrets={imagePullSecrets}
-                      fetchImagePullSecrets={fetchImagePullSecrets}
-                      createDockerRegistrySecret={createDockerRegistrySecret}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </LoadingWrapper>
-            <AppRepoAddButton
-              errors={errors}
-              onSubmit={install}
-              validate={validate}
-              namespace={namespace}
-              kubeappsNamespace={kubeappsNamespace}
-              validating={validating}
-              primary={true}
-              imagePullSecrets={imagePullSecrets}
-              fetchImagePullSecrets={fetchImagePullSecrets}
-              createDockerRegistrySecret={createDockerRegistrySecret}
-            />
-            <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
-          </>
-        )}
-        {displayReposPerNamespaceMsg && (
-          <MessageAlert header="Looking for other app repositories?">
-            <div>
-              <p className="margin-v-normal">
-                Administrators can view App Repositories across all namespaces using the Namespace
-                selector at the top and clicking on "All Namespaces".
-              </p>
-              <p className="margin-v-normal">
-                Kubeapps now enables you to create App Repositories in your own namespace that will
-                be available in your own namespace and, in the future, optionally available in other
-                namespaces to which you have access. You can read more information in the{" "}
-                <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md">
-                  Private App Repository docs
-                </a>
-                .
-              </p>
-            </div>
-          </MessageAlert>
-        )}
-      </div>
-    );
-  }
+  const globalRepos: IAppRepository[] = [];
+  const namespaceRepos: IAppRepository[] = [];
+  repos.forEach(repo => {
+    repo.metadata.namespace === kubeappsNamespace
+      ? globalRepos.push(repo)
+      : namespaceRepos.push(repo);
+  });
 
-  private renderError(action: string) {
-    return (
-      <ErrorSelector
-        error={this.props.errors[action]}
-        defaultRequiredRBACRoles={RequiredRBACRoles}
-        action={action}
-        namespace={this.props.namespace}
-        resource="App Repositories"
+  const tableColumns = [
+    { accessor: "name", Header: "Name" },
+    { accessor: "url", Header: "URL" },
+    { accessor: "accessLevel", Header: "Access Level" },
+    { accessor: "namespace", Header: "Namespace" },
+    { accessor: "actions", Header: "Actions" },
+  ];
+  const getTableData = (targetRepos: IAppRepository[], disableControls: boolean) => {
+    return targetRepos.map(repo => {
+      return {
+        name: (
+          <Link
+            to={
+              app.catalog(cluster, namespace) +
+              filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
+            }
+          >
+            {repo.metadata.name}
+          </Link>
+        ),
+        url: repo.spec?.url,
+        accessLevel: repo.spec?.auth?.header ? "Private" : "Public",
+        namespace: repo.metadata.namespace,
+        actions: disableControls ? (
+          <AppRepoDisabledControl />
+        ) : (
+          <AppRepoControl
+            repo={repo}
+            secret={repoSecrets.find(secret =>
+              secret.metadata.ownerReferences?.some(
+                ownerRef => ownerRef.name === repo.metadata.name,
+              ),
+            )}
+            namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
+          />
+        ),
+      };
+    });
+  };
+  return (
+    <>
+      <PageHeader
+        title="Application Repositories"
+        buttons={[
+          <AppRepoAddButton
+            key="add-repo-button"
+            namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
+          />,
+          <AppRepoRefreshAllButton key="refresh-all-button" />,
+        ]}
       />
-    );
-  }
+      {!supportedCluster ? (
+        <Alert theme="warning">
+          <h5>App Repositories are available on the default cluster only</h5>
+          <p>
+            Currently the multi-cluster support in Kubeapps supports AppRepositories on the default
+            cluster only.
+          </p>
+          <p>
+            The catalog of charts from AppRepositories on the default cluster which are available
+            for all namespaces will be avaialble on additional clusters also, but you can not
+            currently create a private AppRepository for a particular namespace of an additional
+            cluster. We may in the future support AppRepositories on additional clusters but for now
+            you will need to switch back to your default cluster.
+          </p>
+        </Alert>
+      ) : (
+        <div className="page-content">
+          {errors.fetch && (
+            <Alert theme="danger">
+              An error occurred while fetching repositories: {errors.fetch.message}
+            </Alert>
+          )}
+          {errors.delete && (
+            <Alert theme="danger">
+              An error occurred while deleting the repository: {errors.delete.message}
+            </Alert>
+          )}
+          {!errors.fetch && (
+            <>
+              <LoadingWrapper loaded={!isFetching}>
+                <h3>Global Repositories</h3>
+                <p>
+                  Global repositories are available for all Kubeapps users.{" "}
+                  {kubeappsCluster &&
+                    (kubeappsCluster !== cluster || namespace !== kubeappsNamespace) && (
+                      <>
+                        Administrators can go to the{" "}
+                        <Link to={app.config.apprepositories(kubeappsCluster, kubeappsNamespace)}>
+                          {kubeappsNamespace}
+                        </Link>{" "}
+                        namespace to manage them.
+                      </>
+                    )}
+                </p>
+                {globalRepos.length ? (
+                  <Table
+                    valign="center"
+                    columns={tableColumns}
+                    data={getTableData(globalRepos, namespace !== kubeappsNamespace)}
+                  />
+                ) : (
+                  <p>No global repositories found.</p>
+                )}
+                {namespace !== kubeappsNamespace && (
+                  <>
+                    <h3>Namespace Repositories: {namespace}</h3>
+                    <p>
+                      Namespaced Repositories are available in the {namespace} namespace only. To
+                      switch to a different one, use the "Current Context" selector in the top
+                      navigation.
+                    </p>
+                    {namespaceRepos.length ? (
+                      <Table
+                        valign="center"
+                        columns={tableColumns}
+                        data={getTableData(namespaceRepos, false)}
+                      />
+                    ) : (
+                      <p>
+                        The current namespace doesn't have any repositories. Click on the button
+                        "Add app repository" above to create the first one.
+                      </p>
+                    )}
+                  </>
+                )}
+              </LoadingWrapper>
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
 }
 
 export default AppRepoList;

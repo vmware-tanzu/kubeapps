@@ -1,27 +1,20 @@
-import { shallow } from "enzyme";
-import context from "jest-plugin-context";
 import * as React from "react";
+import * as ReactRedux from "react-redux";
 
-import itBehavesLike from "../../shared/specs";
-import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
-import ChartHeader from "./ChartHeader";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IChartState, IChartVersion } from "../../shared/types";
 import ChartMaintainers from "./ChartMaintainers";
-import ChartReadme from "./ChartReadme";
-import ChartVersionsList from "./ChartVersionsList";
 import ChartView, { IChartViewProps } from "./ChartView";
 
 const props: IChartViewProps = {
   chartID: "testrepo/test",
   chartNamespace: "kubeapps-namespace",
-  fetchChartVersionsAndSelectVersion: jest.fn(),
-  getChartReadme: jest.fn(),
   isFetching: false,
   namespace: "test",
   cluster: "default",
-  resetChartVersion: jest.fn(),
-  selectChartVersion: jest.fn(),
-  selected: {} as IChartState["selected"],
+  selected: { versions: [] } as IChartState["selected"],
   version: undefined,
 };
 
@@ -47,105 +40,100 @@ const defaultSelected: IChartState["selected"] = {
   versions: [testVersion],
 };
 
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.kube };
+beforeEach(() => {
+  actions.charts = {
+    ...actions.charts,
+    fetchChartVersionsAndSelectVersion: jest.fn(),
+    resetChartVersion: jest.fn(),
+    selectChartVersion: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.kube = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
+
 it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
   const spy = jest.fn();
-  shallow(<ChartView {...props} fetchChartVersionsAndSelectVersion={spy} />);
-  expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, props.chartID, undefined);
+  actions.charts.fetchChartVersionsAndSelectVersion = spy;
+  mountWrapper(defaultStore, <ChartView {...props} />);
+  expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, "testrepo/test", undefined);
 });
 
 describe("when receiving new props", () => {
   it("finds and selects the chart version when version changes", () => {
     const versions = [{ attributes: { version: "1.2.3" } }] as IChartVersion[];
     const spy = jest.fn();
-    const wrapper = shallow(
-      <ChartView {...props} selectChartVersion={spy} selected={{ versions }} />,
-    );
-    wrapper.setProps({ version: "1.2.3" });
+    actions.charts = {
+      ...actions.charts,
+      selectChartVersion: spy,
+    };
+    mountWrapper(defaultStore, <ChartView {...props} selected={{ versions }} version={"1.2.3"} />);
     expect(spy).toHaveBeenCalledWith(versions[0]);
-  });
-
-  it("does not trigger selectChartVersion if version does not change", () => {
-    const spy = jest.fn();
-    const wrapper = shallow(<ChartView {...props} selectChartVersion={spy} version="1.2.3" />);
-    wrapper.setProps({ isFetching: true });
-    expect(spy).toHaveBeenCalledTimes(0);
-  });
-
-  it("throws an error if the chart version doesn't exist", () => {
-    const versions = [{ attributes: { version: "1.2.3" } }] as IChartVersion[];
-    const spy = jest.fn();
-    const wrapper = shallow(
-      <ChartView {...props} selectChartVersion={spy} selected={{ versions }} />,
-    );
-    expect(() => {
-      wrapper.setProps({ version: "1.0.0" });
-    }).toThrow("could not find chart");
   });
 });
 
 it("triggers resetChartVersion when unmounting", () => {
   const spy = jest.fn();
-  const wrapper = shallow(<ChartView {...props} resetChartVersion={spy} />);
+  actions.charts = {
+    ...actions.charts,
+    resetChartVersion: spy,
+  };
+  const wrapper = mountWrapper(defaultStore, <ChartView {...props} />);
   wrapper.unmount();
   expect(spy).toHaveBeenCalled();
 });
 
-context("when fetching is false but no chart is available", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: ChartView,
-    props: {
-      ...props,
-      isFetching: false,
-    },
-  });
+it("behaves as a loading component when fetching is false but no chart is available", () => {
+  const wrapper = mountWrapper(defaultStore, <ChartView {...props} isFetching={false} />);
+  expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
-context("when fetching is true and chart is available", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: ChartView,
-    props: {
-      ...props,
-      isFetching: true,
-      selected: { version: {} as IChartVersion },
-    },
-  });
-});
+it("behaves as a loading component when fetching is true and chart is available", () => {
+  const versions = [{ attributes: { version: "1.2.3" } }] as IChartVersion[];
 
-describe("subcomponents", () => {
-  const wrapper = shallow(
-    <ChartView {...props} selected={{ ...defaultSelected, version: testVersion }} />,
+  const wrapper = mountWrapper(
+    defaultStore,
+    <ChartView {...props} isFetching={true} selected={{ versions, version: versions[0] }} />,
   );
-
-  for (const component of [ChartHeader, ChartReadme, ChartVersionsList]) {
-    it(`renders ${component.name}`, () => {
-      expect(wrapper.find(component).exists()).toBe(true);
-    });
-  }
+  expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
 it("does not render the app version, home and sources sections if not set", () => {
   const version = { ...testVersion, attributes: { ...testVersion.attributes } };
   delete version.attributes.app_version;
-  const wrapper = shallow(<ChartView {...props} selected={{ versions: [], version }} />);
-  expect(wrapper.contains(<h2>App Version</h2>)).toBe(false);
-  expect(wrapper.contains(<h2>Home</h2>)).toBe(false);
-  expect(wrapper.contains(<h2>Related</h2>)).toBe(false);
-  expect(wrapper.contains(<h2>Maintainers</h2>)).toBe(false);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <ChartView {...props} selected={{ versions: [], version }} />,
+  );
+  expect(wrapper.contains("App Version")).toBe(false);
+  expect(wrapper.contains("Home")).toBe(false);
+  expect(wrapper.contains("Related")).toBe(false);
+  expect(wrapper.contains("Maintainers")).toBe(false);
 });
 
 it("renders the app version when set", () => {
-  const wrapper = shallow(
+  const wrapper = mountWrapper(
+    defaultStore,
     <ChartView {...props} selected={{ ...defaultSelected, version: testVersion }} />,
   );
-  expect(wrapper.contains(<h2>App Version</h2>)).toBe(true);
+  expect(wrapper.contains("App Version")).toBe(true);
   expect(wrapper.contains(<div>{testVersion.attributes.app_version}</div>)).toBe(true);
 });
 
 it("renders the home link when set", () => {
   const v = testVersion as IChartVersion;
   v.relationships.chart.data.home = "https://example.com";
-  const wrapper = shallow(<ChartView {...props} selected={{ ...defaultSelected, version: v }} />);
-  expect(wrapper.contains(<h2>Home</h2>)).toBe(true);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
+  );
+  expect(wrapper.contains("Home")).toBe(true);
   expect(
     wrapper.contains(
       <a href="https://example.com" target="_blank" rel="noopener noreferrer">
@@ -165,19 +153,19 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
   }> = [
     {
       expected: true,
-      name: "stable Helm repo",
+      name: "the stable Helm repo uses github IDs",
       maintainers: [{ name: "Bitnami" }],
       repoURL: "https://kubernetes-charts.storage.googleapis.com",
     },
     {
       expected: true,
-      name: "incubator Helm repo",
+      name: "the incubator Helm repo uses github IDs",
       maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
       repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
     },
     {
       expected: false,
-      name: "random Helm repo",
+      name: "a random Helm repo does not use github IDs as names",
       maintainers: [{ name: "Bitnami" }],
       repoURL: "https://examplerepo.com",
     },
@@ -187,7 +175,8 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
     it(`for ${t.name}`, () => {
       v.relationships.chart.data.maintainers = [{ name: "John Smith" }];
       v.relationships.chart.data.repo.url = t.repoURL;
-      const wrapper = shallow(
+      const wrapper = mountWrapper(
+        defaultStore,
         <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
       );
       const chartMaintainers = wrapper.find(ChartMaintainers);
@@ -199,8 +188,11 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
 it("renders the sources links when set", () => {
   const v = testVersion as IChartVersion;
   v.relationships.chart.data.sources = ["https://example.com", "https://example2.com"];
-  const wrapper = shallow(<ChartView {...props} selected={{ ...defaultSelected, version: v }} />);
-  expect(wrapper.contains(<h2>Related</h2>)).toBe(true);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
+  );
+  expect(wrapper.contains("Related")).toBe(true);
   expect(
     wrapper.contains(
       <a href="https://example.com" target="_blank" rel="noopener noreferrer">
@@ -219,17 +211,11 @@ it("renders the sources links when set", () => {
 
 describe("renders errors", () => {
   it("renders a not found error if it exists", () => {
-    const wrapper = shallow(
-      <ChartView {...props} selected={{ ...defaultSelected, error: new NotFoundError() }} />,
+    const wrapper = mountWrapper(
+      defaultStore,
+      <ChartView {...props} selected={{ ...defaultSelected, error: new Error("Boom!") }} />,
     );
-    expect(wrapper.find(ErrorSelector)).toExist();
-    expect(wrapper.find(ErrorSelector).html()).toContain(`Chart ${props.chartID} not found`);
-  });
-  it("renders a generic error if it exists", () => {
-    const wrapper = shallow(
-      <ChartView {...props} selected={{ ...defaultSelected, error: new Error() }} />,
-    );
-    expect(wrapper.find(ErrorSelector)).toExist();
-    expect(wrapper.find(ErrorSelector).html()).toContain("Sorry! Something went wrong");
+    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(Alert).text()).toContain("Unable to fetch chart: Boom!");
   });
 });

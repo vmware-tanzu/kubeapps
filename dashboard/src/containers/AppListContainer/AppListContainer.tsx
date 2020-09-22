@@ -20,8 +20,6 @@ function mapStateToProps(
     customResources: operators.resources,
     isFetchingResources: operators.isFetching,
     csvs: operators.csvs,
-    featureFlags: config.featureFlags,
-    UI: config.featureFlags.ui,
     appVersion: config.appVersion,
   };
 }

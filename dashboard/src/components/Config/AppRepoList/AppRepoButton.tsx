@@ -1,119 +1,38 @@
-import * as React from "react";
-import Modal from "react-modal";
-import { Redirect } from "react-router";
+import React, { useState } from "react";
 
-import { IAppRepository, IRBACRole, ISecret } from "../../../shared/types";
-import ErrorSelector from "../../ErrorAlert/ErrorSelector";
-import "./AppRepo.css";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import Modal from "components/js/Modal/Modal";
+import { useDispatch } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { IAppRepository, ISecret, IStoreState } from "../../../shared/types";
+import "./AppRepoButton.css";
 import { AppRepoForm } from "./AppRepoForm";
 
-const RequiredRBACRoles: IRBACRole[] = [
-  {
-    apiGroup: "kubeapps.com",
-    resource: "apprepositories",
-    verbs: ["create"],
-  },
-  {
-    apiGroup: "",
-    resource: "secrets",
-    verbs: ["create"],
-  },
-];
-
 interface IAppRepoAddButtonProps {
-  errors: {
-    create?: Error;
-    delete?: Error;
-    fetch?: Error;
-    update?: Error;
-    validate?: Error;
-  };
-  onSubmit: (
-    name: string,
-    namespace: string,
-    url: string,
-    authHeader: string,
-    customCA: string,
-    syncJobPodTemplate: string,
-    registrySecrets: string[],
-  ) => Promise<boolean>;
-  validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
-  validating: boolean;
-  redirectTo?: string;
   namespace: string;
   kubeappsNamespace: string;
-  imagePullSecrets: ISecret[];
-  fetchImagePullSecrets: (namespace: string) => void;
-  createDockerRegistrySecret: (
-    name: string,
-    user: string,
-    password: string,
-    email: string,
-    server: string,
-    namespace: string,
-  ) => Promise<boolean>;
   text?: string;
   primary?: boolean;
   repo?: IAppRepository;
   secret?: ISecret;
 }
-interface IAppRepoAddButtonState {
-  lastSubmittedName: string;
-  modalIsOpen: boolean;
-}
 
-export class AppRepoAddButton extends React.Component<
-  IAppRepoAddButtonProps,
-  IAppRepoAddButtonState
-> {
-  public state = {
-    lastSubmittedName: "",
-    modalIsOpen: false,
-  };
-
-  public render() {
-    const { redirectTo, text, primary, namespace, kubeappsNamespace } = this.props;
-    return (
-      <React.Fragment>
-        <button className={`button ${primary ? "button-primary" : ""}`} onClick={this.openModal}>
-          {text || "Add App Repository"}
-        </button>
-        <Modal
-          isOpen={this.state.modalIsOpen}
-          onRequestClose={this.closeModal}
-          contentLabel="Modal"
-        >
-          {this.props.errors.create && (
-            <ErrorSelector
-              error={this.props.errors.create}
-              defaultRequiredRBACRoles={{ create: RequiredRBACRoles }}
-              action="create"
-              namespace={this.props.namespace}
-              resource={`App Repository ${this.state.lastSubmittedName}`}
-            />
-          )}
-          <AppRepoForm
-            onSubmit={this.onSubmit}
-            validate={this.props.validate}
-            onAfterInstall={this.closeModal}
-            validating={this.props.validating}
-            validationError={this.props.errors.validate}
-            repo={this.props.repo}
-            secret={this.props.secret}
-            imagePullSecrets={this.props.imagePullSecrets}
-            namespace={namespace}
-            kubeappsNamespace={kubeappsNamespace}
-            fetchImagePullSecrets={this.props.fetchImagePullSecrets}
-            createDockerRegistrySecret={this.props.createDockerRegistrySecret}
-          />
-        </Modal>
-        {redirectTo && <Redirect to={redirectTo} />}
-      </React.Fragment>
-    );
-  }
-
-  private closeModal = async () => this.setState({ modalIsOpen: false });
-  private onSubmit = (
+export function AppRepoAddButton({
+  text,
+  namespace,
+  kubeappsNamespace,
+  repo,
+  secret,
+  primary = true,
+}: IAppRepoAddButtonProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const [modalIsOpen, setModalOpen] = useState(false);
+  const openModal = () => setModalOpen(true);
+  const closeModal = () => setModalOpen(false);
+  const onSubmit = (
     name: string,
     url: string,
     authHeader: string,
@@ -121,17 +40,57 @@ export class AppRepoAddButton extends React.Component<
     syncJobPodTemplate: string,
     registrySecrets: string[],
   ) => {
-    // Store last submitted name to show it in an error if needed
-    this.setState({ lastSubmittedName: name });
-    return this.props.onSubmit(
-      name,
-      this.props.namespace,
-      url,
-      authHeader,
-      customCA,
-      syncJobPodTemplate,
-      registrySecrets,
-    );
+    if (repo) {
+      return dispatch(
+        actions.repos.updateRepo(
+          name,
+          namespace,
+          url,
+          authHeader,
+          customCA,
+          syncJobPodTemplate,
+          registrySecrets,
+        ),
+      );
+    } else {
+      return dispatch(
+        actions.repos.installRepo(
+          name,
+          namespace,
+          url,
+          authHeader,
+          customCA,
+          syncJobPodTemplate,
+          registrySecrets,
+        ),
+      );
+    }
   };
-  private openModal = async () => this.setState({ modalIsOpen: true });
+
+  return (
+    <>
+      <CdsButton onClick={openModal} action={primary ? "solid" : "outline"}>
+        {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
+        {text || "Add App Repository"}
+      </CdsButton>
+      <Modal
+        staticBackdrop={false}
+        showModal={modalIsOpen}
+        onModalClose={closeModal}
+        modalSize="lg"
+      >
+        <div className="modal-close" onClick={closeModal}>
+          <CdsIcon shape="times-circle" size="md" solid={true} />
+        </div>
+        <AppRepoForm
+          onSubmit={onSubmit}
+          onAfterInstall={closeModal}
+          repo={repo}
+          secret={secret}
+          namespace={namespace}
+          kubeappsNamespace={kubeappsNamespace}
+        />
+      </Modal>
+    </>
+  );
 }

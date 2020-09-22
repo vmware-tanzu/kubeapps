@@ -2,7 +2,7 @@ import * as React from "react";
 import ResourceRef from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { ISecret } from "shared/types";
-import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum.v2";
+import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
 import AppSecrets from "./AppSecrets";
 
 const defaultProps = {

@@ -5,9 +5,9 @@ import { IAppOverview, IClusterServiceVersion, IResource } from "../../shared/ty
 import * as url from "../../shared/url";
 import { escapeRegExp } from "../../shared/utils";
 import Alert from "../js/Alert";
-import "./AppList.v2.css";
-import AppListItem from "./AppListItem.v2";
-import CustomResourceListItem from "./CustomResourceListItem.v2";
+import "./AppList.css";
+import AppListItem from "./AppListItem";
+import CustomResourceListItem from "./CustomResourceListItem";
 
 export interface IAppListProps {
   appList: IAppOverview[] | undefined;

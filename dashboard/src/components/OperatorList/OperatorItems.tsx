@@ -1,4 +1,4 @@
-import InfoCard from "components/InfoCard/InfoCard.v2";
+import InfoCard from "components/InfoCard/InfoCard";
 import React from "react";
 import { Operators } from "shared/Operators";
 import { IResource } from "shared/types";

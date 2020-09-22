@@ -1,10 +1,9 @@
-.SearchFilter {
-  position: relative;
-  align-self: flex-end;
+header .search-box input[type="text"] {
+  color: var(--clr-color-neutral-700);
+  margin-left: 0.3rem;
 }
 
-.SearchFilter > svg {
-  position: absolute;
-  top: 30%;
-  left: 0.5em;
+header .search-box form {
+  border-radius: 0.15rem;
+  margin-left: 1rem;
 }

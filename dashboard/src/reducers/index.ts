@@ -5,7 +5,6 @@ import { connectRouter } from "connected-react-router";
 import { IStoreState } from "../shared/types";
 import appsReducer from "./apps";
 import authReducer from "./auth";
-import catalogReducer from "./catalog";
 import chartsReducer from "./charts";
 import clusterReducer from "./cluster";
 import configReducer from "./config";
@@ -18,7 +17,6 @@ const rootReducer = (history: History) =>
     router: connectRouter(history),
     apps: appsReducer,
     auth: authReducer,
-    catalog: catalogReducer,
     charts: chartsReducer,
     config: configReducer,
     kube: kubeReducer,

@@ -21,9 +21,6 @@ import CapabiliyLevel, { AUTO_PILOT, BASIC_INSTALL } from "./OperatorCapabilityL
 ].forEach(t => {
   it(t.name, () => {
     const wrapper = shallow(<CapabiliyLevel level={t.level} />);
-    const satisfiedLevels = wrapper
-      .find(".capabilityLevelIcon")
-      .filterWhere(s => s.prop("stroke") === "#1598CB");
-    expect(t.expectedLevels).toEqual(satisfiedLevels.length);
+    expect(wrapper.find(".color-icon-info").length).toEqual(t.expectedLevels);
   });
 });

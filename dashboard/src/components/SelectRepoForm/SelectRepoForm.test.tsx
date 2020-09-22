@@ -2,7 +2,7 @@ import Alert from "components/js/Alert";
 import * as React from "react";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IAppRepository } from "shared/types";
-import SelectRepoForm from "./SelectRepoForm.v2";
+import SelectRepoForm from "./SelectRepoForm";
 
 const defaultProps = {
   isFetching: false,

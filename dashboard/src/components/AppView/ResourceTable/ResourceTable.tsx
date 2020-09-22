@@ -1,85 +1,112 @@
-import * as React from "react";
+import React, { useEffect, useMemo } from "react";
+import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import Table from "components/js/Table";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import { useDispatch, useSelector } from "react-redux";
 import ResourceRef from "shared/ResourceRef";
-import ResourceItemContainer from "../../../containers/ResourceItemContainer";
-import { DaemonSetColumns } from "./ResourceItem/DaemonSetItem/DaemonSetItem";
-import { DeploymentColumns } from "./ResourceItem/DeploymentItem/DeploymentItem";
-import OtherResourceItem, {
-  OtherResourceColumns,
-} from "./ResourceItem/OtherResourceItem/OtherResourceItem";
-import { SecretColumns } from "./ResourceItem/SecretItem/SecretItem";
-import { ServiceColumns } from "./ResourceItem/ServiceItem/ServiceItem";
-import { StatefulSetColumns } from "./ResourceItem/StatefulSetItem/StatefulSetItem";
+import { flattenResources } from "shared/utils";
+import { DaemonSetColumns } from "./ResourceData/DaemonSet";
+import { DeploymentColumns } from "./ResourceData/Deployment";
+import { OtherResourceColumns } from "./ResourceData/OtherResource";
+import { SecretColumns } from "./ResourceData/Secret";
+import { ServiceColumns } from "./ResourceData/Service";
+import { StatefulSetColumns } from "./ResourceData/StatefulSet";
 
 interface IResourceTableProps {
-  title: string;
+  id: string;
+  title?: string;
   resourceRefs: ResourceRef[];
-  requestOtherResources?: boolean;
+  avoidEmptyResource?: boolean;
 }
 
-class ResourceTable extends React.Component<IResourceTableProps> {
-  public render() {
-    const { resourceRefs } = this.props;
-    let section: JSX.Element | null = null;
-    if (resourceRefs.length > 0) {
-      section = (
-        <React.Fragment>
-          <h6>{this.props.title}</h6>
-          <table>
-            <thead>
-              <tr className="flex">{this.getColumns()}</tr>
-            </thead>
-            <tbody>
-              {resourceRefs.map(r => {
-                switch (r.kind) {
-                  case "Deployment":
-                  case "StatefulSet":
-                  case "DaemonSet":
-                  case "Service":
-                  case "Secret":
-                    return <ResourceItemContainer key={r.getResourceURL()} resourceRef={r} />;
-                  default:
-                    return this.props.requestOtherResources ? (
-                      <ResourceItemContainer
-                        key={r.getResourceURL()}
-                        resourceRef={r}
-                        avoidEmptyResouce={true}
-                      />
-                    ) : (
-                      // We may not know the plural of the resource so we don't get the full resource URL
-                      <tr key={`otherResources/${r.kind}/${r.name}`} className="flex">
-                        <OtherResourceItem
-                          key={`${r.kind}/${r.namespace}/${r.name}`}
-                          resource={r}
-                        />
-                      </tr>
-                    );
-                }
-              })}
-            </tbody>
-          </table>
-        </React.Fragment>
-      );
-    }
-    return section;
+function getColumns(r: ResourceRef) {
+  switch (r.kind) {
+    case "Deployment":
+      return DeploymentColumns;
+    case "StatefulSet":
+      return StatefulSetColumns;
+    case "DaemonSet":
+      return DaemonSetColumns;
+    case "Service":
+      return ServiceColumns;
+    case "Secret":
+      return SecretColumns;
+    default:
+      return OtherResourceColumns;
   }
+}
 
-  private getColumns() {
-    switch (this.props.resourceRefs[0].kind) {
-      case "Deployment":
-        return <DeploymentColumns />;
-      case "StatefulSet":
-        return <StatefulSetColumns />;
-      case "DaemonSet":
-        return <DaemonSetColumns />;
-      case "Service":
-        return <ServiceColumns />;
-      case "Secret":
-        return <SecretColumns />;
-      default:
-        return <OtherResourceColumns />;
-    }
+function getData(
+  name: string,
+  accessors: string[],
+  getters: Array<(r: any) => string | JSX.Element | JSX.Element[]>,
+  resource?: IKubeItem<IResource | ISecret>,
+) {
+  const data = {
+    name,
+  };
+  if (!resource || resource.isFetching) {
+    data[accessors[1]] = <LoadingWrapper small={true} />;
+    return data;
   }
+  if (resource.error) {
+    data[accessors[1]] = (
+      <>
+        <CdsIcon shape="alert-triangle" />
+        Error: {resource.error.message}
+      </>
+    );
+    return data;
+  }
+  if (resource.item) {
+    accessors.forEach((accessor, index) => {
+      data[accessor] = getters[index](resource.item);
+    });
+    return data;
+  }
+  data[accessors[1]] = <span>Unkown</span>;
+  return;
+}
+
+function ResourceTable({ id, title, resourceRefs }: IResourceTableProps) {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    resourceRefs.forEach(r => dispatch(actions.kube.getAndWatchResource(r)));
+    return function cleanup() {
+      resourceRefs.forEach(r => dispatch(actions.kube.closeWatchResource(r)));
+    };
+  }, [resourceRefs, dispatch]);
+  const resources = useSelector((state: IStoreState) =>
+    flattenResources(resourceRefs, state.kube.items),
+  );
+
+  const columns = useMemo(() => getColumns(resourceRefs[0]), [resourceRefs]);
+  const data = useMemo(
+    () =>
+      resources.map((resource, index) =>
+        getData(
+          resourceRefs[index].name,
+          columns.map(c => c.accessor),
+          columns.map(c => c.getter),
+          resource,
+        ),
+      ),
+    [columns, resourceRefs, resources],
+  );
+
+  let section: JSX.Element | null = null;
+  if (resourceRefs.length > 0) {
+    section = (
+      <section aria-labelledby={`${id}-table`}>
+        {title && <h6 id={`${id}-table`}>{title}</h6>}
+        <Table columns={columns} data={data} />
+      </section>
+    );
+  }
+  return section;
 }
 
 export default ResourceTable;

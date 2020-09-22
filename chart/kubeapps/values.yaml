@@ -606,7 +606,3 @@ authProxy:
 ## Feature flags
 ## These are used to switch on in development features or new features which are ready to be released.
 featureFlags:
-  invalidateCache: true
-  operators: false
-  # ui is a WIP feature for the migration to Clarity design system.
-  ui: hex

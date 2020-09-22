@@ -11,33 +11,34 @@ export interface IStringParamProps {
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
 
-class BooleanParam extends React.Component<IStringParamProps> {
-  public render() {
-    const { id, param, label } = this.props;
-    return (
-      <label htmlFor={id}>
-        <div className="margin-b-normal">
-          <span>{label}</span>
-          <Switch
-            id={id}
-            onChange={this.handleChange}
-            checked={!!param.value}
-            className="react-switch"
-          />
-        </div>
-        {param.description && <span className="description">{param.description}</span>}
-      </label>
-    );
-  }
-
+function BooleanParam({ id, param, label, handleBasicFormParamChange }: IStringParamProps) {
   // handleChange transform the event received by the Switch component to a checkbox event
-  public handleChange = (checked: boolean) => {
-    const { param } = this.props;
+  const handleChange = (checked: boolean) => {
     const event = {
       currentTarget: { value: String(checked), type: "checkbox", checked },
     } as React.FormEvent<HTMLInputElement>;
-    this.props.handleBasicFormParamChange(param)(event);
+    handleBasicFormParamChange(param)(event);
   };
+
+  return (
+    <label htmlFor={id}>
+      <div>
+        <Switch
+          height={20}
+          width={40}
+          id={id}
+          onChange={handleChange}
+          checked={!!param.value}
+          className="react-switch"
+          onColor="#5aa220"
+          checkedIcon={false}
+          uncheckedIcon={false}
+        />
+        <span className="deployment-form-label">{label}</span>
+      </div>
+      {param.description && <span className="description">{param.description}</span>}
+    </label>
+  );
 }
 
 export default BooleanParam;

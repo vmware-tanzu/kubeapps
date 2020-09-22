@@ -1,193 +1,109 @@
-import { mount } from "enzyme";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import Modal from "components/js/Modal/Modal";
 import * as React from "react";
-import Modal from "react-modal";
-import { ConflictError, UnprocessableEntity } from "../../../shared/types";
-import { wait } from "../../../shared/utils";
-import ErrorSelector from "../../ErrorAlert/ErrorSelector";
+import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IAppRepository } from "shared/types";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoForm } from "./AppRepoForm";
 
+// Mocking AppRepoForm to easily test this component standalone
+jest.mock("./AppRepoForm", () => {
+  return {
+    AppRepoForm: () => <div />,
+  };
+});
+
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.kube };
+beforeEach(() => {
+  actions.repos = {
+    ...actions.repos,
+    updateRepo: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.kube = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
+
 const defaultProps = {
-  onSubmit: jest.fn(),
-  validate: jest.fn().mockReturnValue(true),
-  namespace: "kubeapps",
+  namespace: "default",
   kubeappsNamespace: "kubeapps",
-  validating: false,
-  errors: {},
-  imagePullSecrets: [],
-  fetchImagePullSecrets: jest.fn(),
-  createDockerRegistrySecret: jest.fn(),
 };
 
 it("should open a modal with the repository form", () => {
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
-  Modal.setAppElement(document.createElement("div"));
-  wrapper.setState({ modalIsOpen: true });
-  expect(wrapper).toMatchSnapshot();
+  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  act(() => {
+    (wrapper.find(CdsButton).prop("onClick") as any)();
+  });
+  wrapper.update();
+  expect(wrapper.find(Modal).prop("showModal")).toBe(true);
 });
 
-it("should install a repository with a custom auth header", async () => {
-  const install = jest.fn().mockReturnValue(true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  Modal.setAppElement(document.createElement("div"));
-  wrapper.setState({ modalIsOpen: true });
-  wrapper.update();
-  wrapper.find(AppRepoForm).setState({
-    modalIsOpen: true,
-    authMethod: "custom",
-    name: "my-repo",
-    url: "http://foo.bar",
-    authHeader: "foo",
-    customCA: "bar",
-  });
-
-  const button = wrapper.find(AppRepoForm).find(".button-primary");
-  button.simulate("submit");
-
-  // Wait for the Modal to be closed
-  await wait(1);
-  expect(install).toBeCalledWith("my-repo", "kubeapps", "http://foo.bar", "foo", "bar", "", []);
-  expect(wrapper.state("modalIsOpen")).toBe(false);
-});
-
-it("should install a repository with basic auth", async () => {
-  const install = jest.fn().mockReturnValue(true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  Modal.setAppElement(document.createElement("div"));
-  wrapper.setState({ modalIsOpen: true });
-  wrapper.update();
-  wrapper.find(AppRepoForm).setState({
-    modalIsOpen: true,
-    authMethod: "basic",
-    name: "my-repo",
-    url: "http://foo.bar",
-    user: "foo",
-    password: "bar",
-  });
-
-  const button = wrapper.find(AppRepoForm).find(".button-primary");
-  button.simulate("submit");
-
-  // Wait for the Modal to be closed
-  await wait(1);
-  expect(install).toBeCalledWith(
-    "my-repo",
-    "kubeapps",
-    "http://foo.bar",
-    "Basic Zm9vOmJhcg==",
-    "",
-    "",
-    [],
+it("should render a custom text", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoAddButton {...defaultProps} text="other text" />,
   );
-  expect(wrapper.state("modalIsOpen")).toBe(false);
+  expect(wrapper.find(CdsButton)).toIncludeText("other text");
 });
 
-it("should install a repository with a bearer token", async () => {
-  const install = jest.fn().mockReturnValue(true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  Modal.setAppElement(document.createElement("div"));
-  wrapper.setState({ modalIsOpen: true });
-  wrapper.update();
-  wrapper.find(AppRepoForm).setState({
-    modalIsOpen: true,
-    authMethod: "bearer",
-    name: "my-repo",
-    url: "http://foo.bar",
-    token: "foobar",
-  });
+it("should render a primary button", () => {
+  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  expect(wrapper.find(CdsButton).prop("action")).toBe("solid");
+  expect(wrapper.find(CdsIcon)).toExist();
+});
 
-  const button = wrapper.find(AppRepoForm).find(".button-primary");
-  button.simulate("submit");
-
-  // Wait for the Modal to be closed
-  await wait(1);
-  expect(install).toBeCalledWith(
-    "my-repo",
-    "kubeapps",
-    "http://foo.bar",
-    "Bearer foobar",
-    "",
-    "",
-    [],
+it("should render a secondary button", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoAddButton {...defaultProps} primary={false} />,
   );
-  expect(wrapper.state("modalIsOpen")).toBe(false);
+  expect(wrapper.find(CdsButton).prop("action")).toBe("outline");
+  expect(wrapper.find(CdsIcon)).not.toExist();
 });
 
-it("should install a repository with a podSpecTemplate", async () => {
-  const install = jest.fn().mockReturnValue(true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  Modal.setAppElement(document.createElement("div"));
-  wrapper.setState({ modalIsOpen: true });
+it("calls installRepo when submitting", () => {
+  const installRepo = jest.fn();
+  actions.repos = {
+    ...actions.repos,
+    installRepo,
+  };
+
+  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  act(() => {
+    (wrapper.find(CdsButton).prop("onClick") as any)();
+  });
   wrapper.update();
-  wrapper.find(AppRepoForm).setState({
-    modalIsOpen: true,
-    authMethod: "bearer",
-    name: "my-repo",
-    url: "http://foo.bar",
-    syncJobPodTemplate: "foo: bar",
-  });
+  (wrapper.find(AppRepoForm).prop("onSubmit") as any)();
+  expect(installRepo).toHaveBeenCalled();
+});
 
-  const button = wrapper.find(AppRepoForm).find(".button-primary");
-  button.simulate("submit");
+it("calls updateRepo when submitting and there is a repo available", () => {
+  const updateRepo = jest.fn();
+  actions.repos = {
+    ...actions.repos,
+    updateRepo,
+  };
 
-  // Wait for the Modal to be closed
-  await wait(1);
-  expect(install).toBeCalledWith(
-    "my-repo",
-    "kubeapps",
-    "http://foo.bar",
-    "Bearer ",
-    "",
-    "foo: bar",
-    [],
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoAddButton
+      {...defaultProps}
+      repo={{ metadata: { name: "foo" }, spec: {} } as IAppRepository}
+    />,
   );
-  expect(wrapper.state("modalIsOpen")).toBe(false);
-});
-
-describe("render error", () => {
-  it("renders a conflict error", async () => {
-    const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
-    Modal.setAppElement(document.createElement("div"));
-    wrapper.setState({ modalIsOpen: true });
-    wrapper.update();
-    wrapper.find(AppRepoForm).setState({ name: "my-repo" });
-
-    const button = wrapper.find(AppRepoForm).find(".button-primary");
-    button.simulate("submit");
-    wrapper.setProps({ errors: { create: new ConflictError("already exists!") } });
-
-    await wait(1);
-    expect(wrapper.find(ErrorSelector).text()).toContain(
-      "App Repository my-repo already exists, try a different name.",
-    );
-    // Now changing the name should not change the error message
-    wrapper.setState({ name: "my-app-2" });
-    wrapper.update();
-    expect(wrapper.find(ErrorSelector).text()).toContain(
-      "App Repository my-repo already exists, try a different name.",
-    );
+  act(() => {
+    (wrapper.find(CdsButton).prop("onClick") as any)();
   });
-
-  it("renders an 'unprocessable entity' error", async () => {
-    const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
-    Modal.setAppElement(document.createElement("div"));
-    wrapper.setState({ modalIsOpen: true });
-    wrapper.update();
-    wrapper.find(AppRepoForm).setState({ name: "my-repo" });
-
-    const button = wrapper.find(AppRepoForm).find(".button-primary");
-    button.simulate("submit");
-    wrapper.setProps({ errors: { create: new UnprocessableEntity("cannot process this!") } });
-
-    await wait(1);
-    expect(wrapper.find(ErrorSelector).text()).toContain(
-      "Something went wrong processing App Repository my-repo",
-    );
-    expect(wrapper.find(ErrorSelector).text()).toContain("cannot process this!");
-  });
-});
-
-it("should modify the default button text", () => {
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} text="foo" />);
-  expect(wrapper.text()).toContain("foo");
+  wrapper.update();
+  (wrapper.find(AppRepoForm).prop("onSubmit") as any)();
+  expect(updateRepo).toHaveBeenCalled();
 });

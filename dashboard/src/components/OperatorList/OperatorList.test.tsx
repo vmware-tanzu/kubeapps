@@ -1,29 +1,40 @@
-import { shallow } from "enzyme";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import SearchFilter from "components/SearchFilter/SearchFilter";
 import * as React from "react";
-import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IPackageManifest } from "../../shared/types";
-import { CardGrid } from "../Card";
-import { ErrorSelector } from "../ErrorAlert";
-import InfoCard from "../InfoCard";
-import LoadingWrapper from "../LoadingWrapper";
+import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IPackageManifest } from "../../shared/types";
+import InfoCard from "../InfoCard/InfoCard";
 import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLevel";
 import OLMNotFound from "./OLMNotFound";
-import OperatorList, { IOperatorListProps } from "./OperatorList";
-import OperatorNotSupported from "./OperatorsNotSupported";
+import OperatorItems from "./OperatorItems";
+import OperatorList, { filterNames, IOperatorListProps } from "./OperatorList";
+
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.operators };
+beforeEach(() => {
+  actions.operators = {
+    ...actions.operators,
+    checkOLMInstalled: jest.fn(),
+    getOperators: jest.fn(),
+    getCSVs: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.operators = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
 
 const defaultProps: IOperatorListProps = {
-  isFetching: false,
-  checkOLMInstalled: jest.fn(),
-  isOLMInstalled: false,
-  operators: [],
-  cluster: "default",
+  cluster: initialState.config.kubeappsCluster,
   namespace: "default",
-  kubeappsCluster: "default",
-  getOperators: jest.fn(),
-  getCSVs: jest.fn(),
-  csvs: [],
-  filter: { q: "" },
-  pushSearchFilter: jest.fn(),
+  filter: {},
 };
 
 const sampleOperator = {
@@ -51,127 +62,92 @@ const sampleOperator = {
   },
 } as IPackageManifest;
 
-const sampleCSV = {
+const sampleSubscription = {
   metadata: { name: "kubeapps-operator" },
-  spec: {
-    icon: [{}],
-    provider: {
-      name: "kubeapps",
-    },
-    customresourcedefinitions: {
-      owned: [
-        {
-          name: "foo.kubeapps.com",
-          version: "v1alpha1",
-          kind: "Foo",
-          resources: [{ kind: "Deployment" }],
-        },
-      ],
-    },
-  },
+  spec: { name: "foo" },
 } as any;
 
-itBehavesLike("aLoadingComponent", {
-  component: OperatorList,
-  props: { ...defaultProps, isFetching: true },
+it("renders a LoadingWrapper if fetching", () => {
+  const wrapper = mountWrapper(
+    getStore({ operators: { isFetcing: true } }),
+    <OperatorList {...defaultProps} />,
+  );
+  expect(wrapper.find(LoadingWrapper)).toExist();
 });
 
 it("call the OLM check and render the NotFound message if not found", () => {
   const checkOLMInstalled = jest.fn();
-  const wrapper = shallow(<OperatorList {...defaultProps} checkOLMInstalled={checkOLMInstalled} />);
+  actions.operators.checkOLMInstalled = checkOLMInstalled;
+  const wrapper = mountWrapper(defaultStore, <OperatorList {...defaultProps} />);
   expect(checkOLMInstalled).toHaveBeenCalled();
   expect(wrapper.find(OLMNotFound)).toExist();
 });
 
-it("displays an alert if rendered for an additional cluster", () => {
-  const props = { ...defaultProps, cluster: "other-cluster" };
-  const wrapper = shallow(<OperatorList {...props} />);
-  expect(wrapper.find(OperatorNotSupported)).toExist();
+it("renders an error", () => {
+  const wrapper = mountWrapper(
+    getStore({
+      operators: { isOLMInstalled: true, errors: { operator: { fetch: new Error("Forbidden!") } } },
+    }),
+    <OperatorList {...defaultProps} />,
+  );
+  const error = wrapper.find(Alert).filterWhere(a => a.prop("theme") === "danger");
+  expect(error).toExist();
+  expect(error).toIncludeText("Forbidden!");
 });
 
-it("call the OLM check and render the a Forbidden message if it could do the check", () => {
-  const checkOLMInstalled = jest.fn();
-  const wrapper = shallow(<OperatorList {...defaultProps} checkOLMInstalled={checkOLMInstalled} />);
-  wrapper.setProps({ error: new ForbiddenError("nope") });
-  expect(checkOLMInstalled).toHaveBeenCalled();
-  expect(wrapper.find(ErrorSelector)).toExist();
-  expect(wrapper.find(OLMNotFound)).not.toExist();
-});
-
-it("re-request operators if the namespace changes", () => {
+it("request operators if the OLM is installed", () => {
   const getOperators = jest.fn();
-  const getCSVs = jest.fn();
-  const wrapper = shallow(
-    <OperatorList {...defaultProps} getOperators={getOperators} getCSVs={getCSVs} />,
+  actions.operators.getOperators = getOperators;
+  const wrapper = mountWrapper(
+    getStore({ operators: { isOLMInstalled: true } }),
+    <OperatorList {...defaultProps} />,
   );
   wrapper.setProps({ namespace: "other" });
-  expect(getOperators).toHaveBeenCalledTimes(2);
-  expect(getCSVs).toHaveBeenCalledTimes(2);
+  expect(getOperators).toHaveBeenCalled();
 });
 
-it("renders an error if exists", () => {
-  const wrapper = shallow(
-    <OperatorList {...defaultProps} isOLMInstalled={true} error={new Error("Boom!")} />,
+it("render the operator list", () => {
+  const wrapper = mountWrapper(
+    getStore({ operators: { isOLMInstalled: true, operators: [sampleOperator] } }),
+    <OperatorList {...defaultProps} />,
   );
-  expect(wrapper.find(ErrorSelector)).toExist();
-  expect(
-    wrapper
-      .find(ErrorSelector)
-      .dive()
-      .dive()
-      .text(),
-  ).toMatch("Boom!");
-});
-
-it("skips the error if the OLM is not installed", () => {
-  const wrapper = shallow(
-    <OperatorList
-      {...defaultProps}
-      isOLMInstalled={false}
-      error={new Error("There are no operators!")}
-    />,
-  );
-  expect(wrapper.find(ErrorSelector)).not.toExist();
-  expect(wrapper.find(OLMNotFound)).toExist();
+  expect(wrapper.find(OLMNotFound)).not.toExist();
+  expect(wrapper.find(InfoCard)).toExist();
 });
 
 it("render the operator list with installed operators", () => {
-  const wrapper = shallow(
-    <OperatorList
-      {...defaultProps}
-      isOLMInstalled={true}
-      operators={[sampleOperator]}
-      csvs={[sampleCSV]}
-    />,
+  const wrapper = mountWrapper(
+    getStore({
+      operators: {
+        isOLMInstalled: true,
+        operators: [sampleOperator],
+        subscriptions: [sampleSubscription],
+      },
+    }),
+    <OperatorList {...defaultProps} />,
   );
   expect(wrapper.find(OLMNotFound)).not.toExist();
   expect(wrapper.find(InfoCard)).toExist();
   // The section "Available operators" should be empty since all the ops are installed
   expect(wrapper.find("h3").filterWhere(c => c.text() === "Installed")).toExist();
-  expect(
-    wrapper
-      .find(CardGrid)
-      .last()
-      .children(),
-  ).not.toExist();
-  expect(wrapper).toMatchSnapshot();
+  const operatorLists = wrapper.find(OperatorItems);
+  expect(operatorLists).toHaveLength(2);
+  expect(operatorLists.at(0)).toHaveProp("operators", [sampleOperator]);
+  expect(operatorLists.at(1)).toHaveProp("operators", []);
 });
 
 it("render the operator list without installed operators", () => {
-  const wrapper = shallow(
-    <OperatorList {...defaultProps} isOLMInstalled={true} operators={[sampleOperator]} csvs={[]} />,
+  const wrapper = mountWrapper(
+    getStore({ operators: { isOLMInstalled: true, operators: [sampleOperator] } }),
+    <OperatorList {...defaultProps} />,
   );
   expect(wrapper.find(OLMNotFound)).not.toExist();
   expect(wrapper.find(InfoCard)).toExist();
   // The section "Available operators" should not be empty since the operator is not installed
   expect(wrapper.find("h3").filterWhere(c => c.text() === "Installed")).not.toExist();
-  expect(
-    wrapper
-      .find(CardGrid)
-      .last()
-      .children(),
-  ).toExist();
-  expect(wrapper).toMatchSnapshot();
+  const operatorLists = wrapper.find(OperatorItems);
+  expect(operatorLists).toHaveLength(1);
+  expect(operatorLists.at(0)).toHaveProp("operators", [sampleOperator]);
 });
 
 describe("filter operators", () => {
@@ -198,83 +174,66 @@ describe("filter operators", () => {
   } as any;
 
   it("setting the filter in the state", () => {
-    const wrapper = shallow(
-      <OperatorList
-        {...defaultProps}
-        isOLMInstalled={true}
-        operators={[sampleOperator, sampleOperator2]}
-        csvs={[]}
-      />,
+    const wrapper = mountWrapper(
+      getStore({
+        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+      }),
+      <OperatorList {...defaultProps} />,
     );
     expect(wrapper.find(InfoCard).length).toBe(2);
-    wrapper.setState({ filter: "foo" });
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    act(() => {
+      (wrapper.find(SearchFilter).prop("onChange") as any)("foo");
+    });
+    wrapper.update();
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
   });
 
   it("setting the filter in the props", () => {
-    const wrapper = shallow(
-      <OperatorList
-        {...defaultProps}
-        isOLMInstalled={true}
-        operators={[sampleOperator, sampleOperator2]}
-        csvs={[]}
-      />,
+    const wrapper = mountWrapper(
+      getStore({
+        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+      }),
+      <OperatorList {...defaultProps} filter={{ [filterNames.SEARCH]: "foo" }} />,
     );
-    expect(wrapper.find(InfoCard).length).toBe(2);
-    wrapper.setProps({ filter: { q: "foo" } });
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
   });
 
   it("show a message if the filter doesn't match any operator", () => {
-    const wrapper = shallow(
-      <OperatorList
-        {...defaultProps}
-        isOLMInstalled={true}
-        operators={[sampleOperator, sampleOperator2]}
-        csvs={[]}
-      />,
+    const wrapper = mountWrapper(
+      getStore({
+        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+      }),
+      <OperatorList {...defaultProps} filter={{ [filterNames.SEARCH]: "nope" }} />,
     );
-    expect(wrapper.find(InfoCard).length).toBe(2);
-    wrapper.setProps({ filter: { q: "nope" } });
     expect(wrapper.find(InfoCard)).not.toExist();
-    expect(
-      wrapper
-        .find(LoadingWrapper)
-        .dive()
-        .text(),
-    ).toMatch("No Operator found");
-    expect(wrapper.find(".horizontal-column")).toExist();
+    expect(wrapper).toIncludeText("No operator matches the current filter");
   });
 
   it("filters by category", () => {
-    const wrapper = shallow(<OperatorList {...defaultProps} isOLMInstalled={true} csvs={[]} />);
-    wrapper.setProps({ operators: [sampleOperator, sampleOperator2] });
-    const column = wrapper.find(".horizontal-column").text();
-    expect(column).toContain("security");
-    expect(column).toContain("database");
-    expect(column).toContain("other");
-    expect(wrapper.find(InfoCard).length).toBe(2);
-
-    // Filter category "security"
-    wrapper.setState({
-      filterCategories: {
-        security: true,
-      },
-    });
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    const wrapper = mountWrapper(
+      getStore({
+        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+      }),
+      <OperatorList {...defaultProps} filter={{ [filterNames.CATEGORY]: "security" }} />,
+    );
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
   });
 
   it("filters by capability", () => {
-    const wrapper = shallow(<OperatorList {...defaultProps} isOLMInstalled={true} csvs={[]} />);
-    wrapper.setProps({ operators: [sampleOperator, sampleOperator2] });
-    expect(wrapper.find(InfoCard).length).toBe(2);
-
-    // Filter by capability "Basic Install"
-    wrapper.setState({
-      filterCapabilities: {
-        [BASIC_INSTALL]: true,
-      },
-    });
-    expect(wrapper.find(InfoCard).length).toBe(1);
+    const wrapper = mountWrapper(
+      getStore({
+        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+      }),
+      <OperatorList {...defaultProps} filter={{ [filterNames.CAPABILITY]: BASIC_INSTALL }} />,
+    );
+    const operator = wrapper.find(InfoCard);
+    expect(operator.length).toBe(1);
+    expect(operator.prop("title")).toBe(sampleOperator2.metadata.name);
   });
 });

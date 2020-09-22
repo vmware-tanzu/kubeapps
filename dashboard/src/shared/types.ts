@@ -2,7 +2,6 @@ import { RouterState } from "connected-react-router";
 import * as jsonSchema from "json-schema";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
-import { IServiceCatalogState } from "../reducers/catalog";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
@@ -357,7 +356,6 @@ export interface IAppState {
 
 export interface IStoreState {
   router: RouterState;
-  catalog: IServiceCatalogState;
   apps: IAppState;
   auth: IAuthState;
   charts: IChartState;

@@ -1,8 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import LoadingWrapper, { LoaderType } from ".";
-import LoadingSpinner from "../LoadingSpinner";
-import LoadingPlaceholder from "./LoadingPlaceholder";
+import Spinner from "../js/Spinner";
+import LoadingWrapper from "./LoadingWrapper";
 
 let props = {} as any;
 
@@ -28,14 +27,26 @@ describe("when loaded is false", () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it("renders a spinner", () => {
-    const wrapper = renderComponent(props);
-    expect(wrapper.find(LoadingSpinner)).toExist();
-  });
-
   it("does not render any children", () => {
     const wrapper = renderComponent(props);
     expect(wrapper.find(ChildrenComponent)).not.toExist();
+  });
+
+  it("renders a Spinner", () => {
+    const wrapper = renderComponent(props);
+    expect(wrapper.find(Spinner)).toExist();
+  });
+
+  it("renders a mid size Spinner", () => {
+    const wrapper = renderComponent({ ...props, medium: true });
+    expect(wrapper.find(Spinner)).toExist();
+    expect(wrapper.find(Spinner).prop("medium")).toBe(true);
+  });
+
+  it("renders a small Spinner", () => {
+    const wrapper = renderComponent({ ...props, small: true });
+    expect(wrapper.find(Spinner)).toExist();
+    expect(wrapper.find(Spinner).prop("small")).toBe(true);
   });
 });
 
@@ -51,21 +62,8 @@ describe("when loaded is true", () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it("does not renders a spinner", () => {
-    const wrapper = renderComponent(props);
-    expect(wrapper.find(LoadingSpinner)).not.toExist();
-  });
-
   it("renders it wrapped component", () => {
     const wrapper = renderComponent(props);
     expect(wrapper.find(ChildrenComponent)).toExist();
-  });
-});
-
-describe("loader types", () => {
-  it("renders the LoadingPlaceholder type when specified", () => {
-    const wrapper = renderComponent({ type: LoaderType.Placeholder });
-    expect(wrapper).toMatchSnapshot();
-    expect(wrapper.find(LoadingPlaceholder)).toExist();
   });
 });

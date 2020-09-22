@@ -1,7 +1,8 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-
 import { Link } from "react-router-dom";
+
+import { CardBlock } from "../js/Card";
 import InfoCard from "./InfoCard";
 
 it("should render a Card", () => {
@@ -33,9 +34,7 @@ it("should generate a dummy link if it's not provided", () => {
     />,
   );
 
-  const links = wrapper.find(Link);
-  expect(links.length).toBe(2);
-  links.forEach(l => expect(l.props()).toMatchObject({ to: "#" }));
+  expect(wrapper.find(Link).prop("to")).toBe("#");
 });
 
 it("should avoid tags if they are not defined", () => {
@@ -70,7 +69,7 @@ it("should parse JSX elements in the tags", () => {
 
 it("should parse a description as text", () => {
   const wrapper = shallow(<InfoCard title="foo" info="foobar" description="a description" />);
-  expect(wrapper.find(".ListItem__content").text()).toContain("a description");
+  expect(wrapper.find(CardBlock).html()).toContain("a description");
 });
 
 it("should parse a description as JSX.Element", () => {
@@ -79,9 +78,17 @@ it("should parse a description as JSX.Element", () => {
   expect(wrapper.find(".description").text()).toBe("This is a description");
 });
 
-it("should render a banner if exists", () => {
-  const wrapper = shallow(<InfoCard title="foo" info="foobar" banner="this is important!" />);
-  const banner = wrapper.find(".ListItem__banner");
-  expect(banner).toExist();
-  expect(banner.text()).toBe("this is important!");
+it("should parse an icon", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" />);
+  expect(wrapper.find("img")).toExist();
+});
+
+it("should parse a background img", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" bgIcon="img.png" />);
+  expect(wrapper.find(".bg-img").find("img")).toExist();
+});
+
+it("should parse a tooltip component", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" tooltip={<div id="foo" />} />);
+  expect(wrapper.find(".info-card-header").find("#foo")).toExist();
 });

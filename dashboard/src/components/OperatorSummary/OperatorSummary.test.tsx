@@ -1,5 +1,5 @@
 import Alert from "components/js/Alert";
-import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { cloneDeep } from "lodash";
 import * as React from "react";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";

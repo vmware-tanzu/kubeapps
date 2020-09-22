@@ -1,309 +1,244 @@
-import { RouterAction } from "connected-react-router";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import AppNotes from "components/AppView/AppNotes";
+import AppSecrets from "components/AppView/AppSecrets";
+import { IAppViewResourceRefs } from "components/AppView/AppView";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
+import OperatorSummary from "components/OperatorSummary/OperatorSummary";
+import OperatorHeader from "components/OperatorView/OperatorHeader";
+import { push } from "connected-react-router";
 import * as yaml from "js-yaml";
-import * as React from "react";
-
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
-import AccessURLTable from "../../containers/AccessURLTableContainer";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import { fromCRD } from "../../shared/ResourceRef";
-import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
+import { IClusterServiceVersionCRD, IResource, IStoreState } from "../../shared/types";
 import { app } from "../../shared/url";
-import AppNotes from "../AppView/AppNotes";
-import AppValues from "../AppView/AppValues";
-import { IPartialAppViewState } from "../AppView/AppView";
-import ResourceTable from "../AppView/ResourceTable";
-import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
-import ConfirmDialog from "../ConfirmDialog";
-import { ErrorSelector } from "../ErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
+import AccessURLTable from "../AppView/AccessURLTable/AccessURLTable";
+import AppValues from "../AppView/AppValues/AppValues";
+import ResourceTabs from "../AppView/ResourceTabs";
+import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 
 export interface IOperatorInstanceProps {
-  isFetching: boolean;
   cluster: string;
   namespace: string;
-  kubeappsCluster: string;
   csvName: string;
   crdName: string;
   instanceName: string;
-  getResource: (
-    cluster: string,
-    namespace: string,
-    csvName: string,
-    crdName: string,
-    resourceName: string,
-  ) => Promise<void>;
-  deleteResource: (
-    cluster: string,
-    namespace: string,
-    crdName: string,
-    resource: IResource,
-  ) => Promise<boolean>;
-  push: (location: string) => RouterAction;
-  errors: {
-    fetch?: Error;
-    delete?: Error;
-    update?: Error;
-  };
-  resource?: IResource;
-  csv?: IClusterServiceVersion;
 }
 
-export interface IOperatorInstanceState {
-  modalIsOpen: boolean;
-  crd?: IClusterServiceVersionCRD;
-  resources?: IPartialAppViewState;
+function parseResource(
+  cluster: string,
+  namespace: string,
+  resource: IResource,
+  crd: IClusterServiceVersionCRD,
+) {
+  let result: IAppViewResourceRefs = {
+    ingresses: [],
+    deployments: [],
+    statefulsets: [],
+    daemonsets: [],
+    otherResources: [],
+    services: [],
+    secrets: [],
+  };
+  const ownerRef = { name: resource.metadata.name, kind: resource.kind };
+  if (crd.resources) {
+    crd.resources?.forEach(r => {
+      switch (r.kind) {
+        case "Deployment":
+          result.deployments.push(fromCRD(r, cluster, namespace, ownerRef));
+          break;
+        case "StatefulSet":
+          result.statefulsets.push(fromCRD(r, cluster, namespace, ownerRef));
+          break;
+        case "DaemonSet":
+          result.daemonsets.push(fromCRD(r, cluster, namespace, ownerRef));
+          break;
+        case "Service":
+          result.services.push(fromCRD(r, cluster, namespace, ownerRef));
+          break;
+        case "Ingress":
+          result.ingresses.push(fromCRD(r, cluster, namespace, ownerRef));
+          break;
+        case "Secret":
+          result.secrets.push(fromCRD(r, cluster, namespace, ownerRef));
+          break;
+        default:
+          result.otherResources.push(fromCRD(r, cluster, namespace, ownerRef));
+      }
+    });
+  } else {
+    const emptyCRD = { kind: "", name: "", version: "" };
+    // The CRD definition doesn't define any service so pull everything
+    result = {
+      deployments: [fromCRD({ ...emptyCRD, kind: "Deployment" }, cluster, namespace, ownerRef)],
+      ingresses: [fromCRD({ ...emptyCRD, kind: "Ingress" }, cluster, namespace, ownerRef)],
+      statefulsets: [fromCRD({ ...emptyCRD, kind: "StatefulSet" }, cluster, namespace, ownerRef)],
+      daemonsets: [fromCRD({ ...emptyCRD, kind: "DaemonSet" }, cluster, namespace, ownerRef)],
+      services: [fromCRD({ ...emptyCRD, kind: "Service" }, cluster, namespace, ownerRef)],
+      secrets: [fromCRD({ ...emptyCRD, kind: "Secret" }, cluster, namespace, ownerRef)],
+      otherResources: [],
+    };
+  }
+  return result;
 }
 
-class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperatorInstanceState> {
-  public state: IOperatorInstanceState = {
-    modalIsOpen: false,
-  };
+function OperatorInstance({
+  cluster,
+  namespace,
+  csvName,
+  crdName,
+  instanceName,
+}: IOperatorInstanceProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const [crd, setCRD] = useState(undefined as IClusterServiceVersionCRD | undefined);
+  const [icon, setIcon] = useState(placeholder);
+  const [deleting, setDeleting] = useState(false);
+  const [resourceRefs, setResourceRefs] = useState({
+    ingresses: [],
+    deployments: [],
+    statefulsets: [],
+    daemonsets: [],
+    otherResources: [],
+    services: [],
+    secrets: [],
+  } as IAppViewResourceRefs);
+  const {
+    services,
+    ingresses,
+    deployments,
+    statefulsets,
+    daemonsets,
+    secrets,
+    otherResources,
+  } = resourceRefs;
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const closeModal = () => setModalIsOpen(false);
+  const openModal = () => setModalIsOpen(true);
 
-  public componentDidMount() {
-    const { cluster, csvName, crdName, instanceName, namespace, getResource } = this.props;
-    getResource(cluster, namespace, csvName, crdName, instanceName);
-  }
-
-  public componentDidUpdate(prevProps: IOperatorInstanceProps) {
-    const {
-      cluster,
-      csvName,
-      crdName,
-      instanceName,
-      namespace,
-      getResource,
-      resource,
-      csv,
-    } = this.props;
-    if (prevProps.namespace !== namespace) {
-      getResource(cluster, namespace, csvName, crdName, instanceName);
-      return;
-    }
-    let crd = this.state.crd;
-    if (csv !== prevProps.csv || resource !== prevProps.resource) {
-      if (csv && resource) {
-        crd = csv.spec.customresourcedefinitions.owned.find(c => c.kind === resource.kind);
-        this.setState({ crd });
-      }
-      if (crd && resource) {
-        let result: IPartialAppViewState = {
-          ingressRefs: [],
-          deployRefs: [],
-          statefulSetRefs: [],
-          daemonSetRefs: [],
-          otherResources: [],
-          serviceRefs: [],
-          secretRefs: [],
-        };
-        const ownerRef = { name: resource.metadata.name, kind: resource.kind };
-        if (crd.resources) {
-          crd.resources?.forEach(r => {
-            switch (r.kind) {
-              case "Deployment":
-                result.deployRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
-                break;
-              case "StatefulSet":
-                result.statefulSetRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
-                break;
-              case "DaemonSet":
-                result.daemonSetRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
-                break;
-              case "Service":
-                result.serviceRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
-                break;
-              case "Ingress":
-                result.ingressRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
-                break;
-              case "Secret":
-                result.secretRefs.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
-                break;
-              default:
-                result.otherResources.push(fromCRD(r, cluster, this.props.namespace, ownerRef));
-            }
-          });
-        } else {
-          const emptyCRD = { kind: "", name: "", version: "" };
-          // The CRD definition doesn't define any service so pull everything
-          result = {
-            deployRefs: [
-              fromCRD({ ...emptyCRD, kind: "Deployment" }, cluster, this.props.namespace, ownerRef),
-            ],
-            ingressRefs: [
-              fromCRD({ ...emptyCRD, kind: "Ingress" }, cluster, this.props.namespace, ownerRef),
-            ],
-            statefulSetRefs: [
-              fromCRD(
-                { ...emptyCRD, kind: "StatefulSet" },
-                cluster,
-                this.props.namespace,
-                ownerRef,
-              ),
-            ],
-            daemonSetRefs: [
-              fromCRD({ ...emptyCRD, kind: "DaemonSet" }, cluster, this.props.namespace, ownerRef),
-            ],
-            serviceRefs: [
-              fromCRD({ ...emptyCRD, kind: "Service" }, cluster, this.props.namespace, ownerRef),
-            ],
-            secretRefs: [
-              fromCRD({ ...emptyCRD, kind: "Secret" }, cluster, this.props.namespace, ownerRef),
-            ],
-            otherResources: [],
-          };
-        }
-        this.setState({ resources: result });
-      }
-    }
-  }
-
-  public render() {
-    const {
+  const {
+    operators: {
       isFetching,
-      errors,
-      resource,
       csv,
-      instanceName,
-      csvName,
-      crdName,
-      cluster,
-      namespace,
-      kubeappsCluster,
-      push,
-    } = this.props;
-    if (cluster !== kubeappsCluster) {
-      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
+      resource,
+      errors: { resource: errors },
+    },
+  } = useSelector((state: IStoreState) => state);
+
+  useEffect(() => {
+    dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, instanceName));
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+  }, [dispatch, cluster, namespace, csvName, crdName, instanceName]);
+
+  useEffect(() => {
+    if (csv) {
+      parseCSV(csv, crdName, setIcon, setCRD);
     }
-    const { resources } = this.state;
-    const onUpdateClick = () =>
-      push(app.operatorInstances.update(cluster, namespace, csvName, crdName, instanceName));
-    const error = errors.fetch || errors.delete || errors.update;
-    return (
-      <section className="AppView padding-b-big">
-        <main>
-          <LoadingWrapper loaded={!isFetching}>
-            {error && (
-              <ErrorSelector
-                error={error}
-                action="get"
-                resource={`Operator intance ${instanceName}`}
-                namespace={namespace}
-              />
-            )}
-            {resource && (
-              <div className="row collapse-b-tablet">
-                <div className="col-3">{csv && this.renderCSVInfo(csv)}</div>
-                <div className="col-9">
-                  <div className="row padding-t-bigger">
-                    <div className="col-4">
-                      {resources && (
-                        <ApplicationStatus
-                          deployRefs={resources.deployRefs}
-                          statefulsetRefs={resources.statefulSetRefs}
-                          daemonsetRefs={resources.daemonSetRefs}
-                        />
-                      )}
-                    </div>
-                    <div className="col-8 text-r">
-                      <button className="button" onClick={onUpdateClick}>
-                        Update
-                      </button>
-                      <button className="button button-danger" onClick={this.openModal}>
-                        Delete
-                      </button>
-                      <ConfirmDialog
-                        onConfirm={this.handleDeleteClick}
-                        modalIsOpen={this.state.modalIsOpen}
-                        loading={this.props.isFetching}
-                        closeModal={this.closeModal}
-                      />
-                    </div>
-                  </div>
-                  {resources && (
-                    <>
-                      <AccessURLTable
-                        serviceRefs={resources.serviceRefs}
-                        ingressRefs={resources.ingressRefs}
-                      />
-                      {resource.status && (
-                        <AppNotes title="Status" notes={yaml.safeDump(resource.status)} />
-                      )}
-                      <ResourceTable resourceRefs={resources.secretRefs} title="Secrets" />
-                      <ResourceTable resourceRefs={resources.deployRefs} title="Deployments" />
-                      <ResourceTable
-                        resourceRefs={resources.statefulSetRefs}
-                        title="StatefulSets"
-                      />
-                      <ResourceTable resourceRefs={resources.daemonSetRefs} title="DaemonSets" />
-                      <ResourceTable resourceRefs={resources.serviceRefs} title="Services" />
-                      <ResourceTable
-                        resourceRefs={resources.otherResources}
-                        title="Other Resources"
-                        requestOtherResources={true}
-                      />
-                      {resource.spec && <AppValues values={yaml.safeDump(resource.spec)} />}
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-          </LoadingWrapper>
-        </main>
-      </section>
+  }, [csv, crdName]);
+
+  useEffect(() => {
+    if (crd && resource) {
+      setResourceRefs(parseResource(cluster, namespace, resource, crd));
+    }
+  }, [crd, resource, cluster, namespace]);
+
+  const onUpdateClick = () =>
+    dispatch(
+      push(app.operatorInstances.update(cluster, namespace, csvName, crdName, instanceName)),
     );
-  }
-
-  private renderCSVInfo = (csv: IClusterServiceVersion) => {
-    const { instanceName } = this.props;
-    const { crd } = this.state;
-    const icon = csv.spec.icon.length
-      ? `data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`
-      : placeholder;
-    return (
-      <CardGrid className="ChartInfo">
-        <Card>
-          <CardIcon icon={icon} />
-          <CardContent>
-            <h5>{instanceName}</h5>
-            <p className="margin-b-reset">{crd?.description}</p>
-          </CardContent>
-          <CardFooter>
-            <div>
-              <div>Cluster Service Version: v{csv.spec.version}</div>
-              <div>Kind: {crd?.kind}</div>
-            </div>
-          </CardFooter>
-        </Card>
-      </CardGrid>
+  const handleDeleteClick = async () => {
+    setDeleting(true);
+    const deleted = await dispatch(
+      actions.operators.deleteResource(cluster, namespace, crd!.name.split(".")[0], resource!),
     );
-  };
-
-  private openModal = () => {
-    this.setState({
-      modalIsOpen: true,
-    });
-  };
-
-  private closeModal = async () => {
-    this.setState({
-      modalIsOpen: false,
-    });
-  };
-
-  private handleDeleteClick = async () => {
-    const { kubeappsCluster, cluster, namespace, resource } = this.props;
-    const { crd } = this.state;
-    const deleted = await this.props.deleteResource(
-      cluster,
-      namespace,
-      crd!.name.split(".")[0],
-      resource!,
-    );
-    this.closeModal();
+    setDeleting(false);
+    closeModal();
     if (deleted) {
-      this.props.push(app.apps.list(kubeappsCluster, namespace));
+      dispatch(push(app.apps.list(cluster, namespace)));
     }
   };
+
+  const error = errors.fetch || errors.delete || errors.update;
+  return (
+    <section>
+      <ConfirmDialog
+        onConfirm={handleDeleteClick}
+        modalIsOpen={modalIsOpen}
+        loading={deleting}
+        confirmationText="Are you sure you want to delete the resource?"
+        closeModal={closeModal}
+      />
+      <OperatorHeader
+        title={`${instanceName} (${crd?.kind})`}
+        icon={icon}
+        version={csv?.spec.version}
+        buttons={[
+          <CdsButton key="update-button" status="primary" onClick={onUpdateClick}>
+            <CdsIcon shape="upload-cloud" inverse={true} /> Update
+          </CdsButton>,
+          <CdsButton key="delete-button" status="primary" onClick={openModal}>
+            <CdsIcon shape="trash" inverse={true} /> Delete
+          </CdsButton>,
+        ]}
+      />
+      <section>
+        <LoadingWrapper loaded={!isFetching}>
+          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+          {resource && (
+            <Row>
+              <Column span={3}>
+                <OperatorSummary />
+              </Column>
+              <Column span={9}>
+                <div className="appview-separator">
+                  <div className="appview-first-row">
+                    <ApplicationStatus
+                      deployRefs={deployments}
+                      statefulsetRefs={statefulsets}
+                      daemonsetRefs={daemonsets}
+                    />
+                    <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
+                    <AppSecrets secretRefs={secrets} />
+                  </div>
+                </div>
+                {resource.status && (
+                  <div className="appview-separator">
+                    <AppNotes title="Resource Status" notes={yaml.safeDump(resource.status)} />
+                  </div>
+                )}
+                <div className="appview-separator">
+                  <ResourceTabs
+                    {...{
+                      deployments,
+                      statefulsets,
+                      daemonsets,
+                      secrets,
+                      services,
+                      otherResources,
+                    }}
+                  />
+                </div>
+                {resource.spec && (
+                  <div className="appview-separator">
+                    <AppValues values={yaml.safeDump(resource.spec)} />
+                  </div>
+                )}
+              </Column>
+            </Row>
+          )}
+        </LoadingWrapper>
+      </section>
+    </section>
+  );
 }
 
 export default OperatorInstance;

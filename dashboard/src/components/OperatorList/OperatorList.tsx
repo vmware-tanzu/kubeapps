@@ -1,18 +1,19 @@
-import { RouterAction } from "connected-react-router";
-import { flatten, intersection, isEqual, uniq } from "lodash";
-import * as React from "react";
-
-import {
-  ForbiddenError,
-  IClusterServiceVersion,
-  IPackageManifest,
-  IPackageManifestStatus,
-} from "../../shared/types";
-import { api, app } from "../../shared/url";
-import { CardGrid } from "../Card";
-import { ErrorSelector, MessageAlert } from "../ErrorAlert";
-import InfoCard from "../InfoCard";
-import LoadingWrapper from "../LoadingWrapper";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import { filtersToQuery } from "components/Catalog/Catalog";
+import FilterGroup from "components/FilterGroup/FilterGroup";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import { push } from "connected-react-router";
+import { flatten, get, intersection, uniq, without } from "lodash";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { app } from "shared/url";
+import { IPackageManifest, IPackageManifestStatus, IStoreState } from "../../shared/types";
+import { escapeRegExp } from "../../shared/utils";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import {
   AUTO_PILOT,
   BASIC_INSTALL,
@@ -20,34 +21,15 @@ import {
   FULL_LIFECYCLE,
   SEAMLESS_UPGRADES,
 } from "../OperatorView/OperatorCapabilityLevel";
-import PageHeader from "../PageHeader";
-import SearchFilter from "../SearchFilter";
+import PageHeader from "../PageHeader/PageHeader";
+import SearchFilter from "../SearchFilter/SearchFilter";
 import OLMNotFound from "./OLMNotFound";
-import OperatorNotSupported from "./OperatorsNotSupported";
-
-import "./OperatorList.css";
+import OperatorItems from "./OperatorItems";
 
 export interface IOperatorListProps {
-  isFetching: boolean;
-  checkOLMInstalled: (cluster: string, namespace: string) => Promise<boolean>;
-  isOLMInstalled: boolean;
   cluster: string;
   namespace: string;
-  kubeappsCluster: string;
-  getOperators: (cluster: string, namespace: string) => Promise<void>;
-  operators: IPackageManifest[];
-  error?: Error;
-  getCSVs: (cluster: string, namespace: string) => Promise<IClusterServiceVersion[]>;
-  csvs: IClusterServiceVersion[];
   filter: { [name: string]: string };
-  pushSearchFilter: (filter: string) => RouterAction;
-}
-
-export interface IOperatorListState {
-  filter: string;
-  categories: string[];
-  filterCategories: { [key: string]: boolean };
-  filterCapabilities: { [key: string]: boolean };
 }
 
 function getDefaultChannel(packageStatus: IPackageManifestStatus) {
@@ -58,306 +40,297 @@ function getDefaultChannel(packageStatus: IPackageManifestStatus) {
 
 function getCategories(packageStatus: IPackageManifestStatus) {
   const channel = getDefaultChannel(packageStatus);
-  return channel.currentCSVDesc.annotations.categories.split(",").map(c => c.trim());
+  return get(channel, "currentCSVDesc.annotations.categories", [])
+    .split(",")
+    .map((c: string) => c.trim());
 }
 
 function getCapabilities(packageStatus: IPackageManifestStatus) {
   const channel = getDefaultChannel(packageStatus);
-  return channel.currentCSVDesc.annotations.capabilities;
+  return get(channel, "currentCSVDesc.annotations.capabilities", BASIC_INSTALL);
 }
 
-class OperatorList extends React.Component<IOperatorListProps, IOperatorListState> {
-  public state: IOperatorListState = {
-    filter: "",
-    categories: [],
-    filterCategories: {},
-    filterCapabilities: {
-      [BASIC_INSTALL]: false,
-      [SEAMLESS_UPGRADES]: false,
-      [FULL_LIFECYCLE]: false,
-      [DEEP_INSIGHTS]: false,
-      [AUTO_PILOT]: false,
-    },
+function getProvider(packageStatus: IPackageManifestStatus) {
+  const channel = getDefaultChannel(packageStatus);
+  return get(channel, "currentCSVDesc.provider.name", "");
+}
+
+export const filterNames = {
+  SEARCH: "Search",
+  CAPABILITY: "Capability",
+  CATEGORY: "Category",
+  PROVIDER: "Provider",
+};
+
+function initialFilterState() {
+  const result = {};
+  Object.values(filterNames).forEach(f => (result[f] = []));
+  return result;
+}
+
+export default function OperatorList({
+  cluster,
+  namespace,
+  filter: propsFilter,
+}: IOperatorListProps) {
+  const dispatch = useDispatch();
+  const [filters, setFilters] = useState(initialFilterState());
+
+  useEffect(() => {
+    const newFilters = {};
+    Object.keys(propsFilter).forEach(filter => {
+      newFilters[filter] = propsFilter[filter].split(",");
+    });
+    setFilters({
+      ...initialFilterState(),
+      ...newFilters,
+    });
+  }, [propsFilter]);
+
+  const pushFilters = (newFilters: any) => {
+    dispatch(push(app.operators.list(cluster, namespace) + filtersToQuery(newFilters)));
+  };
+  const addFilter = (type: string, value: string) => {
+    pushFilters({
+      ...filters,
+      [type]: filters[type].concat(value),
+    });
+  };
+  const removeFilter = (type: string, value: string) => {
+    pushFilters({
+      ...filters,
+      [type]: without(filters[type], value),
+    });
+  };
+  const removeFilterFunc = (type: string, value: string) => {
+    return () => removeFilter(type, value);
+  };
+  const clearAllFilters = () => {
+    pushFilters({});
+  };
+  const submitFilters = () => {
+    pushFilters(filters);
   };
 
-  public componentDidMount() {
-    this.props.checkOLMInstalled(this.props.cluster, this.props.namespace);
-    this.props.getOperators(this.props.cluster, this.props.namespace);
-    this.props.getCSVs(this.props.cluster, this.props.namespace);
-    this.setState({ filter: this.props.filter.q });
-  }
+  // Only one search filter can be set
+  const searchFilter = filters[filterNames.SEARCH][0] || "";
+  const setSearchFilter = (searchTerm: string) => {
+    setFilters({
+      ...filters,
+      [filterNames.SEARCH]: [searchTerm],
+    });
+  };
 
-  public componentDidUpdate(prevProps: IOperatorListProps) {
-    if (prevProps.namespace !== this.props.namespace) {
-      this.props.getOperators(this.props.cluster, this.props.namespace);
-      this.props.getCSVs(this.props.cluster, this.props.namespace);
-    }
-    if (!isEqual(this.props.filter, prevProps.filter)) {
-      this.props.getOperators(this.props.cluster, this.props.namespace);
-      this.props.getCSVs(this.props.cluster, this.props.namespace);
-      this.setState({ filter: this.props.filter.q });
-    }
+  useEffect(() => {
+    dispatch(actions.operators.checkOLMInstalled(cluster, namespace));
+  }, [dispatch, cluster, namespace]);
 
-    if (this.props.operators !== prevProps.operators) {
-      const categories = uniq(
-        flatten(this.props.operators.map(operator => getCategories(operator.status))),
-      );
-      const filterCategories = {};
-      categories.forEach(category => {
-        filterCategories[category] = false;
-      });
-      this.setState({ categories, filterCategories });
-    }
-  }
+  const {
+    operators: {
+      operators,
+      isFetching,
+      errors: {
+        operator: { fetch: opError },
+        subscriptions: { fetch: subsError },
+      },
+      subscriptions,
+      isOLMInstalled,
+    },
+  } = useSelector((state: IStoreState) => state);
+  const error = opError || subsError;
 
-  public render() {
-    const { cluster, kubeappsCluster, namespace, isFetching, pushSearchFilter } = this.props;
-    if (cluster !== kubeappsCluster) {
-      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
+  useEffect(() => {
+    if (isOLMInstalled) {
+      dispatch(actions.operators.getOperators(cluster, namespace));
+      dispatch(actions.operators.listSubscriptions(cluster, namespace));
     }
-    return (
-      <div>
-        <PageHeader>
-          <h1>Operators</h1>
+  }, [dispatch, cluster, namespace, isOLMInstalled]);
+
+  const allCapabilities = [
+    BASIC_INSTALL,
+    SEAMLESS_UPGRADES,
+    FULL_LIFECYCLE,
+    DEEP_INSIGHTS,
+    AUTO_PILOT,
+  ];
+  const allCategories = uniq(
+    flatten(operators.map(operator => getCategories(operator.status))),
+  ).sort();
+  const allProviders = uniq(operators.map(operator => getProvider(operator.status))).sort();
+
+  const subscriptionNames = subscriptions.map(subscription => subscription.spec.name);
+  const installedOperators: IPackageManifest[] = [];
+  const availableOperators: IPackageManifest[] = [];
+  const filteredOperators = operators
+    .filter(
+      c =>
+        filters[filterNames.CAPABILITY].length === 0 ||
+        filters[filterNames.CAPABILITY].includes(getCapabilities(c.status)),
+    )
+    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name))
+    .filter(
+      c =>
+        filters[filterNames.CATEGORY].length === 0 ||
+        intersection(filters[filterNames.CATEGORY], getCategories(c.status)).length,
+    )
+    .filter(
+      c =>
+        filters[filterNames.PROVIDER].length === 0 ||
+        filters[filterNames.PROVIDER].includes(getProvider(c.status)),
+    );
+  filteredOperators.forEach(operator => {
+    if (subscriptionNames.includes(operator.metadata.name)) {
+      installedOperators.push(operator);
+    } else {
+      availableOperators.push(operator);
+    }
+  });
+
+  return (
+    <section>
+      <PageHeader
+        title="Operators"
+        filter={
           <SearchFilter
-            className="margin-l-big"
-            placeholder="search operators..."
-            onChange={this.handleFilterQueryChange}
-            value={this.state.filter}
-            onSubmit={pushSearchFilter}
+            key="searchFilter"
+            placeholder="search charts..."
+            onChange={setSearchFilter}
+            value={searchFilter}
+            submitFilters={submitFilters}
           />
-        </PageHeader>
-        <main>
-          <MessageAlert level="warning">
-            <div>
-              Operators integration is under heavy development and currently in alpha state. If you
-              find an issue please report it{" "}
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://github.com/kubeapps/kubeapps/issues"
-              >
-                here.
-              </a>
-            </div>
-          </MessageAlert>
-          <LoadingWrapper loaded={!isFetching}>{this.renderOperators()}</LoadingWrapper>
-        </main>
-      </div>
-    );
-  }
-
-  private renderOperators() {
-    const { operators, error, csvs, isOLMInstalled } = this.props;
-    const { filter, filterCategories, filterCapabilities } = this.state;
-    if (error && error.constructor === ForbiddenError) {
-      return (
-        <ErrorSelector
-          error={error}
-          action="list"
-          resource="Operators"
-          namespace={this.props.namespace}
-        />
-      );
-    }
-    if (!isOLMInstalled) {
-      return <OLMNotFound />;
-    }
-    if (error) {
-      return (
-        <ErrorSelector
-          error={error}
-          action="list"
-          resource="Operators"
-          namespace={this.props.namespace}
-        />
-      );
-    }
-    const csvNames = csvs.map(csv => csv.metadata.name);
-    const installedOperators: IPackageManifest[] = [];
-    const availableOperators: IPackageManifest[] = [];
-    const filteredOperators = operators.filter(operator => {
-      if (filter && !operator.metadata.name.match(filter)) {
-        return false;
-      }
-      const hasFilteredCategories = Object.values(filterCategories).some(
-        filteredCategory => filteredCategory,
-      );
-      if (hasFilteredCategories) {
-        const allowedCategories = Object.keys(filterCategories).filter(
-          cat => filterCategories[cat],
-        );
-        const categories = getCategories(operator.status);
-        if (intersection(allowedCategories, categories).length === 0) {
-          return false;
         }
-      }
-      const hasFilteredCapabilities = Object.values(filterCapabilities).some(
-        filterCapability => filterCapability,
-      );
-      if (hasFilteredCapabilities) {
-        const allowedCapabilities = Object.keys(filterCapabilities).filter(
-          capability => filterCapabilities[capability],
-        );
-        if (
-          !allowedCapabilities.some(capability => capability === getCapabilities(operator.status))
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-    filteredOperators.forEach(operator => {
-      if (csvNames.some(csvName => csvName === getDefaultChannel(operator.status).currentCSV)) {
-        installedOperators.push(operator);
-      } else {
-        availableOperators.push(operator);
-      }
-    });
-    return (
-      <div className="row margin-t-big">
-        <div className="col-2 margin-t-big horizontal-column">
-          <div className="margin-b-normal ">
-            <b>Categories</b>
-          </div>
-          {this.state.categories.map(category => {
-            return (
-              <div key={category}>
-                <label
-                  className="checkbox"
-                  key={category}
-                  onChange={this.toggleFilterCategory(category)}
-                >
-                  <input type="checkbox" />
-                  <span>{category}</span>
-                </label>
-              </div>
-            );
-          })}
-          <div className="margin-v-normal ">
-            <b>Capability Level</b>
-          </div>
-          {[BASIC_INSTALL, SEAMLESS_UPGRADES, FULL_LIFECYCLE, DEEP_INSIGHTS, AUTO_PILOT].map(
-            capability => {
-              return (
-                <div key={capability}>
-                  <label
-                    className="checkbox"
-                    key={capability}
-                    onChange={this.toggleFilterCapability(capability)}
-                  >
-                    <input type="checkbox" />
-                    <span>{capability}</span>
-                  </label>
-                </div>
-              );
-            },
-          )}
+      />
+      <Alert theme="warning">
+        <div>
+          Operators integration is under heavy development and currently in beta state. If you find
+          an issue please report it{" "}
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://github.com/kubeapps/kubeapps/issues"
+          >
+            here.
+          </a>
         </div>
-        <div className="col-10">
-          <div className="padding-l-normal">
-            {filteredOperators.length === 0 ? (
-              <p>No Operator found</p>
-            ) : (
-              this.renderCardGrid(installedOperators, availableOperators)
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  private renderCardGrid(
-    installedOperators: IPackageManifest[],
-    availableOperators: IPackageManifest[],
-  ) {
-    return (
-      <>
-        {installedOperators.length > 0 && (
+      </Alert>
+      <LoadingWrapper loaded={!isFetching}>
+        {!isOLMInstalled ? (
+          <OLMNotFound />
+        ) : (
           <>
-            <h3>Installed</h3>
-            <CardGrid>
-              {installedOperators.map(operator => {
-                return (
-                  <InfoCard
-                    key={operator.metadata.name}
-                    link={app.operators.view(
-                      this.props.cluster,
-                      this.props.namespace,
-                      operator.metadata.name,
+            {error && (
+              <Alert theme="danger">
+                An error occurred while fetching Operators: {error.message}
+              </Alert>
+            )}
+            {operators.length === 0 ? (
+              <div className="section-not-found">
+                <div>
+                  <CdsIcon shape="bundle" size="64" />
+                  <h4>The list of Operators is empty</h4>
+                  <p>
+                    This may mean that the OLM is still populating the catalog or that it found an
+                    error. Check the OLM logs for more information.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <Row>
+                <Column span={2}>
+                  <div className="filters-menu">
+                    <h5>
+                      Filters{" "}
+                      {flatten(Object.values(filters)).length ? (
+                        <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
+                          Clear All
+                        </CdsButton>
+                      ) : (
+                        <></>
+                      )}{" "}
+                    </h5>
+                    {allCategories.length > 0 && (
+                      <div className="filter-section">
+                        <label className="filter-label">Category</label>
+                        <FilterGroup
+                          name={filterNames.CATEGORY}
+                          options={allCategories}
+                          currentFilters={filters[filterNames.CATEGORY]}
+                          onAddFilter={addFilter}
+                          onRemoveFilter={removeFilter}
+                        />
+                      </div>
                     )}
-                    title={operator.metadata.name}
-                    icon={api.operators.operatorIcon(
-                      this.props.cluster,
-                      this.props.namespace,
-                      operator.metadata.name,
+                    {allCapabilities.length > 0 && (
+                      <div className="filter-section">
+                        <label>Capability</label>
+                        <FilterGroup
+                          name={filterNames.CAPABILITY}
+                          options={allCapabilities}
+                          currentFilters={filters[filterNames.CAPABILITY]}
+                          onAddFilter={addFilter}
+                          onRemoveFilter={removeFilter}
+                        />
+                      </div>
                     )}
-                    info={`v${operator.status.channels[0].currentCSVDesc.version}`}
-                    tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
-                    tag2Content={operator.status.provider.name}
-                  />
-                );
-              })}
-            </CardGrid>
+                    {allProviders.length > 0 && (
+                      <div className="filter-section">
+                        <label>Provider</label>
+                        <FilterGroup
+                          name={filterNames.PROVIDER}
+                          options={allProviders}
+                          currentFilters={filters[filterNames.PROVIDER]}
+                          onAddFilter={addFilter}
+                          onRemoveFilter={removeFilter}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </Column>
+                <Column span={10}>
+                  <>
+                    <div className="filter-summary">
+                      {Object.keys(filters).map(filterName => {
+                        if (filters[filterName].length) {
+                          return filters[filterName].map((filterValue: string) => (
+                            <span key={`${filterName}-${filterValue}`} className="label label-info">
+                              {filterName}: {filterValue}{" "}
+                              <CdsIcon
+                                shape="times"
+                                onClick={removeFilterFunc(filterName, filterValue)}
+                              />
+                            </span>
+                          ));
+                        }
+                        return null;
+                      })}
+                    </div>
+                    {installedOperators.length > 0 && (
+                      <>
+                        <h3>Installed</h3>
+                        <Row>
+                          <OperatorItems
+                            operators={installedOperators}
+                            cluster={cluster}
+                            namespace={namespace}
+                          />
+                        </Row>
+                      </>
+                    )}
+                    <h3>Available Operators</h3>
+                    <Row>
+                      <OperatorItems
+                        operators={availableOperators}
+                        cluster={cluster}
+                        namespace={namespace}
+                      />
+                    </Row>
+                  </>
+                </Column>
+              </Row>
+            )}
           </>
         )}
-        <h3>Available Operators</h3>
-        <CardGrid>
-          {availableOperators.map(operator => {
-            return (
-              <InfoCard
-                key={operator.metadata.name}
-                link={app.operators.view(
-                  this.props.cluster,
-                  this.props.namespace,
-                  operator.metadata.name,
-                )}
-                title={operator.metadata.name}
-                icon={api.operators.operatorIcon(
-                  this.props.cluster,
-                  this.props.namespace,
-                  operator.metadata.name,
-                )}
-                info={`v${operator.status.channels[0].currentCSVDesc.version}`}
-                tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
-                tag2Content={operator.status.provider.name}
-              />
-            );
-          })}
-        </CardGrid>
-      </>
-    );
-  }
-
-  private handleFilterQueryChange = (filter: string) => {
-    this.setState({
-      filter,
-    });
-  };
-
-  private toggleFilterCategory = (category: string) => {
-    return () => {
-      const { filterCategories } = this.state;
-      this.setState({
-        filterCategories: {
-          ...filterCategories,
-          [category]: !filterCategories[category],
-        },
-      });
-    };
-  };
-
-  private toggleFilterCapability = (capability: string) => {
-    return () => {
-      const { filterCapabilities } = this.state;
-      this.setState({
-        filterCapabilities: {
-          ...filterCapabilities,
-          [capability]: !filterCapabilities[capability],
-        },
-      });
-    };
-  };
+      </LoadingWrapper>
+    </section>
+  );
 }
-
-export default OperatorList;

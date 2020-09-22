@@ -32,7 +32,6 @@ function mapStateToProps(
     crdName: params.crd,
     resourceName: params.instanceName,
     resource: operators.resource,
-    UI: config.featureFlags.ui,
   };
 }
 

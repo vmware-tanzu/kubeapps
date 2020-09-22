@@ -28,7 +28,6 @@ function mapStateToProps(
     error: operators.errors.operator.fetch,
     operatorName: params.operator,
     csv: operators.csv,
-    UI: config.featureFlags.ui,
   };
 }
 

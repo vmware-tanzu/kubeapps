@@ -1,213 +1,205 @@
-import * as React from "react";
+import React, { useState } from "react";
 
-import { ISecret } from "../../../shared/types";
+import { CdsButton } from "@clr/react/button";
+import actions from "actions";
+import { useDispatch } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { ISecret, IStoreState } from "../../../shared/types";
 
 interface IAppRepoFormProps {
   imagePullSecrets: ISecret[];
   togglePullSecret: (imagePullSecret: string) => () => void;
   selectedImagePullSecrets: { [key: string]: boolean };
   namespace: string;
-  createDockerRegistrySecret: (
-    name: string,
-    user: string,
-    password: string,
-    email: string,
-    server: string,
-    namespace: string,
-  ) => Promise<boolean>;
-  fetchImagePullSecrets: (namespace: string) => void;
 }
 
-interface IAppRepoFormState {
-  user: string;
-  password: string;
-  email: string;
-  server: string;
-  secretName: string;
-  showSecretSubForm: boolean;
-  creating: boolean;
-}
+export function AppRepoAddDockerCreds({
+  imagePullSecrets,
+  togglePullSecret,
+  selectedImagePullSecrets,
+  namespace,
+}: IAppRepoFormProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const [secretName, setSecretName] = useState("");
+  const [user, setUser] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [server, setServer] = useState("");
+  const [showSecretSubForm, setShowSecretSubForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [currentImagePullSecrets, setCurrentImagePullSecrets] = useState(imagePullSecrets);
 
-export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, IAppRepoFormState> {
-  public state: IAppRepoFormState = {
-    secretName: "",
-    user: "",
-    password: "",
-    email: "",
-    server: "",
-    showSecretSubForm: false,
-    creating: false,
+  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => setUser(e.target.value);
+  const handleSecretNameChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setSecretName(e.target.value);
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setPassword(e.target.value);
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
+  const handleServerChange = (e: React.ChangeEvent<HTMLInputElement>) => setServer(e.target.value);
+  const toggleCredSubForm = () => setShowSecretSubForm(!showSecretSubForm);
+
+  const handleInstallClick = async () => {
+    setCreating(true);
+    const success = await dispatch(
+      actions.repos.createDockerRegistrySecret(
+        secretName,
+        user,
+        password,
+        email,
+        server,
+        namespace,
+      ),
+    );
+    setCreating(false);
+    if (success) {
+      // Re-fetching secrets cause a re-render and the modal to be closed,
+      // using local state to avoid that.
+      setCurrentImagePullSecrets(
+        currentImagePullSecrets.concat({ metadata: { name: secretName, namespace } } as ISecret),
+      );
+      setUser("");
+      setSecretName("");
+      setPassword("");
+      setEmail("");
+      setServer("");
+      setShowSecretSubForm(false);
+    }
   };
 
-  public render() {
-    const { imagePullSecrets, togglePullSecret, selectedImagePullSecrets } = this.props;
-    const { showSecretSubForm } = this.state;
-    return (
-      <div className="margin-l-big margin-t-normal">
-        {imagePullSecrets.length > 0 ? (
-          imagePullSecrets.map(secret => {
-            return (
-              <div key={secret.metadata.name}>
-                <label
-                  className="checkbox"
-                  key={secret.metadata.name}
+  return (
+    <div className="clr-form-columns">
+      {currentImagePullSecrets.length > 0 ? (
+        currentImagePullSecrets.map(secret => {
+          return (
+            <div key={secret.metadata.name} className="clr-checkbox-wrapper">
+              <label
+                className="clr-control-label clr-control-label-checkbox"
+                htmlFor={`app-repo-secret-${secret.metadata.name}`}
+                key={secret.metadata.name}
+              >
+                <input
+                  id={`app-repo-secret-${secret.metadata.name}`}
+                  type="checkbox"
                   onChange={togglePullSecret(secret.metadata.name)}
-                >
-                  <input type="checkbox" checked={selectedImagePullSecrets[secret.metadata.name]} />
-                  <span>{secret.metadata.name}</span>
-                </label>
-              </div>
-            );
-          })
-        ) : (
-          <div className="margin-b-small">No existing credentials found.</div>
-        )}
-        {this.state.showSecretSubForm && (
-          <div className="secondary-input margin-t-big">
-            <div className="row">
-              <div className="col-1 margin-t-normal">
-                <label htmlFor="kubeapps-docker-cred-secret-name">Secret Name</label>
-              </div>
-              <div className="col-11">
+                  checked={selectedImagePullSecrets[secret.metadata.name] || false}
+                />
+                <span>{secret.metadata.name}</span>
+              </label>
+            </div>
+          );
+        })
+      ) : (
+        <label className="clr-control-label">No existing credentials found.</label>
+      )}
+      {showSecretSubForm && (
+        <div className="secondary-input">
+          <label className="clr-control-label">New Docker Registry Credentials</label>
+          <div className="clr-form-separator-sm">
+            <label htmlFor="kubeapps-docker-cred-secret-name" className="clr-control-label">
+              Secret Name
+            </label>
+            <div className="clr-control-container">
+              <div className="clr-input-wrapper">
                 <input
                   id="kubeapps-docker-cred-secret-name"
-                  value={this.state.secretName}
-                  onChange={this.handleSecretNameChange}
+                  className="clr-input"
+                  value={secretName}
+                  onChange={handleSecretNameChange}
                   placeholder="Secret"
                   required={true}
                 />
               </div>
             </div>
-            <div className="row">
-              <div className="col-1 margin-t-normal">
-                <label htmlFor="kubeapps-docker-cred-server">Server</label>
-              </div>
-              <div className="col-11">
+          </div>
+          <div className="clr-form-control">
+            <label className="clr-control-label" htmlFor="kubeapps-docker-cred-server">
+              Server
+            </label>
+            <div className="clr-control-container">
+              <div className="clr-input-wrapper">
                 <input
                   id="kubeapps-docker-cred-server"
-                  value={this.state.server}
-                  onChange={this.handleServerChange}
+                  value={server}
+                  className="clr-input"
+                  onChange={handleServerChange}
                   placeholder="https://index.docker.io/v1/"
                   required={true}
                 />
               </div>
             </div>
-            <div className="row">
-              <div className="col-1 margin-t-normal">
-                <label htmlFor="kubeapps-docker-cred-username">Username</label>
-              </div>
-              <div className="col-11">
+          </div>
+          <div className="clr-form-control">
+            <label className="clr-control-label" htmlFor="kubeapps-docker-cred-username">
+              Username
+            </label>
+            <div className="clr-control-container">
+              <div className="clr-input-wrapper">
                 <input
                   id="kubeapps-docker-cred-username"
-                  value={this.state.user}
-                  onChange={this.handleUserChange}
+                  className="clr-input"
+                  value={user}
+                  onChange={handleUserChange}
                   placeholder="Username"
                   required={true}
                 />
               </div>
             </div>
-            <div className="row">
-              <div className="col-1 margin-t-normal">
-                <label htmlFor="kubeapps-docker-cred-password">Password</label>
-              </div>
-              <div className="col-11">
+          </div>
+          <div className="clr-form-control">
+            <label className="clr-control-label" htmlFor="kubeapps-docker-cred-password">
+              Password
+            </label>
+            <div className="clr-control-container">
+              <div className="clr-input-wrapper">
                 <input
                   type="password"
                   id="kubeapps-docker-cred-password"
-                  value={this.state.password}
-                  onChange={this.handlePasswordChange}
+                  className="clr-input"
+                  value={password}
+                  onChange={handlePasswordChange}
                   placeholder="Password"
                   required={true}
                 />
               </div>
             </div>
-            <div className="row">
-              <div className="col-1 margin-t-normal">
-                <label htmlFor="kubeapps-docker-cred-email">Email</label>
-              </div>
-              <div className="col-11">
+          </div>
+          <div className="clr-form-control">
+            <label className="clr-control-label" htmlFor="kubeapps-docker-cred-email">
+              Email
+            </label>
+            <div className="clr-control-container">
+              <div className="clr-input-wrapper">
                 <input
                   id="kubeapps-docker-cred-email"
-                  value={this.state.email}
-                  onChange={this.handleEmailChange}
+                  className="clr-input"
+                  value={email}
+                  onChange={handleEmailChange}
                   placeholder="user@example.com"
                   required={true}
                 />
               </div>
             </div>
-            <div>
-              <button
-                className="button button-primary"
-                type="button"
-                disabled={this.state.creating}
-                onClick={this.handleInstallClick}
-              >
-                {this.state.creating ? "Creating..." : "Submit"}
-              </button>
-              <button onClick={this.toggleCredSubForm} type="button" className="button">
-                Cancel
-              </button>
-            </div>
           </div>
-        )}
-        {!showSecretSubForm && (
-          <button onClick={this.toggleCredSubForm} className="button margin-t-normal" type="button">
+          <div className="clr-form-separator">
+            <CdsButton type="button" disabled={creating} onClick={handleInstallClick}>
+              {creating ? "Creating..." : "Submit"}
+            </CdsButton>
+            <CdsButton onClick={toggleCredSubForm} type="button" action="outline">
+              Cancel
+            </CdsButton>
+          </div>
+        </div>
+      )}
+      {!showSecretSubForm && (
+        <div className="clr-form-separator-sm">
+          <CdsButton onClick={toggleCredSubForm} type="button" size="sm">
             Add new credentials
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  private handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ user: e.target.value });
-  };
-
-  private handleSecretNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ secretName: e.target.value });
-  };
-
-  private handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ password: e.target.value });
-  };
-
-  private handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ email: e.target.value });
-  };
-
-  private handleServerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ server: e.target.value });
-  };
-
-  private toggleCredSubForm = () => {
-    this.setState({ showSecretSubForm: !this.state.showSecretSubForm });
-  };
-
-  private handleInstallClick = async () => {
-    const { fetchImagePullSecrets, namespace } = this.props;
-    const { secretName, user, password, email, server } = this.state;
-    const success = await this.props.createDockerRegistrySecret(
-      secretName,
-      user,
-      password,
-      email,
-      server,
-      namespace,
-    );
-    if (success) {
-      // re-fetch secrets
-      fetchImagePullSecrets(namespace);
-      this.setState({
-        secretName: "",
-        user: "",
-        password: "",
-        email: "",
-        server: "",
-        showSecretSubForm: false,
-        creating: false,
-      });
-    }
-  };
+          </CdsButton>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default AppRepoAddDockerCreds;

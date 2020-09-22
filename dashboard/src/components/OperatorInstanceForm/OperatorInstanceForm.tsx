@@ -1,36 +1,32 @@
-import { RouterAction } from "connected-react-router";
+import { push } from "connected-react-router";
 import * as yaml from "js-yaml";
 import { get } from "lodash";
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import OperatorSummary from "components/OperatorSummary/OperatorSummary";
+import OperatorHeader from "components/OperatorView/OperatorHeader";
+import { useDispatch, useSelector } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import * as url from "shared/url";
-import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
-import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
-import OperatorInstanceFormBody from "../OperatorInstanceFormBody";
-import PageHeader from "../PageHeader";
+import placeholder from "../../placeholder.png";
+import {
+  IClusterServiceVersion,
+  IClusterServiceVersionCRD,
+  IResource,
+  IStoreState,
+} from "../../shared/types";
+import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
 
 export interface IOperatorInstanceFormProps {
   csvName: string;
   crdName: string;
-  isFetching: boolean;
   cluster: string;
   namespace: string;
-  kubeappsCluster: string;
-  getCSV: (cluster: string, namespace: string, csvName: string) => void;
-  createResource: (
-    cluster: string,
-    namespace: string,
-    apiVersion: string,
-    resource: string,
-    body: object,
-  ) => Promise<boolean>;
-  push: (location: string) => RouterAction;
-  csv?: IClusterServiceVersion;
-  errors: {
-    fetch?: Error;
-    create?: Error;
-  };
 }
 
 export interface IOperatorInstanceFormBodyState {
@@ -38,117 +34,140 @@ export interface IOperatorInstanceFormBodyState {
   crd?: IClusterServiceVersionCRD;
 }
 
-class DeploymentFormBody extends React.Component<
-  IOperatorInstanceFormProps,
-  IOperatorInstanceFormBodyState
-> {
-  public state: IOperatorInstanceFormBodyState = {
-    defaultValues: "",
-  };
-
-  public componentDidMount() {
-    const { cluster, getCSV, csvName, namespace } = this.props;
-    getCSV(cluster, namespace, csvName);
+export function parseCSV(
+  csv: IClusterServiceVersion,
+  crdName: string,
+  setIcon: (icon: string) => void,
+  setCRD: (crd: IClusterServiceVersionCRD) => void,
+  setDefaultValues?: (v: string) => void,
+) {
+  const ownedCRDs = get(
+    csv,
+    "spec.customresourcedefinitions.owned",
+    [],
+  ) as IClusterServiceVersionCRD[];
+  const csvIcon = get(csv, "spec.icon[0]");
+  if (csvIcon) {
+    setIcon(`data:${csvIcon.mediatype};base64,${csvIcon.base64data}`);
   }
-
-  public componentDidUpdate(prevProps: IOperatorInstanceFormProps) {
-    const { csv, crdName } = this.props;
-    if (csv && csv !== prevProps.csv) {
-      csv.spec.customresourcedefinitions.owned.forEach(ownedCRD => {
-        if (ownedCRD.name === crdName) {
-          // Got the target CRD, extract the example
-          const kind = ownedCRD.kind;
-          const rawExamples = get(csv, 'metadata.annotations["alm-examples"]', "[]");
-          const examples = JSON.parse(rawExamples) as IResource[];
-          let defaultValues = "";
-          examples.forEach(example => {
-            if (example.kind === kind) {
-              // Found the example, set the default values
-              defaultValues = yaml.safeDump(example);
-            }
-          });
-          this.setState({
-            defaultValues,
-            crd: ownedCRD,
-          });
-        }
-      });
-    }
-  }
-
-  public render() {
-    const {
-      isFetching,
-      errors,
-      csvName,
-      crdName,
-      cluster,
-      namespace,
-      kubeappsCluster,
-    } = this.props;
-    const { crd, defaultValues } = this.state;
-    if (cluster !== kubeappsCluster) {
-      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-    }
-    if (!errors.fetch && !isFetching && !crd) {
-      return (
-        <NotFoundErrorPage
-          header={
-            <span>
-              {crdName} not found in the definition of {csvName}
-            </span>
+  ownedCRDs.forEach(ownedCRD => {
+    if (ownedCRD.name === crdName) {
+      setCRD(ownedCRD);
+      // Got the target CRD, extract the example
+      if (setDefaultValues) {
+        const kind = ownedCRD.kind;
+        const rawExamples = get(csv, 'metadata.annotations["alm-examples"]', "[]");
+        const examples = JSON.parse(rawExamples) as IResource[];
+        examples.forEach(example => {
+          if (example.kind === kind) {
+            // Found the example, set the default values
+            setDefaultValues(yaml.safeDump(example));
           }
-        />
-      );
+        });
+      }
     }
+  });
+}
+
+export default function DeploymentFormBody({
+  csvName,
+  crdName,
+  cluster,
+  namespace,
+}: IOperatorInstanceFormProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const [defaultValues, setDefaultValues] = useState("");
+  const [crd, setCRD] = useState(undefined as IClusterServiceVersionCRD | undefined);
+  const [icon, setIcon] = useState(placeholder);
+
+  useEffect(() => {
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+  }, [cluster, dispatch, namespace, csvName]);
+
+  const {
+    operators: {
+      csv,
+      isFetching,
+      errors: {
+        csv: { fetch: fetchError },
+        resource: { create: createError },
+      },
+    },
+  } = useSelector((state: IStoreState) => state);
+
+  useEffect(() => {
+    if (csv) {
+      parseCSV(csv, crdName, setIcon, setCRD, setDefaultValues);
+    }
+  }, [csv, crdName]);
+
+  if (!fetchError && !isFetching && !crd) {
     return (
-      <>
-        <PageHeader>
-          <h1>Create {crd?.kind}</h1>
-        </PageHeader>
-        <main>
-          <p>{crd?.description}</p>
-          <OperatorInstanceFormBody
-            csvName={csvName}
-            isFetching={isFetching}
-            namespace={namespace}
-            handleDeploy={this.handleDeploy}
-            crd={crd}
-            errors={errors}
-            defaultValues={defaultValues}
-          />
-        </main>
-      </>
+      <Alert theme="danger">
+        {crdName} not found in the definition of {csvName}
+      </Alert>
     );
   }
 
-  private handleDeploy = async (resource: IResource) => {
-    const { createResource, push, cluster, namespace, csv } = this.props;
-    const { crd } = this.state;
+  const handleDeploy = async (resource: IResource) => {
     if (!crd || !csv) {
       // Unexpected error, CRD and CSV should have been previously populated
       throw new Error(`Missing CRD (${JSON.stringify(crd)}) or CSV (${JSON.stringify(csv)})`);
     }
     const resourceType = crd.name.split(".")[0];
-    const created = await createResource(
-      cluster,
-      namespace,
-      resource.apiVersion,
-      resourceType,
-      resource,
+    const created = await dispatch(
+      actions.operators.createResource(
+        cluster,
+        namespace,
+        resource.apiVersion,
+        resourceType,
+        resource,
+      ),
     );
     if (created) {
-      push(
-        url.app.operatorInstances.view(
-          cluster,
-          namespace,
-          csv.metadata.name,
-          crd.name,
-          resource.metadata.name,
+      dispatch(
+        push(
+          url.app.operatorInstances.view(
+            cluster,
+            namespace,
+            csv.metadata.name,
+            crd.name,
+            resource.metadata.name,
+          ),
         ),
       );
     }
   };
-}
 
-export default DeploymentFormBody;
+  return (
+    <section>
+      <OperatorHeader title={`Create ${crd?.kind}`} icon={icon} />
+      <section>
+        {fetchError && (
+          <Alert theme="danger">
+            An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
+          </Alert>
+        )}
+        {createError && (
+          <Alert theme="danger">
+            An error occurred while creating the instance: {createError.message}
+          </Alert>
+        )}
+        <Row>
+          <Column span={3}>
+            <OperatorSummary />
+          </Column>
+          <Column span={9}>
+            <p>{crd?.description}</p>
+            <OperatorInstanceFormBody
+              isFetching={isFetching}
+              namespace={namespace}
+              handleDeploy={handleDeploy}
+              defaultValues={defaultValues}
+            />
+          </Column>
+        </Row>
+      </section>
+    </section>
+  );
+}

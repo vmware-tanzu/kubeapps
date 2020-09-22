@@ -1,7 +1,10 @@
+import { CdsButton } from "@clr/react/button";
+import actions from "actions";
 import { shallow } from "enzyme";
 import * as React from "react";
+import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
 import { ISecret } from "shared/types";
-import { wait } from "../../../shared/utils";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 
 const secret1 = {
@@ -19,9 +22,23 @@ const defaultProps = {
   togglePullSecret: jest.fn(),
   selectedImagePullSecrets: {},
   namespace: "default",
-  createDockerRegistrySecret: jest.fn(),
-  fetchImagePullSecrets: jest.fn(),
 };
+
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.kube };
+beforeEach(() => {
+  actions.repos = {
+    ...actions.repos,
+    createDockerRegistrySecret: jest.fn(),
+  };
+  const mockDispatch = jest.fn(r => r);
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.kube = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
 
 it("shows an info message if there are no secrets", () => {
   const wrapper = shallow(<AppRepoAddDockerCreds {...defaultProps} />);
@@ -56,34 +73,52 @@ it("renders the form to create a registry secret", () => {
 
   expect(wrapper.text()).not.toContain("Secret Name");
 
-  const link = wrapper.find("button").filterWhere(b => b.text().includes("Add new"));
-  link.simulate("click");
+  const button = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Add new"));
+  act(() => {
+    (button.prop("onClick") as any)();
+  });
+  wrapper.update();
 
   expect(wrapper.text()).toContain("Secret Name");
 });
 
-it("submits the new secret and re-request the list", async () => {
-  const fetchImagePullSecrets = jest.fn();
+it("submits the new secret", async () => {
   const createDockerRegistrySecret = jest.fn().mockReturnValue(true);
-  const wrapper = shallow(
-    <AppRepoAddDockerCreds
-      {...defaultProps}
-      fetchImagePullSecrets={fetchImagePullSecrets}
-      createDockerRegistrySecret={createDockerRegistrySecret}
-    />,
-  );
+  actions.repos = {
+    ...actions.repos,
+    createDockerRegistrySecret,
+  };
+  const wrapper = shallow(<AppRepoAddDockerCreds {...defaultProps} />);
+  // Open form
+  const button = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Add new"));
+  act(() => {
+    (button.prop("onClick") as any)();
+  });
+  wrapper.update();
+
   const secretName = "repo-1";
   const user = "foo";
   const password = "pass";
   const email = "foo@bar.com";
   const server = "docker.io";
-  wrapper.setState({ secretName, user, password, email, server, showSecretSubForm: true });
 
-  const button = wrapper.find("button").filterWhere(a => a.text().includes("Submit"));
-  button.simulate("click");
+  wrapper
+    .find("#kubeapps-docker-cred-secret-name")
+    .simulate("change", { target: { value: secretName } });
+  wrapper.find("#kubeapps-docker-cred-server").simulate("change", { target: { value: server } });
+  wrapper.find("#kubeapps-docker-cred-username").simulate("change", { target: { value: user } });
+  wrapper
+    .find("#kubeapps-docker-cred-password")
+    .simulate("change", { target: { value: password } });
+  wrapper.find("#kubeapps-docker-cred-email").simulate("change", { target: { value: email } });
+  wrapper.update();
 
-  await wait(1);
-  expect(fetchImagePullSecrets).toHaveBeenCalledWith(defaultProps.namespace);
+  const submit = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Submit"));
+  await act(async () => {
+    await (submit.prop("onClick") as () => Promise<any>)();
+  });
+  wrapper.update();
+
   expect(createDockerRegistrySecret).toHaveBeenCalledWith(
     secretName,
     user,
@@ -92,4 +127,6 @@ it("submits the new secret and re-request the list", async () => {
     server,
     defaultProps.namespace,
   );
+  // There should be a new item with the secret
+  expect(wrapper.find("#app-repo-secret-repo-1")).toExist();
 });

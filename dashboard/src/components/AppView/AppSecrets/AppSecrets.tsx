@@ -5,7 +5,7 @@ import { ISecret, IStoreState } from "shared/types";
 
 import ResourceRef from "shared/ResourceRef";
 import { flattenResources } from "shared/utils";
-import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum.v2";
+import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
 import "./AppSecrets.css";
 
 interface IResourceTableProps {

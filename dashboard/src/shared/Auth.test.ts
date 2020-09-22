@@ -169,7 +169,6 @@ describe("Auth", () => {
         kubeappsCluster: "default",
         kubeappsNamespace: "ns",
         appVersion: "2",
-        featureFlags: { operators: false, ui: "hex" },
         clusters: [],
       });
 
@@ -185,7 +184,6 @@ describe("Auth", () => {
         kubeappsCluster: "default",
         kubeappsNamespace: "ns",
         appVersion: "2",
-        featureFlags: { operators: false, ui: "hex" },
         clusters: [],
       });
 

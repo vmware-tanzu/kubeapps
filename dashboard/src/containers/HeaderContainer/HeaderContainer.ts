@@ -13,18 +13,14 @@ function mapStateToProps({
   router: {
     location: { pathname },
   },
-  config: { featureFlags, appVersion },
-  catalog: { isServiceCatalogInstalled },
+  config: { appVersion },
 }: IStoreState) {
   return {
     authenticated,
     clusters,
     defaultNamespace,
     pathname,
-    featureFlags,
-    UI: featureFlags.ui,
     appVersion,
-    isServiceCatalogInstalled,
   };
 }
 
