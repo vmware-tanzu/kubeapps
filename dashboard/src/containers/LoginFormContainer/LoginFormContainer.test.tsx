@@ -36,7 +36,6 @@ const makeStore = (
     kubeappsNamespace: "",
     appVersion: "",
     oauthLogoutURI: "",
-    featureFlags: { operators: false, ui: "hex" },
     clusters: [],
   };
   const clusters: IClustersState = {
@@ -72,7 +71,7 @@ describe("LoginFormContainer props", () => {
       "/myoauth/start",
     );
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
-    const form = wrapper.find("LoginFormSelector");
+    const form = wrapper.find("LoginForm");
     expect(form).toHaveProp({
       authenticated: true,
       authenticating: true,
@@ -94,7 +93,7 @@ describe("LoginFormContainer props", () => {
       "/myoauth/start",
     );
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
-    const form = wrapper.find("LoginFormSelector");
+    const form = wrapper.find("LoginForm");
     expect(form).toHaveProp({
       authenticated: true,
       authenticating: true,

@@ -1,7 +1,5 @@
+import Alert from "components/js/Alert";
 import * as React from "react";
-
-import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAlert";
-import { UnexpectedErrorAlert } from "../ErrorAlert";
 
 export interface IErrorBoundaryProps {
   error?: Error;
@@ -13,29 +11,26 @@ interface IErrorBoundaryState {
   errorInfo: React.ErrorInfo | null;
 }
 
+// TODO(andresmgot): This component cannot be migrated to React Hooks (yet) because
+// the hook for `componentDidCatch` has no equivalent.
+// https://reactjs.org/docs/hooks-faq.html#do-hooks-cover-all-use-cases-for-classes
 class ErrorBoundary extends React.Component<IErrorBoundaryProps, IErrorBoundaryState> {
   public state: IErrorBoundaryState = { error: null, errorInfo: null };
 
   public render() {
-    const { error } = this.state;
-    if (this.props.error) {
-      return (
-        <UnexpectedErrorPage
-          raw={true}
-          showGenericMessage={false}
-          text={this.props.error.message}
-        />
-      );
+    const { error: stateError } = this.state;
+    const { error: propsError } = this.props;
+    if (propsError) {
+      return <Alert theme="danger">An error occurred: {propsError.message}</Alert>;
     }
-    return <React.Fragment>{error ? this.renderError() : this.props.children}</React.Fragment>;
+    if (stateError) {
+      return <Alert theme="danger">An error occurred: {stateError.message}</Alert>;
+    }
+    return this.props.children;
   }
 
   public componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     this.setState({ error, errorInfo });
-  }
-
-  private renderError() {
-    return <UnexpectedErrorAlert showGenericMessage={true} />;
   }
 }
 

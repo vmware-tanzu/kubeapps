@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { getIcon } from "shared/Operators";
 import { IChart, IClusterServiceVersion } from "shared/types";
-import CatalogItem, { ICatalogItemProps } from "./CatalogItem.v2";
+import CatalogItem, { ICatalogItemProps } from "./CatalogItem";
 
 interface ICatalogItemsProps {
   charts: IChart[];

@@ -15,7 +15,6 @@ const initialState: IConfigState = {
   authProxyEnabled: false,
   oauthLoginURI: "",
   oauthLogoutURI: "",
-  featureFlags: { operators: true, ui: "hex" },
   clusters: [],
 };
 

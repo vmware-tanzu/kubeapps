@@ -23,7 +23,6 @@ function mapStateToProps({ kube, config }: IStoreState, props: IApplicationStatu
     statefulsets: filterByResourceRefs(statefulsetRefs, kube.items),
     daemonsets: filterByResourceRefs(daemonsetRefs, kube.items),
     info,
-    UI: config.featureFlags.ui,
   };
 }
 

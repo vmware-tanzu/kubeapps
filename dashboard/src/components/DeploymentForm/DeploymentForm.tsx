@@ -1,23 +1,24 @@
 import { RouterAction } from "connected-react-router";
 import * as Moniker from "moniker-native";
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 
 import { JSONSchema4 } from "json-schema";
-import {
-  ForbiddenError,
-  IChartState,
-  IChartVersion,
-  InternalServerError,
-} from "../../shared/types";
+import { IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import { ErrorSelector, UnexpectedErrorAlert } from "../ErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 
+import actions from "actions";
+import ChartSummary from "components/Catalog/ChartSummary";
+import ChartHeader from "components/ChartView/ChartHeader";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import { useDispatch } from "react-redux";
 import "react-tabs/style/react-tabs.css";
+import { definedNamespaces } from "shared/Namespace";
 
 export interface IDeploymentFormProps {
-  kubeappsNamespace: string;
   chartNamespace: string;
   cluster: string;
   chartID: string;
@@ -40,140 +41,54 @@ export interface IDeploymentFormProps {
   namespace: string;
 }
 
-export interface IDeploymentFormState {
-  isDeploying: boolean;
-  releaseName: string;
-  // Name of the release that was submitted for creation
-  // This is different than releaseName since it is also used in the error banner
-  // and we do not want to use releaseName since it is controller by the form field.
-  latestSubmittedReleaseName: string;
-  appValues: string;
-  valuesModified: boolean;
-}
+function DeploymentForm({
+  chartNamespace,
+  cluster,
+  chartID,
+  chartVersion,
+  error,
+  chartsIsFetching,
+  selected,
+  deployChart,
+  push,
+  fetchChartVersions,
+  namespace,
+}: IDeploymentFormProps) {
+  const [isDeploying, setDeploying] = useState(false);
+  const [releaseName, setReleaseName] = useState(Moniker.choose());
+  const [appValues, setAppValues] = useState(selected.values || "");
+  const [valuesModified, setValuesModified] = useState(false);
+  const { version } = selected;
+  const dispatch = useDispatch();
 
-class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
-  public state: IDeploymentFormState = {
-    releaseName: Moniker.choose(),
-    appValues: this.props.selected.values || "",
-    isDeploying: false,
-    latestSubmittedReleaseName: "",
-    valuesModified: false,
+  useEffect(() => {
+    fetchChartVersions(cluster, chartNamespace, chartID);
+  }, [fetchChartVersions, cluster, chartNamespace, chartID]);
+
+  useEffect(() => {
+    if (!valuesModified) {
+      setAppValues(selected.values || "");
+    }
+  }, [selected.values, valuesModified]);
+  useEffect(() => {
+    dispatch(actions.charts.getChartVersion(cluster, chartNamespace, chartID, chartVersion));
+  }, [cluster, chartNamespace, chartID, chartVersion, dispatch]);
+
+  const handleValuesChange = (value: string) => {
+    setAppValues(value);
   };
 
-  public componentDidMount() {
-    this.props.fetchChartVersions(
-      this.props.cluster,
-      this.props.chartNamespace,
-      this.props.chartID,
-    );
-  }
-
-  public componentDidUpdate(prevProps: IDeploymentFormProps) {
-    if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
-      this.setState({ appValues: this.props.selected.values || "" });
-    }
-  }
-
-  public render() {
-    const { namespace, error } = this.props;
-    if (error) {
-      if (error.constructor === ForbiddenError) {
-        // Only if the error is a ForbiddenError use the error selector
-        // to parse the required roles
-        return (
-          <ErrorSelector
-            error={error}
-            namespace={namespace}
-            action="create"
-            resource={this.state.latestSubmittedReleaseName}
-          />
-        );
-      }
-      return (
-        <UnexpectedErrorAlert
-          title={`Sorry! The installation of ${this.state.latestSubmittedReleaseName} failed`}
-          text={error.message}
-          raw={true}
-          showGenericMessage={error.constructor === InternalServerError}
-        >
-          {error.constructor === InternalServerError ? (
-            <span>
-              The server returned an internal error. If the problem persists, please contant
-              Kubeapps maintainers.
-            </span>
-          ) : (
-            <span>
-              If you are unable to install the application, contact the chart maintainers or if you
-              think the issue is related to Kubeapps, please open an{" "}
-              <a
-                href="https://github.com/kubeapps/kubeapps/issues/new"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                issue in GitHub
-              </a>
-              .
-            </span>
-          )}
-        </UnexpectedErrorAlert>
-      );
-    }
-    if (this.state.isDeploying) {
-      return <LoadingWrapper />;
-    }
-    return (
-      <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
-        <div className="row">
-          <div className="col-12">
-            <h2>{this.props.chartID}</h2>
-          </div>
-          <div className="col-8">
-            <div>
-              <label htmlFor="releaseName">Name</label>
-              <input
-                id="releaseName"
-                pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-                title="Use lower case alphanumeric characters, '-' or '.'"
-                onChange={this.handleReleaseNameChange}
-                value={this.state.releaseName}
-                required={true}
-              />
-            </div>
-            <DeploymentFormBody
-              deploymentEvent="install"
-              chartNamespace={this.props.chartNamespace}
-              cluster={this.props.cluster}
-              chartID={this.props.chartID}
-              chartVersion={this.props.chartVersion}
-              chartsIsFetching={this.props.chartsIsFetching}
-              namespace={this.props.namespace}
-              selected={this.props.selected}
-              push={this.props.push}
-              getChartVersion={this.props.getChartVersion}
-              setValues={this.handleValuesChange}
-              appValues={this.state.appValues}
-              setValuesModified={this.setValuesModified}
-            />
-          </div>
-        </div>
-      </form>
-    );
-  }
-
-  public handleValuesChange = (value: string) => {
-    this.setState({ appValues: value });
+  const setValuesModifiedTrue = () => {
+    setValuesModified(true);
   };
 
-  public setValuesModified = () => {
-    this.setState({ valuesModified: true });
+  const handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
+    setReleaseName(e.currentTarget.value);
   };
 
-  public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { chartNamespace, cluster, selected, deployChart, push, namespace } = this.props;
-    const { releaseName, appValues } = this.state;
-
-    this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
+    setDeploying(true);
     if (selected.version) {
       const deployed = await deployChart(
         cluster,
@@ -184,16 +99,82 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         appValues,
         selected.schema,
       );
-      this.setState({ isDeploying: false });
+      setDeploying(false);
       if (deployed) {
         push(url.app.apps.get(cluster, namespace, releaseName));
       }
     }
   };
 
-  public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
-    this.setState({ releaseName: e.currentTarget.value });
+  const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    push(url.app.apps.new(cluster, namespace, selected.version!, e.currentTarget.value));
   };
+
+  if (!version) {
+    return <LoadingWrapper />;
+  }
+  const chartAttrs = version.relationships.chart.data;
+  return (
+    <section>
+      <ChartHeader
+        chartAttrs={chartAttrs}
+        versions={selected.versions}
+        onSelect={selectVersion}
+        selectedVersion={selected.version?.attributes.version}
+      />
+      {isDeploying && (
+        <h3 className="center" style={{ marginBottom: "1.2rem" }}>
+          Hang tight, the application is being deployed...
+        </h3>
+      )}
+      <LoadingWrapper loaded={!isDeploying}>
+        <Row>
+          <Column span={3}>
+            <ChartSummary version={version} chartAttrs={chartAttrs} />
+          </Column>
+          <Column span={9}>
+            {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+            {namespace === definedNamespaces.all ? (
+              <Alert theme="danger">
+                Namespace not selected. Please select a namespace using the selector in the top
+                right corner.
+              </Alert>
+            ) : (
+              <form onSubmit={handleDeploy}>
+                <div>
+                  <label
+                    htmlFor="releaseName"
+                    className="deployment-form-label deployment-form-label-text-param"
+                  >
+                    Name
+                  </label>
+                  <input
+                    id="releaseName"
+                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    title="Use lower case alphanumeric characters, '-' or '.'"
+                    className="clr-input deployment-form-text-input"
+                    onChange={handleReleaseNameChange}
+                    value={releaseName}
+                    required={true}
+                  />
+                </div>
+                <DeploymentFormBody
+                  deploymentEvent="install"
+                  chartID={chartID}
+                  chartVersion={chartVersion}
+                  chartsIsFetching={chartsIsFetching}
+                  selected={selected}
+                  setValues={handleValuesChange}
+                  appValues={appValues}
+                  setValuesModified={setValuesModifiedTrue}
+                />
+              </form>
+            )}
+          </Column>
+        </Row>
+      </LoadingWrapper>
+    </section>
+  );
 }
 
 export default DeploymentForm;

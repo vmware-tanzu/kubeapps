@@ -1,14 +1,8 @@
-.ChartInfo > a {
-  display: block;
-  width: 100%;
-}
-
-.ChartInfoUpdate {
-  color: white;
-  width: 100%;
-  margin-bottom: 0.5em;
-  text-align: center;
-  padding: 0.25em 0;
-  font-size: 14px;
-  background: #008145;
+.chartinfo-subsection {
+  border-bottom: 2px solid #f1f1f1;
+  padding: 1.2rem;
+  &-title {
+    font-weight: 600;
+    margin: 0 0 0.2rem 0;
+  }
 }

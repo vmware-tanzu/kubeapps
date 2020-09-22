@@ -1,15 +1,14 @@
-import { shallow } from "enzyme";
-import context from "jest-plugin-context";
 import * as React from "react";
 
-import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IChart, IChartState } from "../../shared/types";
-import { CardGrid } from "../Card";
-import { MessageAlert } from "../ErrorAlert";
-import PageHeader from "../PageHeader";
-import SearchFilter from "../SearchFilter";
-import Catalog from "./Catalog";
-import CatalogItem from "./CatalogItem";
+import FilterGroup from "components/FilterGroup/FilterGroup";
+import InfoCard from "components/InfoCard/InfoCard";
+import Alert from "components/js/Alert";
+import { act } from "react-dom/test-utils";
+import { definedNamespaces } from "shared/Namespace";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
+import SearchFilter from "../SearchFilter/SearchFilter";
+import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
   isFetching: false,
@@ -29,323 +28,324 @@ const defaultProps = {
   kubeappsNamespace: "kubeapps",
   csvs: [],
   getCSVs: jest.fn(),
-  featureFlags: { operators: false, ui: "hex" },
+};
+const chartItem = {
+  id: "foo",
+  attributes: {
+    name: "foo",
+    description: "",
+    category: "",
+    repo: { name: "foo", namespace: "chart-namespace" },
+  },
+  relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
+} as IChart;
+const chartItem2 = {
+  id: "bar",
+  attributes: {
+    name: "bar",
+    description: "",
+    category: "Database",
+    repo: { name: "bar", namespace: "chart-namespace" },
+  },
+  relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
+} as IChart;
+const csv = {
+  metadata: {
+    name: "test-csv",
+  },
+  spec: {
+    provider: {
+      name: "me",
+    },
+    icon: [{ base64data: "data", mediatype: "img/png" }],
+    customresourcedefinitions: {
+      owned: [
+        {
+          name: "foo-cluster",
+          displayName: "foo-cluster",
+          version: "v1.0.0",
+          description: "a meaningful description",
+        },
+      ],
+    },
+  },
+} as IClusterServiceVersion;
+const populatedProps = {
+  ...defaultProps,
+  csvs: [csv],
+  charts: { ...defaultChartState, items: [chartItem, chartItem2] },
 };
 
-it("propagates the filter from the props", () => {
-  const wrapper = shallow(<Catalog {...defaultProps} filter={{ q: "foo" }} />);
-  expect(wrapper.state("filter")).toBe("foo");
+it("retrieves csvs in the namespace", () => {
+  const getCSVs = jest.fn();
+  mountWrapper(defaultStore, <Catalog {...populatedProps} getCSVs={getCSVs} />);
+  expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, defaultProps.namespace);
 });
 
-it("reloads charts when the repo changes", () => {
-  const fetchCharts = jest.fn();
-  const wrapper = shallow(<Catalog {...defaultProps} fetchCharts={fetchCharts} />);
-  wrapper.setProps({ ...defaultProps, fetchCharts, repo: "bitnami" });
-  expect(fetchCharts.mock.calls.length).toBe(2);
-  expect(fetchCharts.mock.calls[1]).toEqual([defaultProps.cluster, "kubeapps", "bitnami"]);
+it("shows all the elements", () => {
+  const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} />);
+  expect(wrapper.find(InfoCard)).toHaveLength(3);
 });
 
-it("updates the filter from props", () => {
-  const wrapper = shallow(<Catalog {...defaultProps} />);
-  wrapper.setProps({ filter: { q: "foo" } });
-  expect(wrapper.state("filter")).toBe("foo");
+it("should render a message if there are no elements in the catalog", () => {
+  const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
+  const message = wrapper.find(".empty-catalog");
+  expect(message).toExist();
+  expect(message).toIncludeText("The current catalog is empty");
 });
 
-it("keeps the filter from the state", () => {
-  const wrapper = shallow(<Catalog {...defaultProps} />);
-  expect(wrapper.state("filter")).toBe("");
-  wrapper.setState({ filter: "foo" });
-  expect(wrapper.state("filter")).toBe("foo");
+it("should render an error if it exists", () => {
+  const charts = {
+    ...defaultChartState,
+    selected: {
+      error: new Error("Boom!"),
+    },
+  } as any;
+  const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} charts={charts} />);
+  const error = wrapper.find(Alert);
+  expect(error.prop("theme")).toBe("danger");
+  expect(error).toIncludeText("Boom!");
 });
 
-describe("componentDidMount", () => {
-  it("retrieves csvs in the namespace", () => {
-    const getCSVs = jest.fn();
-    const namespace = "foo";
-    shallow(
+it("behaves like a loading wrapper", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...populatedProps} charts={{ isFetching: true, items: [], selected: {} } as any} />,
+  );
+  expect(wrapper.find("LoadingWrapper")).toExist();
+});
+
+it("shows a message if the namespace has not been selected", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...populatedProps} namespace={definedNamespaces.all} />,
+  );
+  expect(wrapper).toIncludeText("A valid namespace should be selected");
+  expect(wrapper.find(".filters-menu")).not.toExist();
+});
+
+describe("filters by the searched item", () => {
+  it("filters using prop", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ Search: "bar" }} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("filters modifying the search box", () => {
+    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} />);
+    act(() => {
+      (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
+    });
+    wrapper.update();
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+});
+
+describe("filters by application type", () => {
+  it("doesn't show the filter if there are no csvs", () => {
+    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} csvs={[]} />);
+    expect(
+      wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.TYPE),
+    ).not.toExist();
+  });
+
+  it("filters only charts", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ Type: "Charts" }} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(2);
+  });
+
+  it("push filter for only charts", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
+    input.simulate("change", { target: { value: "Charts" } });
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Type=Charts"],
+      method: "push",
+    });
+  });
+
+  it("filters only operators", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ Type: "Operators" }} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("push filter for only operators", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
+    input.simulate("change", { target: { value: "Operators" } });
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Type=Operators"],
+      method: "push",
+    });
+  });
+});
+
+describe("filters by application repository", () => {
+  it("doesn't show the filter if there are no apps", () => {
+    const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
+    expect(
+      wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.REPO),
+    ).not.toExist();
+  });
+
+  it("filters by repo", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...populatedProps} filter={{ [filterNames.REPO]: "foo" }} />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("push filter for repo", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
+    // The repo name is "foo"
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+    input.simulate("change", { target: { value: "foo" } });
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Repository=foo"],
+      method: "push",
+    });
+  });
+});
+
+describe("filters by operator provider", () => {
+  it("doesn't show the filter if there are no csvs", () => {
+    const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
+    expect(
+      wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.OPERATOR_PROVIDER),
+    ).not.toExist();
+  });
+
+  const csv2 = {
+    metadata: {
+      name: "csv2",
+    },
+    spec: {
+      ...csv.spec,
+      provider: {
+        name: "you",
+      },
+    },
+  } as any;
+
+  it("push filter for operator provider", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} csvs={[csv, csv2]} />);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
+    input.simulate("change", { target: { value: "you" } });
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Provider=you"],
+      method: "push",
+    });
+  });
+
+  it("filters by operator provider", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
       <Catalog
-        {...defaultProps}
-        getCSVs={getCSVs}
-        namespace={namespace}
-        featureFlags={{ ...defaultProps.featureFlags, operators: true }}
+        {...populatedProps}
+        csvs={[csv, csv2]}
+        filter={{ [filterNames.OPERATOR_PROVIDER]: "you" }}
       />,
     );
-    expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, namespace);
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 });
 
-describe("componentDidUpdate", () => {
-  it("re-fetches csvs if the namespace changes", () => {
-    const getCSVs = jest.fn();
-    const wrapper = shallow(
+describe("filters by category", () => {
+  it("renders a Unknown category if not set", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog {...defaultProps} charts={{ ...defaultChartState, items: [chartItem] }} />,
+    );
+    expect(wrapper.find("input").findWhere(i => i.prop("value") === "Unknown")).toExist();
+  });
+
+  it("push filter for category", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(
+      store,
       <Catalog
         {...defaultProps}
-        getCSVs={getCSVs}
-        featureFlags={{ ...defaultProps.featureFlags, operators: true }}
+        charts={{ ...defaultChartState, items: [chartItem, chartItem2] }}
       />,
     );
-    wrapper.setProps({ namespace: "a-different-one" });
-    expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, "a-different-one");
-  });
-});
-
-describe("renderization", () => {
-  context("when no charts", () => {
-    it("should render an error", () => {
-      const wrapper = shallow(<Catalog {...defaultProps} />);
-      expect(wrapper.find(MessageAlert)).toExist();
-      expect(wrapper.find(".Catalog")).not.toExist();
-      expect(
-        wrapper
-          .find(MessageAlert)
-          .children()
-          .text(),
-      ).toContain("Manage your Helm chart repositories");
-      expect(wrapper).toMatchSnapshot();
+    expect(wrapper.find(InfoCard)).toHaveLength(2);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
+    input.simulate("change", { target: { value: "Database" } });
+    // It should have pushed with the filter
+    expect(store.getActions()[0].payload).toEqual({
+      args: ["/c/default/ns/kubeapps/catalog?Category=Database"],
+      method: "push",
     });
   });
 
-  context("when there is an error fetching charts", () => {
-    it("should render a generic error", () => {
-      const props = {
-        ...defaultProps,
-        charts: {
-          ...defaultProps.charts,
-          selected: {
-            ...defaultProps.charts.selected,
-            error: new Error("Bang!"),
-          },
-        },
-      };
-      const wrapper = shallow(<Catalog {...props} />);
-      expect(wrapper.find(MessageAlert)).toExist();
-      expect(wrapper.find(".Catalog")).not.toExist();
-      const errText = wrapper
-        .find(MessageAlert)
-        .children()
-        .text();
-      expect(errText).toContain("Unable to fetch catalog");
-      expect(errText).not.toContain("Please choose a namespace");
-      expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should render a specific error for a forbidden error", () => {
-      const props = {
-        ...defaultProps,
-        charts: {
-          ...defaultProps.charts,
-          selected: {
-            ...defaultProps.charts.selected,
-            error: new ForbiddenError("Bang!"),
-          },
-        },
-      };
-      const wrapper = shallow(<Catalog {...props} />);
-      expect(wrapper.find(MessageAlert)).toExist();
-      expect(wrapper.find(".Catalog")).not.toExist();
-      const errText = wrapper
-        .find(MessageAlert)
-        .children()
-        .text();
-      expect(errText).toContain("Unable to fetch catalog");
-      expect(errText).toContain("Please choose a namespace");
-      expect(wrapper).toMatchSnapshot();
-    });
+  it("filters a category", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...defaultProps}
+        charts={{ ...defaultChartState, items: [chartItem, chartItem2] }}
+        filter={{ [filterNames.CATEGORY]: "Database" }}
+      />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 
-  context("when fetching apps", () => {
-    itBehavesLike("aLoadingComponent", {
-      component: Catalog,
-      props: { ...defaultProps, charts: { isFetching: true, items: [], selected: {} } },
-    });
+  it("filters an operator category", () => {
+    const csvWithCat = {
+      ...csv,
+      metadata: {
+        name: "csv-cat",
+        annotations: {
+          categories: "E-Learning",
+        },
+      },
+    } as any;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...defaultProps}
+        csvs={[csv, csvWithCat]}
+        filter={{ [filterNames.CATEGORY]: "E-Learning" }}
+      />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 
-  context("when charts available", () => {
-    const chartState = {
-      isFetching: false,
-      selected: {} as IChartState["selected"],
-      items: [
-        {
-          id: "foo",
-          attributes: {
-            name: "foo",
-            description: "",
-            repo: { name: "foo", namespace: "chart-namespace" },
-          },
-          relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-        } as IChart,
-        {
-          id: "bar",
-          attributes: {
-            name: "bar",
-            description: "",
-            repo: { name: "bar", namespace: "chart-namespace" },
-          },
-          relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
-        } as IChart,
-      ],
-    } as IChartState;
-
-    it("should render the list of charts", () => {
-      const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} />);
-
-      expect(wrapper.find(MessageAlert)).not.toExist();
-      expect(wrapper.find(PageHeader)).toExist();
-      expect(wrapper.find(SearchFilter)).toExist();
-
-      const cardGrid = wrapper.find(CardGrid);
-      expect(cardGrid).toExist();
-      expect(cardGrid.children().length).toBe(chartState.items.length);
-      const expectedItem1 = {
-        description: "",
-        id: "bar",
-        name: "bar",
-        namespace: "kubeapps",
-        cluster: "default",
-        repo: {
-          name: "bar",
-          namespace: "chart-namespace",
+  it("filters operator categories", () => {
+    const csvWithCat = {
+      ...csv,
+      metadata: {
+        name: "csv-cat",
+        annotations: {
+          categories: "DeveloperTools, Infrastructure",
         },
-        version: "v2.0.0",
-      };
-      const expectedItem2 = {
-        description: "",
-        id: "foo",
-        name: "foo",
-        namespace: "kubeapps",
-        cluster: "default",
-        repo: {
-          name: "foo",
-          namespace: "chart-namespace",
-        },
-        version: "v1.0.0",
-      };
-      expect(
-        cardGrid
-          .children()
-          .at(0)
-          .props().item,
-      ).toEqual(expectedItem1);
-      expect(
-        cardGrid
-          .children()
-          .at(1)
-          .props().item,
-      ).toEqual(expectedItem2);
-      expect(wrapper).toMatchSnapshot();
-      // If there are no csvs, there shouldn't be columns
-      expect(wrapper.find(".col-10")).not.toExist();
-    });
-
-    it("should filter apps", () => {
-      // Filter "foo" app
-      const wrapper = shallow(
-        <Catalog {...defaultProps} charts={chartState} filter={{ q: "foo" }} />,
-      );
-
-      const cardGrid = wrapper.find(CardGrid);
-      expect(cardGrid).toExist();
-      expect(cardGrid.children().length).toBe(1);
-      const expectedItem = {
-        description: "",
-        id: "foo",
-        name: "foo",
-        namespace: "kubeapps",
-        cluster: "default",
-        repo: {
-          name: "foo",
-          namespace: "chart-namespace",
-        },
-        version: "v1.0.0",
-      };
-      expect(
-        cardGrid
-          .children()
-          .at(0)
-          .props().item,
-      ).toEqual(expectedItem);
-    });
-
-    describe("when operators available", () => {
-      const csvs = [
-        {
-          metadata: {
-            name: "test-csv",
-          },
-          spec: {
-            icon: [{ base64data: "data", mediatype: "img/png" }],
-            customresourcedefinitions: {
-              owned: [
-                {
-                  name: "foo-cluster",
-                  displayName: "foo-cluster",
-                  version: "v1.0.0",
-                  description: "a meaningful description",
-                },
-              ],
-            },
-          },
-        } as any,
-      ];
-
-      it("shows the list of charts and operators", () => {
-        const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} csvs={csvs} />);
-        const cardGrid = wrapper.find(CardGrid);
-        expect(cardGrid).toExist();
-        expect(cardGrid.children().length).toBe(chartState.items.length + csvs.length);
-
-        const expectedItem = {
-          csv: "test-csv",
-          description: "a meaningful description",
-          icon: "data:img/png;base64,data",
-          id: "foo-cluster",
-          name: "foo-cluster",
-          namespace: "kubeapps",
-          version: "v1.0.0",
-        };
-        const csvCard = cardGrid
-          .find(CatalogItem)
-          .findWhere(c => c.prop("item").id === "foo-cluster");
-        expect(csvCard).toExist();
-        expect(csvCard.prop("item")).toMatchObject(expectedItem);
-        // If there are no csvs, there should be a column for the cardgrid
-        expect(wrapper.find(".col-10")).toExist();
-        // The list should be ordered
-        expect(cardGrid.children().map(c => c.props().item.id)).toEqual([
-          "bar",
-          "foo",
-          "foo-cluster",
-        ]);
-      });
-
-      it("should filter out charts or operators when requested", () => {
-        const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} csvs={csvs} />);
-
-        wrapper.setState({ listCharts: false });
-        let cardGrid = wrapper.find(CardGrid);
-        expect(cardGrid).toExist();
-        expect(cardGrid.children().length).toBe(csvs.length);
-
-        wrapper.setState({ listOperators: false, listCharts: true });
-        cardGrid = wrapper.find(CardGrid);
-        expect(cardGrid).toExist();
-        expect(cardGrid.children().length).toBe(chartState.items.length);
-      });
-
-      it("should show operators if there are no charts available", () => {
-        const wrapper = shallow(<Catalog {...defaultProps} csvs={csvs} />);
-        expect(wrapper.find(MessageAlert)).not.toExist();
-        expect(wrapper.find(".Catalog")).toExist();
-      });
-
-      it("should skip operators if the repo filter is used", () => {
-        const wrapper = shallow(
-          <Catalog {...defaultProps} charts={chartState} csvs={csvs} repo="test" />,
-        );
-        const cardGrid = wrapper.find(CardGrid);
-        expect(cardGrid).toExist();
-        expect(cardGrid.children().length).toBe(chartState.items.length);
-      });
-    });
+      },
+    } as any;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...defaultProps}
+        csvs={[csv, csvWithCat]}
+        filter={{ [filterNames.CATEGORY]: "Developer Tools,Infrastructure" }}
+      />,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 });

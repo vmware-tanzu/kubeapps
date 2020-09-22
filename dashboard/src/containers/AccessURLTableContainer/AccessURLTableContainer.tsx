@@ -20,7 +20,6 @@ function mapStateToProps({ kube, config }: IStoreState, props: IAccessURLTableCo
     services: filterByResourceRefs(props.serviceRefs, kube.items),
     ingresses: filterByResourceRefs(props.ingressRefs, kube.items),
     ingressRefs: props.ingressRefs,
-    UI: config.featureFlags.ui,
   };
 }
 

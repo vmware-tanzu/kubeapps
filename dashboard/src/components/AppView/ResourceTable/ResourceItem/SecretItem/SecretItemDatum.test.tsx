@@ -1,6 +1,7 @@
-import { shallow } from "enzyme";
+import { mount } from "enzyme";
 import * as React from "react";
 
+import { CdsIcon } from "@clr/react/icon";
 import SecretItemDatum from "./SecretItemDatum";
 
 const testProps = {
@@ -9,17 +10,24 @@ const testProps = {
 };
 
 it("renders the secret datum (hidden by default)", () => {
-  const wrapper = shallow(<SecretItemDatum {...testProps} />);
-  expect(wrapper.state()).toMatchObject({ hidden: true });
+  const wrapper = mount(<SecretItemDatum {...testProps} />);
+  expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "eye")).toExist();
+  expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "copy-to-clipboard")).toExist();
   expect(wrapper).toMatchSnapshot();
 });
 
 it("displays the secret datum value when clicking on the icon", () => {
-  const wrapper = shallow(<SecretItemDatum {...testProps} />);
-  expect(wrapper.text()).toContain("foo:3 bytes");
-  const icon = wrapper.find("button");
-  expect(icon).toExist();
+  const wrapper = mount(<SecretItemDatum {...testProps} />);
+  expect(wrapper.find("input").props()).toMatchObject({
+    type: "password",
+    value: "bar",
+  });
+  const icon = wrapper.find("button").findWhere(b => b.prop("aria-label") === "Show Secret");
   icon.simulate("click");
-  expect(wrapper.state()).toMatchObject({ hidden: false });
-  expect(wrapper.text()).toContain("foo:bar");
+  wrapper.update();
+  expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "eye-hide")).toExist();
+  expect(wrapper.find("input").props()).toMatchObject({
+    type: "text",
+    value: "bar",
+  });
 });

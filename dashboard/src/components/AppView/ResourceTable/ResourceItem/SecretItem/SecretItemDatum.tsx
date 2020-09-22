@@ -1,49 +1,91 @@
-import * as React from "react";
-import { Eye, EyeOff } from "react-feather";
+import { CdsIcon } from "@clr/react/icon";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import React, { useEffect, useRef } from "react";
+import CopyToClipboard from "react-copy-to-clipboard";
+
+import ReactTooltip from "react-tooltip";
+import "./SecretItemDatum.css";
 
 interface ISecretItemDatumProps {
   name: string;
   value: string;
 }
 
-interface ISecretItemDatumState {
-  hidden: boolean;
-}
-
-class SecretItemDatum extends React.PureComponent<ISecretItemDatumProps, ISecretItemDatumState> {
-  // Secret datum is hidden by default
-  public state: ISecretItemDatumState = {
-    hidden: true,
+function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
+  const [hidden, setHidden] = React.useState(true);
+  const [copied, setCopied] = React.useState(false);
+  const toggleDisplay = () => setHidden(!hidden);
+  const copyTimeout = useRef({} as NodeJS.Timeout);
+  const setCopiedTrue = () => {
+    setCopied(true);
   };
+  useEffect(() => {
+    if (copied) {
+      copyTimeout.current = setTimeout(() => {
+        setCopied(false);
+      }, 1000);
+    }
+    return () => {
+      if (copyTimeout.current != null) {
+        clearTimeout(copyTimeout.current);
+      }
+    };
+  }, [copied]);
+  const decodedValue = atob(value);
 
-  public render() {
-    const { name, value } = this.props;
-    const { hidden } = this.state;
-    const decodedValue = atob(value);
-    return (
-      <span className="flex">
-        <button className="secretDatum" onClick={this.toggleDisplay}>
-          {hidden ? <Eye /> : <EyeOff />}
-        </button>
-        <span className="flex margin-l-normal">
-          <span>{name}:</span>
+  return (
+    <Row>
+      <Column span={5}>
+        <label htmlFor={`secret-datum-content-${name}`} className="secret-datum-text">
+          {name}
+        </label>
+      </Column>
+      <Column span={5}>
+        <input
+          type={hidden ? "password" : "text"}
+          id={`secret-datum-content-${name}`}
+          className="clr-input secret-datum-content"
+          value={decodedValue}
+          readOnly={true}
+        />
+      </Column>
+      <Column span={1}>
+        <button
+          className="secret-datum-icon"
+          aria-label={hidden ? "Show Secret" : "Hide Secret"}
+          aria-controls={`secret-item-datum-${name}-ref`}
+          aria-expanded={!hidden}
+          onClick={toggleDisplay}
+        >
           {hidden ? (
-            <span className="margin-l-small">{decodedValue.length} bytes</span>
+            <CdsIcon shape="eye" size="md" solid={true} />
           ) : (
-            <pre className="SecretContainer">
-              <code className="SecretContent">{decodedValue}</code>
-            </pre>
+            <CdsIcon shape="eye-hide" size="md" solid={true} />
           )}
-        </span>
-      </span>
-    );
-  }
-
-  private toggleDisplay = () => {
-    this.setState({
-      hidden: !this.state.hidden,
-    });
-  };
+        </button>
+      </Column>
+      <Column span={1}>
+        <button className="secret-datum-icon" aria-expanded={!hidden} onClick={setCopiedTrue}>
+          <div data-tip={true} data-for="app-status">
+            <CopyToClipboard text={decodedValue}>
+              <CdsIcon
+                shape="copy-to-clipboard"
+                size="md"
+                solid={true}
+                aria-label={`Copy ${name} secret value to the clipboard`}
+              />
+            </CopyToClipboard>
+          </div>
+        </button>
+        <div style={{ opacity: copied ? "1" : "0" }}>
+          <ReactTooltip id="app-status" effect="solid">
+            Copied
+          </ReactTooltip>
+        </div>
+      </Column>
+    </Row>
+  );
 }
 
 export default SecretItemDatum;

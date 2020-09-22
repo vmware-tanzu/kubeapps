@@ -1,3 +1,4 @@
+import Layout from "components/Layout";
 import { ConnectedRouter } from "connected-react-router";
 import * as React from "react";
 import { Provider } from "react-redux";
@@ -5,7 +6,6 @@ import { Provider } from "react-redux";
 import store, { history } from "../store";
 import ConfigLoaderContainer from "./ConfigLoaderContainer";
 import HeaderContainer from "./HeaderContainer";
-import Layout from "./LayoutContainer";
 import Routes from "./RoutesContainer";
 
 class Root extends React.Component {

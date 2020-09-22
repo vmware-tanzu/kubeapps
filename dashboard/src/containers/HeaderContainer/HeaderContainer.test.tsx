@@ -25,7 +25,6 @@ const defaultState = {
   auth: defaultAuthState,
   router: { location: emptyLocation },
   config: {
-    featureFlags: { operators: true, ui: "hex" },
     clusters: [],
   },
   catalog: { isServiceCatalogInstalled: false },
@@ -44,25 +43,9 @@ describe("HeaderContainer props", () => {
   it("maps authentication redux states to props", () => {
     const store = mockStore(defaultState);
     const wrapper = shallow(<HeaderContainer store={store} />);
-    const form = wrapper.find("HeaderSelector");
+    const form = wrapper.find("Header");
     expect(form).toHaveProp({
       authenticated: true,
-    });
-  });
-
-  it("maps featureFlags configuration to props", () => {
-    const store = mockStore({
-      ...defaultState,
-      config: {
-        featureFlags: { ...defaultState.config.featureFlags, operators: true },
-      },
-    });
-
-    const wrapper = shallow(<HeaderContainer store={store} />);
-
-    const form = wrapper.find("HeaderSelector");
-    expect(form).toHaveProp({
-      featureFlags: { ...defaultState.config.featureFlags, operators: true },
     });
   });
 });

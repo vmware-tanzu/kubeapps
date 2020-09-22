@@ -1,21 +1,21 @@
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
-import { shallow } from "enzyme";
+import { CdsButton } from "@clr/react/button";
+import actions from "actions";
+import Alert from "components/js/Alert";
 import * as React from "react";
-import { NotFoundError } from "../../shared/types";
-import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
-import OperatorNew, { IOperatorNewProps } from "./OperatorNew";
+import * as ReactRedux from "react-redux";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import OperatorNew from "./OperatorNew";
 
 const defaultProps = {
   operatorName: "foo",
   getOperator: jest.fn(),
   isFetching: false,
-  cluster: "default",
+  cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
-  kubeappsCluster: "default",
   push: jest.fn(),
   createOperator: jest.fn(),
   errors: {},
-} as IOperatorNewProps;
+};
 
 const defaultOperator = {
   metadata: {
@@ -48,31 +48,26 @@ const defaultOperator = {
   },
 } as any;
 
-it("displays an alert if rendered for an additional cluster", () => {
-  const props = { ...defaultProps, cluster: "other-cluster" };
-  const wrapper = shallow(<OperatorNew {...props} />);
-  expect(wrapper.find(OperatorNotSupported)).toExist();
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.operators };
+beforeEach(() => {
+  actions.operators = {
+    ...actions.operators,
+    getOperator: jest.fn(),
+  };
+  const mockDispatch = jest.fn(res => res);
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.operators = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
 });
 
 it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
-  shallow(<OperatorNew {...defaultProps} getOperator={getOperator} />);
-  expect(getOperator).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.operatorName,
-  );
-});
-
-it("calls getOperator when changing the namespace the component", () => {
-  const getOperator = jest.fn();
-  const wrapper = shallow(<OperatorNew {...defaultProps} getOperator={getOperator} />);
-  expect(getOperator).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.operatorName,
-  );
-  wrapper.setProps({ namespace: "foo" });
+  actions.operators.getOperator = getOperator;
+  mountWrapper(defaultStore, <OperatorNew {...defaultProps} />);
   expect(getOperator).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.namespace,
@@ -81,20 +76,29 @@ it("calls getOperator when changing the namespace the component", () => {
 });
 
 it("parses the default channel when receiving the operator", () => {
-  const wrapper = shallow(<OperatorNew {...defaultProps} />);
-  wrapper.setProps({ operator: defaultOperator });
-  expect(wrapper.state()).toMatchObject({
-    updateChannel: defaultOperator.status.channels[0],
-    updateChannelGlobal: false,
-    installationModeGlobal: false,
-  });
+  const wrapper = mountWrapper(
+    getStore({ operators: { operator: defaultOperator } }),
+    <OperatorNew {...defaultProps} />,
+  );
+  const input = wrapper.find("#operator-channel-beta");
+  expect(input).toExist();
+  expect(input).toBeChecked();
 });
 
-it("renders an error if present", () => {
-  const wrapper = shallow(
-    <OperatorNew {...defaultProps} errors={{ fetch: new NotFoundError() }} />,
+it("renders a fetch error if present", () => {
+  const wrapper = mountWrapper(
+    getStore({ operators: { errors: { operator: { fetch: new Error("Boom") } } } }),
+    <OperatorNew {...defaultProps} />,
   );
-  expect(wrapper.html()).toContain("Operator foo not found");
+  expect(wrapper.find(Alert)).toIncludeText("Boom");
+});
+
+it("renders a create error if present", () => {
+  const wrapper = mountWrapper(
+    getStore({ operators: { errors: { operator: { create: new Error("Boom") } } } }),
+    <OperatorNew {...defaultProps} />,
+  );
+  expect(wrapper.find(Alert)).toIncludeText("Boom");
 });
 
 it("shows an error if the operator doesn't have any channel defined", () => {
@@ -103,52 +107,41 @@ it("shows an error if the operator doesn't have any channel defined", () => {
       channels: [],
     },
   };
-  const wrapper = shallow(<OperatorNew {...defaultProps} operator={operator as any} />);
-  expect(
-    wrapper
-      .find(UnexpectedErrorPage)
-      .dive()
-      .text(),
-  ).toContain(
+  const wrapper = mountWrapper(
+    getStore({ operators: { operator } }),
+    <OperatorNew {...defaultProps} />,
+  );
+  expect(wrapper.find(Alert)).toIncludeText(
     "Operator foo doesn't define a valid channel. This is needed to extract required info",
   );
 });
 
-it("renders a full OperatorNew", () => {
-  const wrapper = shallow(<OperatorNew {...defaultProps} />);
-  wrapper.setProps({ operator: defaultOperator });
-  expect(wrapper).toMatchSnapshot();
-});
-
 it("disables the submit button if the operators ns is selected", () => {
-  const wrapper = shallow(<OperatorNew {...defaultProps} namespace="operators" />);
-  wrapper.setProps({ operator: defaultOperator });
-  expect(wrapper.find("button").prop("disabled")).toBe(true);
-  expect(wrapper.find(UnexpectedErrorPage)).toExist();
+  const wrapper = mountWrapper(
+    getStore({ operators: { operator: defaultOperator } }),
+    <OperatorNew {...defaultProps} namespace="operators" />,
+  );
+  expect(wrapper.find(CdsButton)).toBeDisabled();
+  expect(wrapper.find(Alert)).toIncludeText(
+    'It\'s not possible to install a namespaced operator in the "operators" namespace',
+  );
 });
 
 it("deploys an operator", async () => {
   const createOperator = jest.fn().mockReturnValue(true);
-  const push = jest.fn();
-  const wrapper = shallow(
-    <OperatorNew
-      {...defaultProps}
-      namespace="operators"
-      createOperator={createOperator}
-      push={push}
-    />,
-  );
-  wrapper.setProps({ operator: defaultOperator });
+  actions.operators.createOperator = createOperator;
+  const store = getStore({ operators: { operator: defaultOperator } });
+
+  const wrapper = mountWrapper(store, <OperatorNew {...defaultProps} />);
   const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
   await onSubmit();
 
   expect(createOperator).toHaveBeenCalledWith(
-    "default",
-    "operators",
+    defaultProps.cluster,
+    "kubeapps",
     "foo",
     "beta",
     "Automatic",
     "foo.1.0.0",
   );
-  expect(push).toHaveBeenCalledWith("/c/default/ns/operators/operators");
 });

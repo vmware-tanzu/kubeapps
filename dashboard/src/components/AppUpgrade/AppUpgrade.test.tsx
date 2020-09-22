@@ -1,16 +1,29 @@
-import { mount, shallow } from "enzyme";
+import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
-import { BrowserRouter } from "react-router-dom";
 
+import Alert from "components/js/Alert";
 import { hapi } from "shared/hapi/release";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IAppRepository, IChartState, IChartVersion, IRelease } from "shared/types";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IAppRepository, IChartState, IRelease } from "../../shared/types";
-import { ErrorSelector, MessageAlert, PermissionsErrorAlert } from "../ErrorAlert";
-import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
-import SelectRepoForm from "../SelectRepoForm";
-import UpgradeForm from "../UpgradeForm";
+import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
+import UpgradeForm from "../UpgradeForm/UpgradeForm";
 import AppUpgrade, { IAppUpgradeProps } from "./AppUpgrade";
+
+const versions = [
+  {
+    id: "foo",
+    attributes: { version: "1.2.3" },
+    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
+  },
+  {
+    id: "foo",
+    attributes: { version: "1.2.4" },
+    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
+  },
+] as IChartVersion[];
+const schema = { properties: { foo: { type: "string" } } };
 
 const defaultProps = {
   app: {} as hapi.release.Release,
@@ -39,7 +52,7 @@ const defaultProps = {
   repo: {} as IAppRepository,
   repoError: undefined,
   repos: [],
-  selected: {} as IChartState["selected"],
+  selected: { versions, version: versions[0], schema },
   upgradeApp: jest.fn(),
   version: "1.0.0",
 } as IAppUpgradeProps;
@@ -77,7 +90,7 @@ it("renders the repo selection form if not introduced", () => {
     />,
   );
   expect(wrapper.find(SelectRepoForm)).toExist();
-  expect(wrapper.find(ErrorSelector)).not.toExist();
+  expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(UpgradeForm)).not.toExist();
   expect(wrapper).toMatchSnapshot();
 });
@@ -90,28 +103,22 @@ context("when an error exists", () => {
     const wrapper = shallow(
       <AppUpgrade
         {...defaultProps}
-        appsError={new Error("foo doesn't exists")}
+        appsError={new Error("foo does not exist")}
         repos={[repo]}
         repo={repo}
       />,
     );
 
-    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(SelectRepoForm)).not.toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
-    expect(wrapper.html()).toContain("Sorry! Something went wrong.");
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.html()).toContain("foo does not exist");
   });
 
-  it("renders a forbidden message", () => {
-    const role = {
-      apiGroup: "kubeapps.com",
-      namespace: "kubeapps",
-      resource: "apprepositories",
-      verbs: ["get"],
-    };
-    const wrapper = mount(
+  it("renders a warning message if there are no repositories", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
       <AppUpgrade
         {...defaultProps}
         app={
@@ -126,46 +133,16 @@ context("when an error exists", () => {
             updateInfo: { repository: {} },
           } as IRelease
         }
-        repoError={new ForbiddenError(JSON.stringify([role]))}
+        repos={[]}
       />,
     );
-    expect(wrapper.find(ErrorSelector)).toExist();
-    expect(wrapper.find(UpgradeForm)).not.toExist();
 
-    expect(wrapper.find(ErrorPageHeader).text()).toContain(
-      "You don't have sufficient permissions to view App Repositories in the kubeapps namespace",
-    );
-    expect(wrapper.find(PermissionsErrorAlert).prop("roles")[0]).toMatchObject(role);
-  });
-
-  it("renders a warning message if there are no repositories", () => {
-    const wrapper = mount(
-      <BrowserRouter>
-        <AppUpgrade
-          {...defaultProps}
-          app={
-            {
-              chart: {
-                metadata: {
-                  name: "bar",
-                  version: "1.0.0",
-                },
-              },
-              name: "foo",
-              updateInfo: { repository: {} },
-            } as IRelease
-          }
-          repos={[]}
-        />
-      </BrowserRouter>,
-    );
-
-    expect(wrapper.find(SelectRepoForm).find(MessageAlert)).toExist();
+    expect(wrapper.find(SelectRepoForm).find(Alert)).toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
     expect(
       wrapper
-        .find(MessageAlert)
+        .find(Alert)
         .children()
         .text(),
     ).toContain("Chart repositories not found");
@@ -173,7 +150,8 @@ context("when an error exists", () => {
 });
 
 it("renders the upgrade form when the repo is available", () => {
-  const wrapper = shallow(
+  const wrapper = mountWrapper(
+    defaultStore,
     <AppUpgrade
       {...defaultProps}
       app={
@@ -188,13 +166,12 @@ it("renders the upgrade form when the repo is available", () => {
           updateInfo: { repository: {} },
         } as IRelease
       }
+      repoName="foobar"
     />,
   );
-  wrapper.setProps({ repoName: "foobar" });
   expect(wrapper.find(UpgradeForm)).toExist();
-  expect(wrapper.find(ErrorSelector)).not.toExist();
+  expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("skips the repo selection form if the app contains upgrade info", () => {
@@ -216,12 +193,13 @@ it("skips the repo selection form if the app contains upgrade info", () => {
       repository: { name: "stable", url: "" },
     },
   } as IRelease;
-  const wrapper = shallow(<AppUpgrade {...defaultProps} repos={[repo]} />);
-  wrapper.setProps({ app });
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppUpgrade {...defaultProps} repos={[repo]} app={app} />,
+  );
   expect(wrapper.find(UpgradeForm)).toExist();
-  expect(wrapper.find(ErrorSelector)).not.toExist();
+  expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
-  expect(wrapper).toMatchSnapshot();
 });
 
 describe("when receiving new props", () => {
@@ -235,11 +213,15 @@ describe("when receiving new props", () => {
       },
     } as IRelease;
     const getDeployedChartVersion = jest.fn();
-    const wrapper = shallow(
-      <AppUpgrade {...defaultProps} getDeployedChartVersion={getDeployedChartVersion} />,
+    mountWrapper(
+      defaultStore,
+      <AppUpgrade
+        {...defaultProps}
+        getDeployedChartVersion={getDeployedChartVersion}
+        repoName="stable"
+        app={app}
+      />,
     );
-    wrapper.setProps({ repoName: "stable", app });
-    wrapper.update();
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
       defaultProps.cluster,
       defaultProps.repoNamespace,
@@ -258,54 +240,19 @@ describe("when receiving new props", () => {
       },
     } as IRelease;
     const getDeployedChartVersion = jest.fn();
-    const wrapper = shallow(
-      <AppUpgrade {...defaultProps} app={app} getDeployedChartVersion={getDeployedChartVersion} />,
+    mountWrapper(
+      defaultStore,
+      <AppUpgrade
+        {...defaultProps}
+        app={app}
+        getDeployedChartVersion={getDeployedChartVersion}
+        repoName="stable"
+      />,
     );
-    expect(getDeployedChartVersion).not.toHaveBeenCalled();
-    wrapper.setProps({ repoName: "stable" });
-    wrapper.update();
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
       defaultProps.cluster,
       defaultProps.repoNamespace,
       "stable/bar",
-      "1.0.0",
-    );
-  });
-
-  it("a new app should re-trigger the deployed chart retrieval", () => {
-    const app = {
-      chart: {
-        metadata: {
-          name: "bar",
-          version: "1.0.0",
-        },
-      },
-    } as IRelease;
-    const getDeployedChartVersion = jest.fn();
-    const wrapper = shallow(
-      <AppUpgrade {...defaultProps} getDeployedChartVersion={getDeployedChartVersion} />,
-    );
-    wrapper.setProps({ repoName: "stable", app });
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(
-      defaultProps.cluster,
-      defaultProps.repoNamespace,
-      "stable/bar",
-      "1.0.0",
-    );
-
-    const app2 = {
-      chart: {
-        metadata: {
-          name: "foobar",
-          version: "1.0.0",
-        },
-      },
-    } as IRelease;
-    wrapper.setProps({ app: app2 });
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(
-      defaultProps.cluster,
-      defaultProps.repoNamespace,
-      "stable/foobar",
       "1.0.0",
     );
   });

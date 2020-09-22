@@ -22,8 +22,6 @@ function mapStateToProps(
     cluster: params.cluster,
     namespace: params.namespace,
     kubeappsNamespace: config.kubeappsNamespace,
-    featureFlags: config.featureFlags,
-    UI: config.featureFlags.ui,
   };
 }
 

@@ -11,52 +11,57 @@ export interface IStringParamProps {
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
-class TextParam extends React.Component<IStringParamProps> {
-  public render() {
-    const { id, param, label, inputType } = this.props;
-    let input = (
-      <input
-        id={id}
-        onChange={this.props.handleBasicFormParamChange(param)}
-        value={param.value === undefined ? "" : param.value}
-        type={inputType ? inputType : "text"}
-      />
-    );
-    if (inputType === "textarea") {
-      input = (
-        <textarea
-          id={id}
-          onChange={this.props.handleBasicFormParamChange(param)}
-          value={param.value === undefined ? "" : param.value}
-        />
-      );
-    } else if (param.enum != null && param.enum.length > 0) {
-      input = (
-        <select id={id} onChange={this.props.handleBasicFormParamChange(param)}>
-          {param.enum.map(enumValue => (
-            <option key={enumValue} selected={param.value === enumValue}>
-              {enumValue}
-            </option>
-          ))}
-        </select>
-      );
-    }
-    return (
-      <div>
-        <label htmlFor={id}>
-          <div className="row">
-            <div className="col-3 block">
-              <div className="centered">{label}</div>
-            </div>
-            <div className="col-9 margin-t-small">
-              {input}
-              {param.description && <span className="description">{param.description}</span>}
-            </div>
-          </div>
-        </label>
-      </div>
+function TextParam({ id, param, label, inputType, handleBasicFormParamChange }: IStringParamProps) {
+  const [value, setValue] = React.useState((param.value || "") as any);
+  let timeout: NodeJS.Timeout;
+  const onChange = (
+    e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    setValue(e.currentTarget.value);
+    // Gather changes before submitting
+    clearTimeout(timeout);
+    const func = handleBasicFormParamChange(param);
+    // The reference to target get lost, so we need to keep a copy
+    const targetCopy = {
+      currentTarget: {
+        value: e.currentTarget.value,
+        type: e.currentTarget.type,
+      },
+    } as React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+    timeout = setTimeout(() => func(targetCopy), 500);
+  };
+  let input = (
+    <input
+      id={id}
+      onChange={onChange}
+      value={value}
+      className="clr-input deployment-form-text-input"
+      type={inputType ? inputType : "text"}
+    />
+  );
+  if (inputType === "textarea") {
+    input = <textarea id={id} onChange={onChange} value={value} />;
+  } else if (param.enum != null && param.enum.length > 0) {
+    input = (
+      <select id={id} onChange={handleBasicFormParamChange(param)} value={param.value}>
+        {param.enum.map(enumValue => (
+          <option key={enumValue}>{enumValue}</option>
+        ))}
+      </select>
     );
   }
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="centered deployment-form-label deployment-form-label-text-param"
+      >
+        {label}
+      </label>
+      {input}
+      {param.description && <span className="description">{param.description}</span>}
+    </div>
+  );
 }
 
 export default TextParam;

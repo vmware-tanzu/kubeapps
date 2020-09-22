@@ -2,34 +2,17 @@
 
 exports[`when the config is not ready loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
-  getConfig={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
-  }
   loaded={false}
-  type={0}
 />
 `;
 
 exports[`when there is an error renders the error details 1`] = `
-<UnexpectedErrorPage
-  raw={true}
-  showGenericMessage={true}
-  text="Unable to load Kubeapps configuration: Wrong config!"
-  title="Sorry! Something went wrong."
-/>
+<Alert
+  app={false}
+  compact={false}
+  theme="danger"
+>
+  Unable to load Kubeapps configuration: 
+  Wrong config!
+</Alert>
 `;

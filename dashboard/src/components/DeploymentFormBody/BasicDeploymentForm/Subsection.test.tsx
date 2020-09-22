@@ -1,8 +1,7 @@
-import { mount, shallow } from "enzyme";
+import { shallow } from "enzyme";
 import * as React from "react";
 
 import { IBasicFormParam } from "shared/types";
-import BooleanParam from "./BooleanParam";
 import Subsection, { ISubsectionProps } from "./Subsection";
 
 const defaultProps = {
@@ -34,28 +33,12 @@ const defaultProps = {
     description: "description of the param",
     type: "object",
   } as IBasicFormParam,
-  handleBasicFormParamChange: jest.fn(),
   appValues: "externalDatabase: {}",
+  deploymentEvent: "install",
   handleValuesChange: jest.fn(),
-  enablerChildrenParam: "useSelfHostedDatabase",
-  enablerCondition: false,
-  renderParam: jest.fn(),
 } as ISubsectionProps;
 
 it("should render a external database section", () => {
   const wrapper = shallow(<Subsection {...defaultProps} />);
   expect(wrapper).toMatchSnapshot();
-});
-
-it("should omit the enabler param if it doesn't exist", () => {
-  const props = {
-    ...defaultProps,
-    param: {
-      ...defaultProps.param,
-      children: defaultProps.param.children!.concat({} as IBasicFormParam),
-    },
-  };
-  const wrapper = mount(<Subsection {...props} />);
-  expect(wrapper.find(BooleanParam)).not.toExist();
-  expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).not.toExist();
 });

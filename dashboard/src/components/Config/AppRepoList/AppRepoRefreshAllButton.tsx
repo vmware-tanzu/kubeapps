@@ -1,35 +1,37 @@
-import * as React from "react";
+import React, { useState } from "react";
 
-import { IAppRepository, IAppRepositoryKey } from "shared/types";
-import "./AppRepo.css";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import { useDispatch, useSelector } from "react-redux";
+import { IStoreState } from "shared/types";
 
-interface IAppRepoRefreshAllButtonProps {
-  resyncAllRepos: (repos: IAppRepositoryKey[]) => void;
-  repos: IAppRepository[];
-}
+export function AppRepoRefreshAllButton() {
+  const [refreshing, setRefreshing] = useState(false);
+  const { repos } = useSelector((state: IStoreState) => state.repos);
+  const dispatch = useDispatch();
 
-export class AppRepoRefreshAllButton extends React.Component<IAppRepoRefreshAllButtonProps> {
-  public render() {
-    return (
-      <button
-        className="button button-primary margin-l-big"
-        onClick={this.handleResyncAllClick}
-        title="Refresh All App Repositories"
-      >
-        Refresh All
-      </button>
-    );
-  }
-
-  private handleResyncAllClick = async () => {
-    if (this.props.repos) {
-      const repos = this.props.repos.map(repo => {
+  const handleResyncAllClick = async () => {
+    // Fake timeout to show progress
+    // TODO(andresmgot): Ideally, we should show the progress of the sync but we don't
+    // have that info yet: https://github.com/kubeapps/kubeapps/issues/153
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 500);
+    if (repos) {
+      const repoObjects = repos.map(repo => {
         return {
           name: repo.metadata.name,
           namespace: repo.metadata.namespace,
         };
       });
-      this.props.resyncAllRepos(repos);
+      dispatch(actions.repos.resyncAllRepos(repoObjects));
     }
   };
+  return (
+    <div className="refresh-all-button">
+      <CdsButton action="outline" onClick={handleResyncAllClick} disabled={refreshing}>
+        <CdsIcon shape="refresh" inverse={true} /> {refreshing ? "Refreshing" : "Refresh All"}
+      </CdsButton>
+    </div>
+  );
 }

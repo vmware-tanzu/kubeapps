@@ -5,9 +5,5 @@
   "authProxyEnabled": false,
   "oauthLoginURI": "/oauth2/start",
   "oauthLogoutURI": "/oauth2/sign_out",
-  "featureFlags": {
-    "operators": true,
-    "ui": "clarity"
-  },
   "clusters": ["default"]
 }

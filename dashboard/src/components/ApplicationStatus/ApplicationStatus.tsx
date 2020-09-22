@@ -1,16 +1,17 @@
+import { CdsIcon } from "@clr/react/icon";
 import { flatten } from "lodash";
 import { get } from "lodash";
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 import PieChart from "react-minimal-pie-chart";
-import ReactTooltip from "react-tooltip";
 
-import { AlertTriangle } from "react-feather";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import ReactTooltip from "react-tooltip";
 import isSomeResourceLoading from "../../components/AppView/helpers";
 import { hapi } from "../../shared/hapi/release";
 import { IK8sList, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
-export interface IApplicationStatusProps {
+interface IApplicationStatusProps {
   deployments: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   statefulsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   daemonsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
@@ -23,197 +24,191 @@ interface IWorkload {
   replicas: number;
   readyReplicas: number;
   name: string;
+  type: string;
 }
 
-interface IApplicationStatusState {
-  workloads: IWorkload[];
-  totalPods: number;
-  readyPods: number;
+function flattenItemList(items: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>) {
+  return flatten(
+    items.map(i => {
+      const itemList = i.item as IK8sList<IResource, {}>;
+      if (itemList && itemList.items) {
+        // If the item is a list, return the array of items
+        return itemList.items;
+      }
+      return i.item as IResource;
+    }),
+    // Remove empty items
+  ).filter(r => !!r);
 }
 
-class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplicationStatusState> {
-  public state: IApplicationStatusState = {
-    workloads: [],
-    totalPods: 0,
-    readyPods: 0,
+function codeToString(status: hapi.release.IStatus | null | undefined) {
+  // Codes from https://github.com/helm/helm/blob/268695813ba957821e53a784ac849aa3ca7f70a3/_proto/hapi/release/status.proto
+  const codes = {
+    0: "Unknown",
+    1: "Deployed",
+    2: "Deleted",
+    3: "Superseded",
+    4: "Failed",
+    5: "Deleting",
+    6: "Pending Install",
+    7: "Pending Upgrade",
+    8: "Pending Rollback",
   };
-
-  public componentDidMount() {
-    this.props.watchWorkloads();
+  if (status && status.code) {
+    return codes[status.code];
   }
+  return codes[0];
+}
 
-  public componentWillUnmount() {
-    this.props.closeWatches();
-  }
+export default function ApplicationStatus({
+  deployments,
+  statefulsets,
+  daemonsets,
+  info,
+  watchWorkloads,
+  closeWatches,
+}: IApplicationStatusProps) {
+  const [workloads, setWorkloads] = useState([] as IWorkload[]);
+  const [totalPods, setTotalPods] = useState(0);
+  const [readyPods, setReadyPods] = useState(0);
 
-  public componentDidUpdate(prevProps: IApplicationStatusProps) {
-    if (prevProps !== this.props) {
-      const { deployments, statefulsets, daemonsets } = this.props;
-      let totalPods = 0;
-      let readyPods = 0;
-      let workloads: IWorkload[] = [];
-      [
-        {
-          workloads: this.flattenItemList(deployments),
-          readyKey: "status.availableReplicas",
-          totalKey: "spec.replicas",
-        },
-        {
-          workloads: this.flattenItemList(statefulsets),
-          readyKey: "status.readyReplicas",
-          totalKey: "spec.replicas",
-        },
-        {
-          workloads: this.flattenItemList(daemonsets),
-          readyKey: "status.numberReady",
-          totalKey: "status.currentNumberScheduled",
-        },
-      ].forEach(src => {
-        src.workloads.forEach(w => {
-          const wReady = get(w, src.readyKey, 0);
-          const wTotal = get(w, src.totalKey, 0);
-          if (wReady) {
-            readyPods += wReady;
-          }
-          if (wTotal) {
-            totalPods += wTotal;
-          }
-          workloads = workloads.concat({
-            name: w.metadata.name,
-            replicas: wTotal,
-            readyReplicas: wReady,
-          });
+  useEffect(() => {
+    watchWorkloads();
+    return function cleanup() {
+      closeWatches();
+    };
+  }, [watchWorkloads, closeWatches]);
+
+  useEffect(() => {
+    let currentTotalPods = 0;
+    let currentReadyPods = 0;
+    let currentWorkloads: IWorkload[] = [];
+    [
+      {
+        workloads: flattenItemList(deployments),
+        readyKey: "status.availableReplicas",
+        totalKey: "spec.replicas",
+        type: "deployment",
+      },
+      {
+        workloads: flattenItemList(statefulsets),
+        readyKey: "status.readyReplicas",
+        totalKey: "spec.replicas",
+        type: "statefulset",
+      },
+      {
+        workloads: flattenItemList(daemonsets),
+        readyKey: "status.numberReady",
+        totalKey: "status.currentNumberScheduled",
+        type: "daemonset",
+      },
+    ].forEach(src => {
+      src.workloads.forEach(w => {
+        const wReady = get(w, src.readyKey, 0);
+        const wTotal = get(w, src.totalKey, 0);
+        if (wReady) {
+          currentReadyPods += wReady;
+        }
+        if (wTotal) {
+          currentTotalPods += wTotal;
+        }
+        currentWorkloads = currentWorkloads.concat({
+          name: w.metadata.name,
+          replicas: wTotal,
+          readyReplicas: wReady,
+          type: src.type,
         });
       });
-      this.setState({ workloads, totalPods, readyPods });
-    }
-  }
+    });
+    setWorkloads(currentWorkloads);
+    setReadyPods(currentReadyPods);
+    setTotalPods(currentTotalPods);
+  }, [deployments, statefulsets, daemonsets]);
 
-  public render() {
-    const { totalPods, readyPods } = this.state;
-    const ready = totalPods === readyPods;
+  const ready = totalPods === readyPods;
 
-    if (isSomeResourceLoading(this.props.deployments)) {
-      return <span className="ApplicationStatus">Loading...</span>;
-    }
-    if (this.props.info && this.props.info.deleted) {
-      return this.renderDeletedStatus();
-    }
-    if (this.props.info && this.props.info.status) {
-      // If the status code is different than "Deployed", display that status
-      const helmStatus = this.codeToString(this.props.info.status);
-      if (helmStatus !== "Deployed") {
-        return this.helmStatusError(helmStatus);
-      }
-    }
-    if (this.state.totalPods === 0) {
-      return (
-        <span className="ApplicationStatus ApplicationStatus--pending">No workload found</span>
-      );
-    }
+  if (isSomeResourceLoading(deployments.concat(statefulsets).concat(daemonsets))) {
     return (
-      <div className="ApplicationStatusPieChart">
-        <div data-tip={true} data-for="app-status">
-          <h5 className="ApplicationStatusPieChart__title">{ready ? "Ready" : "Not Ready"}</h5>
-          <PieChart
-            data={[{ value: 1, color: `${ready ? "#1598CB" : "#F58220"}` }]}
-            reveal={(readyPods / totalPods) * 100}
-            animate={true}
-            animationDuration={1000}
-            lineWidth={20}
-            startAngle={270}
-            labelStyle={{ fontSize: "30px" }}
-            rounded={true}
-            style={{ height: "100px", width: "100px" }}
-            background="#bfbfbf"
-          />
-          <div className="ApplicationStatusPieChart__label">
-            <p className="ApplicationStatusPieChart__label__number">{readyPods}</p>
-            <p className="ApplicationStatusPieChart__label__text">Pod{readyPods > 1 ? "s" : ""}</p>
-          </div>
-        </div>
-        <ReactTooltip id="app-status" className="extraClass" effect="solid" place="right">
-          {this.renderWorkloadTable()}
-        </ReactTooltip>
+      <div className="center">
+        Loading Status...
+        <LoadingWrapper medium={true} />
       </div>
     );
   }
-
-  private renderWorkloadTable = () => {
-    const { workloads } = this.state;
+  if (info && info.deleted) {
     return (
-      <table style={{ margin: 0 }}>
-        <thead>
-          <tr>
-            <th>Pod(s)</th>
-            <th>Workload</th>
-          </tr>
-        </thead>
-        <tbody>
-          {workloads.map(workload => {
-            return (
-              <tr key={workload.name}>
-                <td>
-                  {workload.readyReplicas}/{workload.replicas}
-                </td>
-                <td>{workload.name}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="center">
+        <div className="color-icon-danger">
+          <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> Application Deleted
+        </div>
+      </div>
     );
-  };
-
-  private codeToString(status: hapi.release.IStatus | null | undefined) {
-    // Codes from https://github.com/helm/helm/blob/268695813ba957821e53a784ac849aa3ca7f70a3/_proto/hapi/release/status.proto
-    const codes = {
-      0: "Unknown",
-      1: "Deployed",
-      2: "Deleted",
-      3: "Superseded",
-      4: "Failed",
-      5: "Deleting",
-      6: "Pending Install",
-      7: "Pending Upgrade",
-      8: "Pending Rollback",
-    };
-    if (status && status.code) {
-      return codes[status.code];
+  }
+  if (info && info.status) {
+    // If the status code is different than "Deployed", display that status
+    const helmStatus = codeToString(info.status);
+    if (helmStatus !== "Deployed") {
+      return (
+        <div className="center">
+          <div className="color-icon-warning">
+            <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> Status: {helmStatus}
+          </div>
+        </div>
+      );
     }
-    return codes[0];
   }
-
-  private helmStatusError(status: string) {
+  if (totalPods === 0) {
     return (
-      <span className="ApplicationStatus ApplicationStatus--error">
-        <AlertTriangle className="icon" style={{ bottom: "-0.425em", left: "-0.3em" }} />
-        {status}
-      </span>
+      <div className="center">
+        <div className="color-icon-info">
+          <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> No Workload Found
+        </div>
+      </div>
     );
   }
-
-  private renderDeletedStatus() {
-    return (
-      <span className="ApplicationStatus ApplicationStatus--deleted">
-        <AlertTriangle className="icon" style={{ bottom: "-0.425em" }} /> Deleted
-      </span>
-    );
-  }
-
-  private flattenItemList(items: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>) {
-    return flatten(
-      items.map(i => {
-        const itemList = i.item as IK8sList<IResource, {}>;
-        if (itemList && itemList.items) {
-          // If the item is a list, return the array of items
-          return itemList.items;
-        }
-        return i.item as IResource;
-      }),
-      // Remove empty items
-    ).filter(r => !!r);
-  }
+  return (
+    <section aria-label="Application status" className="application-status-pie-chart">
+      <div data-tip={true} data-for="application-status">
+        <h5 className="application-status-pie-chart-title">{ready ? "Ready" : "Not Ready"}</h5>
+        <PieChart
+          data={[{ value: 1, color: "#0072a3" }]}
+          reveal={(readyPods / totalPods) * 100}
+          animate={true}
+          animationDuration={1000}
+          lineWidth={20}
+          startAngle={270}
+          labelStyle={{ fontSize: "30px", fontWeight: 600 }}
+          rounded={true}
+          style={{ height: "100px", width: "100px" }}
+          background="#bfbfbf"
+        />
+        <div className="application-status-pie-chart-label">
+          <p className="application-status-pie-chart-number">{readyPods}</p>
+          <p className="application-status-pie-chart-text">Pod{readyPods > 1 ? "s" : ""}</p>
+        </div>
+      </div>
+      <ReactTooltip id="application-status" className="extraClass" effect="solid" place="right">
+        <table className="application-status-table">
+          <thead>
+            <tr>
+              <th>Workload</th>
+              <th>Ready</th>
+            </tr>
+          </thead>
+          <tbody>
+            {workloads.map(workload => {
+              return (
+                <tr key={`${workload.type}/${workload.name}`}>
+                  <td>{workload.name}</td>
+                  <td>
+                    {workload.readyReplicas}/{workload.replicas}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </ReactTooltip>
+    </section>
+  );
 }
-
-export default ApplicationStatus;

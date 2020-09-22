@@ -1,33 +1,32 @@
-import { shallow } from "enzyme";
+import { mount } from "enzyme";
 import * as React from "react";
 import OperatorHeader from "./OperatorHeader";
 
 const defaultProps = {
-  id: "foo",
+  title: "foo by Kubeapps",
   icon: "/path/to/icon.png",
-  description: "this is a description",
-  cluster: "default",
-  namespace: "kubeapps",
   version: "1.0.0",
-  provider: "Kubeapps",
-  namespaced: false,
-  push: jest.fn(),
 };
 
-it("renders the header", () => {
-  const wrapper = shallow(<OperatorHeader {...defaultProps} />);
-  expect(wrapper).toMatchSnapshot();
+it("fallbacks to the default icon if not set", () => {
+  const wrapper = mount(<OperatorHeader {...defaultProps} icon={undefined} />);
+  expect(
+    wrapper
+      .find("img")
+      .filterWhere(i => i.prop("alt") === "app-icon")
+      .prop("src"),
+  ).toBe("placeholder.png");
 });
 
-it("omits the button", () => {
-  const wrapper = shallow(<OperatorHeader {...defaultProps} hideButton={true} />);
-  expect(wrapper.find("button")).not.toExist();
+it("includes the id, provider and version", () => {
+  const wrapper = mount(<OperatorHeader {...defaultProps} />);
+  expect(wrapper).toIncludeText("foo by Kubeapps");
+  expect(wrapper).toIncludeText("Operator Version: 1.0.0");
 });
 
-it("disables the button", () => {
-  const wrapper = shallow(<OperatorHeader {...defaultProps} disableButton={true} />);
-  const button = wrapper.find("button");
-  expect(button).toExist();
-  expect(button.prop("disabled")).toBe(true);
-  expect(button.text()).toBe("Deployed");
+it("renders buttons", () => {
+  const wrapper = mount(
+    <OperatorHeader {...defaultProps} buttons={[<div key="foo" id="foo" />]} />,
+  );
+  expect(wrapper.find("#foo")).toExist();
 });

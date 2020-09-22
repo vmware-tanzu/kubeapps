@@ -1,21 +1,18 @@
-import { mount, shallow } from "enzyme";
+import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
+import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
+import Alert from "components/js/Alert";
+import { mount } from "enzyme";
 import * as React from "react";
-import Modal from "react-modal";
-import { Tabs } from "react-tabs";
-import OperatorInstanceFormBody from ".";
+import { act } from "react-dom/test-utils";
 import itBehavesLike from "../../shared/specs";
-import { ConflictError } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
-import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
+import OperatorInstanceFormBody from "./OperatorInstanceFormBody";
 import { IOperatorInstanceFormProps } from "./OperatorInstanceFormBody";
 
 const defaultProps: IOperatorInstanceFormProps = {
-  csvName: "foo",
   isFetching: false,
   namespace: "kubeapps",
   handleDeploy: jest.fn(),
   defaultValues: "",
-  errors: {},
 };
 
 itBehavesLike("aLoadingComponent", {
@@ -24,55 +21,46 @@ itBehavesLike("aLoadingComponent", {
 });
 
 it("set default values", () => {
-  const wrapper = shallow(<OperatorInstanceFormBody {...defaultProps} />);
-  wrapper.setProps({ defaultValues: "foo" });
-  expect(wrapper.state()).toMatchObject({
-    values: "foo",
-  });
-});
-
-it("renders an error if there is some error fetching", () => {
-  const wrapper = shallow(
-    <OperatorInstanceFormBody {...defaultProps} errors={{ fetch: new Error("Boom!") }} />,
-  );
-  expect(wrapper.find(ErrorSelector)).toExist();
+  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} defaultValues="foo" />);
+  expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("foo");
 });
 
 it("renders an error if the namespace is _all", () => {
-  const wrapper = shallow(<OperatorInstanceFormBody {...defaultProps} namespace="_all" />);
-  expect(wrapper.find(UnexpectedErrorPage)).toExist();
-});
-
-it("renders an error if the creation failed", () => {
-  const wrapper = shallow(<OperatorInstanceFormBody {...defaultProps} />);
-  wrapper.setProps({ errors: { create: new ConflictError() } });
-  expect(wrapper.find(ErrorSelector)).toExist();
-  expect(wrapper.find(Tabs)).toExist();
+  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} namespace="_all" />);
+  expect(wrapper.find(Alert)).toIncludeText("Select a namespace before creating a new instance");
 });
 
 it("restores the default values", async () => {
-  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} />);
-  Modal.setAppElement(document.createElement("div"));
-  wrapper.setProps({ defaultValues: "foo" });
-  wrapper.setState({ values: "not-foo" });
-  const restoreButton = wrapper.find("button").filterWhere(b => b.text() === "Restore Defaults");
-  restoreButton.simulate("click");
+  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} defaultValues="foo" />);
 
-  const restoreConfirmButton = wrapper.find("button").filterWhere(b => b.text() === "Restore");
-  restoreConfirmButton.simulate("click");
+  act(() => {
+    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)("not-foo");
+  });
+  wrapper.update();
+  expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("not-foo");
 
-  const { values } = wrapper.state() as any;
-  expect(values).toEqual("foo");
+  const restoreButton = wrapper
+    .find("button")
+    .filterWhere(b => b.text().includes("Restore Defaults"));
+  act(() => {
+    restoreButton.simulate("click");
+  });
+  act(() => {
+    (wrapper.find(ConfirmDialog).prop("onConfirm") as any)();
+  });
+  wrapper.update();
+
+  expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("foo");
 });
 
 it("should submit the form", () => {
   const handleDeploy = jest.fn();
-  const wrapper = shallow(
-    <OperatorInstanceFormBody {...defaultProps} handleDeploy={handleDeploy} />,
-  );
+  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} handleDeploy={handleDeploy} />);
 
   const values = "apiVersion: v1\nmetadata:\n  name: foo";
-  wrapper.setState({ values });
+  act(() => {
+    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
+  });
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
 
@@ -87,42 +75,32 @@ it("should submit the form", () => {
 
 it("should catch a syntax error in the form", () => {
   const handleDeploy = jest.fn();
-  const wrapper = shallow(
-    <OperatorInstanceFormBody {...defaultProps} handleDeploy={handleDeploy} />,
-  );
+  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} handleDeploy={handleDeploy} />);
 
   const values = "metadata: invalid!\n  name: foo";
-  wrapper.setState({ values });
+  act(() => {
+    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
+  });
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
 
-  expect(
-    wrapper
-      .find(ErrorSelector)
-      .dive()
-      .dive()
-      .text(),
-  ).toContain("Unable to parse the given YAML. Got: bad indentation");
+  expect(wrapper.find(Alert)).toIncludeText("Unable to parse the given YAML. Got: bad indentation");
   expect(handleDeploy).not.toHaveBeenCalled();
 });
 
 it("should throw an eror if the element doesn't contain an apiVersion", () => {
   const handleDeploy = jest.fn();
-  const wrapper = shallow(
-    <OperatorInstanceFormBody {...defaultProps} handleDeploy={handleDeploy} />,
-  );
+  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} handleDeploy={handleDeploy} />);
 
   const values = "metadata:\nname: foo";
-  wrapper.setState({ values });
+  act(() => {
+    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
+  });
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
 
-  expect(
-    wrapper
-      .find(ErrorSelector)
-      .dive()
-      .dive()
-      .text(),
-  ).toContain("Unable parse the resource. Make sure it contains a valid apiVersion");
+  expect(wrapper.find(Alert)).toIncludeText(
+    "Unable parse the resource. Make sure it contains a valid apiVersion",
+  );
   expect(handleDeploy).not.toHaveBeenCalled();
 });

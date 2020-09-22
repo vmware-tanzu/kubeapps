@@ -1,10 +1,13 @@
-.confirm-dialog-loading-info {
-  .loading-legend {
-    line-height: 40px;
-    padding-right: 5px;
+.confirmation-modal {
+  text-align: center;
+  overflow-y: hidden;
+  span {
+    color: var(--clr-p-color, black);
   }
-
-  .spinner {
-    margin: 0;
+  &-buttons {
+    margin-top: 0.6rem;
+    cds-button {
+      margin: 0 0.6rem 0 0.6rem;
+    }
   }
 }

@@ -3,8 +3,8 @@ import { app } from "shared/url";
 import { trimDescription } from "shared/utils";
 import operatorIcon from "../../icons/operator-framework.svg";
 import placeholder from "../../placeholder.png";
-import InfoCard from "../InfoCard/InfoCard.v2";
-import { IOperatorCatalogItem } from "./CatalogItem.v2";
+import InfoCard from "../InfoCard/InfoCard";
+import { IOperatorCatalogItem } from "./CatalogItem";
 
 export default function OperatorCatalogItem(props: IOperatorCatalogItem) {
   const { icon, name, csv, version, description, cluster, namespace, id } = props;

@@ -2,10 +2,10 @@ import { isArray } from "lodash";
 import React from "react";
 import { getValue } from "shared/schema";
 import { DeploymentEvent, IBasicFormParam, IBasicFormSliderParam } from "shared/types";
-import BooleanParam from "./BooleanParam.v2";
-import SliderParam from "./SliderParam.v2";
-import Subsection from "./Subsection.v2";
-import TextParam from "./TextParam.v2";
+import BooleanParam from "./BooleanParam";
+import SliderParam from "./SliderParam";
+import Subsection from "./Subsection";
+import TextParam from "./TextParam";
 
 interface IParamProps {
   appValues: string;

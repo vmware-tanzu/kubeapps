@@ -1,167 +1,121 @@
-import * as React from "react";
+import React, { useEffect } from "react";
+import { Dispatch } from "redux";
 
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import ChartSummary from "components/Catalog/ChartSummary";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import { useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
+import { app } from "shared/url";
 import { IChartState, IChartVersion } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import ChartHeader from "./ChartHeader";
-import ChartMaintainers from "./ChartMaintainers";
 import ChartReadme from "./ChartReadme";
-import ChartVersionsList from "./ChartVersionsList";
-import "./ChartView.css";
 
 export interface IChartViewProps {
   chartID: string;
   chartNamespace: string;
-  fetchChartVersionsAndSelectVersion: (
-    cluster: string,
-    namespace: string,
-    id: string,
-    version?: string,
-  ) => void;
   isFetching: boolean;
   selected: IChartState["selected"];
-  selectChartVersion: (version: IChartVersion) => any;
-  resetChartVersion: () => any;
-  getChartReadme: (cluster: string, namespace: string, version: string) => any;
   namespace: string;
   cluster: string;
   version: string | undefined;
 }
 
-class ChartView extends React.Component<IChartViewProps> {
-  public componentDidMount() {
-    const {
-      chartID,
-      chartNamespace,
-      cluster,
-      fetchChartVersionsAndSelectVersion,
-      version,
-    } = this.props;
-    fetchChartVersionsAndSelectVersion(cluster, chartNamespace, chartID, version);
+function callSelectChartVersion(ver: string, versions: IChartVersion[], dispatch: Dispatch) {
+  const cv = versions.find(v => v.attributes.version === ver);
+  if (cv) {
+    dispatch(actions.charts.selectChartVersion(cv));
   }
+}
 
-  public componentDidUpdate(prevProps: IChartViewProps) {
-    const { selectChartVersion, version } = this.props;
-    const { versions } = this.props.selected;
-    if (prevProps.version !== version) {
-      const cv = versions.find(v => v.attributes.version === version);
-      if (cv) {
-        selectChartVersion(cv);
-      } else {
-        throw new Error("could not find chart");
-      }
-    }
+function ChartView({
+  chartID,
+  chartNamespace,
+  version: versionStr,
+  selected,
+  isFetching,
+  cluster,
+  namespace,
+}: IChartViewProps) {
+  const dispatch = useDispatch();
+  const { version, readme, error, readmeError, versions } = selected;
+  useEffect(() => {
+    dispatch(
+      actions.charts.fetchChartVersionsAndSelectVersion(
+        cluster,
+        chartNamespace,
+        chartID,
+        versionStr,
+      ),
+    );
+    return () => {
+      dispatch(actions.charts.resetChartVersion());
+    };
+  }, [cluster, chartNamespace, chartID, versionStr, dispatch]);
+
+  useEffect(() => {
+    callSelectChartVersion(versionStr || "", versions, dispatch);
+  }, [versions, versionStr, dispatch]);
+
+  if (error) {
+    return <Alert theme="danger">Unable to fetch chart: {error.message}</Alert>;
   }
-
-  public componentWillUnmount() {
-    this.props.resetChartVersion();
+  if (isFetching || !version) {
+    return <LoadingWrapper loaded={false} />;
   }
+  const chartAttrs = version.relationships.chart.data;
+  const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) =>
+    callSelectChartVersion(event.target.value, versions, dispatch);
 
-  public render() {
-    const { isFetching, getChartReadme, cluster, namespace, chartID, chartNamespace } = this.props;
-    const { version, readme, error, readmeError, versions } = this.props.selected;
-    if (error) {
-      return <ErrorSelector error={error} resource={`Chart ${chartID}`} />;
-    }
-    if (isFetching || !version) {
-      return <LoadingWrapper />;
-    }
-    const chartAttrs = version.relationships.chart.data;
-    return (
-      <section className="ChartView padding-b-big">
+  return (
+    <section>
+      <div className="header-button">
         <ChartHeader
-          id={`${chartAttrs.repo.name}/${chartAttrs.name}`}
-          description={chartAttrs.description}
-          icon={chartAttrs.icon}
-          repo={chartAttrs.repo.name}
-          version={version}
-          namespace={namespace}
-          cluster={cluster}
+          chartAttrs={chartAttrs}
+          versions={versions}
+          onSelect={selectVersion}
+          deployButton={
+            <Link to={app.apps.new(cluster, namespace, version, version.attributes.version)}>
+              <CdsButton status="primary">
+                <CdsIcon shape="deploy" inverse={true} /> Deploy
+              </CdsButton>
+            </Link>
+          }
+          selectedVersion={selected.version?.attributes.version}
         />
-        <main>
-          <div className="container container-fluid">
-            <div className="row">
-              <div className="col-9 ChartView__readme-container">
-                <ChartReadme
-                  getChartReadme={getChartReadme}
-                  readme={readme}
-                  hasError={!!readmeError}
-                  version={version.attributes.version}
-                  cluster={cluster}
-                  chartNamespace={chartNamespace}
-                />
-              </div>
-              <div className="col-3 ChartView__sidebar-container">
-                <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
-                  <div className="ChartViewSidebar__section">
-                    <h2>Chart Versions</h2>
-                    <ChartVersionsList
-                      selected={version}
-                      versions={versions}
-                      targetNamespace={namespace}
-                      cluster={cluster}
-                    />
-                  </div>
-                  {version.attributes.app_version && (
-                    <div className="ChartViewSidebar__section">
-                      <h2>App Version</h2>
-                      <div>{version.attributes.app_version}</div>
-                    </div>
-                  )}
-                  {chartAttrs.home && (
-                    <div className="ChartViewSidebar__section">
-                      <h2>Home</h2>
-                      <div>
-                        <ul className="remove-style padding-l-reset margin-b-reset">
-                          <li>
-                            <a href={chartAttrs.home} target="_blank" rel="noopener noreferrer">
-                              {chartAttrs.home}
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                  {chartAttrs.maintainers?.length > 0 && (
-                    <div className="ChartViewSidebar__section">
-                      <h2>Maintainers</h2>
-                      <ChartMaintainers
-                        maintainers={chartAttrs.maintainers}
-                        githubIDAsNames={this.isKubernetesCharts(chartAttrs.repo.url)}
-                      />
-                    </div>
-                  )}
-                  {chartAttrs.sources?.length > 0 && (
-                    <div className="ChartViewSidebar__section">
-                      <h2>Related</h2>
-                      <div className="ChartSources">
-                        <ul className="remove-style padding-l-reset margin-b-reset">
-                          {chartAttrs.sources.map((s, i) => (
-                            <li key={i}>
-                              <a href={s} target="_blank" rel="noopener noreferrer">
-                                {s}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                </aside>
-              </div>
-            </div>
-          </div>
-        </main>
-      </section>
-    );
-  }
+      </div>
 
-  private isKubernetesCharts(repoURL: string) {
-    return (
-      repoURL === "https://kubernetes-charts.storage.googleapis.com" ||
-      repoURL === "https://kubernetes-charts-incubator.storage.googleapis.com"
-    );
-  }
+      <section>
+        <Row>
+          <Column span={3}>
+            <ChartSummary version={version} chartAttrs={chartAttrs} />
+          </Column>
+          <Column span={9}>
+            <ChartReadme
+              readme={readme}
+              error={readmeError}
+              version={version.attributes.version}
+              cluster={cluster}
+              namespace={chartNamespace}
+              chartID={chartID}
+            />
+            <div className="after-readme-button">
+              <Link to={app.apps.new(cluster, namespace, version, version.attributes.version)}>
+                <CdsButton status="primary">
+                  <CdsIcon shape="deploy" inverse={true} /> Deploy
+                </CdsButton>
+              </Link>
+            </div>
+          </Column>
+        </Row>
+      </section>
+    </section>
+  );
 }
 
 export default ChartView;

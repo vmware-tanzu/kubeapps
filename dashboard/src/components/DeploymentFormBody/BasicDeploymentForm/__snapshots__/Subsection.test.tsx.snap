@@ -2,12 +2,14 @@
 
 exports[`should render a external database section 1`] = `
 <div
-  className="subsection margin-v-normal"
+  className="subsection"
 >
-  <div
-    className="margin-v-normal"
-  >
-    Enable an external database
+  <div>
+    <label
+      className="deployment-form-label"
+    >
+      Enable an external database
+    </label>
     <br />
     <span
       className="description"
@@ -15,5 +17,95 @@ exports[`should render a external database section 1`] = `
       description of the param
     </span>
   </div>
+  <Param
+    appValues="externalDatabase: {}"
+    deploymentEvent="install"
+    handleBasicFormParamChange={[Function]}
+    handleValuesChange={[MockFunction]}
+    id="externalDatabase.database-0"
+    key="externalDatabase.database-0"
+    param={
+      Object {
+        "path": "externalDatabase.database",
+        "type": "string",
+        "value": "bitnami_wordpress",
+      }
+    }
+  />
+  <Param
+    appValues="externalDatabase: {}"
+    deploymentEvent="install"
+    handleBasicFormParamChange={[Function]}
+    handleValuesChange={[MockFunction]}
+    id="externalDatabase.host-1"
+    key="externalDatabase.host-1"
+    param={
+      Object {
+        "path": "externalDatabase.host",
+        "type": "string",
+        "value": "localhost",
+      }
+    }
+  />
+  <Param
+    appValues="externalDatabase: {}"
+    deploymentEvent="install"
+    handleBasicFormParamChange={[Function]}
+    handleValuesChange={[MockFunction]}
+    id="externalDatabase.password-2"
+    key="externalDatabase.password-2"
+    param={
+      Object {
+        "path": "externalDatabase.password",
+        "type": "string",
+      }
+    }
+  />
+  <Param
+    appValues="externalDatabase: {}"
+    deploymentEvent="install"
+    handleBasicFormParamChange={[Function]}
+    handleValuesChange={[MockFunction]}
+    id="externalDatabase.port-3"
+    key="externalDatabase.port-3"
+    param={
+      Object {
+        "path": "externalDatabase.port",
+        "type": "integer",
+        "value": 3306,
+      }
+    }
+  />
+  <Param
+    appValues="externalDatabase: {}"
+    deploymentEvent="install"
+    handleBasicFormParamChange={[Function]}
+    handleValuesChange={[MockFunction]}
+    id="externalDatabase.user-4"
+    key="externalDatabase.user-4"
+    param={
+      Object {
+        "path": "externalDatabase.user",
+        "type": "string",
+        "value": "bn_wordpress",
+      }
+    }
+  />
+  <Param
+    appValues="externalDatabase: {}"
+    deploymentEvent="install"
+    handleBasicFormParamChange={[Function]}
+    handleValuesChange={[MockFunction]}
+    id="mariadb.enabled-5"
+    key="mariadb.enabled-5"
+    param={
+      Object {
+        "path": "mariadb.enabled",
+        "title": "Enable External Database",
+        "type": "boolean",
+        "value": true,
+      }
+    }
+  />
 </div>
 `;

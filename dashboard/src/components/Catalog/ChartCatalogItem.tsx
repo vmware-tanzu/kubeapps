@@ -5,8 +5,8 @@ import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
 import { IRepo, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
-import InfoCard from "../InfoCard/InfoCard.v2";
-import { IChartCatalogItem } from "./CatalogItem.v2";
+import InfoCard from "../InfoCard/InfoCard";
+import { IChartCatalogItem } from "./CatalogItem";
 
 export default function ChartCatalogItem(props: IChartCatalogItem) {
   const { icon, name, repo, version, description, namespace, id } = props;

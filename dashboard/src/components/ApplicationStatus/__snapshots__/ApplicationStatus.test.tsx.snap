@@ -1,46 +1,47 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders a deleting status 1`] = `
-<span
-  className="ApplicationStatus ApplicationStatus--deleted"
+<div
+  className="center"
 >
-  <AlertTriangle
-    className="icon"
-    color="currentColor"
-    size="24"
-    style={
-      Object {
-        "bottom": "-0.425em",
-      }
-    }
-  />
-   Deleted
-</span>
+  <div
+    className="color-icon-danger"
+  >
+    <CdsIcon
+      shape="exclamation-triangle"
+      size="md"
+      solid={true}
+    />
+     Application Deleted
+  </div>
+</div>
 `;
 
 exports[`renders a failed status 1`] = `
-<span
-  className="ApplicationStatus ApplicationStatus--error"
+<div
+  className="center"
 >
-  <AlertTriangle
-    className="icon"
-    color="currentColor"
-    size="24"
-    style={
-      Object {
-        "bottom": "-0.425em",
-        "left": "-0.3em",
-      }
-    }
-  />
-  Failed
-</span>
+  <div
+    className="color-icon-warning"
+  >
+    <CdsIcon
+      shape="exclamation-triangle"
+      size="md"
+      solid={true}
+    />
+     Status: 
+    Failed
+  </div>
+</div>
 `;
 
 exports[`renders a loading status 1`] = `
-<span
-  className="ApplicationStatus"
+<div
+  className="center"
 >
-  Loading...
-</span>
+  Loading Status...
+  <LoadingWrapper
+    medium={true}
+  />
+</div>
 `;
