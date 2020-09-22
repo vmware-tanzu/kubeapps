@@ -17,8 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
-
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 )
@@ -34,11 +32,5 @@ type assetManager interface {
 }
 
 func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (assetManager, error) {
-	if databaseType == "mongodb" {
-		return newMongoDBManager(config, kubeappsNamespace), nil
-	} else if databaseType == "postgresql" {
-		return newPGManager(config, kubeappsNamespace)
-	} else {
-		return nil, fmt.Errorf("Unsupported database type %s", databaseType)
-	}
+	return newPGManager(config, kubeappsNamespace)
 }

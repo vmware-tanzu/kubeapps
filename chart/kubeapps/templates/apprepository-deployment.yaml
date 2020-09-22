@@ -47,7 +47,6 @@ spec:
             - --namespace={{ .Release.Namespace }}
             - --database-secret-name={{ .Values.postgresql.existingSecret }}
             - --database-secret-key=postgresql-password
-            - --database-type=postgresql
             - --database-url={{ template "kubeapps.postgresql.fullname" . }}:5432
             - --database-user=postgres
             - --database-name=assets

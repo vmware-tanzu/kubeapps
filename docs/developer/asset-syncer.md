@@ -43,15 +43,6 @@ This builds the `asset-syncer` Docker image.
 
 ### Running in development
 
-When using MongoDB:
-
-```bash
-export DB_PASSWORD=$(kubectl get secret --namespace kubeapps kubeapps-mongodb -o go-template='{{index .data "mongodb-root-password" | base64decode}}')
-telepresence --namespace kubeapps --docker-run -e DB_PASSWORD=$DB_PASSWORD --rm -ti kubeapps/asset-syncer /asset-syncer sync --database-user=root --database-url=kubeapps-mongodb --database-type=mongodb --database-name=charts stable https://kubernetes-charts.storage.googleapis.com
-```
-
-When using PostgreSQL:
-
 ```bash
 export DB_PASSWORD=$(kubectl get secret --namespace kubeapps kubeapps-db -o go-template='{{index .data "postgresql-password" | base64decode}}')
 telepresence --namespace kubeapps --docker-run -e DB_PASSWORD=$DB_PASSWORD --rm -ti kubeapps/asset-syncer /asset-syncer sync --database-user=postgres --database-url=kubeapps-postgresql:5432 --database-type=postgresql --database-name=assets stable https://kubernetes-charts.storage.googleapis.com

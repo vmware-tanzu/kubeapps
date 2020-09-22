@@ -17,73 +17,31 @@ limitations under the License.
 package main
 
 import (
+	"database/sql/driver"
 	"encoding/base64"
-	"fmt"
+	"encoding/json"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/stretchr/testify/mock"
 )
 
-type fakePGManager struct {
-	*mock.Mock
-}
-
-func (f *fakePGManager) Init() error {
-	return nil
-}
-
-func (f *fakePGManager) Close() error {
-	return nil
-}
-
-func (f *fakePGManager) QueryOne(target interface{}, query string, args ...interface{}) error {
-	f.Called(target, query, args)
-	return nil
-}
-
-var chartsResponse []*models.Chart
-
-func (f *fakePGManager) QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error) {
-	f.Called(query, args)
-	return chartsResponse, nil
-}
-
-func (f *fakePGManager) InvalidateCache() error {
-	return nil
-}
-
-func (f *fakePGManager) InitTables() error {
-	return nil
-}
-
-func (f *fakePGManager) EnsureRepoExists(namespace, name string) (int, error) {
-	return 0, nil
-}
-
-func (f *fakePGManager) GetDB() dbutils.PostgresDB {
-	return nil
-}
-
-func (f *fakePGManager) GetKubeappsNamespace() string {
-	return "kubeapps"
-}
-
-func Test_NewPGManager(t *testing.T) {
-	config := datastore.Config{URL: "10.11.12.13:5432"}
-	_, err := newPGManager(config, "kubeapps")
+func getMockManager(t *testing.T) (*postgresAssetManager, sqlmock.Sqlmock, func()) {
+	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Errorf("Found error %v", err)
+		t.Fatalf("%+v", err)
 	}
+
+	pgManager := &postgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeapps"}}
+
+	return pgManager, mock, func() { db.Close() }
 }
 
 func Test_PGgetChart(t *testing.T) {
-	m := &mock.Mock{}
-	fpg := &fakePGManager{m}
-	pg := postgresAssetManager{fpg}
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
 
 	icon := []byte("test")
 	iconB64 := base64.StdEncoding.EncodeToString(icon)
@@ -91,11 +49,15 @@ func Test_PGgetChart(t *testing.T) {
 		Chart:   models.Chart{ID: "foo"},
 		RawIcon: iconB64,
 	}
-	m.On("QueryOne", &models.ChartIconString{}, "SELECT info FROM charts WHERE repo_namespace = $1 AND chart_id = $2", []interface{}{"namespace", "foo"}).Run(func(args mock.Arguments) {
-		*args.Get(0).(*models.ChartIconString) = dbChart
-	})
+	dbChartJSON, err := json.Marshal(dbChart)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	mock.ExpectQuery("SELECT info FROM charts*").
+		WithArgs("namespace", "foo").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(dbChartJSON)))
 
-	chart, err := pg.getChart("namespace", "foo")
+	chart, err := pgManager.getChart("namespace", "foo")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -109,9 +71,8 @@ func Test_PGgetChart(t *testing.T) {
 }
 
 func Test_PGgetChartVersion(t *testing.T) {
-	m := &mock.Mock{}
-	fpg := &fakePGManager{m}
-	pg := postgresAssetManager{fpg}
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
 
 	dbChart := models.Chart{
 		ID: "foo",
@@ -120,11 +81,15 @@ func Test_PGgetChartVersion(t *testing.T) {
 			{Version: "2.0.0"},
 		},
 	}
-	m.On("QueryOne", &models.Chart{}, "SELECT info FROM charts WHERE repo_namespace = $1 AND chart_id = $2", []interface{}{"namespace", "foo"}).Run(func(args mock.Arguments) {
-		*args.Get(0).(*models.Chart) = dbChart
-	})
+	dbChartJSON, err := json.Marshal(dbChart)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	mock.ExpectQuery("SELECT info FROM charts*").
+		WithArgs("namespace", "foo").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(dbChartJSON)))
 
-	chart, err := pg.getChartVersion("namespace", "foo", "1.0.0")
+	chart, err := pgManager.getChartVersion("namespace", "foo", "1.0.0")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -140,16 +105,19 @@ func Test_PGgetChartVersion(t *testing.T) {
 }
 
 func Test_getChartFiles(t *testing.T) {
-	m := &mock.Mock{}
-	fpg := &fakePGManager{m}
-	pg := postgresAssetManager{fpg}
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
 
 	expectedFiles := models.ChartFiles{ID: "foo"}
-	m.On("QueryOne", &models.ChartFiles{}, "SELECT info FROM files WHERE repo_namespace = $1 AND chart_files_id = $2", []interface{}{"namespace", "foo"}).Run(func(args mock.Arguments) {
-		*args.Get(0).(*models.ChartFiles) = expectedFiles
-	})
+	filesJSON, err := json.Marshal(expectedFiles)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	mock.ExpectQuery("SELECT info FROM files*").
+		WithArgs("namespace", "foo").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(filesJSON)))
 
-	files, err := pg.getChartFiles("namespace", "foo")
+	files, err := pgManager.getChartFiles("namespace", "foo")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -158,10 +126,9 @@ func Test_getChartFiles(t *testing.T) {
 	}
 }
 
-func Test_getChartWithFilters(t *testing.T) {
-	m := &mock.Mock{}
-	fpg := &fakePGManager{m}
-	pg := postgresAssetManager{fpg}
+func Test_getChartsWithFilters(t *testing.T) {
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
 
 	dbChart := models.Chart{
 		Name: "foo",
@@ -170,10 +137,16 @@ func Test_getChartWithFilters(t *testing.T) {
 			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
 	}
-	chartsResponse = []*models.Chart{&dbChart}
-	m.On("QueryAllCharts", "SELECT info FROM charts WHERE info ->> 'name' = $1 AND (repo_namespace = $2 OR repo_namespace = $3) ORDER BY info ->> 'ID' ASC", []interface{}{"foo", "namespace", "kubeapps"})
+	dbChartJSON, err := json.Marshal(dbChart)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
 
-	charts, err := pg.getChartsWithFilters("namespace", "foo", "1.0.0", "1.0.1")
+	mock.ExpectQuery("SELECT info FROM charts WHERE info*").
+		WithArgs("foo", "namespace", "kubeapps").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
+
+	charts, err := pgManager.getChartsWithFilters("namespace", "foo", "1.0.0", "1.0.1")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -229,22 +202,28 @@ func Test_getPaginatedChartList(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &mock.Mock{}
-			fpg := &fakePGManager{m}
-			pg := postgresAssetManager{fpg}
+			pgManager, mock, cleanup := getMockManager(t)
+			defer cleanup()
 
-			chartsResponse = availableCharts
-			expectedQuery := "WHERE (repo_namespace = $1 OR repo_namespace = $2)"
-			expectedParams := []interface{}{"other-namespace", "kubeapps"}
+			rows := sqlmock.NewRows([]string{"info"})
+			for _, chart := range availableCharts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
+			}
+			expectedParams := []driver.Value{"other-namespace", "kubeapps"}
 			if tt.repo != "" {
-				expectedQuery = expectedQuery + " AND repo_name = $3"
 				expectedParams = append(expectedParams, "bitnami")
 			}
-			expectedQuery = fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, expectedQuery)
-			m.On("QueryAllCharts", expectedQuery, expectedParams)
-			charts, totalPages, err := pg.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize, tt.showDuplicates)
+			mock.ExpectQuery("SELECT info FROM *").
+				WithArgs(expectedParams...).
+				WillReturnRows(rows)
+
+			charts, totalPages, err := pgManager.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize, tt.showDuplicates)
 			if err != nil {
-				t.Errorf("Found error %v", err)
+				t.Fatalf("Found error %v", err)
 			}
 			if totalPages != tt.expectedTotalPages {
 				t.Errorf("Unexpected number of pages, got %d expecting %d", totalPages, tt.expectedTotalPages)

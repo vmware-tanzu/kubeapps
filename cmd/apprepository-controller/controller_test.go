@@ -13,10 +13,10 @@ import (
 )
 
 func Test_newCronJob(t *testing.T) {
-	dbURL = "mongodb.kubeapps"
+	dbURL = "postgresql.kubeapps"
 	dbName = "assets"
 	dbUser = "admin"
-	dbSecretName = "mongodb"
+	dbSecretName = "postgresql"
 	const kubeappsNamespace = "kubeapps"
 	tests := []struct {
 		name             string
@@ -84,8 +84,7 @@ func Test_newCronJob(t *testing.T) {
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
-												"--database-type=mongodb",
-												"--database-url=mongodb.kubeapps",
+												"--database-url=postgresql.kubeapps",
 												"--database-user=admin",
 												"--database-name=assets",
 												"--namespace=kubeapps",
@@ -96,7 +95,7 @@ func Test_newCronJob(t *testing.T) {
 												{
 													Name: "DB_PASSWORD",
 													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 												},
 											},
 											VolumeMounts: nil,
@@ -175,8 +174,7 @@ func Test_newCronJob(t *testing.T) {
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
-												"--database-type=mongodb",
-												"--database-url=mongodb.kubeapps",
+												"--database-url=postgresql.kubeapps",
 												"--database-user=admin",
 												"--database-name=assets",
 												"--user-agent-comment=kubeapps/v2.3",
@@ -188,7 +186,7 @@ func Test_newCronJob(t *testing.T) {
 												{
 													Name: "DB_PASSWORD",
 													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 												},
 												{
 													Name: "AUTHORIZATION_HEADER",
@@ -263,8 +261,7 @@ func Test_newCronJob(t *testing.T) {
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
-												"--database-type=mongodb",
-												"--database-url=mongodb.kubeapps",
+												"--database-url=postgresql.kubeapps",
 												"--database-user=admin",
 												"--database-name=assets",
 												"--user-agent-comment=kubeapps/v2.3",
@@ -276,7 +273,7 @@ func Test_newCronJob(t *testing.T) {
 												{
 													Name: "DB_PASSWORD",
 													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 												},
 												{
 													Name: "AUTHORIZATION_HEADER",
@@ -318,10 +315,10 @@ func Test_newCronJob(t *testing.T) {
 }
 
 func Test_newSyncJob(t *testing.T) {
-	dbURL = "mongodb.kubeapps"
+	dbURL = "postgresql.kubeapps"
 	dbName = "assets"
 	dbUser = "admin"
-	dbSecretName = "mongodb"
+	dbSecretName = "postgresql"
 	const kubeappsNamespace = "kubeapps"
 	tests := []struct {
 		name             string
@@ -381,8 +378,7 @@ func Test_newSyncJob(t *testing.T) {
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--database-type=mongodb",
-										"--database-url=mongodb.kubeapps",
+										"--database-url=postgresql.kubeapps",
 										"--database-user=admin",
 										"--database-name=assets",
 										"--namespace=kubeapps",
@@ -393,7 +389,7 @@ func Test_newSyncJob(t *testing.T) {
 										{
 											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -448,8 +444,7 @@ func Test_newSyncJob(t *testing.T) {
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--database-type=mongodb",
-										"--database-url=mongodb.kubeapps",
+										"--database-url=postgresql.kubeapps",
 										"--database-user=admin",
 										"--database-name=assets",
 										"--namespace=my-other-namespace",
@@ -460,7 +455,7 @@ func Test_newSyncJob(t *testing.T) {
 										{
 											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -529,8 +524,7 @@ func Test_newSyncJob(t *testing.T) {
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--database-type=mongodb",
-										"--database-url=mongodb.kubeapps",
+										"--database-url=postgresql.kubeapps",
 										"--database-user=admin",
 										"--database-name=assets",
 										"--user-agent-comment=kubeapps/v2.3",
@@ -542,7 +536,7 @@ func Test_newSyncJob(t *testing.T) {
 										{
 											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 										{
 											Name: "AUTHORIZATION_HEADER",
@@ -617,8 +611,7 @@ func Test_newSyncJob(t *testing.T) {
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--database-type=mongodb",
-										"--database-url=mongodb.kubeapps",
+										"--database-url=postgresql.kubeapps",
 										"--database-user=admin",
 										"--database-name=assets",
 										"--namespace=kubeapps",
@@ -629,7 +622,7 @@ func Test_newSyncJob(t *testing.T) {
 										{
 											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: []corev1.VolumeMount{{
@@ -716,8 +709,7 @@ func Test_newSyncJob(t *testing.T) {
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--database-type=mongodb",
-										"--database-url=mongodb.kubeapps",
+										"--database-url=postgresql.kubeapps",
 										"--database-user=admin",
 										"--database-name=assets",
 										"--namespace=kubeapps",
@@ -728,7 +720,7 @@ func Test_newSyncJob(t *testing.T) {
 										{
 											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 										{
 											Name: "AUTHORIZATION_HEADER",
@@ -833,8 +825,7 @@ func Test_newSyncJob(t *testing.T) {
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--database-type=mongodb",
-										"--database-url=mongodb.kubeapps",
+										"--database-url=postgresql.kubeapps",
 										"--database-user=admin",
 										"--database-name=assets",
 										"--namespace=kubeapps",
@@ -846,7 +837,7 @@ func Test_newSyncJob(t *testing.T) {
 										{
 											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: []corev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
@@ -877,10 +868,10 @@ func Test_newSyncJob(t *testing.T) {
 }
 
 func Test_newCleanupJob(t *testing.T) {
-	dbURL = "mongodb.kubeapps"
+	dbURL = "postgresql.kubeapps"
 	dbName = "assets"
 	dbUser = "admin"
-	dbSecretName = "mongodb"
+	dbSecretName = "postgresql"
 	const kubeappsNamespace = "kubeapps"
 
 	tests := []struct {
@@ -912,8 +903,7 @@ func Test_newCleanupJob(t *testing.T) {
 										"delete",
 										"my-charts",
 										"--namespace=kubeapps",
-										"--database-type=mongodb",
-										"--database-url=mongodb.kubeapps",
+										"--database-url=postgresql.kubeapps",
 										"--database-user=admin",
 										"--database-name=assets",
 									},
@@ -921,7 +911,7 @@ func Test_newCleanupJob(t *testing.T) {
 										{
 											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 								},

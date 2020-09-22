@@ -30,6 +30,7 @@ import (
 
 const pathPrefix = "/v1"
 
+// TODO(absoludity): Let's not use globals for storing state like this.
 var manager assetManager
 
 func setupRoutes() http.Handler {
@@ -68,7 +69,6 @@ func main() {
 	dbURL := flag.String("database-url", "localhost", "Database URL")
 	dbName := flag.String("database-name", "charts", "Database database")
 	dbUsername := flag.String("database-user", "", "Database user")
-	dbType := flag.String("database-type", "mongodb", "Database type")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	flag.Parse()
 
@@ -77,7 +77,7 @@ func main() {
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
 
 	var err error
-	manager, err = newManager(*dbType, dbConfig, kubeappsNamespace)
+	manager, err = newManager("postgresql", dbConfig, kubeappsNamespace)
 	if err != nil {
 		log.Fatal(err)
 	}

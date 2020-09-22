@@ -28,6 +28,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrMultipleRows = fmt.Errorf("more than one row returned in query result")
@@ -76,6 +77,7 @@ func (m *postgresAssetManager) RepoAlreadyProcessed(repo models.Repo, repoChecks
 	row := m.DB.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1 AND namespace = $2", dbutils.RepositoryTable), repo.Name, repo.Namespace)
 	if row != nil {
 		err := row.Scan(&lastChecksum)
+		log.Errorf("lastChecksum: %+v", lastChecksum)
 		return err == nil && lastChecksum == repoChecksum
 	}
 	return false
@@ -160,13 +162,13 @@ func (m *postgresAssetManager) filesExist(repo models.Repo, chartFilesID, digest
 	var exists bool
 	err := m.DB.QueryRow(
 		fmt.Sprintf(`
-SELECT EXISTS(
-	SELECT 1 FROM %s
-	WHERE chart_files_id = $1 AND
-		repo_name = $2 AND
-		repo_namespace = $3 AND
-		info ->> 'Digest' = $4
-	)`, dbutils.ChartFilesTable),
+	SELECT EXISTS(
+		SELECT 1 FROM %s
+		WHERE chart_files_id = $1 AND
+			repo_name = $2 AND
+			repo_namespace = $3 AND
+			info ->> 'Digest' = $4
+		)`, dbutils.ChartFilesTable),
 		chartFilesID, repo.Name, repo.Namespace, digest).Scan(&exists)
 	return err == nil && exists
 }

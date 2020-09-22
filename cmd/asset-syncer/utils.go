@@ -31,6 +31,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -87,14 +88,8 @@ type assetManager interface {
 	insertFiles(chartId string, files models.ChartFiles) error
 }
 
-func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (assetManager, error) {
-	if databaseType == "mongodb" {
-		return newMongoDBManager(config, kubeappsNamespace), nil
-	} else if databaseType == "postgresql" {
-		return newPGManager(config, kubeappsNamespace)
-	} else {
-		return nil, fmt.Errorf("Unsupported database type %s", databaseType)
-	}
+func newManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
+	return newPGManager(config, kubeappsNamespace)
 }
 
 func getSha256(src []byte) (string, error) {
@@ -184,6 +179,7 @@ func chartsFromIndex(index *helmrepo.IndexFile, r *models.Repo) []models.Chart {
 		}
 		charts = append(charts, newChart(entry, r))
 	}
+	sort.Slice(charts, func(i, j int) bool { return charts[i].ID < charts[j].ID })
 	return charts
 }
 

@@ -23,15 +23,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 // tests the GET /live endpoint
 func Test_GetLive(t *testing.T) {
-	var m mock.Mock
-	manager = getMockManager(&m)
+	_, cleanup := setMockManager(t)
+	defer cleanup()
 
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -44,8 +44,8 @@ func Test_GetLive(t *testing.T) {
 
 // tests the GET /ready endpoint
 func Test_GetReady(t *testing.T) {
-	var m mock.Mock
-	manager = getMockManager(&m)
+	_, cleanup := setMockManager(t)
+	defer cleanup()
 
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -77,17 +77,25 @@ func Test_GetCharts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
-			m.On("All", &chartsList).Run(func(args mock.Arguments) {
-				*args.Get(0).(*[]*models.Chart) = tt.charts
-			})
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/charts")
+			rows := sqlmock.NewRows([]string{"info"})
+			for _, chart := range tt.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
+			}
+			mock.ExpectQuery("SELECT info FROM charts WHERE *").
+				WithArgs("my-namespace", kubeappsNamespace).
+				WillReturnRows(rows)
+
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
 
 			var b bodyAPIListResponse
@@ -119,17 +127,25 @@ func Test_GetChartsInRepo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
-			m.On("All", &chartsList).Run(func(args mock.Arguments) {
-				*args.Get(0).(*[]*models.Chart) = tt.charts
-			})
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/charts/" + tt.repo)
+			rows := sqlmock.NewRows([]string{"info"})
+			for _, chart := range tt.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
+			}
+			mock.ExpectQuery("SELECT info FROM charts WHERE *").
+				WithArgs("my-namespace", kubeappsNamespace, tt.repo).
+				WillReturnRows(rows)
+
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.repo)
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
 
 			var b bodyAPIListResponse
@@ -172,21 +188,26 @@ func Test_GetChartInRepo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts WHERE *").
+				WithArgs("my-namespace", tt.chart.ID)
+
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/charts/" + tt.chart.ID)
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.chart.ID)
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
 		})
 	}
@@ -225,21 +246,26 @@ func Test_ListChartVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts WHERE *").
+				WithArgs("my-namespace", tt.chart.ID)
+
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/charts/" + tt.chart.ID + "/versions")
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.chart.ID + "/versions")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
 		})
 	}
@@ -278,21 +304,26 @@ func Test_GetChartVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts WHERE *").
+				WithArgs("my-namespace", tt.chart.ID)
+
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/charts/" + tt.chart.ID + "/versions/" + tt.chart.ChartVersions[0].Version)
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.chart.ID + "/versions/" + tt.chart.ChartVersions[0].Version)
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
 		})
 	}
@@ -333,27 +364,28 @@ func Test_GetChartIcon(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts WHERE *").
+				WithArgs("my-namespace", tt.chart.ID)
+
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.Chart{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.Chart) = tt.chart
-				})
+				chartJSON, err := json.Marshal(tt.chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
 			}
 
-			for _, path := range []string{
-				"/clusters/default/namespaces/kubeapps/assets/",
-				"/ns/kubeapps/assets/",
-			} {
-				res, err := http.Get(ts.URL + pathPrefix + path + tt.chart.ID + "/logo")
-				assert.NoError(t, err)
-				defer res.Body.Close()
+			path := "/clusters/default/namespaces/my-namespace/assets/"
+			res, err := http.Get(ts.URL + pathPrefix + path + tt.chart.ID + "/logo")
+			assert.NoError(t, err)
+			defer res.Body.Close()
 
-				m.AssertExpectations(t)
-				assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
-			}
+			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
 		})
 	}
 }
@@ -395,21 +427,26 @@ func Test_GetChartReadme(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM files").
+				WithArgs("my-namespace", tt.files.ID+"-"+tt.version)
+
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.ChartFiles{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.ChartFiles) = tt.files
-				})
+				filesJSON, err := json.Marshal(tt.files)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(filesJSON))
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/assets/" + tt.files.ID + "/versions/" + tt.version + "/README.md")
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/assets/" + tt.files.ID + "/versions/" + tt.version + "/README.md")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, tt.wantCode, res.StatusCode, "http status code should match")
 		})
 	}
@@ -452,21 +489,26 @@ func Test_GetChartValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM files").
+				WithArgs("my-namespace", tt.files.ID+"-"+tt.version)
+
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.ChartFiles{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.ChartFiles) = tt.files
-				})
+				filesJSON, err := json.Marshal(tt.files)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(filesJSON))
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.yaml")
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.yaml")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
 		})
 	}
@@ -509,21 +551,26 @@ func Test_GetChartSchema(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m mock.Mock
-			manager = getMockManager(&m)
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			mockQuery := mock.ExpectQuery("SELECT info FROM files").
+				WithArgs("my-namespace", tt.files.ID+"-"+tt.version)
+
 			if tt.err != nil {
-				m.On("One", mock.Anything).Return(tt.err)
+				mockQuery.WillReturnError(tt.err)
 			} else {
-				m.On("One", &models.ChartFiles{}).Return(nil).Run(func(args mock.Arguments) {
-					*args.Get(0).(*models.ChartFiles) = tt.files
-				})
+				filesJSON, err := json.Marshal(tt.files)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mockQuery.WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(filesJSON))
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/kubeapps/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.schema.json")
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.schema.json")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
-			m.AssertExpectations(t)
 			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
 		})
 	}

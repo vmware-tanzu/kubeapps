@@ -21,7 +21,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/rand"
-	"errors"
+	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
@@ -34,13 +34,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arschles/assert"
 	"github.com/disintegration/imaging"
-	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/mock"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
@@ -102,6 +101,10 @@ func iconBytes() []byte {
 	img := imaging.New(1, 1, color.White)
 	imaging.Encode(&b, img, imaging.PNG)
 	return b.Bytes()
+}
+
+func iconB64() string {
+	return base64.StdEncoding.EncodeToString(iconBytes())
 }
 
 func (h *goodIconClient) Do(req *http.Request) (*http.Response, error) {
@@ -473,20 +476,18 @@ func Test_getSha256(t *testing.T) {
 func Test_newManager(t *testing.T) {
 	tests := []struct {
 		name            string
-		database        string
 		dbName          string
 		dbURL           string
 		dbUser          string
 		dbPass          string
 		expectedManager string
 	}{
-		{"mongodb database", "mongodb", "charts", "example.com", "admin", "root", "&{{example.com charts admin root 0} <nil>}"},
-		{"postgresql database", "postgresql", "assets", "example.com:44124", "postgres", "root", "&{host=example.com port=44124 user=postgres password=root dbname=assets sslmode=disable <nil>}"},
+		{"postgresql database", "assets", "example.com:44124", "postgres", "root", "&{host=example.com port=44124 user=postgres password=root dbname=assets sslmode=disable <nil>}"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := datastore.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
-			_, err := newManager(tt.database, config, "kubeapps")
+			_, err := newManager(config, "kubeapps")
 			assert.NoErr(t, err)
 		})
 	}
@@ -494,61 +495,64 @@ func Test_newManager(t *testing.T) {
 }
 
 func Test_fetchAndImportIcon(t *testing.T) {
-	r := &models.RepoInternal{Name: "test", Namespace: "repo-namespace"}
+	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace"}
 	t.Run("no icon", func(t *testing.T) {
-		m := &mock.Mock{}
+		pgManager, _, cleanup := getMockManager(t)
+		defer cleanup()
 		c := models.Chart{ID: "test/acs-engine-autoscaler"}
-		manager := getMockManager(m)
-		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
+		fImporter := fileImporter{pgManager}
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
 	})
 
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	charts := chartsFromIndex(index, &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"})
 
 	t.Run("failed download", func(t *testing.T) {
+		pgManager, _, cleanup := getMockManager(t)
+		defer cleanup()
 		netClient = &badHTTPClient{}
-		c := charts[0]
-		m := &mock.Mock{}
-		manager := getMockManager(m)
-		fImporter := fileImporter{manager}
-		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fImporter.fetchAndImportIcon(c, r))
+		fImporter := fileImporter{pgManager}
+		assert.Err(t, fmt.Errorf("500 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
+		pgManager, _, cleanup := getMockManager(t)
+		defer cleanup()
 		netClient = &badIconClient{}
 		c := charts[0]
-		m := &mock.Mock{}
-		manager := getMockManager(m)
-		fImporter := fileImporter{manager}
-		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, r))
+		fImporter := fileImporter{pgManager}
+		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
 		netClient = &goodIconClient{}
-		c := charts[0]
-		m := &mock.Mock{}
-		m.On("Upsert", bson.M{"chart_id": c.ID, "repo.name": c.Repo.Name, "repo.namespace": c.Repo.Namespace}, bson.M{"$set": bson.M{"raw_icon": iconBytes(), "icon_content_type": "image/png"}}).Return(nil)
-		manager := getMockManager(m)
-		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
-		m.AssertExpectations(t)
+
+		mock.ExpectQuery("UPDATE charts SET info *").
+			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
+
+		fImporter := fileImporter{pgManager}
+		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
 	t.Run("valid SVG icon", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
 		netClient = &svgIconClient{}
 		c := models.Chart{
 			ID:   "foo",
 			Icon: "https://foo/bar/logo.svg",
-			Repo: &models.Repo{Name: r.Name, Namespace: r.Namespace},
+			Repo: &models.Repo{Name: repo.Name, Namespace: repo.Namespace},
 		}
-		m := &mock.Mock{}
-		m.On("Upsert", bson.M{"chart_id": c.ID, "repo.name": c.Repo.Name, "repo.namespace": c.Repo.Namespace}, bson.M{"$set": bson.M{"raw_icon": []byte("foo"), "icon_content_type": "image/svg"}}).Return(nil)
 
-		manager := getMockManager(m)
-		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
-		m.AssertExpectations(t)
+		mock.ExpectQuery("UPDATE charts SET info *").
+			WithArgs("foo", "repo-namespace", "test").
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
+
+		fImporter := fileImporter{pgManager}
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
 	})
 }
 
@@ -556,87 +560,107 @@ func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
 	charts := chartsFromIndex(index, &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL})
-	cv := charts[0].ChartVersions[0]
+	chartVersion := charts[0].ChartVersions[0]
+	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
+	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
+	chartFiles := models.ChartFiles{
+		ID:     chartFilesID,
+		Readme: testChartReadme,
+		Values: testChartValues,
+		Schema: testChartSchema,
+		Repo:   charts[0].Repo,
+		Digest: chartVersion.Digest,
+	}
 
 	t.Run("http error", func(t *testing.T) {
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if readme already exists to force fetching"))
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+
+		mock.ExpectQuery("SELECT EXISTS*").
+			WithArgs(chartFilesID, repo.Name, repo.Namespace).
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 		netClient = &badHTTPClient{}
-		manager := getMockManager(&m)
-		fImporter := fileImporter{manager}
-		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, repo, cv))
+		fImporter := fileImporter{pgManager}
+		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
-		netClient = &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("Upsert", bson.M{"file_id": chartFilesID, "repo.name": repo.Name, "repo.namespace": repo.Namespace}, models.ChartFiles{
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+
+		files := models.ChartFiles{
 			ID:     chartFilesID,
 			Readme: "",
 			Values: "",
 			Schema: "",
 			Repo:   charts[0].Repo,
-			Digest: cv.Digest,
-		})
+			Digest: chartVersion.Digest,
+		}
 
-		manager := getMockManager(&m)
-		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
+		// file does not exist (no rows returned) so insertion goes ahead.
+		mock.ExpectQuery(`SELECT EXISTS*`).
+			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WillReturnRows(sqlmock.NewRows([]string{"info"}))
+		mock.ExpectQuery("INSERT INTO files *").
+			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, files).
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
+
+		netClient = &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
+
+		fImporter := fileImporter{pgManager}
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
 		assert.NoErr(t, err)
-		m.AssertExpectations(t)
 	})
 
 	t.Run("authenticated request", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+
+		// file does not exist (no rows returned) so insertion goes ahead.
+		mock.ExpectQuery(`SELECT EXISTS*`).
+			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WillReturnRows(sqlmock.NewRows([]string{"info"}))
+		mock.ExpectQuery("INSERT INTO files *").
+			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
+
 		netClient = &authenticatedTarballClient{c: charts[0]}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("Upsert", bson.M{"file_id": chartFilesID, "repo.name": repo.Name, "repo.namespace": repo.Namespace}, models.ChartFiles{
-			ID:     chartFilesID,
-			Readme: testChartReadme,
-			Values: testChartValues,
-			Schema: testChartSchema,
-			Repo:   charts[0].Repo,
-			Digest: cv.Digest,
-		})
-		manager := getMockManager(&m)
-		fImporter := fileImporter{manager}
+
+		fImporter := fileImporter{pgManager}
+
 		r := &models.RepoInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, r, cv)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, r, chartVersion)
 		assert.NoErr(t, err)
-		m.AssertExpectations(t)
 	})
 
 	t.Run("valid tarball", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+
+		mock.ExpectQuery(`SELECT EXISTS*`).
+			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WillReturnRows(sqlmock.NewRows([]string{"info"}))
+		mock.ExpectQuery("INSERT INTO files *").
+			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
+
 		netClient = &goodTarballClient{c: charts[0]}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("Upsert", bson.M{"file_id": chartFilesID, "repo.name": repo.Name, "repo.namespace": repo.Namespace}, models.ChartFiles{
-			ID:     chartFilesID,
-			Readme: testChartReadme,
-			Values: testChartValues,
-			Schema: testChartSchema,
-			Repo:   charts[0].Repo,
-			Digest: cv.Digest,
-		})
-		manager := getMockManager(&m)
-		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
+		fImporter := fileImporter{pgManager}
+
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
 		assert.NoErr(t, err)
-		m.AssertExpectations(t)
 	})
 
 	t.Run("file exists", func(t *testing.T) {
-		m := mock.Mock{}
-		// don't return an error when checking if files already exists
-		m.On("One", mock.Anything).Return(nil)
-		manager := getMockManager(&m)
-		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+
+		mock.ExpectQuery(`SELECT EXISTS*`).
+			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(`true`))
+
+		fImporter := fileImporter{pgManager}
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
 		assert.NoErr(t, err)
-		m.AssertNotCalled(t, "UpsertId", mock.Anything, mock.Anything)
 	})
 }
