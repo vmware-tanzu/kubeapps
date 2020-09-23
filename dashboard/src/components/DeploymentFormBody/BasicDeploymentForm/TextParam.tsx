@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useEffect } from "react";
 import { IBasicFormParam } from "shared/types";
 
 export interface IStringParamProps {
@@ -30,6 +30,13 @@ function TextParam({ id, param, label, inputType, handleBasicFormParamChange }: 
     } as React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
     timeout = setTimeout(() => func(targetCopy), 500);
   };
+
+  useEffect(() => {
+    if (value !== param.value && param.value) {
+      setValue(param.value);
+    }
+  }, [value, param.value]);
+
   let input = (
     <input
       id={id}

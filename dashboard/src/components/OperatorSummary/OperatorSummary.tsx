@@ -6,6 +6,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Operators } from "shared/Operators";
 import { IStoreState } from "shared/types";
+import "./CapabilityLevel.css";
 
 export default function OperatorSummary() {
   const { operator, isFetching, csv } = useSelector((state: IStoreState) => state.operators);
