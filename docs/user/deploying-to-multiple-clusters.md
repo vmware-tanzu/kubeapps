@@ -29,7 +29,7 @@ The multi-cluster feature requires that each of your Kubernetes API servers trus
     secret: ABcdefGHIjklmnoPQRStuvw0
 ```
 
-The Kubernetes documentation has more information about [configuring your Kubernetes API server to trust an OIDC provider](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). For more information about running Kubeapps with various OIDC providers see [Using an OIDC provider](/docs/user/using-an-OIDC-provider.md).
+The upstream Kubernetes documentation has more information about [configuring your Kubernetes API server to trust an OIDC provider](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server), which can be tricky the first time you configure OIDC support as it will be different depending on which flavour of OIDC provider you choose, your RBAC setup on the cluster as well as the chosen Kubernetes environment.
 
 Certain multi-cluster environments, such as Tanzu Kubernetes Grid, have specific instructions for configuring their workload clusters to trust an instance of Dex. See the [Deploying an Authentication-Enabled Cluster](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.0/vmware-tanzu-kubernetes-grid-10/GUID-manage-instance-deploy-oidc-cluster.html) in the TKG documentation for an example. For a multi-cluster Kubeapps setup on TKG you will also need to configure [Kubeapps and Dex to support the different client-ids used by each cluster](#clusters-with-different-client-ids).
 
@@ -40,14 +40,41 @@ If you are testing the multi-cluster support on a local [Kubernetes-in-Docker cl
 
 These are used with an instance of Dex running in the Kubeapps cluster with a [matching configuration](/docs/user/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps itself [configured with its own auth-proxy](/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
 
+Configuring your Kubernetes cluster for OIDC authentication can be tricky, despite the upstream documentation, so be prepared to check the logs of your `kube-apiserver` pod:
+
+```bash
+# First find the name of your kubernetes api server pod(s)
+kubectl -n kube-system get pods
+
+# then follow the logs of the pod to check for any errors.
+kubectl -n kube-system logs -f kube-apiserver-pod-name
+```
+
+This will normally be enough to find any configuration issues with your OIDC setup, but in some cases you may even want to reconfigure your Kubernetes setup so the API server runs with a higher `--v` verbosity level. One specific detail to watch out for: any values for the oidc options which you provide must result in valid yaml. So, for example, note how the username and group prefixes end up quoted in the yaml resource below so that they remain valid yaml list items for the command arguments:
+
+```bash
+kubectl -n kube-system get po kube-apiserver-kubeapps-control-plane -o yaml | grep "\-\ kube-apiserver\|oidc"
+    - kube-apiserver
+    - --oidc-ca-file=/etc/kubernetes/pki/apiserver.crt
+    - --oidc-client-id=default
+    - --oidc-groups-claim=groups
+    - '--oidc-groups-prefix=oidc:'
+    - --oidc-issuer-url=https://172.18.0.2:32000
+    - --oidc-username-claim=email
+    - '--oidc-username-prefix=oidc:'
+```
+
+For more information about configuring Kubeapps, as opposed to the Kubernetes API server itself, with various OIDC providers see [Using an OIDC provider](/docs/user/using-an-OIDC-provider.md). Similarly, the logs of the Kubeapps frontend `auth-proxy` container will provide more details for debugging authentication requests from Kubeapps itself.
+
 ## A Kubeapps Configuration example
 
 Once you have the cluster configuration for OIDC authentication sorted, we then need to ensure that Kubeapps is aware of the different clusters to which it can deploy applications.
 
-The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name and api service URL of a cluster. For example:
+The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name you are assigning to the cluster as well as the api service URL for each additional cluster. For example, in the following configuration:
 
 ```yaml
 clusters:
+ - name: default
  - name: team-sandbox
    apiServiceURL: https://172.18.0.3:6443
    certificateAuthorityData: aou...
@@ -57,7 +84,9 @@ clusters:
    serviceToken: ...
 ```
 
-The `name` and `apiServiceURL` are the only required items for each cluster. Note that the apiServiceURL can be a public or internal URL, the only restrictions being that:
+`default` is the name you are assigning to the cluster on which Kubeapps is itself installed. You can only define at most one cluster without an `apiServiceURL` corresponding to the cluster on which Kubeapps is installed, or don't provide one at all if you don't want users targeting the cluster on which Kubeapps is installed. For each additional clusters the `name` and `apiServiceURL` are the only required items.
+
+Note that the apiServiceURL can be a public or internal URL, the only restrictions being that:
 
 * the URL is reachable from the pods of the Kubeapps installation.
 * the URL uses TLS (https protocol)
