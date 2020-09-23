@@ -5,23 +5,28 @@ import { cloneDeep } from "lodash";
 import * as React from "react";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
-import { IClustersState } from "reducers/cluster";
+import { initialState as appsInitialState } from "reducers/apps";
+import { initialState as authInitialState } from "reducers/auth";
+import { initialState as chartsInitialState } from "reducers/charts";
+import { initialState as clustersInitialState } from "reducers/cluster";
+import { initialState as configInitialState } from "reducers/config";
+import { initialState as kubeInitialState } from "reducers/kube";
 import { operatorsInitialState } from "reducers/operators";
+import { initialState as reposInitialState } from "reducers/repos";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
-import { IAppRepository, ISecret } from "../../shared/types";
+import { IStoreState } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
 export const initialState = {
-  apps: {},
-  auth: {},
-  charts: {},
-  config: { featureFlags: {}, kubeappsCluster: "default-cluster" },
-  kube: {
-    items: {},
-  },
+  apps: cloneDeep(appsInitialState),
+  auth: cloneDeep(authInitialState),
+  charts: cloneDeep(chartsInitialState),
+  config: cloneDeep(configInitialState),
+  kube: cloneDeep(kubeInitialState),
   clusters: {
+    ...cloneDeep(clustersInitialState),
     currentCluster: "default-cluster",
     clusters: {
       "default-cluster": {
@@ -29,16 +34,11 @@ export const initialState = {
         namespaces: ["default", "other"],
       },
     },
-  } as IClustersState,
-  repos: {
-    errors: {},
-    repos: [] as IAppRepository[],
-    repoSecrets: [] as ISecret[],
-    imagePullSecrets: [] as ISecret[],
   },
+  repos: cloneDeep(reposInitialState),
   operators: cloneDeep(operatorsInitialState),
   router: {} as RouterState,
-} as any;
+} as IStoreState;
 
 export const defaultStore = mockStore(initialState);
 

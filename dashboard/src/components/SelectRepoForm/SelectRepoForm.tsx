@@ -2,62 +2,60 @@ import { get } from "lodash";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import actions from "actions";
 import Alert from "components/js/Alert";
+import { useDispatch, useSelector } from "react-redux";
 import * as url from "shared/url";
-import { IAppRepository } from "../../shared/types";
+import { IStoreState } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./SelectRepoForm.css";
 
 interface ISelectRepoFormProps {
-  isFetching: boolean;
   cluster: string;
   namespace: string;
-  repoError?: Error;
-  error?: Error;
-  repo: IAppRepository;
-  repos: IAppRepository[];
   chartName: string;
-  checkChart: (cluster: string, namespace: string, repo: string, chartName: string) => any;
-  fetchRepositories: (namespace: string) => void;
 }
 
-function SelectRepoForm({
-  isFetching,
-  cluster,
-  namespace,
-  repoError,
-  error,
-  repo,
-  repos,
-  chartName,
-  checkChart,
-  fetchRepositories,
-}: ISelectRepoFormProps) {
+function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps) {
+  const dispatch = useDispatch();
+  const {
+    repos: {
+      isFetching,
+      repos,
+      repo,
+      errors: { fetch: fetchError },
+    },
+    charts: {
+      selected: { error: chartError },
+    },
+    config: { kubeappsNamespace, kubeappsCluster },
+  } = useSelector((state: IStoreState) => state);
+
   const [repoName, setRepoName] = useState(get(repo, "metadata.name", ""));
 
   useEffect(() => {
-    fetchRepositories(namespace);
-  }, [fetchRepositories, namespace]);
+    dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+  }, [dispatch, namespace, kubeappsNamespace]);
 
   const handleChartRepoNameChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    checkChart(cluster, namespace, e.target.value, chartName);
+    const [ns, name] = e.target.value.split("/");
+    dispatch(actions.repos.checkChart(kubeappsCluster, ns, name, chartName));
     setRepoName(e.currentTarget.value);
   };
 
-  const getRepoURL = (name: string) => {
-    let res = "";
-    repos.forEach(r => {
-      if (r.metadata.name === name && r.spec) {
-        res = r.spec.url;
-      }
-    });
-    return res;
+  const findRepo = (ns: string, name: string) => {
+    return repos.find(r => r.metadata.name === name && r.metadata.namespace === ns);
+  };
+
+  const getRepoURL = (ns: string, name: string) => {
+    const r = findRepo(ns, name);
+    return r && r.spec ? r.spec.url : "";
   };
 
   return (
     <LoadingWrapper loaded={!isFetching}>
-      {repoError && <Alert theme="danger">An error occurred: {repoError.message}</Alert>}
-      {!repoError && repos.length === 0 && (
+      {fetchError && <Alert theme="danger">An error occurred: {fetchError.message}</Alert>}
+      {!fetchError && repos.length === 0 && (
         <Alert theme="warning">
           <h5>Chart repositories not found.</h5>
           Manage your Helm chart repositories in Kubeapps by visiting the{" "}
@@ -69,7 +67,7 @@ function SelectRepoForm({
       )}
       {repos.length > 0 && (
         <div className="select-repo-form">
-          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+          {chartError && <Alert theme="danger">An error occurred: {chartError.message}</Alert>}
           <h2>Select the source repository of {chartName}</h2>
           <label className="select-repo-form-label" htmlFor="chartRepoName">
             Chart Repository Name *
@@ -83,11 +81,14 @@ function SelectRepoForm({
               className="clr-page-size-select"
             >
               {!repoName && <option key="" value="" />}
-              {repos.map(r => (
-                <option key={r.metadata.name} value={r.metadata.name}>
-                  {r.metadata.name} ({getRepoURL(r.metadata.name)})
-                </option>
-              ))}
+              {repos.map(r => {
+                const value = `${r.metadata.namespace}/${r.metadata.name}`;
+                return (
+                  <option key={value} value={value}>
+                    {value} ({getRepoURL(r.metadata.namespace, r.metadata.name)})
+                  </option>
+                );
+              })}
             </select>
           </div>
           <p>

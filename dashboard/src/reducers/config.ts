@@ -7,7 +7,7 @@ export interface IConfigState extends IConfig {
   loaded: boolean;
 }
 
-const initialState: IConfigState = {
+export const initialState: IConfigState = {
   loaded: false,
   kubeappsCluster: "",
   kubeappsNamespace: "",
