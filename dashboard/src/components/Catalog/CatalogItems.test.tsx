@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChart, IClusterServiceVersion } from "shared/types";
-import CatalogItem from "./CatalogItem.v2";
+import CatalogItem from "./CatalogItem";
 import CatalogItems from "./CatalogItems";
 
 const chartItem = {

@@ -1,211 +1,189 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`oauth login form renders a login button link 1`] = `
-<section
-  className="LoginForm"
+<div
+  className="login-wrapper"
 >
-  <div
-    className="LoginForm__container padding-v-bigger bg-skew"
+  <form
+    className="login clr-form"
+    onSubmit={[Function]}
   >
-    <div
-      className="container container-tiny"
+    <OAuthLogin
+      oauthLoginURI="/sign/in"
     />
     <div
-      className="bg-skew__pattern bg-skew__pattern-dark type-color-reverse"
+      className="login-moreinfo"
     >
-      <div
-        className="container"
+      <a
+        href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
+        rel="noopener noreferrer"
+        target="_blank"
       >
-        <h2>
-          <Lock
-            color="currentColor"
-            size="24"
-          />
-           Login
-        </h2>
-        <p>
-          Your cluster operator has enabled login via an authentication provider.
-           
-          <a
-            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Click here
-          </a>
-           
-          for more info about using authentication providers with Kubeapps.
-        </p>
-        <a
-          className="button button-accent"
-          href="/sign/in"
-        >
-          Login
-        </a>
-      </div>
+        <CdsIcon
+          shape="info-circle"
+        />
+        More Info
+      </a>
     </div>
-  </div>
-</section>
+  </form>
+</div>
 `;
 
 exports[`token login form displays an error if the authentication error is passed 1`] = `
-<section
-  className="LoginForm"
+<LoginForm
+  appVersion="devel"
+  authenticate={[MockFunction]}
+  authenticated={false}
+  authenticating={false}
+  authenticationError="it's a trap"
+  checkCookieAuthentication={[MockFunction]}
+  cluster="default"
+  location={
+    Object {
+      "hash": "",
+      "pathname": "",
+      "search": "",
+      "state": "",
+    }
+  }
+  oauthLoginURI=""
 >
   <div
-    className="LoginForm__container padding-v-bigger bg-skew"
+    className="login-wrapper"
   >
-    <div
-      className="container container-tiny"
+    <form
+      className="login clr-form"
+      onSubmit={[Function]}
     >
-      <div
-        className="alert alert-error margin-c"
-        role="alert"
+      <TokenLogin
+        authenticationError="it's a trap"
+        handleTokenChange={[Function]}
+        token=""
       >
-        There was an error connecting to the Kubernetes API. Please check that your token is valid.
-      </div>
-    </div>
-    <div
-      className="bg-skew__pattern bg-skew__pattern-dark type-color-reverse"
-    >
-      <div
-        className="container"
-      >
-        <h2>
-          <Lock
-            color="currentColor"
-            size="24"
-          />
-           Login
-        </h2>
-        <p>
-          Your cluster operator should provide you with a Kubernetes API token.
-           
-          <a
-            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Click here
-          </a>
-           
-          for more info on how to create and use Bearer Tokens.
-        </p>
-        <div
-          className="bg-skew__content"
+        <section
+          aria-describedby="login-desc"
+          aria-labelledby="login-title"
+          className="title"
         >
-          <form
-            onSubmit={[Function]}
+          <h3
+            className="welcome"
+            id="login-title"
           >
-            <div>
+            Welcome to 
+            <span>
+              Kubeapps
+            </span>
+          </h3>
+          <p
+            className="hint"
+            id="login-desc"
+          >
+            Your cluster operator should provide you with a Kubernetes API token.
+          </p>
+          <div
+            className="login-group"
+          >
+            <div
+              className="clr-form-control"
+            >
               <label
+                className="clr-control-label"
                 htmlFor="token"
               >
-                Kubernetes API Token
+                Token
               </label>
-              <input
-                id="token"
-                name="token"
-                onChange={[Function]}
-                placeholder="Token"
-                required={true}
-                type="password"
-                value=""
-              />
-            </div>
-            <p>
-              <button
-                className="button button-accent"
-                type="submit"
+              <div
+                className="clr-control-container"
               >
-                Login
-              </button>
-            </p>
-          </form>
-        </div>
+                <div
+                  className="clr-input-wrapper"
+                >
+                  <input
+                    className="clr-input"
+                    id="token"
+                    name="token"
+                    onChange={[Function]}
+                    placeholder="Paste token here"
+                    required={true}
+                    type="password"
+                    value=""
+                  />
+                </div>
+              </div>
+            </div>
+            <div
+              className="error active "
+            >
+              There was an error connecting to the Kubernetes API. Please check that your token is valid.
+            </div>
+            <div
+              className="login-submit-button"
+            >
+              <CdsButton
+                id="login-submit-button"
+                status="primary"
+              >
+                <cds-button>
+                  Submit
+                </cds-button>
+              </CdsButton>
+            </div>
+          </div>
+        </section>
+      </TokenLogin>
+      <div
+        className="login-moreinfo"
+      >
+        <a
+          href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <CdsIcon
+            shape="info-circle"
+          >
+            <cds-icon />
+          </CdsIcon>
+          More Info
+        </a>
       </div>
-    </div>
+    </form>
   </div>
-</section>
+</LoginForm>
 `;
 
 exports[`token login form renders a token login form 1`] = `
-<section
-  className="LoginForm"
+<div
+  className="login-wrapper"
 >
-  <div
-    className="LoginForm__container padding-v-bigger bg-skew"
+  <form
+    className="login clr-form"
+    onSubmit={[Function]}
   >
-    <div
-      className="container container-tiny"
+    <TokenLogin
+      handleTokenChange={[Function]}
+      token=""
     />
     <div
-      className="bg-skew__pattern bg-skew__pattern-dark type-color-reverse"
+      className="login-moreinfo"
     >
-      <div
-        className="container"
+      <a
+        href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
+        rel="noopener noreferrer"
+        target="_blank"
       >
-        <h2>
-          <Lock
-            color="currentColor"
-            size="24"
-          />
-           Login
-        </h2>
-        <p>
-          Your cluster operator should provide you with a Kubernetes API token.
-           
-          <a
-            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Click here
-          </a>
-           
-          for more info on how to create and use Bearer Tokens.
-        </p>
-        <div
-          className="bg-skew__content"
-        >
-          <form
-            onSubmit={[Function]}
-          >
-            <div>
-              <label
-                htmlFor="token"
-              >
-                Kubernetes API Token
-              </label>
-              <input
-                id="token"
-                name="token"
-                onChange={[Function]}
-                placeholder="Token"
-                required={true}
-                type="password"
-                value=""
-              />
-            </div>
-            <p>
-              <button
-                className="button button-accent"
-                type="submit"
-              >
-                Login
-              </button>
-            </p>
-          </form>
-        </div>
-      </div>
+        <CdsIcon
+          shape="info-circle"
+        />
+        More Info
+      </a>
     </div>
-  </div>
-</section>
+  </form>
+</div>
 `;
 
 exports[`while authenticating loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
   loaded={false}
-  type={0}
 />
 `;

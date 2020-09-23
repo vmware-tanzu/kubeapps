@@ -1,55 +1,94 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should render a Card 1`] = `
-<Card
-  className="ListItem"
-  responsive={true}
+<Column
+  listItem={false}
+  span={
+    Array [
+      12,
+      6,
+      4,
+      3,
+    ]
+  }
 >
-  <Link
-    className="ListItem__header"
-    title="foo"
-    to="/a/link/somewhere"
+  <Card
+    clickable={true}
+    htmlTag="div"
   >
-    <CardIcon
-      icon="an-icon.png"
-    />
-  </Link>
-  <CardContent>
-    <div
-      className="ListItem__content"
+    <Link
+      to="/a/link/somewhere"
     >
-      <Link
-        title="foo"
-        to="/a/link/somewhere"
+      <CardHeader
+        noBorder={false}
       >
-        <h3
-          className="ListItem__content__title type-big"
+        <div
+          className="info-card-header"
         >
-          foo
-        </h3>
-      </Link>
-      <div
-        className="ListItem__content__info"
-      >
-        <p
-          className="margin-reset type-small padding-t-tiny type-color-light-blue"
-        >
-          foobar
-        </p>
-        <div>
-          <span
-            className="ListItem__content__info_tag ListItem__content__info_tag-1 type-small type-color-white padding-t-tiny padding-h-normal blue"
+          <div
+            className="card-title"
           >
-            database
-          </span>
-          <span
-            className="ListItem__content__info_tag ListItem__content__info_tag-2 type-small type-color-white padding-t-tiny padding-h-normal margin-b-normal red"
-          >
-            running
-          </span>
+            foo
+          </div>
         </div>
-      </div>
-    </div>
-  </CardContent>
-</Card>
+      </CardHeader>
+      <CardBlock>
+        <div
+          className="info-card-block"
+        >
+          <div
+            className="card-icon"
+          >
+            <img
+              alt="icon"
+              src="an-icon.png"
+            />
+          </div>
+          <div
+            className="card-description-wrapper"
+          >
+            <div
+              className="card-description"
+            >
+              <span />
+            </div>
+          </div>
+        </div>
+      </CardBlock>
+      <CardFooter>
+        <Row
+          list={false}
+        >
+          <div
+            className="kubeapps-card-footer"
+          >
+            <div
+              className="kubeapps-card-footer-col1"
+            >
+              foobar
+            </div>
+            <div
+              className="kubeapps-card-footer-col2"
+            >
+              <div
+                className="footer-tags"
+              >
+                <span
+                  className="label blue"
+                >
+                  database
+                </span>
+                <span
+                  className="label red"
+                >
+                  running
+                </span>
+              </div>
+            </div>
+          </div>
+        </Row>
+      </CardFooter>
+    </Link>
+  </Card>
+</Column>
 `;

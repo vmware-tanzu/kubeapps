@@ -1,43 +1,50 @@
+import { CdsIcon } from "@clr/react/icon";
 import * as React from "react";
-import { Search } from "react-feather";
+import Input from "../js/Input";
 
+import Column from "components/js/Column";
+import Row from "components/js/Row";
 import "./SearchFilter.css";
 
-interface ISearchFilterProps {
+export interface ISearchFilterProps {
   value: string;
   className?: string;
   placeholder: string;
   onChange: (filter: string) => void;
-  onSubmit: (filter: string) => void;
+  submitFilters: () => void;
 }
 
-class SearchFilter extends React.Component<ISearchFilterProps> {
-  public render() {
-    return (
-      <div className={`SearchFilter ${this.props.className}`}>
-        <Search size={16} />
-        <form onSubmit={this.handleSubmit}>
-          <input
-            id="search"
-            type="text"
-            className="padding-l-bigger"
-            placeholder={this.props.placeholder}
-            autoComplete="off"
-            onChange={this.handleChange}
-            value={this.props.value}
-          />
-        </form>
-      </div>
-    );
-  }
-
-  private handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange(e.currentTarget.value);
+function SearchFilter(props: ISearchFilterProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    props.onChange(e.currentTarget.value);
   };
-  private handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    this.props.onSubmit(this.props.value);
+    props.submitFilters();
   };
+  return (
+    <div className="search-box">
+      <form onSubmit={handleSubmit} role="search" aria-label="Search on the site">
+        <Row>
+          <Column span={1}>
+            <CdsIcon size="sm" shape="search" />
+          </Column>
+          <Column span={10}>
+            <Input
+              id="search"
+              name="search"
+              type="text"
+              placeholder={props.placeholder}
+              autoComplete="off"
+              onChange={handleChange}
+              value={props.value}
+              {...Input.defaultProps}
+            />
+          </Column>
+        </Row>
+      </form>
+    </div>
+  );
 }
 
 export default SearchFilter;

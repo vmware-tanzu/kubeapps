@@ -1,161 +1,109 @@
-import * as React from "react";
+import React, { useEffect } from "react";
 
-import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
-import { RouterAction } from "connected-react-router";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import OperatorSummary from "components/OperatorSummary/OperatorSummary";
+import { push } from "connected-react-router";
+import { useDispatch, useSelector } from "react-redux";
 import { Operators } from "../../shared/Operators";
-import { IClusterServiceVersion, IPackageManifest } from "../../shared/types";
-import { api } from "../../shared/url";
-import { ErrorSelector } from "../ErrorAlert";
-import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
-import CapabiliyLevel from "./OperatorCapabilityLevel";
+import { IStoreState } from "../../shared/types";
+import { api, app } from "../../shared/url";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";
 
-export interface IOperatorViewProps {
+interface IOperatorViewProps {
   operatorName: string;
-  operator?: IPackageManifest;
-  getOperator: (cluster: string, namespace: string, name: string) => Promise<void>;
-  isFetching: boolean;
   cluster: string;
   namespace: string;
-  kubeappsCluster: string;
-  error?: Error;
-  push: (location: string) => RouterAction;
-  getCSV: (
-    cluster: string,
-    namespace: string,
-    name: string,
-  ) => Promise<IClusterServiceVersion | undefined>;
-  csv?: IClusterServiceVersion;
 }
 
-class OperatorView extends React.Component<IOperatorViewProps> {
-  public componentDidMount() {
-    const { cluster, operatorName, namespace, getOperator } = this.props;
-    getOperator(cluster, namespace, operatorName);
-  }
+export default function OperatorView({ operatorName, cluster, namespace }: IOperatorViewProps) {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+    dispatch(actions.operators.listSubscriptions(cluster, namespace));
+  }, [dispatch, cluster, namespace, operatorName]);
 
-  public componentDidUpdate(prevProps: IOperatorViewProps) {
-    const { cluster, namespace, getOperator, getCSV } = this.props;
-    if (prevProps.operator !== this.props.operator && this.props.operator) {
-      const defaultChannel = Operators.getDefaultChannel(this.props.operator);
+  const {
+    operators: {
+      operator,
+      isFetching,
+      errors: {
+        operator: { fetch: error },
+      },
+      subscriptions,
+    },
+  } = useSelector((state: IStoreState) => state);
+
+  useEffect(() => {
+    if (operator) {
+      const defaultChannel = Operators.getDefaultChannel(operator);
       if (defaultChannel) {
-        getCSV(cluster, namespace, defaultChannel.currentCSV);
+        dispatch(actions.operators.getCSV(cluster, namespace, defaultChannel.currentCSV));
       }
     }
-    if (prevProps.namespace !== this.props.namespace) {
-      getOperator(cluster, this.props.namespace, this.props.operatorName);
-    }
-  }
+  }, [dispatch, operator, cluster, namespace]);
 
-  public render() {
-    const {
-      isFetching,
-      cluster,
-      namespace,
-      kubeappsCluster,
-      operatorName,
-      operator,
-      error,
-      push,
-      csv,
-    } = this.props;
-    if (cluster !== kubeappsCluster) {
-      return <OperatorNotSupported kubeappsCluster={kubeappsCluster} namespace={namespace} />;
-    }
-    if (error) {
-      return <ErrorSelector error={error} resource={`Operator ${operatorName}`} />;
-    }
-    if (isFetching || !operator) {
-      return <LoadingWrapper />;
-    }
-    const channel = Operators.getDefaultChannel(operator);
-    if (!channel) {
-      return (
-        <UnexpectedErrorPage
-          text={`Operator ${operatorName} doesn't define a valid channel. This is needed to extract required info.`}
-        />
-      );
-    }
-    const { currentCSVDesc } = channel;
-    const namespaced = currentCSVDesc.installModes.find(m => m.type === "AllNamespaces");
+  const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
+
+  if (error) {
     return (
-      <section className="ChartView padding-b-big">
-        <OperatorHeader
-          id={operator.metadata.name}
-          description={currentCSVDesc.displayName}
-          icon={api.operators.operatorIcon(
-            this.props.cluster,
-            this.props.namespace,
-            operator.metadata.name,
-          )}
-          version={currentCSVDesc.version}
-          cluster={cluster}
-          namespace={namespace}
-          provider={operator.status.provider.name}
-          namespaced={!namespaced?.supported}
-          push={push}
-          disableButton={!!csv}
-        />
-        <main>
-          <div className="container container-fluid">
-            <div className="row">
-              <div className="col-9 ChartView__readme-container">
-                <OperatorDescription description={currentCSVDesc.description} />
-              </div>
-              <div className="col-3 ChartView__sidebar-container">
-                <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
-                  <div className="ChartViewSidebar__section">
-                    <h2>Capability Level</h2>
-                    <div>
-                      <ul className="remove-style padding-l-reset margin-b-reset">
-                        <li>
-                          <CapabiliyLevel level={currentCSVDesc.annotations.capabilities} />
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="ChartViewSidebar__section">
-                    <h2>Repository</h2>
-                    <div className="margin-l-big">
-                      <span>
-                        <a
-                          href={currentCSVDesc.annotations.repository}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {currentCSVDesc.annotations.repository}
-                        </a>
-                      </span>
-                    </div>
-                  </div>
-                  <div className="ChartViewSidebar__section">
-                    <h2>Provider</h2>
-                    <div className="margin-l-big">
-                      <span>{operator.status.provider.name}</span>
-                    </div>
-                  </div>
-                  <div className="ChartViewSidebar__section">
-                    <h2>Container Image</h2>
-                    <div className="margin-l-big">
-                      <span>{currentCSVDesc.annotations.containerImage}</span>
-                    </div>
-                  </div>
-                  <div className="ChartViewSidebar__section">
-                    <h2>Created At</h2>
-                    <div className="margin-l-big">
-                      <span>{currentCSVDesc.annotations.createdAt}</span>
-                    </div>
-                  </div>
-                </aside>
-              </div>
-            </div>
-          </div>
-        </main>
-      </section>
+      <Alert theme="danger">
+        An error occurred while fetching the Operator {operatorName}: {error.message}
+      </Alert>
     );
   }
+  if (isFetching || !operator) {
+    return <LoadingWrapper />;
+  }
+  const channel = Operators.getDefaultChannel(operator);
+  if (!channel) {
+    return (
+      <Alert theme="danger">
+        Operator {operatorName} doesn't define a valid channel. This is needed to extract required
+        info.
+      </Alert>
+    );
+  }
+  const { currentCSVDesc } = channel;
+  const alreadyInstalled = subscriptions.some(s => s.spec.name === operator.metadata.name);
+  return (
+    <section>
+      <OperatorHeader
+        title={`${operator.metadata.name} by ${operator.status.provider.name}`}
+        icon={api.operators.operatorIcon(cluster, namespace, operator.metadata.name)}
+        version={currentCSVDesc.version}
+        buttons={[
+          <CdsButton
+            key="deploy-button"
+            status="primary"
+            disabled={alreadyInstalled}
+            onClick={redirect}
+          >
+            <CdsIcon shape="deploy" inverse={true} /> Deploy
+          </CdsButton>,
+        ]}
+      />
+      <section>
+        <Row>
+          <Column span={3}>
+            <OperatorSummary />
+          </Column>
+          <Column span={9}>
+            <OperatorDescription description={currentCSVDesc.description} />
+            <div className="after-readme-button">
+              <CdsButton status="primary" disabled={alreadyInstalled} onClick={redirect}>
+                <CdsIcon shape="deploy" inverse={true} /> Deploy
+              </CdsButton>
+            </div>
+          </Column>
+        </Row>
+      </section>
+    </section>
+  );
 }
-
-export default OperatorView;

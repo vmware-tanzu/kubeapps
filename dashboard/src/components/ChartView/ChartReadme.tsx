@@ -1,66 +1,60 @@
-import * as React from "react";
-import { FileText } from "react-feather";
+import React, { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { useDispatch } from "react-redux";
 
-import LoadingWrapper from "../LoadingWrapper";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import HeadingRenderer from "./HeadingRenderer";
-
-import "./ChartReadme.css";
 import LinkRenderer from "./LinkRenderer";
+import TableRenderer from "./TableRenderer";
 
 interface IChartReadmeProps {
-  getChartReadme: (cluster: string, namespace: string, version: string) => void;
-  hasError: boolean;
-  readme?: string;
-  version: string;
   cluster: string;
-  chartNamespace: string;
+  namespace: string;
+  chartID: string;
+  version: string;
+  error?: string;
+  readme?: string;
 }
 
-class ChartReadme extends React.Component<IChartReadmeProps> {
-  public componentDidMount() {
-    const { getChartReadme, cluster, chartNamespace, version } = this.props;
-    getChartReadme(cluster, chartNamespace, version);
-  }
+function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IChartReadmeProps) {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(actions.charts.getChartReadme(cluster, namespace, chartID, version));
+  }, [dispatch, cluster, namespace, chartID, version]);
 
-  public componentDidUpdate(prevProps: IChartReadmeProps) {
-    const { getChartReadme, cluster, chartNamespace, version } = this.props;
-    if (version !== prevProps.version) {
-      getChartReadme(cluster, chartNamespace, version);
-    }
-  }
-
-  public render() {
-    const { hasError, readme } = this.props;
-    if (hasError) {
-      return this.renderError();
-    }
-    return (
-      <LoadingWrapper loaded={!!readme}>
-        {readme && (
-          <div className="ChartReadme">
-            <ReactMarkdown
-              source={readme}
-              renderers={{
-                heading: HeadingRenderer,
-                link: LinkRenderer,
-              }}
-              skipHtml={true}
-            />
+  if (error) {
+    if (error.toLocaleLowerCase().includes("not found")) {
+      return (
+        <div className="section-not-found">
+          <div>
+            <CdsIcon shape="file" size="64" />
+            <h4>No README found</h4>
           </div>
-        )}
-      </LoadingWrapper>
-    );
+        </div>
+      );
+    }
+    return <Alert theme="danger">Unable to fetch chart README: {error}</Alert>;
   }
-
-  public renderError() {
-    return (
-      <div className="ChartReadme ChartReadme--error flex align-center text-c">
-        <FileText size={64} />
-        <h4>No README found</h4>
-      </div>
-    );
-  }
+  return (
+    <LoadingWrapper loaded={!!readme}>
+      {readme && (
+        <div className="application-readme">
+          <ReactMarkdown
+            source={readme}
+            renderers={{
+              heading: HeadingRenderer,
+              link: LinkRenderer,
+              table: TableRenderer,
+            }}
+            skipHtml={true}
+          />
+        </div>
+      )}
+    </LoadingWrapper>
+  );
 }
 
 export default ChartReadme;

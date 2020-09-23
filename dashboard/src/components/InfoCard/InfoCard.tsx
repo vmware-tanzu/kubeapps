@@ -1,81 +1,90 @@
 import * as React from "react";
-
 import { Link } from "react-router-dom";
+import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
+import Column from "../js/Column";
+import Row from "../js/Row";
+
 import placeholder from "../../placeholder.png";
-import Card, { CardContent, CardIcon } from "../Card";
 import "./InfoCard.css";
 
-export interface IServiceInstanceCardProps {
+export interface IInfoCardProps {
   title: string;
-  info: string;
+  info: string | JSX.Element;
   link?: string;
   icon?: string;
-  banner?: string;
-  subIcon?: string;
+  bgIcon?: string;
   description?: string | JSX.Element;
+  tooltip?: JSX.Element;
   tag1Class?: string;
   tag1Content?: string | JSX.Element;
   tag2Class?: string;
   tag2Content?: string | JSX.Element;
 }
 
-const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
+function InfoCard(props: IInfoCardProps) {
   const {
     title,
     link,
     info,
     description,
+    tooltip,
     tag1Content,
     tag1Class,
     tag2Content,
     tag2Class,
-    banner,
-    subIcon,
+    bgIcon,
   } = props;
   const icon = props.icon ? props.icon : placeholder;
   return (
-    <Card responsive={true} className="ListItem">
-      <Link to={link || "#"} title={title} className="ListItem__header">
-        <CardIcon icon={icon} />
-        {banner && <p className="ListItem__banner">{banner}</p>}
-        {subIcon && (
-          <div className="Card__subIcon bg-light text-r">
-            <img src={subIcon} alt="icon" />
-          </div>
-        )}
-      </Link>
-      <CardContent>
-        <div className="ListItem__content">
-          <Link to={link || "#"} title={title}>
-            <h3 className="ListItem__content__title type-big">{title}</h3>
-          </Link>
-          {description}
-          <div className="ListItem__content__info">
-            <p className="margin-reset type-small padding-t-tiny type-color-light-blue">{info}</p>
-            <div>
-              {tag1Content && (
-                <span
-                  className={`ListItem__content__info_tag ListItem__content__info_tag-1 type-small type-color-white padding-t-tiny padding-h-normal ${tag1Class ||
-                    ""}`}
-                >
-                  {tag1Content}
-                </span>
-              )}
-              {tag2Content && (
-                <span
-                  className={`ListItem__content__info_tag ListItem__content__info_tag-2 type-small type-color-white padding-t-tiny padding-h-normal margin-b-normal ${tag2Class ||
-                    ""}`}
-                >
-                  {tag2Content}
-                </span>
+    <Column span={[12, 6, 4, 3]}>
+      <Card clickable={true}>
+        <Link to={link || "#"}>
+          <CardHeader>
+            <div className="info-card-header">
+              <div className="card-title">{title}</div>
+              {tooltip ? <div className="card-tooltip">{tooltip}</div> : <></>}
+            </div>
+          </CardHeader>
+          <CardBlock>
+            <div className="info-card-block">
+              <div className="card-icon">
+                <img src={icon} alt="icon" />
+              </div>
+              <div className="card-description-wrapper">
+                <div className="card-description">
+                  <span>{description}</span>
+                </div>
+              </div>
+              {bgIcon ? (
+                <div className="bg-img">
+                  <img src={bgIcon} alt="bg-img" />
+                </div>
+              ) : (
+                <></>
               )}
             </div>
-          </div>
-        </div>
-      </CardContent>
-      {props.children}
-    </Card>
+          </CardBlock>
+          <CardFooter>
+            <Row>
+              <div className="kubeapps-card-footer">
+                <div className="kubeapps-card-footer-col1">{info}</div>
+                <div className="kubeapps-card-footer-col2">
+                  <div className="footer-tags">
+                    {tag1Content && (
+                      <span className={`label ${tag1Class || "label-info"}`}>{tag1Content}</span>
+                    )}
+                    {tag2Content && (
+                      <span className={`label ${tag2Class || "label-info"}`}>{tag2Content}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Row>
+          </CardFooter>
+        </Link>
+      </Card>
+    </Column>
   );
-};
+}
 
 export default InfoCard;

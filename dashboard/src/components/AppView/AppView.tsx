@@ -1,30 +1,38 @@
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
 import { RouterAction } from "connected-react-router";
-import { assignWith, isEqual } from "lodash";
-import * as React from "react";
+import { assignWith } from "lodash";
+import { get } from "lodash";
+import React, { useEffect, useState } from "react";
 import * as yaml from "yaml";
-import { hapi } from "../../shared/hapi/release";
+import placeholder from "../../placeholder.png";
 
-import AccessURLTable from "../../containers/AccessURLTableContainer";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import PageHeader from "components/PageHeader/PageHeader";
+import { Link } from "react-router-dom";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import ResourceRef from "../../shared/ResourceRef";
-import { IK8sList, IRBACRole, IRelease, IResource } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
-import AppControls from "./AppControls";
+import { IK8sList, IRelease, IResource } from "../../shared/types";
+import * as url from "../../shared/url";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
+import AccessURLTable from "./AccessURLTable/AccessURLTable";
+import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
+import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
 import AppNotes from "./AppNotes";
-import AppValues from "./AppValues";
-import "./AppView.css";
-import ChartInfo from "./ChartInfo";
-import ResourceTable from "./ResourceTable";
+import AppSecrets from "./AppSecrets";
+import AppValues from "./AppValues/AppValues";
+import ChartInfo from "./ChartInfo/ChartInfo";
+import ResourceTabs from "./ResourceTabs";
 
 export interface IAppViewProps {
   cluster: string;
   namespace: string;
   releaseName: string;
   app?: IRelease;
-  // TODO(miguel) how to make optional props? I tried adding error? but the container complains
-  error: Error | undefined;
-  deleteError: Error | undefined;
+  error?: Error;
+  deleteError?: Error;
   getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
   deleteApp: (
     cluster: string,
@@ -35,248 +43,192 @@ export interface IAppViewProps {
   push: (location: string) => RouterAction;
 }
 
-interface IAppViewState {
-  deployRefs: ResourceRef[];
-  statefulSetRefs: ResourceRef[];
-  daemonSetRefs: ResourceRef[];
-  serviceRefs: ResourceRef[];
-  ingressRefs: ResourceRef[];
-  secretRefs: ResourceRef[];
-  otherResources: ResourceRef[];
-  manifest: IResource[];
-}
-
-export interface IPartialAppViewState {
-  deployRefs: ResourceRef[];
-  statefulSetRefs: ResourceRef[];
-  daemonSetRefs: ResourceRef[];
-  serviceRefs: ResourceRef[];
-  ingressRefs: ResourceRef[];
-  secretRefs: ResourceRef[];
+export interface IAppViewResourceRefs {
+  deployments: ResourceRef[];
+  statefulsets: ResourceRef[];
+  daemonsets: ResourceRef[];
+  services: ResourceRef[];
+  ingresses: ResourceRef[];
+  secrets: ResourceRef[];
   otherResources: ResourceRef[];
 }
 
-const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
-  view: [
-    {
-      apiGroup: "apps",
-      resource: "deployments",
-      verbs: ["list", "watch"],
-    },
-    {
-      apiGroup: "apps",
-      resource: "services",
-      verbs: ["list", "watch"],
-    },
-  ],
-};
-
-class AppView extends React.Component<IAppViewProps, IAppViewState> {
-  public state: IAppViewState = {
-    manifest: [],
-    ingressRefs: [],
-    deployRefs: [],
-    statefulSetRefs: [],
-    daemonSetRefs: [],
+function parseResources(
+  resources: Array<IResource | IK8sList<IResource, {}>>,
+  cluster: string,
+  releaseNamespace: string,
+) {
+  const result: IAppViewResourceRefs = {
+    ingresses: [],
+    deployments: [],
+    statefulsets: [],
+    daemonsets: [],
     otherResources: [],
-    serviceRefs: [],
-    secretRefs: [],
+    services: [],
+    secrets: [],
   };
+  resources.forEach(i => {
+    // The item may be a list
+    const itemList = i as IK8sList<IResource, {}>;
+    if (itemList.items) {
+      // If the resource  has a list of items, treat them as a list
+      // A List can contain an arbitrary set of resources so we treat them as an
+      // additional manifest. We merge the current result with the resources of
+      // the List, concatenating items from both.
+      assignWith(
+        result,
+        parseResources((i as IK8sList<IResource, {}>).items, cluster, releaseNamespace),
+        // Merge the list with the current result
+        (prev, newArray) => prev.concat(newArray),
+      );
+    } else {
+      const item = i as IResource;
+      const resource = { isFetching: true, item };
+      switch (i.kind) {
+        case "Deployment":
+          result.deployments.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          break;
+        case "StatefulSet":
+          result.statefulsets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          break;
+        case "DaemonSet":
+          result.daemonsets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          break;
+        case "Service":
+          result.services.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          break;
+        case "Ingress":
+          result.ingresses.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          break;
+        case "Secret":
+          result.secrets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          break;
+        default:
+          result.otherResources.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+      }
+    }
+  });
+  return result;
+}
 
-  public async componentDidMount() {
-    const { releaseName, getAppWithUpdateInfo, cluster, namespace } = this.props;
+export default function AppView({
+  cluster,
+  namespace,
+  releaseName,
+  app,
+  error,
+  deleteError,
+  getAppWithUpdateInfo,
+  deleteApp,
+  push,
+}: IAppViewProps) {
+  const [resourceRefs, setResourceRefs] = useState({
+    ingresses: [],
+    deployments: [],
+    statefulsets: [],
+    daemonsets: [],
+    otherResources: [],
+    services: [],
+    secrets: [],
+  } as IAppViewResourceRefs);
+
+  useEffect(() => {
     getAppWithUpdateInfo(cluster, namespace, releaseName);
-  }
+  }, [getAppWithUpdateInfo, cluster, namespace, releaseName]);
 
-  public componentDidUpdate(prevProps: IAppViewProps) {
-    const { releaseName, getAppWithUpdateInfo, cluster, namespace, error, app } = this.props;
-    if (prevProps.namespace !== namespace || prevProps.cluster !== cluster) {
-      getAppWithUpdateInfo(cluster, namespace, releaseName);
-      return;
-    }
-    if (error || !app) {
+  useEffect(() => {
+    if (!app?.manifest) {
       return;
     }
 
-    let manifest: IResource[] = yaml
+    let parsedManifest: IResource[] = yaml
       .parseAllDocuments(app.manifest)
       .map((doc: yaml.ast.Document) => doc.toJSON());
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
-    manifest = manifest.filter(r => r && r.kind);
-    if (!isEqual(manifest, this.state.manifest)) {
-      this.setState({ manifest });
-    } else {
-      return;
-    }
+    parsedManifest = parsedManifest.filter(r => r && r.kind);
+    setResourceRefs(parseResources(parsedManifest, cluster, app.namespace));
+  }, [app, cluster]);
 
-    // Iterate over the current manifest to populate the initial state
-    this.setState(this.parseResources(manifest, app.namespace));
-  }
+  const {
+    services,
+    ingresses,
+    deployments,
+    statefulsets,
+    daemonsets,
+    secrets,
+    otherResources,
+  } = resourceRefs;
+  const icon = get(app, "chart.metadata.icon", placeholder);
+  return (
+    <section>
+      <PageHeader
+        title={releaseName}
+        titleSize="md"
+        helm={true}
+        icon={icon}
+        buttons={[
+          <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)} key="upgrade-button">
+            <CdsButton status="primary">
+              <CdsIcon shape="upload-cloud" inverse={true} /> Upgrade
+            </CdsButton>
+          </Link>,
+          <RollbackButton
+            key="rollback-button"
+            cluster={cluster}
+            namespace={namespace}
+            releaseName={releaseName}
+            revision={app?.version || 0}
+          />,
+          <DeleteButton
+            key="delete-button"
+            cluster={cluster}
+            namespace={namespace}
+            releaseName={releaseName}
+          />,
+        ]}
+      />
+      {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
 
-  public render() {
-    if (this.props.error) {
-      return (
-        <ErrorSelector
-          error={this.props.error}
-          defaultRequiredRBACRoles={RequiredRBACRoles}
-          action="view"
-          resource={`Application ${this.props.releaseName}`}
-          namespace={this.props.namespace}
-        />
-      );
-    }
-
-    return this.props.app && this.props.app.info ? (
-      this.appInfo(this.props.app, this.props.app.info)
-    ) : (
-      <LoadingWrapper />
-    );
-  }
-
-  public appInfo(app: IRelease, info: hapi.release.IInfo) {
-    const { cluster, push } = this.props;
-    const {
-      serviceRefs,
-      ingressRefs,
-      deployRefs,
-      statefulSetRefs,
-      daemonSetRefs,
-      secretRefs,
-      otherResources,
-    } = this.state;
-    return (
-      <section className="AppView padding-b-big">
-        <main>
-          <div className="container">
-            {this.props.deleteError && (
-              <ErrorSelector
-                error={this.props.deleteError}
-                defaultRequiredRBACRoles={RequiredRBACRoles}
-                action="delete"
-                resource={`Application ${this.props.releaseName}`}
-                namespace={this.props.namespace}
-              />
-            )}
-            <div className="row collapse-b-tablet">
-              <div className="col-3">
-                <ChartInfo app={app} cluster={cluster} />
-              </div>
-              <div className="col-9">
-                <div className="row padding-t-bigger">
-                  <div className="col-4">
-                    <ApplicationStatus
-                      deployRefs={deployRefs}
-                      statefulsetRefs={statefulSetRefs}
-                      daemonsetRefs={daemonSetRefs}
-                      info={info}
-                    />
-                  </div>
-                  <div className="col-8 text-r">
-                    <AppControls
-                      cluster={cluster}
-                      app={app}
-                      deleteApp={this.deleteApp}
-                      push={push}
-                    />
-                  </div>
-                </div>
-                <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
-                <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <ResourceTable resourceRefs={secretRefs} title="Secrets" />
-                <ResourceTable resourceRefs={deployRefs} title="Deployments" />
-                <ResourceTable resourceRefs={statefulSetRefs} title="StatefulSets" />
-                <ResourceTable resourceRefs={daemonSetRefs} title="DaemonSets" />
-                <ResourceTable resourceRefs={serviceRefs} title="Services" />
-                <ResourceTable resourceRefs={otherResources} title="Other Resources" />
-                <AppValues values={(app.config && app.config.raw) || ""} />
+      {deleteError && (
+        <Alert theme="danger">
+          Unable to delete the application. Received: {deleteError.message}
+        </Alert>
+      )}
+      {!app || !app.info ? (
+        <LoadingWrapper />
+      ) : (
+        <Row>
+          <Column span={3}>
+            <ChartInfo app={app} cluster={cluster} />
+          </Column>
+          <Column span={9}>
+            <div className="appview-separator">
+              <div className="appview-first-row">
+                <ApplicationStatus
+                  deployRefs={deployments}
+                  statefulsetRefs={statefulsets}
+                  daemonsetRefs={daemonsets}
+                  info={app.info}
+                />
+                <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
+                <AppSecrets secretRefs={secrets} />
               </div>
             </div>
-          </div>
-        </main>
-      </section>
-    );
-  }
-
-  private parseResources(
-    resources: Array<IResource | IK8sList<IResource, {}>>,
-    releaseNamespace: string,
-  ): IPartialAppViewState {
-    const result: IPartialAppViewState = {
-      ingressRefs: [],
-      deployRefs: [],
-      statefulSetRefs: [],
-      daemonSetRefs: [],
-      otherResources: [],
-      serviceRefs: [],
-      secretRefs: [],
-    };
-    resources.forEach(i => {
-      // The item may be a list
-      const itemList = i as IK8sList<IResource, {}>;
-      if (itemList.items) {
-        // If the resource  has a list of items, treat them as a list
-        // A List can contain an arbitrary set of resources so we treat them as an
-        // additional manifest. We merge the current result with the resources of
-        // the List, concatenating items from both.
-        assignWith(
-          result,
-          this.parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
-          // Merge the list with the current result
-          (prev, newArray) => prev.concat(newArray),
-        );
-      } else {
-        const item = i as IResource;
-        const resource = { isFetching: true, item };
-        switch (i.kind) {
-          case "Deployment":
-            result.deployRefs.push(
-              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
-            );
-            break;
-          case "StatefulSet":
-            result.statefulSetRefs.push(
-              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
-            );
-            break;
-          case "DaemonSet":
-            result.daemonSetRefs.push(
-              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
-            );
-            break;
-          case "Service":
-            result.serviceRefs.push(
-              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
-            );
-            break;
-          case "Ingress":
-            result.ingressRefs.push(
-              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
-            );
-            break;
-          case "Secret":
-            result.secretRefs.push(
-              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
-            );
-            break;
-          default:
-            result.otherResources.push(
-              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
-            );
-        }
-      }
-    });
-    return result;
-  }
-
-  private deleteApp = (purge: boolean) => {
-    return this.props.deleteApp(
-      this.props.cluster,
-      this.props.namespace,
-      this.props.releaseName,
-      purge,
-    );
-  };
+            <div className="appview-separator">
+              <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
+            </div>
+            <div className="appview-separator">
+              <ResourceTabs
+                {...{ deployments, statefulsets, daemonsets, secrets, services, otherResources }}
+              />
+            </div>
+            <div className="appview-separator">
+              <AppValues values={(app.config && app.config.raw) || ""} />
+            </div>
+          </Column>
+        </Row>
+      )}
+    </section>
+  );
 }
-
-export default AppView;

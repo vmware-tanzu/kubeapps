@@ -1,45 +1,75 @@
-import { shallow } from "enzyme";
+import { mount } from "enzyme";
 import * as React from "react";
-import { Link } from "react-router-dom";
-import * as url from "../../shared/url";
-import ChartIcon from "../ChartIcon";
 import ChartHeader from "./ChartHeader";
 
 const testProps: any = {
-  description: "A Test Chart",
-  id: "testrepo/test",
-  repo: "testrepo",
-  version: {
-    attributes: {
-      app_version: "1.2.3",
+  chartAttrs: {
+    description: "A Test Chart",
+    name: "test",
+    repo: {
+      name: "testrepo",
     },
+    namespace: "kubeapps",
+    cluster: "default",
+    icon: "test.jpg",
   },
-  namespace: "kubeapps",
-  cluster: "default",
+  versions: [
+    {
+      attributes: {
+        app_version: "1.2.3",
+      },
+    },
+  ],
+  onSelect: jest.fn(),
 };
 
 it("renders a header for the chart", () => {
-  const wrapper = shallow(<ChartHeader {...testProps} />);
+  const wrapper = mount(<ChartHeader {...testProps} />);
   expect(wrapper.text()).toContain("testrepo/test");
-  expect(wrapper.text()).toContain("A Test Chart");
-  const repoLink = wrapper.find(Link);
-  expect(repoLink.exists()).toBe(true);
-  expect(repoLink.props()).toMatchObject({
-    to: url.app.repo("default", "kubeapps", "testrepo"),
-    children: "testrepo",
-  });
-  expect(wrapper.find(ChartIcon).exists()).toBe(true);
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("displays the appVersion", () => {
-  const wrapper = shallow(<ChartHeader {...testProps} />);
+  const wrapper = mount(<ChartHeader {...testProps} />);
   expect(wrapper.text()).toContain("1.2.3");
 });
 
 it("uses the icon", () => {
-  const wrapper = shallow(<ChartHeader {...testProps} icon="test.jpg" />);
-  const icon = wrapper.find(ChartIcon);
+  const wrapper = mount(<ChartHeader {...testProps} />);
+  const icon = wrapper.find("img").filterWhere(i => i.prop("alt") === "app-icon");
   expect(icon.exists()).toBe(true);
-  expect(icon.props()).toMatchObject({ icon: "test.jpg" });
+  expect(icon.props()).toMatchObject({ src: "api/assetsvc/test.jpg" });
+});
+
+it("uses the first version as default in the select input", () => {
+  const versions = [
+    {
+      attributes: {
+        version: "1.2.3",
+      },
+    },
+    {
+      attributes: {
+        version: "1.2.4",
+      },
+    },
+  ];
+  const wrapper = mount(<ChartHeader {...testProps} versions={versions} />);
+  expect(wrapper.find("select").prop("value")).toBe("1.2.3");
+});
+
+it("uses the current version as default in the select input", () => {
+  const versions = [
+    {
+      attributes: {
+        version: "1.2.3",
+      },
+    },
+    {
+      attributes: {
+        version: "1.2.4",
+      },
+    },
+  ];
+  const wrapper = mount(<ChartHeader {...testProps} versions={versions} currentVersion="1.2.4" />);
+  expect(wrapper.find("select").prop("value")).toBe("1.2.4");
 });

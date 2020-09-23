@@ -1,11 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`match snapshot with values 1`] = `
-<Fragment>
-  <h6>
+<section
+  aria-labelledby="installation-values"
+>
+  <h5
+    className="section-title"
+    id="installation-values"
+  >
     Installation Values
-  </h6>
+  </h5>
   <ReactAce
+    className="installation-values"
     cursorStart={1}
     editorProps={
       Object {
@@ -52,16 +58,21 @@ exports[`match snapshot with values 1`] = `
     width="100%"
     wrapEnabled={false}
   />
-</Fragment>
+</section>
 `;
 
 exports[`match snapshot without values 1`] = `
-<Fragment>
-  <h6>
+<section
+  aria-labelledby="installation-values"
+>
+  <h5
+    className="section-title"
+    id="installation-values"
+  >
     Installation Values
-  </h6>
+  </h5>
   <p>
     The current application was installed without specifying any values
   </p>
-</Fragment>
+</section>
 `;

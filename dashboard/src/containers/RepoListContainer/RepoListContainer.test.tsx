@@ -31,7 +31,7 @@ describe("RepoListContainer props", () => {
     });
     const wrapper = shallow(<RepoListContainer store={store} />);
 
-    const component = wrapper.find("AppRepoListSelector");
+    const component = wrapper.find("AppRepoList");
 
     expect(component).toHaveProp({
       namespace: currentNamespace,
@@ -51,7 +51,7 @@ describe("RepoListContainer props", () => {
     });
     const wrapper = shallow(<RepoListContainer store={store} />);
 
-    const component = wrapper.find("AppRepoListSelector");
+    const component = wrapper.find("AppRepoList");
 
     expect(component).toHaveProp({
       namespace: definedNamespaces.all,

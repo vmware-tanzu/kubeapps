@@ -30,8 +30,7 @@ deploy-dev: deploy-dependencies
 	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set useHelm3=true --set featureFlags.ui=clarity
+		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"

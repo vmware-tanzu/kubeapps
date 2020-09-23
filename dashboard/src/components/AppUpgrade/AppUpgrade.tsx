@@ -1,12 +1,12 @@
-import * as React from "react";
+import React, { useEffect } from "react";
 
+import Alert from "components/js/Alert";
 import { RouterAction } from "connected-react-router";
 import { JSONSchema4 } from "json-schema";
 import { IAppRepository, IChartState, IChartVersion, IRelease } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
-import SelectRepoForm from "../SelectRepoForm";
-import UpgradeForm from "../UpgradeForm";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
+import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
+import UpgradeForm from "../UpgradeForm/UpgradeForm";
 
 export interface IAppUpgradeProps {
   app?: IRelease;
@@ -39,10 +39,8 @@ export interface IAppUpgradeProps {
     chartVersion: string,
   ) => void;
   push: (location: string) => RouterAction;
-  goBack: () => RouterAction;
   // repo selector properties
   reposIsFetching: boolean;
-  kubeappsNamespace: string;
   repoError?: Error;
   chartsError: Error | undefined;
   repo: IAppRepository;
@@ -51,104 +49,92 @@ export interface IAppUpgradeProps {
   fetchRepositories: (namespace: string) => void;
 }
 
-class AppUpgrade extends React.Component<IAppUpgradeProps> {
-  public componentDidMount() {
-    const { releaseName, getAppWithUpdateInfo, cluster, namespace } = this.props;
+function AppUpgrade({
+  app,
+  appsIsFetching,
+  chartsIsFetching,
+  appsError,
+  namespace,
+  cluster,
+  releaseName,
+  repoName,
+  repoNamespace,
+  selected,
+  deployed,
+  upgradeApp,
+  fetchChartVersions,
+  getAppWithUpdateInfo,
+  getChartVersion,
+  getDeployedChartVersion,
+  push,
+  reposIsFetching,
+  repoError,
+  chartsError,
+  repo,
+  repos,
+  checkChart,
+  fetchRepositories,
+}: IAppUpgradeProps) {
+  useEffect(() => {
     getAppWithUpdateInfo(cluster, namespace, releaseName);
-  }
+  }, [getAppWithUpdateInfo, cluster, namespace, releaseName]);
 
-  public componentDidUpdate(prevProps: IAppUpgradeProps) {
-    const { app, repoName, repoNamespace, cluster } = this.props;
-    if (app && repoName && repoNamespace) {
-      const { chart } = app;
-      if (
-        chart &&
-        chart.metadata &&
-        chart.metadata.name &&
-        chart.metadata.version &&
-        (prevProps.app !== app || prevProps.repoName !== repoName)
-      ) {
-        const chartID = `${repoName}/${chart.metadata.name}`;
-        this.props.getDeployedChartVersion(cluster, repoNamespace, chartID, chart.metadata.version);
-      }
+  const chart = app?.chart;
+  useEffect(() => {
+    if (
+      repoName &&
+      repoNamespace &&
+      chart &&
+      chart.metadata &&
+      chart.metadata &&
+      chart.metadata.name &&
+      chart.metadata.version
+    ) {
+      const chartID = `${repoName}/${chart.metadata.name}`;
+      getDeployedChartVersion(cluster, repoNamespace, chartID, chart.metadata.version);
     }
-  }
+  }, [getDeployedChartVersion, app, chart, repoName, repoNamespace, cluster]);
 
-  public render() {
-    const {
-      app,
-      namespace,
-      cluster,
-      appsError,
-      releaseName,
-      appsIsFetching,
-      chartsIsFetching,
-      repoName,
-      repoNamespace,
-      selected,
-      deployed,
-      upgradeApp,
-      push,
-      goBack,
-      fetchChartVersions,
-      getChartVersion,
-    } = this.props;
-    if (appsError) {
-      return (
-        <ErrorSelector
-          error={appsError}
-          namespace={namespace}
-          action="update"
-          resource={releaseName}
-        />
-      );
-    }
-    if (appsIsFetching || !app || !app.updateInfo) {
-      return <LoadingWrapper />;
-    }
-    const repo = repoName || app.updateInfo.repository.name;
-    const repoNS = repoNamespace || app.updateInfo.repository.namespace;
-    if (app && app.chart && app.chart.metadata && repo) {
-      return (
-        <div>
-          <UpgradeForm
-            appCurrentVersion={app.chart.metadata.version!}
-            appCurrentValues={(app.config && app.config.raw) || ""}
-            chartName={app.chart.metadata.name!}
-            chartsIsFetching={chartsIsFetching}
-            repo={repo}
-            repoNamespace={repoNS}
-            namespace={namespace}
-            cluster={cluster}
-            releaseName={releaseName}
-            selected={selected}
-            deployed={deployed}
-            upgradeApp={upgradeApp}
-            push={push}
-            goBack={goBack}
-            fetchChartVersions={fetchChartVersions}
-            getChartVersion={getChartVersion}
-          />
-        </div>
-      );
-    }
-
+  if (appsError) {
     return (
-      <SelectRepoForm
-        isFetching={this.props.reposIsFetching}
-        error={this.props.chartsError}
-        kubeappsNamespace={this.props.kubeappsNamespace}
-        cluster={this.props.cluster}
-        namespace={this.props.namespace}
-        repoError={this.props.repoError}
-        repo={this.props.repo}
-        repos={this.props.repos}
-        chartName={app.chart?.metadata?.name!}
-        checkChart={this.props.checkChart}
-        fetchRepositories={this.props.fetchRepositories}
-      />
+      <Alert theme="danger">
+        An error occurred while processing the application: {appsError.message}
+      </Alert>
     );
   }
+  if (appsIsFetching || !app || !app.updateInfo) {
+    return <LoadingWrapper loaded={false} />;
+  }
+
+  const appRepoName = repoName || app.updateInfo.repository.name;
+  const repoNS = repoNamespace || app.updateInfo.repository.namespace;
+  if (app && app.chart && app.chart.metadata && appRepoName) {
+    return (
+      <div>
+        <UpgradeForm
+          appCurrentVersion={app.chart.metadata.version!}
+          appCurrentValues={(app.config && app.config.raw) || ""}
+          chartName={app.chart.metadata.name!}
+          chartsIsFetching={chartsIsFetching}
+          repo={appRepoName}
+          repoNamespace={repoNS}
+          namespace={namespace}
+          cluster={cluster}
+          releaseName={releaseName}
+          selected={selected}
+          deployed={deployed}
+          upgradeApp={upgradeApp}
+          push={push}
+          fetchChartVersions={fetchChartVersions}
+          getChartVersion={getChartVersion}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <SelectRepoForm cluster={cluster} namespace={namespace} chartName={chart?.metadata?.name!} />
+  );
 }
 
 export default AppUpgrade;

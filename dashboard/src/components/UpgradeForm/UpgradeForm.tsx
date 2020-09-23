@@ -1,15 +1,22 @@
 import { RouterAction } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
 import { JSONSchema4 } from "json-schema";
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 import * as YAML from "yaml";
 
+import ChartSummary from "components/Catalog/ChartSummary";
+import ChartHeader from "components/ChartView/ChartHeader";
+import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
+import Alert from "components/js/Alert";
+import Column from "components/js/Column";
+import Row from "components/js/Row";
+import { useSelector } from "react-redux";
 import { deleteValue, setValue } from "../../shared/schema";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import { ErrorSelector } from "../ErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
+import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
@@ -34,136 +41,118 @@ export interface IUpgradeFormProps {
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  goBack: () => RouterAction;
   fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
   getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
 }
 
-interface IUpgradeFormState {
-  appValues: string;
-  valuesModified: boolean;
-  isDeploying: boolean;
-  modifications?: jsonpatch.Operation[];
-  deployedValues?: string;
+function applyModifications(mods: jsonpatch.Operation[], values: string) {
+  // And we add any possible change made to the original version
+  if (mods.length) {
+    mods.forEach(modification => {
+      if (modification.op === "remove") {
+        values = deleteValue(values, modification.path);
+      } else {
+        // Transform the modification as a ReplaceOperation to read its value
+        const value = (modification as jsonpatch.ReplaceOperation<any>).value;
+        values = setValue(values, modification.path, value);
+      }
+    });
+  }
+  return values;
 }
 
-class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> {
-  public state: IUpgradeFormState = {
-    appValues: this.props.appCurrentValues || "",
-    isDeploying: false,
-    valuesModified: false,
-  };
+function UpgradeForm({
+  appCurrentVersion,
+  appCurrentValues,
+  chartName,
+  chartsIsFetching,
+  namespace,
+  cluster,
+  releaseName,
+  repo,
+  repoNamespace,
+  error,
+  selected,
+  deployed,
+  upgradeApp,
+  push,
+  fetchChartVersions,
+  getChartVersion,
+}: IUpgradeFormProps) {
+  const [appValues, setAppValues] = useState(appCurrentValues || "");
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [valuesModified, setValuesModified] = useState(false);
+  const [modifications, setModifications] = useState(
+    undefined as undefined | jsonpatch.Operation[],
+  );
+  const [deployedValues, setDeployedValues] = useState("");
 
-  public componentDidMount() {
-    const chartID = `${this.props.repo}/${this.props.chartName}`;
-    this.props.fetchChartVersions(this.props.cluster, this.props.repoNamespace, chartID);
-  }
+  const chartID = `${repo}/${chartName}`;
+  const { version } = selected;
 
-  public componentDidUpdate = (prevProps: IUpgradeFormProps) => {
-    let modifications = this.state.modifications;
-    // applyModifications is an expensive operatior, that's why it's only defined within
-    // the componentDidUpdate scope
-    const applyModifications = (mods: jsonpatch.Operation[], appValues: string) => {
-      // And we add any possible change made to the original version
-      if (mods.length) {
-        mods.forEach(modification => {
-          if (modification.op === "remove") {
-            appValues = deleteValue(appValues, modification.path);
-          } else {
-            // Transform the modification as a ReplaceOperation to read its value
-            const value = (modification as jsonpatch.ReplaceOperation<any>).value;
-            appValues = setValue(appValues, modification.path, value);
-          }
-        });
-      }
-      return appValues;
-    };
+  const {
+    apps: { isFetching: appsFetching },
+    charts: { isFetching: chartsFetching },
+  } = useSelector((state: IStoreState) => state);
+  const isFetching = appsFetching || chartsFetching;
 
-    if (this.props.deployed.values && !modifications) {
+  useEffect(() => {
+    fetchChartVersions(cluster, repoNamespace, chartID);
+  }, [fetchChartVersions, cluster, repoNamespace, chartID]);
+
+  useEffect(() => {
+    if (deployed.values && !modifications) {
       // Calculate modifications from the default values
-      const defaultValuesObj = YAML.parse(this.props.deployed.values);
-      const deployedValuesObj = YAML.parse(this.props.appCurrentValues || "");
-      modifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
-      const values = applyModifications(modifications, this.props.deployed.values);
-      this.setState({ modifications });
-      this.setState({ appValues: values, deployedValues: values });
+      const defaultValuesObj = YAML.parse(deployed.values);
+      const deployedValuesObj = YAML.parse(appCurrentValues || "");
+      const newModifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
+      const values = applyModifications(newModifications, deployed.values);
+      setModifications(newModifications);
+      setAppValues(values);
     }
+  }, [deployed.values, appCurrentValues, modifications]);
 
-    if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
+  useEffect(() => {
+    if (deployed.values) {
+      // Apply modifications to deployed values
+      const values = applyModifications(modifications || [], deployed.values);
+      setDeployedValues(values);
+    }
+  }, [deployed.values, modifications]);
+
+  useEffect(() => {
+    if (deployed.chartVersion?.attributes.version && !version) {
+      getChartVersion(cluster, repoNamespace, chartID, deployed.chartVersion.attributes.version);
+    }
+  }, [getChartVersion, cluster, repoNamespace, chartID, deployed.chartVersion, version]);
+
+  useEffect(() => {
+    if (!valuesModified && selected.values) {
       // Apply modifications to the new selected version
-      const appValues = modifications
-        ? applyModifications(modifications, this.props.selected.values || "")
-        : this.props.selected.values || "";
-      this.setState({ appValues });
+      const newAppValues = modifications?.length
+        ? applyModifications(modifications, selected.values)
+        : selected.values;
+      setAppValues(newAppValues);
     }
+  }, [selected.values, modifications, valuesModified]);
+
+  const setValuesModifiedTrue = () => {
+    setValuesModified(true);
   };
 
-  public render() {
-    const { namespace, releaseName, error, selected } = this.props;
-    if (error) {
-      return (
-        <ErrorSelector error={error} namespace={namespace} action="update" resource={releaseName} />
-      );
-    }
-    if (selected.versions.length === 0) {
-      return <LoadingWrapper />;
-    }
-    const chartID = `${this.props.repo}/${this.props.chartName}`;
-    return (
-      <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
-        <div className="row">
-          <div className="col-12">
-            <h2>{`${this.props.releaseName} (${chartID})`}</h2>
-          </div>
-          <div className="col-8">
-            <DeploymentFormBody
-              deploymentEvent="upgrade"
-              chartNamespace={this.props.repoNamespace}
-              chartID={chartID}
-              chartVersion={this.props.appCurrentVersion}
-              deployedValues={this.state.deployedValues}
-              chartsIsFetching={this.props.chartsIsFetching}
-              namespace={this.props.namespace}
-              cluster={this.props.cluster}
-              releaseVersion={this.props.appCurrentVersion}
-              selected={this.props.selected}
-              push={this.props.push}
-              goBack={this.props.goBack}
-              getChartVersion={this.props.getChartVersion}
-              setValues={this.handleValuesChange}
-              appValues={this.state.appValues}
-              setValuesModified={this.setValuesModified}
-            />
-          </div>
-        </div>
-      </form>
-    );
-  }
-
-  public setValuesModified = () => {
-    this.setState({ valuesModified: true });
+  const handleValuesChange = (value: string) => {
+    setAppValues(value);
   };
 
-  public handleValuesChange = (value: string) => {
-    this.setState({ appValues: value });
+  const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    getChartVersion(cluster, repoNamespace, chartID, e.currentTarget.value);
   };
 
-  public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const {
-      selected,
-      push,
-      upgradeApp,
-      releaseName,
-      cluster,
-      namespace,
-      repoNamespace,
-    } = this.props;
-    const { appValues } = this.state;
-
-    this.setState({ isDeploying: true });
+    setIsDeploying(true);
     if (selected.version) {
-      const deployed = await upgradeApp(
+      const deployedSuccess = await upgradeApp(
         cluster,
         namespace,
         selected.version,
@@ -172,12 +161,74 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
         appValues,
         selected.schema,
       );
-      this.setState({ isDeploying: false });
-      if (deployed) {
+      setIsDeploying(false);
+      if (deployedSuccess) {
         push(url.app.apps.get(cluster, namespace, releaseName));
       }
     }
   };
+
+  if (error) {
+    return <Alert theme="danger">An error occurred: {error.message}</Alert>;
+  }
+  if (selected.versions.length === 0 || !version) {
+    return <LoadingWrapper loaded={false} />;
+  }
+
+  const chartAttrs = version.relationships.chart.data;
+  return (
+    <section>
+      <LoadingWrapper loaded={!isFetching}>
+        <ChartHeader
+          releaseName={releaseName}
+          chartAttrs={chartAttrs}
+          versions={selected.versions}
+          onSelect={selectVersion}
+          currentVersion={deployed.chartVersion?.attributes.version}
+          selectedVersion={selected.version?.attributes.version}
+        />
+        {isDeploying && (
+          <h3 className="center" style={{ marginBottom: "1.2rem" }}>
+            Hang tight, the application is being deployed...
+          </h3>
+        )}
+        <LoadingWrapper loaded={!isDeploying}>
+          <Row>
+            <Column span={3}>
+              <ChartSummary version={version} chartAttrs={chartAttrs} />
+            </Column>
+            <Column span={9}>
+              <form onSubmit={handleDeploy}>
+                <div className="upgrade-form-version-selector">
+                  <label className="centered deployment-form-label deployment-form-label-text-param">
+                    Upgrade to Version
+                  </label>
+                  <ChartVersionSelector
+                    versions={selected.versions}
+                    selectedVersion={selected.version?.attributes.version}
+                    onSelect={selectVersion}
+                    currentVersion={deployed.chartVersion?.attributes.version}
+                    chartAttrs={chartAttrs}
+                  />
+                </div>
+                <DeploymentFormBody
+                  deploymentEvent="upgrade"
+                  chartID={chartID}
+                  chartVersion={appCurrentVersion}
+                  deployedValues={deployedValues}
+                  chartsIsFetching={chartsIsFetching}
+                  selected={selected}
+                  setValues={handleValuesChange}
+                  appValues={appValues}
+                  setValuesModified={setValuesModifiedTrue}
+                />
+              </form>
+            </Column>
+          </Row>
+        </LoadingWrapper>
+      </LoadingWrapper>
+    </section>
+  );
 }
 
 export default UpgradeForm;

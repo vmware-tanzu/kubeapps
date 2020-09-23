@@ -5,7 +5,7 @@ import { ChartsAction } from "../actions/charts";
 import { NamespaceAction } from "../actions/namespace";
 import { IChartState } from "../shared/types";
 
-const initialState: IChartState = {
+export const initialState: IChartState = {
   isFetching: false,
   items: [],
   selected: {

@@ -1,7 +1,6 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import { has } from "lodash";
 import * as React from "react";
-import ReactTooltip from "react-tooltip";
 
 import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
@@ -14,21 +13,10 @@ const defaultProps = {
   daemonsets: [],
 };
 
-const consoleError = global.console.error;
-beforeEach(() => {
-  // Mute console.error since we are getting a lot of error for rendering the PieChart component
-  // more info here: https://github.com/toomuchdesign/react-minimal-pie-chart/issues/131
-  global.console.error = jest.fn();
-});
-afterEach(() => {
-  jest.resetAllMocks();
-  global.console.error = consoleError;
-});
-
 describe("componentDidMount", () => {
   it("calls watchWorkloads", () => {
     const mock = jest.fn();
-    shallow(<ApplicationStatus {...defaultProps} watchWorkloads={mock} />);
+    mount(<ApplicationStatus {...defaultProps} watchWorkloads={mock} />);
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -36,7 +24,7 @@ describe("componentDidMount", () => {
 describe("componentWillUnmount", () => {
   it("calls closeWatches", () => {
     const mock = jest.fn();
-    const wrapper = shallow(<ApplicationStatus {...defaultProps} closeWatches={mock} />);
+    const wrapper = mount(<ApplicationStatus {...defaultProps} closeWatches={mock} />);
     wrapper.unmount();
     expect(mock).toHaveBeenCalled();
   });
@@ -321,42 +309,40 @@ describe("isFetching", () => {
   ];
   tests.forEach(t => {
     it(t.title, () => {
-      const wrapper = shallow(<ApplicationStatus {...defaultProps} />);
+      const wrapper = mount(<ApplicationStatus {...defaultProps} />);
       wrapper.setProps({
         deployments: t.deployments,
         statefulsets: t.statefulsets,
         daemonsets: t.daemonsets,
       });
+      wrapper.update();
       const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {
         return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
       };
       if (!t.deployments.length && !t.statefulsets.length && !t.daemonsets.length) {
-        expect(wrapper.text()).toContain("No workload found");
+        expect(wrapper.text()).toContain("No Workload Found");
         return;
       }
       expect(wrapper.text()).toContain(t.deployed ? "Ready" : "Not Ready");
-      expect(wrapper.state()).toMatchObject({ totalPods: t.totalPods, readyPods: t.readyPods });
+      // expect(wrapper.state()).toMatchObject({ totalPods: t.totalPods, readyPods: t.readyPods });
       // Check tooltip text
-      const tooltipText = wrapper
-        .find(ReactTooltip)
-        .dive()
-        .text();
+      const tooltipText = wrapper.html();
       t.deployments.forEach(d => {
         const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${item.status.availableReplicas}/${item.spec.replicas}${item.metadata.name}`,
+          `<td>${item.metadata.name}</td><td>${item.status.availableReplicas}/${item.spec.replicas}</td>`,
         );
       });
       t.statefulsets.forEach(d => {
         const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${item.status.readyReplicas}/${item.spec.replicas}${item.metadata.name}`,
+          `<td>${item.metadata.name}</td><td>${item.status.readyReplicas}/${item.spec.replicas}</td>`,
         );
       });
       t.daemonsets.forEach(d => {
         const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${item.status.numberReady}/${item.status.currentNumberScheduled}${item.metadata.name}`,
+          `<td>${item.metadata.name}</td><td>${item.status.numberReady}/${item.status.currentNumberScheduled}</td>`,
         );
       });
     });

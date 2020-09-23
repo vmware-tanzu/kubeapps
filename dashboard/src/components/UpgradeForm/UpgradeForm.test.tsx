@@ -1,14 +1,26 @@
-import { mount, shallow } from "enzyme";
 import * as React from "react";
-import itBehavesLike from "../../shared/specs";
 
-import { IChartState, IChartVersion, UnprocessableEntity } from "../../shared/types";
+import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import { act } from "react-dom/test-utils";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import { ErrorSelector } from "../ErrorAlert";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
 
-const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+const versions = [
+  {
+    id: "foo",
+    attributes: { version: "1.2.3" },
+    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
+  },
+  {
+    id: "foo",
+    attributes: { version: "1.2.4" },
+    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
+  },
+] as IChartVersion[];
 
 const defaultProps = {
   appCurrentVersion: "1.0.0",
@@ -30,14 +42,60 @@ const defaultProps = {
   error: undefined,
 } as IUpgradeFormProps;
 
-itBehavesLike("aLoadingComponent", {
-  component: UpgradeForm,
-  props: { ...defaultProps, selected: { versions: [] } },
+const schema = { properties: { foo: { type: "string" } } };
+
+const populatedProps = {
+  ...defaultProps,
+  selected: { versions, version: versions[0], schema },
+};
+
+describe("it behaves like a loading component", () => {
+  it("if the app is being fetched", () => {
+    expect(
+      mountWrapper(
+        getStore({ apps: { isFetching: true } }),
+        <UpgradeForm {...defaultProps} />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
+
+  it("if the chart is being fetched", () => {
+    expect(
+      mountWrapper(
+        getStore({ charts: { isFetching: true } }),
+        <UpgradeForm {...defaultProps} />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
+
+  it("if there are no versions", () => {
+    expect(
+      mountWrapper(
+        defaultStore,
+        <UpgradeForm {...defaultProps} selected={{ ...defaultProps.selected, versions: [] }} />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
+
+  it("if there is no version", () => {
+    expect(
+      mountWrapper(
+        defaultStore,
+        <UpgradeForm
+          {...defaultProps}
+          selected={{ ...defaultProps.selected, version: undefined }}
+        />,
+      ).find(LoadingWrapper),
+    ).toExist();
+  });
 });
 
 it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
-  shallow(<UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
+  mountWrapper(
+    defaultStore,
+    <UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />,
+  );
   expect(fetchChartVersions).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.repoNamespace,
@@ -46,8 +104,9 @@ it("fetches the available versions", () => {
 });
 
 describe("renders an error", () => {
-  it("renders a custom error if the deployment failed", () => {
-    const wrapper = shallow(
+  it("renders an alert if the deployment failed", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
       <UpgradeForm
         {...defaultProps}
         selected={
@@ -56,64 +115,53 @@ describe("renders an error", () => {
             versions: [{ id: "foo", attributes: {} }],
           } as IChartState["selected"]
         }
-        error={new UnprocessableEntity("wrong format!")}
+        error={new Error("wrong format!")}
       />,
     );
-    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
-    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
-    expect(wrapper.find(ErrorSelector).html()).toContain(
-      "Sorry! Something went wrong processing my-release",
-    );
-    expect(wrapper.find(ErrorSelector).html()).toContain("wrong format!");
+    expect(wrapper.find(Alert).exists()).toBe(true);
+    expect(wrapper.find(Alert).html()).toContain("wrong format!");
   });
-});
-
-it("renders the full UpgradeForm", () => {
-  const wrapper = shallow(
-    <UpgradeForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
-  );
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("defaults the upgrade version to the current version", () => {
   // helm upgrade is the only way to update the values.yaml, so upgrade is
   // often used by users to update values only, so we can't default to the
   // latest version on the assumption that they always want to upgrade.
-  const wrapper = shallow(
-    <UpgradeForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
-  );
+  const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
 
   expect(wrapper.find(DeploymentFormBody).prop("chartVersion")).toBe("1.0.0");
 });
 
 it("forwards the appValues when modified", () => {
-  const wrapper = shallow(<UpgradeForm {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
   const handleValuesChange: (v: string) => void = wrapper
     .find(DeploymentFormBody)
     .prop("setValues");
   handleValuesChange("foo: bar");
 
-  expect(wrapper.state("appValues")).toBe("foo: bar");
   expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
 });
 
-it("triggers an upgrade when submitting the form", done => {
+it("triggers an upgrade when submitting the form", async () => {
   const { namespace, releaseName } = defaultProps;
   const appValues = "foo: bar";
-  const schema = { properties: { foo: { type: "string" } } };
   const upgradeApp = jest.fn().mockReturnValue(true);
   const push = jest.fn();
-  const wrapper = mount(
-    <UpgradeForm
-      {...defaultProps}
-      selected={{ versions, version: versions[0], schema }}
-      upgradeApp={upgradeApp}
-      push={push}
-      namespace={namespace}
-    />,
+  const wrapper = mountWrapper(
+    defaultStore,
+    <UpgradeForm {...populatedProps} upgradeApp={upgradeApp} push={push} namespace={namespace} />,
   );
-  wrapper.setState({ releaseName, appValues });
-  wrapper.find("form").simulate("submit");
+  const handleValuesChange: (v: string) => void = wrapper
+    .find(DeploymentFormBody)
+    .prop("setValues");
+  handleValuesChange(appValues);
+
+  await act(async () => {
+    // Simulating "submit" causes a console.warning
+    await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<void>)({
+      preventDefault: jest.fn(),
+    });
+  });
   expect(upgradeApp).toHaveBeenCalledWith(
     defaultProps.cluster,
     namespace,
@@ -123,44 +171,55 @@ it("triggers an upgrade when submitting the form", done => {
     appValues,
     schema,
   );
-  setTimeout(() => {
-    expect(push).toHaveBeenCalledWith(
-      url.app.apps.get(defaultProps.cluster, namespace, releaseName),
-    );
-    done();
-  }, 1);
+  expect(push).toHaveBeenCalledWith(url.app.apps.get(defaultProps.cluster, namespace, releaseName));
 });
 
 describe("when receiving new props", () => {
   it("should calculate the modifications from the default and the current values", () => {
     const currentValues = "a: b\nc: d\n";
     const defaultValues = "a: b\n";
-    const expectedModifications = [{ op: "add", path: "/c", value: "d" }];
-    const wrapper = shallow(<UpgradeForm {...defaultProps} appCurrentValues={currentValues} />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <UpgradeForm {...populatedProps} appCurrentValues={currentValues} />,
+    );
     wrapper.setProps({ deployed: { values: defaultValues } });
 
-    expect(wrapper.state("modifications")).toEqual(expectedModifications);
-    expect(wrapper.state("appValues")).toEqual(currentValues);
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(currentValues);
   });
 
   it("should apply modifications if a new version is selected", () => {
     const defaultValues = "a: b\n";
-    const modifications = [{ op: "add", path: "/c", value: "d" }];
-    const wrapper = shallow(<UpgradeForm {...defaultProps} />);
-    wrapper.setState({ modifications });
-    wrapper.setProps({ selected: { versions: [], version: {}, values: defaultValues } });
-
-    expect(wrapper.state("appValues")).toEqual("a: b\nc: d\n");
+    const deployedValues = "a: B\n";
+    const currentValues = "a: B\nc: d\n";
+    const wrapper = mountWrapper(
+      defaultStore,
+      <UpgradeForm
+        {...populatedProps}
+        deployed={{ values: deployedValues }}
+        appCurrentValues={currentValues}
+        selected={{ versions, version: versions[1], values: defaultValues }}
+      />,
+    );
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("a: b\nc: d\n");
   });
 
   it("won't apply changes if the values have been manually modified", () => {
     const userValues = "a: b\n";
-    const modifications = [{ op: "add", path: "/c", value: "d" }];
-    const wrapper = shallow(<UpgradeForm {...defaultProps} />);
-    wrapper.setState({ modifications, valuesModified: true, appValues: userValues });
-    wrapper.setProps({ selected: { versions: [], version: {} } });
+    const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
+    act(() => {
+      const handleValuesChange: (v: string) => void = wrapper
+        .find(DeploymentFormBody)
+        .prop("setValues");
+      handleValuesChange(userValues);
+      const setValuesModified: () => void = wrapper
+        .find(DeploymentFormBody)
+        .prop("setValuesModified");
+      setValuesModified();
+    });
+    wrapper.setProps({ selected: { versions, version: versions[1] } });
+    wrapper.update();
 
-    expect(wrapper.state("appValues")).toEqual(userValues);
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(userValues);
   });
 
   [
@@ -245,25 +304,33 @@ describe("when receiving new props", () => {
         requested: true,
       };
       const newSelected = {
-        ...defaultProps.selected,
-        version: { trigger: "change" },
+        ...populatedProps.selected,
+        version: versions[1],
         values: t.newDefaultValues,
       };
-      const wrapper = shallow(
-        <UpgradeForm {...defaultProps} appCurrentValues={t.deployedValues} />,
+      const wrapper = mountWrapper(
+        defaultStore,
+        <UpgradeForm
+          {...populatedProps}
+          appCurrentValues={t.deployedValues}
+          deployed={deployed}
+          selected={newSelected}
+        />,
       );
-      wrapper.setProps({ deployed });
-
-      // Apply new version
-      wrapper.setProps({ selected: newSelected });
-      expect(wrapper.state("appValues")).toEqual(t.result);
+      expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(t.result);
     });
   });
 });
 
 it("shows, by default, the default values of the deployed chart plus any modification", () => {
-  const wrapper = shallow(<UpgradeForm {...defaultProps} appCurrentValues="foo: not-bar" />);
-  wrapper.setProps({ deployed: { values: "# A comment\nfoo: bar\n" } as IChartState["deployed"] });
+  const wrapper = mountWrapper(
+    defaultStore,
+    <UpgradeForm
+      {...populatedProps}
+      deployed={{ values: "# A comment\nfoo: bar\n" }}
+      appCurrentValues="foo: not-bar"
+    />,
+  );
   const expectedValues = "# A comment\nfoo: not-bar\n";
   expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toBe(expectedValues);
 });

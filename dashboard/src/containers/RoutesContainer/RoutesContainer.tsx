@@ -9,7 +9,6 @@ function mapStateToProps({ auth, clusters: { currentCluster, clusters }, config 
     cluster: currentCluster,
     namespace: clusters[currentCluster].currentNamespace || auth.defaultNamespace,
     authenticated: auth.authenticated,
-    featureFlags: config.featureFlags,
   };
 }
 

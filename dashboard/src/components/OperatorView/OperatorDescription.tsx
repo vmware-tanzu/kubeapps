@@ -8,21 +8,17 @@ interface IOperatorDescriptionProps {
   description: string;
 }
 
-class OperatorDescription extends React.Component<IOperatorDescriptionProps> {
-  public render() {
-    return (
-      <div className="ChartReadme">
-        <ReactMarkdown
-          source={this.props.description}
-          renderers={{
-            heading: HeadingRenderer,
-            link: LinkRenderer,
-          }}
-          skipHtml={true}
-        />
-      </div>
-    );
-  }
+export default function OperatorDescription(props: IOperatorDescriptionProps) {
+  return (
+    <div className="application-readme">
+      <ReactMarkdown
+        source={props.description}
+        renderers={{
+          heading: HeadingRenderer,
+          link: LinkRenderer,
+        }}
+        skipHtml={true}
+      />
+    </div>
+  );
 }
-
-export default OperatorDescription;

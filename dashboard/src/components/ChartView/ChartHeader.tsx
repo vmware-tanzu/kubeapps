@@ -1,49 +1,72 @@
-import * as React from "react";
-import { Link } from "react-router-dom";
-import { IChartVersion } from "shared/types";
-import * as url from "../../shared/url";
-import ChartIcon from "../ChartIcon";
-import ChartDeployButton from "./ChartDeployButton";
+import Tooltip from "components/js/Tooltip";
+import PageHeader from "components/PageHeader/PageHeader";
+import React from "react";
+import { IChartAttributes, IChartVersion } from "shared/types";
+import placeholder from "../../placeholder.png";
+import ChartVersionSelector from "./ChartVersionSelector";
+
 import "./ChartHeader.css";
 
 interface IChartHeaderProps {
-  id: string;
-  icon?: string;
-  repo: string;
-  description: string;
-  version: IChartVersion;
-  namespace: string;
-  cluster: string;
+  chartAttrs: IChartAttributes;
+  versions: IChartVersion[];
+  onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+  releaseName?: string;
+  currentVersion?: string;
+  selectedVersion?: string;
+  deployButton?: JSX.Element;
 }
 
-class ChartHeader extends React.Component<IChartHeaderProps> {
-  public render() {
-    const { id, icon, repo, description, version, cluster, namespace } = this.props;
-    const appVersion = version.attributes.app_version;
-    return (
-      <header>
-        <div className="ChartView__heading margin-normal row">
-          <div className="col-1 ChartHeader__icon">
-            <ChartIcon icon={icon} />
-          </div>
-          <div className="col-9">
-            <div className="title margin-l-small">
-              <h1 className="margin-t-reset">{id}</h1>
-              <h5 className="subtitle margin-b-normal">
-                {appVersion && <span>{appVersion} - </span>}
-                <Link to={url.app.repo(cluster, namespace, repo)}>{repo}</Link>
-              </h5>
-              <h5 className="subtitle margin-b-reset">{description}</h5>
-            </div>
-          </div>
-          <div className="col-2 ChartHeader__button">
-            <ChartDeployButton version={version} namespace={namespace} />
-          </div>
-        </div>
-        <hr />
-      </header>
-    );
-  }
+export default function ChartHeader({
+  chartAttrs,
+  versions,
+  onSelect,
+  releaseName,
+  currentVersion,
+  deployButton,
+  selectedVersion,
+}: IChartHeaderProps) {
+  return (
+    <PageHeader
+      title={
+        releaseName
+          ? `${releaseName} (${chartAttrs.repo.name}/${chartAttrs.name})`
+          : `${chartAttrs.repo.name}/${chartAttrs.name}`
+      }
+      titleSize="md"
+      icon={chartAttrs.icon ? `api/assetsvc/${chartAttrs.icon}` : placeholder}
+      helm={true}
+      version={
+        <>
+          <label className="header-version-label" htmlFor="chart-versions">
+            Chart Version{" "}
+            <Tooltip
+              label="chart-versions-tooltip"
+              id="chart-versions-tooltip"
+              position="bottom-left"
+              iconProps={{ solid: true, size: "sm" }}
+            >
+              Chart and App versions can be increased independently.{" "}
+              <a
+                href="https://helm.sh/docs/topics/charts/#charts-and-versioning"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                More info here
+              </a>
+              .{" "}
+            </Tooltip>
+          </label>
+          <ChartVersionSelector
+            versions={versions}
+            onSelect={onSelect}
+            selectedVersion={selectedVersion}
+            currentVersion={currentVersion}
+            chartAttrs={chartAttrs}
+          />
+        </>
+      }
+      buttons={deployButton ? [deployButton] : undefined}
+    />
+  );
 }
-
-export default ChartHeader;

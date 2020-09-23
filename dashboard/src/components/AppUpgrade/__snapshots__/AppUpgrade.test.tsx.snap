@@ -3,83 +3,13 @@
 exports[`loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
   loaded={false}
-  type={0}
 />
 `;
 
 exports[`renders the repo selection form if not introduced 1`] = `
 <SelectRepoForm
   chartName="bar"
-  checkChart={[MockFunction]}
   cluster="default"
-  fetchRepositories={[MockFunction]}
-  isFetching={false}
-  kubeappsNamespace="kubeapps"
   namespace="default"
-  repo={Object {}}
-  repos={
-    Array [
-      Object {
-        "metadata": Object {
-          "name": "stable",
-        },
-      },
-    ]
-  }
-/>
-`;
-
-exports[`renders the upgrade form when the repo is available 1`] = `
-<div>
-  <UpgradeForm
-    appCurrentValues=""
-    appCurrentVersion="1.0.0"
-    chartName="bar"
-    chartsIsFetching={false}
-    cluster="default"
-    deployed={Object {}}
-    fetchChartVersions={[MockFunction]}
-    getChartVersion={[MockFunction]}
-    goBack={[MockFunction]}
-    namespace="default"
-    push={[MockFunction]}
-    releaseName="foo"
-    repo="foobar"
-    repoNamespace="chart-namespace"
-    selected={Object {}}
-    upgradeApp={[MockFunction]}
-  />
-</div>
-`;
-
-exports[`skips the repo selection form if the app contains upgrade info 1`] = `
-<div>
-  <UpgradeForm
-    appCurrentValues=""
-    appCurrentVersion="1.0.0"
-    chartName="bar"
-    chartsIsFetching={false}
-    cluster="default"
-    deployed={Object {}}
-    fetchChartVersions={[MockFunction]}
-    getChartVersion={[MockFunction]}
-    goBack={[MockFunction]}
-    namespace="default"
-    push={[MockFunction]}
-    releaseName="foo"
-    repo="stable"
-    repoNamespace="chart-namespace"
-    selected={Object {}}
-    upgradeApp={[MockFunction]}
-  />
-</div>
-`;
-
-exports[`when an error exists renders a generic error message 1`] = `
-<ErrorSelector
-  action="update"
-  error={[Error: foo doesn't exists]}
-  namespace="default"
-  resource="foo"
 />
 `;

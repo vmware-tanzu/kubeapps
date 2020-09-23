@@ -1,7 +1,6 @@
 import * as React from "react";
-import { CheckCircle, XCircle } from "react-feather";
 
-import "./CapabilityLevel.css";
+import { CdsIcon } from "@clr/react/icon";
 
 interface IOperatorCapabilitiesProps {
   level: string;
@@ -21,23 +20,24 @@ const levels = {
   [AUTO_PILOT]: 5,
 };
 
-class CapabiliyLevel extends React.Component<IOperatorCapabilitiesProps> {
-  public render() {
-    const { level } = this.props;
-    const levelInt = levels[level];
-    return Object.keys(levels).map(key => {
-      return (
-        <li key={key}>
-          {levels[key] <= levelInt ? (
-            <CheckCircle className="capabilityLevelIcon" stroke="#1598CB" />
-          ) : (
-            <XCircle className="capabilityLevelIcon" stroke="#C7C9C8" />
-          )}
-          <span style={{ color: levels[key] <= levelInt ? "inherit" : "#C7C9C8" }}>{key}</span>
-        </li>
-      );
-    });
-  }
+export default function CapabiliyLevel({ level }: IOperatorCapabilitiesProps) {
+  const levelInt = levels[level];
+  return (
+    <ul className="capabilities-list">
+      {Object.keys(levels).map(key => {
+        return (
+          <li key={key}>
+            {levels[key] <= levelInt ? (
+              <span className="color-icon-info">
+                <CdsIcon shape="success-standard" solid={true} />
+              </span>
+            ) : (
+              <CdsIcon shape="times-circle" solid={true} />
+            )}
+            <span style={{ color: levels[key] <= levelInt ? "inherit" : "#C7C9C8" }}>{key}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
-
-export default CapabiliyLevel;

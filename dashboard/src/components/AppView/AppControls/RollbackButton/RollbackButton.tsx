@@ -1,5 +1,12 @@
-import * as React from "react";
-import Modal from "react-modal";
+import { CdsButton } from "@clr/react/button";
+import { CdsIcon } from "@clr/react/icon";
+import actions from "actions";
+import Modal from "components/js/Modal/Modal";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { IStoreState } from "shared/types";
 import RollbackDialog from "./RollbackDialog";
 
 export interface IRollbackButtonProps {
@@ -7,76 +14,39 @@ export interface IRollbackButtonProps {
   namespace: string;
   releaseName: string;
   revision: number;
-  rollbackApp: (
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    revision: number,
-  ) => Promise<boolean>;
-  loading: boolean;
-  error?: Error;
 }
 
-interface IRollbackButtonState {
-  modalIsOpen: boolean;
-  loading: boolean;
-}
-
-class RollbackButton extends React.Component<IRollbackButtonProps> {
-  public state: IRollbackButtonState = {
-    modalIsOpen: false,
-    loading: false,
-  };
-
-  public render() {
-    return (
-      <React.Fragment>
-        <Modal
-          className="centered-modal"
-          isOpen={this.state.modalIsOpen}
-          onRequestClose={this.closeModal}
-          contentLabel="Modal"
-        >
-          <RollbackDialog
-            onConfirm={this.handleRollback}
-            loading={this.state.loading}
-            closeModal={this.closeModal}
-            currentRevision={this.props.revision}
-          />
-        </Modal>
-        <button className="button" onClick={this.openModal}>
-          Rollback
-        </button>
-      </React.Fragment>
-    );
-  }
-
-  public openModal = () => {
-    this.setState({
-      modalIsOpen: true,
-    });
-  };
-
-  public closeModal = async () => {
-    this.setState({
-      modalIsOpen: false,
-    });
-  };
-
-  private handleRollback = async (revision: number) => {
-    this.setState({ loading: true });
-    const success = await this.props.rollbackApp(
-      this.props.cluster,
-      this.props.namespace,
-      this.props.releaseName,
-      revision,
-    );
-    // If there is an error it's catched at AppView level
+function RollbackButton({ cluster, namespace, releaseName, revision }: IRollbackButtonProps) {
+  const [modalIsOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const error = useSelector((state: IStoreState) => state.apps.error);
+  const openModal = () => setModalOpen(true);
+  const closeModal = () => setModalOpen(false);
+  const handleRollback = async (r: number) => {
+    setLoading(true);
+    const success = await dispatch(actions.apps.rollbackApp(cluster, namespace, releaseName, r));
+    setLoading(false);
     if (success) {
-      this.setState({ loading: false });
-      this.closeModal();
+      closeModal();
     }
   };
+  return (
+    <>
+      <Modal showModal={modalIsOpen} onModalClose={closeModal}>
+        <RollbackDialog
+          onConfirm={handleRollback}
+          loading={loading}
+          closeModal={closeModal}
+          currentRevision={revision}
+          error={error}
+        />
+      </Modal>
+      <CdsButton status="primary" onClick={openModal}>
+        <CdsIcon shape="rewind" inverse={true} /> Rollback
+      </CdsButton>
+    </>
+  );
 }
 
 export default RollbackButton;

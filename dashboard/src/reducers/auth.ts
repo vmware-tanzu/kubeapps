@@ -24,7 +24,7 @@ const getInitialState: () => IAuthState = (): IAuthState => {
     defaultNamespace: Auth.defaultNamespaceFromToken(token),
   };
 };
-const initialState: IAuthState = getInitialState();
+export const initialState: IAuthState = getInitialState();
 
 const authReducer = (state: IAuthState = initialState, action: AuthAction): IAuthState => {
   switch (action.type) {

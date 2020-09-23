@@ -1,149 +1,105 @@
-import * as React from "react";
+import { get } from "lodash";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import actions from "actions";
+import Alert from "components/js/Alert";
+import { useDispatch, useSelector } from "react-redux";
 import * as url from "shared/url";
-import { IAppRepository, IRBACRole } from "../../shared/types";
-import LoadingWrapper from "../LoadingWrapper";
-
-import { ErrorSelector, MessageAlert } from "../ErrorAlert";
+import { IStoreState } from "../../shared/types";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
+import "./SelectRepoForm.css";
 
 interface ISelectRepoFormProps {
-  isFetching: boolean;
   cluster: string;
   namespace: string;
-  kubeappsNamespace: string;
-  repoError?: Error;
-  error?: Error;
-  repo: IAppRepository;
-  repos: IAppRepository[];
   chartName: string;
-  checkChart: (cluster: string, namespace: string, repo: string, chartName: string) => any;
-  fetchRepositories: (namespace: string) => void;
 }
 
-interface ISelectRepoFormState {
-  repo: string;
-}
+function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps) {
+  const dispatch = useDispatch();
+  const {
+    repos: {
+      isFetching,
+      repos,
+      repo,
+      errors: { fetch: fetchError },
+    },
+    charts: {
+      selected: { error: chartError },
+    },
+    config: { kubeappsNamespace, kubeappsCluster },
+  } = useSelector((state: IStoreState) => state);
 
-class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFormState> {
-  public state: ISelectRepoFormState = {
-    repo:
-      this.props.repo.metadata && this.props.repo.metadata.name
-        ? this.props.repo.metadata.name
-        : "",
+  const [repoName, setRepoName] = useState(get(repo, "metadata.name", ""));
+
+  useEffect(() => {
+    dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+  }, [dispatch, namespace, kubeappsNamespace]);
+
+  const handleChartRepoNameChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const [ns, name] = e.target.value.split("/");
+    dispatch(actions.repos.checkChart(kubeappsCluster, ns, name, chartName));
+    setRepoName(e.currentTarget.value);
   };
 
-  public componentDidMount() {
-    this.props.fetchRepositories(this.props.namespace);
-  }
+  const findRepo = (ns: string, name: string) => {
+    return repos.find(r => r.metadata.name === name && r.metadata.namespace === ns);
+  };
 
-  public render() {
-    if (this.props.isFetching) {
-      return <LoadingWrapper />;
-    }
-    if (this.props.repoError) {
-      return (
-        <ErrorSelector
-          error={this.props.repoError}
-          namespace={this.props.kubeappsNamespace}
-          action="view"
-          defaultRequiredRBACRoles={{ view: this.requiredRBACRoles() }}
-          resource="App Repositories"
-        />
-      );
-    }
-    if (this.props.repos.length === 0) {
-      return (
-        <MessageAlert
-          level={"warning"}
-          children={
-            <div>
-              <h5>Chart repositories not found.</h5>
-              Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={url.app.config.apprepositories(this.props.cluster, this.props.namespace)}>
-                App repositories configuration
-              </Link>{" "}
-              page.
-            </div>
-          }
-        />
-      );
-    }
-    return (
-      <LoadingWrapper loaded={this.props.repos.length > 0}>
-        <div className="container margin-normal">
-          <div className="col-8">
-            {this.props.error && (
-              <ErrorSelector
-                error={this.props.error}
-                resource={`Chart ${this.state.repo}/${this.props.chartName}`}
-              />
-            )}
-          </div>
-          <div className="col-12">
-            <h2>Select the source repository of {this.props.chartName}</h2>
-          </div>
-          <div className="col-8">
-            <label htmlFor="chartRepoName">Chart Repository Name *</label>
+  const getRepoURL = (ns: string, name: string) => {
+    const r = findRepo(ns, name);
+    return r && r.spec ? r.spec.url : "";
+  };
+
+  return (
+    <LoadingWrapper loaded={!isFetching}>
+      {fetchError && <Alert theme="danger">An error occurred: {fetchError.message}</Alert>}
+      {!fetchError && repos.length === 0 && (
+        <Alert theme="warning">
+          <h5>Chart repositories not found.</h5>
+          Manage your Helm chart repositories in Kubeapps by visiting the{" "}
+          <Link to={url.app.config.apprepositories(cluster, namespace)}>
+            App repositories configuration
+          </Link>{" "}
+          page.
+        </Alert>
+      )}
+      {repos.length > 0 && (
+        <div className="select-repo-form">
+          {chartError && <Alert theme="danger">An error occurred: {chartError.message}</Alert>}
+          <h2>Select the source repository of {chartName}</h2>
+          <label className="select-repo-form-label" htmlFor="chartRepoName">
+            Chart Repository Name *
+          </label>
+          <div className="clr-select-wrapper">
             <select
               id="chartRepoName"
-              onChange={this.handleChartRepoNameChange}
-              value={this.state.repo}
+              onChange={handleChartRepoNameChange}
+              value={repoName}
               required={true}
+              className="clr-page-size-select"
             >
-              {!this.state.repo && <option key="" value="" />}
-              {this.props.repos.map(r => (
-                <option key={r.metadata.name} value={r.metadata.name}>
-                  {r.metadata.name} ({this.getRepoURL(r.metadata.name)})
-                </option>
-              ))}
+              {!repoName && <option key="" value="" />}
+              {repos.map(r => {
+                const value = `${r.metadata.namespace}/${r.metadata.name}`;
+                return (
+                  <option key={value} value={value}>
+                    {value} ({getRepoURL(r.metadata.namespace, r.metadata.name)})
+                  </option>
+                );
+              })}
             </select>
           </div>
-          <div>
-            <p>
-              {" "}
-              * If the repository containing {this.props.chartName} is not in the list add it{" "}
-              <a href={url.app.config.apprepositories(this.props.cluster, this.props.namespace)}>
-                here
-              </a>
-              .{" "}
-            </p>
-          </div>
+          <p>
+            {" "}
+            * If the repository containing {chartName} is not in the list add it{" "}
+            <Link to={url.app.config.apprepositories(cluster, namespace)}>here</Link>.{" "}
+          </p>
         </div>
-      </LoadingWrapper>
-    );
-  }
-
-  public handleChartRepoNameChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.props.checkChart(
-      this.props.cluster,
-      this.props.namespace,
-      e.currentTarget.value,
-      this.props.chartName,
-    );
-    this.setState({ repo: e.currentTarget.value });
-  };
-
-  private getRepoURL = (name: string) => {
-    let res = "";
-    this.props.repos.forEach(r => {
-      if (r.metadata.name === name && r.spec) {
-        res = r.spec.url;
-      }
-    });
-    return res;
-  };
-
-  private requiredRBACRoles(): IRBACRole[] {
-    return [
-      {
-        apiGroup: "kubeapps.com",
-        namespace: this.props.kubeappsNamespace,
-        resource: "apprepositories",
-        verbs: ["get"],
-      },
-    ];
-  }
+      )}
+    </LoadingWrapper>
+  );
 }
 
 export default SelectRepoForm;

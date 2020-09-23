@@ -1,8 +1,11 @@
 import * as React from "react";
 
 import { mount } from "enzyme";
+import { act } from "react-dom/test-utils";
 import { IBasicFormParam } from "shared/types";
 import TextParam from "./TextParam";
+
+jest.useFakeTimers();
 
 const stringParam = { path: "username", value: "user", type: "string" } as IBasicFormParam;
 const stringProps = {
@@ -33,15 +36,19 @@ it("should forward the proper value when using a string parameter", () => {
   );
   const input = wrapper.find("input");
 
-  const event = { currentTarget: {} } as React.FormEvent<HTMLInputElement>;
-  (input.prop("onChange") as any)(event);
+  const event = { currentTarget: { value: "" } } as React.FormEvent<HTMLInputElement>;
+  act(() => {
+    (input.prop("onChange") as any)(event);
+  });
+  wrapper.update();
+  jest.runAllTimers();
 
-  expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual({
+  expect(handleBasicFormParamChange).toHaveBeenCalledWith({
     path: "username",
     type: "string",
     value: "user",
   });
-  expect(handler.mock.calls[0][0]).toMatchObject(event);
+  expect(handler).toHaveBeenCalledWith(event);
 });
 
 it("should set the input value as empty if a string parameter value is not defined", () => {
@@ -86,15 +93,19 @@ it("should forward the proper value when using a textArea parameter", () => {
   );
   const input = wrapper.find("textarea");
 
-  const event = { currentTarget: {} } as React.FormEvent<HTMLInputElement>;
-  (input.prop("onChange") as any)(event);
+  const event = { currentTarget: { value: "" } } as React.FormEvent<HTMLInputElement>;
+  act(() => {
+    (input.prop("onChange") as any)(event);
+  });
+  wrapper.update();
+  jest.runAllTimers();
 
-  expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual({
+  expect(handleBasicFormParamChange).toHaveBeenCalledWith({
     path: "configuration",
     type: "string",
     value: "First line\nSecond line",
   });
-  expect(handler.mock.calls[0][0]).toMatchObject(event);
+  expect(handler).toHaveBeenCalledWith(event);
 });
 
 it("should set the input value as empty if a textArea param value is not defined", () => {
@@ -129,16 +140,14 @@ it("should render a string parameter as select with option tags", () => {
   const wrapper = mount(<TextParam {...tprops} />);
   const input = wrapper.find("select");
 
+  expect(wrapper.find("select").prop("value")).toBe(tparam.value);
   if (tparam.enum != null) {
     const options = input.find("option");
     expect(options.length).toBe(tparam.enum.length);
+
     for (let i = 0; i < tparam.enum.length; i++) {
       const option = options.at(i);
       expect(option.text()).toBe(tparam.enum[i]);
-
-      if (tparam.value === tparam.enum[i]) {
-        expect(option.prop("selected")).toBe(true);
-      }
     }
   }
 });
@@ -164,7 +173,9 @@ it("should forward the proper value when using a select", () => {
   const input = wrapper.find("select");
 
   const event = { currentTarget: {} } as React.FormEvent<HTMLSelectElement>;
-  (input.prop("onChange") as any)(event);
+  act(() => {
+    (input.prop("onChange") as any)(event);
+  });
 
   expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual({
     path: "databaseType",

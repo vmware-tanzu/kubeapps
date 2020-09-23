@@ -1,3 +1,3 @@
-import LoadingWrapper, { LoaderType } from "./LoadingWrapper";
-export { LoaderType };
+import LoadingWrapper from "./LoadingWrapper";
+
 export default LoadingWrapper;

@@ -15,7 +15,6 @@ function mapStateToProps(
   return {
     error: cluster.error && cluster.error.error,
     children,
-    UI: config.featureFlags.ui,
   };
 }
 

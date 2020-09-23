@@ -1,12 +1,11 @@
 import * as React from "react";
 
 import ErrorBoundaryContainer from "containers/ErrorBoundaryContainer";
-import Footer from "../../containers/FooterContainer";
+import Clarity from "./Clarity";
 
 import "./Layout.css";
 
 interface ILayoutProps {
-  children: JSX.Element;
   headerComponent: React.ComponentClass<any> | React.StatelessComponent<any>;
 }
 
@@ -14,14 +13,16 @@ class Layout extends React.Component<ILayoutProps> {
   public render() {
     const HeaderComponent = this.props.headerComponent;
     return (
-      <section className="Layout">
+      <section className="layout">
+        <Clarity />
         <HeaderComponent />
         <main>
-          <div className="container">
-            <ErrorBoundaryContainer>{this.props.children}</ErrorBoundaryContainer>
+          <div className="container kubeapps-main-container">
+            <div className="content-area">
+              <ErrorBoundaryContainer>{this.props.children}</ErrorBoundaryContainer>
+            </div>
           </div>
         </main>
-        <Footer />
       </section>
     );
   }

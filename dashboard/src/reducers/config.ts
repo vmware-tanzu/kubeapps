@@ -7,7 +7,7 @@ export interface IConfigState extends IConfig {
   loaded: boolean;
 }
 
-const initialState: IConfigState = {
+export const initialState: IConfigState = {
   loaded: false,
   kubeappsCluster: "",
   kubeappsNamespace: "",
@@ -15,7 +15,6 @@ const initialState: IConfigState = {
   authProxyEnabled: false,
   oauthLoginURI: "",
   oauthLogoutURI: "",
-  featureFlags: { operators: true, ui: "hex" },
   clusters: [],
 };
 

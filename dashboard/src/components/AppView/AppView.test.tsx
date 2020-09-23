@@ -1,24 +1,18 @@
-import { shallow } from "enzyme";
-import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 
-import AccessURLTable from "../../containers/AccessURLTableContainer";
-import ApplicationStatus from "../../containers/ApplicationStatusContainer";
+import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IResource } from "shared/types";
 import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
-import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
-import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
-import AppControls from "./AppControls";
+import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import AppNotes from "./AppNotes";
 import AppViewComponent from "./AppView";
-import ChartInfo from "./ChartInfo";
-import ResourceTable from "./ResourceTable";
-
-const clusterName = "cluster-name";
+import ChartInfo from "./ChartInfo/ChartInfo";
+import ResourceTabs from "./ResourceTabs";
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -42,7 +36,7 @@ describe("AppViewComponent", () => {
     error: undefined,
     getAppWithUpdateInfo: jest.fn(),
     namespace: "my-happy-place",
-    cluster: clusterName,
+    cluster: "default",
     releaseName: "mr-sunshine",
     push: jest.fn(),
   };
@@ -78,14 +72,14 @@ describe("AppViewComponent", () => {
     } as IResource,
   };
 
-  context("when app info is null", () => {
-    itBehavesLike("aLoadingComponent", {
-      component: AppViewComponent,
-      props: {
-        ...validProps,
-        app: { ...validProps.app, info: null },
-      },
-    });
+  it("renders a loading wrapper", () => {
+    const props = {
+      ...validProps,
+      app: { ...validProps.app, info: null },
+    } as any;
+
+    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+    expect(wrapper.find(LoadingWrapper)).toExist();
   });
 
   describe("State initialization", () => {
@@ -101,27 +95,28 @@ describe("AppViewComponent", () => {
         resources.secret,
       ]);
 
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
-      validProps.app.manifest = manifest;
-      // setProps again so we trigger componentWillReceiveProps
-      wrapper.setProps(validProps);
+      const props = {
+        ...validProps,
+        app: {
+          ...validProps.app,
+          manifest,
+        } as any,
+      };
+      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
 
-      expect(wrapper.state("deployRefs")).toEqual([
-        new ResourceRef(resources.deployment, clusterName, appRelease.namespace),
+      const tabs = wrapper.find(ResourceTabs);
+      expect(tabs.prop("deployments")).toEqual([
+        new ResourceRef(resources.deployment, validProps.cluster, appRelease.namespace),
       ]);
-      expect(wrapper.state("serviceRefs")).toEqual([
-        new ResourceRef(resources.service, clusterName, appRelease.namespace),
+      expect(tabs.prop("services")).toEqual([
+        new ResourceRef(resources.service, validProps.cluster, appRelease.namespace),
       ]);
-      expect(wrapper.state("ingressRefs")).toEqual([
-        new ResourceRef(resources.ingress, clusterName, appRelease.namespace),
-      ]);
-      expect(wrapper.state("secretRefs")).toEqual([
-        new ResourceRef(resources.secret, clusterName, appRelease.namespace),
+      expect(tabs.prop("secrets")).toEqual([
+        new ResourceRef(resources.secret, validProps.cluster, appRelease.namespace),
       ]);
     });
 
-    it("stores other k8s resources directly in the state", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
+    it("stores other k8s resources", () => {
       const manifest = generateYamlManifest([
         resources.deployment,
         resources.service,
@@ -129,10 +124,17 @@ describe("AppViewComponent", () => {
         resources.secret,
       ]);
 
-      validProps.app.manifest = manifest;
-      wrapper.setProps(validProps);
+      const props = {
+        ...validProps,
+        app: {
+          ...validProps.app,
+          manifest,
+        } as any,
+      };
+      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
 
-      const otherResources: ResourceRef[] = wrapper.state("otherResources");
+      const tabs = wrapper.find(ResourceTabs);
+      const otherResources: ResourceRef[] = tabs.prop("otherResources");
       const configMap = otherResources[0];
       // It should skip deployments, services and secrets from "other resources"
       expect(otherResources.length).toEqual(1);
@@ -142,7 +144,6 @@ describe("AppViewComponent", () => {
     });
 
     it("does not store empty resources, bogus or without kind attribute", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
       const manifest = generateYamlManifest([
         { apiVersion: "v1", metadata: { name: "cm-one" } },
         {},
@@ -150,19 +151,24 @@ describe("AppViewComponent", () => {
         " ",
       ]);
 
-      validProps.app.manifest = manifest;
-      wrapper.setProps(validProps);
+      const props = {
+        ...validProps,
+        app: {
+          ...validProps.app,
+          manifest,
+        } as any,
+      };
+      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
 
-      expect(wrapper.state("otherResources")).toEqual([]);
-      expect(wrapper.state("deployRefs")).toEqual([]);
-      expect(wrapper.state("serviceRefs")).toEqual([]);
-      expect(wrapper.state("ingressRefs")).toEqual([]);
-      expect(wrapper.state("secretRefs")).toEqual([]);
+      const tabs = wrapper.find(ResourceTabs);
+      expect(tabs.prop("otherResources")).toEqual([]);
+      expect(tabs.prop("deployments")).toEqual([]);
+      expect(tabs.prop("services")).toEqual([]);
+      expect(tabs.prop("secrets")).toEqual([]);
     });
 
     // See https://github.com/kubeapps/kubeapps/issues/632
     it("supports manifests with duplicated keys", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
       const manifest = `
       apiVersion: v1
       metadata:
@@ -177,18 +183,17 @@ describe("AppViewComponent", () => {
         app: {
           ...validProps.app,
           manifest,
-        },
+        } as any,
       };
       expect(() => {
-        wrapper.setProps(props);
+        mountWrapper(defaultStore, <AppViewComponent {...props} />);
       }).not.toThrow();
     });
 
     it("supports manifests with YAML type casting", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
       const manifest = `
       apiVersion: v1
-      kind: ConfigMap
+      kind: Deployment
       metadata:
         name: !!string foo
 `;
@@ -198,177 +203,46 @@ describe("AppViewComponent", () => {
         app: {
           ...validProps.app,
           manifest,
-        },
+        } as any,
       };
       expect(() => {
-        wrapper.setProps(props);
+        const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+        const tabs = wrapper.find(ResourceTabs);
+        expect(tabs.prop("deployments")[0].name).toEqual("foo");
       }).not.toThrow();
-      expect((wrapper.state("manifest") as IResource[])[0].metadata.name).toEqual("foo");
     });
   });
 
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
-      expect(wrapper.find(ChartInfo).exists()).toBe(true);
-      expect(wrapper.find(ApplicationStatus).exists()).toBe(true);
-      expect(wrapper.find(AppControls).exists()).toBe(true);
-      expect(wrapper.find(AppNotes).exists()).toBe(true);
-      expect(wrapper.find(ResourceTable).exists()).toBe(true);
-      expect(wrapper.find(AccessURLTable).exists()).toBe(true);
+      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...validProps} />);
+      expect(wrapper.find(ChartInfo)).toExist();
+      expect(wrapper.find(ApplicationStatusContainer)).toExist();
+      expect(wrapper.find(".control-buttons")).toExist();
+      expect(wrapper.find(AppNotes)).toExist();
+      expect(wrapper.find(ResourceTabs)).toExist();
+      expect(wrapper.find(AccessURLTable)).toExist();
     });
 
     it("renders an error if error prop is set", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} error={new NotFoundError()} />);
-      const err = wrapper.find(ErrorSelector);
-      expect(err.exists()).toBe(true);
-      expect(err.html()).toContain("Application mr-sunshine not found");
-    });
-
-    it("renders a forbidden delete-error if if the deleteError prop is a ForbiddenError", () => {
-      const wrapper = shallow(
-        <AppViewComponent {...validProps} deleteError={new ForbiddenError()} />,
+      const wrapper = mountWrapper(
+        defaultStore,
+        <AppViewComponent {...validProps} error={new Error("Boom!")} />,
       );
-      const err = wrapper.find(ErrorSelector);
-      expect(err.exists()).toBe(true);
-      expect(
-        err
-          .shallow()
-          .find(PermissionsErrorPage)
-          .props(),
-      ).toMatchObject({
-        action: "delete Application mr-sunshine",
-        namespace: "my-happy-place",
-      });
+      const err = wrapper.find(Alert);
+      expect(err).toExist();
+      expect(err.html()).toContain("Boom!");
     });
 
-    it("renders a not-found delete-error if the deleteError prop is a NotFound error", () => {
-      const wrapper = shallow(
-        <AppViewComponent {...validProps} deleteError={new NotFoundError()} />,
+    it("renders a delete-error", () => {
+      const wrapper = mountWrapper(
+        defaultStore,
+        <AppViewComponent {...validProps} deleteError={new Error("Boom!")} />,
       );
-      const err = wrapper.find(ErrorSelector);
-      expect(err.exists()).toBe(true);
-      expect(err.html()).toContain("Application mr-sunshine not found");
+      const err = wrapper.find(Alert);
+      expect(err).toExist();
+      expect(err.html()).toContain("Unable to delete the application. Received: Boom!");
     });
-  });
-
-  it("forwards services/ingresses", () => {
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    const ingress = {
-      isFetching: false,
-      item: {
-        metadata: {
-          name: "foo",
-        },
-        spec: {
-          rules: [
-            {
-              host: "foo.bar",
-              http: {
-                paths: [{ path: "/ready" }],
-              },
-            },
-          ],
-        },
-      },
-    };
-    const ingressRefs = [new ResourceRef(ingress.item as IResource, clusterName, "default")];
-    const service = {
-      isFetching: false,
-      item: {
-        apiVersion: "v1",
-        kind: "Service",
-        metadata: {
-          name: "foo",
-        },
-        spec: {},
-      },
-    };
-    const serviceRefs = [new ResourceRef(service.item as IResource, clusterName, "default")];
-
-    wrapper.setState({ ingressRefs, serviceRefs });
-
-    const accessURLTable = wrapper.find(AccessURLTable);
-    expect(accessURLTable).toExist();
-    expect(accessURLTable.props()).toMatchObject({ ingressRefs, serviceRefs });
-
-    const svcTable = wrapper.find(ResourceTable).findWhere(t => t.prop("title") === "Services");
-    expect(svcTable).toExist();
-    expect(svcTable.prop("resourceRefs")).toEqual(serviceRefs);
-  });
-
-  it("forwards deployments", () => {
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    const deployment = {
-      metadata: {
-        name: "foo",
-      },
-      spec: {},
-    };
-    const deployRefs = [new ResourceRef(deployment as IResource, clusterName, "default")];
-
-    wrapper.setState({ deployRefs });
-
-    const depTable = wrapper
-      .find(ResourceTable)
-      .filterWhere(e => e.prop("title") === "Deployments");
-    expect(depTable).toExist();
-    expect(depTable.prop("resourceRefs")).toEqual(deployRefs);
-  });
-
-  it("forwards statefulsets", () => {
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    const r = {
-      metadata: {
-        name: "foo",
-      },
-      spec: {},
-    };
-    const ref = [new ResourceRef(r as IResource, clusterName, "default")];
-
-    wrapper.setState({ statefulSetRefs: ref });
-
-    const depTable = wrapper
-      .find(ResourceTable)
-      .filterWhere(e => e.prop("title") === "StatefulSets");
-    expect(depTable).toExist();
-    expect(depTable.prop("resourceRefs")).toEqual(ref);
-  });
-
-  it("forwards daemonsets", () => {
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    const r = {
-      metadata: {
-        name: "foo",
-      },
-      spec: {},
-    };
-    const ref = [new ResourceRef(r as IResource, clusterName, "default")];
-
-    wrapper.setState({ daemonSetRefs: ref });
-
-    const depTable = wrapper.find(ResourceTable).filterWhere(e => e.prop("title") === "DaemonSets");
-    expect(depTable).toExist();
-    expect(depTable.prop("resourceRefs")).toEqual(ref);
-  });
-
-  it("forwards other resources", () => {
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    const otherResource = {
-      metadata: {
-        name: "foo",
-      },
-      spec: {},
-    };
-    const otherResources = [otherResource];
-
-    wrapper.setState({ otherResources });
-
-    const orTable = wrapper
-      .find(ResourceTable)
-      .filterWhere(e => e.prop("title") === "Other Resources");
-    expect(orTable).toExist();
-    expect(orTable.prop("resourceRefs")).toEqual([otherResource]);
   });
 
   it("renders a list of resources", () => {
@@ -379,15 +253,22 @@ describe("AppViewComponent", () => {
     };
     const manifest = generateYamlManifest([resources.service, list]);
 
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    validProps.app.manifest = manifest;
-    // setProps again so we trigger componentWillReceiveProps
-    wrapper.setProps(validProps);
+    const props = {
+      ...validProps,
+      app: {
+        ...validProps.app,
+        manifest,
+      } as any,
+    };
+    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
 
-    expect(wrapper.state()).toMatchObject({
-      deployRefs: [new ResourceRef(resources.deployment, clusterName, appRelease.namespace)],
-      serviceRefs: [new ResourceRef(resources.service, clusterName, appRelease.namespace)],
-      otherResources: [new ResourceRef(obj, clusterName, appRelease.namespace)],
+    const tabs = wrapper.find(ResourceTabs);
+    expect(tabs.props()).toMatchObject({
+      deployments: [
+        new ResourceRef(resources.deployment, validProps.cluster, appRelease.namespace),
+      ],
+      services: [new ResourceRef(resources.service, validProps.cluster, appRelease.namespace)],
+      otherResources: [new ResourceRef(obj, validProps.cluster, appRelease.namespace)],
     });
   });
 
@@ -399,34 +280,45 @@ describe("AppViewComponent", () => {
     };
     const manifest = generateYamlManifest([resources.service, list]);
 
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    validProps.app.manifest = manifest;
-    // setProps again so we trigger componentWillReceiveProps
-    wrapper.setProps(validProps);
+    const props = {
+      ...validProps,
+      app: {
+        ...validProps.app,
+        manifest,
+      } as any,
+    };
+    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
 
-    expect(wrapper.state()).toMatchObject({
-      deployRefs: [new ResourceRef(resources.deployment, clusterName, appRelease.namespace)],
-      serviceRefs: [new ResourceRef(resources.service, clusterName, appRelease.namespace)],
-      otherResources: [new ResourceRef(obj, clusterName, appRelease.namespace)],
+    const tabs = wrapper.find(ResourceTabs);
+    expect(tabs.props()).toMatchObject({
+      deployments: [
+        new ResourceRef(resources.deployment, validProps.cluster, appRelease.namespace),
+      ],
+      services: [new ResourceRef(resources.service, validProps.cluster, appRelease.namespace)],
+      otherResources: [new ResourceRef(obj, validProps.cluster, appRelease.namespace)],
     });
   });
 
-  it("forwards statefulsets and daemonsets", () => {
+  it("forwards statefulsets and daemonsets to the application status", () => {
     const r = [resources.statefulset, resources.daemonset];
     const manifest = generateYamlManifest(r);
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    validProps.app.manifest = manifest;
-    // setProps again so we trigger componentWillReceiveProps
-    wrapper.setProps(validProps);
+    const props = {
+      ...validProps,
+      app: {
+        ...validProps.app,
+        manifest,
+      } as any,
+    };
+    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
 
     const applicationStatus = wrapper.find(ApplicationStatusContainer);
     expect(applicationStatus).toExist();
 
     expect(applicationStatus.prop("statefulsetRefs")).toEqual([
-      new ResourceRef(resources.statefulset, clusterName, appRelease.namespace),
+      new ResourceRef(resources.statefulset, validProps.cluster, appRelease.namespace),
     ]);
     expect(applicationStatus.prop("daemonsetRefs")).toEqual([
-      new ResourceRef(resources.daemonset, clusterName, appRelease.namespace),
+      new ResourceRef(resources.daemonset, validProps.cluster, appRelease.namespace),
     ]);
   });
 });

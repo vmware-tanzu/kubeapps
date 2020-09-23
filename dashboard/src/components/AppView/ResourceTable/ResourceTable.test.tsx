@@ -1,86 +1,137 @@
-import { shallow } from "enzyme";
+import actions from "actions";
+import Table from "components/js/Table";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import * as React from "react";
-
-import ResourceItemContainer from "../../../containers/ResourceItemContainer";
-import ResourceRef from "../../../shared/ResourceRef";
-import { IResource } from "../../../shared/types";
-import OtherResourceItem from "./ResourceItem/OtherResourceItem";
+import * as ReactRedux from "react-redux";
+import ResourceRef from "shared/ResourceRef";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IResource } from "shared/types";
 import ResourceTable from "./ResourceTable";
 
-const clusterName = "cluster-name";
+const defaultProps = {
+  id: "test",
+  resourceRefs: [],
+  watchResource: jest.fn(),
+  closeWatch: jest.fn(),
+};
 
-it("skips the element if there are no resources", () => {
-  const wrapper = shallow(<ResourceTable resourceRefs={[]} title={""} />);
-  expect(wrapper.find(ResourceItemContainer)).not.toExist();
-  expect(wrapper.html()).toBe(null);
+const sampleResourceRef = {
+  cluster: "cluster-name",
+  apiVersion: "v1",
+  kind: "Deployment",
+  name: "foo",
+  namespace: "default",
+  filter: "",
+  getResourceURL: jest.fn(() => "deployment-foo"),
+  watchResourceURL: jest.fn(),
+  getResource: jest.fn(),
+  watchResource: jest.fn(),
+} as ResourceRef;
+
+const deployment = {
+  metadata: {
+    name: "foo",
+  },
+  status: {
+    replicas: 1,
+    updatedReplicas: 0,
+    availableReplicas: 0,
+  },
+};
+
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.kube };
+beforeEach(() => {
+  actions.kube = {
+    ...actions.kube,
+    getAndWatchResource: jest.fn(),
+    closeWatchResource: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
 });
 
-it("renders a ResourceItem", () => {
-  const resourceRefs = [
-    new ResourceRef(
-      { kind: "Deployment", metadata: { name: "foo" } } as IResource,
-      clusterName,
-      "default",
-    ),
-  ];
-  const wrapper = shallow(<ResourceTable resourceRefs={resourceRefs} title={""} />);
-  expect(wrapper).toMatchSnapshot();
-  expect(wrapper.find(ResourceItemContainer)).toExist();
+afterEach(() => {
+  actions.kube = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
 });
 
-it("renders two resources", () => {
-  const deployRefs = [
-    new ResourceRef(
-      { kind: "Deployment", metadata: { name: "foo" } } as IResource,
-      clusterName,
-      "default",
-    ),
-    new ResourceRef(
-      { kind: "Deployment", metadata: { name: "bar" } } as IResource,
-      clusterName,
-      "default",
-    ),
-  ];
-  const wrapper = shallow(<ResourceTable resourceRefs={deployRefs} title={""} />);
-  expect(wrapper.find(ResourceItemContainer).length).toBe(2);
-  expect(
-    wrapper
-      .find(ResourceItemContainer)
-      .at(0)
-      .prop("resourceRef"),
-  ).toBe(deployRefs[0]);
-  expect(
-    wrapper
-      .find(ResourceItemContainer)
-      .at(1)
-      .prop("resourceRef"),
-  ).toBe(deployRefs[1]);
-});
-
-it("renders OtherResourceItem", () => {
-  const resourceRefs = [
-    new ResourceRef(
-      { kind: "ConfigMap", metadata: { name: "foo" } } as IResource,
-      clusterName,
-      "default",
-    ),
-  ];
-  const wrapper = shallow(<ResourceTable resourceRefs={resourceRefs} title={""} />);
-  expect(wrapper.find(OtherResourceItem)).toExist();
-  expect(wrapper.find(ResourceItemContainer)).not.toExist();
-});
-
-it("renders OtherResource as ItemContainer", () => {
-  const resourceRefs = [
-    new ResourceRef(
-      { kind: "ConfigMap", metadata: { name: "foo" } } as IResource,
-      clusterName,
-      "default",
-    ),
-  ];
-  const wrapper = shallow(
-    <ResourceTable resourceRefs={resourceRefs} title={""} requestOtherResources={true} />,
+it("watches the given resources and close watchers", async () => {
+  const watchResource = jest.fn();
+  const closeWatch = jest.fn();
+  actions.kube = {
+    ...actions.kube,
+    getAndWatchResource: watchResource,
+    closeWatchResource: closeWatch,
+  };
+  const wrapper = mountWrapper(
+    defaultStore,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
   );
-  expect(wrapper.find(OtherResourceItem)).not.toExist();
-  expect(wrapper.find(ResourceItemContainer)).toExist();
+  expect(watchResource).toHaveBeenCalledWith(sampleResourceRef);
+  wrapper.unmount();
+  expect(closeWatch).toHaveBeenCalledWith(sampleResourceRef);
+});
+
+it("renders a table with a resource", () => {
+  const state = getStore({
+    kube: {
+      items: {
+        "deployment-foo": {
+          isFetching: false,
+          item: deployment as IResource,
+        },
+      },
+    },
+  });
+  const wrapper = mountWrapper(
+    state,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
+  );
+  expect(wrapper.find(Table).prop("data")).toEqual([
+    { name: "foo", desired: 1, upToDate: 0, available: 0 },
+  ]);
+});
+
+it("renders a table with a loading resource", () => {
+  const state = getStore({
+    kube: {
+      items: {
+        "deployment-foo": {
+          isFetching: true,
+        },
+      },
+    },
+  });
+  const wrapper = mountWrapper(
+    state,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
+  );
+
+  const data = wrapper.find(Table).prop("data");
+  const row = data[0];
+  expect(row.name).toEqual("foo");
+  expect(wrapper.find(LoadingWrapper)).toExist();
+});
+
+it("renders a table with an error", () => {
+  const state = getStore({
+    kube: {
+      items: {
+        "deployment-foo": {
+          isFetching: false,
+          error: new Error("Boom!"),
+        },
+      },
+    },
+  });
+  const wrapper = mountWrapper(
+    state,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
+  );
+
+  const data = wrapper.find(Table).prop("data");
+  const row = data[0];
+  expect(row.name).toEqual("foo");
+  expect(wrapper.text()).toContain("Error: Boom!");
 });

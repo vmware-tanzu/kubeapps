@@ -1,11 +1,12 @@
-.deleted {
-  background-color: #c5c5c5;
+.info-icon {
+  display: grid;
+  align-items: center;
+  height: 100%;
+  padding-left: 0.4rem;
+  justify-content: center;
 }
 
-.failed {
-  background-color: #cb1515;
-}
-
-.deployed {
-  background-color: #15cb2d;
+/* stylelint-disable-next-line selector-type-no-unknown */
+.is-success cds-icon {
+  --color: var(--clr-color-success-700);
 }

@@ -1,22 +1,19 @@
 import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
+import * as ReactRedux from "react-redux";
 
-import {
-  ForbiddenError,
-  IChartState,
-  IChartVersion,
-  UnprocessableEntity,
-} from "../../shared/types";
+import Alert from "components/js/Alert";
+import { act } from "react-dom/test-utils";
+import { definedNamespaces } from "shared/Namespace";
+import { IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import DeploymentForm, { IDeploymentFormProps } from "./DeploymentForm";
 
 const releaseName = "my-release";
 const defaultProps = {
   chartsIsFetching: false,
-  kubeappsNamespace: "kubeapps",
   chartNamespace: "other-namespace",
   chartID: "foo",
   chartVersion: "1.0.0",
@@ -29,21 +26,27 @@ const defaultProps = {
   namespace: "default",
   cluster: "default",
 } as IDeploymentFormProps;
-const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+const versions = [
+  { id: "foo", attributes: { version: "1.2.3" }, relationships: { chart: { data: { repo: {} } } } },
+] as IChartVersion[];
 let monikerChooseMock: jest.Mock;
 
+let spyOnUseDispatch: jest.SpyInstance;
 beforeEach(() => {
   monikerChooseMock = jest.fn().mockReturnValue(releaseName);
   Moniker.choose = monikerChooseMock;
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
 });
 
 afterEach(() => {
   jest.resetAllMocks();
+  spyOnUseDispatch.mockRestore();
 });
 
 it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
-  shallow(<DeploymentForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
+  mount(<DeploymentForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
   expect(fetchChartVersions).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.chartNamespace,
@@ -58,118 +61,88 @@ describe("renders an error", () => {
         {...defaultProps}
         selected={
           {
-            version: { attributes: {} },
+            version: { attributes: {}, relationships: { chart: { data: {} } } },
             versions: [{ id: "foo", attributes: {} }],
           } as IChartState["selected"]
         }
-        error={new UnprocessableEntity("wrong format!")}
+        error={new Error("wrong format!")}
       />,
     );
-    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
-    expect(wrapper.find(UnexpectedErrorAlert).exists()).toBe(true);
-    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain(
-      "Sorry! The installation of my-app failed",
-    );
-    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain("wrong format!");
+    expect(wrapper.find(Alert).exists()).toBe(true);
+    expect(wrapper.find(Alert).html()).toContain("wrong format!");
   });
-
-  it("the error does not change if the release name changes", () => {
-    const expectedErrorMsg = "Sorry! The installation of my-app failed";
-
-    const wrapper = shallow(
-      <DeploymentForm
-        {...defaultProps}
-        selected={
-          {
-            version: { attributes: {} },
-            versions: [{ id: "foo", attributes: {} }],
-          } as IChartState["selected"]
-        }
-        error={new UnprocessableEntity("wrong format!")}
-      />,
-    );
-
-    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
-    expect(wrapper.find(UnexpectedErrorAlert).exists()).toBe(true);
-    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain(expectedErrorMsg);
-    wrapper.setState({ releaseName: "another-app" });
-    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain(expectedErrorMsg);
-  });
-
-  it("renders a Forbidden error if the deployment fails because missing permissions", () => {
-    const wrapper = mount(
-      <DeploymentForm
-        {...defaultProps}
-        selected={
-          {
-            version: { attributes: {} },
-            versions: [{ id: "foo", attributes: {} }],
-          } as IChartState["selected"]
-        }
-        error={
-          new ForbiddenError(
-            '[{"apiGroup":"","resource":"secrets","namespace":"kubeapps","clusterWide":false,"verbs":["create","list"]}]',
-          )
-        }
-      />,
-    );
-    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
-    expect(wrapper.find(PermissionsErrorAlert).exists()).toBe(true);
-    expect(wrapper.find(PermissionsErrorAlert).text()).toContain(
-      "You don't have sufficient permissions",
-    );
-    expect(wrapper.find(PermissionsErrorAlert).text()).toContain(
-      "create, list secrets  in the kubeapps namespace",
-    );
-  });
-});
-
-it("renders the full DeploymentForm", () => {
-  const wrapper = shallow(
-    <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
-  );
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("renders a release name by default, relying in Monickers output", () => {
   monikerChooseMock.mockReturnValueOnce("foo").mockReturnValueOnce("bar");
 
-  let wrapper = shallow(
+  let wrapper = mount(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
-  const name1 = wrapper.state("releaseName") as string;
+  const name1 = wrapper.find("#releaseName").prop("value");
   expect(name1).toBe("foo");
 
   // When reloading the name should change
-  wrapper = shallow(
+  wrapper = mount(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
-  const name2 = wrapper.state("releaseName") as string;
+  const name2 = wrapper.find("#releaseName").prop("value");
   expect(name2).toBe("bar");
 });
 
 it("forwards the appValues when modified", () => {
-  const wrapper = shallow(<DeploymentForm {...defaultProps} />);
+  const wrapper = mount(
+    <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
+  );
   const handleValuesChange: (v: string) => void = wrapper
     .find(DeploymentFormBody)
     .prop("setValues");
-  handleValuesChange("foo: bar");
-
-  expect(wrapper.state("appValues")).toBe("foo: bar");
+  act(() => {
+    handleValuesChange("foo: bar");
+  });
+  wrapper.update();
   expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
 });
 
-it("forwards the valuesModifed property", () => {
-  const wrapper = shallow(<DeploymentForm {...defaultProps} />);
-  const handleValuesModified: (v: string) => void = wrapper
-    .find(DeploymentFormBody)
-    .prop("setValuesModified");
-  handleValuesModified("foo: bar");
+it("changes values if the version changes and it has not been modified", () => {
+  const selected = {
+    versions: [versions[0], { ...versions[0], attributes: { version: "1.2.4" } } as IChartVersion],
+    version: versions[0],
+  };
+  const wrapper = mount(<DeploymentForm {...defaultProps} selected={selected} />);
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("");
 
-  expect(wrapper.state("valuesModified")).toBe(true);
+  wrapper.find("select").simulate("change", { target: { value: "1.2.4" } });
+  wrapper.setProps({ selected: { ...selected, values: "bar: foo" } });
+  wrapper.update();
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("bar: foo");
 });
 
-it("triggers a deployment when submitting the form", done => {
+it("keep values if the version changes", () => {
+  const selected = {
+    versions: [versions[0], { ...versions[0], attributes: { version: "1.2.4" } } as IChartVersion],
+    version: versions[0],
+  };
+  const wrapper = mount(<DeploymentForm {...defaultProps} selected={selected} />);
+
+  const handleValuesChange: (v: string) => void = wrapper
+    .find(DeploymentFormBody)
+    .prop("setValues");
+  const setValuesModified: () => void = wrapper.find(DeploymentFormBody).prop("setValuesModified");
+  act(() => {
+    handleValuesChange("foo: bar");
+    setValuesModified();
+  });
+  wrapper.update();
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+
+  wrapper.find("select").simulate("change", { target: { value: "1.2.4" } });
+  wrapper.setProps({ selected: { ...selected, values: "bar: foo" } });
+  wrapper.update();
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+});
+
+it("triggers a deployment when submitting the form", async () => {
   const namespace = "default";
   const appValues = "foo: bar";
   const schema = { properties: { foo: { type: "string", form: true } } };
@@ -184,8 +157,21 @@ it("triggers a deployment when submitting the form", done => {
       namespace={namespace}
     />,
   );
-  wrapper.setState({ appValues });
-  wrapper.find("form").simulate("submit");
+  const handleValuesChange: (v: string) => void = wrapper
+    .find(DeploymentFormBody)
+    .prop("setValues");
+  act(() => {
+    handleValuesChange("foo: bar");
+  });
+  wrapper.update();
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+
+  await act(async () => {
+    // Simulating "submit" causes a console.warning
+    await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<void>)({
+      preventDefault: jest.fn(),
+    });
+  });
   expect(deployChart).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.namespace,
@@ -195,8 +181,17 @@ it("triggers a deployment when submitting the form", done => {
     appValues,
     schema,
   );
-  setTimeout(() => {
-    expect(push).toHaveBeenCalledWith(url.app.apps.get("default", "default", "my-release"));
-    done();
-  }, 1);
+  expect(push).toHaveBeenCalledWith(url.app.apps.get("default", "default", "my-release"));
+});
+
+it("hides the form if no namespace is selected", async () => {
+  const wrapper = mount(
+    <DeploymentForm
+      {...defaultProps}
+      selected={{ versions, version: versions[0] }}
+      namespace={definedNamespaces.all}
+    />,
+  );
+  expect(wrapper.find(Alert)).toIncludeText("Namespace not selected");
+  expect(wrapper.find("form")).not.toExist();
 });

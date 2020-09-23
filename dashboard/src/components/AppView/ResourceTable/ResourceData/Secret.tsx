@@ -1,7 +1,7 @@
 import { get, isEmpty } from "lodash";
 import React from "react";
 import { IResource, ISecret } from "shared/types";
-import SecretItemDatum from "../ResourceItem/SecretItem/SecretItemDatum.v2";
+import SecretItemDatum from "../ResourceItem/SecretItem/SecretItemDatum";
 
 import "./Secret.css";
 

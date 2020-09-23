@@ -1,8 +1,9 @@
+import Tooltip from "components/js/Tooltip";
 import { shallow } from "enzyme";
 import * as React from "react";
-import { Link } from "react-router-dom";
-import * as url from "../../shared/url";
-import InfoCard from "../InfoCard";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { app } from "shared/url";
+import InfoCard from "../InfoCard/InfoCard";
 import AppListItem, { IAppListItemProps } from "./AppListItem";
 
 const defaultProps = {
@@ -14,6 +15,7 @@ const defaultProps = {
     chart: "myapp",
     chartMetadata: {
       appVersion: "1.0.0",
+      description: "this is a description",
     },
   },
   cluster: "default",
@@ -21,26 +23,22 @@ const defaultProps = {
 
 it("renders an app item", () => {
   const wrapper = shallow(<AppListItem {...defaultProps} />);
-  const card = wrapper.find(InfoCard).shallow();
-  expect(
-    card
-      .find(Link)
-      .at(0)
-      .props().title,
-  ).toBe("foo");
-  expect(
-    card
-      .find(Link)
-      .at(0)
-      .props().to,
-  ).toBe(url.app.apps.get("default", "default", "foo"));
-  expect(card.find(".type-color-light-blue").text()).toBe("myapp v1.0.0");
-  expect(card.find(".deployed").exists()).toBe(true);
-  expect(card.find(".ListItem__content__info_tag-1").text()).toBe("default");
-  expect(card.find(".ListItem__content__info_tag-2").text()).toBe("deployed");
+  const card = wrapper.find(InfoCard);
+  expect(card.props()).toMatchObject({
+    description: defaultProps.app.chartMetadata.description,
+    icon: "placeholder.png",
+    link: app.apps.get(
+      defaultProps.cluster,
+      defaultProps.app.namespace,
+      defaultProps.app.releaseName,
+    ),
+    tag1Class: "label-success",
+    tag1Content: "deployed",
+    title: defaultProps.app.releaseName,
+  });
 });
 
-it("should set a banner if there are chart updates available", () => {
+it("should add a tooltip with the chart update available", () => {
   const props = {
     ...defaultProps,
     app: {
@@ -56,12 +54,12 @@ it("should set a banner if there are chart updates available", () => {
       },
     },
   } as IAppListItemProps;
-  const wrapper = shallow(<AppListItem {...props} />);
-  const card = wrapper.find(InfoCard);
-  expect(card.prop("banner")).toBe("Update available");
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  const tooltip = wrapper.find(Tooltip);
+  expect(tooltip.text()).toBe("New Chart Version: 1.1.0");
 });
 
-it("should set a banner if there are app updates available", () => {
+it("should add a second label with the app update available", () => {
   const props = {
     ...defaultProps,
     app: {
@@ -77,29 +75,7 @@ it("should set a banner if there are app updates available", () => {
       },
     },
   } as IAppListItemProps;
-  const wrapper = shallow(<AppListItem {...props} />);
-  const card = wrapper.find(InfoCard);
-  expect(card.prop("banner")).toBe("Update available");
-});
-
-it("should not set a banner if there are errors in the update info", () => {
-  const props = {
-    ...defaultProps,
-    app: {
-      ...defaultProps.app,
-      chartMetadata: {
-        appVersion: "1.0.0",
-      },
-      updateInfo: {
-        upToDate: false,
-        error: new Error("Boom!"),
-        chartLatestVersion: "1.0.0",
-        appLatestVersion: "1.1.0",
-        repository: { name: "", url: "" },
-      },
-    },
-  } as IAppListItemProps;
-  const wrapper = shallow(<AppListItem {...props} />);
-  const card = wrapper.find(InfoCard);
-  expect(card.prop("banner")).toBe(undefined);
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  const tooltip = wrapper.find(Tooltip);
+  expect(tooltip.text()).toBe("New App Version: 1.1.0");
 });

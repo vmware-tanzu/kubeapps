@@ -26,7 +26,6 @@ function mapStateToProps({ apps, kube, config }: IStoreState, { match: { params 
     cluster: params.cluster,
     namespace: params.namespace,
     releaseName: params.releaseName,
-    UI: config.featureFlags.ui,
   };
 }
 

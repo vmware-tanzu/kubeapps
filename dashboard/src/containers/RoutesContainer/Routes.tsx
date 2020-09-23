@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
-import { IFeatureFlags } from "shared/Config";
 import NotFound from "../../components/NotFound";
 import AppListContainer from "../../containers/AppListContainer";
 import AppNewContainer from "../../containers/AppNewContainer";
@@ -17,11 +16,6 @@ import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import RepoListContainer from "../../containers/RepoListContainer";
-import ServiceBrokerListContainer from "../../containers/ServiceBrokerListContainer";
-import ServiceClassListContainer from "../../containers/ServiceClassListContainer";
-import ServiceClassViewContainer from "../../containers/ServiceClassViewContainer";
-import ServiceInstanceListContainer from "../../containers/ServiceInstanceListContainer";
-import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewContainer";
 import { app } from "../../shared/url";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
@@ -38,11 +32,12 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartViewContainer,
   "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartViewContainer,
   "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version": ChartViewContainer,
-  "/c/:cluster/config/brokers": ServiceBrokerListContainer,
-  "/services/brokers/:brokerName/classes/:className": ServiceClassViewContainer,
-  "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": ServiceInstanceViewContainer,
-  "/services/classes": ServiceClassListContainer,
-  "/ns/:namespace/services/instances": ServiceInstanceListContainer,
+  "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
+  "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
+  "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,
+  "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
+  "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
+  "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
 } as const;
 
 // Public routes that don't require authentication
@@ -54,26 +49,11 @@ interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   namespace: string;
   cluster: string;
   authenticated: boolean;
-  featureFlags: IFeatureFlags;
 }
 
 class Routes extends React.Component<IRoutesProps> {
-  public static defaultProps = {
-    featureFlags: { operators: false, ui: "hex" },
-  };
   public render() {
     const reposPath = "/c/:cluster/ns/:namespace/config/repos";
-    if (this.props.featureFlags.operators) {
-      // Add routes related to operators
-      Object.assign(privateRoutes, {
-        "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
-        "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
-        "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,
-        "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
-        "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
-        "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
-      });
-    }
     return (
       <Switch>
         <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
