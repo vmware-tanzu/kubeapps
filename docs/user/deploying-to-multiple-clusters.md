@@ -8,9 +8,10 @@ Once configured, you can select the cluster to which you are deploying in the sa
 
 When you have selected the target cluster and namespace, you can browse the catalog as normal and deploy apps to the chosen target cluster and namespace as you would normally.
 
-You can watch a brief demonstration of deploying to an additional cluster (we will update this demo in a few weeks with the new UI):
+<!-- TODO: Re-publish the Video  -->
+<!-- You can watch a brief demonstration of deploying to an additional cluster (we will update this demo in a few weeks with the new UI):
 
-[![Demo of Kubeapps with multiple clusters](https://img.youtube.com/vi/KIoW4zZDtdY/0.jpg)](https://www.youtube.com/watch?v=KIoW4zZDtdY)
+[![Demo of Kubeapps with multiple clusters](https://img.youtube.com/vi/KIoW4zZDtdY/0.jpg)](https://www.youtube.com/watch?v=KIoW4zZDtdY) -->
 
 ## Requirements
 

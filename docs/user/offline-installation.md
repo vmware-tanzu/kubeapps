@@ -44,7 +44,7 @@ You will need to follow a similar process for every image present in the values 
 
 ## 3. [Optional] Prepare an offline App Repository
 
-By default, Kubeapps install three App Repositories: `stable`, `incubator` and `bitnami`. Since, in order to sync those repositories, it's necessary to have Internet connection, you will need to mirror those or create your own repository (e.g. using Harbor) and configure it when installing Kubeapps.
+By default, Kubeapps install the `bitnami` App Repository. Since, in order to sync that repository, it's necessary to have Internet connection, you will need to mirror it or create your own repository (e.g. using Harbor) and configure it when installing Kubeapps.
 
 For more information about how to create a private repository, follow this [guide](./private-app-repository.md).
 

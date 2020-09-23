@@ -45,7 +45,7 @@ You do NOT have to include this information if this is a FEATURE REQUEST
 (paste your output here)
 ```
 
-- Output of `helm list <kubeapps-release-name>`:
+- Output of `helm list -n <kubeapps-namespace> <kubeapps-release-name>`:
 
 ```
 (paste your output here)

@@ -4,7 +4,7 @@ This guide will walk you through the process of deploying Kubeapps for your clus
 
 ## Prerequisites
 
-Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/) (2.14.0+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+Kubeapps assumes a working Kubernetes cluster (v1.15+), [`Helm`](https://helm.sh/) (3.0.2+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
@@ -12,19 +12,10 @@ Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/
 
 Use the Helm chart to install the latest version of Kubeapps:
 
-For Helm 2:
-
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
-```
-
-If you are using Helm 3, you need to set an extra flag to enable it:
-
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 kubectl create namespace kubeapps
-helm install kubeapps --namespace kubeapps bitnami/kubeapps --set useHelm3=true
+helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
 For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
@@ -93,7 +84,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-- Use the "Deploy App" or click on the "Catalog" page in the Dashboard to select an application from the list of charts in any of the configured Helm chart repositories. This example assumes you want to deploy WordPress.
+- Use the "Deploy" button or click on the "Catalog" page in the Dashboard to select an application from the list of charts in any of the configured Helm chart repositories. This example assumes you want to deploy WordPress.
 
   ![WordPress chart](../img/wordpress-search.png)
 
@@ -105,7 +96,7 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
   ![WordPress installation](../img/wordpress-installation.png)
 
-- Click the "Submit" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top and you can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the status, you can see the workloads and number of ready and total pods within them.
+- Click the "Deploy" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top, including the access URL and any secret includded with the app. You can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the status, you can see the workloads and number of ready and total pods within them.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
@@ -115,12 +106,12 @@ To access your new WordPress site, you can run the commands in the "Notes" secti
 
 ![WordPress deployment notes](../img/wordpress-url.png)
 
-To get the credentials for logging into your WordPress account, refer to the "Notes" section. You can also get the WordPress password by scrolling down to "Secrets" and clicking the eye next to `wordpress-password`.
+To get the credentials for logging into your WordPress account, refer to the "Notes" section. You can also get the WordPress password by clicking on the eye next to `wordpress-password`.
 
 ![WordPress deployment notes](../img/wordpress-credentials.png)
 
 ## [Optional] Step 5: Uninstall/Delete WordPress
-If you want to uninstall/delete your WordPress application, you can do so by clicking the "Delete" button. You can choose to click the checkbox for "Purge Release" (default action with the Helm 3 CLI). If you do not click it, the Helm chart history will remain (default action with Helm 2). This is fine, so long as you don't attempt to install another chart with the same name in the same namespace.
+If you want to uninstall/delete your WordPress application, you can do so by clicking the "Delete" button.
 
 ![WordPress uninstall](../img/wordpress-uninstall.png)
 

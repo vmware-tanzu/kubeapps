@@ -30,7 +30,7 @@ kubectl get -n default secret $(kubectl get -n default serviceaccount example -o
 
 ## Assigning Kubeapps User Roles
 
-Kubeapps will install a set of preset Roles and ClusterRoles in your cluster
+You can install a set of preset Roles and ClusterRoles in your cluster
 that you can bind to user or Service Accounts. Each Role and ClusterRole
 pertains to a certain operation within Kubeapps. This documentation describes
 the roles that should be applied to a user in order to perform operations within
@@ -62,48 +62,6 @@ that role
 kubectl create -n default rolebinding example-edit \
   --clusterrole=edit \
   --serviceaccount default:example
-```
-
-### Service Catalog, Service Instances and Bindings
-
-#### Read access to Service Instances and Bindings within a namespaces
-
-Service Brokers, Classes and Plans in the Service Catalog are cluster-scoped
-resources, but Service Instances and Bindings can be restricted to a namespace.
-We'll need to define two roles (`kubeapps-service-catalog-browse` and
-`kubeapps-service-catalog-read`) to separate the roles required to view Service
-Instances and Bindings so that they can be applied to desired namespaces.
-
-In order to list and view Service Instances in a namespace, we'll create the
-`kubeapps-service-catalog-browse` ClusterRole in all namespaces and the
-`kubeapps-service-catalog-read` in the desired namespace.
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-browse.yaml
-kubectl create clusterrolebinding example-kubeapps-service-catalog-browse --clusterrole=kubeapps-service-catalog-browse --serviceaccount default:example
-
-kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-read.yaml
-kubectl create -n default rolebinding example-kubeapps-service-catalog-read --clusterrole=kubeapps-service-catalog-read --serviceaccount default:example
-```
-
-#### Write access to Service Instances and Bindings within a namespace
-
-In order to create and delete Service Instances and Bindings in a namespace,
-create and bind the `kubeapps-service-catalog-write` ClusterRole in the desired namespace.
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-write.yaml
-kubectl create -n default rolebinding example-kubeapps-service-catalog-write --clusterrole=kubeapps-service-catalog-write --serviceaccount default:example
-```
-
-#### Admin access to configure Service Brokers
-
-In order to resync Service Brokers from the Service Brokers Configuration page,
-create and apply the `kubeapps-service-catalog-admin` ClusterRole in all namespaces.
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-admin.yaml
-kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clusterrole=kubeapps-service-catalog-admin --serviceaccount default:example
 ```
 
 ### App Repositories
