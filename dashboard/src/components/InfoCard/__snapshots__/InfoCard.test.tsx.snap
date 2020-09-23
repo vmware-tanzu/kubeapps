@@ -39,9 +39,8 @@ exports[`should render a Card 1`] = `
           <div
             className="card-icon"
           >
-            <img
-              alt="icon"
-              src="an-icon.png"
+            <Icon
+              icon="an-icon.png"
             />
           </div>
           <div

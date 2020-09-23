@@ -1,3 +1,4 @@
+import Icon from "components/Icon/Icon";
 import { shallow } from "enzyme";
 import * as React from "react";
 import { Link } from "react-router-dom";
@@ -80,7 +81,7 @@ it("should parse a description as JSX.Element", () => {
 
 it("should parse an icon", () => {
   const wrapper = shallow(<InfoCard title="foo" info="foobar" />);
-  expect(wrapper.find("img")).toExist();
+  expect(wrapper.find(Icon)).toExist();
 });
 
 it("should parse a background img", () => {

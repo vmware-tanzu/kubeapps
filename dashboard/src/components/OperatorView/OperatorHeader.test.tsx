@@ -13,7 +13,7 @@ it("fallbacks to the default icon if not set", () => {
   expect(
     wrapper
       .find("img")
-      .filterWhere(i => i.prop("alt") === "app-icon")
+      .filterWhere(i => i.prop("alt") === "icon")
       .prop("src"),
   ).toBe("placeholder.png");
 });

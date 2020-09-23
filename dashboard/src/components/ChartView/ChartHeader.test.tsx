@@ -35,7 +35,7 @@ it("displays the appVersion", () => {
 
 it("uses the icon", () => {
   const wrapper = mount(<ChartHeader {...testProps} />);
-  const icon = wrapper.find("img").filterWhere(i => i.prop("alt") === "app-icon");
+  const icon = wrapper.find("img").filterWhere(i => i.prop("alt") === "icon");
   expect(icon.exists()).toBe(true);
   expect(icon.props()).toMatchObject({ src: "api/assetsvc/test.jpg" });
 });
