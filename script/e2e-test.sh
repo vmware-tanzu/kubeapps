@@ -22,6 +22,12 @@ ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 DEV_TAG=${1:?missing dev tag}
 IMG_MODIFIER=${2:-""}
 
+# TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
+# removes the pre-release part of the tag
+if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+  DEV_TAG=${DEV_TAG/-beta.*/}
+fi
+
 # Load Generic Libraries
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/libtest.sh"
