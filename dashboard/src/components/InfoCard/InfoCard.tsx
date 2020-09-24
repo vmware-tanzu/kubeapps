@@ -4,6 +4,7 @@ import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
 import Column from "../js/Column";
 import Row from "../js/Row";
 
+import Icon from "components/Icon/Icon";
 import placeholder from "../../placeholder.png";
 import "./InfoCard.css";
 
@@ -48,7 +49,7 @@ function InfoCard(props: IInfoCardProps) {
           <CardBlock>
             <div className="info-card-block">
               <div className="card-icon">
-                <img src={icon} alt="icon" />
+                <Icon icon={icon} />
               </div>
               <div className="card-description-wrapper">
                 <div className="card-description">

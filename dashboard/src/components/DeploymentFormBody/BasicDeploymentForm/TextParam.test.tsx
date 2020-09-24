@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { mount } from "enzyme";
 import { act } from "react-dom/test-utils";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IBasicFormParam } from "shared/types";
 import TextParam from "./TextParam";
 
@@ -184,4 +185,21 @@ it("should forward the proper value when using a select", () => {
     enum: ["mariadb", "postgresql"],
   });
   expect(handler.mock.calls[0][0]).toMatchObject(event);
+});
+
+it("a change in the param property should update the current value", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <TextParam {...stringProps} param={{ ...stringParam, value: "" }} />,
+  );
+  const input = wrapper.find("input");
+  expect(input.prop("value")).toBe("");
+
+  wrapper.setProps({
+    param: {
+      ...stringParam,
+      value: "foo",
+    },
+  });
+  expect(input.prop("value")).toBe("");
 });

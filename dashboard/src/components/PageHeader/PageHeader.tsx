@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import Icon from "components/Icon/Icon";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import olmIcon from "icons/operator-framework.svg";
@@ -32,7 +33,7 @@ function PageHeader({
         <Row>
           <Column span={7}>
             <div className="kubeapps-title-section">
-              {icon && <img src={icon} alt="app-icon" />}
+              {icon && <Icon icon={icon} />}
               <div className="kubeapps-title-block">
                 {titleSize === "lg" ? <h1>{title}</h1> : <h3>{title}</h3>}
                 {helm && (
