@@ -12,11 +12,11 @@ The following sections walk you through some common tasks with the Kubeapps Dash
 
   ![Dashboard main page](../img/dashboard-home.png)
 
-* Use the "Charts" menu to select an application from the list of charts in the official Kubernetes chart repositories. This example assumes you want to deploy MariaDB.
+* Use the "Catalog" menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
 
   ![MariaDB chart](../img/mariadb-chart.png)
 
-* Click the "Deploy using Helm" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
+* Click the "Deploy" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
 
   ![MariaDB installation](../img/mariadb-installation.png)
 
@@ -26,7 +26,7 @@ The following sections walk you through some common tasks with the Kubeapps Dash
 
 ### List all the applications running in your cluster
 
-The "Applications" page displays a list of the application deployments in your cluster that are managed by Helm.
+The "Applications" page displays a list of the application deployments in your cluster.
 
 ![Deployment list](../img/dashboard-deployments.png)
 
@@ -38,13 +38,10 @@ You can remove any of the applications from your cluster by clicking the "Delete
 
 ### Add more chart repositories
 
-By default, Kubeapps comes with the official Kubernetes chart repositories enabled. You can see the list of enabled chart repositories in the "App Repositories" page under the "Configuration" menu:
+By default, Kubeapps comes with the Bitnami repository enabled. You can see the list of enabled chart repositories in the "App Repositories" page under the menu:
 
 ![Repositories List](../img/dashboard-repos.png)
 
-Add new repositories (for example, your organization's chart repository) by clicking the "Add App Repository" button. Fill the "Add Repository" form using the guidelines below:
-
-* Name: Use any unique identifier.
-* URL: Add the URL of your chart repository (the same URL used with `helm repo add`)
+Add new repositories (for example, your organization's chart repository) by clicking the "Add App Repository" button. Fill the "Add Repository" form using the repository info. For a detailed guide of how to add app repositories, check [this guide](./private-app-repository.md).
 
 ![Adding repository](../img/dashboard-add-repo.png)
