@@ -18,3 +18,4 @@ nodes:
         oidc-username-prefix: "oidc:"
         oidc-groups-claim: groups
         oidc-groups-prefix: "oidc:"
+        feature-gates: "EphemeralContainers=true"
