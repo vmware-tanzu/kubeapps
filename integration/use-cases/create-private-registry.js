@@ -84,8 +84,10 @@ test("Creates a private registry", async () => {
   // Upgrade apache and verify.
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
+  await new Promise((r) => setTimeout(r, 500));
+
   let chartVersionElement = await expect(page).toMatchElement(
-    'select[name="chart-versions"]'
+    '.upgrade-form-version-selector select[name="chart-versions"]'
   );
   let chartVersionElementContent = await chartVersionElement.getProperty(
     "value"
@@ -95,13 +97,16 @@ test("Creates a private registry", async () => {
 
   // TODO(andresmgot): Avoid race condition for selecting the latest version
   // but going back to the previous version
-  await new Promise((r) => setTimeout(r, 1000));
+  await new Promise((r) => setTimeout(r, 500));
 
-  await expect(page).toSelect('select[name="chart-versions"]', "7.3.16");
+  await expect(page).toSelect(
+    '.upgrade-form-version-selector select[name="chart-versions"]',
+    "7.3.16"
+  );
 
   // Ensure that the new value is selected
   chartVersionElement = await expect(page).toMatchElement(
-    'select[name="chart-versions"]'
+    '.upgrade-form-version-selector select[name="chart-versions"]'
   );
   chartVersionElementContent = await chartVersionElement.getProperty("value");
   chartVersionValue = await chartVersionElementContent.jsonValue();
