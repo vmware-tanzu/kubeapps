@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import { isEmpty } from "lodash";
+import React, { useEffect, useState } from "react";
 import { IBasicFormParam } from "shared/types";
 
 export interface IStringParamProps {
@@ -12,12 +13,14 @@ export interface IStringParamProps {
 }
 
 function TextParam({ id, param, label, inputType, handleBasicFormParamChange }: IStringParamProps) {
-  const [value, setValue] = React.useState((param.value || "") as any);
-  let timeout: NodeJS.Timeout;
+  const [value, setValue] = useState((param.value || "") as any);
+  const [valueModified, setValueModified] = useState(false);
+  const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
   const onChange = (
     e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     setValue(e.currentTarget.value);
+    setValueModified(true);
     // Gather changes before submitting
     clearTimeout(timeout);
     const func = handleBasicFormParamChange(param);
@@ -28,14 +31,14 @@ function TextParam({ id, param, label, inputType, handleBasicFormParamChange }: 
         type: e.currentTarget.type,
       },
     } as React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
-    timeout = setTimeout(() => func(targetCopy), 500);
+    setThisTimeout(setTimeout(() => func(targetCopy), 500));
   };
 
   useEffect(() => {
-    if (value !== param.value && param.value) {
+    if (!isEmpty(param.value) && !valueModified) {
       setValue(param.value);
     }
-  }, [value, param.value]);
+  }, [valueModified, param.value]);
 
   let input = (
     <input
