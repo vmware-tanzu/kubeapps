@@ -12,6 +12,8 @@ You can watch a brief demonstration of deploying to an additional cluster:
 
 [![Demo of Kubeapps with multiple clusters](https://img.youtube.com/vi/pzVMZGTK0vU/0.jpg)](https://www.youtube.com/watch?v=pzVMZGTK0vU)
 
+or read a specific configuration example of [multi-cluster Kubeapps running on a Tanzu Kubernetes Grid](https://liveandletlearn.net/post/kubeapps-on-tkg-management-cluster/) environment. The following documentation aims to be generic for any multi-cluster Kubernetes environment.
+
 ## Requirements
 
 To use the multi-cluster support in Kubeapps, you must first setup your clusters to use the OIDC authentication plugin configured with a chosen OIDC/OAuth2 provider. This setup depends on various choices that you make and is out of the scope of this document, but some specific points are mentioned below to help with the setup.
@@ -190,4 +192,3 @@ The following limitations exist when configuring Kubeapps with multiple clusters
 * The OIDC/OAuth2 provider must use TLS (https protocol).
 * The APIServers of each configured cluster must be routable from the pods of the Kubeapps installation.
 * Only AppRepositories installed for all namespaces (ie. AppRepositories in the same namespace as the Kubeapps installation) will be available in the catalog when targeting other clusters. There is no support for private AppRepositories on other clusters.
-* Similarly, the Operator support (currently behind a feature-flag) is only available on the installation cluster.
