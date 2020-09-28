@@ -1,19 +1,28 @@
 # Access Control in Kubeapps
 
-Kubeapps requires users to login with a Kubernetes API token in order to make
+Before you configure the Kubernetes Role-Based-Access-Control for your authenticated users to access Kubeapps you will first need to establish how users will authenticate with the Kubernetes clusters on which Kubeapps operates.
+
+## User Authentication in Kubeapps
+
+By design, Kubeapps does not include a separate authentication layer but rather relies on the [supported mechanisms provided with Kubernetes itself](https://kubernetes.io/docs/reference/access-authn-authz/authentication/).
+
+Each request to Kubeapps requires a token trusted by the Kubernetes API token in order to make
 requests to the Kubernetes API server as the user. This ensures that a certain
-user of Kubeapps is only permitted to view and manage applications that they
-have access to (for example, within a specific namespace). If a user does not
+user of Kubeapps is only permitted to view and manage applications to which they
+have access (for example, within a specific namespace). If a user does not
 have access to a particular resource, Kubeapps will display an error describing
 the required roles to access the resource.
 
-If your cluster supports [Token
-Authentication](https://kubernetes.io/docs/admin/authentication/) you may login
-with the same tokens. Alternatively, you can create Service Accounts for
-Kubeapps users. The examples below use a Service Account, as it is the most
-common scenario.
+Two of the most common authentication strategies for providing a token identifying the user with Kubeapps are described below.
 
-## Service Accounts
+### OpenID Connect authentication
+
+The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](using-an-OIDC-provider.md).
+
+### Service Account authentication
+
+Alternatively, you can create Service Accounts for
+Kubeapps users. This is not recommended for production use as Kubernetes service accounts are not designed to be used by users. That said, it is often a quick way to test or demo a Kubeapps installation without needing to configure OpenID Connect.
 
 To create a Service Account for a user "example" in the "default" namespace, run
 the following:
@@ -29,6 +38,8 @@ kubectl get -n default secret $(kubectl get -n default serviceaccount example -o
 ```
 
 ## Assigning Kubeapps User Roles
+
+The examples below demonstrate creating RBAC for a service account as it is easy to reproduce, but normally you would use the `--user` or `--group` arg rather than `--serviceaccount` when creating the role bindings for users.
 
 You can install a set of preset Roles and ClusterRoles in your cluster
 that you can bind to user or Service Accounts. Each Role and ClusterRole
