@@ -5,7 +5,7 @@ OpenID Connect (OIDC) is a simple identity layer on top of the OAuth 2.0 protoco
 It is possible to configure your Kubernetes cluster to use an OIDC provider in order to manage accounts, groups and roles with a single application. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2 (GKE).
 This guide will explain how you can use an existing OAuth2 provider, including OIDC, to authenticate users within Kubeapps.
 
-For a complete worked example of this process on a specific Kubernetes environment, one of the Kubeapps developers has written a series detailing the installation of [Kubeapps on a set of VMware TKG clusters with OpenID Connect].
+For a complete worked example of this process on a specific Kubernetes environment, one of the Kubeapps developers has written a series detailing the installation of [Kubeapps on a set of VMware TKG clusters with OpenID Connect](https://liveandletlearn.net/post/kubeapps-on-tkg-management-cluster/).
 
 ## Pre-requisites
 
