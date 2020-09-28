@@ -13,11 +13,11 @@ have access (for example, within a specific namespace). If a user does not
 have access to a particular resource, Kubeapps will display an error describing
 the required roles to access the resource.
 
-Two of the most common authentication strategies for providing a token identifying the user with Kubeapps are described here.
+Two of the most common authentication strategies for providing a token identifying the user with Kubeapps are described below.
 
 ### OpenID Connect authentication
 
-The most common and secure authentication for users to authenticate with both the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](using-an-OIDC-provider.md).
+The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](using-an-OIDC-provider.md).
 
 ### Service Account authentication
 
@@ -39,7 +39,7 @@ kubectl get -n default secret $(kubectl get -n default serviceaccount example -o
 
 ## Assigning Kubeapps User Roles
 
-The examples below demonstrate creating RBAC for a service account as it is easy to reproduce, but normally you would use the `--user` or `--grop` arg rather than `--serviceaccount` when creating the role bindings for users.
+The examples below demonstrate creating RBAC for a service account as it is easy to reproduce, but normally you would use the `--user` or `--group` arg rather than `--serviceaccount` when creating the role bindings for users.
 
 You can install a set of preset Roles and ClusterRoles in your cluster
 that you can bind to user or Service Accounts. Each Role and ClusterRole
