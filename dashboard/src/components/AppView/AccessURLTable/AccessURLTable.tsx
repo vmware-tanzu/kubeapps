@@ -78,9 +78,11 @@ function flattenIngresses(ingresses: Array<IKubeItem<IResource | IK8sList<IResou
 
 function getAnchors(URLs: string[]) {
   return URLs.map(URL => (
-    <a href={URL} target="_blank" rel="noopener noreferrer" key={URL}>
-      {URL}
-    </a>
+    <div className="margin-b-sm">
+      <a href={URL} target="_blank" rel="noopener noreferrer" key={URL}>
+        {URL}
+      </a>
+    </div>
   ));
 }
 
