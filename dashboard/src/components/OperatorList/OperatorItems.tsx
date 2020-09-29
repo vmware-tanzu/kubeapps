@@ -8,10 +8,9 @@ import { trimDescription } from "shared/utils";
 interface ICatalogItemsProps {
   operators: IResource[];
   cluster: string;
-  namespace: string;
 }
 
-export default function OperatorItems({ operators, cluster, namespace }: ICatalogItemsProps) {
+export default function OperatorItems({ operators, cluster }: ICatalogItemsProps) {
   if (operators.length === 0) {
     return <p>No operator matches the current filter.</p>;
   }
@@ -22,9 +21,13 @@ export default function OperatorItems({ operators, cluster, namespace }: ICatalo
         return (
           <InfoCard
             key={operator.metadata.name}
-            link={app.operators.view(cluster, namespace, operator.metadata.name)}
+            link={app.operators.view(cluster, operator.metadata.namespace, operator.metadata.name)}
             title={operator.metadata.name}
-            icon={api.operators.operatorIcon(cluster, namespace, operator.metadata.name)}
+            icon={api.operators.operatorIcon(
+              cluster,
+              operator.metadata.namespace,
+              operator.metadata.name,
+            )}
             info={`v${channel?.currentCSVDesc.version}`}
             tag1Content={operator.status.provider.name}
             description={trimDescription(channel?.currentCSVDesc.annotations.description || "")}
