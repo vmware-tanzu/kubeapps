@@ -132,6 +132,7 @@ exports[`when apps available matches the snapshot 1`] = `
               "name": "bar",
               "version": "1.0.0",
             },
+            "namespace": "bar",
             "releaseName": "foo",
             "status": "deployed",
           },

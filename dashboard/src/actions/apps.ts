@@ -244,7 +244,7 @@ export function fetchAppsWithUpdateInfo(
       dispatch(
         getAppUpdateInfo(
           cluster,
-          namespace,
+          app.namespace,
           app.releaseName,
           app.chartMetadata.name,
           app.chartMetadata.version,

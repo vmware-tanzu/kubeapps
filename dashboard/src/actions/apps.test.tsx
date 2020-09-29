@@ -63,6 +63,7 @@ describe("fetches applications", () => {
       const appsResponse = [
         {
           releaseName: "foobar",
+          namespace: "ns-1",
           chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
         },
       ];
@@ -94,6 +95,14 @@ describe("fetches applications", () => {
         },
       ];
       await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
+      // It should use the app namespace
+      expect(Chart.listWithFilters).toHaveBeenCalledWith(
+        "default-c",
+        "ns-1",
+        "foo",
+        "1.0.0",
+        "0.1.0",
+      );
       expect(store.getActions()).toEqual(expectedActions);
     });
 
