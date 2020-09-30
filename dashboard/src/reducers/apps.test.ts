@@ -17,7 +17,6 @@ describe("appsReducer", () => {
     initialState = {
       isFetching: false,
       items: [],
-      listingAll: false,
     };
   });
 
@@ -34,15 +33,13 @@ describe("appsReducer", () => {
 
     it("toggles the listAll state", () => {
       let state = appsReducer(undefined, {
-        payload: true,
         type: actionTypes.listApps as any,
       });
-      expect(state).toEqual({ ...initialState, isFetching: true, listingAll: true });
+      expect(state).toEqual({ ...initialState, isFetching: true });
       state = appsReducer(state, {
-        payload: false,
         type: actionTypes.listApps as any,
       });
-      expect(state).toEqual({ ...initialState, isFetching: true, listingAll: false });
+      expect(state).toEqual({ ...initialState, isFetching: true });
     });
 
     describe("receieveAppUpdateInfo", () => {

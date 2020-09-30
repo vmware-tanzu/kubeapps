@@ -22,9 +22,7 @@ export const receiveApps = createAction("RECEIVE_APPS", resolve => {
   return (apps: hapi.release.Release[]) => resolve(apps);
 });
 
-export const listApps = createAction("REQUEST_APP_LIST", resolve => {
-  return (listingAll: boolean) => resolve(listingAll);
-});
+export const listApps = createAction("REQUEST_APP_LIST");
 
 export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
   return (apps: IAppOverview[]) => resolve(apps);
@@ -215,15 +213,14 @@ export function deleteApp(
 export function fetchApps(
   cluster: string,
   ns?: string,
-  all: boolean = false,
 ): ThunkAction<Promise<IAppOverview[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
-    dispatch(listApps(all));
+    dispatch(listApps());
     try {
-      const apps = await App.listApps(cluster, ns, all);
+      const apps = await App.listApps(cluster, ns);
       dispatch(receiveAppList(apps));
       return apps;
     } catch (e) {
@@ -235,11 +232,10 @@ export function fetchApps(
 
 export function fetchAppsWithUpdateInfo(
   cluster: string,
-  namespace: string,
-  all: boolean = false,
+  namespaceOrAll: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    const apps = await dispatch(fetchApps(cluster, namespace, all));
+    const apps = await dispatch(fetchApps(cluster, namespaceOrAll));
     apps.forEach(app =>
       dispatch(
         getAppUpdateInfo(

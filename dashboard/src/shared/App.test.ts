@@ -24,22 +24,16 @@ describe("App", () => {
     [
       {
         description: "should request all the releases if no namespace is given",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/releases`,
+        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/releases?statuses=all`,
       },
       {
-        description: "should request the releases of a namespace",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/default/releases`,
-        namespace: "default",
-      },
-      {
-        all: true,
         description: "should request the releases of a namespace with any status",
         expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/default/releases?statuses=all`,
         namespace: "default",
       },
     ].forEach(t => {
       it(t.description, async () => {
-        expect(await App.listApps("defaultc", t.namespace, t.all)).toEqual(apps);
+        expect(await App.listApps("defaultc", t.namespace)).toEqual(apps);
         expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
       });
     });

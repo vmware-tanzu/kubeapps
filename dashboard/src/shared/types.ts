@@ -349,7 +349,6 @@ export interface IAppState {
   deleteError?: Error;
   // currently items are always Helm releases
   items: IRelease[];
-  listingAll: boolean;
   listOverview?: IAppOverview[];
   selected?: IRelease;
 }

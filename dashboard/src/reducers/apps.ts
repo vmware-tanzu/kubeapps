@@ -8,7 +8,6 @@ import { IAppState, IRelease } from "../shared/types";
 export const initialState: IAppState = {
   isFetching: false,
   items: [],
-  listingAll: false,
 };
 
 const appsReducer = (
@@ -27,7 +26,7 @@ const appsReducer = (
     case getType(actions.apps.selectApp):
       return { ...state, isFetching: false, selected: action.payload };
     case getType(actions.apps.listApps):
-      return { ...state, isFetching: true, listingAll: action.payload };
+      return { ...state, isFetching: true };
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.payload };
     case getType(actions.apps.requestAppUpdateInfo):
