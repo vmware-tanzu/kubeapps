@@ -16,7 +16,6 @@ beforeEach(() => {
   const state: IAppState = {
     isFetching: false,
     items: [],
-    listingAll: false,
   };
   store = mockStore({
     apps: {
@@ -37,25 +36,14 @@ describe("fetches applications", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  it("fetches all applications", async () => {
+  it("fetches applications", async () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps), payload: true },
+      { type: getType(actions.apps.listApps) },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default", true));
+    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default", true]);
-  });
-  it("fetches default applications", async () => {
-    const expectedActions = [
-      { type: getType(actions.apps.listApps), payload: false },
-      { type: getType(actions.apps.receiveAppList), payload: [] },
-    ];
-    await store.dispatch(
-      actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default-ns", false),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default-ns", false]);
+    expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default"]);
   });
 
   describe("fetches chart updates", () => {
@@ -63,6 +51,7 @@ describe("fetches applications", () => {
       const appsResponse = [
         {
           releaseName: "foobar",
+          namespace: "ns-1",
           chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
         },
       ];
@@ -77,7 +66,7 @@ describe("fetches applications", () => {
       Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
       App.listApps = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
-        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.listApps) },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
         { type: getType(actions.apps.requestAppUpdateInfo) },
         {
@@ -93,7 +82,15 @@ describe("fetches applications", () => {
           },
         },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
+      // It should use the app namespace
+      expect(Chart.listWithFilters).toHaveBeenCalledWith(
+        "default-c",
+        "ns-1",
+        "foo",
+        "1.0.0",
+        "0.1.0",
+      );
       expect(store.getActions()).toEqual(expectedActions);
     });
 
@@ -115,7 +112,7 @@ describe("fetches applications", () => {
       Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
       App.listApps = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
-        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.listApps) },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
         { type: getType(actions.apps.requestAppUpdateInfo) },
         {
@@ -131,7 +128,7 @@ describe("fetches applications", () => {
           },
         },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
       expect(store.getActions()).toEqual(expectedActions);
     });
 
@@ -151,7 +148,7 @@ describe("fetches applications", () => {
       Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
       App.listApps = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
-        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.listApps) },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
         { type: getType(actions.apps.requestAppUpdateInfo) },
         {
@@ -168,7 +165,7 @@ describe("fetches applications", () => {
           },
         },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
       expect(store.getActions()).toEqual(expectedActions);
     });
   });

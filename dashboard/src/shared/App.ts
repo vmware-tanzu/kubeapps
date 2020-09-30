@@ -82,13 +82,11 @@ export class App {
     return data;
   }
 
-  public static async listApps(cluster: string, namespace?: string, allStatuses?: boolean) {
+  public static async listApps(cluster: string, namespace?: string) {
     let endpoint = namespace
       ? url.kubeops.releases.list(cluster, namespace)
       : url.kubeops.releases.listAll(cluster);
-    if (allStatuses) {
-      endpoint += "?statuses=all";
-    }
+    endpoint += "?statuses=all";
     const { data } = await axiosWithAuth.get<{ data: IAppOverview[] }>(endpoint);
     return data.data;
   }

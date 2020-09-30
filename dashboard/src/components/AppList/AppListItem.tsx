@@ -52,7 +52,7 @@ function AppListItem(props: IAppListItemProps) {
   }
   return (
     <InfoCard
-      key={app.releaseName}
+      key={`${app.namespace}/${app.releaseName}`}
       link={url.app.apps.get(cluster, app.namespace, app.releaseName)}
       title={app.releaseName}
       icon={icon}

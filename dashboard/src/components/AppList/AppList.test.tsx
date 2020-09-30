@@ -149,6 +149,7 @@ context("when apps available", () => {
         listOverview: [
           {
             releaseName: "foo",
+            namespace: "bar",
             chartMetadata: {
               name: "bar",
               version: "1.0.0",
@@ -174,7 +175,7 @@ context("when apps available", () => {
     );
     const itemList = wrapper.find(AppListItem);
     expect(itemList).toExist();
-    expect(itemList.key()).toBe("foo");
+    expect(itemList.key()).toBe("bar/foo");
   });
 });
 
@@ -190,6 +191,7 @@ it("filters apps", () => {
             listOverview: [
               {
                 releaseName: "foo",
+                namespace: "foobar",
                 chartMetadata: {
                   name: "foobar",
                   version: "1.0.0",
@@ -199,6 +201,7 @@ it("filters apps", () => {
               } as IAppOverview,
               {
                 releaseName: "bar",
+                namespace: "foobar",
                 chartMetadata: {
                   name: "foobar",
                   version: "1.0.0",
@@ -215,7 +218,7 @@ it("filters apps", () => {
       ,
     </Router>,
   );
-  expect(wrapper.find(AppListItem).key()).toBe("bar");
+  expect(wrapper.find(AppListItem).key()).toBe("foobar/bar");
 });
 
 context("when custom resources available", () => {
