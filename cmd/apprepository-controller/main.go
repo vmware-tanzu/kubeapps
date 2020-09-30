@@ -69,7 +69,13 @@ func main() {
 
 	// We're interested in being informed about cronjobs in kubeapps namespace only, currently.
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(namespace))
-	apprepoInformerFactory := informers.NewSharedInformerFactory(apprepoClient, 0)
+	// Enable app repo scanning to be manually set to scan the kubeapps repo only. See #1923.
+	var apprepoInformerFactory informers.SharedInformerFactory
+	if reposPerNamespace {
+		apprepoInformerFactory = informers.NewSharedInformerFactory(apprepoClient, 0)
+	} else {
+		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, namespace, nil)
+	}
 
 	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory, namespace)
 
@@ -87,7 +93,7 @@ func init() {
 	flag.StringVar(&repoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
 	flag.StringVar(&repoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
-	flag.BoolVar(&reposPerNamespace, "repos-per-namespace", true, "UNUSED: This flag will be removed in a future release.")
+	flag.BoolVar(&reposPerNamespace, "repos-per-namespace", true, "DEPRECATED: This flag will be removed in a future release.")
 	flag.StringVar(&dbURL, "database-url", "localhost", "Database URL")
 	flag.StringVar(&dbUser, "database-user", "root", "Database user")
 	flag.StringVar(&dbName, "database-name", "charts", "Database name")
