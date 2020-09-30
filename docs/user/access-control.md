@@ -24,8 +24,7 @@ The most common and secure authentication for users to authenticate with the clu
 Alternatively, you can create Service Accounts for
 Kubeapps users. This is not recommended for production use as Kubernetes service accounts are not designed to be used by users. That said, it is often a quick way to test or demo a Kubeapps installation without needing to configure OpenID Connect.
 
-To create a Service Account for a user "example" in the "default" namespace, run
-the following:
+To create a Service Account for a user "example" in the "default" namespace, run the following:
 
 ```bash
 kubectl create -n default serviceaccount example
@@ -84,6 +83,8 @@ kubectl create -n ${KUBEAPPS_NAMESPACE} rolebinding example-kubeapps-repositorie
   --serviceaccount default:example
 ```
 
+> Note: There is also a cluster-role for just allowing people to read app repositories: `kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-read`.
+
 The above command command allows people to create app repositories in the Kubeapps namespace, these are called "Global Repositories" since they will be available in any namespace Kubeapps is available. In the other hand, it's also possible to create "Namespaced Repositories" that will be available just in a single namespace. For doing so, users need to have permissions to create app repositories in those namespaces. Read the next section to know how to create those roles.
 
 ### Assigning roles across multiple namespaces
@@ -97,7 +98,7 @@ kubectl create -n example rolebinding example-kubeapps-applications-write \
   --serviceaccount default:example
 ```
 
-If you want to give access for every namespace, simply create a ClusterRoleBinding instead of a RoleBinding. For example, to give the "example" user permissions to manage Applications in _any_ namespace. Again, be careful applying this ClusterRole because it also allow to read and write Secrets:
+If you want to give access for every namespace, simply create a ClusterRoleBinding instead of a RoleBinding. For example, we can give the "example" user permissions to manage Applications in _any_ namespace. Again, be careful applying this ClusterRole because it also allows to read and write Secrets:
 
 ```bash
 export KUBEAPPS_NAMESPACE=kubeapps
