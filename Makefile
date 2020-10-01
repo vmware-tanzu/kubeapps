@@ -7,7 +7,6 @@ VERSION ?= $$(git rev-parse HEAD)
 default: all
 
 include ./script/cluster-kind.mk
-include ./script/cluster-openshift.mk
 include ./script/deploy-dev.mk
 
 IMG_MODIFIER ?=
@@ -15,7 +14,7 @@ IMG_MODIFIER ?=
 GO_PACKAGES = ./...
 # GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 
-all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/tiller-proxy kubeapps/kubeops kubeapps/assetsvc kubeapps/asset-syncer
+all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubeapps/assetsvc kubeapps/asset-syncer
 
 # TODO(miguel) Create Makefiles per component
 kubeapps/%:
