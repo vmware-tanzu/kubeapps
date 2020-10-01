@@ -24,8 +24,7 @@ The most common and secure authentication for users to authenticate with the clu
 Alternatively, you can create Service Accounts for
 Kubeapps users. This is not recommended for production use as Kubernetes service accounts are not designed to be used by users. That said, it is often a quick way to test or demo a Kubeapps installation without needing to configure OpenID Connect.
 
-To create a Service Account for a user "example" in the "default" namespace, run
-the following:
+To create a Service Account for a user "example" in the "default" namespace, run the following:
 
 ```bash
 kubectl create -n default serviceaccount example
@@ -51,23 +50,19 @@ Kubeapps.
 
 #### Read access to Applications within a namespace
 
-In order to list and view Applications in a namespace, first we will create a `ClusterRole` with read-access to **all** the possible resources. In case you want
-to limit this access, create a custom cluster role or use one of the [default ones](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles). Then we will bind that cluster role to our service account.
+In order to list and view Applications in a namespace, we will use the [default ClusterRole for viewing resources](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles). Then we will bind that cluster role to our service account.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-applications-read.yaml
 kubectl create -n default rolebinding example-view \
-  --clusterrole=kubeapps-applications-read \
+  --clusterrole=view \
   --serviceaccount default:example
 ```
 
+This role should be enough to explore and discover the applications running in your cluster. It's certainly not enough for deploying new apps or managing app repositories.
+
 #### Write access to Applications within a namespace
 
-In order to create, update and delete Applications in a namespace, apply the
-`edit` ClusterRole in the desired namespace. The `edit` ClusterRole should be
-available in most Kubernetes distributions, you can find more information about
-that role
-[here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
+In order to create, update and delete Applications in a namespace, apply the`edit` ClusterRole in the desired namespace. The `edit` ClusterRole should be available in most Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```bash
 kubectl create -n default rolebinding example-edit \
@@ -75,58 +70,46 @@ kubectl create -n default rolebinding example-edit \
   --serviceaccount default:example
 ```
 
+With the `edit` role, a user will be able to deploy and manage most of the applications available but it will still not be able to create new application repositories.
+
 ### App Repositories
 
-#### Read access to App Repositories
-
-In order to list the configured App Repositories in Kubeapps, [bind users/groups Subjects](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#command-line-utilities) to the Kubeapps `apprepositories-read` clusterrole in the namespace Kubeapps was installed into by the helm chart.
+In order to manage Kubeapps app repositories, the `apprepositories-write` ClusterRole in the namespace Kubeapps is installed in is required. This cluster role include permissions to manage Kubernetes secrets in the namespace is installed (in order to manage app repository credentials) so treat it carefully:
 
 ```bash
 export KUBEAPPS_NAMESPACE=kubeapps
-kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
-  --clusterrole=kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read \
+kubectl create -n ${KUBEAPPS_NAMESPACE} rolebinding example-kubeapps-repositories-write \
+  --clusterrole=kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-write \
   --serviceaccount default:example
 ```
 
-#### Write access to App Repositories
+> Note: There is also a cluster-role for just allowing people to read app repositories: `kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-read`.
 
-Likewise to the read access bind users/group Subjects to the
-Kubeapps `apprepositories-write` ClusterRole in the namespace Kubeapps is installed in
-for users to create and refresh App Repositories in Kubeapps
-
-```bash
-export KUBEAPPS_NAMESPACE=kubeapps
-kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write \
-  --clusterrole=kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write \
-  --serviceaccount default:example
-```
+The above command command allows people to create app repositories in the Kubeapps namespace, these are called "Global Repositories" since they will be available in any namespace Kubeapps is available. On the other hand, it's also possible to create "Namespaced Repositories" that will be available just in a single namespace. For doing so, users need to have permissions to create app repositories in those namespaces. Read the next section to know how to create those roles.
 
 ### Assigning roles across multiple namespaces
 
-To give permissions in multiple namespaces, simply create the same RoleBindings
-in each namespace you want to configure access for. For example, to give the
-"example" user permissions to manage Applications in the "example" namespace:
+To give permissions in multiple namespaces, simply create the same RoleBindings in each namespace you want to configure access for. For example, to give the "example" user permissions to manage Applications in the "example" namespace:
 
 ```bash
-kubectl create -n example rolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-read --serviceaccount default:example
-kubectl create -n example rolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-write --serviceaccount default:example
+export KUBEAPPS_NAMESPACE=kubeapps
+kubectl create -n example rolebinding example-kubeapps-applications-write \
+  --clusterrole=kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-write \
+  --serviceaccount default:example
 ```
 
-Note that there's no need to recreate the RoleBinding in the namespace Kubeapps
-is installed in that is also needed, since that has already been created.
-
-If you want to give access for every namespace, simply create a
-ClusterRoleBinding instead of a RoleBinding. For example, to give the "example" user permissions to manage Applications in _any_ namespace:
+If you want to give access for every namespace, simply create a ClusterRoleBinding instead of a RoleBinding. For example, we can give the "example" user permissions to manage Applications in _any_ namespace. Again, be careful applying this ClusterRole because it also allows to read and write Secrets:
 
 ```bash
-kubectl create clusterrolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-read --serviceaccount default:example
-kubectl create clusterrolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-write --serviceaccount default:example
+export KUBEAPPS_NAMESPACE=kubeapps
+kubectl create clusterrolebinding example-kubeapps-applications-write \
+  --clusterrole=kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-write \
+  --serviceaccount default:example
 ```
 
 ## Using a cluster-admin user (not recommended)
 
-A simpler way to configure access for Kubeapps would be to give the user
-cluster-admin access (effectively disabling RBAC). This is not recommended, but
+A simpler way to configure access for Kubeapps would be to give the user cluster-admin access (effectively disabling RBAC). This is not recommended, but
 useful for quick demonstrations or evaluations.
 
 ```bash
