@@ -31,7 +31,6 @@ done
 # Uninstall Kubeapps
 info "Uninstalling Kubeapps in namespace '$namespace'..."
 silence helm uninstall kubeapps -n "$namespace"
-silence kubectl delete rolebinding example-kubeapps-repositories-read -n "$namespace"
 silence kubectl delete rolebinding example-kubeapps-repositories-write -n "$namespace"
 info "Deleting '$namespace' namespace..."
 silence kubectl delete ns "$namespace"
@@ -39,6 +38,4 @@ silence kubectl delete ns "$namespace"
 # Delete serviceAccount
 info "Deleting 'example' serviceAccount and related RBAC objects..."
 silence kubectl delete serviceaccount example --namespace default
-silence kubectl delete clusterrole kubeapps-applications-read
-silence kubectl delete rolebinding example-view
 silence kubectl delete rolebinding example-edit
