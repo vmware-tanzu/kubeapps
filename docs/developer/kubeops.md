@@ -11,14 +11,6 @@ The `kubeops` component is a micro-service that creates an API endpoint for acce
 - [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/). [Minikube](https://github.com/kubernetes/minikbue) is recommended.
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
-## Environment
-
-```bash
-export GOPATH=~/gopath
-export PATH=$GOPATH/bin:$PATH
-export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
-```
-
 ## Download the Kubeapps source code
 
 ```bash

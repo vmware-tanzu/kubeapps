@@ -12,14 +12,6 @@ The `assetsvc` component is a micro-service that creates an API endpoint for acc
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
-## Environment
-
-```bash
-export GOPATH=~/gopath
-export PATH=$GOPATH/bin:$PATH
-export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
-```
-
 ## Download the Kubeapps source code
 
 ```bash

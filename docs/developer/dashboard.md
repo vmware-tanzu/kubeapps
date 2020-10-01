@@ -14,13 +14,6 @@ The dashboard is the main UI component of the Kubeapps project. Written in Javas
 
 *Telepresence is not a hard requirement, but is recommended for a better developer experience*
 
-## Environment
-
-```bash
-export GOPATH=~/gopath
-export PATH=$GOPATH/bin:$PATH
-export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
-```
 ## Download the kubeapps source code
 
 ```bash
