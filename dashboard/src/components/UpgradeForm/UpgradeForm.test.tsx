@@ -103,6 +103,27 @@ it("fetches the available versions", () => {
   );
 });
 
+it("fetches the current chart version even if there is already one in the state", () => {
+  const deployed = {
+    chartVersion: {
+      attributes: {
+        version: "1.0.0",
+      },
+    },
+  } as any;
+  const getChartVersion = jest.fn();
+  mountWrapper(
+    defaultStore,
+    <UpgradeForm {...defaultProps} deployed={deployed} getChartVersion={getChartVersion} />,
+  );
+  expect(getChartVersion).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    defaultProps.repoNamespace,
+    `${defaultProps.repo}/${defaultProps.chartName}`,
+    deployed.chartVersion.attributes.version,
+  );
+});
+
 describe("renders an error", () => {
   it("renders an alert if the deployment failed", () => {
     const wrapper = mountWrapper(
