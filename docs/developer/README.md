@@ -17,9 +17,3 @@ Please refer to the [Kubeapps assetsvc Developer Guide](assetsvc.md) for the dev
 The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in the database. This metadata is then served by the `assetsvc` component.
 
 Please refer to the [Kubeapps asset-syncer Developer Guide](asset-syncer.md) for the developer setup.
-
-### tiller-proxy
-
-The `tiller-proxy` component is a service used both as a client for Tiller but also to provide a way to authorize users to deploy, upgrade and delete charts in different namespaces.
-
-Please refer to the [Kubeapps tiller-proxy Developer Guide](tiller-proxy.md) for the developer setup.

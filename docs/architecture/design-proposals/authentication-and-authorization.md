@@ -15,6 +15,8 @@ In order to make it easier to access Kubeapps, the Cluster Operator configures K
 
 Further, the company wants to restrict the ability to manage certain applications to certain teams. They create a restricted namespace for Team A, and only allow employees in that team to view, create and manage applications within that namespace by creating the appropriate RBAC roles. However, since Kubeapps uses its own Service Account and RBAC roles to access the Kubernetes API, all employees are able to view, create and manage applications in Team A's namespace, even if their Kubeconfig credentials restrict it.
 
+DEPRECATED: The following paragraph and parts of this document were part of the initial Kubeapps implementation, but there are serious security issue with using Kubernetes service tokens and/or Kubeconfig credentials for user login. We recommend using an auth-proxy in front of the Kubeapps frontend nginx that handles obtaining a short-lived user token via a standard single sign-on service. See [using an OIDC provider](../../user/using-an-OIDC-provider.md) for more information. The remainder of the document is left in place because aside from the credentials we do take advantage of the RBAC primitives.
+
 As described above, this is a solved problem in Kubernetes through the use of Kubeconfig credentials and RBAC roles. The Kubernetes Dashboard allows users to leverage their credentials and RBAC roles by providing a login form that accepts a bearer token. When a user is logged in with a token, all requests to the Kubernetes API are made using it. The Kubeapps Dashboard has very similar access mechanisms to the Kubernetes Dashboard, and I propose that we follow in their footsteps to enable authenticated and authorized access.
 
 ## Goals and Non-Goals
@@ -541,6 +543,6 @@ We will add documentation to describe how Kubeapps can be externally exposed. Th
 
 We will add documentation to describe how to put something like [oauth2_proxy](https://github.com/bitly/oauth2_proxy) in front of Kubeapps to enable an additional layer of authentication/authorization. With oauth2_proxy it is possible to configure login through a company's GitHub organization, Google domain, etc.
 
-After going through the oauth2 jump with the configured provider, the user will still need to login with an token to access the Kubernetes API. It may be possible to setup the proxy to forward the access token retrieved from the oauth2 jump so that Kubeapps can use it. See [https://github.com/kubernetes/dashboard/pull/1539](https://github.com/kubernetes/dashboard/pull/1539)
+Update: see [using an OIDC provider](../../user/using-an-OIDC-provider.md) for recommended auth-proxy configuration using various providers.
 
 ## Open Questions

@@ -44,9 +44,6 @@ make IMAGE_TAG=myver kubeapps/dashboard
 
 # to build the kubeapps/apprepository-controller docker image
 make IMAGE_TAG=myver kubeapps/apprepository-controller
-
-# to build the kubeapps/tiller-proxy docker image
-make IMAGE_TAG=myver kubeapps/tiller-proxy
 ```
 
 ## Running tests
@@ -68,7 +65,4 @@ make test-dashboard
 
 # to test the cmd/apprepository-controller package
 make test-apprepository-controller
-
-# to test the cmd/tiller-proxy package
-make test-tiller-proxy
 ```
