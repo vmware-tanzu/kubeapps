@@ -111,10 +111,20 @@ it("fetches the current chart version even if there is already one in the state"
       },
     },
   } as any;
+  const selected = {
+    version: { attributes: {}, relationships: { chart: { data: { repo: { name: "" } } } } },
+    versions: [{ id: "foo", attributes: {} }],
+  } as IChartState["selected"];
+
   const getChartVersion = jest.fn();
   mountWrapper(
     defaultStore,
-    <UpgradeForm {...defaultProps} deployed={deployed} getChartVersion={getChartVersion} />,
+    <UpgradeForm
+      {...defaultProps}
+      selected={selected}
+      deployed={deployed}
+      getChartVersion={getChartVersion}
+    />,
   );
   expect(getChartVersion).toHaveBeenCalledWith(
     defaultProps.cluster,
