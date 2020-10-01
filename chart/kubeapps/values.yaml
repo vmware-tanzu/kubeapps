@@ -32,8 +32,8 @@ enableIPv6: false
 #   apiServiceURL: https://second-cluster:6443
 #   # certificateAuthorityData is required for secure communication with the additional API server.
 #   certificateAuthorityData: LS0tLS1CRUdJ...
-#   # serviceToken is an optional token configured to allow LIST namespaces only on the additional cluster
-#   # so that the UI can present a list of (only) those namespaces to which the user has access.
+#   # serviceToken is an optional token configured to allow LIST namespaces and packagemanifests (operators) only on the additional cluster
+#   # so that the UI can present a list of (only) those namespaces to which the user has access and the available operators.
 #   serviceToken: ...
 clusters:
   - name: default

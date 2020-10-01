@@ -101,7 +101,7 @@ kubectl --kubeconfig ~/.kube/path-to-kube-confnig-file config view --raw -o json
 
 Alternatively, for a development with private API server URLs, you can omit the `certificateAuthorityData` and instead include the field `insecure: true` for a cluster and Kubeapps will not try to verify the secure connection.
 
-A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. The service token should be configured with RBAC so that it can only list namespaces on the cluster. You can refer to the [example used for a local development environment](/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
+A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can  list those resources. You can refer to the [example used for a local development environment](/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
 
 Your Kubeapps installation will also need to be [configured to use OIDC for authentication](/docs/user/using-an-OIDC-provider.md) with a client-id for your chosen provider.
 

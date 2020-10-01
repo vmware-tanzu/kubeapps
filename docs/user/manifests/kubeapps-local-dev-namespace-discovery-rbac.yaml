@@ -9,6 +9,13 @@ rules:
       - namespaces
     verbs:
       - list
+  - apiGroups:
+      - "packages.operators.coreos.com/v1"
+    resources:
+      - packagemanifests
+    verbs:
+      - list
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

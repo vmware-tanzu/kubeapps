@@ -177,27 +177,17 @@ type handler interface {
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
 type AuthHandler interface {
 	AsUser(token, cluster string) (handler, error)
-	AsSVC() handler
+	AsSVC(cluster string) (handler, error)
 }
 
-func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
-	config, err := NewClusterConfig(&a.config, token, cluster, a.clustersConfig)
-	if err != nil {
-		log.Errorf("unable to create config: %v", err)
-		return nil, err
-	}
-	clientset, err := a.clientsetForConfig(config)
-	if err != nil {
-		log.Errorf("unable to create clientset: %v", err)
-		return nil, err
-	}
-
+func (a *kubeHandler) svcClientSet(cluster string, config *rest.Config) (combinedClientsetInterface, error) {
 	// Just use the service clientset if we're on the default cluster, but otherwise
 	// create a new clientset using a configured service token for a specific cluster.
 	// This is used when requesting the namespaces for a cluster (to populate the selector)
 	// iff the users own credential does not suffice. If a service token is not configured
 	// for the cluster, the namespace selector remains unpopulated.
 	var svcClientset combinedClientsetInterface
+	var err error
 	if cluster == a.clustersConfig.KubeappsClusterName {
 		svcClientset = a.svcClientset
 	} else {
@@ -214,6 +204,26 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 			return nil, err
 		}
 	}
+	return svcClientset, nil
+}
+
+func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
+	config, err := NewClusterConfig(&a.config, token, cluster, a.clustersConfig)
+	if err != nil {
+		log.Errorf("unable to create config: %v", err)
+		return nil, err
+	}
+	clientset, err := a.clientsetForConfig(config)
+	if err != nil {
+		log.Errorf("unable to create clientset: %v", err)
+		return nil, err
+	}
+
+	svcClientset, err := a.svcClientSet(cluster, config)
+	if err != nil {
+		log.Errorf("unable to create svc clientset: %v", err)
+		return nil, err
+	}
 
 	return &userHandler{
 		kubeappsNamespace: a.kubeappsNamespace,
@@ -222,12 +232,20 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 	}, nil
 }
 
-func (a *kubeHandler) AsSVC() handler {
+func (a *kubeHandler) AsSVC(cluster string) (handler, error) {
+	config, err := NewClusterConfig(&a.config, "", cluster, a.clustersConfig)
+
+	svcClientset, err := a.svcClientSet(cluster, config)
+	if err != nil {
+		log.Errorf("unable to create svc clientset: %v", err)
+		return nil, err
+	}
+
 	return &userHandler{
 		kubeappsNamespace: a.kubeappsNamespace,
-		svcClientset:      a.svcClientset,
-		clientset:         a.svcClientset,
-	}
+		svcClientset:      svcClientset,
+		clientset:         svcClientset,
+	}, nil
 }
 
 // appRepositoryRequest is used to parse the JSON request
