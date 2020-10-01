@@ -10,14 +10,6 @@ This guide explains how to build Kubeapps.
 - [kubecfg](https://github.com/ksonnet/kubecfg)
 - [Docker CE](https://www.docker.com/community-edition)
 
-## Environment setup
-
-```bash
-export GOPATH=~/gopath
-export PATH=$GOPATH/bin:$PATH
-export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
-```
-
 ## Download kubeapps source code
 
 ```bash

@@ -12,14 +12,6 @@ The `asset-syncer` component is a tool that scans a Helm chart repository and po
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
-## Environment
-
-```bash
-export GOPATH=~/gopath
-export PATH=$GOPATH/bin:$PATH
-export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
-```
-
 ## Download the Kubeapps source code
 
 ```bash

@@ -14,14 +14,6 @@ The `apprepository-controller` is a Kubernetes controller for managing Helm char
 
 *Telepresence is not a hard requirement, but is recommended for a better developer experience*
 
-## Environment
-
-```bash
-export GOPATH=~/gopath
-export PATH=$GOPATH/bin:$PATH
-export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
-```
-
 ## Download the kubeapps source code
 
 ```bash
