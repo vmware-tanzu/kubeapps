@@ -41,7 +41,7 @@ function getDefaultChannel(packageStatus: IPackageManifestStatus) {
 
 function getCategories(packageStatus: IPackageManifestStatus) {
   const channel = getDefaultChannel(packageStatus);
-  return get(channel, "currentCSVDesc.annotations.categories", [])
+  return get(channel, "currentCSVDesc.annotations.categories", "Unknown")
     .split(",")
     .map((c: string) => c.trim());
 }

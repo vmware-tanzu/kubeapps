@@ -530,9 +530,27 @@ func TestDeleteAppRepository(t *testing.T) {
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  kubeappsNamespace,
 				svcClientset:       cs,
+				clustersConfig: ClustersConfig{
+					KubeappsClusterName: "cluster",
+					Clusters: map[string]ClusterConfig{
+						"cluster": {
+							Name:                     "cluster",
+							APIServiceURL:            "fake",
+							CertificateAuthorityData: "fake",
+							CAFile:                   "",
+							ServiceToken:             "fake",
+							Insecure:                 true,
+						},
+					},
+				},
 			}
 
-			err := handler.AsSVC().DeleteAppRepository(tc.repoName, tc.requestNamespace)
+			cli, err := handler.AsSVC("cluster")
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			err = cli.DeleteAppRepository(tc.repoName, tc.requestNamespace)
 
 			if got, want := errorCodeForK8sError(t, err), tc.expectedErrorCode; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
