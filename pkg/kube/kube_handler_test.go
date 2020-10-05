@@ -545,8 +545,12 @@ func TestDeleteAppRepository(t *testing.T) {
 				},
 			}
 
-			cli, _ := handler.AsSVC("cluster")
-			err := cli.DeleteAppRepository(tc.repoName, tc.requestNamespace)
+			cli, err := handler.AsSVC("cluster")
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			err = cli.DeleteAppRepository(tc.repoName, tc.requestNamespace)
 
 			if got, want := errorCodeForK8sError(t, err), tc.expectedErrorCode; got != want {
 				t.Errorf("got: %d, want: %d", got, want)

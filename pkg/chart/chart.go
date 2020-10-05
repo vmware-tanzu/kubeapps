@@ -291,7 +291,7 @@ func (c *Client) parseDetailsForHTTPClient(details *Details, userAuthToken strin
 		// AppRepositories are only allowed in the default cluster for the moment
 		client, err = c.appRepoHandler.AsSVC(c.kubeappsCluster)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
+			return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
 		}
 	}
 	appRepo, err := client.GetAppRepository(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
