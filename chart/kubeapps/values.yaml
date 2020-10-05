@@ -288,6 +288,10 @@ apprepository:
   ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   ##
   tolerations: {}
+  ## The controller watches all namespaces by default to support separate AppRepositories per namespace.
+  ## Switch this off only if you require running multiple instances of Kubeapps in different namespaces
+  ## without each instance watching AppRepositories of each other.
+  watchAllNamespaces: true
 
 ## Hooks are used to perform actions like populating apprepositories
 ## or creating required resources during installation or upgrade
