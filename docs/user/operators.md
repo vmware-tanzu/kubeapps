@@ -48,9 +48,9 @@ Once the Operator is installed it would be listed like that and after a minute o
 
   ![Installed Operators](../img/installed-operators.png)
 
-## Step 3: Deploy an Operator Instance
+## Step 3: Deploy Resources Managed by an Operator
 
-Now, available Operators are listed in the Catalog along with the existing Helm Charts:
+Now, available applications related to an Operator are listed in the Catalog along with the existing Helm Charts:
 
   ![Operators Catalog](../img/operator-catalog.png)
 
@@ -58,7 +58,7 @@ You can filter out Charts and select the Akka Cluster example. That would render
 
   ![Operator Form](../img/operator-form.png)
 
-Finally, when the instance gets deployed, after some minutes, you will be able to inspect its status and resources:
+Finally, when the application or resource gets deployed, after some minutes, you will be able to inspect its status and resources:
 
   ![Operator Instance View](../img/operator-instance-view.png)
 
