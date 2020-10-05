@@ -237,9 +237,15 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 // GetOperatorLogo return the list of namespaces
 func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		ns := mux.Vars(req)["namespace"]
 		name := mux.Vars(req)["name"]
-		logo, err := kubeHandler.AsSVC().GetOperatorLogo(ns, name)
+		ns, requestCluster := getNamespaceAndCluster(req)
+		clientset, err := kubeHandler.AsSVC(requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		logo, err := clientset.GetOperatorLogo(ns, name)
 		if err != nil {
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return

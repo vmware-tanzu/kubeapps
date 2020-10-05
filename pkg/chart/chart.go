@@ -288,7 +288,11 @@ func (c *Client) parseDetailsForHTTPClient(details *Details, userAuthToken strin
 	}
 	if details.AppRepositoryResourceNamespace == c.kubeappsNamespace {
 		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
-		client = c.appRepoHandler.AsSVC()
+		// AppRepositories are only allowed in the default cluster for the moment
+		client, err = c.appRepoHandler.AsSVC(c.kubeappsCluster)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
+		}
 	}
 	appRepo, err := client.GetAppRepository(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
 	if err != nil {
@@ -394,7 +398,7 @@ func getRegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, to
 			return nil, err
 		}
 
-		for key, _ := range dockerConfigJSON.Auths {
+		for key := range dockerConfigJSON.Auths {
 			secretsPerDomain[key] = secretName
 		}
 

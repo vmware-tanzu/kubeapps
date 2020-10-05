@@ -41,8 +41,8 @@ func (c *FakeHandler) AsUser(token, cluster string) (handler, error) {
 }
 
 // AsSVC fakes using current svcaccount
-func (c *FakeHandler) AsSVC() handler {
-	return c
+func (c *FakeHandler) AsSVC(cluster string) (handler, error) {
+	return c, nil
 }
 
 // ListAppRepositories fake
