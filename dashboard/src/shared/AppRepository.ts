@@ -5,8 +5,10 @@ import * as url from "./url";
 
 export class AppRepository {
   public static async list(cluster: string, namespace: string) {
-    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(cluster, namespace));
-    return data;
+    const {
+      data: { appRepository },
+    } = await axiosWithAuth.get(url.backend.apprepositories.list(cluster, namespace));
+    return appRepository;
   }
 
   public static async get(cluster: string, name: string, namespace: string) {
