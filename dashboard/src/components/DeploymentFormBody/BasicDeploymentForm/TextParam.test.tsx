@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { mount } from "enzyme";
 import { act } from "react-dom/test-utils";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IBasicFormParam } from "shared/types";
 import TextParam from "./TextParam";
 
@@ -188,10 +187,7 @@ it("should forward the proper value when using a select", () => {
 });
 
 it("a change in the param property should update the current value", () => {
-  const wrapper = mountWrapper(
-    defaultStore,
-    <TextParam {...stringProps} param={{ ...stringParam, value: "" }} />,
-  );
+  const wrapper = mount(<TextParam {...stringProps} param={{ ...stringParam, value: "" }} />);
   const input = wrapper.find("input");
   expect(input.prop("value")).toBe("");
 
@@ -201,5 +197,22 @@ it("a change in the param property should update the current value", () => {
       value: "foo",
     },
   });
-  expect(input.prop("value")).toBe("");
+  wrapper.update();
+  expect(wrapper.find("input").prop("value")).toBe("foo");
+});
+
+it("a change in a number param property should update the current value", () => {
+  const numberParam = { path: "replicas", value: 0, type: "number" } as IBasicFormParam;
+  const wrapper = mount(<TextParam {...stringProps} param={numberParam} />);
+  const input = wrapper.find("input");
+  expect(input.prop("value")).toBe(0);
+
+  wrapper.setProps({
+    param: {
+      ...numberParam,
+      value: 1,
+    },
+  });
+  wrapper.update();
+  expect(wrapper.find("input").prop("value")).toBe(1);
 });

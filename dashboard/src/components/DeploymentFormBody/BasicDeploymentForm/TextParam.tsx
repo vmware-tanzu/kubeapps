@@ -1,4 +1,4 @@
-import { isEmpty } from "lodash";
+import { isEmpty, isNumber } from "lodash";
 import React, { useEffect, useState } from "react";
 import { IBasicFormParam } from "shared/types";
 
@@ -35,7 +35,7 @@ function TextParam({ id, param, label, inputType, handleBasicFormParamChange }: 
   };
 
   useEffect(() => {
-    if (!isEmpty(param.value) && !valueModified) {
+    if ((isNumber(param.value) || !isEmpty(param.value)) && !valueModified) {
       setValue(param.value);
     }
   }, [valueModified, param.value]);
