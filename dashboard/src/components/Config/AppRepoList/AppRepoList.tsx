@@ -40,7 +40,11 @@ function AppRepoList({
       // TODO(andresmgot): It will likely fail fetching secrets
       dispatch(actions.repos.fetchRepos(kubeappsNamespace));
     } else {
-      dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+      if (namespace === definedNamespaces.all) {
+        dispatch(actions.repos.fetchRepos(namespace));
+      } else {
+        dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+      }
     }
   }, [dispatch, namespace, kubeappsNamespace, supportedCluster]);
 

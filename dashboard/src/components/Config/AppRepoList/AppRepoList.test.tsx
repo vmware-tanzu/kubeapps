@@ -5,6 +5,7 @@ import PageHeader from "components/PageHeader/PageHeader";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
+import { definedNamespaces } from "shared/Namespace";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
 import { AppRepoAddButton } from "./AppRepoButton";
@@ -54,6 +55,11 @@ it("fetches repos only from the kubeappsNamespace", () => {
     <AppRepoList {...defaultProps} namespace={defaultProps.kubeappsNamespace} />,
   );
   expect(actions.repos.fetchRepos).toHaveBeenCalledWith(defaultProps.kubeappsNamespace);
+});
+
+it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
+  mountWrapper(defaultStore, <AppRepoList {...defaultProps} namespace={definedNamespaces.all} />);
+  expect(actions.repos.fetchRepos).toHaveBeenCalledWith(definedNamespaces.all);
 });
 
 // TODO: Remove this test when app repos are supported in different clusters
