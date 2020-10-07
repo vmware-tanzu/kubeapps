@@ -7,6 +7,7 @@ import Table from "components/js/Table";
 import PageHeader from "components/PageHeader/PageHeader";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { definedNamespaces } from "shared/Namespace";
 import { app } from "shared/url";
 import { IAppRepository, IStoreState } from "../../../shared/types";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
@@ -169,11 +170,13 @@ function AppRepoList({
                 )}
                 {namespace !== kubeappsNamespace && (
                   <>
-                    <h3>Namespace Repositories: {namespace}</h3>
+                    <h3>
+                      Namespace Repositories:{" "}
+                      {namespace === definedNamespaces.all ? "All Namespaces" : namespace}
+                    </h3>
                     <p>
-                      Namespaced Repositories are available in the {namespace} namespace only. To
-                      switch to a different one, use the "Current Context" selector in the top
-                      navigation.
+                      Namespaced Repositories are available in their namespace only. To switch to a
+                      different one, use the "Current Context" selector in the top navigation.
                     </p>
                     {namespaceRepos.length ? (
                       <Table
