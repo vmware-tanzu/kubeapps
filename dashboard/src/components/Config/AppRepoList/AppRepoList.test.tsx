@@ -198,23 +198,6 @@ describe("global and namespaced repositories", () => {
     ).toExist();
   });
 
-  it("the repo control uses the proper namespace", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        repos: {
-          repos: [namespacedRepo],
-        },
-      }),
-      <AppRepoList {...defaultProps} namespace={definedNamespaces.all} />,
-    );
-    expect(
-      wrapper
-        .find(Table)
-        .find(AppRepoControl)
-        .prop("namespace"),
-    ).toBe(namespacedRepo.metadata.namespace);
-  });
-
   it("shows a link to the repo catalog", () => {
     const wrapper = mountWrapper(
       getStore({

@@ -99,7 +99,7 @@ function AppRepoList({
                 ownerRef => ownerRef.name === repo.metadata.name,
               ),
             )}
-            namespace={repo.metadata.namespace}
+            namespace={namespace}
             kubeappsNamespace={kubeappsNamespace}
           />
         ),

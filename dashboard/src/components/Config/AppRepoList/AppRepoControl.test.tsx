@@ -64,7 +64,7 @@ it("deletes the repo and refreshes list", async () => {
     await (confirmButton.prop("onClick") as any)();
   });
   expect(deleteRepo).toHaveBeenCalled();
-  expect(fetchRepos).toHaveBeenCalledWith(defaultProps.kubeappsNamespace);
+  expect(fetchRepos).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.kubeappsNamespace);
 });
 
 it("deletes the repo and refreshes list (in other namespace)", async () => {
@@ -87,6 +87,7 @@ it("deletes the repo and refreshes list (in other namespace)", async () => {
           },
         } as IAppRepository
       }
+      namespace="other"
     />,
   );
   const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
