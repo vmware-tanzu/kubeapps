@@ -125,6 +125,11 @@ export function setValue(values: string, path: string, newValue: any) {
   return doc.toString();
 }
 
+// parseValues returns a processed version of the values without modifying anything
+export function parseValues(values: string) {
+  return YAML.parseDocument(values).toString();
+}
+
 export function deleteValue(values: string, path: string) {
   const doc = YAML.parseDocument(values);
   const { splittedPath } = parsePathAndValue(doc, path);
