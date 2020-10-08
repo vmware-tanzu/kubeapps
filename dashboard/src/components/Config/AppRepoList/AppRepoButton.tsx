@@ -18,6 +18,8 @@ interface IAppRepoAddButtonProps {
   primary?: boolean;
   repo?: IAppRepository;
   secret?: ISecret;
+  disabled?: boolean;
+  title?: string;
 }
 
 export function AppRepoAddButton({
@@ -27,6 +29,8 @@ export function AppRepoAddButton({
   repo,
   secret,
   primary = true,
+  title,
+  disabled,
 }: IAppRepoAddButtonProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
@@ -69,7 +73,12 @@ export function AppRepoAddButton({
 
   return (
     <>
-      <CdsButton onClick={openModal} action={primary ? "solid" : "outline"}>
+      <CdsButton
+        onClick={openModal}
+        action={primary ? "solid" : "outline"}
+        disabled={disabled}
+        title={title}
+      >
         {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
         {text || "Add App Repository"}
       </CdsButton>

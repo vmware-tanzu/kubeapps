@@ -107,3 +107,19 @@ it("calls updateRepo when submitting and there is a repo available", () => {
   (wrapper.find(AppRepoForm).prop("onSubmit") as any)();
   expect(updateRepo).toHaveBeenCalled();
 });
+
+it("should disable the button if given", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoAddButton {...defaultProps} disabled={true} />,
+  );
+  expect(wrapper.find(CdsButton)).toBeDisabled();
+});
+
+it("should use the given title", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoAddButton {...defaultProps} title={"a title"} />,
+  );
+  expect(wrapper.find(CdsButton).prop("title")).toBe("a title");
+});

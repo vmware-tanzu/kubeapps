@@ -75,7 +75,7 @@ export const backend = {
   },
   apprepositories: {
     base: (cluster: string, namespace: string) =>
-      `api/v1/clusters/${cluster}/namespaces/${namespace}/apprepositories`,
+      `api/v1/clusters/${cluster}/${withNS(namespace)}apprepositories`,
     create: (cluster: string, namespace: string) =>
       backend.apprepositories.base(cluster, namespace),
     list: (cluster: string, namespace: string) => backend.apprepositories.base(cluster, namespace),

@@ -4,6 +4,7 @@ import { CdsButton } from "@clr/react/button";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { definedNamespaces } from "shared/Namespace";
 import { IAppRepository, ISecret, IStoreState } from "shared/types";
 import actions from "../../../actions";
 import ConfirmDialog from "../../ConfirmDialog/ConfirmDialog";
@@ -29,17 +30,21 @@ export function AppRepoControl({
   const closeModal = () => setModalOpen(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
-  const handleDeleteClick = (repoName: string, repoNamespace: string) => {
+  const handleDeleteClick = (repoName: string, repoNamespace: string, currentNamespace: string) => {
     return async () => {
       await dispatch(actions.repos.deleteRepo(repoName, repoNamespace));
-      if (repoNamespace !== kubeappsNamespace) {
+      if (currentNamespace !== kubeappsNamespace) {
         // Re-fetch repos in both namespaces because otherwise, the state
         // will be updated only with the repos of repoNamespace and removing
         // the global ones.
         // TODO(andresmgot): This can be refactored once hex UI is dropped
-        dispatch(actions.repos.fetchRepos(repoNamespace, kubeappsNamespace));
+        dispatch(actions.repos.fetchRepos(currentNamespace, kubeappsNamespace));
       } else {
-        dispatch(actions.repos.fetchRepos(repoNamespace));
+        if (currentNamespace === definedNamespaces.all) {
+          dispatch(actions.repos.fetchRepos(currentNamespace));
+        } else {
+          dispatch(actions.repos.fetchRepos(currentNamespace, kubeappsNamespace));
+        }
       }
       closeModal();
     };
@@ -59,7 +64,7 @@ export function AppRepoControl({
   return (
     <div className="apprepo-control-buttons">
       <ConfirmDialog
-        onConfirm={handleDeleteClick(repo.metadata.name, repo.metadata.namespace)}
+        onConfirm={handleDeleteClick(repo.metadata.name, repo.metadata.namespace, namespace)}
         modalIsOpen={modalIsOpen}
         loading={false}
         closeModal={closeModal}
@@ -67,7 +72,7 @@ export function AppRepoControl({
       />
 
       <AppRepoAddButton
-        namespace={namespace}
+        namespace={repo.metadata.namespace}
         kubeappsNamespace={kubeappsNamespace}
         text="Edit"
         repo={repo}
