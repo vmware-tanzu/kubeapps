@@ -99,13 +99,14 @@ function AppRepoList({
                 ownerRef => ownerRef.name === repo.metadata.name,
               ),
             )}
-            namespace={namespace}
+            namespace={repo.metadata.namespace}
             kubeappsNamespace={kubeappsNamespace}
           />
         ),
       };
     });
   };
+  const disableAddButton = namespace === definedNamespaces.all;
   return (
     <>
       <PageHeader
@@ -115,6 +116,12 @@ function AppRepoList({
             key="add-repo-button"
             namespace={namespace}
             kubeappsNamespace={kubeappsNamespace}
+            disabled={disableAddButton}
+            title={
+              disableAddButton
+                ? "Select a single namespace to create an Application Repository"
+                : ""
+            }
           />,
           <AppRepoRefreshAllButton key="refresh-all-button" />,
         ]}

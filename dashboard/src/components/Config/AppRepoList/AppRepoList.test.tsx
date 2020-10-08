@@ -198,6 +198,23 @@ describe("global and namespaced repositories", () => {
     ).toExist();
   });
 
+  it("the repo control uses the proper namespace", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        repos: {
+          repos: [namespacedRepo],
+        },
+      }),
+      <AppRepoList {...defaultProps} namespace={definedNamespaces.all} />,
+    );
+    expect(
+      wrapper
+        .find(Table)
+        .find(AppRepoControl)
+        .prop("namespace"),
+    ).toBe(namespacedRepo.metadata.namespace);
+  });
+
   it("shows a link to the repo catalog", () => {
     const wrapper = mountWrapper(
       getStore({
@@ -214,4 +231,15 @@ describe("global and namespaced repositories", () => {
         .prop("to"),
     ).toEqual("/c/default/ns/default-namespace/catalog?Repository=my-repo");
   });
+});
+
+it("disables the add repo button if there is not a namespace selected", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoList {...defaultProps} namespace={definedNamespaces.all} />,
+  );
+  expect(wrapper.find(AppRepoAddButton)).toBeDisabled();
+  expect(wrapper.find(AppRepoAddButton).prop("title")).toBe(
+    "Select a single namespace to create an Application Repository",
+  );
 });
