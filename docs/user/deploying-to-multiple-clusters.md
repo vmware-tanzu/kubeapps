@@ -144,7 +144,7 @@ Once the pods have cycled, Kubeapps will be ready with your new configured clust
 
 ### Updating through the Kubeapps UI
 
-As any other update, you can use the Kubeapp UI to configure the list of available cluster. To do so, just go to your Kubeapps application and click on the Upgrade button.
+As with any other update, you can use the Kubeapp UI to configure the list of available clusters. To do so, just go to your Kubeapps application and click on the Upgrade button.
 
 ![Upgrade button](../img/kubeapps-upgrade-button.png)
 
