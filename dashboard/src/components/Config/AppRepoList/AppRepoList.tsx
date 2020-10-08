@@ -79,7 +79,7 @@ function AppRepoList({
         name: (
           <Link
             to={
-              app.catalog(cluster, namespace) +
+              app.catalog(cluster, repo.metadata.namespace) +
               filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
             }
           >

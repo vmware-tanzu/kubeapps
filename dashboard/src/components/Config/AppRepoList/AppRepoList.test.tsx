@@ -231,6 +231,23 @@ describe("global and namespaced repositories", () => {
         .prop("to"),
     ).toEqual("/c/default/ns/default-namespace/catalog?Repository=my-repo");
   });
+
+  it("use the correct namespace in the link", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        repos: {
+          repos: [namespacedRepo],
+        },
+      }),
+      <AppRepoList {...defaultProps} namespace={definedNamespaces.all} />,
+    );
+    expect(
+      wrapper
+        .find(Table)
+        .find(Link)
+        .prop("to"),
+    ).toEqual("/c/default/ns/default-namespace/catalog?Repository=my-repo");
+  });
 });
 
 it("disables the add repo button if there is not a namespace selected", () => {
