@@ -142,6 +142,18 @@ then to modify the clusters configured for Kubeapps at some later point you will
 
 Once the pods have cycled, Kubeapps will be ready with your new configured clusters.
 
+### Updating through the Kubeapps UI
+
+As with any other update, you can use the Kubeapp UI to configure the list of available clusters. To do so, just go to your Kubeapps application and click on the Upgrade button.
+
+![Upgrade button](../img/kubeapps-upgrade-button.png)
+
+The clusters configuration cannot be changed in the form so we need to click on the YAML tab and add there the information. When you are done, click on the "Deploy" button to save the changes:
+
+![Upgrade update values](../img/kubeapps-update-values.png)
+
+When the application finishes its upgrade, refresh the page to re-request the new configuration.
+
 ## Running a local multi-cluster development environment
 
 You can run Kubeapps locally in a multi-cluster development environment from a linux environment (untested in other environments) with the following tools available:
