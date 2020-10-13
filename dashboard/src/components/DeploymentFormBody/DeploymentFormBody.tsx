@@ -5,7 +5,7 @@ import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
 import Alert from "components/js/Alert";
 import { isEqual } from "lodash";
-import { retrieveBasicFormParams, setValue } from "../../shared/schema";
+import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
@@ -40,7 +40,9 @@ function DeploymentFormBody({
 }: IDeploymentFormBodyProps) {
   const [basicFormParameters, setBasicFormParameters] = useState([] as IBasicFormParam[]);
   const [restoreModalIsOpen, setRestoreModalOpen] = useState(false);
-  const { version, versions, schema } = selected;
+  const [defaultValues, setDefaultValues] = useState("");
+
+  const { version, versions, schema, values } = selected;
 
   useEffect(() => {
     const params = retrieveBasicFormParams(appValues, schema);
@@ -48,6 +50,10 @@ function DeploymentFormBody({
       setBasicFormParameters(params);
     }
   }, [setBasicFormParameters, schema, appValues, basicFormParameters]);
+
+  useEffect(() => {
+    setDefaultValues(values || "");
+  }, [values]);
 
   const handleValuesChange = (value: string) => {
     setValues(value);
@@ -58,8 +64,12 @@ function DeploymentFormBody({
   };
 
   const handleBasicFormParamChange = (param: IBasicFormParam) => {
+    const parsedDefaultValues = parseValues(defaultValues);
     return (e: React.FormEvent<any>) => {
       setValuesModified();
+      if (parsedDefaultValues !== defaultValues) {
+        setDefaultValues(parsedDefaultValues);
+      }
       const value = getValueFromEvent(e);
       setBasicFormParameters(
         basicFormParameters.map(p => (p.path === param.path ? { ...param, value } : p)),
@@ -104,7 +114,7 @@ function DeploymentFormBody({
     <DifferentialTab
       key="differential-selector"
       deploymentEvent={deploymentEvent}
-      defaultValues={selected.values || ""}
+      defaultValues={defaultValues}
       deployedValues={deployedValues || ""}
       appValues={appValues}
     />,
@@ -122,7 +132,7 @@ function DeploymentFormBody({
     <DifferentialSelector
       key="differential-selector"
       deploymentEvent={deploymentEvent}
-      defaultValues={selected.values || ""}
+      defaultValues={defaultValues}
       deployedValues={deployedValues || ""}
       appValues={appValues}
     />,
