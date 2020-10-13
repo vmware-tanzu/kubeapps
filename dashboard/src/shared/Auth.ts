@@ -2,7 +2,6 @@ import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 import * as url from "shared/url";
 import { IConfig } from "./Config";
-import { definedNamespaces } from "./Namespace";
 
 const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
@@ -138,9 +137,9 @@ export class Auth {
   public static defaultNamespaceFromToken(token: string) {
     const payload = jwt.decode(token);
     const namespaceKey = "kubernetes.io/serviceaccount/namespace";
-    if (!payload || !payload[namespaceKey]) {
-      return definedNamespaces.all;
+    if (payload && payload[namespaceKey]) {
+      return payload[namespaceKey];
     }
-    return payload[namespaceKey];
+    return "";
   }
 }
