@@ -1,9 +1,10 @@
 import { ThunkAction } from "redux-thunk";
+import { definedNamespaces } from "shared/Namespace";
 import { ActionType, createAction } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
-import { clearClusters, NamespaceAction } from "./namespace";
+import { clearClusters, fetchNamespaces, NamespaceAction } from "./namespace";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
   return (authenticated: boolean, oidc: boolean, defaultNamespace: string) =>
@@ -36,7 +37,19 @@ export function authenticate(
         await Auth.validateToken(cluster, token);
       }
       Auth.setAuthToken(token, oidc);
-      dispatch(setAuthenticated(true, oidc, Auth.defaultNamespaceFromToken(token)));
+      // TODO(andresmgot): This is a workaround while #2018 gets properly implemented.
+      // If the current sa is not associated to a namespace, list all namespaces and pick
+      // one.
+      let ns = Auth.defaultNamespaceFromToken(token);
+      if (!ns) {
+        const availableNamespaces = await dispatch(fetchNamespaces(cluster));
+        if (availableNamespaces.length) {
+          ns = availableNamespaces[0];
+        } else {
+          ns = definedNamespaces.all;
+        }
+      }
+      dispatch(setAuthenticated(true, oidc, ns));
       if (oidc) {
         dispatch(setSessionExpired(false));
       }
@@ -85,7 +98,7 @@ export function checkCookieAuthentication(
     dispatch(authenticating());
     const isAuthed = await Auth.isAuthenticatedWithCookie(cluster);
     if (isAuthed) {
-      dispatch(authenticate(cluster, "", true));
+      await dispatch(authenticate(cluster, "", true));
     } else {
       dispatch(setAuthenticated(false, false, ""));
     }

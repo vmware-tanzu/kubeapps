@@ -19,7 +19,7 @@ describe("authReducer", () => {
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
-      defaultNamespace: "_all",
+      defaultNamespace: "",
     };
   });
 
@@ -40,7 +40,7 @@ describe("authReducer", () => {
             payload: { authenticated: e, oidc: false, defaultNamespace: "" },
             type: actionTypes.setAuthenticated as any,
           }),
-        ).toEqual({ ...initialState, authenticated: e });
+        ).toEqual({ ...initialState, authenticated: e, defaultNamespace: "_all" });
       });
     });
 
@@ -85,12 +85,13 @@ describe("authReducer", () => {
       expect(
         authReducer(initialState, {
           type: actionTypes.setAuthenticated as any,
-          payload: { authenticated: true, oidc: true, defaultNamespace: "" },
+          payload: { authenticated: true, oidc: true, defaultNamespace: "_all" },
         }),
       ).toEqual({
         ...initialState,
         authenticated: true,
         oidcAuthenticated: true,
+        defaultNamespace: "_all",
       });
     });
 

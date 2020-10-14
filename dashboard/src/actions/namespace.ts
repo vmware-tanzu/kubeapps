@@ -43,15 +43,16 @@ export type NamespaceAction = ActionType<typeof allActions[number]>;
 
 export function fetchNamespaces(
   cluster: string,
-): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+): ThunkAction<Promise<string[]>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
       const namespaceList = await Namespace.list(cluster);
       const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
       dispatch(receiveNamespaces(cluster, namespaceStrings));
+      return namespaceStrings;
     } catch (e) {
       dispatch(errorNamespaces(cluster, e, "list"));
-      return;
+      return [];
     }
   };
 }
