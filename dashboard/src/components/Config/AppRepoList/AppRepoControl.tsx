@@ -40,7 +40,7 @@ export function AppRepoControl({
         // TODO(andresmgot): This can be refactored once hex UI is dropped
         dispatch(actions.repos.fetchRepos(currentNamespace, kubeappsNamespace));
       } else {
-        if (currentNamespace === definedNamespaces.all) {
+        if (currentNamespace === definedNamespaces.all || currentNamespace === kubeappsNamespace) {
           dispatch(actions.repos.fetchRepos(currentNamespace));
         } else {
           dispatch(actions.repos.fetchRepos(currentNamespace, kubeappsNamespace));
