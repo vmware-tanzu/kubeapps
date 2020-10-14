@@ -108,6 +108,38 @@ it("deletes the repo and refreshes list (in other namespace)", async () => {
   expect(fetchRepos).toHaveBeenCalledWith("other", defaultProps.kubeappsNamespace);
 });
 
+it("deletes the repo and refreshes list (for the kubeapps namespace)", async () => {
+  const deleteRepo = jest.fn();
+  const fetchRepos = jest.fn();
+  actions.repos = {
+    ...actions.repos,
+    deleteRepo,
+    fetchRepos,
+  };
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoControl {...defaultProps} namespace={defaultProps.kubeappsNamespace} />,
+  );
+  const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
+  act(() => {
+    (deleteButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+  expect(wrapper.find(ConfirmDialog).find(Modal)).toIncludeText(
+    "Are you sure you want to delete the repository",
+  );
+  const confirmButton = wrapper
+    .find(ConfirmDialog)
+    .find(Modal)
+    .find(CdsButton)
+    .filterWhere(b => b.text() === "Delete");
+  await act(async () => {
+    await (confirmButton.prop("onClick") as any)();
+  });
+  expect(deleteRepo).toHaveBeenCalled();
+  expect(fetchRepos).toHaveBeenCalledWith(defaultProps.kubeappsNamespace);
+});
+
 it("refreshes the repo", () => {
   const resyncRepo = jest.fn();
   actions.repos = {
