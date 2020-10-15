@@ -89,26 +89,6 @@
           "title": "Enable OIDC proxy",
           "description": "Use an OIDC provider in order to manage accounts, groups and roles with a single application"
         },
-        "provider": {
-          "type": "string",
-          "form": true,
-          "title": "Identity Provider name",
-          "description": "See https://pusher.github.io/oauth2_proxy/auth-configuration to find available providers",
-          "hidden": {
-            "value": false,
-            "path": "authProxy/enabled"
-          }
-        },
-        "clientID": {
-          "type": "string",
-          "form": true,
-          "title": "Client ID:",
-          "description": "Client ID of the Identity Provider",
-          "hidden": {
-            "value": false,
-            "path": "authProxy/enabled"
-          }
-        },
         "clientSecret": {
           "type": "string",
           "form": true,
@@ -124,6 +104,16 @@
           "form": true,
           "title": "Cookie Secret",
           "description": "Used by OAuth2 Proxy to encrypt any credentials",
+          "hidden": {
+            "value": false,
+            "path": "authProxy/enabled"
+          }
+        },
+        "clientID": {
+          "type": "string",
+          "form": true,
+          "title": "Discovery URL:",
+          "description": "Discovery URL to retrieve the openid configuration",
           "hidden": {
             "value": false,
             "path": "authProxy/enabled"

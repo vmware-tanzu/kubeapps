@@ -557,17 +557,17 @@ authProxy:
   ## Overridable flags for OAuth URIs to which the Kubeapps frontend redirects for authn.
   ## Useful when serving Kubeapps under a sub path or using an external auth proxy.
   ##
-  oauthLoginURI: /oauth2/start
-  oauthLogoutURI: /oauth2/sign_out
+  oauthLoginURI: /oauth/login
+  oauthLogoutURI: /oauth/logout
   ## The remaining auth proxy values are relevant only if an internal auth-proxy is
   ## being configured by Kubeapps.
-  ## Bitnami OAuth2 Proxy image
-  ## ref: https://hub.docker.com/r/bitnami/oauth2-proxy/tags/
+  ## Louketo Proxy image
+  ## ref: https://quay.io/repository/louketo/louketo-proxy?tag=latest&tab=tags
   ##
   image:
-    registry: docker.io
-    repository: bitnami/oauth2-proxy
-    tag: 6.1.1-debian-10-r12
+    registry: quay.io
+    repository: louketo/louketo-proxy
+    tag: 1.0.0
     ## Specify a imagePullPolicy
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
@@ -575,25 +575,23 @@ authProxy:
 
   ## Mandatory parameters for the internal auth-proxy.
   ##
-  provider: ""
   clientID: ""
   clientSecret: ""
-  ## cookieSecret is used by oauth2-proxy to encrypt any credentials so that it requires
+  ## Discovery URL to retrieve the openid configuration, example:
+  ## https://keycloak.example.org/auth/realms/example
+  discoveryURL: ""
+  ## cookieSecret is used by louketo-proxy to encrypt any credentials so that it requires
   ## no storage. Note that it must be a particular number of bytes. Recommend using the
   ## following to generate a cookieSecret as per the oauth2 configuration documentation
-  ## at https://pusher.github.io/oauth2_proxy/configuration :
+  ## at https://github.com/louketo/louketo-proxy/blob/master/docs/user-guide.md :
   ## python -c 'import os,base64; print base64.urlsafe_b64encode(os.urandom(16))'
   cookieSecret: ""
-  ## Use "example.com" to restrict logins to emails from example.com
-  emailDomain: "*"
-  ## Additional flags for oauth2-proxy
+  ## Additional flags for louketo-proxy
   ##
   additionalFlags: []
-  # - --ssl-insecure-skip-verify
-  # - --cookie-secure=false
-  # - --scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform
-  # - --oidc-issuer-url=https://accounts.google.com # Only needed if provider is oidc
-  ## OAuth2 Proxy containers' resource requests and limits
+  # - --secure-cookie=false
+  # - --scopes=openid+email+groups
+  ## Louketo Proxy containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
   resources:
