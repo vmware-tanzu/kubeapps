@@ -18,20 +18,20 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
+For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps).
 
 The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to execute. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
 
 ## Step 2: Create a demo credential with which to access Kubeapps and Kubernetes
 
-For any user-facing installation you should [configure an OAuth2/OIDC provider](using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster, but this is quite an overhead to simply try out Kubeapps. Instead, for a simpler way to try out Kubeapps for personal learning, we can create a Kubernetes service account and use that API token to authenticate with the Kubernetes API server via Kubeapps:
+For any user-facing installation you should [configure an OAuth2/OIDC provider](../using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster, but this is quite an overhead to simply try out Kubeapps. Instead, for a simpler way to try out Kubeapps for personal learning, we can create a Kubernetes service account and use that API token to authenticate with the Kubernetes API server via Kubeapps:
 
 ```bash
 kubectl create serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
 ```
 
-> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](/docs/user/access-control.md) documentation to configure fine-grained access control for users.
+> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](../access-control.md) documentation to configure fine-grained access control for users.
 
 To retrieve the token,
 
@@ -78,7 +78,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 ![Dashboard main page](../img/dashboard-home.png)
 
-***Note:*** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
+***Note:*** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps).
 
 ## Step 4: Deploy WordPress
 
@@ -119,8 +119,7 @@ If you want to uninstall/delete your WordPress application, you can do so by cli
 
 Learn more about Kubeapps with the links below:
 
-- [Detailed installation instructions](../../chart/kubeapps/README.md)
-- [Deploying Operators](./operators.md)
-- [Kubeapps Dashboard documentation](dashboard.md)
-- [Kubeapps components](../architecture/overview.md)
+- [Detailed installation instructions](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps)
+- [Deploying Operators](../operators.md)
+- [Kubeapps Dashboard documentation](../dashboard.md)
 - [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
