@@ -3,7 +3,6 @@
 FROM golang:1.13 as builder
 WORKDIR /go/src/github.com/kubeapps/kubeapps
 COPY go.mod go.sum ./
-COPY vendor vendor
 COPY pkg pkg
 COPY cmd cmd
 # With the trick below, Go's build cache is kept between builds.
