@@ -79,3 +79,19 @@ it("should add a second label with the app update available", () => {
   const tooltip = wrapper.find(Tooltip);
   expect(tooltip.text()).toBe("New App Version: 1.1.0");
 });
+
+it("doesn't include a double v prefix", () => {
+  const props = {
+    ...defaultProps,
+    app: {
+      ...defaultProps.app,
+      chartMetadata: {
+        name: "foo",
+        appVersion: "v1.0.0",
+      },
+      updateInfo: {},
+    },
+  } as IAppListItemProps;
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  expect(wrapper.find("span").findWhere(s => s.text() === "App: foo v1.0.0")).toExist();
+});

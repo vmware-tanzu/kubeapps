@@ -60,7 +60,9 @@ function AppListItem(props: IAppListItemProps) {
         <div>
           <span>
             App: {app.chartMetadata.name}{" "}
-            {app.chartMetadata.appVersion ? `v${app.chartMetadata.appVersion}` : ""}
+            {app.chartMetadata.appVersion
+              ? `v${app.chartMetadata.appVersion.replace(/^v/, "")}`
+              : ""}
           </span>
           <br />
           <span>Chart: {app.chartMetadata.version}</span>
