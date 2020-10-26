@@ -71,7 +71,7 @@ replaceImage() {
 updateRepo() {
     local targetRepo=${1:?}
     local targetTag=${2:?}
-    local targetTagWithoutV=${targetTag/v/}
+    local targetTagWithoutV=${targetTag#v}
     local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
     if [ ! -f "${chartYaml}" ]; then
