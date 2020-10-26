@@ -29,6 +29,7 @@ const sampleResourceRef = {
 } as ResourceRef;
 
 const deployment = {
+  kind: "Deployment",
   metadata: {
     name: "foo",
   },
@@ -134,4 +135,45 @@ it("renders a table with an error", () => {
   const row = data[0];
   expect(row.name).toEqual("foo");
   expect(wrapper.text()).toContain("Error: Boom!");
+});
+
+it("do not fail if the resources are already populated but the refs not yet", () => {
+  const state = getStore({
+    kube: {
+      items: {
+        "deployment-foo": {
+          isFetching: false,
+          item: deployment as IResource,
+        },
+      },
+    },
+  });
+  const wrapper = mountWrapper(state, <ResourceTable {...defaultProps} resourceRefs={[]} />);
+  expect(wrapper.find(Table)).not.toExist();
+});
+
+it("renders the table with two entries with a list reference", () => {
+  const state = getStore({
+    kube: {
+      items: {
+        "deployment-foo": {
+          isFetching: false,
+          item: {
+            items: [
+              deployment as IResource,
+              { ...deployment, metadata: { name: "bar" } } as IResource,
+            ],
+          },
+        },
+      },
+    },
+  });
+  const wrapper = mountWrapper(
+    state,
+    <ResourceTable
+      {...defaultProps}
+      resourceRefs={[{ ...sampleResourceRef, name: "" } as ResourceRef]}
+    />,
+  );
+  expect(wrapper.find(Table).prop("data")).toHaveLength(2);
 });

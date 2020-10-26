@@ -83,17 +83,25 @@ function ResourceTable({ id, title, resourceRefs }: IResourceTableProps) {
     flattenResources(resourceRefs, state.kube.items),
   );
 
-  const columns = useMemo(() => getColumns(resourceRefs[0]), [resourceRefs]);
+  const columns = useMemo(
+    () => (resourceRefs.length ? getColumns(resourceRefs[0]) : OtherResourceColumns),
+    [resourceRefs],
+  );
   const data = useMemo(
     () =>
-      resources.map((resource, index) =>
-        getData(
-          resourceRefs[index].name,
-          columns.map(c => c.accessor),
-          columns.map(c => c.getter),
-          resource,
-        ),
-      ),
+      resources.map((resource, index) => {
+        // When the resourceRef is a list, the list of references will be just one
+        const ref = resourceRefs.length === 1 ? resourceRefs[0] : resourceRefs[index];
+        if (ref) {
+          return getData(
+            ref.name,
+            columns.map(c => c.accessor),
+            columns.map(c => c.getter),
+            resource,
+          );
+        }
+        return {};
+      }),
     [columns, resourceRefs, resources],
   );
 
