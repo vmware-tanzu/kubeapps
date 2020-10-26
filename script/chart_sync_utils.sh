@@ -71,6 +71,7 @@ replaceImage() {
 updateRepo() {
     local targetRepo=${1:?}
     local targetTag=${2:?}
+    local targetTagWithoutV=${targetTag#v}
     local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
     if [ ! -f "${chartYaml}" ]; then
@@ -80,7 +81,7 @@ updateRepo() {
     rm -rf "${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
     # Update Chart.yaml with new version
-    sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTag}"'/g' "${chartYaml}"
+    sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTagWithoutV}"'/g' "${chartYaml}"
     rm "${targetChartPath}/Chart.yaml.bk"
     # Replace images for the latest available
     replaceImage dashboard "${targetChartPath}/values.yaml"
