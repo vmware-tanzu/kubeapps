@@ -91,7 +91,7 @@ function ResourceTable({ id, title, resourceRefs }: IResourceTableProps) {
     () =>
       resources.map((resource, index) => {
         // When the resourceRef is a list, the list of references will be just one
-        const ref = resourceRefs[index] || resourceRefs[0];
+        const ref = resourceRefs.length === 1 ? resourceRefs[0] : resourceRefs[index];
         if (ref) {
           return getData(
             ref.name,
