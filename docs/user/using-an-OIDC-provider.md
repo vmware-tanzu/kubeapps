@@ -89,7 +89,7 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.clientID=my-client-id.apps.googleusercontent.com \
   --set authProxy.clientSecret=my-client-secret \
   --set authProxy.cookieSecret=$(echo "not-good-secret" | base64) \
-  --set authProxy.additionalFlags="{-cookie-secure=false,-oidc-issuer-url=https://accounts.google.com}" \
+  --set authProxy.additionalFlags="{--cookie-secure=false,--oidc-issuer-url=https://accounts.google.com}" \
 ```
 
 **Example 2: Using a custom oauth2-proxy provider**
@@ -106,7 +106,7 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.clientID=my-client-id.apps.googleusercontent.com \
   --set authProxy.clientSecret=my-client-secret \
   --set authProxy.cookieSecret=$(echo "not-good-secret" | base64) \
-  --set authProxy.additionalFlags="{-cookie-secure=false}"
+  --set authProxy.additionalFlags="{--cookie-secure=false}"
 ```
 
 **Example 3: Authentication for Kubeapps on a GKE cluster**
@@ -127,7 +127,7 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.clientID=my-client-id.apps.googleusercontent.com \
   --set authProxy.clientSecret=my-client-secret \
   --set authProxy.cookieSecret=$(echo "not-good-secret" | base64) \
-  --set authProxy.additionalFlags="{-cookie-secure=false,-scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform}" \
+  --set authProxy.additionalFlags="{--cookie-secure=false,--scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform}" \
   --set frontend.proxypassAccessTokenAsBearer=true
 ```
 
