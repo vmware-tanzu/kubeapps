@@ -166,7 +166,7 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
       .concat(
         allIngresses.map(ingress => {
           return {
-            url: ingress.item ? getAnchors(GetURLItemFromIngress(ingress.item).URLs) : "Unkown",
+            url: ingress.item ? getAnchors(GetURLItemFromIngress(ingress.item).URLs) : "Unknown",
             type: "Ingress",
             notes: ingress.error ? (
               <span>Error: {ingress.error.message}</span>
