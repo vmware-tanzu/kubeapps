@@ -95,14 +95,14 @@ function AppUpgrade({
     }
   }, [getDeployedChartVersion, app, chart, repoName, repoNamespace, cluster]);
 
-  if (appsError) {
-    return (
-      <Alert theme="danger">
-        An error occurred while processing the application: {appsError.message}
-      </Alert>
-    );
-  }
   if (appsIsFetching || !app || !app.updateInfo) {
+    if (!app && appsError) {
+      return (
+        <Alert theme="danger">
+          An error occurred while processing the application: {appsError.message}
+        </Alert>
+      );
+    }
     return <LoadingWrapper loaded={false} />;
   }
 
@@ -125,6 +125,7 @@ function AppUpgrade({
           deployed={deployed}
           upgradeApp={upgradeApp}
           push={push}
+          error={appsError}
           fetchChartVersions={fetchChartVersions}
           getChartVersion={getChartVersion}
         />

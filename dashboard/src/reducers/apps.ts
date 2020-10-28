@@ -39,10 +39,6 @@ const appsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveDeployApp):
       return { ...state, isFetching: false };
-    case getType(actions.apps.requestUpgradeApp):
-      return { ...state, isFetching: true };
-    case getType(actions.apps.receiveUpgradeApp):
-      return { ...state, isFetching: false };
     case getType(actions.apps.requestRollbackApp):
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveRollbackApp):
