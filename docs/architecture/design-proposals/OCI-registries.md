@@ -4,4 +4,4 @@ The goal of this document is to evaluate what’s needed to support OCI registri
 
 ## Design overview
 
-You can find the [design doc here](https://docs.google.com/document/d/1-6cKxOsW6K5u3lK7Om2zQeVYVPxzHT6dVwej5wy3_9A/edit).
+You can find the [design doc here](https://docs.google.com/document/d/1-9mAdNhu_Hue8ZmCywXQbNEOLhC1-IABQ36zk_Ua1SM/edit).
