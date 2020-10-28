@@ -67,7 +67,7 @@ function getData(
     });
     return data;
   }
-  data[accessors[1]] = <span>Unkown</span>;
+  data[accessors[1]] = <span>Unknown</span>;
   return;
 }
 
