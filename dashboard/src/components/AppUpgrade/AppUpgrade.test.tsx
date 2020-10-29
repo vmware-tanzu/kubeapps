@@ -147,6 +147,37 @@ context("when an error exists", () => {
         .text(),
     ).toContain("Chart repositories not found");
   });
+
+  it("still renders the upgrade form even if there is an upgrade error", () => {
+    const repo = {
+      metadata: { name: "stable" },
+    } as IAppRepository;
+    const upgradeError = new Error("foo upgrade failed");
+    const wrapper = shallow(
+      <AppUpgrade
+        {...defaultProps}
+        upgradeError={upgradeError}
+        repos={[repo]}
+        repo={repo}
+        app={
+          {
+            chart: {
+              metadata: {
+                name: "bar",
+                version: "1.0.0",
+              },
+            },
+            name: "foo",
+            updateInfo: { repository: {} },
+          } as IRelease
+        }
+        repoName="foobar"
+      />,
+    );
+
+    expect(wrapper.find(UpgradeForm)).toExist();
+    expect(wrapper.find(UpgradeForm).prop("error")).toEqual(upgradeError);
+  });
 });
 
 it("renders the upgrade form when the repo is available", () => {
