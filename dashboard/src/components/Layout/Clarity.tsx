@@ -32,7 +32,7 @@ import {
 import "@clr/core/icon/register.js";
 import * as React from "react";
 
-import "../../clr-ui.min.css";
+import "../../../node_modules/@clr/ui/clr-ui.min.css";
 
 Icons.addIcons(
   angleIcon,
