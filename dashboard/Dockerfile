@@ -5,8 +5,7 @@ COPY package.json yarn.lock /app/
 RUN yarn install --frozen-lockfile
 
 RUN mkdir /app/src
-RUN curl -L https://unpkg.com/@bitnami/hex@3.2.0/dist/hex.min.css > /app/src/hex.min.css
-RUN curl -L https://unpkg.com/@clr/ui@4.0.1/clr-ui.min.css > /app/src/clr-ui.min.css
+RUN curl -L https://unpkg.com/@clr/ui@4.0.1/clr-ui.min.css > /app/node_modules/@clr/ui/clr-ui.min.css
 COPY . /app
 RUN yarn run prettier-check && yarn run ts-compile-check
 RUN yarn run build
