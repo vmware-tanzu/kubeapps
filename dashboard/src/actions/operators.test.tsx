@@ -348,7 +348,6 @@ describe("getResources", () => {
         customresourcedefinitions: {},
       },
     };
-    // const resource = { metadata: { name: "resource" } };
     Operators.getCSVs = jest.fn().mockReturnValue([csv]);
     Operators.listResources = jest.fn();
     const expectedActions = [
