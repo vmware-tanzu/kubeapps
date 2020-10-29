@@ -186,7 +186,7 @@ function UpgradeForm({
         />
         {isDeploying && (
           <h3 className="center" style={{ marginBottom: "1.2rem" }}>
-            Hang tight, the application is being deployed...
+            The application is being upgraded, please wait...
           </h3>
         )}
         <LoadingWrapper loaded={!isDeploying}>

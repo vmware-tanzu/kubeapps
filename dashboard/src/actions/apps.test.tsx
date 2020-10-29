@@ -260,7 +260,7 @@ describe("deploy chart", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestDeployApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorCreateApp),
         payload: new UnprocessableEntity(
           "Namespace not selected. Please select a namespace using the selector in the top right corner.",
         ),
@@ -286,7 +286,7 @@ describe("deploy chart", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestDeployApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorCreateApp),
         payload: new UnprocessableEntity(
           "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
         ),
@@ -333,7 +333,7 @@ describe("upgradeApp", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestUpgradeApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorUpgradeApp),
         payload: new Error("Boom!"),
       },
     ];
@@ -361,7 +361,7 @@ describe("upgradeApp", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestUpgradeApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorUpgradeApp),
         payload: new UnprocessableEntity(
           "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
         ),
@@ -399,7 +399,7 @@ describe("rollbackApp", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestRollbackApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorRollbackApp),
         payload: new Error("Boom!"),
       },
     ];

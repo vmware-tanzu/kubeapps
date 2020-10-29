@@ -20,7 +20,7 @@ function RollbackButton({ cluster, namespace, releaseName, revision }: IRollback
   const [modalIsOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const error = useSelector((state: IStoreState) => state.apps.error);
+  const error = useSelector((state: IStoreState) => state.apps.rollbackError);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
   const handleRollback = async (r: number) => {

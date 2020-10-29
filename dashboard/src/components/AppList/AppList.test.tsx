@@ -116,7 +116,7 @@ context("when fetched but not apps available", () => {
 
 context("when an error is present", () => {
   beforeEach(() => {
-    props = { ...defaultProps, apps: { error: new Error("Boom!") } };
+    props = { ...defaultProps, apps: { getError: new Error("Boom!") } };
   });
 
   it("matches the snapshot", () => {

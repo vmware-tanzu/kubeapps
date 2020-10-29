@@ -345,7 +345,10 @@ export interface IClusterServiceVersion extends IResource {
 
 export interface IAppState {
   isFetching: boolean;
-  error?: Error;
+  getError?: Error;
+  createError?: Error;
+  upgradeError?: Error;
+  rollbackError?: Error;
   deleteError?: Error;
   // currently items are always Helm releases
   items: IRelease[];

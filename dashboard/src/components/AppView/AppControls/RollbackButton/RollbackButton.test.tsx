@@ -55,7 +55,7 @@ it("rolls back an application", async () => {
 });
 
 it("renders an error", async () => {
-  const store = getStore({ apps: { error: new Error("Boom!") } });
+  const store = getStore({ apps: { rollbackError: new Error("Boom!") } });
   const wrapper = mountWrapper(store, <RollbackButton {...defaultProps} />);
   // Open modal
   act(() => {

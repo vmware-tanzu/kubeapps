@@ -50,7 +50,19 @@ export const requestRollbackApp = createAction("REQUEST_ROLLBACK_APP");
 
 export const receiveRollbackApp = createAction("RECEIVE_ROLLBACK_APP_CONFIRMATION");
 
-export const errorApps = createAction("ERROR_APPS", resolve => {
+export const errorGetApp = createAction("ERROR_GET_APP", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+export const errorCreateApp = createAction("ERROR_CREATE_APP", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+export const errorUpgradeApp = createAction("ERROR_UPGRADE_APP", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+export const errorRollbackApp = createAction("ERROR_ROLLBACK_APP", resolve => {
   return (err: Error) => resolve(err);
 });
 
@@ -77,7 +89,10 @@ const allActions = [
   receiveUpgradeApp,
   requestRollbackApp,
   receiveRollbackApp,
-  errorApps,
+  errorGetApp,
+  errorCreateApp,
+  errorUpgradeApp,
+  errorRollbackApp,
   errorDeleteApp,
   selectApp,
 ];
@@ -96,7 +111,7 @@ export function getApp(
       dispatch(selectApp(app));
       return app;
     } catch (e) {
-      dispatch(errorApps(e));
+      dispatch(errorGetApp(e));
       return;
     }
   };
@@ -185,7 +200,7 @@ export function getAppWithUpdateInfo(
         );
       }
     } catch (e) {
-      dispatch(errorApps(e));
+      dispatch(errorGetApp(e));
     }
   };
 }
@@ -224,7 +239,7 @@ export function fetchApps(
       dispatch(receiveAppList(apps));
       return apps;
     } catch (e) {
-      dispatch(errorApps(e));
+      dispatch(errorGetApp(e));
       return [];
     }
   };
@@ -291,7 +306,7 @@ export function deployChart(
       dispatch(receiveDeployApp());
       return true;
     } catch (e) {
-      dispatch(errorApps(e));
+      dispatch(errorCreateApp(e));
       return false;
     }
   };
@@ -324,7 +339,7 @@ export function upgradeApp(
       dispatch(receiveUpgradeApp());
       return true;
     } catch (e) {
-      dispatch(errorApps(e));
+      dispatch(errorUpgradeApp(e));
       return false;
     }
   };
@@ -344,7 +359,7 @@ export function rollbackApp(
       dispatch(getAppWithUpdateInfo(cluster, namespace, releaseName));
       return true;
     } catch (e) {
-      dispatch(errorApps(e));
+      dispatch(errorRollbackApp(e));
       return false;
     }
   };

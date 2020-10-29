@@ -12,7 +12,8 @@ export interface IAppUpgradeProps {
   app?: IRelease;
   appsIsFetching: boolean;
   chartsIsFetching: boolean;
-  appsError: Error | undefined;
+  getError?: Error;
+  upgradeError?: Error;
   namespace: string;
   cluster: string;
   releaseName: string;
@@ -53,7 +54,8 @@ function AppUpgrade({
   app,
   appsIsFetching,
   chartsIsFetching,
-  appsError,
+  getError,
+  upgradeError,
   namespace,
   cluster,
   releaseName,
@@ -95,14 +97,11 @@ function AppUpgrade({
     }
   }, [getDeployedChartVersion, app, chart, repoName, repoNamespace, cluster]);
 
+  if (getError) {
+    return <Alert theme="danger">Unable to retrieve the current app: {getError.message}</Alert>;
+  }
+
   if (appsIsFetching || !app || !app.updateInfo) {
-    if (!app && appsError) {
-      return (
-        <Alert theme="danger">
-          An error occurred while processing the application: {appsError.message}
-        </Alert>
-      );
-    }
     return <LoadingWrapper loaded={false} />;
   }
 
@@ -125,7 +124,7 @@ function AppUpgrade({
           deployed={deployed}
           upgradeApp={upgradeApp}
           push={push}
-          error={appsError}
+          error={upgradeError}
           fetchChartVersions={fetchChartVersions}
           getChartVersion={getChartVersion}
         />

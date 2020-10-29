@@ -22,7 +22,7 @@ function mapStateToProps({ apps, kube, config }: IStoreState, { match: { params 
     app: apps.selected,
     deleteError: apps.deleteError,
     resources: kube.items,
-    error: apps.error,
+    error: apps.getError,
     cluster: params.cluster,
     namespace: params.namespace,
     releaseName: params.releaseName,
