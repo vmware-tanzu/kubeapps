@@ -135,6 +135,36 @@ describe("IsURL", () => {
       expected: false,
     },
     {
+      description: "it should return true to a simple url (https)",
+      fullURL: "https://wordpress.local/example-test",
+      expected: true,
+    },
+    {
+      description: "it should return false to a 'rfc-ilegal' url with a regex (https)",
+      fullURL: "https://wordpress.local/example-bad(/|$)(.*)",
+      expected: false,
+    },
+    {
+      description: "it should return false to a 'rfc-legal' url with a regex (https)",
+      fullURL: "https://wordpress.local/example-bad/[a-z]+",
+      expected: false,
+    },
+    {
+      description: "it should return true to a simple url (host is ip)",
+      fullURL: "http://1.1.1.1/example-test",
+      expected: true,
+    },
+    {
+      description: "it should return false to a 'rfc-ilegal' url with a regex (host is ip)",
+      fullURL: "http://1.1.1.1/example-bad(/|$)(.*)",
+      expected: false,
+    },
+    {
+      description: "it should return false to a 'rfc-legal' url with a regex (host is ip)",
+      fullURL: "http://1.1.1.1/example-bad/[a-z]+",
+      expected: false,
+    },
+    {
       description: "it should return false to a 'rfc-legal' url with a regex",
       fullURL: "http://wordpress.local/example-bad/*",
       expected: false,
