@@ -1257,6 +1257,11 @@
     css-vars-ponyfill "^2.3.2"
     normalize.css "^8.0.1"
 
+"@clr/icons@^4.0.4":
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/@clr/icons/-/icons-4.0.4.tgz#36e447116940eed708a915e4f9a1d8ce3390dc06"
+  integrity sha512-1snMF963n5CTWhE3FKbk/sLsGMGastLqzyRDT4YjNt4H/9b3sv+z9svkoptmUK8j+m52ByORcnKtf8711XDNHQ==
+
 "@clr/react@^4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@clr/react/-/react-4.0.1.tgz#7c1921cb41c2a12151b16b41bc43fef6ffee9f0d"
@@ -1268,10 +1273,10 @@
     "@clr/city" "^1.1.0"
     normalize.css "^8.0.1"
 
-"@clr/ui@^2.3.4":
-  version "2.4.4"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-2.4.4.tgz#f120dfa5f440634e556db14bbebe596488cfba6a"
-  integrity sha512-u164Mkwb7Jb4nwQhF1r28rEEqNbnVIAnrAsG/4ef1LrHGOJCFychswXTNYy8f9zpNixX6GZwgq6TzIrFGsRcfw==
+"@clr/ui@^4.0.1":
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-4.0.4.tgz#dcdeb012abe99bd0873867ffb83a98d328b64dcf"
+  integrity sha512-9lCtH/PkUZaZDKj2PsIxOC7he4PXrbpJCsUC8gcQZm7sYNLRcHPBEaUAPHAA7SBf+6+v4UxogAZ/N9/lnPndDg==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
