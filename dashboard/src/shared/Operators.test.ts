@@ -55,14 +55,14 @@ it("get csvs", async () => {
   );
 });
 
-it("get global csvs", async () => {
+it("get csvs in all namespaces", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "_all";
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [csv] } });
   expect(await Operators.getCSVs(cluster, ns)).toEqual([csv]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    "api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/namespaces/operators/clusterserviceversions",
+    "api/clusters/defaultc/apis/operators.coreos.com/v1alpha1/clusterserviceversions",
   );
 });
 
