@@ -10,7 +10,7 @@ import { flattenResources } from "shared/utils";
 import LoadingWrapper from "../../../components/LoadingWrapper/LoadingWrapper";
 import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "../../../shared/types";
 import isSomeResourceLoading from "../helpers";
-import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressHelper";
+import { GetURLItemFromIngress, IsURL } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 
 interface IAccessURLTableProps {
@@ -77,18 +77,34 @@ function flattenIngresses(ingresses: Array<IKubeItem<IResource | IK8sList<IResou
 }
 
 function getAnchors(URLs: string[]) {
-  return URLs.map(URL => (
+  return URLs.map(URL => getAnchor(URL));
+}
+
+function getAnchor(URL: string) {
+  return (
     <div className="margin-b-sm">
       <a href={URL} target="_blank" rel="noopener noreferrer" key={URL}>
         {URL}
       </a>
     </div>
-  ));
+  );
+}
+
+function getSpan(URL: string) {
+  return (
+    <div className="margin-b-sm">
+      <span>{URL}</span>
+    </div>
+  );
+}
+
+function getUnknown() {
+  return <span>Unknown</span>;
 }
 
 function getNotes(resource?: IResource) {
   if (!resource) {
-    return <span>Unknown</span>;
+    return getUnknown;
   }
   const ips: Array<{ ip: string }> = get(resource, "status.loadBalancer.ingress", []);
   if (ips.length) {
@@ -166,7 +182,13 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
       .concat(
         allIngresses.map(ingress => {
           return {
-            url: ingress.item ? getAnchors(GetURLItemFromIngress(ingress.item).URLs) : "Unknown",
+            url: ingress.item
+              ? GetURLItemFromIngress(ingress.item).URLs.map(
+                  // check whether each URL is, indeed, a valid URL.
+                  // If so, render the <a>, othersiwe, render a simple <span>
+                  url => (IsURL(url) ? getAnchor(url) : getSpan(url)),
+                )
+              : [getUnknown()], // render a simple span with "unknown"
             type: "Ingress",
             notes: ingress.error ? (
               <span>Error: {ingress.error.message}</span>

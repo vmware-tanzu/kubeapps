@@ -457,7 +457,11 @@ exports[`when the app contains resources with errors displays the error 1`] = `
                     could not find Ingress
                   </span>,
                   "type": "Ingress",
-                  "url": "Unknown",
+                  "url": Array [
+                    <span>
+                      Unknown
+                    </span>,
+                  ],
                 },
               ]
             }
@@ -517,7 +521,11 @@ exports[`when the app contains resources with errors displays the error 1`] = `
                         could not find Ingress
                       </span>,
                       "type": "Ingress",
-                      "url": "Unknown",
+                      "url": Array [
+                        <span>
+                          Unknown
+                        </span>,
+                      ],
                     }
                   }
                 >
@@ -526,7 +534,9 @@ exports[`when the app contains resources with errors displays the error 1`] = `
                       className=""
                       key="0-url"
                     >
-                      Unknown
+                      <span>
+                        Unknown
+                      </span>
                     </td>
                     <td
                       className=""
