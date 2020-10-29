@@ -96,6 +96,26 @@ it("renders the repo selection form if not introduced", () => {
 });
 
 context("when an error exists", () => {
+  it("renders a generic error message", () => {
+    const repo = {
+      metadata: { name: "stable" },
+    } as IAppRepository;
+    const wrapper = shallow(
+      <AppUpgrade
+        {...defaultProps}
+        getError={new Error("foo does not exist")}
+        repos={[repo]}
+        repo={repo}
+      />,
+    );
+
+    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(SelectRepoForm)).not.toExist();
+    expect(wrapper.find(UpgradeForm)).not.toExist();
+
+    expect(wrapper.html()).toContain("foo does not exist");
+  });
+
   it("renders a warning message if there are no repositories", () => {
     const wrapper = mountWrapper(
       defaultStore,
