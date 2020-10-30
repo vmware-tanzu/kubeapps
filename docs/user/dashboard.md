@@ -1,6 +1,6 @@
 # Using the Dashboard
 
-Once you have [installed Kubeapps in your cluster](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps) you can use the Dashboard to start managing and deploying applications in your cluster. Checkout the [Getting Started](../getting-started.md) guide to learn how to access the Dashboard and deploy your first application.
+Once you have [installed Kubeapps in your cluster](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps) you can use the Dashboard to start managing and deploying applications in your cluster. Checkout the [Getting Started](./getting-started.md) guide to learn how to access the Dashboard and deploy your first application.
 
 The following sections walk you through some common tasks with the Kubeapps Dashboard.
 
@@ -42,6 +42,6 @@ By default, Kubeapps comes with the Bitnami repository enabled. You can see the 
 
 ![Repositories List](../img/dashboard-repos.png)
 
-Add new repositories (for example, your organization's chart repository) by clicking the "Add App Repository" button. Fill the "Add Repository" form using the repository info. For a detailed guide of how to add app repositories, check [this guide](../private-app-repository.md).
+Add new repositories (for example, your organization's chart repository) by clicking the "Add App Repository" button. Fill the "Add Repository" form using the repository info. For a detailed guide of how to add app repositories, check [this guide](./private-app-repository.md).
 
 ![Adding repository](../img/dashboard-add-repo.png)
