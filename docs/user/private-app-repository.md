@@ -90,7 +90,7 @@ It is possible to configure ChartMuseum to use authentication with two different
 
 [Harbor](https://github.com/goharbor/harbor) is an open source trusted cloud native registry project that stores, signs, and scans content, e.g. Docker images. Harbor is hosted by the [Cloud Native Computing Foundation](https://cncf.io/). Since version 1.6.0, Harbor is a composite cloud native registry which supports both container image management and Helm chart management. Harbor integrates [ChartMuseum](https://chartmuseum.com) to provide the Helm chart repository functionality. The access to Helm Charts in a Harbor Chart Repository can be controlled via Role-Based Access Control.
 
-To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://github.com/goharbor/harbor/blob/master/docs/installation_guide.md#downloading-the-installer)):
+To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.1.0/install-config/download-installer/)):
 
 <img src="../img/harbor-chart.png" alt="Harbor Chart" width="300px">
 
@@ -139,7 +139,7 @@ Click 'UPLOAD' button to upload the Helm chart you previously created. You can a
 
 <img src="../img/harbor-upload-chart.png" width="500px">
 
-Please refer to ['Manage Helm Charts in Harbor'](https://github.com/goharbor/harbor/blob/master/docs/user_guide.md#manage-helm-charts) for more details.
+Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.1.0/working-with-projects/working-with-images/managing-helm-charts) for more details.
 
 ### Harbor: Configure the repository in Kubeapps
 
