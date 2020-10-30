@@ -207,11 +207,17 @@ context("when the app contains ingresses", () => {
       <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} />,
     );
     expect(wrapper.find("Table")).toExist();
-    expect(
-      wrapper.find("a").findWhere(a => a.prop("href") === "http://foo.bar/ready(/|$)(.*)"),
-    ).not.toExist();
-    expect(wrapper.find("span").first()).toHaveText("http://foo.bar/ready(/|$)(.*)");
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.find("a")).not.toExist();
+    const matchingSpans = wrapper.find("span").findWhere(s =>
+      s
+        .render()
+        .text()
+        .includes("foo.bar/ready"),
+    );
+    expect(matchingSpans).not.toHaveLength(0);
+    matchingSpans.forEach(element => {
+      expect(element.text()).toEqual("http://foo.bar/ready(/|$)(.*)");
+    });
   });
 });
 
