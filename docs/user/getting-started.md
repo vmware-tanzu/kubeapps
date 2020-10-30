@@ -119,7 +119,7 @@ If you want to uninstall/delete your WordPress application, you can do so by cli
 
 Learn more about Kubeapps with the links below:
 
-- [Detailed installation instructions](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps)
-- [Deploying Operators](../operators.md)
-- [Kubeapps Dashboard documentation](../dashboard.md)
+- [Detailed installation instructions](../../chart/kubeapps/README.md)
+- [Deploying Operators](./operators.md)
+- [Kubeapps Dashboard documentation](./dashboard.md)
 - [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
