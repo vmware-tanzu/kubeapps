@@ -4,10 +4,9 @@ This guide explains how to setup your environment to test Kubeapps integration w
 
 ## Background
 
-Kubeapps can be integrated with other services to extend its capabilities. Find more information about these integrations in the links below:
+Kubeapps can be integrated with other services to extend its capabilities. Find more information about these integrations in the link below:
 
 - [Using Private App Repositories with Kubeapps](../user/private-app-repository.md).
-- [Kubernetes Service Catalog Kubeapps Integration](../user/service-catalog.md).
 
 This guide aims to provide the instructions to easily setup the environment to test these integrations.
 
