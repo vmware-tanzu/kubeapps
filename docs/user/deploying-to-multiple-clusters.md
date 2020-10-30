@@ -20,7 +20,7 @@ To use the multi-cluster support in Kubeapps, you must first setup your clusters
 
 ### Configuring your Kubernetes API servers for OIDC
 
-The multi-cluster feature requires that each of your Kubernetes API servers trusts the same OpenID Connect provider, whether that be a specific commercial OAuth2 provider such as Google, Azure or Github, or an instance of [Dex](https://github.com/dexidp/dex/blob/master/Documentation/kubernetes.md). After you have selected your OIDC provider you will need to configure at least one OAuth2 client to use. For example, if you are using Dex, you could use the following Dex configuration to create a single client id which can be used by your API servers:
+The multi-cluster feature requires that each of your Kubernetes API servers trusts the same OpenID Connect provider, whether that be a specific commercial OAuth2 provider such as Google, Azure or Github, or an instance of [Dex](https://dexidp.io/docs/kubernetes/). After you have selected your OIDC provider you will need to configure at least one OAuth2 client to use. For example, if you are using Dex, you could use the following Dex configuration to create a single client id which can be used by your API servers:
 
 ```yaml
   staticClients:
@@ -66,7 +66,7 @@ kubectl -n kube-system get po kube-apiserver-kubeapps-control-plane -o yaml | gr
     - '--oidc-username-prefix=oidc:'
 ```
 
-For more information about configuring Kubeapps, as opposed to the Kubernetes API server itself, with various OIDC providers see [Using an OIDC provider](../using-an-OIDC-provider.md). Similarly, the logs of the Kubeapps frontend `auth-proxy` container will provide more details for debugging authentication requests from Kubeapps itself.
+For more information about configuring Kubeapps, as opposed to the Kubernetes API server itself, with various OIDC providers see [Using an OIDC provider](./using-an-OIDC-provider.md). Similarly, the logs of the Kubeapps frontend `auth-proxy` container will provide more details for debugging authentication requests from Kubeapps itself.
 
 ## A Kubeapps Configuration example
 
@@ -103,7 +103,7 @@ Alternatively, for a development with private API server URLs, you can omit the 
 
 A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can  list those resources. You can refer to the [example used for a local development environment](https://github.com/kubeapps/kubeapps/tree/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
 
-Your Kubeapps installation will also need to be [configured to use OIDC for authentication](../using-an-OIDC-provider.md) with a client-id for your chosen provider.
+Your Kubeapps installation will also need to be [configured to use OIDC for authentication](./using-an-OIDC-provider.md) with a client-id for your chosen provider.
 
 ## Clusters with different client-ids
 
