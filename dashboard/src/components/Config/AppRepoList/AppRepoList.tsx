@@ -22,6 +22,7 @@ export interface IAppRepoListProps {
   namespace: string;
   kubeappsCluster: string;
   kubeappsNamespace: string;
+  appVersion: string;
 }
 
 function AppRepoList({
@@ -29,6 +30,7 @@ function AppRepoList({
   namespace,
   kubeappsCluster,
   kubeappsNamespace,
+  appVersion,
 }: IAppRepoListProps) {
   const dispatch = useDispatch();
   // We do not currently support app repositories on additional clusters.
@@ -101,6 +103,7 @@ function AppRepoList({
             )}
             namespace={namespace}
             kubeappsNamespace={kubeappsNamespace}
+            appVersion={appVersion}
           />
         ),
       };
@@ -116,6 +119,7 @@ function AppRepoList({
             key="add-repo-button"
             namespace={namespace}
             kubeappsNamespace={kubeappsNamespace}
+            appVersion={appVersion}
             disabled={disableAddButton}
             title={
               disableAddButton

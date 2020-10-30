@@ -36,6 +36,7 @@ afterEach(() => {
 const defaultProps = {
   namespace: "default",
   kubeappsNamespace: "kubeapps",
+  appVersion: "DEVEL",
 };
 
 it("should open a modal with the repository form", () => {

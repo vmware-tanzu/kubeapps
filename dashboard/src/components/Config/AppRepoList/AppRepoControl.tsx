@@ -16,6 +16,7 @@ interface IAppRepoListItemProps {
   namespace: string;
   kubeappsNamespace: string;
   secret?: ISecret;
+  appVersion: string;
 }
 
 export function AppRepoControl({
@@ -23,6 +24,7 @@ export function AppRepoControl({
   repo,
   secret,
   kubeappsNamespace,
+  appVersion,
 }: IAppRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,6 +80,7 @@ export function AppRepoControl({
         repo={repo}
         secret={secret}
         primary={false}
+        appVersion={appVersion}
       />
 
       <CdsButton
