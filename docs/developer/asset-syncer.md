@@ -8,7 +8,7 @@ The `asset-syncer` component is a tool that scans a Helm chart repository and po
 - [Make](https://www.gnu.org/software/make/)
 - [Go programming language](https://golang.org/dl/)
 - [Docker CE](https://www.docker.com/community-edition)
-- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/). [Minikube](https://github.com/kubernetes/minikbue) is recommended.
+- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/). [Minikube](https://github.com/kubernetes/minikbue) is recommended.
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
