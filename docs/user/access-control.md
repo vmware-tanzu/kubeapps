@@ -17,7 +17,7 @@ Two of the most common authentication strategies for providing a token identifyi
 
 ### OpenID Connect authentication
 
-The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](../using-an-OIDC-provider.md).
+The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](./using-an-OIDC-provider.md).
 
 ### Service Account authentication
 
