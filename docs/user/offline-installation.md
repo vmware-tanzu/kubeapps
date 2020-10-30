@@ -46,7 +46,7 @@ You will need to follow a similar process for every image present in the values 
 
 By default, Kubeapps install the `bitnami` App Repository. Since, in order to sync that repository, it's necessary to have Internet connection, you will need to mirror it or create your own repository (e.g. using Harbor) and configure it when installing Kubeapps.
 
-For more information about how to create a private repository, follow this [guide](../private-app-repository.md).
+For more information about how to create a private repository, follow this [guide](./private-app-repository.md).
 
 ## 4. Install Kubeapps
 
