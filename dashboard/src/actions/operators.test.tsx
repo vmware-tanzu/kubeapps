@@ -340,6 +340,36 @@ describe("getResources", () => {
     await store.dispatch(operatorActions.getResources("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("ignores csv without owned crds", async () => {
+    const csv = {
+      metadata: { name: "foo" },
+      spec: {
+        customresourcedefinitions: {},
+      },
+    };
+    Operators.getCSVs = jest.fn().mockReturnValue([csv]);
+    Operators.listResources = jest.fn();
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCustomResources),
+      },
+      {
+        type: getType(operatorActions.requestCSVs),
+      },
+      {
+        type: getType(operatorActions.receiveCSVs),
+        payload: [csv],
+      },
+      {
+        type: getType(operatorActions.receiveCustomResources),
+        payload: [],
+      },
+    ];
+    await store.dispatch(operatorActions.getResources("default", "default"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(Operators.listResources).not.toHaveBeenCalled();
+  });
 });
 
 describe("getResources", () => {
