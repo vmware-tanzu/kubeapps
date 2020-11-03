@@ -79,7 +79,7 @@ Next you can launch the dashboard.
 yarn run start
 ```
 
-You can now access the local development server simply by accessing the dashboard as you usually would (e.g. doing a port-forward or accesing the Ingress URL).
+You can now access the local development server simply by accessing the dashboard as you usually would (e.g. doing a port-forward or accessing the Ingress URL).
 
 #### Troubleshooting
 

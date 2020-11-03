@@ -43,7 +43,7 @@ This builds the `apprepository-controller` binary in the working directory.
 Before running the `apprepository-controller` binary on the development host we should stop the existing controller that is running in the development cluster. The best way to do this is to scale the number of replicas of the `apprepository-controller` deployment to `0`.
 
 ```bash
-kubectl -n kubeapps scale deployment apprepository-controller --replicas=0
+kubectl -n kubeapps scale deployment kubeapps-internal-apprepository-controller --replicas=0
 ```
 
 > **NOTE** Remember to scale the deployment back to `1` replica when you are done
