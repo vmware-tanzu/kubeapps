@@ -160,6 +160,37 @@ func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 	}
 }
 
+// RefreshAppRepository forces a refresh in a given apprepository (by updating resyncRequests property)
+func RefreshAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		requestNamespace, requestCluster := getNamespaceAndCluster(req)
+		repoName := mux.Vars(req)["name"]
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+
+		clientset, err := handler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		appRepo, err := clientset.RefreshAppRepository(repoName, requestNamespace)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		response := appRepositoryResponse{
+			AppRepository: *appRepo,
+		}
+		responseBody, err := json.Marshal(response)
+		if err != nil {
+			JSONError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(responseBody)
+	}
+}
+
 // ValidateAppRepository returns a 200 if the connection to the AppRepo can be established
 func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -274,12 +305,14 @@ func SetupDefaultRoutes(r *mux.Router, clustersConfig kube.ClustersConfig) error
 	r.Methods("PUT").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(UpdateAppRepository(backendHandler)))
 	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	r.Methods("GET").Path("/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
+
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
 	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
 	r.Methods("PUT").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(UpdateAppRepository(backendHandler)))
+	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}/refresh").Handler(http.HandlerFunc(RefreshAppRepository(backendHandler)))
 	r.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
 	return nil
