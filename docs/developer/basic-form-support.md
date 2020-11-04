@@ -50,8 +50,8 @@ In order to render a slider, there are some requirements and additional tags tha
 
 - The supported types are `string`, `integer` and `numeric`.
 - It's necessary to specify the tag `render` and set it to `slider`.
-- The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writting a smaller value in the input).
-- The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writting a bigger value in the input).
+- The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writing a smaller value in the input).
+- The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writing a bigger value in the input).
 - The tag `sliderStep` identifies the step the slider will increment or decrement the value when moved.
 - The tag `sliderUnit` specifies the unit of the value to set. For example `Gi`.
 
@@ -88,7 +88,7 @@ In order to render a component as a textArea, it's necessary to specify the tag 
 ```
 ### Drop-down lists
 
-When a property defines a `enum` tag as constraint, it will be rendered as a drop-down list. 
+When a property defines an `enum` tag as constraint, it will be rendered as a drop-down list. 
 
 This is an example:
 
@@ -114,7 +114,7 @@ When a property of type `object` is set with a `form` identifier, it will be ren
 
 All the parameters within an `object` will be rendered in the subsection.
 
-Note that in some cases, a parameter cause that the rest of parameters are no longer relevant. For example, setting `ingress.enabled` to `false` makes the `ingress.hostname` irrelevant. To avoid confussion, you can hide that parameter setting the special tag `hidden`. The tag `hidden` can be a `string` pointing to the parameter that needs to be `true` to hide the element, or an `object` to also set the value that the pointed value needs to match as shown below:
+Note that in some cases, a parameter cause that the rest of the parameters are no longer relevant. For example, setting `ingress.enabled` to `false` makes the `ingress.hostname` irrelevant. To avoid confusion, you can hide that parameter setting the special tag `hidden`. The tag `hidden` can be a `string` pointing to the parameter that needs to be `true` to hide the element, or an `object` to also set the value that the pointed value needs to match as shown below:
 
 ```json
 {
