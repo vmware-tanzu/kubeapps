@@ -1,8 +1,15 @@
+import { get } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
 import { Operators } from "../shared/Operators";
-import { IClusterServiceVersion, IPackageManifest, IResource, IStoreState } from "../shared/types";
+import {
+  IClusterServiceVersion,
+  IClusterServiceVersionCRD,
+  IPackageManifest,
+  IResource,
+  IStoreState,
+} from "../shared/types";
 
 export const checkingOLM = createAction("CHECKING_OLM");
 export const OLMInstalled = createAction("OLM_INSTALLED");
@@ -307,7 +314,8 @@ export function getResources(
     const csvs = await dispatch(getCSVs(cluster, namespace));
     let resources: IResource[] = [];
     const csvPromises = csvs.map(async csv => {
-      const crdPromises = csv.spec.customresourcedefinitions.owned.map(async crd => {
+      const crds = get(csv, "spec.customresourcedefinitions.owned", []);
+      const crdPromises = crds.map(async (crd: IClusterServiceVersionCRD) => {
         const { plural, group } = parseCRD(crd.name);
         try {
           const csvResources = await Operators.listResources(

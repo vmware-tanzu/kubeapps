@@ -33,9 +33,8 @@ export class Operators {
 
   public static async getCSVs(cluster: string, namespace: string) {
     // Global operators are installed in the "operators" namespace
-    const reqNamespace = namespace === "_all" ? "operators" : namespace;
     const { data } = await axiosWithAuth.get<IK8sList<IClusterServiceVersion, {}>>(
-      urls.api.k8s.operators.clusterServiceVersions(cluster, reqNamespace),
+      urls.api.k8s.operators.clusterServiceVersions(cluster, namespace),
     );
     return data.items;
   }
