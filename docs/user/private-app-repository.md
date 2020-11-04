@@ -79,7 +79,7 @@ Once you create the repository you can click on the link for the specific reposi
 
 ### ChartMuseum: Authentication/Authorization
 
-It is possible to configure ChartMuseum to use authentication with two different mechanism:
+It is possible to configure ChartMuseum to use authentication with two different mechanisms:
 
 - Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). To use this feature, it's needed to:
   - Specify the parameters `secret.AUTH_USER` and `secret.AUTH_PASS` when deploying the ChartMuseum.
@@ -135,7 +135,7 @@ Click the project name to view the project details page, then click 'Helm Charts
 
 <img src="../img/harbor-list-charts.png" width="600px">
 
-Click 'UPLOAD' button to upload the Helm chart you previously created. You can also use helm command to upload chart too.
+Click 'UPLOAD' button to upload the Helm chart you previously created. You can also use helm command to upload the chart too.
 
 <img src="../img/harbor-upload-chart.png" width="500px">
 
@@ -152,7 +152,7 @@ Once you create the repository you can click on the link for the specific reposi
 It is possible to configure Harbor to use HTTP basic authentication:
 
   - When creating a new project for serving as the helm chart repository in Harbor, set the `Access Level` of the project to non public. This enforces authentication to access the charts in the chart repository via Helm CLI or other clients.
-  - When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specifiy the username and password for Harbor.
+  - When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specify the username and password for Harbor.
 
 ## Artifactory
 
@@ -164,7 +164,7 @@ To install Artifactory with Kubeapps first add the JFrog repository to Kubeapps.
 
 <img src="../img/jfrog-repository.png" alt="JFrog repository" width="300px">
 
-Then click on the JFrog repository and deploy Artifactory. For detailed installation instructions, check its [README](https://github.com/jfrog/charts/tree/master/stable/artifactory). If you don't have any further requirement, the default values will work.
+Then click on the JFrog repository and deploy Artifactory. For detailed installation instructions, check its [README](https://github.com/jfrog/charts/tree/master/stable/artifactory). If you don't have any further requirements, the default values will work.
 
 When deployed, in the setup wizard, select "Helm" to initialize a repository:
 

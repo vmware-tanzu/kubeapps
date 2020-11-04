@@ -97,7 +97,7 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
   ![WordPress installation](../img/wordpress-installation.png)
 
-- Click the "Deploy" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top, including the access URL and any secret includded with the app. You can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the status, you can see the workloads and number of ready and total pods within them.
+- Click the "Deploy" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top, including the access URL and any secret included with the app. You can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the status, you can see the workloads and number of ready and total pods within them.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 

@@ -1,6 +1,6 @@
 # Using an OAuth2/OIDC Provider with Kubeapps
 
-OpenID Connect (OIDC) is a simple identity layer on top of the OAuth 2.0 protocol which allows clients to verify the identity of an user based on the authentication performed by an authorization server, as well as to obtain basic profile information about the user.
+OpenID Connect (OIDC) is a simple identity layer on top of the OAuth 2.0 protocol which allows clients to verify the identity of a user based on the authentication performed by an authorization server, as well as to obtain basic profile information about the user.
 
 It is possible to configure your Kubernetes cluster to use an OIDC provider in order to manage accounts, groups and roles with a single application. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2 (GKE).
 This guide will explain how you can use an existing OAuth2 provider, including OIDC, to authenticate users within Kubeapps.

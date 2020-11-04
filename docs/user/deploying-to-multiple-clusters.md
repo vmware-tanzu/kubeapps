@@ -72,7 +72,7 @@ For more information about configuring Kubeapps, as opposed to the Kubernetes AP
 
 Once you have the cluster configuration for OIDC authentication sorted, we then need to ensure that Kubeapps is aware of the different clusters to which it can deploy applications.
 
-The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name you are assigning to the cluster as well as the api service URL for each additional cluster. For example, in the following configuration:
+The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name you are assigning to the cluster as well as the API service URL for each additional cluster. For example, in the following configuration:
 
 ```yaml
 clusters:
@@ -86,7 +86,7 @@ clusters:
    serviceToken: ...
 ```
 
-`default` is the name you are assigning to the cluster on which Kubeapps is itself installed. You can only define at most one cluster without an `apiServiceURL` corresponding to the cluster on which Kubeapps is installed, or don't provide one at all if you don't want users targeting the cluster on which Kubeapps is installed. For each additional clusters the `name` and `apiServiceURL` are the only required items.
+`default` is the name you are assigning to the cluster on which Kubeapps is itself installed. You can only define at most one cluster without an `apiServiceURL` corresponding to the cluster on which Kubeapps is installed, or don't provide one at all if you don't want users targeting the cluster on which Kubeapps is installed. For each additional cluster the `name` and `apiServiceURL` are the only required items.
 
 Note that the apiServiceURL can be a public or internal URL, the only restrictions being that:
 
