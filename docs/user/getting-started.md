@@ -78,7 +78,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 ![Dashboard main page](../img/dashboard-home.png)
 
-***Note:*** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
+***Note:*** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps)
 
 
 ## Step 4: Deploy WordPress
@@ -120,7 +120,7 @@ If you want to uninstall/delete your WordPress application, you can do so by cli
 
 Learn more about Kubeapps with the links below:
 
-- [Detailed installation instructions](../../chart/kubeapps/README.md)
+- [Detailed installation instructions](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md)
 - [Deploying Operators](./operators.md)
 - [Kubeapps Dashboard documentation](./dashboard.md)
 - [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
