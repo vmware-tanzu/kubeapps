@@ -13,7 +13,6 @@ const defaultProps = {
   onSubmit: jest.fn(),
   namespace: "default",
   kubeappsNamespace: "kubeapps",
-  appVersion: "DEVEL",
 };
 
 let spyOnUseDispatch: jest.SpyInstance;

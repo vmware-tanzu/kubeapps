@@ -24,7 +24,6 @@ function mapStateToProps({ config, clusters: { currentCluster, clusters }, repos
     imagePullSecrets: repos.imagePullSecrets,
     kubeappsCluster: config.kubeappsCluster,
     kubeappsNamespace: config.kubeappsNamespace,
-    appVersion: config.appVersion,
   };
 }
 

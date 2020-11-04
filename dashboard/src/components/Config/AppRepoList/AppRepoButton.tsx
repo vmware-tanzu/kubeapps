@@ -20,7 +20,6 @@ interface IAppRepoAddButtonProps {
   secret?: ISecret;
   disabled?: boolean;
   title?: string;
-  appVersion: string;
 }
 
 export function AppRepoAddButton({
@@ -32,7 +31,6 @@ export function AppRepoAddButton({
   primary = true,
   title,
   disabled,
-  appVersion,
 }: IAppRepoAddButtonProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
@@ -100,7 +98,6 @@ export function AppRepoAddButton({
           secret={secret}
           namespace={namespace}
           kubeappsNamespace={kubeappsNamespace}
-          appVersion={appVersion}
         />
       </Modal>
     </>

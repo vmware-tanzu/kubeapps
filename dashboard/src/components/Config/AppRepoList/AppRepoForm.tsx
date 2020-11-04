@@ -27,7 +27,6 @@ interface IAppRepoFormProps {
   kubeappsNamespace: string;
   repo?: IAppRepository;
   secret?: ISecret;
-  appVersion: string;
 }
 
 const AUTH_METHOD_NONE = "none";
@@ -36,15 +35,7 @@ const AUTH_METHOD_BEARER = "bearer";
 const AUTH_METHOD_CUSTOM = "custom";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
-  const {
-    onSubmit,
-    onAfterInstall,
-    namespace,
-    kubeappsNamespace,
-    repo,
-    secret,
-    appVersion,
-  } = props;
+  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo, secret } = props;
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const [authMethod, setAuthMethod] = useState(AUTH_METHOD_NONE);
@@ -62,10 +53,13 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [validated, setValidated] = useState(undefined as undefined | boolean);
 
   const {
-    imagePullSecrets,
-    errors: { create: createError, update: updateError, validate: validationError },
-    validating,
-  } = useSelector((state: IStoreState) => state.repos);
+    repos: {
+      imagePullSecrets,
+      errors: { create: createError, update: updateError, validate: validationError },
+      validating,
+    },
+    config: { appVersion },
+  } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
     // Select the pull secrets if they are already selected in the existing repo

@@ -21,7 +21,6 @@ const defaultProps = {
   cluster: "default",
   kubeappsCluster: "default",
   kubeappsNamespace: "kubeapps",
-  appVersion: "DEVEL",
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
