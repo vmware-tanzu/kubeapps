@@ -1,5 +1,5 @@
 import { IHTTPIngressPath, IIngressRule, IResource } from "shared/types";
-import { GetURLItemFromIngress } from "./AccessURLIngressHelper";
+import { GetURLItemFromIngress, IsURL } from "./AccessURLIngressHelper";
 
 describe("GetURLItemFromIngress", () => {
   interface ITest {
@@ -108,6 +108,92 @@ describe("GetURLItemFromIngress", () => {
       const ingressItem = GetURLItemFromIngress(ingress);
       expect(ingressItem.isLink).toBe(true);
       expect(ingressItem.URLs).toEqual(test.expectedURLs);
+    });
+  });
+});
+
+describe("IsURL", () => {
+  interface ITest {
+    description: string;
+    fullURL: string;
+    expected: boolean;
+  }
+  const tests: ITest[] = [
+    {
+      description: "it should return true to a simple url",
+      fullURL: "http://wordpress.local/example-test",
+      expected: true,
+    },
+    {
+      description: "it should return false to a 'rfc-ilegal' url with a regex",
+      fullURL: "http://wordpress.local/example-bad(/|$)(.*)",
+      expected: false,
+    },
+    {
+      description: "it should return false to a 'rfc-legal' url with a regex",
+      fullURL: "http://wordpress.local/example-bad/[a-z]+",
+      expected: false,
+    },
+    {
+      description: "it should return true to a simple url (https)",
+      fullURL: "https://wordpress.local/example-test",
+      expected: true,
+    },
+    {
+      description: "it should return false to a 'rfc-ilegal' url with a regex (https)",
+      fullURL: "https://wordpress.local/example-bad(/|$)(.*)",
+      expected: false,
+    },
+    {
+      description: "it should return false to a 'rfc-legal' url with a regex (https)",
+      fullURL: "https://wordpress.local/example-bad/[a-z]+",
+      expected: false,
+    },
+    {
+      description: "it should return true to a simple url (host is ip)",
+      fullURL: "http://1.1.1.1/example-test",
+      expected: true,
+    },
+    {
+      description: "it should return false to a 'rfc-ilegal' url with a regex (host is ip)",
+      fullURL: "http://1.1.1.1/example-bad(/|$)(.*)",
+      expected: false,
+    },
+    {
+      description: "it should return false to a 'rfc-legal' url with a regex (host is ip)",
+      fullURL: "http://1.1.1.1/example-bad/[a-z]+",
+      expected: false,
+    },
+    {
+      description: "it should return false to a 'rfc-legal' url with a regex",
+      fullURL: "http://wordpress.local/example-bad/*",
+      expected: false,
+    },
+    {
+      description: "it should return true to a translated idn url",
+      fullURL: "http://wordpress.local/example-good/xn--kgbechtv",
+      expected: true,
+    },
+    {
+      description: "it should return true to a translated idn url (path)",
+      fullURL: "http://wordpress.local/example-good/xn--kgbechtv",
+      expected: true,
+    },
+    {
+      description: "it should return true to a translated idn url (host)",
+      fullURL: "http://wordpress.xn--kgbechtv/example-good",
+      expected: true,
+    },
+    {
+      description: "it should return false to a non-translated idn url",
+      fullURL: "http://wordpress.local/♨️/shouldBeIDNTranslated",
+      expected: false,
+    },
+  ];
+  tests.forEach(test => {
+    it(test.fullURL, () => {
+      const isURL = IsURL(test.fullURL);
+      expect(isURL).toBe(test.expected);
     });
   });
 });
