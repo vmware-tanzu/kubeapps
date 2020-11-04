@@ -35,7 +35,7 @@ function AppList(props: IAppListProps) {
     filter: filterProps,
     namespace,
     getCustomResources,
-    apps: { getError: error, isFetching, listOverview },
+    apps: { error, isFetching, listOverview },
     cluster,
     isFetchingResources,
     pushSearchFilter,

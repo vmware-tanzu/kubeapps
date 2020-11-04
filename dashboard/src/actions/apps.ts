@@ -8,12 +8,17 @@ import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
 import { validate } from "../shared/schema";
 import {
+  CreateError,
+  DeleteError,
+  FetchError,
   IAppOverview,
   IChartUpdateInfo,
   IChartVersion,
   IRelease,
   IStoreState,
+  RollbackError,
   UnprocessableEntity,
+  UpgradeError,
 } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
@@ -50,24 +55,9 @@ export const requestRollbackApp = createAction("REQUEST_ROLLBACK_APP");
 
 export const receiveRollbackApp = createAction("RECEIVE_ROLLBACK_APP_CONFIRMATION");
 
-export const errorGetApp = createAction("ERROR_GET_APP", resolve => {
-  return (err: Error) => resolve(err);
-});
-
-export const errorCreateApp = createAction("ERROR_CREATE_APP", resolve => {
-  return (err: Error) => resolve(err);
-});
-
-export const errorUpgradeApp = createAction("ERROR_UPGRADE_APP", resolve => {
-  return (err: Error) => resolve(err);
-});
-
-export const errorRollbackApp = createAction("ERROR_ROLLBACK_APP", resolve => {
-  return (err: Error) => resolve(err);
-});
-
-export const errorDeleteApp = createAction("ERROR_DELETE_APP", resolve => {
-  return (err: Error) => resolve(err);
+export const errorApp = createAction("ERROR_APP", resolve => {
+  return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
+    resolve(err);
 });
 
 export const selectApp = createAction("SELECT_APP", resolve => {
@@ -89,11 +79,7 @@ const allActions = [
   receiveUpgradeApp,
   requestRollbackApp,
   receiveRollbackApp,
-  errorGetApp,
-  errorCreateApp,
-  errorUpgradeApp,
-  errorRollbackApp,
-  errorDeleteApp,
+  errorApp,
   selectApp,
 ];
 
@@ -111,7 +97,7 @@ export function getApp(
       dispatch(selectApp(app));
       return app;
     } catch (e) {
-      dispatch(errorGetApp(e));
+      dispatch(errorApp(new FetchError(e.message)));
       return;
     }
   };
@@ -200,7 +186,7 @@ export function getAppWithUpdateInfo(
         );
       }
     } catch (e) {
-      dispatch(errorGetApp(e));
+      dispatch(errorApp(new FetchError(e.message)));
     }
   };
 }
@@ -218,7 +204,7 @@ export function deleteApp(
       dispatch(receiveDeleteApp());
       return true;
     } catch (e) {
-      dispatch(errorDeleteApp(e));
+      dispatch(errorApp(new DeleteError(e.message)));
       return false;
     }
   };
@@ -239,7 +225,7 @@ export function fetchApps(
       dispatch(receiveAppList(apps));
       return apps;
     } catch (e) {
-      dispatch(errorGetApp(e));
+      dispatch(errorApp(new FetchError(e.message)));
       return [];
     }
   };
@@ -306,7 +292,7 @@ export function deployChart(
       dispatch(receiveDeployApp());
       return true;
     } catch (e) {
-      dispatch(errorCreateApp(e));
+      dispatch(errorApp(new CreateError(e.message)));
       return false;
     }
   };
@@ -339,7 +325,7 @@ export function upgradeApp(
       dispatch(receiveUpgradeApp());
       return true;
     } catch (e) {
-      dispatch(errorUpgradeApp(e));
+      dispatch(errorApp(new UpgradeError(e.message)));
       return false;
     }
   };
@@ -359,7 +345,7 @@ export function rollbackApp(
       dispatch(getAppWithUpdateInfo(cluster, namespace, releaseName));
       return true;
     } catch (e) {
-      dispatch(errorRollbackApp(e));
+      dispatch(errorApp(new RollbackError(e.message)));
       return false;
     }
   };

@@ -30,6 +30,16 @@ export class UnprocessableEntity extends CustomError {}
 
 export class InternalServerError extends CustomError {}
 
+export class FetchError extends CustomError {}
+
+export class CreateError extends CustomError {}
+
+export class UpgradeError extends CustomError {}
+
+export class RollbackError extends CustomError {}
+
+export class DeleteError extends CustomError {}
+
 export type DeploymentEvent = "install" | "upgrade";
 
 export interface IRepo {
@@ -345,11 +355,7 @@ export interface IClusterServiceVersion extends IResource {
 
 export interface IAppState {
   isFetching: boolean;
-  getError?: Error;
-  createError?: Error;
-  upgradeError?: Error;
-  rollbackError?: Error;
-  deleteError?: Error;
+  error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
   // currently items are always Helm releases
   items: IRelease[];
   listOverview?: IAppOverview[];

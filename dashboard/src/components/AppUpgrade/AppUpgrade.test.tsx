@@ -5,7 +5,14 @@ import * as React from "react";
 import Alert from "components/js/Alert";
 import { hapi } from "shared/hapi/release";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IChartState, IChartVersion, IRelease } from "shared/types";
+import {
+  FetchError,
+  IAppRepository,
+  IChartState,
+  IChartVersion,
+  IRelease,
+  UpgradeError,
+} from "shared/types";
 import itBehavesLike from "../../shared/specs";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
@@ -103,7 +110,7 @@ context("when an error exists", () => {
     const wrapper = shallow(
       <AppUpgrade
         {...defaultProps}
-        getError={new Error("foo does not exist")}
+        error={new FetchError("foo does not exist")}
         repos={[repo]}
         repo={repo}
       />,
@@ -152,11 +159,11 @@ context("when an error exists", () => {
     const repo = {
       metadata: { name: "stable" },
     } as IAppRepository;
-    const upgradeError = new Error("foo upgrade failed");
+    const upgradeError = new UpgradeError("foo upgrade failed");
     const wrapper = shallow(
       <AppUpgrade
         {...defaultProps}
-        upgradeError={upgradeError}
+        error={upgradeError}
         repos={[repo]}
         repo={repo}
         app={

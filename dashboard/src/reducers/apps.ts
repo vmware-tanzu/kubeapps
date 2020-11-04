@@ -19,16 +19,8 @@ const appsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveApps):
       return { ...state, isFetching: false, items: action.payload };
-    case getType(actions.apps.errorGetApp):
-      return { ...state, isFetching: false, getError: action.payload };
-    case getType(actions.apps.errorCreateApp):
-      return { ...state, isFetching: false, createError: action.payload };
-    case getType(actions.apps.errorUpgradeApp):
-      return { ...state, isFetching: false, upgradeError: action.payload };
-    case getType(actions.apps.errorRollbackApp):
-      return { ...state, isFetching: false, rollbackError: action.payload };
-    case getType(actions.apps.errorDeleteApp):
-      return { ...state, isFetching: false, deleteError: action.payload };
+    case getType(actions.apps.errorApp):
+      return { ...state, isFetching: false, error: action.payload };
     case getType(actions.apps.selectApp):
       return { ...state, isFetching: false, selected: action.payload };
     case getType(actions.apps.listApps):
@@ -81,11 +73,7 @@ const appsReducer = (
     case LOCATION_CHANGE:
       return {
         ...state,
-        deleteError: undefined,
-        getError: undefined,
-        createError: undefined,
-        upgradeError: undefined,
-        rollbackError: undefined,
+        error: undefined,
         isFetching: false,
         selected: undefined,
       };

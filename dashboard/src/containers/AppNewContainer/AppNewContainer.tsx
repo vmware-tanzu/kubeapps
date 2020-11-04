@@ -30,7 +30,7 @@ function mapStateToProps(
     chartNamespace: params.global === "global" ? config.kubeappsNamespace : params.namespace,
     cluster: params.cluster,
     chartVersion: params.version,
-    error: apps.createError,
+    error: apps.error,
     kubeappsNamespace: config.kubeappsNamespace,
     namespace: params.namespace,
     selected: charts.selected,

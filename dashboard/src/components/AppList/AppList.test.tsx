@@ -5,7 +5,7 @@ import * as React from "react";
 import SearchFilter from "components/SearchFilter/SearchFilter";
 import { BrowserRouter as Router } from "react-router-dom";
 import itBehavesLike from "../../shared/specs";
-import { IAppOverview, IAppState } from "../../shared/types";
+import { FetchError, IAppOverview, IAppState } from "../../shared/types";
 import Alert from "../js/Alert";
 import AppList, { IAppListProps } from "./AppList";
 import AppListItem from "./AppListItem";
@@ -116,7 +116,7 @@ context("when fetched but not apps available", () => {
 
 context("when an error is present", () => {
   beforeEach(() => {
-    props = { ...defaultProps, apps: { getError: new Error("Boom!") } };
+    props = { ...defaultProps, apps: { error: new FetchError("Boom!") } };
   });
 
   it("matches the snapshot", () => {
