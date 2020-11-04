@@ -19,11 +19,11 @@ Check more details about the implementation in [this document](/docs/developer/k
 
 ### Apprepository CRD and Controller
 
-Chart repositories in Kubeapps are managed with a `CustomResourceDefinition` called `apprepositories.kubeapps.com`. Each repository added to Kubeapps is an object of type `AppRepository` and the `apprepository-controller` will watch for changes on those type of objects to update the list of available charts to deploy.
+Chart repositories in Kubeapps are managed with a `CustomResourceDefinition` called `apprepositories.kubeapps.com`. Each repository added to Kubeapps is an object of type `AppRepository` and the `apprepository-controller` will watch for changes on those types of objects to update the list of available charts to deploy.
 
 ### `asset-syncer`
 
-The `asset-syncer` component is tool that scans a Helm chart repository and populates chart metadata in a database. This metadata is then served by the `assetsvc` component. Check more details about the implementation in this [document](/docs/developer/asset-syncer.md).
+The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in a database. This metadata is then served by the `assetsvc` component. Check more details about the implementation in this [document](/docs/developer/asset-syncer.md).
 
 ### `assetsvc`
 

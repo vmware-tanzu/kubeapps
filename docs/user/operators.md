@@ -2,7 +2,7 @@
 
 This guide will walk you through the process of enabling support for Operators in Kubeapps and deploy an Operator instance.
 
-In this tutorial we will be using the the [Operator Lifecycle Manager (OLM)](https://github.com/operator-framework/operator-lifecycle-manager) to expose the Operators from the [OperatorHub](https://operatorhub.io/).
+In this tutorial we will be using the [Operator Lifecycle Manager (OLM)](https://github.com/operator-framework/operator-lifecycle-manager) to expose the Operators from the [OperatorHub](https://operatorhub.io/).
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ Let's deploy the "Akka Cluster Operator". When clicking on it, the information a
 
   ![Operators View](../img/operator-view.png)
 
-When clicking on the Deploy button, a form to deploy the operator will be displayed. There are two type of Operators: Global and namespaced. Namespaced Operators will be available in a single namespace while global Operators across the cluster. In this case, we are installing a global Operator:
+When clicking on the Deploy button, a form to deploy the operator will be displayed. There are two types of Operators: Global and namespaced. Namespaced Operators will be available in a single namespace while global Operators across the cluster. In this case, we are installing a global Operator:
 
   ![Operator Deployment Form](../img/operator-deployment.png)
 

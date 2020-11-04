@@ -79,7 +79,7 @@ Once you create the repository you can click on the link for the specific reposi
 
 ### ChartMuseum: Authentication/Authorization
 
-It is possible to configure ChartMuseum to use authentication with two different mechanism:
+It is possible to configure ChartMuseum to use authentication with two different mechanisms:
 
 - Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). To use this feature, it's needed to:
   - Specify the parameters `secret.AUTH_USER` and `secret.AUTH_PASS` when deploying the ChartMuseum.
@@ -90,7 +90,7 @@ It is possible to configure ChartMuseum to use authentication with two different
 
 [Harbor](https://github.com/goharbor/harbor) is an open source trusted cloud native registry project that stores, signs, and scans content, e.g. Docker images. Harbor is hosted by the [Cloud Native Computing Foundation](https://cncf.io/). Since version 1.6.0, Harbor is a composite cloud native registry which supports both container image management and Helm chart management. Harbor integrates [ChartMuseum](https://chartmuseum.com) to provide the Helm chart repository functionality. The access to Helm Charts in a Harbor Chart Repository can be controlled via Role-Based Access Control.
 
-To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://github.com/goharbor/harbor/blob/master/docs/installation_guide.md#downloading-the-installer)):
+To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.1.0/install-config/download-installer/)):
 
 <img src="../img/harbor-chart.png" alt="Harbor Chart" width="300px">
 
@@ -135,11 +135,11 @@ Click the project name to view the project details page, then click 'Helm Charts
 
 <img src="../img/harbor-list-charts.png" width="600px">
 
-Click 'UPLOAD' button to upload the Helm chart you previously created. You can also use helm command to upload chart too.
+Click 'UPLOAD' button to upload the Helm chart you previously created. You can also use helm command to upload the chart too.
 
 <img src="../img/harbor-upload-chart.png" width="500px">
 
-Please refer to ['Manage Helm Charts in Harbor'](https://github.com/goharbor/harbor/blob/master/docs/user_guide.md#manage-helm-charts) for more details.
+Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.1.0/working-with-projects/working-with-images/managing-helm-charts) for more details.
 
 ### Harbor: Configure the repository in Kubeapps
 
@@ -152,7 +152,7 @@ Once you create the repository you can click on the link for the specific reposi
 It is possible to configure Harbor to use HTTP basic authentication:
 
   - When creating a new project for serving as the helm chart repository in Harbor, set the `Access Level` of the project to non public. This enforces authentication to access the charts in the chart repository via Helm CLI or other clients.
-  - When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specifiy the username and password for Harbor.
+  - When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specify the username and password for Harbor.
 
 ## Artifactory
 
@@ -164,7 +164,7 @@ To install Artifactory with Kubeapps first add the JFrog repository to Kubeapps.
 
 <img src="../img/jfrog-repository.png" alt="JFrog repository" width="300px">
 
-Then click on the JFrog repository and deploy Artifactory. For detailed installation instructions, check its [README](https://github.com/jfrog/charts/tree/master/stable/artifactory). If you don't have any further requirement, the default values will work.
+Then click on the JFrog repository and deploy Artifactory. For detailed installation instructions, check its [README](https://github.com/jfrog/charts/tree/master/stable/artifactory). If you don't have any further requirements, the default values will work.
 
 When deployed, in the setup wizard, select "Helm" to initialize a repository:
 
