@@ -82,8 +82,8 @@ function getAnchors(URLs: string[]) {
 
 function getAnchor(URL: string) {
   return (
-    <div className="margin-b-sm">
-      <a href={URL} target="_blank" rel="noopener noreferrer" key={URL}>
+    <div className="margin-b-sm" key={URL}>
+      <a href={URL} target="_blank" rel="noopener noreferrer">
         {URL}
       </a>
     </div>
@@ -92,19 +92,23 @@ function getAnchor(URL: string) {
 
 function getSpan(URL: string) {
   return (
-    <div className="margin-b-sm">
+    <div className="margin-b-sm" key={URL}>
       <span>{URL}</span>
     </div>
   );
 }
 
-function getUnknown() {
-  return <span>Unknown</span>;
+function getUnknown(key: string) {
+  return (
+    <div className="margin-b-sm" key={key}>
+      <span>Unknown</span>
+    </div>
+  );
 }
 
 function getNotes(resource?: IResource) {
   if (!resource) {
-    return getUnknown;
+    return getUnknown("unknown-notes");
   }
   const ips: Array<{ ip: string }> = get(resource, "status.loadBalancer.ingress", []);
   if (ips.length) {
@@ -180,7 +184,7 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
         };
       })
       .concat(
-        allIngresses.map(ingress => {
+        allIngresses.map((ingress, index) => {
           return {
             url: ingress.item
               ? GetURLItemFromIngress(ingress.item).URLs.map(
@@ -188,7 +192,7 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
                   // If so, render the <a>, othersiwe, render a simple <span>
                   url => (IsURL(url) ? getAnchor(url) : getSpan(url)),
                 )
-              : [getUnknown()], // render a simple span with "unknown"
+              : [getUnknown(index.toString())], // render a simple span with "unknown"
             type: "Ingress",
             notes: ingress.error ? (
               <span>Error: {ingress.error.message}</span>

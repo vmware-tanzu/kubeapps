@@ -208,12 +208,7 @@ context("when the app contains ingresses", () => {
     );
     expect(wrapper.find("Table")).toExist();
     expect(wrapper.find("a")).not.toExist();
-    const matchingSpans = wrapper.find("span").findWhere(s =>
-      s
-        .render()
-        .text()
-        .includes("foo.bar/ready"),
-    );
+    const matchingSpans = wrapper.find("span").findWhere(s => s.text().includes("foo.bar/ready"));
     expect(matchingSpans).not.toHaveLength(0);
     matchingSpans.forEach(element => {
       expect(element.text()).toEqual("http://foo.bar/ready(/|$)(.*)");
