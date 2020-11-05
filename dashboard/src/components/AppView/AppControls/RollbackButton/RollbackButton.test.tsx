@@ -6,6 +6,7 @@ import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { RollbackError } from "shared/types";
 import RollbackButton from "./RollbackButton";
 
 const defaultProps = {
@@ -55,7 +56,7 @@ it("rolls back an application", async () => {
 });
 
 it("renders an error", async () => {
-  const store = getStore({ apps: { error: new Error("Boom!") } });
+  const store = getStore({ apps: { error: new RollbackError("Boom!") } });
   const wrapper = mountWrapper(store, <RollbackButton {...defaultProps} />);
   // Open modal
   act(() => {

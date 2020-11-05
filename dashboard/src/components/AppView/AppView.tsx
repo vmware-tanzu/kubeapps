@@ -14,7 +14,7 @@ import PageHeader from "components/PageHeader/PageHeader";
 import { Link } from "react-router-dom";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import ResourceRef from "../../shared/ResourceRef";
-import { IK8sList, IRelease, IResource } from "../../shared/types";
+import { DeleteError, FetchError, IK8sList, IRelease, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
@@ -31,8 +31,7 @@ export interface IAppViewProps {
   namespace: string;
   releaseName: string;
   app?: IRelease;
-  error?: Error;
-  deleteError?: Error;
+  error?: FetchError | DeleteError;
   getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
   deleteApp: (
     cluster: string,
@@ -117,10 +116,7 @@ export default function AppView({
   releaseName,
   app,
   error,
-  deleteError,
   getAppWithUpdateInfo,
-  deleteApp,
-  push,
 }: IAppViewProps) {
   const [resourceRefs, setResourceRefs] = useState({
     ingresses: [],
@@ -188,13 +184,12 @@ export default function AppView({
           />,
         ]}
       />
-      {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
-
-      {deleteError && (
-        <Alert theme="danger">
-          Unable to delete the application. Received: {deleteError.message}
-        </Alert>
-      )}
+      {error &&
+        (error.constructor === DeleteError ? (
+          <Alert theme="danger">Unable to delete the application. Received: {error.message}</Alert>
+        ) : (
+          <Alert theme="danger">An error occurred: {error.message}</Alert>
+        ))}
       {!app || !app.info ? (
         <LoadingWrapper />
       ) : (

@@ -20,9 +20,8 @@ interface IRouteProps {
 function mapStateToProps({ apps, kube, config }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     app: apps.selected,
-    deleteError: apps.deleteError,
-    resources: kube.items,
     error: apps.error,
+    resources: kube.items,
     cluster: params.cluster,
     namespace: params.namespace,
     releaseName: params.releaseName,

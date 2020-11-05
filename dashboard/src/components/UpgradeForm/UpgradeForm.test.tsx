@@ -142,7 +142,7 @@ describe("renders an error", () => {
         {...defaultProps}
         selected={
           {
-            version: { attributes: {} },
+            version: { attributes: {}, relationships: { chart: { data: { repo: { name: "" } } } } },
             versions: [{ id: "foo", attributes: {} }],
           } as IChartState["selected"]
         }

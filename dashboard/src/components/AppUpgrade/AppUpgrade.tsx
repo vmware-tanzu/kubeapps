@@ -3,7 +3,14 @@ import React, { useEffect } from "react";
 import Alert from "components/js/Alert";
 import { RouterAction } from "connected-react-router";
 import { JSONSchema4 } from "json-schema";
-import { IAppRepository, IChartState, IChartVersion, IRelease } from "../../shared/types";
+import {
+  FetchError,
+  IAppRepository,
+  IChartState,
+  IChartVersion,
+  IRelease,
+  UpgradeError,
+} from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
@@ -12,7 +19,7 @@ export interface IAppUpgradeProps {
   app?: IRelease;
   appsIsFetching: boolean;
   chartsIsFetching: boolean;
-  appsError: Error | undefined;
+  error?: FetchError | UpgradeError;
   namespace: string;
   cluster: string;
   releaseName: string;
@@ -53,7 +60,7 @@ function AppUpgrade({
   app,
   appsIsFetching,
   chartsIsFetching,
-  appsError,
+  error,
   namespace,
   cluster,
   releaseName,
@@ -67,13 +74,6 @@ function AppUpgrade({
   getChartVersion,
   getDeployedChartVersion,
   push,
-  reposIsFetching,
-  repoError,
-  chartsError,
-  repo,
-  repos,
-  checkChart,
-  fetchRepositories,
 }: IAppUpgradeProps) {
   useEffect(() => {
     getAppWithUpdateInfo(cluster, namespace, releaseName);
@@ -95,13 +95,10 @@ function AppUpgrade({
     }
   }, [getDeployedChartVersion, app, chart, repoName, repoNamespace, cluster]);
 
-  if (appsError) {
-    return (
-      <Alert theme="danger">
-        An error occurred while processing the application: {appsError.message}
-      </Alert>
-    );
+  if (error && error.constructor === FetchError) {
+    return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
   }
+
   if (appsIsFetching || !app || !app.updateInfo) {
     return <LoadingWrapper loaded={false} />;
   }
@@ -125,6 +122,7 @@ function AppUpgrade({
           deployed={deployed}
           upgradeApp={upgradeApp}
           push={push}
+          error={error}
           fetchChartVersions={fetchChartVersions}
           getChartVersion={getChartVersion}
         />

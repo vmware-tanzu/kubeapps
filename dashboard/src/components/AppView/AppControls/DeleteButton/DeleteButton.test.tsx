@@ -6,6 +6,7 @@ import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { DeleteError } from "shared/types";
 import DeleteButton from "./DeleteButton";
 
 const defaultProps = {
@@ -54,7 +55,7 @@ it("deletes an application", async () => {
 });
 
 it("renders an error", async () => {
-  const store = getStore({ apps: { deleteError: new Error("Boom!") } });
+  const store = getStore({ apps: { error: new DeleteError("Boom!") } });
   const wrapper = mountWrapper(store, <DeleteButton {...defaultProps} />);
   // Open modal
   act(() => {

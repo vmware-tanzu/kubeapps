@@ -168,9 +168,6 @@ function UpgradeForm({
     }
   };
 
-  if (error) {
-    return <Alert theme="danger">An error occurred: {error.message}</Alert>;
-  }
   if (selected.versions.length === 0 || !version) {
     return <LoadingWrapper loaded={false} />;
   }
@@ -189,10 +186,11 @@ function UpgradeForm({
         />
         {isDeploying && (
           <h3 className="center" style={{ marginBottom: "1.2rem" }}>
-            Hang tight, the application is being deployed...
+            The application is being upgraded, please wait...
           </h3>
         )}
         <LoadingWrapper loaded={!isDeploying}>
+          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
           <Row>
             <Column span={3}>
               <ChartSummary version={version} chartAttrs={chartAttrs} />
