@@ -18,7 +18,7 @@ export class AppRepository {
 
   public static async resync(cluster: string, name: string, namespace: string) {
     const { data } = await axiosWithAuth.post(
-      url.backend.apprepositories.refresh(cluster, name, namespace),
+      url.backend.apprepositories.refresh(cluster, namespace, name),
       null,
     );
     return data;
