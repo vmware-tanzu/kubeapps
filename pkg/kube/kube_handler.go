@@ -446,18 +446,13 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 
 // RefreshAppRepository forces a refresh in a given apprepository (by updating resyncRequests property)
 func (a *userHandler) RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error) {
-	if a.kubeappsNamespace == "" {
-		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
-		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
-	}
-
-	// retrive the repo object with name=repoName
+	// Retrieve the repo object with name=repoName
 	appRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(context.TODO(), repoName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	// an updated is forced if the ResyncRequests property changes,
+	// An updated is forced if the ResyncRequests property changes,
 	// so we increase it in the retrieved object
 	appRepo.Spec.ResyncRequests++
 
