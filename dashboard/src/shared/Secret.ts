@@ -3,7 +3,7 @@ import { IK8sList, ISecret } from "./types";
 import * as url from "./url";
 
 export default class Secret {
-  public static async get(cluster: string, name: string, namespace: string) {
+  public static async get(cluster: string, namespace: string, name: string) {
     const u = url.api.k8s.secret(cluster, namespace, name);
     const { data } = await axiosWithAuth.get<ISecret>(u);
     return data;

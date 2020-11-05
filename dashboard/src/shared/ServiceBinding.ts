@@ -73,7 +73,7 @@ export class ServiceBinding {
     return data;
   }
 
-  public static async delete(cluster: string, name: string, namespace: string) {
+  public static async delete(cluster: string, namespace: string, name: string) {
     const u = this.getLink(cluster, namespace, name);
     return axiosWithAuth.delete(u);
   }

@@ -323,8 +323,8 @@ describe("removeBinding", () => {
     expect(store.getActions().length).toBe(0);
     expect(ServiceBinding.delete).toHaveBeenCalledWith(
       testArgs.kubeappsCluster,
-      testArgs.bindingName,
       testArgs.namespace,
+      testArgs.bindingName,
     );
   });
 
