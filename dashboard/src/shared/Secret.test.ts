@@ -3,7 +3,7 @@ import Secret from "./Secret";
 
 it("gets a secret", async () => {
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: "ok" });
-  await Secret.get("default", "foo", "bar");
+  await Secret.get("default", "bar", "foo");
   expect(axiosWithAuth.get).toHaveBeenCalledWith(
     "api/clusters/default/api/v1/namespaces/bar/secrets/foo",
   );

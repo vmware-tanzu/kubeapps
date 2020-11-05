@@ -14,29 +14,31 @@ export default class Namespace {
     return data;
   }
 
-  public static async create(cluster: string, name: string) {
+  public static async create(cluster: string, namespace: string) {
     const { data } = await axiosWithAuth.post<IResource>(url.api.k8s.namespaces(cluster), {
       apiVersion: "v1",
       kind: "Namespace",
       metadata: {
-        name,
+        name: namespace,
       },
     });
     return data;
   }
 
-  public static async get(cluster: string, name: string) {
+  public static async get(cluster: string, namespace: string) {
     try {
-      const { data } = await axiosWithAuth.get<IResource>(url.api.k8s.namespace(cluster, name));
+      const { data } = await axiosWithAuth.get<IResource>(
+        url.api.k8s.namespace(cluster, namespace),
+      );
       return data;
     } catch (err) {
       switch (err.constructor) {
         case ForbiddenError:
           throw new ForbiddenError(
-            `You don't have sufficient permissions to use the namespace ${name}`,
+            `You don't have sufficient permissions to use the namespace ${namespace}`,
           );
         case NotFoundError:
-          throw new NotFoundError(`Namespace ${name} not found. Create it before using it.`);
+          throw new NotFoundError(`Namespace ${namespace} not found. Create it before using it.`);
         default:
           throw err;
       }

@@ -6,6 +6,12 @@ The dashboard is the main UI component of the Kubeapps project. Written in Javas
 
 Please refer to the [Kubeapps Dashboard Developer Guide](dashboard.md) for the developer setup.
 
+### kubeops
+
+The `kubeops` component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.
+
+Please refer to the [Kubeapps Kubeops Developer Guide](kubeops.md) for the developer setup.
+
 ### assetsvc
 
 The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a Postgresql server.

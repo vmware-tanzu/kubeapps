@@ -4,7 +4,7 @@ import * as React from "react";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IResource } from "shared/types";
+import { DeleteError, IResource } from "shared/types";
 import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
@@ -32,7 +32,6 @@ describe("AppViewComponent", () => {
   const validProps = {
     app: appRelease,
     deleteApp: jest.fn(),
-    deleteError: undefined,
     error: undefined,
     getAppWithUpdateInfo: jest.fn(),
     namespace: "my-happy-place",
@@ -237,7 +236,7 @@ describe("AppViewComponent", () => {
     it("renders a delete-error", () => {
       const wrapper = mountWrapper(
         defaultStore,
-        <AppViewComponent {...validProps} deleteError={new Error("Boom!")} />,
+        <AppViewComponent {...validProps} error={new DeleteError("Boom!")} />,
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();

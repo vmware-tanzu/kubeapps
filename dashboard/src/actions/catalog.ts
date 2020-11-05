@@ -126,7 +126,7 @@ export function removeBinding(
       clusters: { currentCluster },
     } = getState();
     try {
-      await ServiceBinding.delete(currentCluster, name, namespace);
+      await ServiceBinding.delete(currentCluster, namespace, name);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "delete"));

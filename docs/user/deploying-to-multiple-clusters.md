@@ -20,7 +20,7 @@ To use the multi-cluster support in Kubeapps, you must first setup your clusters
 
 ### Configuring your Kubernetes API servers for OIDC
 
-The multi-cluster feature requires that each of your Kubernetes API servers trusts the same OpenID Connect provider, whether that be a specific commercial OAuth2 provider such as Google, Azure or Github, or an instance of [Dex](https://github.com/dexidp/dex/blob/master/Documentation/kubernetes.md). After you have selected your OIDC provider you will need to configure at least one OAuth2 client to use. For example, if you are using Dex, you could use the following Dex configuration to create a single client id which can be used by your API servers:
+The multi-cluster feature requires that each of your Kubernetes API servers trusts the same OpenID Connect provider, whether that be a specific commercial OAuth2 provider such as Google, Azure or Github, or an instance of [Dex](https://dexidp.io/docs/kubernetes/). After you have selected your OIDC provider you will need to configure at least one OAuth2 client to use. For example, if you are using Dex, you could use the following Dex configuration to create a single client id which can be used by your API servers:
 
 ```yaml
   staticClients:
@@ -37,10 +37,10 @@ Certain multi-cluster environments, such as Tanzu Kubernetes Grid, have specific
 
 If you are testing the multi-cluster support on a local [Kubernetes-in-Docker cluster](https://kind.sigs.k8s.io/), you can view the example configuration files used for configuring two kind clusters in a local development environment:
 
-* [Kubeapps cluster API server config](https://github.com/kubeapps/kubeapps/tree/master/docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml)
-* An [additional cluster API server config](https://github.com/kubeapps/kubeapps/tree/master/docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
+* [Kubeapps cluster API server config](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml)
+* An [additional cluster API server config](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
 
-These are used with an instance of Dex running in the Kubeapps cluster with a [matching configuration](https://github.com/kubeapps/kubeapps/tree/master/docs/user/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps itself [configured with its own auth-proxy](https://github.com/kubeapps/kubeapps/tree/master/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
+These are used with an instance of Dex running in the Kubeapps cluster with a [matching configuration](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps itself [configured with its own auth-proxy](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
 
 Configuring your Kubernetes cluster for OIDC authentication can be tricky, despite the upstream documentation, so be prepared to check the logs of your `kube-apiserver` pod:
 
@@ -66,13 +66,13 @@ kubectl -n kube-system get po kube-apiserver-kubeapps-control-plane -o yaml | gr
     - '--oidc-username-prefix=oidc:'
 ```
 
-For more information about configuring Kubeapps, as opposed to the Kubernetes API server itself, with various OIDC providers see [Using an OIDC provider](../using-an-OIDC-provider.md). Similarly, the logs of the Kubeapps frontend `auth-proxy` container will provide more details for debugging authentication requests from Kubeapps itself.
+For more information about configuring Kubeapps, as opposed to the Kubernetes API server itself, with various OIDC providers see [Using an OIDC provider](./using-an-OIDC-provider.md). Similarly, the logs of the Kubeapps frontend `auth-proxy` container will provide more details for debugging authentication requests from Kubeapps itself.
 
 ## A Kubeapps Configuration example
 
 Once you have the cluster configuration for OIDC authentication sorted, we then need to ensure that Kubeapps is aware of the different clusters to which it can deploy applications.
 
-The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name you are assigning to the cluster as well as the api service URL for each additional cluster. For example, in the following configuration:
+The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name you are assigning to the cluster as well as the API service URL for each additional cluster. For example, in the following configuration:
 
 ```yaml
 clusters:
@@ -86,7 +86,7 @@ clusters:
    serviceToken: ...
 ```
 
-`default` is the name you are assigning to the cluster on which Kubeapps is itself installed. You can only define at most one cluster without an `apiServiceURL` corresponding to the cluster on which Kubeapps is installed, or don't provide one at all if you don't want users targeting the cluster on which Kubeapps is installed. For each additional clusters the `name` and `apiServiceURL` are the only required items.
+`default` is the name you are assigning to the cluster on which Kubeapps is itself installed. You can only define at most one cluster without an `apiServiceURL` corresponding to the cluster on which Kubeapps is installed, or don't provide one at all if you don't want users targeting the cluster on which Kubeapps is installed. For each additional cluster the `name` and `apiServiceURL` are the only required items.
 
 Note that the apiServiceURL can be a public or internal URL, the only restrictions being that:
 
@@ -101,9 +101,9 @@ kubectl --kubeconfig ~/.kube/path-to-kube-confnig-file config view --raw -o json
 
 Alternatively, for a development with private API server URLs, you can omit the `certificateAuthorityData` and instead include the field `insecure: true` for a cluster and Kubeapps will not try to verify the secure connection.
 
-A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can  list those resources. You can refer to the [example used for a local development environment](https://github.com/kubeapps/kubeapps/tree/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
+A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can  list those resources. You can refer to the [example used for a local development environment](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
 
-Your Kubeapps installation will also need to be [configured to use OIDC for authentication](../using-an-OIDC-provider.md) with a client-id for your chosen provider.
+Your Kubeapps installation will also need to be [configured to use OIDC for authentication](./using-an-OIDC-provider.md) with a client-id for your chosen provider.
 
 ## Clusters with different client-ids
 
@@ -119,7 +119,7 @@ First your OIDC Provider needs to be configured so that tokens issued for the cl
 
 ### Configuring the auth-proxy to request multiple audiences
 
-The second part of the additional configuration is to ensure that when Kubeapps' auth-proxy requests a token that it includes extra scopes, such as `audience:server:client_id:second-cluster` for each additional audience that it requires in the issued token. For example, you can view the [auth-proxy configuration used in the local development environment](https://github.com/kubeapps/kubeapps/tree/master/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml) and see the additional scopes included there to ensure that the `second-cluster` and `third-cluster` are included in the audience of the resulting token.
+The second part of the additional configuration is to ensure that when Kubeapps' auth-proxy requests a token that it includes extra scopes, such as `audience:server:client_id:second-cluster` for each additional audience that it requires in the issued token. For example, you can view the [auth-proxy configuration used in the local development environment](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml) and see the additional scopes included there to ensure that the `second-cluster` and `third-cluster` are included in the audience of the resulting token.
 
 ## Updating multi-cluster options
 

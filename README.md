@@ -8,8 +8,8 @@ Kubeapps is a web-based UI for deploying and managing applications in Kubernetes
 - Inspect, upgrade and delete Helm-based applications installed in the cluster
 - Add custom and private chart repositories (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
 - Browse and deploy [Kubernetes Operators](https://operatorhub.io/).
-- Secure authentication to Kubeapps using an [OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)
-- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md)
+- Secure authentication to Kubeapps using an [OAuth2/OIDC provider](./docs/user/using-an-OIDC-provider.md)
+- Secure authorization based on Kubernetes [Role-Based Access Control](./docs/user/access-control.md)
 
 ## Quick Start
 
@@ -21,25 +21,25 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ``` 
 
-***Note:*** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work. For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](docs/user/getting-started.md).
+***Note:*** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work. For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](./docs/user/getting-started.md).
 
 ## Developer Documentation
 
 Please refer to:
 
-- The [Kubeapps Build Guide](docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
-- The [Kubeapps Developer Documentation](docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
+- The [Kubeapps Build Guide](./docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
+- The [Kubeapps Developer Documentation](./docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
 
 ## Next Steps
 
-If you have followed the instructions for [installing Kubeapps](docs/user/getting-started.md) check how to [use Kubeapps](docs/user/dashboard.md) to easily manage your applications running in your cluster, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
+If you have followed the instructions for [installing Kubeapps](./docs/user/getting-started.md) check how to [use Kubeapps](./docs/user/dashboard.md) to easily manage your applications running in your cluster, or [look under the hood to see what's included in Kubeapps](./docs/architecture/overview.md).
 
 ## Useful Resources
 
-- [Walkthrough for first-time users](docs/user/getting-started.md)
+- [Walkthrough for first-time users](./docs/user/getting-started.md)
 - [Detailed installation instructions](chart/kubeapps/README.md)
-- [Kubeapps Dashboard documentation](docs/user/dashboard.md)
-- [Kubeapps components](docs/architecture/overview.md)
+- [Kubeapps Dashboard documentation](./docs/user/dashboard.md)
+- [Kubeapps components](./docs/architecture/overview.md)
 - [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
 
 ## Differences from Monocular

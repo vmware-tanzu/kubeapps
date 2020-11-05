@@ -17,7 +17,7 @@ Two of the most common authentication strategies for providing a token identifyi
 
 ### OpenID Connect authentication
 
-The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](../using-an-OIDC-provider.md).
+The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](./using-an-OIDC-provider.md).
 
 ### Service Account authentication
 
@@ -85,7 +85,7 @@ kubectl create -n ${KUBEAPPS_NAMESPACE} rolebinding example-kubeapps-repositorie
 
 > Note: There is also a cluster-role for just allowing people to read app repositories: `kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-read`.
 
-The above command command allows people to create app repositories in the Kubeapps namespace, these are called "Global Repositories" since they will be available in any namespace Kubeapps is available. On the other hand, it's also possible to create "Namespaced Repositories" that will be available just in a single namespace. For doing so, users need to have permissions to create app repositories in those namespaces. Read the next section to know how to create those roles.
+The above command allows people to create app repositories in the Kubeapps namespace, these are called "Global Repositories" since they will be available in any namespace Kubeapps is available. On the other hand, it's also possible to create "Namespaced Repositories" that will be available just in a single namespace. For doing so, users need to have permissions to create app repositories in those namespaces. Read the next section to know how to create those roles.
 
 ### Assigning roles across multiple namespaces
 

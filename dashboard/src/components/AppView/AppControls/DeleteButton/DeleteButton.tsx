@@ -20,7 +20,7 @@ export default function DeleteButton({ cluster, namespace, releaseName }: IDelet
   const [modalIsOpen, setModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const error = useSelector((state: IStoreState) => state.apps.deleteError);
+  const error = useSelector((state: IStoreState) => state.apps.error);
 
   const openModal = () => setModal(true);
   const closeModal = () => setModal(false);

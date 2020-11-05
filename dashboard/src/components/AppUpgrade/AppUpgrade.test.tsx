@@ -5,7 +5,14 @@ import * as React from "react";
 import Alert from "components/js/Alert";
 import { hapi } from "shared/hapi/release";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IChartState, IChartVersion, IRelease } from "shared/types";
+import {
+  FetchError,
+  IAppRepository,
+  IChartState,
+  IChartVersion,
+  IRelease,
+  UpgradeError,
+} from "shared/types";
 import itBehavesLike from "../../shared/specs";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
@@ -103,7 +110,7 @@ context("when an error exists", () => {
     const wrapper = shallow(
       <AppUpgrade
         {...defaultProps}
-        appsError={new Error("foo does not exist")}
+        error={new FetchError("foo does not exist")}
         repos={[repo]}
         repo={repo}
       />,
@@ -146,6 +153,37 @@ context("when an error exists", () => {
         .children()
         .text(),
     ).toContain("Chart repositories not found");
+  });
+
+  it("still renders the upgrade form even if there is an upgrade error", () => {
+    const repo = {
+      metadata: { name: "stable" },
+    } as IAppRepository;
+    const upgradeError = new UpgradeError("foo upgrade failed");
+    const wrapper = shallow(
+      <AppUpgrade
+        {...defaultProps}
+        error={upgradeError}
+        repos={[repo]}
+        repo={repo}
+        app={
+          {
+            chart: {
+              metadata: {
+                name: "bar",
+                version: "1.0.0",
+              },
+            },
+            name: "foo",
+            updateInfo: { repository: {} },
+          } as IRelease
+        }
+        repoName="foobar"
+      />,
+    );
+
+    expect(wrapper.find(UpgradeForm)).toExist();
+    expect(wrapper.find(UpgradeForm).prop("error")).toEqual(upgradeError);
   });
 });
 

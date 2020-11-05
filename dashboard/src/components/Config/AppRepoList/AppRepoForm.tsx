@@ -34,14 +34,8 @@ const AUTH_METHOD_BASIC = "basic";
 const AUTH_METHOD_BEARER = "bearer";
 const AUTH_METHOD_CUSTOM = "custom";
 
-export function AppRepoForm({
-  onSubmit,
-  onAfterInstall,
-  namespace,
-  kubeappsNamespace,
-  repo,
-  secret,
-}: IAppRepoFormProps) {
+export function AppRepoForm(props: IAppRepoFormProps) {
+  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo, secret } = props;
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const [authMethod, setAuthMethod] = useState(AUTH_METHOD_NONE);
@@ -59,10 +53,13 @@ export function AppRepoForm({
   const [validated, setValidated] = useState(undefined as undefined | boolean);
 
   const {
-    imagePullSecrets,
-    errors: { create: createError, update: updateError, validate: validationError },
-    validating,
-  } = useSelector((state: IStoreState) => state.repos);
+    repos: {
+      imagePullSecrets,
+      errors: { create: createError, update: updateError, validate: validationError },
+      validating,
+    },
+    config: { appVersion },
+  } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
     // Select the pull secrets if they are already selected in the existing repo
@@ -388,7 +385,7 @@ export function AppRepoForm({
             Select existing secret(s) to access a private Docker registry and pull images from it.
             Note that this functionality is supported for Kubeapps with Helm3 only, more info{" "}
             <a
-              href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
+              href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -432,7 +429,7 @@ export function AppRepoForm({
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
+            href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md#modifying-the-synchronization-job`}
           >
             here
           </a>

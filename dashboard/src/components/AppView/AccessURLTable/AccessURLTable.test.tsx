@@ -178,6 +178,42 @@ context("when the app contains ingresses", () => {
     expect(wrapper.find("a").findWhere(a => a.prop("href") === "http://foo.bar/ready")).toExist();
     expect(wrapper).toMatchSnapshot();
   });
+
+  it("should show the table with available ingresses without anchors if a regex is present in the path", () => {
+    const ingress = {
+      kind: "Ingress",
+      metadata: {
+        name: "foo",
+        selfLink: "/ingresses/foo",
+      },
+      spec: {
+        rules: [
+          {
+            host: "foo.bar",
+            http: {
+              paths: [{ path: "/ready(/|$)(.*)" }],
+            },
+          },
+        ],
+      } as IIngressSpec,
+    } as IResource;
+    const ingressItem = { isFetching: false, item: ingress };
+    const url = ingress.metadata.selfLink;
+    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
+    const state = { kube: { items: { [url]: ingressItem } } };
+    const store = getStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} />,
+    );
+    expect(wrapper.find("Table")).toExist();
+    expect(wrapper.find("a")).not.toExist();
+    const matchingSpans = wrapper.find("span").findWhere(s => s.text().includes("foo.bar/ready"));
+    expect(matchingSpans).not.toHaveLength(0);
+    matchingSpans.forEach(element => {
+      expect(element.text()).toEqual("http://foo.bar/ready(/|$)(.*)");
+    });
+  });
 });
 
 context("when the app contains services and ingresses", () => {

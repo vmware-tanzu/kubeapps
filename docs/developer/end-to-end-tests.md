@@ -1,6 +1,6 @@
 # End-to-end tests in the project
 
-In every CI build, a set of end-to-end tests are run to verify, as much as possible, that the changes don't include regressions from an user point of view. The current end-to-end tests are executed in two steps (or categories):
+In every CI build, a set of end-to-end tests are run to verify, as much as possible, that the changes don't include regressions from a user point of view. The current end-to-end tests are executed in two steps (or categories):
 
 - Chart tests
 - Browser tests
@@ -35,7 +35,7 @@ It's possible to run these tests either locally or in a container environment.
 
 You can setup a configured Kubeapps instance in your cluster with the `script/setup-kubeapps.sh` script.
 
-### Runing browser tests locally
+### Running browser tests locally
 
 To run the tests locally you just need to install the required dependencies and set the required environment variables:
 
@@ -49,7 +49,7 @@ If anything goes wrong, apart from the logs of the test, you can find the screen
 
 ### Running browser tests in a pod
 
-Since the CI environment don't have the required dependencies and to provide a reproducible environment, it's possible to run the browser tests in a Kubernetes pod. To do so, you can spin up an instance running the image `kubeapps/integration-tests`. This image contains all the required dependencies and it waits forever so you can execute commands within it. The goal of this setup is that you can copy the latest tests to the image, run the tests and extract the screenshots in case of failure:
+Since the CI environment doesn't have the required dependencies and to provide a reproducible environment, it's possible to run the browser tests in a Kubernetes pod. To do so, you can spin up an instance running the image `kubeapps/integration-tests`. This image contains all the required dependencies and it waits forever so you can execute commands within it. The goal of this setup is that you can copy the latest tests to the image, run the tests and extract the screenshots in case of failure:
 
 ```bash
 cd integration

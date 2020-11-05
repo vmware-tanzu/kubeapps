@@ -14,7 +14,7 @@ We see no reason to implement a proxy for Helm 3, but rather what we call an age
 
 ## Authentication
 
-Since Helm 2 is built on the assumption that the Tiller service runs in-cluster with its own service account (and ["does not provide a way to map user credentials to specific permissions within Kubernetes"](https://helm.sh/docs/securing_installation/#tiller-and-user-permissions)), the only thing Kubeapps was required to provide for authentication with Tiller (when using TLS) was the `ca.crt` file.
+Since Helm 2 is built on the assumption that the Tiller service runs in-cluster with its own service account (and ["does not provide a way to map user credentials to specific permissions within Kubernetes"](https://v2.helm.sh/docs/securing_installation/#tiller-and-user-permissions)), the only thing Kubeapps was required to provide for authentication with Tiller (when using TLS) was the `ca.crt` file.
 For this reason, Kubeapps currently (with Helm 2) authenticates with the Kubernetes API server using the user's bearer token not only when talking directly to the API server, but also to verify permissions before making any request to Tiller.
 
 With Helm 3, all authentication will be handled by the Kubernetes API Server, so none of the above should be an issue.

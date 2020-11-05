@@ -8,7 +8,7 @@ The `apprepository-controller` is a Kubernetes controller for managing Helm char
 - [Make](https://www.gnu.org/software/make/)
 - [Go programming language](https://golang.org/dl/)
 - [Docker CE](https://www.docker.com/community-edition)
-- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/)
+- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
@@ -43,7 +43,7 @@ This builds the `apprepository-controller` binary in the working directory.
 Before running the `apprepository-controller` binary on the development host we should stop the existing controller that is running in the development cluster. The best way to do this is to scale the number of replicas of the `apprepository-controller` deployment to `0`.
 
 ```bash
-kubectl -n kubeapps scale deployment apprepository-controller --replicas=0
+kubectl -n kubeapps scale deployment kubeapps-internal-apprepository-controller --replicas=0
 ```
 
 > **NOTE** Remember to scale the deployment back to `1` replica when you are done

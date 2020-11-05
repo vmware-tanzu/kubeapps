@@ -173,19 +173,19 @@ describe("resyncAllRepos", () => {
     await store.dispatch(
       repoActions.resyncAllRepos([
         {
-          name: "foo",
           namespace: "namespace-1",
+          name: "foo",
         },
         {
-          name: "bar",
           namespace: "namespace-2",
+          name: "bar",
         },
       ]),
     );
 
     expect(appRepoGetMock).toHaveBeenCalledTimes(2);
-    expect(appRepoGetMock.mock.calls[0]).toEqual(["default", "foo", "namespace-1"]);
-    expect(appRepoGetMock.mock.calls[1]).toEqual(["default", "bar", "namespace-2"]);
+    expect(appRepoGetMock.mock.calls[0]).toEqual(["default", "namespace-1", "foo"]);
+    expect(appRepoGetMock.mock.calls[1]).toEqual(["default", "namespace-2", "bar"]);
   });
 });
 

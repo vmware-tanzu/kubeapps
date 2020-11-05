@@ -240,10 +240,10 @@ exports[`when the app contains ingresses should show the table with available in
                     >
                       <div
                         className="margin-b-sm"
+                        key="http://foo.bar/ready"
                       >
                         <a
                           href="http://foo.bar/ready"
-                          key="http://foo.bar/ready"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -457,7 +457,15 @@ exports[`when the app contains resources with errors displays the error 1`] = `
                     could not find Ingress
                   </span>,
                   "type": "Ingress",
-                  "url": "Unknown",
+                  "url": Array [
+                    <div
+                      className="margin-b-sm"
+                    >
+                      <span>
+                        Unknown
+                      </span>
+                    </div>,
+                  ],
                 },
               ]
             }
@@ -517,7 +525,15 @@ exports[`when the app contains resources with errors displays the error 1`] = `
                         could not find Ingress
                       </span>,
                       "type": "Ingress",
-                      "url": "Unknown",
+                      "url": Array [
+                        <div
+                          className="margin-b-sm"
+                        >
+                          <span>
+                            Unknown
+                          </span>
+                        </div>,
+                      ],
                     }
                   }
                 >
@@ -526,7 +542,14 @@ exports[`when the app contains resources with errors displays the error 1`] = `
                       className=""
                       key="0-url"
                     >
-                      Unknown
+                      <div
+                        className="margin-b-sm"
+                        key="0"
+                      >
+                        <span>
+                          Unknown
+                        </span>
+                      </div>
                     </td>
                     <td
                       className=""
@@ -821,10 +844,10 @@ exports[`when the app contains services and ingresses should show the table with
                     >
                       <div
                         className="margin-b-sm"
+                        key="http://1.2.3.4:8080"
                       >
                         <a
                           href="http://1.2.3.4:8080"
-                          key="http://1.2.3.4:8080"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -919,10 +942,10 @@ exports[`when the app contains services and ingresses should show the table with
                     >
                       <div
                         className="margin-b-sm"
+                        key="http://foo.bar/ready"
                       >
                         <a
                           href="http://foo.bar/ready"
-                          key="http://foo.bar/ready"
                           rel="noopener noreferrer"
                           target="_blank"
                         >

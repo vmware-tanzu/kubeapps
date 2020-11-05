@@ -203,7 +203,7 @@ describe("delete applications", () => {
     const error = new Error("something went wrong!");
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteApp) },
-      { type: getType(actions.apps.errorDeleteApp), payload: error },
+      { type: getType(actions.apps.errorApp), payload: error },
     ];
     deleteAppMock.mockImplementation(() => {
       throw error;
@@ -260,7 +260,7 @@ describe("deploy chart", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestDeployApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorApp),
         payload: new UnprocessableEntity(
           "Namespace not selected. Please select a namespace using the selector in the top right corner.",
         ),
@@ -286,7 +286,7 @@ describe("deploy chart", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestDeployApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorApp),
         payload: new UnprocessableEntity(
           "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
         ),
@@ -333,7 +333,7 @@ describe("upgradeApp", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestUpgradeApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorApp),
         payload: new Error("Boom!"),
       },
     ];
@@ -361,7 +361,7 @@ describe("upgradeApp", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestUpgradeApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorApp),
         payload: new UnprocessableEntity(
           "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
         ),
@@ -399,7 +399,7 @@ describe("rollbackApp", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestRollbackApp) },
       {
-        type: getType(actions.apps.errorApps),
+        type: getType(actions.apps.errorApp),
         payload: new Error("Boom!"),
       },
     ];
