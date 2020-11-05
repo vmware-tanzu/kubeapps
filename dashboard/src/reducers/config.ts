@@ -15,6 +15,7 @@ export const initialState: IConfigState = {
   authProxyEnabled: false,
   oauthLoginURI: "",
   oauthLogoutURI: "",
+  authProxySkipLoginPage: false,
   clusters: [],
 };
 

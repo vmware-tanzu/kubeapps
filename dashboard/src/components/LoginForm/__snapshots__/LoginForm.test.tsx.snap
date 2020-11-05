@@ -1,37 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`oauth login form renders a login button link 1`] = `
-<div
-  className="login-wrapper"
->
-  <form
-    className="login clr-form"
-    onSubmit={[Function]}
-  >
-    <OAuthLogin
-      oauthLoginURI="/sign/in"
-    />
-    <div
-      className="login-moreinfo"
-    >
-      <a
-        href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        <CdsIcon
-          shape="info-circle"
-        />
-        More Info
-      </a>
-    </div>
-  </form>
-</div>
-`;
-
 exports[`token login form displays an error if the authentication error is passed 1`] = `
 <LoginForm
   appVersion="devel"
+  authProxySkipLoginPage={false}
   authenticate={[MockFunction]}
   authenticated={false}
   authenticating={false}
@@ -150,36 +122,6 @@ exports[`token login form displays an error if the authentication error is passe
     </form>
   </div>
 </LoginForm>
-`;
-
-exports[`token login form renders a token login form 1`] = `
-<div
-  className="login-wrapper"
->
-  <form
-    className="login clr-form"
-    onSubmit={[Function]}
-  >
-    <TokenLogin
-      handleTokenChange={[Function]}
-      token=""
-    />
-    <div
-      className="login-moreinfo"
-    >
-      <a
-        href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        <CdsIcon
-          shape="info-circle"
-        />
-        More Info
-      </a>
-    </div>
-  </form>
-</div>
 `;
 
 exports[`while authenticating loading spinner matches the snapshot 1`] = `

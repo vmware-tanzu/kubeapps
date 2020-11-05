@@ -1,9 +1,12 @@
+import LoadingWrapper from "components/LoadingWrapper";
 import { mount, shallow } from "enzyme";
 import { Location } from "history";
 import context from "jest-plugin-context";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import { Redirect } from "react-router";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { wait } from "shared/utils";
 import itBehavesLike from "../../shared/specs";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
@@ -25,30 +28,15 @@ const defaultProps = {
   authenticating: false,
   authenticationError: undefined,
   location: emptyLocation,
-  checkCookieAuthentication: jest.fn(),
+  checkCookieAuthentication: jest.fn().mockReturnValue({
+    then: jest.fn(f => f()),
+  }),
   oauthLoginURI: "",
   appVersion: "devel",
+  authProxySkipLoginPage: false,
 };
 
 const authenticationError = "it's a trap";
-
-describe("componentDidMount", () => {
-  it("calls checkCookieAuthentication when oauthLoginURI provided", () => {
-    const props = {
-      ...defaultProps,
-      oauthLoginURI: "/sign/in",
-    };
-    const checkCookieAuthentication = jest.fn();
-    mount(<LoginForm {...props} checkCookieAuthentication={checkCookieAuthentication} />);
-    expect(checkCookieAuthentication).toHaveBeenCalled();
-  });
-
-  it("does not call checkCookieAuthentication when oauthLoginURI not provided", () => {
-    const checkCookieAuthentication = jest.fn();
-    mount(<LoginForm {...defaultProps} checkCookieAuthentication={checkCookieAuthentication} />);
-    expect(checkCookieAuthentication).not.toHaveBeenCalled();
-  });
-});
 
 context("while authenticating", () => {
   itBehavesLike("aLoadingComponent", {
@@ -59,14 +47,13 @@ context("while authenticating", () => {
 
 describe("token login form", () => {
   it("renders a token login form", () => {
-    const wrapper = shallow(<LoginForm {...defaultProps} />);
+    const wrapper = mount(<LoginForm {...defaultProps} />);
     expect(wrapper.find(TokenLogin)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
-    expect(wrapper).toMatchSnapshot();
   });
 
   it("renders a link to the access control documentation", () => {
-    const wrapper = shallow(<LoginForm {...defaultProps} />);
+    const wrapper = mount(<LoginForm {...defaultProps} />);
     expect(wrapper.find("a").props()).toMatchObject({
       href: "https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md",
       target: "_blank",
@@ -89,7 +76,10 @@ describe("token login form", () => {
 
   describe("redirect if authenticated", () => {
     it("redirects to / if no current location", () => {
-      const wrapper = shallow(<LoginForm {...defaultProps} authenticated={true} />);
+      const wrapper = mountWrapper(
+        defaultStore,
+        <LoginForm {...defaultProps} authenticated={true} />,
+      );
       const redirect = wrapper.find(Redirect);
       expect(redirect.props()).toEqual({ to: { pathname: "/" } });
     });
@@ -97,7 +87,8 @@ describe("token login form", () => {
     it("redirects to previous location", () => {
       const location = Object.assign({}, emptyLocation);
       location.state = { from: "/test" };
-      const wrapper = shallow(
+      const wrapper = mountWrapper(
+        defaultStore,
         <LoginForm {...defaultProps} authenticated={true} location={location} />,
       );
       const redirect = wrapper.find(Redirect);
@@ -151,12 +142,26 @@ describe("oauth login form", () => {
 
   it("displays the oauth login if oauthLoginURI provided", () => {
     const wrapper = mount(<LoginForm {...props} />);
-
+    expect(props.checkCookieAuthentication).toHaveBeenCalled();
+    expect(wrapper.find(OAuthLogin)).toExist();
     expect(wrapper.find("a").findWhere(a => a.prop("href") === props.oauthLoginURI)).toExist();
   });
 
-  it("renders a login button link", () => {
-    const wrapper = shallow(<LoginForm {...props} />);
-    expect(wrapper).toMatchSnapshot();
+  it("doesn't render the login form if the cookie has not been checked yet", () => {
+    const checkCookieAuthentication = jest.fn(async () => {
+      await wait(1);
+      return true;
+    });
+    const wrapper = mount(
+      <LoginForm {...props} checkCookieAuthentication={checkCookieAuthentication} />,
+    );
+    expect(wrapper.find(LoadingWrapper)).toExist();
+    expect(wrapper.find(OAuthLogin)).not.toExist();
+  });
+
+  it("changes window location when skipping oauth login page", () => {
+    window.location.replace = jest.fn();
+    mount(<LoginForm {...props} authProxySkipLoginPage={true} />);
+    expect(window.location.replace).toHaveBeenCalledWith(props.oauthLoginURI);
   });
 });

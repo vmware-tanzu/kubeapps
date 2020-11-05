@@ -321,6 +321,7 @@ describe("clusterReducer", () => {
         ui: "hex",
       },
       clusters: ["additionalCluster1", "additionalCluster2"],
+      authProxySkipLoginPage: false,
     } as IConfig;
     it("re-writes the clusters to match the config.clusters state", () => {
       expect(
