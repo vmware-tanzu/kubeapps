@@ -452,7 +452,7 @@ func (a *userHandler) RefreshAppRepository(repoName string, requestNamespace str
 		return nil, err
 	}
 
-	// An updated is forced if the ResyncRequests property changes,
+	// An update is forced if the ResyncRequests property changes,
 	// so we increase it in the retrieved object
 	appRepo.Spec.ResyncRequests++
 
