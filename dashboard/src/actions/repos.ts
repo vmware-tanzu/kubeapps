@@ -125,7 +125,7 @@ export const deleteRepo = (
       },
     } = getState();
     try {
-      await AppRepository.delete(currentCluster, name, namespace);
+      await AppRepository.delete(currentCluster, namespace, name);
       dispatch(fetchRepos(currentNamespace));
       return true;
     } catch (e) {
@@ -144,7 +144,7 @@ export const resyncRepo = (
       clusters: { currentCluster },
     } = getState();
     try {
-      await AppRepository.resync(currentCluster, name, namespace);
+      await AppRepository.resync(currentCluster, namespace, name);
     } catch (e) {
       dispatch(errorRepos(e, "update"));
     }
@@ -187,7 +187,7 @@ export const fetchRepoSecret = (
     const {
       clusters: { currentCluster },
     } = getState();
-    const secret = await Secret.get(currentCluster, name, namespace);
+    const secret = await Secret.get(currentCluster, namespace, name);
     dispatch(receiveReposSecret(secret));
   };
 };
@@ -366,7 +366,7 @@ export function checkChart(
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async (dispatch, getState) => {
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(cluster, repo, repoNamespace);
+    const appRepository = await AppRepository.get(cluster, repoNamespace, repo);
     try {
       await Chart.fetchChartVersions(cluster, repoNamespace, `${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));

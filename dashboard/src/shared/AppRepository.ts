@@ -11,13 +11,13 @@ export class AppRepository {
     return appRepository;
   }
 
-  public static async get(cluster: string, name: string, namespace: string) {
+  public static async get(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(cluster, namespace, name));
     return data;
   }
 
-  public static async resync(cluster: string, name: string, namespace: string) {
-    const repo = await AppRepository.get(cluster, name, namespace);
+  public static async resync(cluster: string, namespace: string, name: string) {
+    const repo = await AppRepository.get(cluster, namespace, name);
     repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
     repo.spec.resyncRequests++;
     const { data } = await axiosWithAuth.put(
@@ -46,9 +46,9 @@ export class AppRepository {
     return data;
   }
 
-  public static async delete(cluster: string, name: string, namespace: string) {
+  public static async delete(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.delete(
-      url.backend.apprepositories.delete(cluster, name, namespace),
+      url.backend.apprepositories.delete(cluster, namespace, name),
     );
     return data;
   }
