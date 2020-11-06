@@ -137,7 +137,7 @@ This value will be the Bearer token to be passed in the `Authentication` HTTP he
 
 A high-level description of the main steps is presented herein; please refer to the [official Harbor documentation](https://goharbor.io/docs/1.10/working-with-projects/project-configuration/configure-webhooks/) for further information.
 
-1.  Log in to the Harbor interface with an account that has at least project administrator privileges.
+1. Log in to the Harbor interface with an account that has at least project administrator privileges.
 2. Go to  *Projects*, select a project, and select  *Webhooks*.
 3. Enter this URL: `https://<KUBEAPPS_URL>/api/v1/clusters/<CLUSTER_NAME>/namespaces/<NAMESPACE_NAME>/apprepositories/<APPREPO_NAME>/refresh`. Modify `<KUBEAPPS_URL>` , `<CLUSTER_NAME>`, `<NAMESPACE_NAME>`, `<APPREPO_NAME>` to match your needs. 
 	> For instance: `https://<KUBEAPPS_URL>/api/v1/clusters/default/namespaces/kubeapps/apprepositories/bitnami/refresh` will update the App Repository `bitnami` in the namespace `kubeapps` of the cluster `default`.
@@ -147,6 +147,10 @@ A high-level description of the main steps is presented herein; please refer to 
 	
 5. Select as many events as you need to trigger notifications.
 6.  Click  *Continue*  to create the webhook.
+
+This picture illustrates the configurtation of a webhook in Habor:
+
+  ![Configuring a webhook in Harbor](../img/harbor-webhook.png)
 
 ## Final remarks
 
