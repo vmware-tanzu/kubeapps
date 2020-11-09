@@ -146,7 +146,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: "kubeapps:{{ .Release.Namespace }}:apprepositories-webhook"
+  name: "kubeapps:{{ .Release.Namespace }}:apprepositories-refresh"
   labels:{{ include "kubeapps.extraAppLabels" . | nindent 4 }}
   app: {{ template "kubeapps.apprepository.fullname" . }}
 rules:
