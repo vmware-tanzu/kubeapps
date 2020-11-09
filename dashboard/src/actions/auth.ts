@@ -99,10 +99,9 @@ export function checkCookieAuthentication(
     const isAuthed = await Auth.isAuthenticatedWithCookie(cluster);
     if (isAuthed) {
       await dispatch(authenticate(cluster, "", true));
-      return true;
     } else {
       dispatch(setAuthenticated(false, false, ""));
-      return false;
     }
+    return isAuthed;
   };
 }
