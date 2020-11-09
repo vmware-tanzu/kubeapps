@@ -170,6 +170,7 @@ describe("Auth", () => {
         kubeappsNamespace: "ns",
         appVersion: "2",
         clusters: [],
+        authProxySkipLoginPage: false,
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -185,6 +186,7 @@ describe("Auth", () => {
         kubeappsNamespace: "ns",
         appVersion: "2",
         clusters: [],
+        authProxySkipLoginPage: false,
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

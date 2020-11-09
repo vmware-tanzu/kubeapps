@@ -37,6 +37,7 @@ const makeStore = (
     appVersion: "",
     oauthLogoutURI: "",
     clusters: [],
+    authProxySkipLoginPage: false,
   };
   const clusters: IClustersState = {
     currentCluster: "default",

@@ -559,6 +559,11 @@ authProxy:
   ##
   oauthLoginURI: /oauth2/start
   oauthLogoutURI: /oauth2/sign_out
+
+  ## Skip the Kubeapps login page when using OIDC and directly redirect to the IdP
+  ##
+  skipKubeappsLoginPage: false
+
   ## The remaining auth proxy values are relevant only if an internal auth-proxy is
   ## being configured by Kubeapps.
   ## Bitnami OAuth2 Proxy image

@@ -8,6 +8,7 @@ export interface IConfig {
   authProxyEnabled: boolean;
   oauthLoginURI: string;
   oauthLogoutURI: string;
+  authProxySkipLoginPage: boolean;
   error?: Error;
   clusters: string[];
 }

@@ -15,22 +15,26 @@ export interface ILoginFormProps {
   authenticating: boolean;
   authenticationError: string | undefined;
   oauthLoginURI: string;
+  authProxySkipLoginPage: boolean;
   authenticate: (cluster: string, token: string) => any;
-  checkCookieAuthentication: (cluster: string) => void;
+  checkCookieAuthentication: (cluster: string) => Promise<boolean>;
   appVersion: string;
   location: Location;
 }
 
 function LoginForm(props: ILoginFormProps) {
   const [token, setToken] = useState("");
+  const [cookieChecked, setCookieChecked] = useState(false);
   const { oauthLoginURI, checkCookieAuthentication } = props;
   useEffect(() => {
     if (oauthLoginURI) {
-      checkCookieAuthentication(props.cluster);
+      checkCookieAuthentication(props.cluster).then(() => setCookieChecked(true));
+    } else {
+      setCookieChecked(true);
     }
   }, [oauthLoginURI, checkCookieAuthentication, props.cluster]);
 
-  if (props.authenticating) {
+  if (props.authenticating || !cookieChecked) {
     return <LoadingWrapper loaded={false} />;
   }
   if (props.authenticated) {
@@ -46,6 +50,11 @@ function LoginForm(props: ILoginFormProps) {
   const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setToken(e.target.value);
   };
+
+  if (props.oauthLoginURI && props.authProxySkipLoginPage) {
+    // If the oauth login page should be skipped, simply redirect to the login URI.
+    window.location.replace(props.oauthLoginURI);
+  }
 
   return (
     <div className="login-wrapper">

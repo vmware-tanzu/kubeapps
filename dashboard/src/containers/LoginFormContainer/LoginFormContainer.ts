@@ -8,7 +8,7 @@ import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
   auth: { authenticated, authenticating, authenticationError },
-  config: { authProxyEnabled, oauthLoginURI, appVersion },
+  config: { authProxyEnabled, oauthLoginURI, appVersion, authProxySkipLoginPage },
   clusters,
 }: IStoreState) {
   return {
@@ -17,6 +17,7 @@ function mapStateToProps({
     authenticationError,
     cluster: clusters.currentCluster,
     oauthLoginURI: authProxyEnabled ? oauthLoginURI : "",
+    authProxySkipLoginPage,
     appVersion,
   };
 }

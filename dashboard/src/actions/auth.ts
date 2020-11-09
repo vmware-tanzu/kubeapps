@@ -90,7 +90,7 @@ export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, A
 
 export function checkCookieAuthentication(
   cluster: string,
-): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, AuthAction> {
   return async dispatch => {
     // The call to authenticate below will also dispatch authenticating,
     // but we dispatch it early so that the login screen is shown as
@@ -102,5 +102,6 @@ export function checkCookieAuthentication(
     } else {
       dispatch(setAuthenticated(false, false, ""));
     }
+    return isAuthed;
   };
 }
