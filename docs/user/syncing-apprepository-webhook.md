@@ -30,11 +30,11 @@ cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: apprepositories-webhook
+  name: apprepositories-refresh
 EOF
 ```
 
-Besides, a `ClusterRole` *apprepositories-webhook* should be already created in the cluster if the `rbac.create=true` was passed in the `values.yaml`  file. Otherwise, this object is created as follows:
+Besides, a `ClusterRole` *apprepositories-refresh* should be already created in the cluster if the `rbac.create=true` was passed in the `values.yaml`  file. Otherwise, this object is created as follows:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -42,7 +42,7 @@ cat <<EOF | kubectl apply -f -
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: apprepositories-webhook
+  name: apprepositories-refresh
 rules:
   - apiGroups:
       - kubeapps.com
@@ -53,9 +53,9 @@ rules:
       - update
 EOF
 ```
-> Note: this is only necessary if your cluster does not already have a `ClusterRole` *apprepositories-webhook*.
+> Note: this is only necessary if your cluster does not already have a `ClusterRole` *apprepositories-refresh*.
 
-Next, the `ClusterRole` *apprepositories-webhook* (with `get` and `update` permissions over `apprepositories`) has to be associated to the relevant namespace(s) by means of a `RoleBinding`:
+Next, the `ClusterRole` *apprepositories-refresh* (with `get` and `update` permissions over `apprepositories`) has to be associated to the relevant namespace(s) by means of a `RoleBinding`:
 
 > To bind it in multiple namespaces, create as many `RoleBinding`s (changing `namespace: my-namespace` to match your needs) for each namespace.
 
@@ -65,15 +65,15 @@ cat <<EOF | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: apprepositories-webhook
+  name: apprepositories-refresh
   namespace: my-namespace
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: apprepositories-webhook
+  name: apprepositories-refresh
 subjects:
 - kind: ServiceAccount
-  name: apprepositories-webhook
+  name: apprepositories-refresh
   namespace: default
 EOF
 ```
@@ -82,10 +82,10 @@ EOF
 
 ### Retrieving the ServiceAccount token
 
-The `<TOEKN>`  for the ServiceAccount *apprepositories-webhook* is retrieved:
+The `<TOKEN>`  for the ServiceAccount *apprepositories-refresh* is retrieved:
 
 ```bash
-kubectl get secret $(kubectl get serviceaccount apprepositories-webhook -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep apprepositories-webhook) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
+kubectl get secret $(kubectl get serviceaccount apprepositories-refresh -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep apprepositories-refresh) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
 ```
 This value will be the Bearer token to be passed in the `Authentication` HTTP header.
 
