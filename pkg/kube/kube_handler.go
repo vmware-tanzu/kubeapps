@@ -166,6 +166,7 @@ type handler interface {
 	ListAppRepositories(requestNamespace string) (*v1alpha1.AppRepositoryList, error)
 	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
+	RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
@@ -440,6 +441,27 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 			return nil, err
 		}
 	}
+	return appRepo, nil
+}
+
+// RefreshAppRepository forces a refresh in a given apprepository (by updating resyncRequests property)
+func (a *userHandler) RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error) {
+	// Retrieve the repo object with name=repoName
+	appRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(context.TODO(), repoName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// An update is forced if the ResyncRequests property changes,
+	// so we increase it in the retrieved object
+	appRepo.Spec.ResyncRequests++
+
+	// Update existing repo with the new spec (ie ResyncRequests++)
+	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Update(context.TODO(), appRepo, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
 	return appRepo, nil
 }
 

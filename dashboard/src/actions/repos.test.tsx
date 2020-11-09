@@ -149,22 +149,6 @@ describe("deleteRepo", () => {
 });
 
 describe("resyncRepo", () => {
-  it("dispatches errorRepos if error on #get", async () => {
-    AppRepository.get = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
-
-    const expectedActions = [
-      {
-        type: getType(repoActions.errorRepos),
-        payload: { err: new Error("Boom!"), op: "update" },
-      },
-    ];
-
-    await store.dispatch(repoActions.resyncRepo("foo", "my-namespace"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
   it("dispatches errorRepos if error on #update", async () => {
     AppRepository.resync = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");

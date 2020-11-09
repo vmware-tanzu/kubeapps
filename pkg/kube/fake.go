@@ -60,6 +60,11 @@ func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 	return c.CreatedRepo, c.Err
 }
 
+// RefreshAppRepository fake
+func (c *FakeHandler) RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error) {
+	return c.UpdatedRepo, c.Err
+}
+
 // UpdateAppRepository fake
 func (c *FakeHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	return c.UpdatedRepo, c.Err

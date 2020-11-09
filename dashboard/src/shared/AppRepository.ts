@@ -17,12 +17,9 @@ export class AppRepository {
   }
 
   public static async resync(cluster: string, namespace: string, name: string) {
-    const repo = await AppRepository.get(cluster, namespace, name);
-    repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
-    repo.spec.resyncRequests++;
-    const { data } = await axiosWithAuth.put(
-      AppRepository.getSelfLink(cluster, namespace, name),
-      repo,
+    const { data } = await axiosWithAuth.post(
+      url.backend.apprepositories.refresh(cluster, namespace, name),
+      null,
     );
     return data;
   }
