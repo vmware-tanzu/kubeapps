@@ -40,6 +40,8 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
+	github.com/srwiley/oksvg v0.0.0-20200311192757-870daf9aa564
+	github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9
 	github.com/stretchr/testify v1.6.1
 	github.com/unrolled/render v1.0.1 // indirect
 	github.com/urfave/negroni v1.0.0

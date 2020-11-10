@@ -5,9 +5,14 @@
   border-bottom: 2px solid #f1f1f1;
   background-color: white;
 
-  img {
-    max-height: 3rem;
-    margin: 0.2rem 0 0.2rem 0.6rem;
+  .img-container {
+    display: flex;
+    align-items: center;
+    img {
+      max-height: 3rem;
+      max-width: 7rem;
+      margin: 0.2rem 0 0.2rem 0.6rem;
+    }
   }
   .kubeapps-header-content {
     width: 100%;
