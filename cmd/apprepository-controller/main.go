@@ -31,19 +31,20 @@ import (
 )
 
 var (
-	masterURL         string
-	kubeconfig        string
-	repoSyncImage     string
-	repoSyncCommand   string
-	namespace         string
-	dbURL             string
-	dbUser            string
-	dbName            string
-	dbSecretName      string
-	dbSecretKey       string
-	userAgentComment  string
-	crontab           string
-	reposPerNamespace bool
+	masterURL                string
+	kubeconfig               string
+	repoSyncImage            string
+	repoSyncImagePullSecrets string
+	repoSyncCommand          string
+	namespace                string
+	dbURL                    string
+	dbUser                   string
+	dbName                   string
+	dbSecretName             string
+	dbSecretKey              string
+	userAgentComment         string
+	crontab                  string
+	reposPerNamespace        bool
 )
 
 func main() {
@@ -91,6 +92,7 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&repoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
+	flag.StringVar(&repoSyncImagePullSecrets, "repo-sync-image-pullsecrets", "", "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
 	flag.StringVar(&repoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
 	flag.BoolVar(&reposPerNamespace, "repos-per-namespace", true, "Defaults to watch for repos in all namespaces. Switch to false to watch only the configured namespace.")

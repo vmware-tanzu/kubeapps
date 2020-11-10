@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -480,6 +481,13 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace strin
 	if len(podTemplateSpec.Spec.Containers) == 0 {
 		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
 	}
+
+	// Populate ImagePullSecrets spec
+	if len(podTemplateSpec.Spec.ImagePullSecrets) == 0 {
+		log.Info("Populating ImagePullSecrets")
+		podTemplateSpec.Spec.ImagePullSecrets = append(podTemplateSpec.Spec.ImagePullSecrets, getImagePullSecretsRefs()...)
+	}
+
 	podTemplateSpec.Spec.Containers[0].Name = "sync"
 	podTemplateSpec.Spec.Containers[0].Image = repoSyncImage
 	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = "IfNotPresent"
@@ -509,11 +517,13 @@ func newCleanupJob(reponame, namespace, kubeappsNamespace string) *batchv1.Job {
 
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
 func cleanupJobSpec(repoName, repoNamespace string) batchv1.JobSpec {
+	log.Info("Creating cleaunp")
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				// If there's an issue, delay till the next cron
-				RestartPolicy: "Never",
+				RestartPolicy:    "Never",
+				ImagePullSecrets: getImagePullSecretsRefs(),
 				Containers: []corev1.Container{
 					{
 						Name:            "delete",
@@ -618,4 +628,23 @@ func dbFlags() []string {
 		"--database-user=" + dbUser,
 		"--database-name=" + dbName,
 	}
+}
+
+// getImagePullSecretsRefs gets the []LocalObjectReference of Secrets from the
+// comma separated list passed in the repoSyncImagePullSecrets arg
+func getImagePullSecretsRefs() []corev1.LocalObjectReference {
+	var imagePullSecretsRefs []corev1.LocalObjectReference
+
+	// if no repoSyncImagePullSecrets arg passed, return nil, as usual
+	if len(repoSyncImagePullSecrets) == 0 {
+		return nil
+	}
+
+	// getting and appending a []LocalObjectReference for each ImagePullSecret passed
+	for _, imagePullSecretName := range strings.Split(repoSyncImagePullSecrets, ",") {
+		imagePullSecretsRefs = append(imagePullSecretsRefs, []corev1.LocalObjectReference{
+			{Name: imagePullSecretName},
+		}...)
+	}
+	return imagePullSecretsRefs
 }

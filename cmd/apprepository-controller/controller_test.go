@@ -17,6 +17,7 @@ func Test_newCronJob(t *testing.T) {
 	dbName = "assets"
 	dbUser = "admin"
 	dbSecretName = "postgresql"
+	repoSyncImagePullSecrets = "foo,bar,foobar"
 	const kubeappsNamespace = "kubeapps"
 	tests := []struct {
 		name             string
@@ -75,7 +76,8 @@ func Test_newCronJob(t *testing.T) {
 									},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									ImagePullSecrets: getImagePullSecretsRefs(),
+									RestartPolicy:    "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -165,7 +167,8 @@ func Test_newCronJob(t *testing.T) {
 									},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									ImagePullSecrets: getImagePullSecretsRefs(),
+									RestartPolicy:    "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -252,7 +255,8 @@ func Test_newCronJob(t *testing.T) {
 									},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									ImagePullSecrets: getImagePullSecretsRefs(),
+									RestartPolicy:    "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -319,6 +323,7 @@ func Test_newSyncJob(t *testing.T) {
 	dbName = "assets"
 	dbUser = "admin"
 	dbSecretName = "postgresql"
+	repoSyncImagePullSecrets = "foo,bar,foobar"
 	const kubeappsNamespace = "kubeapps"
 	tests := []struct {
 		name             string
@@ -369,7 +374,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							RestartPolicy:    "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -435,7 +441,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							RestartPolicy:    "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -515,7 +522,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							RestartPolicy:    "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -602,7 +610,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							RestartPolicy:    "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -700,7 +709,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							RestartPolicy:    "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -777,7 +787,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							Affinity: &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							Affinity:         &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
 							Containers: []corev1.Container{
 								{
 									Env: []corev1.EnvVar{
@@ -815,8 +826,9 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
-							RestartPolicy: "OnFailure",
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							Affinity:         &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
+							RestartPolicy:    "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -872,6 +884,7 @@ func Test_newCleanupJob(t *testing.T) {
 	dbName = "assets"
 	dbUser = "admin"
 	dbSecretName = "postgresql"
+	repoSyncImagePullSecrets = "foo,bar,foobar"
 	const kubeappsNamespace = "kubeapps"
 
 	tests := []struct {
@@ -892,7 +905,8 @@ func Test_newCleanupJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
-							RestartPolicy: "Never",
+							ImagePullSecrets: getImagePullSecretsRefs(),
+							RestartPolicy:    "Never",
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
