@@ -43,8 +43,10 @@ spec:
           args:
             - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
             - --repo-sync-image={{ template "kubeapps.image" (list .Values.apprepository.syncImage .Values.global) }}
-            {{- if .Values.global.imagePullSecrets }}
+            {{- if .Values.global}} 
+              {{- if.Values.global.imagePullSecrets }}
             - --repo-sync-image-pullsecrets={{- include "kubeapps.joinListWithComma" .Values.global.imagePullSecrets}}
+              {{- end}}
             {{- end}}
             - --repo-sync-cmd=/asset-syncer
             - --namespace={{ .Release.Namespace }}
