@@ -258,11 +258,3 @@ Returns a JSON list of cluster names only (without sensitive tokens etc.)
     {{- end }}
     {{- $sanitizedClusters | toJson }}
 {{- end -}}
-
-{{/*
-Returns a comma separated string from a list
-*/}}
-{{- define "kubeapps.joinListWithComma" -}}
-{{- $local := dict "first" true -}}
-{{- range $k, $v := . -}}{{- if not $local.first -}},{{- end -}}{{- $v -}}{{- $_ := set $local "first" false -}}{{- end -}}
-{{- end -}}
