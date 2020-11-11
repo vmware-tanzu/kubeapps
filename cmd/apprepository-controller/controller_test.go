@@ -13,21 +13,44 @@ import (
 )
 
 func Test_newCronJob(t *testing.T) {
-	dbURL = "postgresql.kubeapps"
-	dbName = "assets"
-	dbUser = "admin"
-	dbSecretName = "postgresql"
-	repoSyncImagePullSecrets = "foo,bar,foobar"
-	const kubeappsNamespace = "kubeapps"
+	var kubeconfig = ""
+	var masterURL = ""
+	var repoSyncImage = "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
+	var repoSyncImagePullSecrets = make(arrayFlags, 0, 0)
+	var repoSyncCommand = "/chart-repo"
+	var namespace = "kubeapps"
+	var reposPerNamespace = true
+	var dbURL = "postgresql.kubeapps"
+	var dbUser = "admin"
+	var dbName = "assets"
+	var dbSecretName = "postgresql"
+	var dbSecretKey = "postgresql-root-password"
+	var userAgentComment = ""
+	var crontab = "*/10 * * * *"
 	tests := []struct {
-		name             string
-		apprepo          *apprepov1alpha1.AppRepository
-		expected         batchv1beta1.CronJob
-		userAgentComment string
-		crontab          string
+		name     string
+		config   Config
+		apprepo  *apprepov1alpha1.AppRepository
+		expected batchv1beta1.CronJob
 	}{
 		{
 			"my-charts",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         userAgentComment,
+				Crontab:                  crontab,
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -76,8 +99,7 @@ func Test_newCronJob(t *testing.T) {
 									},
 								},
 								Spec: corev1.PodSpec{
-									ImagePullSecrets: getImagePullSecretsRefs(),
-									RestartPolicy:    "OnFailure",
+									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -110,11 +132,25 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 			},
-			"",
-			"",
 		},
 		{
 			"my-charts with auth, userAgent and crontab configuration",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         "kubeapps/v2.3",
+				Crontab:                  "*/20 * * * *",
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -167,8 +203,7 @@ func Test_newCronJob(t *testing.T) {
 									},
 								},
 								Spec: corev1.PodSpec{
-									ImagePullSecrets: getImagePullSecretsRefs(),
-									RestartPolicy:    "OnFailure",
+									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -207,11 +242,25 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 			},
-			"kubeapps/v2.3",
-			"*/20 * * * *",
 		},
 		{
 			"a cronjob for an app repo in another namespace references the repo secret in kubeapps",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         "kubeapps/v2.3",
+				Crontab:                  "*/20 * * * *",
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -255,8 +304,7 @@ func Test_newCronJob(t *testing.T) {
 									},
 								},
 								Spec: corev1.PodSpec{
-									ImagePullSecrets: getImagePullSecretsRefs(),
-									RestartPolicy:    "OnFailure",
+									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
@@ -295,22 +343,20 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 			},
-			"kubeapps/v2.3",
-			"*/20 * * * *",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.userAgentComment != "" {
-				userAgentComment = tt.userAgentComment
+			if tt.config.UserAgentComment != "" {
+				userAgentComment = tt.config.UserAgentComment
 				defer func() { userAgentComment = "" }()
 			}
-			if tt.crontab != "" {
-				crontab = tt.crontab
+			if tt.config.Crontab != "" {
+				crontab = tt.config.Crontab
 				defer func() { crontab = "" }()
 			}
-			result := newCronJob(tt.apprepo, kubeappsNamespace)
+			result := newCronJob(tt.apprepo, tt.config.Namespace, tt.config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
@@ -319,20 +365,45 @@ func Test_newCronJob(t *testing.T) {
 }
 
 func Test_newSyncJob(t *testing.T) {
-	dbURL = "postgresql.kubeapps"
-	dbName = "assets"
-	dbUser = "admin"
-	dbSecretName = "postgresql"
-	repoSyncImagePullSecrets = "foo,bar,foobar"
-	const kubeappsNamespace = "kubeapps"
+	var kubeconfig = ""
+	var masterURL = ""
+	var repoSyncImage = "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
+	var repoSyncImagePullSecrets = make(arrayFlags, 0, 0)
+	var repoSyncCommand = "/chart-repo"
+	var namespace = "kubeapps"
+	var reposPerNamespace = true
+	var dbURL = "postgresql.kubeapps"
+	var dbUser = "admin"
+	var dbName = "assets"
+	var dbSecretName = "postgresql"
+	var dbSecretKey = "postgresql-root-password"
+	var userAgentComment = ""
+	var crontab = "*/10 * * * *"
+
 	tests := []struct {
-		name             string
-		apprepo          *apprepov1alpha1.AppRepository
-		expected         batchv1.Job
-		userAgentComment string
+		name     string
+		config   Config
+		apprepo  *apprepov1alpha1.AppRepository
+		expected batchv1.Job
 	}{
 		{
 			"my-charts",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         userAgentComment,
+				Crontab:                  "*/20 * * * *",
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -374,8 +445,7 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							RestartPolicy:    "OnFailure",
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -406,10 +476,25 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			"",
 		},
 		{
 			"an app repository in another namespace results in jobs without owner references",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         userAgentComment,
+				Crontab:                  crontab,
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -441,8 +526,7 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							RestartPolicy:    "OnFailure",
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -473,10 +557,25 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			"",
 		},
 		{
 			"my-charts with auth and userAgent comment",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         "kubeapps/v2.3",
+				Crontab:                  crontab,
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -522,8 +621,7 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							RestartPolicy:    "OnFailure",
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -560,10 +658,25 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			"kubeapps/v2.3",
 		},
 		{
 			"my-charts with a customCA",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         userAgentComment,
+				Crontab:                  crontab,
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -610,8 +723,7 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							RestartPolicy:    "OnFailure",
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -656,10 +768,25 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			"",
 		},
 		{
 			"my-charts with a customCA and auth header",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         userAgentComment,
+				Crontab:                  crontab,
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -709,8 +836,7 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							RestartPolicy:    "OnFailure",
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -760,10 +886,25 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			"",
 		},
 		{
 			"my-charts with a custom pod template",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         userAgentComment,
+				Crontab:                  crontab,
+			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -787,8 +928,7 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							Affinity:         &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
+							Affinity: &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
 							Containers: []corev1.Container{
 								{
 									Env: []corev1.EnvVar{
@@ -826,9 +966,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							Affinity:         &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
-							RestartPolicy:    "OnFailure",
+							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
@@ -860,18 +999,17 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			"",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.userAgentComment != "" {
-				userAgentComment = tt.userAgentComment
+			if tt.config.UserAgentComment != "" {
+				userAgentComment = tt.config.UserAgentComment
 				defer func() { userAgentComment = "" }()
 			}
 
-			result := newSyncJob(tt.apprepo, kubeappsNamespace)
+			result := newSyncJob(tt.apprepo, tt.config.Namespace, tt.config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
@@ -880,23 +1018,48 @@ func Test_newSyncJob(t *testing.T) {
 }
 
 func Test_newCleanupJob(t *testing.T) {
-	dbURL = "postgresql.kubeapps"
-	dbName = "assets"
-	dbUser = "admin"
-	dbSecretName = "postgresql"
-	repoSyncImagePullSecrets = "foo,bar,foobar"
-	const kubeappsNamespace = "kubeapps"
+	var kubeconfig = ""
+	var masterURL = ""
+	var repoSyncImage = "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
+	var repoSyncImagePullSecrets = make(arrayFlags, 0, 0)
+	var repoSyncCommand = "/chart-repo"
+	var namespace = "kubeapps"
+	var reposPerNamespace = true
+	var dbURL = "postgresql.kubeapps"
+	var dbUser = "admin"
+	var dbName = "assets"
+	var dbSecretName = "postgresql"
+	var dbSecretKey = "postgresql-root-password"
+	var userAgentComment = ""
+	var crontab = "*/10 * * * *"
 
 	tests := []struct {
-		name      string
-		repoName  string
-		namespace string
-		expected  batchv1.Job
+		name          string
+		repoName      string
+		repoNamespace string
+		config        Config
+		expected      batchv1.Job
 	}{
 		{
 			"my-charts",
 			"my-charts",
 			"kubeapps",
+			Config{
+				Kubeconfig:               kubeconfig,
+				MasterURL:                masterURL,
+				RepoSyncImage:            repoSyncImage,
+				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
+				RepoSyncCommand:          repoSyncCommand,
+				Namespace:                namespace,
+				ReposPerNamespace:        reposPerNamespace,
+				DBURL:                    dbURL,
+				DBUser:                   dbUser,
+				DBName:                   dbName,
+				DBSecretName:             dbSecretName,
+				DBSecretKey:              dbSecretKey,
+				UserAgentComment:         userAgentComment,
+				Crontab:                  crontab,
+			},
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-cleanup-my-charts-",
@@ -905,8 +1068,7 @@ func Test_newCleanupJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
-							ImagePullSecrets: getImagePullSecretsRefs(),
-							RestartPolicy:    "Never",
+							RestartPolicy: "Never",
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
@@ -939,7 +1101,7 @@ func Test_newCleanupJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob(tt.repoName, tt.namespace, kubeappsNamespace)
+			result := newCleanupJob(tt.repoName, tt.repoNamespace, tt.config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

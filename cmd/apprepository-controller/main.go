@@ -17,11 +17,16 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
+	"os"
+	"strings"
 
 	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/signals"
+	corev1 "k8s.io/api/core/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd" // Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
@@ -30,30 +35,94 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	masterURL                string
-	kubeconfig               string
-	repoSyncImage            string
-	repoSyncImagePullSecrets string
-	repoSyncCommand          string
-	namespace                string
-	dbURL                    string
-	dbUser                   string
-	dbName                   string
-	dbSecretName             string
-	dbSecretKey              string
-	userAgentComment         string
-	crontab                  string
-	reposPerNamespace        bool
-)
+type arrayFlags []string
+
+// Config contains al the flags passed through the command line
+// besides, it contains the []LocalObjectReference for the PullSecrets
+// so they can be shared across the jobs
+type Config struct {
+	MasterURL                string
+	Kubeconfig               string
+	RepoSyncImage            string
+	RepoSyncImagePullSecrets arrayFlags
+	ImagePullSecretsRefs     []corev1.LocalObjectReference
+	RepoSyncCommand          string
+	Namespace                string
+	DBURL                    string
+	DBUser                   string
+	DBName                   string
+	DBSecretName             string
+	DBSecretKey              string
+	UserAgentComment         string
+	Crontab                  string
+	ReposPerNamespace        bool
+
+	// Args are the positional (non-flag) command-line arguments.
+	Args []string
+}
+
+// parseFlags parses the command-line arguments provided to the program.
+// Typically os.Args[0] is provided as 'programName' and os.args[1:] as 'args'.
+func parseFlags(progname string, args []string) (config *Config, output string, err error) {
+	flagSet := flag.NewFlagSet(progname, flag.ContinueOnError)
+	var buf bytes.Buffer
+	flagSet.SetOutput(&buf)
+
+	var conf Config
+
+	flagSet.StringVar(&conf.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+	flagSet.StringVar(&conf.MasterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
+	flagSet.StringVar(&conf.RepoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
+	flagSet.Var(&conf.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
+	flagSet.StringVar(&conf.RepoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
+	flagSet.StringVar(&conf.Namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
+	flagSet.BoolVar(&conf.ReposPerNamespace, "repos-per-namespace", true, "Defaults to watch for repos in all namespaces. Switch to false to watch only the configured namespace.")
+	flagSet.StringVar(&conf.DBURL, "database-url", "localhost", "Database URL")
+	flagSet.StringVar(&conf.DBUser, "database-user", "root", "Database user")
+	flagSet.StringVar(&conf.DBName, "database-name", "charts", "Database name")
+	flagSet.StringVar(&conf.DBSecretName, "database-secret-name", "kubeapps-db", "Kubernetes secret name for database credentials")
+	flagSet.StringVar(&conf.DBSecretKey, "database-secret-key", "postgresql-root-password", "Kubernetes secret key used for database credentials")
+	flagSet.StringVar(&conf.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
+	flagSet.StringVar(&conf.Crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
+
+	err = flagSet.Parse(args)
+	if err != nil {
+		return nil, buf.String(), err
+	}
+	conf.Args = flagSet.Args()
+	return &conf, buf.String(), nil
+}
 
 func main() {
-	flag.Parse()
+	conf, output, err := parseFlags(os.Args[0], os.Args[1:])
+
+	if err != nil {
+		log.Fatal("got error:", err)
+		log.Fatal("output:\n", output)
+		os.Exit(1)
+	}
+
+	log.WithFields(log.Fields{
+		"kubeconfig":                  conf.Kubeconfig,
+		"master":                      conf.MasterURL,
+		"repo-sync-image":             conf.RepoSyncImage,
+		"repo-sync-image-pullsecrets": conf.RepoSyncImagePullSecrets,
+		"repo-sync-cmd":               conf.RepoSyncCommand,
+		"namespace":                   conf.Namespace,
+		"repos-per-namespace":         conf.ReposPerNamespace,
+		"database-url":                conf.DBURL,
+		"database-user":               conf.DBUser,
+		"database-name":               conf.DBName,
+		"database-secret-name":        conf.DBSecretName,
+		"database-secret-key":         conf.DBSecretKey,
+		"user-agent-comment":          conf.UserAgentComment,
+		"crontab":                     conf.Crontab,
+	}).Debug("apprepository-controller configured with these args:")
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
 
-	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
+	cfg, err := clientcmd.BuildConfigFromFlags(conf.MasterURL, conf.Kubeconfig)
 	if err != nil {
 		log.Fatalf("Error building kubeconfig: %s", err.Error())
 	}
@@ -69,16 +138,18 @@ func main() {
 	}
 
 	// We're interested in being informed about cronjobs in kubeapps namespace only, currently.
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(namespace))
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(conf.Namespace))
 	// Enable app repo scanning to be manually set to scan the kubeapps repo only. See #1923.
 	var apprepoInformerFactory informers.SharedInformerFactory
-	if reposPerNamespace {
+	if conf.ReposPerNamespace {
 		apprepoInformerFactory = informers.NewSharedInformerFactory(apprepoClient, 0)
 	} else {
-		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, namespace, nil)
+		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, conf.Namespace, nil)
 	}
 
-	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory, namespace)
+	conf.ImagePullSecretsRefs = getImagePullSecretsRefs(conf.RepoSyncImagePullSecrets)
+
+	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory, conf)
 
 	go kubeInformerFactory.Start(stopCh)
 	go apprepoInformerFactory.Start(stopCh)
@@ -88,19 +159,38 @@ func main() {
 	}
 }
 
-func init() {
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
-	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	flag.StringVar(&repoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
-	flag.StringVar(&repoSyncImagePullSecrets, "repo-sync-image-pullsecrets", "", "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
-	flag.StringVar(&repoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
-	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
-	flag.BoolVar(&reposPerNamespace, "repos-per-namespace", true, "Defaults to watch for repos in all namespaces. Switch to false to watch only the configured namespace.")
-	flag.StringVar(&dbURL, "database-url", "localhost", "Database URL")
-	flag.StringVar(&dbUser, "database-user", "root", "Database user")
-	flag.StringVar(&dbName, "database-name", "charts", "Database name")
-	flag.StringVar(&dbSecretName, "database-secret-name", "kubeapps-db", "Kubernetes secret name for database credentials")
-	flag.StringVar(&dbSecretKey, "database-secret-key", "postgresql-root-password", "Kubernetes secret key used for database credentials")
-	flag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
-	flag.StringVar(&crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
+// getImagePullSecretsRefs gets the []LocalObjectReference of Secrets from the
+// comma separated list passed in the repoSyncImagePullSecrets arg
+func getImagePullSecretsRefs(imagePullSecretsRefsParam arrayFlags) []corev1.LocalObjectReference {
+	var imagePullSecretsRefs []corev1.LocalObjectReference
+
+	// if no repoSyncImagePullSecrets arg passed, return nil, as usual
+	if len(imagePullSecretsRefsParam) == 0 {
+		return nil
+	}
+
+	// getting and appending a []LocalObjectReference for each ImagePullSecret passed
+	for _, imagePullSecretName := range imagePullSecretsRefsParam {
+		imagePullSecretsRefs = append(imagePullSecretsRefs, []corev1.LocalObjectReference{
+			{Name: imagePullSecretName},
+		}...)
+	}
+	return imagePullSecretsRefs
+}
+
+// just for being compliant with the interface
+func (i *arrayFlags) String() string {
+	return fmt.Sprint(*i)
+}
+
+// if the flag arg it's a comma-separated list, split it by "," and append
+// otherwise append it directly (dups allowed)
+func (i *arrayFlags) Set(value string) error {
+	if strings.Contains(value, ",") {
+		*i = append(*i, strings.Split(strings.TrimSpace(value), ",")...)
+
+	} else {
+		*i = append(*i, strings.TrimSpace(value))
+	}
+	return nil
 }
