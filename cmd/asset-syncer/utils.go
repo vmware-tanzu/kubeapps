@@ -25,6 +25,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -42,6 +43,8 @@ import (
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
+	"github.com/srwiley/oksvg"
+	"github.com/srwiley/rasterx"
 	helmrepo "k8s.io/helm/pkg/repo"
 )
 
@@ -85,7 +88,7 @@ type assetManager interface {
 	InvalidateCache() error
 	updateIcon(repo models.Repo, data []byte, contentType, ID string) error
 	filesExist(repo models.Repo, chartFilesID, digest string) bool
-	insertFiles(chartId string, files models.ChartFiles) error
+	insertFiles(chartID string, files models.ChartFiles) error
 }
 
 func newManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
@@ -356,29 +359,34 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 
 	b := []byte{}
 	contentType := ""
+	var img image.Image
+	// if the icon is in any other format try to convert it to PNG
 	if strings.Contains(res.Header.Get("Content-Type"), "image/svg") {
-		// if the icon is a SVG file simply read it
-		b, err = ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		contentType = res.Header.Get("Content-Type")
-	} else {
-		// if the icon is in any other format try to convert it to PNG
-		orig, err := imaging.Decode(res.Body)
+		// if the icon is an SVG, it requires special processing
+		icon, err := oksvg.ReadIconStream(res.Body)
 		if err != nil {
 			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to decode icon")
 			return err
 		}
-
-		// TODO: make this configurable?
-		icon := imaging.Fit(orig, 160, 160, imaging.Lanczos)
-
-		var buf bytes.Buffer
-		imaging.Encode(&buf, icon, imaging.PNG)
-		b = buf.Bytes()
-		contentType = "image/png"
+		w, h := int(icon.ViewBox.W), int(icon.ViewBox.H)
+		icon.SetTarget(0, 0, float64(w), float64(h))
+		rgba := image.NewNRGBA(image.Rect(0, 0, w, h))
+		icon.Draw(rasterx.NewDasher(w, h, rasterx.NewScannerGV(w, h, rgba, rgba.Bounds())), 1)
+		img = rgba
+	} else {
+		img, err = imaging.Decode(res.Body)
+		if err != nil {
+			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to decode icon")
+			return err
+		}
 	}
+
+	// TODO: make this configurable?
+	resizedImg := imaging.Fit(img, 160, 160, imaging.Lanczos)
+	var buf bytes.Buffer
+	imaging.Encode(&buf, resizedImg, imaging.PNG)
+	b = buf.Bytes()
+	contentType = "image/png"
 
 	return f.manager.updateIcon(models.Repo{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)
 }

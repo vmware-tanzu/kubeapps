@@ -33,7 +33,7 @@ function PageHeader({
         <Row>
           <Column span={7}>
             <div className="kubeapps-title-section">
-              {icon && <Icon icon={icon} />}
+              <div className="img-container">{icon && <Icon icon={icon} />}</div>
               <div className="kubeapps-title-block">
                 {titleSize === "lg" ? <h1>{title}</h1> : <h3>{title}</h3>}
                 {helm && (
