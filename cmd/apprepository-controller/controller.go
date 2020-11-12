@@ -273,7 +273,7 @@ func (c *Controller) syncHandler(key string) error {
 		if errors.IsNotFound(err) {
 			log.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
 			// Trigger a Job to perfrom the cleanup of the charts in the DB corresponding to deleted AppRepository
-			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(context.TODO(), newCleanupJob(name, namespace, c.conf), metav1.CreateOptions{})
+			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(context.TODO(), newCleanupJob(name, c.conf), metav1.CreateOptions{})
 			return nil
 		}
 		return fmt.Errorf("Error fetching object with key %s from store: %v", key, err)
@@ -281,27 +281,27 @@ func (c *Controller) syncHandler(key string) error {
 
 	// Get the cronjob with the same name as AppRepository
 	cronjobName := cronJobName(apprepo)
-	cronjob, err := c.cronjobsLister.CronJobs(c.conf.Namespace).Get(cronjobName)
+	cronjob, err := c.cronjobsLister.CronJobs(c.conf.KubeappsNamespace).Get(cronjobName)
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
 		log.Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.Namespace).Create(context.TODO(), newCronJob(apprepo, c.conf.Namespace, c.conf), metav1.CreateOptions{})
+		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCronJob(apprepo, c.conf), metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
 
 		// Trigger a manual Job for the initial sync
-		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.Namespace).Create(context.TODO(), newSyncJob(apprepo, c.conf.Namespace, c.conf), metav1.CreateOptions{})
+		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
 	} else if err == nil {
 		// If the resource already exists, we'll update it
-		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q in namespace %q", cronjobName, c.conf.Namespace, apprepo.GetName(), apprepo.GetNamespace())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.Namespace).Update(context.TODO(), newCronJob(apprepo, c.conf.Namespace, c.conf), metav1.UpdateOptions{})
+		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q in namespace %q", cronjobName, c.conf.KubeappsNamespace, apprepo.GetName(), apprepo.GetNamespace())
+		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), newCronJob(apprepo, c.conf), metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
 
 		// The AppRepository has changed, launch a manual Job
-		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.Namespace).Create(context.TODO(), newSyncJob(apprepo, c.conf.Namespace, c.conf), metav1.CreateOptions{})
+		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
 	}
 
 	// If an error occurs during Get/Create, we'll requeue the item so we can
@@ -320,7 +320,7 @@ func (c *Controller) syncHandler(key string) error {
 		return fmt.Errorf(msg)
 	}
 
-	if apprepo.GetNamespace() == c.conf.Namespace {
+	if apprepo.GetNamespace() == c.conf.KubeappsNamespace {
 		c.recorder.Event(apprepo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	}
 	return nil
@@ -409,11 +409,11 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
-func newCronJob(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, config Config) *batchv1beta1.CronJob {
+func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1beta1.CronJob {
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cronJobName(apprepo),
-			OwnerReferences: ownerReferencesForAppRepo(apprepo, repoNamespace),
+			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
 			Labels:          jobLabels(apprepo),
 		},
 		Spec: batchv1beta1.CronJobSpec{
@@ -423,7 +423,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, co
 			// https://github.com/kubernetes/kubernetes/issues/54870
 			ConcurrencyPolicy: "Replace",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: syncJobSpec(apprepo, repoNamespace, config),
+				Spec: syncJobSpec(apprepo, config),
 			},
 		},
 	}
@@ -431,18 +431,18 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, co
 
 // newSyncJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newSyncJob(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, config Config) *batchv1.Job {
+func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName:    cronJobName(apprepo) + "-",
-			OwnerReferences: ownerReferencesForAppRepo(apprepo, repoNamespace),
+			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
 		},
-		Spec: syncJobSpec(apprepo, repoNamespace, config),
+		Spec: syncJobSpec(apprepo, config),
 	}
 }
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
-func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, config Config) batchv1.JobSpec {
+func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.JobSpec {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 	if apprepo.Spec.Auth.CustomCA != nil {
@@ -450,7 +450,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, c
 			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretKeyRefForRepo(apprepo.Spec.Auth.CustomCA.SecretKeyRef, apprepo, repoNamespace).Name,
+					SecretName: secretKeyRefForRepo(apprepo.Spec.Auth.CustomCA.SecretKeyRef, apprepo, config).Name,
 					Items: []corev1.KeyToPath{
 						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
 					},
@@ -488,7 +488,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, c
 	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = "IfNotPresent"
 	podTemplateSpec.Spec.Containers[0].Command = []string{config.RepoSyncCommand}
 	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo, config)
-	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, repoNamespace, config)...)
+	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, config)...)
 	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
 	// Add volumes
 	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
@@ -500,18 +500,18 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, c
 
 // newCleanupJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newCleanupJob(repoName string, repoNamespace string, config Config) *batchv1.Job {
+func newCleanupJob(repoName string, config Config) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: deleteJobName(repoName, repoNamespace) + "-",
-			Namespace:    repoNamespace,
+			GenerateName: deleteJobName(repoName, config) + "-",
+			Namespace:    config.KubeappsNamespace,
 		},
-		Spec: cleanupJobSpec(repoName, repoNamespace, config),
+		Spec: cleanupJobSpec(repoName, config),
 	}
 }
 
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
-func cleanupJobSpec(repoName string, repoNamespace string, config Config) batchv1.JobSpec {
+func cleanupJobSpec(repoName string, config Config) batchv1.JobSpec {
 	log.Info("Creating cleaunp")
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
@@ -525,7 +525,7 @@ func cleanupJobSpec(repoName string, repoNamespace string, config Config) batchv
 						Image:           config.RepoSyncImage,
 						ImagePullPolicy: "IfNotPresent",
 						Command:         []string{config.RepoSyncCommand},
-						Args:            apprepoCleanupJobArgs(repoName, repoNamespace, config),
+						Args:            apprepoCleanupJobArgs(repoName, config),
 						Env: []corev1.EnvVar{
 							{
 								Name: "DB_PASSWORD",
@@ -558,8 +558,8 @@ func cronJobName(apprepo *apprepov1alpha1.AppRepository) string {
 }
 
 // deleteJobName returns a unique name for the Job to cleanup AppRepository
-func deleteJobName(reponame, reponamespace string) string {
-	return fmt.Sprintf("apprepo-%s-cleanup-%s", reponamespace, reponame)
+func deleteJobName(reponame string, config Config) string {
+	return fmt.Sprintf("apprepo-%s-cleanup-%s", config.KubeappsNamespace, reponame)
 }
 
 // apprepoSyncJobArgs returns a list of args for the sync container
@@ -574,7 +574,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container
-func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, repoNamespace string, config Config) []corev1.EnvVar {
+func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, config Config) []corev1.EnvVar {
 	var envVars []corev1.EnvVar
 	envVars = append(envVars, corev1.EnvVar{
 		Name: "DB_PASSWORD",
@@ -589,7 +589,7 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, repoNamespace
 		envVars = append(envVars, corev1.EnvVar{
 			Name: "AUTHORIZATION_HEADER",
 			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, repoNamespace),
+				SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
 			},
 		})
 	}
@@ -600,8 +600,8 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, repoNamespace
 // this repo is in the kubeapps namespace or not. If the repo is not in the
 // kubeapps namespace, then the secret will have been copied from another namespace
 // into the kubeapps namespace and have a slightly different name.
-func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alpha1.AppRepository, repoNamespace string) *corev1.SecretKeySelector {
-	if apprepo.ObjectMeta.Namespace == repoNamespace {
+func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alpha1.AppRepository, config Config) *corev1.SecretKeySelector {
+	if apprepo.ObjectMeta.Namespace == config.KubeappsNamespace {
 		return &keyRef
 	}
 	keyRef.LocalObjectReference.Name = kube.KubeappsSecretNameForRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
@@ -609,11 +609,11 @@ func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alph
 }
 
 // apprepoCleanupJobArgs returns a list of args for the repo cleanup container
-func apprepoCleanupJobArgs(repoName, repoNamespace string, config Config) []string {
+func apprepoCleanupJobArgs(repoName string, config Config) []string {
 	return append([]string{
 		"delete",
 		repoName,
-		"--namespace=" + repoNamespace,
+		"--namespace=" + config.KubeappsNamespace,
 	}, dbFlags(config)...)
 }
 

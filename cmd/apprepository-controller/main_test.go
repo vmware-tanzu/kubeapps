@@ -23,7 +23,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				RepoSyncImage:            "quay.io/helmpack/chart-repo:latest",
 				RepoSyncImagePullSecrets: nil,
 				RepoSyncCommand:          "/chart-repo",
-				Namespace:                "kubeapps",
+				KubeappsNamespace:        "kubeapps",
 				ReposPerNamespace:        true,
 				DBURL:                    "localhost",
 				DBUser:                   "root",
@@ -37,7 +37,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 		},
 		{
 			"pullSecrets with spaces",
-			[]string{
+			[]string{ // note trailing spaces
 				"--repo-sync-image-pullsecrets=s1, s2",
 				"--repo-sync-image-pullsecrets= s3",
 			},
@@ -45,10 +45,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				Kubeconfig:               "",
 				MasterURL:                "",
 				RepoSyncImage:            "quay.io/helmpack/chart-repo:latest",
-				RepoSyncImagePullSecrets: arrayFlags{"s1", " s2", "s3"},
-				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: " s2"}, {Name: "s3"}},
+				RepoSyncImagePullSecrets: []string{"s1", " s2", " s3"},
+				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: " s2"}, {Name: " s3"}},
 				RepoSyncCommand:          "/chart-repo",
-				Namespace:                "kubeapps",
+				KubeappsNamespace:        "kubeapps",
 				ReposPerNamespace:        true,
 				DBURL:                    "localhost",
 				DBUser:                   "root",
@@ -83,10 +83,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				Kubeconfig:               "foo01",
 				MasterURL:                "foo02",
 				RepoSyncImage:            "foo03",
-				RepoSyncImagePullSecrets: arrayFlags{"s1", "s2", "s3"},
+				RepoSyncImagePullSecrets: []string{"s1", "s2", "s3"},
 				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: "s2"}, {Name: "s3"}},
 				RepoSyncCommand:          "foo04",
-				Namespace:                "foo05",
+				KubeappsNamespace:        "foo05",
 				ReposPerNamespace:        false,
 				DBURL:                    "foo06",
 				DBUser:                   "foo07",
@@ -127,26 +127,23 @@ func TestParseFlagsError(t *testing.T) {
 		{
 			"non-existent flag",
 			[]string{"--foo"},
-			"flag provided but not defined",
+			"unknown flag: --foo",
 		},
 		{
 			"flag with worng value type",
 			[]string{"--repos-per-namespace=3"},
-			"invalid boolean value",
+			"flag: strconv.ParseBool",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(strings.Join(tt.args, " "), func(t *testing.T) {
-			conf, output, err := parseFlags("prog", tt.args)
+			conf, _, err := parseFlags("prog", tt.args)
 			if conf != nil {
 				t.Errorf("conf got %v, want nil", conf)
 			}
 			if strings.Index(err.Error(), tt.errstr) < 0 {
 				t.Errorf("err got %q, want to find %q", err.Error(), tt.errstr)
-			}
-			if strings.Index(output, "Usage of prog") < 0 {
-				t.Errorf("output got %q", output)
 			}
 		})
 	}

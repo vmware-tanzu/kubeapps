@@ -18,10 +18,7 @@ package main
 
 import (
 	"bytes"
-	"flag"
-	"fmt"
 	"os"
-	"strings"
 
 	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
@@ -33,9 +30,8 @@ import (
 
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	log "github.com/sirupsen/logrus"
+	flag "github.com/spf13/pflag"
 )
-
-type arrayFlags []string
 
 // Config contains al the flags passed through the command line
 // besides, it contains the []LocalObjectReference for the PullSecrets
@@ -44,10 +40,10 @@ type Config struct {
 	MasterURL                string
 	Kubeconfig               string
 	RepoSyncImage            string
-	RepoSyncImagePullSecrets arrayFlags
+	RepoSyncImagePullSecrets []string
 	ImagePullSecretsRefs     []corev1.LocalObjectReference
 	RepoSyncCommand          string
-	Namespace                string
+	KubeappsNamespace        string
 	DBURL                    string
 	DBUser                   string
 	DBName                   string
@@ -73,9 +69,9 @@ func parseFlags(progname string, args []string) (config *Config, output string, 
 	flagSet.StringVar(&conf.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flagSet.StringVar(&conf.MasterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flagSet.StringVar(&conf.RepoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
-	flagSet.Var(&conf.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
+	flagSet.StringSliceVar(&conf.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", nil, "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
 	flagSet.StringVar(&conf.RepoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
-	flagSet.StringVar(&conf.Namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
+	flagSet.StringVar(&conf.KubeappsNamespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
 	flagSet.BoolVar(&conf.ReposPerNamespace, "repos-per-namespace", true, "Defaults to watch for repos in all namespaces. Switch to false to watch only the configured namespace.")
 	flagSet.StringVar(&conf.DBURL, "database-url", "localhost", "Database URL")
 	flagSet.StringVar(&conf.DBUser, "database-user", "root", "Database user")
@@ -108,7 +104,7 @@ func main() {
 		"repo-sync-image":             conf.RepoSyncImage,
 		"repo-sync-image-pullsecrets": conf.RepoSyncImagePullSecrets,
 		"repo-sync-cmd":               conf.RepoSyncCommand,
-		"namespace":                   conf.Namespace,
+		"namespace":                   conf.KubeappsNamespace,
 		"repos-per-namespace":         conf.ReposPerNamespace,
 		"database-url":                conf.DBURL,
 		"database-user":               conf.DBUser,
@@ -117,7 +113,7 @@ func main() {
 		"database-secret-key":         conf.DBSecretKey,
 		"user-agent-comment":          conf.UserAgentComment,
 		"crontab":                     conf.Crontab,
-	}).Debug("apprepository-controller configured with these args:")
+	}).Info("apprepository-controller configured with these args:")
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
@@ -138,13 +134,13 @@ func main() {
 	}
 
 	// We're interested in being informed about cronjobs in kubeapps namespace only, currently.
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(conf.Namespace))
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(conf.KubeappsNamespace))
 	// Enable app repo scanning to be manually set to scan the kubeapps repo only. See #1923.
 	var apprepoInformerFactory informers.SharedInformerFactory
 	if conf.ReposPerNamespace {
 		apprepoInformerFactory = informers.NewSharedInformerFactory(apprepoClient, 0)
 	} else {
-		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, conf.Namespace, nil)
+		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, conf.KubeappsNamespace, nil)
 	}
 
 	conf.ImagePullSecretsRefs = getImagePullSecretsRefs(conf.RepoSyncImagePullSecrets)
@@ -159,38 +155,19 @@ func main() {
 	}
 }
 
-// getImagePullSecretsRefs gets the []LocalObjectReference of Secrets from the
-// comma separated list passed in the repoSyncImagePullSecrets arg
-func getImagePullSecretsRefs(imagePullSecretsRefsParam arrayFlags) []corev1.LocalObjectReference {
+// getImagePullSecretsRefs gets the []string of Secrets names from the
+// StringSliceVar flag list passed in the repoSyncImagePullSecrets arg
+func getImagePullSecretsRefs(imagePullSecretsRefsArr []string) []corev1.LocalObjectReference {
 	var imagePullSecretsRefs []corev1.LocalObjectReference
 
 	// if no repoSyncImagePullSecrets arg passed, return nil, as usual
-	if len(imagePullSecretsRefsParam) == 0 {
+	if len(imagePullSecretsRefsArr) == 0 {
 		return nil
 	}
 
 	// getting and appending a []LocalObjectReference for each ImagePullSecret passed
-	for _, imagePullSecretName := range imagePullSecretsRefsParam {
-		imagePullSecretsRefs = append(imagePullSecretsRefs, []corev1.LocalObjectReference{
-			{Name: imagePullSecretName},
-		}...)
+	for _, imagePullSecretName := range imagePullSecretsRefsArr {
+		imagePullSecretsRefs = append(imagePullSecretsRefs, corev1.LocalObjectReference{Name: imagePullSecretName})
 	}
 	return imagePullSecretsRefs
-}
-
-// just for being compliant with the interface
-func (i *arrayFlags) String() string {
-	return fmt.Sprint(*i)
-}
-
-// if the flag arg it's a comma-separated list, split it by "," and append
-// otherwise append it directly (dups allowed)
-func (i *arrayFlags) Set(value string) error {
-	if strings.Contains(value, ",") {
-		*i = append(*i, strings.Split(strings.TrimSpace(value), ",")...)
-
-	} else {
-		*i = append(*i, strings.TrimSpace(value))
-	}
-	return nil
 }
