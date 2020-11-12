@@ -629,9 +629,9 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
-func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) ([]corev1.Namespace, error) {
+func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces []corev1.Namespace) ([]corev1.Namespace, error) {
 	allowedNamespaces := []corev1.Namespace{}
-	for _, namespace := range namespaces.Items {
+	for _, namespace := range namespaces {
 		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
 			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationapi.ResourceAttributes{
@@ -680,7 +680,7 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	}
 
 	// Filter namespaces in which the user has permissions to write (secrets) only
-	namespaceList, err := filterAllowedNamespaces(a.clientset, namespaces)
+	namespaceList, err := filterAllowedNamespaces(a.clientset, namespaces.Items)
 	if err != nil {
 		return nil, err
 	}
