@@ -2,6 +2,7 @@ import { LOCATION_CHANGE, RouterActionType } from "connected-react-router";
 import context from "jest-plugin-context";
 import { getType } from "typesafe-actions";
 
+import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
 import actions from "../actions";
 import { IResource } from "../shared/types";
@@ -249,6 +250,72 @@ describe("clusterReducer", () => {
           },
           other: {
             currentNamespace: "one",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("gets the namespace from the token", () => {
+      Auth.defaultNamespaceFromToken = jest.fn(() => "two");
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "two",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+      jest.restoreAllMocks();
+    });
+
+    it("gets the existing current namespace", () => {
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "three",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "three",
             namespaces: ["one", "two", "three"],
             error: undefined,
           },
