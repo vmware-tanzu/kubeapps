@@ -2,6 +2,7 @@ import LoadingWrapper from "components/LoadingWrapper";
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
 import NotFound from "../../components/NotFound";
+// TODO(andresmgot): Containers should be no longer needed, replace them when possible
 import AppListContainer from "../../containers/AppListContainer";
 import AppNewContainer from "../../containers/AppNewContainer";
 import AppUpgradeContainer from "../../containers/AppUpgradeContainer";

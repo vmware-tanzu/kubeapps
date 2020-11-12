@@ -35,7 +35,6 @@ function ContextSelector() {
   useOutsideClick(setOpen, [ref], open);
 
   useEffect(() => {
-    dispatch(actions.namespace.fetchNamespaces(clusters.currentCluster));
     if (namespaceSelected && namespaceSelected !== definedNamespaces.all) {
       dispatch(actions.namespace.getNamespace(clusters.currentCluster, namespaceSelected));
     }

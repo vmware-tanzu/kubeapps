@@ -30,14 +30,11 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-it("fetches namespaces", () => {
-  const fetchNamespaces = jest.fn();
+it("gets a namespace", () => {
   const getNamespace = jest.fn();
-  actions.namespace.fetchNamespaces = fetchNamespaces;
   actions.namespace.getNamespace = getNamespace;
   mountWrapper(defaultStore, <ContextSelector />);
 
-  expect(fetchNamespaces).toHaveBeenCalled();
   expect(getNamespace).toHaveBeenCalledWith(
     initialState.clusters.currentCluster,
     initialState.clusters.clusters[initialState.clusters.currentCluster].currentNamespace,
