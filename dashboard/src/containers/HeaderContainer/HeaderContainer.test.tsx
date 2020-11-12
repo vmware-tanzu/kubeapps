@@ -18,7 +18,6 @@ const defaultAuthState: IAuthState = {
   authenticated: true,
   oidcAuthenticated: true,
   authenticating: false,
-  defaultNamespace: "",
 };
 
 const defaultState = {

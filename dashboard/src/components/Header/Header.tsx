@@ -12,13 +12,12 @@ interface IHeaderProps {
   authenticated: boolean;
   logout: () => void;
   clusters: IClustersState;
-  defaultNamespace: string;
   appVersion: string;
   push: (path: string) => void;
 }
 
 function Header(props: IHeaderProps) {
-  const { appVersion, clusters, authenticated: showNav, defaultNamespace, logout } = props;
+  const { appVersion, clusters, authenticated: showNav, logout } = props;
   const cluster = clusters.clusters[clusters.currentCluster];
 
   const routesToRender = [
@@ -62,12 +61,7 @@ function Header(props: IHeaderProps) {
           {showNav && (
             <section className="header-actions">
               <ContextSelector />
-              <Menu
-                clusters={clusters}
-                defaultNamespace={defaultNamespace}
-                appVersion={appVersion}
-                logout={logout}
-              />
+              <Menu clusters={clusters} appVersion={appVersion} logout={logout} />
             </section>
           )}
         </header>

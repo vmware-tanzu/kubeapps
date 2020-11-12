@@ -26,7 +26,6 @@ const makeStore = (
     authenticating,
     oidcAuthenticated,
     authenticationError,
-    defaultNamespace,
   };
   const config: IConfigState = {
     authProxyEnabled,

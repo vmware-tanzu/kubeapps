@@ -1,3 +1,4 @@
+import LoadingWrapper from "components/LoadingWrapper";
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
 import NotFound from "../../components/NotFound";
@@ -38,6 +39,7 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
+  "/c/:cluster/ns/:namespace/config/repos": RepoListContainer,
 } as const;
 
 // Public routes that don't require authentication
@@ -46,14 +48,13 @@ const routes = {
 } as const;
 
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
-  namespace: string;
   cluster: string;
+  currentNamespace: string;
   authenticated: boolean;
 }
 
 class Routes extends React.Component<IRoutesProps> {
   public render() {
-    const reposPath = "/c/:cluster/ns/:namespace/config/repos";
     return (
       <Switch>
         <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
@@ -63,20 +64,17 @@ class Routes extends React.Component<IRoutesProps> {
         {Object.entries(privateRoutes).map(([route, component]) => (
           <PrivateRouteContainer key={route} exact={true} path={route} component={component} />
         ))}
-        <PrivateRouteContainer
-          key={reposPath}
-          exact={true}
-          path={reposPath}
-          component={RepoListContainer}
-        />
         {/* If the route doesn't match any expected path redirect to a 404 page  */}
         <Route component={NotFound} />
       </Switch>
     );
   }
   private rootNamespacedRedirect = () => {
-    if (this.props.cluster && this.props.namespace && this.props.authenticated) {
-      return <Redirect to={app.apps.list(this.props.cluster, this.props.namespace)} />;
+    if (this.props.authenticated) {
+      if (!this.props.cluster || !this.props.currentNamespace) {
+        return <LoadingWrapper />;
+      }
+      return <Redirect to={app.apps.list(this.props.cluster, this.props.currentNamespace)} />;
     }
     // There is not a default namespace, redirect to login page
     return <Redirect to={"/login"} />;

@@ -1,6 +1,7 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import * as url from "./url";
 
+import { Auth } from "./Auth";
 import { ForbiddenError, IResource, NotFoundError } from "./types";
 
 export default class Namespace {
@@ -50,3 +51,18 @@ export default class Namespace {
 export const definedNamespaces = {
   all: "_all",
 };
+
+export function getCurrentNamespace(currenNS: string, availableNS: string[]) {
+  if (currenNS) {
+    // If a namespace has been already selected, use it
+    return currenNS;
+  }
+  // Try to get a namespace from the auth token
+  const tokenNS = Auth.defaultNamespaceFromToken(Auth.getAuthToken() || "");
+  if (tokenNS) {
+    // Return the default namespace in the token
+    return tokenNS;
+  }
+  // In other case, just return the first namespace available
+  return availableNS.length ? availableNS[0] : "";
+}

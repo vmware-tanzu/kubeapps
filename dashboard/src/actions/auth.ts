@@ -1,14 +1,12 @@
 import { ThunkAction } from "redux-thunk";
-import { definedNamespaces } from "shared/Namespace";
 import { ActionType, createAction } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
-import { clearClusters, fetchNamespaces, NamespaceAction } from "./namespace";
+import { clearClusters, NamespaceAction } from "./namespace";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
-  return (authenticated: boolean, oidc: boolean, defaultNamespace: string) =>
-    resolve({ authenticated, oidc, defaultNamespace });
+  return (authenticated: boolean, oidc: boolean) => resolve({ authenticated, oidc });
 });
 
 export const authenticating = createAction("AUTHENTICATING");
@@ -37,19 +35,7 @@ export function authenticate(
         await Auth.validateToken(cluster, token);
       }
       Auth.setAuthToken(token, oidc);
-      // TODO(andresmgot): This is a workaround while #2018 gets properly implemented.
-      // If the current sa is not associated to a namespace, list all namespaces and pick
-      // one.
-      let ns = Auth.defaultNamespaceFromToken(token);
-      if (!ns) {
-        const availableNamespaces = await dispatch(fetchNamespaces(cluster));
-        if (availableNamespaces.length) {
-          ns = availableNamespaces[0];
-        } else {
-          ns = definedNamespaces.all;
-        }
-      }
-      dispatch(setAuthenticated(true, oidc, ns));
+      dispatch(setAuthenticated(true, oidc));
       if (oidc) {
         dispatch(setSessionExpired(false));
       }
@@ -73,7 +59,7 @@ export function logout(): ThunkAction<
       Auth.unsetAuthCookie(config);
     } else {
       Auth.unsetAuthToken();
-      dispatch(setAuthenticated(false, false, ""));
+      dispatch(setAuthenticated(false, false));
       dispatch(clearClusters());
     }
   };
@@ -100,7 +86,7 @@ export function checkCookieAuthentication(
     if (isAuthed) {
       await dispatch(authenticate(cluster, "", true));
     } else {
-      dispatch(setAuthenticated(false, false, ""));
+      dispatch(setAuthenticated(false, false));
     }
     return isAuthed;
   };

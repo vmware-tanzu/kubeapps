@@ -8,7 +8,7 @@ import Header from "../../components/Header";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
-  auth: { authenticated, defaultNamespace },
+  auth: { authenticated },
   clusters,
   router: {
     location: { pathname },
@@ -18,7 +18,6 @@ function mapStateToProps({
   return {
     authenticated,
     clusters,
-    defaultNamespace,
     pathname,
     appVersion,
   };
