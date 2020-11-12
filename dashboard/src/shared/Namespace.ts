@@ -52,10 +52,10 @@ export const definedNamespaces = {
   all: "_all",
 };
 
-export function getCurrentNamespace(currenNS: string, availableNS: string[]) {
-  if (currenNS) {
+export function getCurrentNamespace(currentNS: string, availableNS: string[]) {
+  if (currentNS) {
     // If a namespace has been already selected, use it
-    return currenNS;
+    return currentNS;
   }
   // Try to get a namespace from the auth token
   const tokenNS = Auth.defaultNamespaceFromToken(Auth.getAuthToken() || "");
