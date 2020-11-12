@@ -201,3 +201,17 @@
 .margin-b-sm {
   margin-bottom: 0.3rem;
 }
+
+.clr-control-container {
+  width: 100%;
+  margin-top: 0.3rem;
+  .clr-input-wrapper {
+    max-width: 100%;
+    .clr-input {
+      width: 100%;
+    }
+  }
+  textarea {
+    width: 100%;
+  }
+}
