@@ -629,9 +629,9 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
-func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) (*corev1.NamespaceList, error) {
+func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces []corev1.Namespace) ([]corev1.Namespace, error) {
 	allowedNamespaces := []corev1.Namespace{}
-	for _, namespace := range namespaces.Items {
+	for _, namespace := range namespaces {
 		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
 			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationapi.ResourceAttributes{
@@ -649,8 +649,17 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 			allowedNamespaces = append(allowedNamespaces, namespace)
 		}
 	}
-	namespaces.Items = allowedNamespaces
-	return namespaces, nil
+	return allowedNamespaces, nil
+}
+
+func filterActiveNamespaces(namespaces []corev1.Namespace) []corev1.Namespace {
+	readyNamespaces := []corev1.Namespace{}
+	for _, namespace := range namespaces {
+		if namespace.Status.Phase == corev1.NamespaceActive {
+			readyNamespaces = append(readyNamespaces, namespace)
+		}
+	}
+	return readyNamespaces
 }
 
 // GetNamespaces return the list of namespaces that the user has permission to access
@@ -658,7 +667,6 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	// Try to list namespaces with the user token, for backward compatibility
 	namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		// TODO: #1763 Check if we have a service token for getting namespaces on other clusters.
 		if k8sErrors.IsForbidden(err) {
 			// The user doesn't have permissions to list namespaces, use the current serviceaccount
 			namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
@@ -666,19 +674,24 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 				// If the configured svcclient doesn't have permission, just return an empty list.
 				return []corev1.Namespace{}, nil
 			}
-
-			// Only if we obtained the namespaces from the svc client do we filter it using
-			// the user clientset.
-			namespaces, err = filterAllowedNamespaces(a.clientset, namespaces)
-			if err != nil {
-				return nil, err
-			}
 		} else {
 			return nil, err
 		}
 	}
 
-	return namespaces.Items, nil
+	// Filter namespaces in which the user has permissions to write (secrets) only
+	namespaceList, err := filterAllowedNamespaces(a.clientset, namespaces.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter namespaces that are in terminating state
+	namespaceList = filterActiveNamespaces(namespaceList)
+	if err != nil {
+		return nil, err
+	}
+
+	return namespaceList, nil
 }
 
 // GetSecret return the a secret from a namespace using a token if given

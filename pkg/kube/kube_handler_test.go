@@ -801,47 +801,76 @@ func TestSecretForRequest(t *testing.T) {
 	}
 }
 
+type existingNs struct {
+	name  string
+	phase corev1.NamespacePhase
+}
+
 func TestGetNamespaces(t *testing.T) {
+
 	testCases := []struct {
 		name               string
-		existingNamespaces []string
+		existingNamespaces []existingNs
 		allowed            bool
 		userClientErr      error
 		svcClientErr       error
 		expectedNamespaces []string
 	}{
 		{
-			name:               "it lists namespaces if the user client returns the namespaces",
-			existingNamespaces: []string{"foo", "bar", "zed"},
+			name: "it lists namespaces if the user client returns the namespaces",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceActive},
+				{"bar", corev1.NamespaceActive},
+				{"zed", corev1.NamespaceActive},
+			},
 			expectedNamespaces: []string{"foo", "bar", "zed"},
 			allowed:            true,
 		},
 		{
-			name:               "it does not filter the namespaces if returned by the user client",
-			existingNamespaces: []string{"foo", "bar", "zed"},
-			expectedNamespaces: []string{"foo", "bar", "zed"},
+			name: "it does filter the namespaces if returned by the user client",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceActive},
+				{"bar", corev1.NamespaceActive},
+				{"zed", corev1.NamespaceActive},
+			},
+			expectedNamespaces: []string{},
 			allowed:            false,
 		},
 		{
-			name:               "it lists namespaces if the userclient fails but the service client succeeds",
-			existingNamespaces: []string{"foo"},
+			name: "it lists namespaces if the userclient fails but the service client succeeds",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceActive},
+			},
 			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			expectedNamespaces: []string{"foo"},
 			allowed:            true,
 		},
 		{
-			name:               "it filters the namespaces if the userclient fails but the service client succeeds",
-			existingNamespaces: []string{"foo"},
+			name: "it filters the namespaces if the userclient fails but the service client succeeds",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceActive},
+			},
 			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			expectedNamespaces: []string{},
 			allowed:            false,
 		},
 		{
-			name:               "it returns an empty list if both the user and service account forbidden",
-			existingNamespaces: []string{"foo"},
+			name: "it returns an empty list if both the user and service account forbidden",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceActive},
+			},
 			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			svcClientErr:       k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			expectedNamespaces: []string{},
+			allowed:            true,
+		},
+		{
+			name: "it filters namespaces in terminating status",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceTerminating},
+				{"bar", corev1.NamespaceActive},
+			},
+			expectedNamespaces: []string{"bar"},
 			allowed:            true,
 		},
 	}
@@ -903,18 +932,21 @@ func TestGetNamespaces(t *testing.T) {
 				namespaceNames = append(namespaceNames, ns.ObjectMeta.Name)
 			}
 			if !cmp.Equal(namespaceNames, tc.expectedNamespaces) {
-				t.Errorf("Unexpected response: %s", cmp.Diff(namespaces, tc.expectedNamespaces))
+				t.Errorf("Unexpected response: %s", cmp.Diff(namespaceNames, tc.expectedNamespaces))
 			}
 		})
 	}
 }
 
 // setClientsetData configures the fake clientset with the return and error.
-func setClientsetData(cs fakeCombinedClientset, namespaceNames []string, err error) {
+func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err error) {
 	namespaces := []corev1.Namespace{}
 	for _, ns := range namespaceNames {
 		namespaces = append(namespaces, corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{Name: ns},
+			ObjectMeta: metav1.ObjectMeta{Name: ns.name},
+			Status: corev1.NamespaceStatus{
+				Phase: ns.phase,
+			},
 		})
 	}
 	cs.Clientset.Fake.PrependReactor(
