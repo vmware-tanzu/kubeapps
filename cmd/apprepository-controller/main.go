@@ -160,11 +160,6 @@ func main() {
 func getImagePullSecretsRefs(imagePullSecretsRefsArr []string) []corev1.LocalObjectReference {
 	var imagePullSecretsRefs []corev1.LocalObjectReference
 
-	// if no repoSyncImagePullSecrets arg passed, return nil, as usual
-	if len(imagePullSecretsRefsArr) == 0 {
-		return nil
-	}
-
 	// getting and appending a []LocalObjectReference for each ImagePullSecret passed
 	for _, imagePullSecretName := range imagePullSecretsRefsArr {
 		imagePullSecretsRefs = append(imagePullSecretsRefs, corev1.LocalObjectReference{Name: imagePullSecretName})

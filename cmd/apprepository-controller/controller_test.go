@@ -18,7 +18,7 @@ func Test_newCronJob(t *testing.T) {
 	repoSyncImage := "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
 	repoSyncImagePullSecrets := []string{}
 	repoSyncCommand := "/chart-repo"
-	namespace := "kubeapps"
+	kubeappsNamespace := "kubeapps"
 	reposPerNamespace := true
 	dbURL := "postgresql.kubeapps"
 	dbUser := "admin"
@@ -42,7 +42,7 @@ func Test_newCronJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -142,7 +142,7 @@ func Test_newCronJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -252,7 +252,7 @@ func Test_newCronJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -371,7 +371,7 @@ func Test_newSyncJob(t *testing.T) {
 	repoSyncImage := "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
 	repoSyncImagePullSecrets := []string{}
 	repoSyncCommand := "/chart-repo"
-	namespace := "kubeapps"
+	kubeappsNamespace := "kubeapps"
 	reposPerNamespace := true
 	dbURL := "postgresql.kubeapps"
 	dbUser := "admin"
@@ -395,7 +395,7 @@ func Test_newSyncJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -486,7 +486,7 @@ func Test_newSyncJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -567,7 +567,7 @@ func Test_newSyncJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -668,7 +668,7 @@ func Test_newSyncJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -778,7 +778,7 @@ func Test_newSyncJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -896,7 +896,7 @@ func Test_newSyncJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -1024,7 +1024,7 @@ func Test_newCleanupJob(t *testing.T) {
 	repoSyncImage := "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
 	repoSyncImagePullSecrets := []string{}
 	repoSyncCommand := "/chart-repo"
-	namespace := "kubeapps"
+	kubeappsNamespace := "kubeapps"
 	reposPerNamespace := true
 	dbURL := "postgresql.kubeapps"
 	dbUser := "admin"
@@ -1051,7 +1051,7 @@ func Test_newCleanupJob(t *testing.T) {
 				RepoSyncImage:            repoSyncImage,
 				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
 				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        namespace,
+				KubeappsNamespace:        kubeappsNamespace,
 				ReposPerNamespace:        reposPerNamespace,
 				DBURL:                    dbURL,
 				DBUser:                   dbUser,
@@ -1102,7 +1102,11 @@ func Test_newCleanupJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob(tt.repoName, tt.config)
+			result := newCleanupJob(&apprepov1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tt.repoName,
+					Namespace: tt.repoNamespace,
+				}}, tt.config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

@@ -273,7 +273,7 @@ func (c *Controller) syncHandler(key string) error {
 		if errors.IsNotFound(err) {
 			log.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
 			// Trigger a Job to perfrom the cleanup of the charts in the DB corresponding to deleted AppRepository
-			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(context.TODO(), newCleanupJob(name, c.conf), metav1.CreateOptions{})
+			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(context.TODO(), newCleanupJob(apprepo, c.conf), metav1.CreateOptions{})
 			return nil
 		}
 		return fmt.Errorf("Error fetching object with key %s from store: %v", key, err)
@@ -500,18 +500,18 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 
 // newCleanupJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newCleanupJob(repoName string, config Config) *batchv1.Job {
+func newCleanupJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: deleteJobName(repoName, config) + "-",
-			Namespace:    config.KubeappsNamespace,
+			GenerateName: deleteJobName(apprepo) + "-",
+			Namespace:    apprepo.GetNamespace(),
 		},
-		Spec: cleanupJobSpec(repoName, config),
+		Spec: cleanupJobSpec(apprepo, config),
 	}
 }
 
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
-func cleanupJobSpec(repoName string, config Config) batchv1.JobSpec {
+func cleanupJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.JobSpec {
 	log.Info("Creating cleaunp")
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
@@ -525,7 +525,7 @@ func cleanupJobSpec(repoName string, config Config) batchv1.JobSpec {
 						Image:           config.RepoSyncImage,
 						ImagePullPolicy: "IfNotPresent",
 						Command:         []string{config.RepoSyncCommand},
-						Args:            apprepoCleanupJobArgs(repoName, config),
+						Args:            apprepoCleanupJobArgs(apprepo, config),
 						Env: []corev1.EnvVar{
 							{
 								Name: "DB_PASSWORD",
@@ -558,8 +558,8 @@ func cronJobName(apprepo *apprepov1alpha1.AppRepository) string {
 }
 
 // deleteJobName returns a unique name for the Job to cleanup AppRepository
-func deleteJobName(reponame string, config Config) string {
-	return fmt.Sprintf("apprepo-%s-cleanup-%s", config.KubeappsNamespace, reponame)
+func deleteJobName(apprepo *apprepov1alpha1.AppRepository) string {
+	return fmt.Sprintf("apprepo-%s-cleanup-%s", apprepo.GetNamespace(), apprepo.GetName())
 }
 
 // apprepoSyncJobArgs returns a list of args for the sync container
@@ -609,11 +609,11 @@ func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alph
 }
 
 // apprepoCleanupJobArgs returns a list of args for the repo cleanup container
-func apprepoCleanupJobArgs(repoName string, config Config) []string {
+func apprepoCleanupJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) []string {
 	return append([]string{
 		"delete",
-		repoName,
-		"--namespace=" + config.KubeappsNamespace,
+		apprepo.GetName(),
+		"--namespace=" + apprepo.GetNamespace(),
 	}, dbFlags(config)...)
 }
 
