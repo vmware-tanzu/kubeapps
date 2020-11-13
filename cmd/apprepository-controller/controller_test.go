@@ -13,20 +13,7 @@ import (
 )
 
 func Test_newCronJob(t *testing.T) {
-	kubeconfig := ""
-	masterURL := ""
-	repoSyncImage := "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
-	repoSyncImagePullSecrets := []string{}
-	repoSyncCommand := "/chart-repo"
-	kubeappsNamespace := "kubeapps"
-	reposPerNamespace := true
-	dbURL := "postgresql.kubeapps"
-	dbUser := "admin"
-	dbName := "assets"
-	dbSecretName := "postgresql"
-	dbSecretKey := "postgresql-root-password"
-	userAgentComment := ""
-	crontab := "*/10 * * * *"
+	defaultConfig := makeDefaultConfig()
 
 	tests := []struct {
 		name     string
@@ -37,20 +24,20 @@ func Test_newCronJob(t *testing.T) {
 		{
 			"my-charts",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
-				UserAgentComment:         userAgentComment,
-				Crontab:                  crontab,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
+				UserAgentComment:         defaultConfig.UserAgentComment,
+				Crontab:                  defaultConfig.Crontab,
 			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
@@ -104,7 +91,7 @@ func Test_newCronJob(t *testing.T) {
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
-											Image:           repoSyncImage,
+											Image:           defaultConfig.RepoSyncImage,
 											ImagePullPolicy: "IfNotPresent",
 											Command:         []string{"/chart-repo"},
 											Args: []string{
@@ -137,18 +124,18 @@ func Test_newCronJob(t *testing.T) {
 		{
 			"my-charts with auth, userAgent and crontab configuration",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
 				UserAgentComment:         "kubeapps/v2.3",
 				Crontab:                  "*/20 * * * *",
 			},
@@ -208,7 +195,7 @@ func Test_newCronJob(t *testing.T) {
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
-											Image:           repoSyncImage,
+											Image:           defaultConfig.RepoSyncImage,
 											ImagePullPolicy: "IfNotPresent",
 											Command:         []string{"/chart-repo"},
 											Args: []string{
@@ -247,18 +234,18 @@ func Test_newCronJob(t *testing.T) {
 		{
 			"a cronjob for an app repo in another namespace references the repo secret in kubeapps",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
 				UserAgentComment:         "kubeapps/v2.3",
 				Crontab:                  "*/20 * * * *",
 			},
@@ -309,7 +296,7 @@ func Test_newCronJob(t *testing.T) {
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
-											Image:           repoSyncImage,
+											Image:           defaultConfig.RepoSyncImage,
 											ImagePullPolicy: "IfNotPresent",
 											Command:         []string{"/chart-repo"},
 											Args: []string{
@@ -350,12 +337,12 @@ func Test_newCronJob(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.config.UserAgentComment != "" {
-				userAgentComment = tt.config.UserAgentComment
-				defer func() { userAgentComment = "" }()
+				defaultConfig.UserAgentComment = tt.config.UserAgentComment
+				defer func() { defaultConfig.UserAgentComment = "" }()
 			}
 			if tt.config.Crontab != "" {
-				crontab = tt.config.Crontab
-				defer func() { crontab = "" }()
+				defaultConfig.Crontab = tt.config.Crontab
+				defer func() { defaultConfig.Crontab = "" }()
 			}
 			result := newCronJob(tt.apprepo, tt.config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
@@ -366,20 +353,7 @@ func Test_newCronJob(t *testing.T) {
 }
 
 func Test_newSyncJob(t *testing.T) {
-	kubeconfig := ""
-	masterURL := ""
-	repoSyncImage := "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
-	repoSyncImagePullSecrets := []string{}
-	repoSyncCommand := "/chart-repo"
-	kubeappsNamespace := "kubeapps"
-	reposPerNamespace := true
-	dbURL := "postgresql.kubeapps"
-	dbUser := "admin"
-	dbName := "assets"
-	dbSecretName := "postgresql"
-	dbSecretKey := "postgresql-root-password"
-	userAgentComment := ""
-	crontab := "*/10 * * * *"
+	defaultConfig := makeDefaultConfig()
 
 	tests := []struct {
 		name     string
@@ -390,19 +364,19 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
-				UserAgentComment:         userAgentComment,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
+				UserAgentComment:         defaultConfig.UserAgentComment,
 				Crontab:                  "*/20 * * * *",
 			},
 			&apprepov1alpha1.AppRepository{
@@ -450,7 +424,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           repoSyncImage,
+									Image:           defaultConfig.RepoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -481,20 +455,20 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"an app repository in another namespace results in jobs without owner references",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
-				UserAgentComment:         userAgentComment,
-				Crontab:                  crontab,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
+				UserAgentComment:         defaultConfig.UserAgentComment,
+				Crontab:                  defaultConfig.Crontab,
 			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
@@ -531,7 +505,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           repoSyncImage,
+									Image:           defaultConfig.RepoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -562,20 +536,20 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with auth and userAgent comment",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
 				UserAgentComment:         "kubeapps/v2.3",
-				Crontab:                  crontab,
+				Crontab:                  defaultConfig.Crontab,
 			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
@@ -626,7 +600,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           repoSyncImage,
+									Image:           defaultConfig.RepoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -663,20 +637,20 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with a customCA",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
-				UserAgentComment:         userAgentComment,
-				Crontab:                  crontab,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
+				UserAgentComment:         defaultConfig.UserAgentComment,
+				Crontab:                  defaultConfig.Crontab,
 			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
@@ -728,7 +702,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           repoSyncImage,
+									Image:           defaultConfig.RepoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -773,20 +747,20 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with a customCA and auth header",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
-				UserAgentComment:         userAgentComment,
-				Crontab:                  crontab,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
+				UserAgentComment:         defaultConfig.UserAgentComment,
+				Crontab:                  defaultConfig.Crontab,
 			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
@@ -841,7 +815,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           repoSyncImage,
+									Image:           defaultConfig.RepoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -891,20 +865,20 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with a custom pod template",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
-				UserAgentComment:         userAgentComment,
-				Crontab:                  crontab,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
+				UserAgentComment:         defaultConfig.UserAgentComment,
+				Crontab:                  defaultConfig.Crontab,
 			},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
@@ -972,7 +946,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           repoSyncImage,
+									Image:           defaultConfig.RepoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -1006,8 +980,8 @@ func Test_newSyncJob(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.config.UserAgentComment != "" {
-				userAgentComment = tt.config.UserAgentComment
-				defer func() { userAgentComment = "" }()
+				defaultConfig.UserAgentComment = tt.config.UserAgentComment
+				defer func() { defaultConfig.UserAgentComment = "" }()
 			}
 
 			result := newSyncJob(tt.apprepo, tt.config)
@@ -1019,20 +993,7 @@ func Test_newSyncJob(t *testing.T) {
 }
 
 func Test_newCleanupJob(t *testing.T) {
-	kubeconfig := ""
-	masterURL := ""
-	repoSyncImage := "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
-	repoSyncImagePullSecrets := []string{}
-	repoSyncCommand := "/chart-repo"
-	kubeappsNamespace := "kubeapps"
-	reposPerNamespace := true
-	dbURL := "postgresql.kubeapps"
-	dbUser := "admin"
-	dbName := "assets"
-	dbSecretName := "postgresql"
-	dbSecretKey := "postgresql-root-password"
-	userAgentComment := ""
-	crontab := "*/10 * * * *"
+	defaultConfig := makeDefaultConfig()
 
 	tests := []struct {
 		name          string
@@ -1046,20 +1007,20 @@ func Test_newCleanupJob(t *testing.T) {
 			"my-charts",
 			"kubeapps",
 			Config{
-				Kubeconfig:               kubeconfig,
-				MasterURL:                masterURL,
-				RepoSyncImage:            repoSyncImage,
-				RepoSyncImagePullSecrets: repoSyncImagePullSecrets,
-				RepoSyncCommand:          repoSyncCommand,
-				KubeappsNamespace:        kubeappsNamespace,
-				ReposPerNamespace:        reposPerNamespace,
-				DBURL:                    dbURL,
-				DBUser:                   dbUser,
-				DBName:                   dbName,
-				DBSecretName:             dbSecretName,
-				DBSecretKey:              dbSecretKey,
-				UserAgentComment:         userAgentComment,
-				Crontab:                  crontab,
+				Kubeconfig:               defaultConfig.Kubeconfig,
+				MasterURL:                defaultConfig.MasterURL,
+				RepoSyncImage:            defaultConfig.RepoSyncImage,
+				RepoSyncImagePullSecrets: defaultConfig.RepoSyncImagePullSecrets,
+				RepoSyncCommand:          defaultConfig.RepoSyncCommand,
+				KubeappsNamespace:        defaultConfig.KubeappsNamespace,
+				ReposPerNamespace:        defaultConfig.ReposPerNamespace,
+				DBURL:                    defaultConfig.DBURL,
+				DBUser:                   defaultConfig.DBUser,
+				DBName:                   defaultConfig.DBName,
+				DBSecretName:             defaultConfig.DBSecretName,
+				DBSecretKey:              defaultConfig.DBSecretKey,
+				UserAgentComment:         defaultConfig.UserAgentComment,
+				Crontab:                  defaultConfig.Crontab,
 			},
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1073,7 +1034,7 @@ func Test_newCleanupJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
-									Image:           repoSyncImage,
+									Image:           defaultConfig.RepoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -1170,4 +1131,22 @@ func TestObjectBelongsTo(t *testing.T) {
 			}
 		})
 	}
+}
+
+func makeDefaultConfig() Config {
+	return Config{
+		Kubeconfig:               "",
+		MasterURL:                "",
+		RepoSyncImage:            "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2",
+		RepoSyncImagePullSecrets: []string{},
+		RepoSyncCommand:          "/chart-repo",
+		KubeappsNamespace:        "kubeapps",
+		ReposPerNamespace:        true,
+		DBURL:                    "postgresql.kubeapps",
+		DBUser:                   "admin",
+		DBName:                   "assets",
+		DBSecretName:             "postgresql",
+		DBSecretKey:              "postgresql-root-password",
+		UserAgentComment:         "",
+		Crontab:                  "*/10 * * * *"}
 }

@@ -33,7 +33,7 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-// Config contains al the flags passed through the command line
+// Config contains all the flags passed through the command line
 // besides, it contains the []LocalObjectReference for the PullSecrets
 // so they can be shared across the jobs
 type Config struct {
@@ -93,9 +93,9 @@ func main() {
 	conf, output, err := parseFlags(os.Args[0], os.Args[1:])
 
 	if err != nil {
-		log.Fatal("got error:", err)
-		log.Fatal("output:\n", output)
-		os.Exit(1)
+		log.Fatal("error parsing command-line arguments: ", err)
+		log.Fatal(output)
+		log.Exit(1)
 	}
 
 	log.WithFields(log.Fields{
