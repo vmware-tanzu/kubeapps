@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+const repoSyncImage = "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
+
 func Test_newCronJob(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -76,7 +78,7 @@ func Test_newCronJob(t *testing.T) {
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
-											Image:           "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2",
+											Image:           repoSyncImage,
 											ImagePullPolicy: "IfNotPresent",
 											Command:         []string{"/chart-repo"},
 											Args: []string{
@@ -166,7 +168,7 @@ func Test_newCronJob(t *testing.T) {
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
-											Image:           "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2",
+											Image:           repoSyncImage,
 											ImagePullPolicy: "IfNotPresent",
 											Command:         []string{"/chart-repo"},
 											Args: []string{
@@ -253,7 +255,7 @@ func Test_newCronJob(t *testing.T) {
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
-											Image:           "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2",
+											Image:           repoSyncImage,
 											ImagePullPolicy: "IfNotPresent",
 											Command:         []string{"/chart-repo"},
 											Args: []string{
@@ -306,8 +308,6 @@ func Test_newCronJob(t *testing.T) {
 }
 
 func Test_newSyncJob(t *testing.T) {
-	defaultConfig := makeDefaultConfig()
-
 	tests := []struct {
 		name             string
 		userAgentComment string
@@ -362,7 +362,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           defaultConfig.RepoSyncImage,
+									Image:           repoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -428,7 +428,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           defaultConfig.RepoSyncImage,
+									Image:           repoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -508,7 +508,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           defaultConfig.RepoSyncImage,
+									Image:           repoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -595,7 +595,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           defaultConfig.RepoSyncImage,
+									Image:           repoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -693,7 +693,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           defaultConfig.RepoSyncImage,
+									Image:           repoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -809,7 +809,7 @@ func Test_newSyncJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
-									Image:           defaultConfig.RepoSyncImage,
+									Image:           repoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -854,8 +854,6 @@ func Test_newSyncJob(t *testing.T) {
 }
 
 func Test_newCleanupJob(t *testing.T) {
-	defaultConfig := makeDefaultConfig()
-
 	tests := []struct {
 		name          string
 		repoName      string
@@ -878,7 +876,7 @@ func Test_newCleanupJob(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
-									Image:           defaultConfig.RepoSyncImage,
+									Image:           repoSyncImage,
 									ImagePullPolicy: "IfNotPresent",
 									Command:         []string{"/chart-repo"},
 									Args: []string{
@@ -981,7 +979,7 @@ func makeDefaultConfig() Config {
 	return Config{
 		Kubeconfig:               "",
 		MasterURL:                "",
-		RepoSyncImage:            "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2",
+		RepoSyncImage:            repoSyncImage,
 		RepoSyncImagePullSecrets: []string{},
 		RepoSyncCommand:          "/chart-repo",
 		KubeappsNamespace:        "kubeapps",
