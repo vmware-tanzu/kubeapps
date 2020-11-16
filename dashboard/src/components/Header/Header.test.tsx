@@ -62,7 +62,7 @@ it("should skip the links if it's not authenticated", () => {
   expect(items).not.toExist();
 });
 
-it("should skip the links the namespace info is not available", () => {
+it("should skip the links if the namespace info is not available", () => {
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,

@@ -291,6 +291,40 @@ describe("clusterReducer", () => {
       jest.restoreAllMocks();
     });
 
+    it("defaults to the first namespace if the one in token is not available", () => {
+      Auth.defaultNamespaceFromToken = jest.fn(() => "nope");
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "one",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+      jest.restoreAllMocks();
+    });
+
     it("gets the existing current namespace", () => {
       expect(
         clusterReducer(

@@ -59,8 +59,8 @@ export function getCurrentNamespace(currentNS: string, availableNS: string[]) {
   }
   // Try to get a namespace from the auth token
   const tokenNS = Auth.defaultNamespaceFromToken(Auth.getAuthToken() || "");
-  if (tokenNS) {
-    // Return the default namespace in the token
+  if (tokenNS && availableNS.includes(tokenNS)) {
+    // Return the default namespace in the token (if exists)
     return tokenNS;
   }
   // In other case, just return the first namespace available

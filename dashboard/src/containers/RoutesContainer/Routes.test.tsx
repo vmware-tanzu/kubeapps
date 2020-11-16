@@ -69,7 +69,7 @@ it("should render a redirect to the login page", () => {
   expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
 });
 
-it("should render a redirect to the login page (when not authenticated)", () => {
+it("should render a redirect to the login page (even with cluster or ns info)", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
       <Routes
