@@ -205,3 +205,46 @@ describe("is403FromAuthProxy", () => {
     ).toBe(false);
   });
 });
+
+describe("isAnonymous", () => {
+  it("returns true if the message includes 'system:anonymous' in response.data", () => {
+    expect(
+      Auth.isAnonymous({
+        status: 403,
+        data:
+          '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
+      } as AxiosResponse<any>),
+    ).toBe(true);
+  });
+  it("returns true if the message includes 'system:anonymous' in response.data.message", () => {
+    expect(
+      Auth.isAnonymous({
+        status: 403,
+        data: {
+          message:
+            '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
+        },
+      } as AxiosResponse<any>),
+    ).toBe(true);
+  });
+  it("returns false if the message does not include 'system:anonymous' in response.data", () => {
+    expect(
+      Auth.isAnonymous({
+        status: 403,
+        data:
+          'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+      } as AxiosResponse<any>),
+    ).toBe(false);
+  });
+  it("returns false if the message does not include 'system:anonymous' in response.data.message", () => {
+    expect(
+      Auth.isAnonymous({
+        status: 403,
+        data: {
+          message:
+            'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+        },
+      } as AxiosResponse<any>),
+    ).toBe(false);
+  });
+});

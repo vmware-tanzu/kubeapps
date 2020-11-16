@@ -63,10 +63,21 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
           dispatchErrorAndLogout(message);
           return Promise.reject(new UnauthorizedError(message));
         case 403:
-          // A 403 directly from the auth proxy requires reauthentication.
-          if (Auth.usingOIDCToken() && Auth.is403FromAuthProxy(response)) {
+          // Subcase 1:
+          //   if usingOIDCToken: a 403 directly from the auth proxy
+          //   always requires reauthentication.
+          // Subcase 2:
+          //   if !usingOIDCToken, an anonymous response is sent when
+          //   a serviceaccount token expires (eg., delete secret xxx)
+          //   or the token is managed externally (eg., vsphere kubectl login)
+          //   In this case, force reauthentication
+          if (Auth.is403FromAuthProxy(response) || Auth.isAnonymous(response)) {
             dispatchErrorAndLogout(message);
           }
+          // Subcase 3:
+          //   The most likely case is just a 403 due to a lack of
+          //   permissions in a certain namespace.
+          //   In this case, just return the error message back to the user
           try {
             const jsonMessage = JSON.parse(message) as IRBACRole[];
             return Promise.reject(
@@ -82,7 +93,9 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
               ),
             );
           } catch (e) {
-            // Not a json error
+            // Subcase 4:
+            //   A non-parseable 403 error.
+            //   Do not require reauthentication and display error (ie. edge cases of proxy auth)
           }
           return Promise.reject(new ForbiddenError(message));
         case 404:
