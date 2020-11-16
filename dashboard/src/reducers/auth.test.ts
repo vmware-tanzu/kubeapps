@@ -19,7 +19,6 @@ describe("authReducer", () => {
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
-      defaultNamespace: "",
     };
   });
 
@@ -37,21 +36,11 @@ describe("authReducer", () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
-            payload: { authenticated: e, oidc: false, defaultNamespace: "" },
+            payload: { authenticated: e, oidc: false },
             type: actionTypes.setAuthenticated as any,
           }),
-        ).toEqual({ ...initialState, authenticated: e, defaultNamespace: "_all" });
+        ).toEqual({ ...initialState, authenticated: e });
       });
-    });
-
-    it(`sets defaultNamespace in ${actionTypes.setAuthenticated}`, () => {
-      const defaultNamespace = "kubeapps-user";
-      expect(
-        authReducer(initialState, {
-          payload: { authenticated: true, oidc: false, defaultNamespace },
-          type: actionTypes.setAuthenticated as any,
-        }),
-      ).toEqual({ ...initialState, authenticated: true, defaultNamespace });
     });
 
     it(`resets authenticated and authenticating if type ${actionTypes.authenticating}`, () => {
@@ -85,13 +74,12 @@ describe("authReducer", () => {
       expect(
         authReducer(initialState, {
           type: actionTypes.setAuthenticated as any,
-          payload: { authenticated: true, oidc: true, defaultNamespace: "_all" },
+          payload: { authenticated: true, oidc: true },
         }),
       ).toEqual({
         ...initialState,
         authenticated: true,
         oidcAuthenticated: true,
-        defaultNamespace: "_all",
       });
     });
 

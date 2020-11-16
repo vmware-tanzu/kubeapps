@@ -1,7 +1,6 @@
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 import { Auth } from "../shared/Auth";
@@ -20,7 +19,6 @@ beforeEach(() => {
     authenticated: false,
     authenticating: false,
     oidcAuthenticated: false,
-    defaultNamespace: "_all",
   };
 
   Auth.validateToken = jest.fn();
@@ -72,11 +70,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        type: getType(actions.namespace.receiveNamespaces),
-        payload: { cluster: "default", namespaces: [] },
-      },
-      {
-        payload: { authenticated: true, oidc: false, defaultNamespace: "_all" },
+        payload: { authenticated: true, oidc: false },
         type: getType(actions.auth.setAuthenticated),
       },
     ];
@@ -94,11 +88,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        type: getType(actions.namespace.receiveNamespaces),
-        payload: { cluster: "default", namespaces: [] },
-      },
-      {
-        payload: { authenticated: true, oidc: true, defaultNamespace: "_all" },
+        payload: { authenticated: true, oidc: true },
         type: getType(actions.auth.setAuthenticated),
       },
       {
@@ -110,31 +100,6 @@ describe("authenticate", () => {
     return store.dispatch(actions.auth.authenticate(defaultCluster, "ignored", true)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(Auth.validateToken).not.toHaveBeenCalled();
-    });
-  });
-
-  it("uses a namespace from the list", () => {
-    Auth.validateToken = jest.fn();
-    Namespace.list = async () => {
-      return { namespaces: [{ metadata: { name: "foo" } } as IResource] };
-    };
-    const expectedActions = [
-      {
-        type: getType(actions.auth.authenticating),
-      },
-      {
-        type: getType(actions.namespace.receiveNamespaces),
-        payload: { cluster: "default", namespaces: ["foo"] },
-      },
-      {
-        payload: { authenticated: true, oidc: false, defaultNamespace: "foo" },
-        type: getType(actions.auth.setAuthenticated),
-      },
-    ];
-
-    return store.dispatch(actions.auth.authenticate(defaultCluster, token, false)).then(() => {
-      expect(store.getActions()).toEqual(expectedActions);
-      expect(Auth.validateToken).toHaveBeenCalledWith(defaultCluster, token);
     });
   });
 });
@@ -150,11 +115,7 @@ describe("OIDC authentication", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        type: getType(actions.namespace.receiveNamespaces),
-        payload: { cluster: "default", namespaces: [] },
-      },
-      {
-        payload: { authenticated: true, oidc: true, defaultNamespace: "_all" },
+        payload: { authenticated: true, oidc: true },
         type: getType(actions.auth.setAuthenticated),
       },
       {

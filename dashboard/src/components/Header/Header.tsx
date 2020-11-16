@@ -1,25 +1,33 @@
-import * as React from "react";
+import actions from "actions";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { NavLink } from "react-router-dom";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { IStoreState } from "shared/types";
 
 import logo from "../../logo.svg";
-import { IClustersState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import ContextSelector from "./ContextSelector";
 import "./Header.css";
 import Menu from "./Menu";
 
-interface IHeaderProps {
-  authenticated: boolean;
-  logout: () => void;
-  clusters: IClustersState;
-  defaultNamespace: string;
-  appVersion: string;
-  push: (path: string) => void;
-}
-
-function Header(props: IHeaderProps) {
-  const { appVersion, clusters, authenticated: showNav, defaultNamespace, logout } = props;
+function Header() {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const {
+    auth: { authenticated },
+    clusters,
+    config: { appVersion },
+  } = useSelector((state: IStoreState) => state);
   const cluster = clusters.clusters[clusters.currentCluster];
+  const showNav = authenticated && clusters.currentCluster && cluster.currentNamespace;
+  const logout = () => dispatch(actions.auth.logout());
+
+  useEffect(() => {
+    if (authenticated && clusters.currentCluster) {
+      dispatch(actions.namespace.fetchNamespaces(clusters.currentCluster));
+    }
+  }, [dispatch, authenticated, clusters.currentCluster]);
 
   const routesToRender = [
     {
@@ -62,12 +70,7 @@ function Header(props: IHeaderProps) {
           {showNav && (
             <section className="header-actions">
               <ContextSelector />
-              <Menu
-                clusters={clusters}
-                defaultNamespace={defaultNamespace}
-                appVersion={appVersion}
-                logout={logout}
-              />
+              <Menu clusters={clusters} appVersion={appVersion} logout={logout} />
             </section>
           )}
         </header>

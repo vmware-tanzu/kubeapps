@@ -3,7 +3,6 @@ import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
 import { Auth } from "../shared/Auth";
-import { definedNamespaces } from "../shared/Namespace";
 
 export interface IAuthState {
   sessionExpired: boolean;
@@ -11,7 +10,6 @@ export interface IAuthState {
   authenticating: boolean;
   oidcAuthenticated: boolean;
   authenticationError?: string;
-  defaultNamespace: string;
 }
 
 const getInitialState: () => IAuthState = (): IAuthState => {
@@ -21,7 +19,6 @@ const getInitialState: () => IAuthState = (): IAuthState => {
     authenticated: token !== "",
     authenticating: false,
     oidcAuthenticated: Auth.usingOIDCToken(),
-    defaultNamespace: Auth.defaultNamespaceFromToken(token),
   };
 };
 export const initialState: IAuthState = getInitialState();
@@ -34,7 +31,6 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
         authenticated: action.payload.authenticated,
         oidcAuthenticated: action.payload.oidc,
         authenticating: false,
-        defaultNamespace: action.payload.defaultNamespace || definedNamespaces.all,
       };
     case getType(actions.auth.authenticating):
       return { ...state, authenticated: false, authenticating: true };

@@ -1,3 +1,4 @@
+import LoadingWrapper from "components/LoadingWrapper";
 import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
 import * as React from "react";
@@ -29,7 +30,7 @@ it("invalid path should show a 404 error", () => {
       <Routes
         {...emptyRouteComponentProps}
         cluster={"default"}
-        namespace={"default"}
+        currentNamespace={"default"}
         authenticated={true}
       />
     </StaticRouter>,
@@ -44,7 +45,7 @@ it("should render a redirect to the default cluster and namespace", () => {
       <Routes
         {...emptyRouteComponentProps}
         cluster={"default"}
-        namespace={"default"}
+        currentNamespace={"default"}
         authenticated={true}
       />
     </StaticRouter>,
@@ -58,9 +59,9 @@ it("should render a redirect to the login page", () => {
     <StaticRouter location="/" context={{}}>
       <Routes
         {...emptyRouteComponentProps}
-        cluster={"default"}
-        namespace={""}
-        authenticated={true}
+        cluster={""}
+        currentNamespace={""}
+        authenticated={false}
       />
     </StaticRouter>,
   );
@@ -68,17 +69,32 @@ it("should render a redirect to the login page", () => {
   expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
 });
 
-it("should render a redirect to the login page (when not authenticated)", () => {
+it("should render a redirect to the login page (even with cluster or ns info)", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
       <Routes
         {...emptyRouteComponentProps}
         cluster={"default"}
-        namespace={"default"}
+        currentNamespace={"default"}
         authenticated={false}
       />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
   expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
+});
+
+it("should render a loading wrapper if authenticated but the cluster and ns info is not populated", () => {
+  const wrapper = mount(
+    <StaticRouter location="/" context={{}}>
+      <Routes
+        {...emptyRouteComponentProps}
+        cluster={""}
+        currentNamespace={""}
+        authenticated={true}
+      />
+    </StaticRouter>,
+  );
+  expect(wrapper.find(NotFound)).not.toExist();
+  expect(wrapper.find(LoadingWrapper)).toExist();
 });
