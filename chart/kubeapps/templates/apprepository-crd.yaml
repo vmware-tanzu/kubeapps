@@ -1,7 +1,7 @@
 {{- if not (.Capabilities.APIVersions.Has "kubeapps.com/v1alpha1") -}}
 # The condition above will be true if another instance of Kubeapps is
 # already installed
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: apprepositories.kubeapps.com

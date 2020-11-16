@@ -7,7 +7,7 @@ import Routes from "./Routes";
 function mapStateToProps({ auth, clusters: { currentCluster, clusters }, config }: IStoreState) {
   return {
     cluster: currentCluster,
-    namespace: clusters[currentCluster].currentNamespace || auth.defaultNamespace,
+    currentNamespace: clusters[currentCluster].currentNamespace,
     authenticated: auth.authenticated,
   };
 }
