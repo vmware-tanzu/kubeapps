@@ -305,6 +305,8 @@ kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-
 kubectl create clusterrolebinding kubeapps-repositories-write --clusterrole kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
 ## Create view user
 kubectl create serviceaccount kubeapps-view -n kubeapps
+kubectl create role view-secrets --verb=get,list,watch --resource=secrets
+kubectl create rolebinding kubeapps-view-secret --role view-secrets --serviceaccount kubeapps:kubeapps-view
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
