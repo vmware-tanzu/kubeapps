@@ -94,6 +94,18 @@ export class Auth {
     return r.status === 403 && (!r.data || !r.data.message);
   }
 
+  // isAnonymous returns true if the message includes "system:anonymous"
+  // in response.data or response.data.message
+  // the k8s api server nowadays defaults to allowing anonymous
+  // requests, so that rather than returning a 401, a 403 is returned if
+  // RBAC does not allow the anonymous user access.
+  public static isAnonymous(response: AxiosResponse): boolean {
+    return (
+      (response?.data && response.data.includes("system:anonymous")) ||
+      (response?.data?.message && response.data.message.includes("system:anonymous"))
+    );
+  }
+
   // isAuthenticatedWithCookie() does an anonymous GET request to determine if
   // the request is authenticated with an http-only cookie (there is, by design,
   // no way to determine via client JS whether an http-only cookie is present).
@@ -120,11 +132,7 @@ export class Auth {
       // requests, so that rather than returning a 401, a 403 is returned if
       // RBAC does not allow the anonymous user access. An http-only cookie
       // will not result in an anonymous request, so...
-      const isAnon =
-        response.data &&
-        response.data.message &&
-        response.data.message.includes("system:anonymous");
-      return !isAnon;
+      return !this.isAnonymous(response);
     }
     return true;
   }
