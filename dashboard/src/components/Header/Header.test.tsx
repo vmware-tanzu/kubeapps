@@ -1,13 +1,28 @@
-import { shallow } from "enzyme";
+import actions from "actions";
 import * as React from "react";
-import { IClustersState } from "../../reducers/cluster";
+import * as ReactRedux from "react-redux";
+import { NavLink } from "react-router-dom";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { app } from "../../shared/url";
 import Header from "./Header";
 
-const defaultProps = {
-  authenticated: true,
-  fetchNamespaces: jest.fn(),
-  logout: jest.fn(),
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.namespace };
+beforeEach(() => {
+  actions.namespace = {
+    ...actions.namespace,
+    fetchNamespaces: jest.fn(),
+  };
+  const mockDispatch = jest.fn(res => res);
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.namespace = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
+
+const defaultState = {
   clusters: {
     currentCluster: "default",
     clusters: {
@@ -16,19 +31,14 @@ const defaultProps = {
         namespaces: ["default", "other"],
       },
     },
-  } as IClustersState,
-  defaultNamespace: "kubeapps-user",
-  pathname: "",
-  push: jest.fn(),
-  setNamespace: jest.fn(),
-  createNamespace: jest.fn(),
-  getNamespace: jest.fn(),
-  appVersion: "v2.0.0",
+  },
+  auth: { authenticated: true },
+  config: { appVersion: "v2.0.0" },
 };
 
 it("renders the header links and titles", () => {
-  const wrapper = shallow(<Header {...defaultProps} />);
-  const items = wrapper.find(".nav-link");
+  const wrapper = mountWrapper(getStore(defaultState), <Header />);
+  const items = wrapper.find(".header-nav").find(NavLink);
   const expectedItems = [
     { children: "Applications", to: app.apps.list("default", "default") },
     { children: "Catalog", to: app.catalog("default", "default") },
@@ -41,7 +51,33 @@ it("renders the header links and titles", () => {
 });
 
 it("should skip the links if it's not authenticated", () => {
-  const wrapper = shallow(<Header {...defaultProps} authenticated={false} />);
+  const wrapper = mountWrapper(
+    getStore({
+      ...defaultState,
+      auth: { authenticated: false },
+    }),
+    <Header />,
+  );
+  const items = wrapper.find(".nav-link");
+  expect(items).not.toExist();
+});
+
+it("should skip the links if the namespace info is not available", () => {
+  const wrapper = mountWrapper(
+    getStore({
+      ...defaultState,
+      clusters: {
+        currentCluster: "default",
+        clusters: {
+          default: {
+            currentNamespace: "",
+            namespaces: [],
+          },
+        },
+      },
+    }),
+    <Header />,
+  );
   const items = wrapper.find(".nav-link");
   expect(items).not.toExist();
 });

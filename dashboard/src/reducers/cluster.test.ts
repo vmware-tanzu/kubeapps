@@ -2,10 +2,9 @@ import { LOCATION_CHANGE, RouterActionType } from "connected-react-router";
 import context from "jest-plugin-context";
 import { getType } from "typesafe-actions";
 
+import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
-import { definedNamespaces } from "shared/Namespace";
 import actions from "../actions";
-import { Auth } from "../shared/Auth";
 import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState, initialState } from "./cluster";
 
@@ -139,55 +138,6 @@ describe("clusterReducer", () => {
     });
   });
 
-  context("when SET_AUTHENTICATED", () => {
-    it("sets the current namespace to the users default if not already set", () => {
-      const stateWithoutCurrentNamespace = {
-        ...initialTestState,
-        clusters: {
-          ...initialTestState.clusters,
-          [initialTestState.currentCluster]: {
-            ...initialTestState.clusters[initialTestState.currentCluster],
-            currentNamespace: definedNamespaces.all,
-          },
-        },
-      };
-      expect(
-        clusterReducer(stateWithoutCurrentNamespace, {
-          type: getType(actions.auth.setAuthenticated),
-          payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
-        }),
-      ).toEqual({
-        ...stateWithoutCurrentNamespace,
-        clusters: {
-          ...initialTestState.clusters,
-          [initialTestState.currentCluster]: {
-            ...initialTestState.clusters[initialTestState.currentCluster],
-            currentNamespace: "foo-bar",
-          },
-        },
-      } as IClustersState);
-    });
-
-    it("does not set the current namespace to the users default already set (from the route, for eg)", () => {
-      const stateWithCurrentNamespace = {
-        ...initialTestState,
-        clusters: {
-          ...initialTestState.clusters,
-          [initialTestState.currentCluster]: {
-            ...initialTestState.clusters[initialTestState.currentCluster],
-            currentNamespace: "default",
-          },
-        },
-      };
-      expect(
-        clusterReducer(stateWithCurrentNamespace, {
-          type: getType(actions.auth.setAuthenticated),
-          payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
-        }),
-      ).toEqual(stateWithCurrentNamespace);
-    });
-  });
-
   context("when SET_NAMESPACE", () => {
     it("sets the current namespace and clears error", () => {
       expect(
@@ -299,7 +249,107 @@ describe("clusterReducer", () => {
             namespaces: ["default"],
           },
           other: {
-            currentNamespace: "",
+            currentNamespace: "one",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("gets the namespace from the token", () => {
+      Auth.defaultNamespaceFromToken = jest.fn(() => "two");
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "two",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+      jest.restoreAllMocks();
+    });
+
+    it("defaults to the first namespace if the one in token is not available", () => {
+      Auth.defaultNamespaceFromToken = jest.fn(() => "nope");
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "one",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+      jest.restoreAllMocks();
+    });
+
+    it("gets the existing current namespace", () => {
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "three",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "three",
             namespaces: ["one", "two", "three"],
             error: undefined,
           },
@@ -334,11 +384,11 @@ describe("clusterReducer", () => {
         currentCluster: "additionalCluster1",
         clusters: {
           additionalCluster1: {
-            currentNamespace: "default",
+            currentNamespace: "",
             namespaces: [],
           },
           additionalCluster2: {
-            currentNamespace: "default",
+            currentNamespace: "",
             namespaces: [],
           },
         },
@@ -360,54 +410,19 @@ describe("clusterReducer", () => {
         currentCluster: "one",
         clusters: {
           one: {
-            currentNamespace: "default",
+            currentNamespace: "",
             namespaces: [],
           },
           two: {
-            currentNamespace: "default",
+            currentNamespace: "",
             namespaces: [],
           },
           three: {
-            currentNamespace: "default",
+            currentNamespace: "",
             namespaces: [],
           },
         },
       } as IClustersState);
-    });
-
-    it("uses default namespace from token for kubeapps cluster", () => {
-      const configWithKubeappsCluster = {
-        ...config,
-        kubeappsCluster: "kubeappsCluster",
-        clusters: ["kubeappsCluster", ...config.clusters],
-      };
-      const spyOnDefaultNamespaceFromToken = jest
-        .spyOn(Auth, "defaultNamespaceFromToken")
-        .mockReturnValue("kubeapps");
-      expect(
-        clusterReducer(initialTestState, {
-          type: getType(actions.config.receiveConfig),
-          payload: configWithKubeappsCluster,
-        }),
-      ).toEqual({
-        ...initialTestState,
-        currentCluster: "kubeappsCluster",
-        clusters: {
-          additionalCluster1: {
-            currentNamespace: "default",
-            namespaces: [],
-          },
-          additionalCluster2: {
-            currentNamespace: "default",
-            namespaces: [],
-          },
-          kubeappsCluster: {
-            currentNamespace: "kubeapps",
-            namespaces: [],
-          },
-        },
-      } as IClustersState);
-      spyOnDefaultNamespaceFromToken.mockRestore();
     });
   });
 });

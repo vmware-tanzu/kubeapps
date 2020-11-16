@@ -16,15 +16,14 @@ import "./Menu.css";
 
 export interface IContextSelectorProps {
   clusters: IClustersState;
-  defaultNamespace: string;
   appVersion: string;
   logout: () => void;
 }
 
-function Menu({ clusters, defaultNamespace, appVersion, logout }: IContextSelectorProps) {
+function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   const [open, setOpen] = useState(false);
   const currentCluster = clusters.clusters[clusters.currentCluster];
-  const namespaceSelected = currentCluster.currentNamespace || defaultNamespace;
+  const namespaceSelected = currentCluster.currentNamespace;
   // Control when users click outside
   const ref = useRef(null);
   useOutsideClick(setOpen, [ref], open);

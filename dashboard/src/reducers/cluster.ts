@@ -2,7 +2,7 @@ import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 
 import { IConfig } from "shared/Config";
-import { definedNamespaces } from "shared/Namespace";
+import { getCurrentNamespace } from "shared/Namespace";
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
 import { ConfigAction } from "../actions/config";
@@ -72,6 +72,10 @@ const clusterReducer = (
           [action.payload.cluster]: {
             ...state.clusters[action.payload.cluster],
             namespaces: action.payload.namespaces,
+            currentNamespace: getCurrentNamespace(
+              state.clusters[action.payload.cluster].currentNamespace,
+              action.payload.namespaces,
+            ),
             error: undefined,
           },
         },
@@ -132,35 +136,13 @@ const clusterReducer = (
         };
       }
       break;
-    case getType(actions.auth.setAuthenticated):
-      // Only when a user is authenticated to we set the current namespace from
-      // the auth default namespace.
-      if (action.payload.authenticated) {
-        if (state.clusters[state.currentCluster].currentNamespace === definedNamespaces.all) {
-          return {
-            ...state,
-            clusters: {
-              ...state.clusters,
-              [state.currentCluster]: {
-                ...state.clusters[state.currentCluster],
-                currentNamespace: action.payload.defaultNamespace,
-              },
-            },
-          };
-        }
-      }
-      break;
     case getType(actions.config.receiveConfig):
       // Initialize the clusters when receiving the config.
       const config = action.payload as IConfig;
       const clusters: IClustersMap = {};
       config.clusters.forEach(cluster => {
-        const currentNamespace =
-          cluster === config.kubeappsCluster
-            ? Auth.defaultNamespaceFromToken(Auth.getAuthToken() || "")
-            : "default";
         clusters[cluster] = {
-          currentNamespace,
+          currentNamespace: "",
           namespaces: [],
         };
       });

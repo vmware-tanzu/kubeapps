@@ -20,12 +20,9 @@ import "./ContextSelector.css";
 
 function ContextSelector() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const {
-    clusters,
-    auth: { defaultNamespace },
-  } = useSelector((state: IStoreState) => state);
+  const { clusters } = useSelector((state: IStoreState) => state);
   const currentCluster = clusters.clusters[clusters.currentCluster];
-  const namespaceSelected = currentCluster.currentNamespace || defaultNamespace;
+  const namespaceSelected = currentCluster.currentNamespace;
   const error = currentCluster.error;
   const [open, setOpen] = useState(false);
   const [cluster, setStateCluster] = useState(clusters.currentCluster);
@@ -38,8 +35,7 @@ function ContextSelector() {
   useOutsideClick(setOpen, [ref], open);
 
   useEffect(() => {
-    dispatch(actions.namespace.fetchNamespaces(clusters.currentCluster));
-    if (namespaceSelected !== definedNamespaces.all) {
+    if (namespaceSelected && namespaceSelected !== definedNamespaces.all) {
       dispatch(actions.namespace.getNamespace(clusters.currentCluster, namespaceSelected));
     }
   }, [dispatch, namespaceSelected, clusters.currentCluster]);
