@@ -148,7 +148,7 @@ kind: ClusterRole
 metadata:
   name: "kubeapps:{{ .Release.Namespace }}:apprepositories-refresh"
   labels:{{ include "kubeapps.extraAppLabels" . | nindent 4 }}
-  app: {{ template "kubeapps.apprepository.fullname" . }}
+    app: {{ template "kubeapps.apprepository.fullname" . }}
 rules:
   - apiGroups:
       - kubeapps.com
