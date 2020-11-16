@@ -172,14 +172,6 @@ describe("getNamespace", () => {
 });
 
 describe("setNamespace", () => {
-  beforeEach(() => {
-    localStorage.setItem = jest.fn();
-    localStorage.getItem = jest.fn();
-  });
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it("dispatches namespace set", async () => {
     const expectedActions = [
       {

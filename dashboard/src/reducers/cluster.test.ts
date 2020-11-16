@@ -215,7 +215,6 @@ describe("clusterReducer", () => {
     });
   });
 
-  // let spyOnGetItem: jest.SpyInstance;
   context("when RECEIVE_NAMESPACES", () => {
     afterEach(() => {
       jest.restoreAllMocks();
