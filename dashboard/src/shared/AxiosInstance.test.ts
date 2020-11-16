@@ -149,8 +149,9 @@ describe("createAxiosInterceptorWithAuth", () => {
     try {
       await axios.get(testPath);
     } catch (error) {
-      expect(store.getActions()).toEqual(expectedActions);
+      expect(error.message).toBe("Boom!");
     }
+    expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
 
@@ -176,8 +177,9 @@ describe("createAxiosInterceptorWithAuth", () => {
     try {
       await axios.get(testPath);
     } catch (error) {
-      expect(store.getActions()).toEqual(expectedActions);
+      expect(error.message).toBe("not ajson paylod");
     }
+    expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
 
@@ -213,8 +215,11 @@ describe("createAxiosInterceptorWithAuth", () => {
     try {
       await axios.get(testPath);
     } catch (error) {
-      expect(store.getActions()).toEqual(expectedActions);
+      expect(error.message).toBe(
+        '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
+      );
     }
+    expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthToken).toHaveBeenCalled();
   });
 

@@ -1,8 +1,8 @@
 import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
+import { get } from "lodash";
 import * as url from "shared/url";
 import { IConfig } from "./Config";
-
 const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 
@@ -100,13 +100,8 @@ export class Auth {
   // requests, so that rather than returning a 401, a 403 is returned if
   // RBAC does not allow the anonymous user access.
   public static isAnonymous(response: AxiosResponse): boolean {
-    return (
-      (response?.data?.message && response.data.message.includes("system:anonymous")) ||
-      (response?.data &&
-        response.data &&
-        typeof response.data === "string" &&
-        response.data.includes("system:anonymous"))
-    );
+    const msg = get(response, "data.message") || get(response, "data");
+    return typeof msg === "string" && msg.includes("system:anonymous");
   }
 
   // isAuthenticatedWithCookie() does an anonymous GET request to determine if
