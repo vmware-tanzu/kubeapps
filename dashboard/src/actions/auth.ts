@@ -1,4 +1,5 @@
 import { ThunkAction } from "redux-thunk";
+import * as Namespace from "shared/Namespace";
 import { ActionType, createAction } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
@@ -62,6 +63,7 @@ export function logout(): ThunkAction<
       dispatch(setAuthenticated(false, false));
       dispatch(clearClusters());
     }
+    Namespace.unsetStoredNamespace();
   };
 }
 

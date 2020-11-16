@@ -2,7 +2,7 @@ import { ThunkAction } from "redux-thunk";
 
 import { ActionType, createAction } from "typesafe-actions";
 
-import Namespace from "../shared/Namespace";
+import Namespace, { setStoredNamespace } from "../shared/Namespace";
 import { IResource, IStoreState } from "../shared/types";
 
 export const requestNamespace = createAction("REQUEST_NAMESPACE", resolve => {
@@ -12,7 +12,7 @@ export const receiveNamespace = createAction("RECEIVE_NAMESPACE", resolve => {
   return (cluster: string, namespace: IResource) => resolve({ cluster, namespace });
 });
 
-export const setNamespace = createAction("SET_NAMESPACE", resolve => {
+export const setNamespaceState = createAction("SET_NAMESPACE", resolve => {
   return (cluster: string, namespace: string) => resolve({ cluster, namespace });
 });
 
@@ -33,7 +33,7 @@ export const clearClusters = createAction("CLEAR_CLUSTERS");
 const allActions = [
   requestNamespace,
   receiveNamespace,
-  setNamespace,
+  setNamespaceState,
   receiveNamespaces,
   errorNamespaces,
   clearClusters,
@@ -88,5 +88,15 @@ export function getNamespace(
       dispatch(errorNamespaces(cluster, e, "get"));
       return false;
     }
+  };
+}
+
+export function setNamespace(
+  cluster: string,
+  ns: string,
+): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+  return async dispatch => {
+    setStoredNamespace(cluster, ns);
+    dispatch(setNamespaceState(cluster, ns));
   };
 }

@@ -5,6 +5,7 @@ import { getType } from "typesafe-actions";
 import actions from ".";
 import { Auth } from "../shared/Auth";
 import Namespace from "../shared/Namespace";
+import * as NS from "../shared/Namespace";
 
 const defaultCluster = "default";
 const mockStore = configureMockStore([thunk]);
@@ -28,6 +29,7 @@ beforeEach(() => {
   Namespace.list = jest.fn(async () => {
     return { namespaces: [] };
   });
+  jest.spyOn(NS, "unsetStoredNamespace");
 
   store = mockStore({
     auth: {
@@ -144,5 +146,12 @@ describe("OIDC authentication", () => {
       expect(localStorage.removeItem).toBeCalled();
       expect(document.location.assign).toBeCalledWith("/log/out");
     });
+  });
+});
+
+describe("logout", () => {
+  it("unsets the stored namespace", async () => {
+    await store.dispatch(actions.auth.logout());
+    expect(NS.unsetStoredNamespace).toHaveBeenCalled();
   });
 });

@@ -12,6 +12,7 @@ import {
   receiveNamespaces,
   requestNamespace,
   setNamespace,
+  setNamespaceState,
 } from "./namespace";
 
 const mockStore = configureMockStore([thunk]);
@@ -34,7 +35,7 @@ interface ITestCase {
 const actionTestCases: ITestCase[] = [
   {
     name: "setNamespace",
-    action: setNamespace,
+    action: setNamespaceState,
     args: ["default", "jack"],
     payload: { cluster: "default", namespace: "jack" },
   },
@@ -167,5 +168,30 @@ describe("getNamespace", () => {
     const r = await store.dispatch(getNamespace("default-c", "default-ns"));
     expect(r).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("setNamespace", () => {
+  beforeEach(() => {
+    localStorage.setItem = jest.fn();
+    localStorage.getItem = jest.fn();
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("dispatches namespace set", async () => {
+    const expectedActions = [
+      {
+        type: getType(setNamespaceState),
+        payload: { cluster: "default-c", namespace: "default-ns" },
+      },
+    ];
+    await store.dispatch(setNamespace("default-c", "default-ns"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "kubeapps_namespace",
+      '{"default-c":"default-ns"}',
+    );
   });
 });

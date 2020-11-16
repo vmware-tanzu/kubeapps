@@ -34,7 +34,7 @@ describe("chartReducer", () => {
 
     expect(
       chartsReducer(undefined, {
-        type: getType(actions.namespace.setNamespace) as any,
+        type: getType(actions.namespace.setNamespaceState) as any,
       }),
     ).toEqual({ ...initialState });
   });
@@ -51,7 +51,7 @@ describe("chartReducer", () => {
           },
         },
         {
-          type: getType(actions.namespace.setNamespace) as any,
+          type: getType(actions.namespace.setNamespaceState) as any,
         },
       ),
     ).toEqual({ ...initialState });

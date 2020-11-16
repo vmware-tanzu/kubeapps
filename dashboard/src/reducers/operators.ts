@@ -209,7 +209,7 @@ const catalogReducer = (
         isOLMInstalled: state.isOLMInstalled,
         errors: { operator: {}, csv: {}, resource: {}, subscriptions: {} },
       };
-    case getType(actions.namespace.setNamespace):
+    case getType(actions.namespace.setNamespaceState):
       return { ...operatorsInitialState, isOLMInstalled: state.isOLMInstalled };
     default:
       return { ...state };

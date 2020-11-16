@@ -154,7 +154,7 @@ describe("clusterReducer", () => {
             },
           },
           {
-            type: getType(actions.namespace.setNamespace),
+            type: getType(actions.namespace.setNamespaceState),
             payload: { cluster: "initial-cluster", namespace: "default" },
           },
         ),
@@ -215,7 +215,12 @@ describe("clusterReducer", () => {
     });
   });
 
+  // let spyOnGetItem: jest.SpyInstance;
   context("when RECEIVE_NAMESPACES", () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     it("updates the namespace list and clears error", () => {
       expect(
         clusterReducer(
@@ -288,7 +293,6 @@ describe("clusterReducer", () => {
           },
         },
       } as IClustersState);
-      jest.restoreAllMocks();
     });
 
     it("defaults to the first namespace if the one in token is not available", () => {
@@ -322,7 +326,6 @@ describe("clusterReducer", () => {
           },
         },
       } as IClustersState);
-      jest.restoreAllMocks();
     });
 
     it("gets the existing current namespace", () => {
@@ -350,6 +353,74 @@ describe("clusterReducer", () => {
         clusters: {
           other: {
             currentNamespace: "three",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("gets the stored namespace", () => {
+      jest
+        .spyOn(window.localStorage.__proto__, "getItem")
+        .mockReturnValueOnce('{"other": "three"}');
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "three",
+            namespaces: ["one", "two", "three"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("ignores the stored namespace if it's not available", () => {
+      jest.spyOn(window.localStorage.__proto__, "getItem").mockReturnValueOnce('{"other": "four"}');
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              other: {
+                currentNamespace: "",
+                namespaces: [],
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.receiveNamespaces),
+            payload: {
+              cluster: "other",
+              namespaces: ["one", "two", "three"],
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          other: {
+            currentNamespace: "one",
             namespaces: ["one", "two", "three"],
             error: undefined,
           },
