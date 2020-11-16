@@ -181,6 +181,43 @@ describe("createAxiosInterceptorWithAuth", () => {
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
 
+  it("dispatches auth error and logout if 403 anonymous user and no auth proxy", async () => {
+    Auth.usingOIDCToken = jest.fn().mockReturnValue(false);
+    Auth.unsetAuthToken = jest.fn();
+    const expectedActions = [
+      {
+        type: "AUTHENTICATION_ERROR",
+        payload:
+          '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
+      },
+      {
+        type: "SET_AUTHENTICATED",
+        payload: {
+          authenticated: false,
+          oidc: false,
+        },
+      },
+      {
+        type: "CLEAR_CLUSTERS",
+      },
+    ];
+
+    moxios.stubRequest(testPath, {
+      response: {
+        message:
+          '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
+      },
+      status: 403,
+    });
+
+    try {
+      await axios.get(testPath);
+    } catch (error) {
+      expect(store.getActions()).toEqual(expectedActions);
+    }
+    expect(Auth.unsetAuthToken).toHaveBeenCalled();
+  });
+
   it("parses a forbidden response", async () => {
     moxios.stubRequest(testPath, {
       response: {

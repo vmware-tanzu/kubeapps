@@ -101,8 +101,11 @@ export class Auth {
   // RBAC does not allow the anonymous user access.
   public static isAnonymous(response: AxiosResponse): boolean {
     return (
-      (response?.data && response.data.includes("system:anonymous")) ||
-      (response?.data?.message && response.data.message.includes("system:anonymous"))
+      (response?.data?.message && response.data.message.includes("system:anonymous")) ||
+      (response?.data &&
+        response.data &&
+        typeof response.data === "string" &&
+        response.data.includes("system:anonymous"))
     );
   }
 
