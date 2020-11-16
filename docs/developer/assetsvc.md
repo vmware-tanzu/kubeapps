@@ -38,7 +38,7 @@ This builds the `assetsvc` Docker image.
 #### Option 1: Using Telepresence (recommended)
 
 ```bash
-telepresence --swap-deployment kubeapps-internal-assetsvc --namespace kubeapps --expose 8080:8080 --docker-run --rm -ti kubeapps/assetsvc /assetsvc --database-user=postgres --database-url=kubeapps-postgresql:5432 --database-type=postgresql --database-name=assets
+telepresence --swap-deployment kubeapps-internal-assetsvc --namespace kubeapps --expose 8080:8080 --docker-run --rm -ti kubeapps/assetsvc /assetsvc --database-user=postgres --database-url=kubeapps-postgresql:5432 --database-name=assets
 ```
 
 Note that the assetsvc should be rebuilt for new changes to take effect.
