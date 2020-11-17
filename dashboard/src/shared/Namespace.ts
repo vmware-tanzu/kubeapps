@@ -1,3 +1,4 @@
+import { get } from "lodash";
 import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { ForbiddenError, IResource, NotFoundError } from "./types";
@@ -54,16 +55,25 @@ export const definedNamespaces = {
 // The namespace information will contain a map[cluster]:namespace with the default namespaces
 const namespaceKey = "kubeapps_namespace";
 
-function getStoredNamespace(cluster: string) {
+function parseStoredNS() {
   const ns = localStorage.getItem(namespaceKey) || "{}";
-  return JSON.parse(ns)[cluster] || "";
+  let parsedNS = {};
+  try {
+    parsedNS = JSON.parse(ns);
+  } catch (e) {
+    // The stored value should be a json object, if not, ignore it
+  }
+  return parsedNS;
+}
+
+function getStoredNamespace(cluster: string) {
+  return get(parseStoredNS(), cluster, "");
 }
 
 export function setStoredNamespace(cluster: string, namespace: string) {
-  const ns: string = localStorage.getItem(namespaceKey) || "{}";
-  const nsObject = JSON.parse(ns);
-  nsObject[cluster] = namespace;
-  localStorage.setItem(namespaceKey, JSON.stringify(nsObject));
+  const ns = parseStoredNS();
+  ns[cluster] = namespace;
+  localStorage.setItem(namespaceKey, JSON.stringify(ns));
 }
 
 export function unsetStoredNamespace() {
