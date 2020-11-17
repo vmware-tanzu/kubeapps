@@ -323,11 +323,21 @@ func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Char
 		}
 	}
 	for j := range chartFiles {
-		log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
-		if err := f.fetchAndImportFiles(j.Name, r, j.ChartVersion); err != nil {
-			log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
+		name := j.Name //processChartName(j.Name)
+		log.WithFields(log.Fields{"name": name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
+		if err := f.fetchAndImportFiles(name, r, j.ChartVersion); err != nil {
+			log.WithFields(log.Fields{"name": name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
 		}
 	}
+}
+
+func getNameFromLastSlash(name string) string {
+	fixedName := name
+	if strings.Count(name, "/") > 0 {
+		fixedName = name[strings.LastIndex(name, "/")+1:]
+	}
+	log.WithFields(log.Fields{"oldName": name, "fixedName": fixedName}).Debug("getNameFromLastSlash")
+	return fixedName
 }
 
 func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal) error {
@@ -429,9 +439,15 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 
 	tarf := tar.NewReader(gzf)
 
-	readmeFileName := name + "/README.md"
-	valuesFileName := name + "/values.yaml"
-	schemaFileName := name + "/values.schema.json"
+	// get last part of the name
+	// ie., "foo/bar/wordpress" should return
+	// "wordpress" so that it can be retrieved
+	// in the tarball
+	fixedName := getNameFromLastSlash(name)
+
+	readmeFileName := fixedName + "/README.md"
+	valuesFileName := fixedName + "/values.yaml"
+	schemaFileName := fixedName + "/values.schema.json"
 	filenames := []string{valuesFileName, readmeFileName, schemaFileName}
 
 	files, err := extractFilesFromTarball(filenames, tarf)
