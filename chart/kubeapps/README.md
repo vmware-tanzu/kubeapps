@@ -255,7 +255,7 @@ Due to the last point, it's necessary to run a command before upgrading to Kubea
 > Note: The command below assumes that Kubeapps has been deployed in the kubeapps namespace using "kubeapps" as release name, if that's not the case, adapt the command accordingly.
 
 ```bash
-kubectl delete statefulset -n kubeapps kubeapps-postgresql-master kubeapps-postgresql-slave
+kubectl delete statefulset -n kubeapps kubeapps-postgresql-primary kubeapps-postgresql-read
 ```
 
 After that you should be able to upgrade Kubeapps as always and the database will be repopulated.
