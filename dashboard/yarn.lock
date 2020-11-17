@@ -1239,10 +1239,10 @@
   resolved "https://registry.yarnpkg.com/@clr/city/-/city-1.1.0.tgz#4a444cd12c626d66ffadab27e9d09bb3c8eca352"
   integrity sha512-R+C4uywmXoTD01LINOt3O0cBRviQdbAVNxdVvOyuO3+rM9bvFroF7UZY0R1ue/xvKXlqJrEkNKZQODeKjzaAhA==
 
-"@clr/core@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@clr/core/-/core-4.0.1.tgz#2e6427da39036c175e0feebff76eb78baa2b32db"
-  integrity sha512-daSyzatbmlYmLq1ZCDR6U/Ntdn315s57um3KxXezg5anxZsLt+8CRR6CglXHNKISsun/W4zmKzhc0IUJ/OEoCA==
+"@clr/core@^4.0.6":
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/@clr/core/-/core-4.0.6.tgz#67b4a02906e16176a7bf9ca93c101a3ff4716e83"
+  integrity sha512-pcwMJqw86rddXzX3W74NoY3Ljin7g8zLLVJVQiZYR+38elsM18jV8GAyApHsGVgViYGXRwu4ZKP/Q4mfkf0taw==
   dependencies:
     "@types/resize-observer-browser" "^0.1.3"
     lit-element "^2.3.1"
@@ -1257,15 +1257,15 @@
     css-vars-ponyfill "^2.3.2"
     normalize.css "^8.0.1"
 
-"@clr/icons@^4.0.4":
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/@clr/icons/-/icons-4.0.4.tgz#36e447116940eed708a915e4f9a1d8ce3390dc06"
-  integrity sha512-1snMF963n5CTWhE3FKbk/sLsGMGastLqzyRDT4YjNt4H/9b3sv+z9svkoptmUK8j+m52ByORcnKtf8711XDNHQ==
+"@clr/icons@^4.0.6":
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/@clr/icons/-/icons-4.0.6.tgz#081a3944a80ce4ac72b36c2c04f847f581220bac"
+  integrity sha512-0lWDIfqg5B8Gr0NKKv+QSZZ80AiAFHoXERg0XYwS7JQEti6Rl9d8+Y4mdEIVvq30aFdRtp5kB23BNU2XXMneHw==
 
-"@clr/react@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@clr/react/-/react-4.0.1.tgz#7c1921cb41c2a12151b16b41bc43fef6ffee9f0d"
-  integrity sha512-F3hcjTiYu2U9WT23wxfONo9w8I3Ms1zPIhpsPalvZEP1D9BblkgBk2vNtviW9VoRxzcqXxNTcdGH69Yze/FjwQ==
+"@clr/react@^4.0.6":
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/@clr/react/-/react-4.0.6.tgz#2541418f1e5ddeb092495b163a39cce0d404d3f0"
+  integrity sha512-ZRlvCBueYkWUxMfyws6bejm1PeWu+4lPrknoTxC0lNgImnzmHleZDxChep/R3RY41t/2naZ9msnIt5NvotFlXA==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
@@ -1273,10 +1273,10 @@
     "@clr/city" "^1.1.0"
     normalize.css "^8.0.1"
 
-"@clr/ui@^4.0.1":
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-4.0.4.tgz#dcdeb012abe99bd0873867ffb83a98d328b64dcf"
-  integrity sha512-9lCtH/PkUZaZDKj2PsIxOC7he4PXrbpJCsUC8gcQZm7sYNLRcHPBEaUAPHAA7SBf+6+v4UxogAZ/N9/lnPndDg==
+"@clr/ui@^4.0.6":
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-4.0.6.tgz#bb5497e4f9482537aed705edbf7fcb26df9beac9"
+  integrity sha512-M78sNbG+OOUwQ5wQib1Ry+/ZAmB1rfqVZ46amNt0FvLlxiKdZVdJJxJ+eRrBsR4pvWHwAV8RiTXwwJXxcuuG7A==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"

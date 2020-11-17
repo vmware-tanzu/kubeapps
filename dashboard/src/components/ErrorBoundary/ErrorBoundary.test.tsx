@@ -1,3 +1,4 @@
+import { CdsInlineButton } from "@clr/react/button";
 import Alert from "components/js/Alert";
 import { mount } from "enzyme";
 import * as React from "react";
@@ -5,6 +6,10 @@ import ErrorBoundary from "./ErrorBoundary";
 
 // tslint:disable:no-console
 const consoleOrig = console.error;
+
+const defaultProps = {
+  logout: jest.fn(),
+};
 
 describe("ErrorBoundary around a component", () => {
   const exampleError = new Error("Bang!");
@@ -26,7 +31,7 @@ describe("ErrorBoundary around a component", () => {
 
   it("captures any synchronous error thrown during a descendant render", () => {
     const wrapper = mount(
-      <ErrorBoundary>
+      <ErrorBoundary {...defaultProps}>
         <BadRenderor throwError={true} />
       </ErrorBoundary>,
     );
@@ -47,7 +52,7 @@ describe("ErrorBoundary around a component", () => {
 
   it("renders only the wrapped components if no error", () => {
     const wrapper = mount(
-      <ErrorBoundary>
+      <ErrorBoundary {...defaultProps}>
         <BadRenderor />
       </ErrorBoundary>,
     );
@@ -68,6 +73,19 @@ describe("ErrorBoundary around a component", () => {
 });
 
 it("renders an error if it exists as a property", () => {
-  const wrapper = mount(<ErrorBoundary error={new Error("boom!")} children={<></>} />);
+  const wrapper = mount(
+    <ErrorBoundary {...defaultProps} error={new Error("boom!")} children={<></>} />,
+  );
   expect(wrapper.find(Alert).text()).toContain("boom!");
+});
+
+it("logs out when clicking on the link", () => {
+  const logout = jest.fn();
+  const wrapper = mount(
+    <ErrorBoundary {...defaultProps} logout={logout} error={new Error("boom!")} children={<></>} />,
+  );
+  const link = wrapper.find(Alert).find(CdsInlineButton);
+  expect(link).toExist();
+  (link.prop("onClick") as any)();
+  expect(logout).toHaveBeenCalled();
 });

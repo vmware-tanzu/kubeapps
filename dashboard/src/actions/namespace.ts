@@ -48,6 +48,16 @@ export function fetchNamespaces(
     try {
       const namespaceList = await Namespace.list(cluster);
       const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
+      if (namespaceStrings.length === 0) {
+        dispatch(
+          errorNamespaces(
+            cluster,
+            new Error("The current account does not have access to any namespace"),
+            "list",
+          ),
+        );
+        return [];
+      }
       dispatch(receiveNamespaces(cluster, namespaceStrings));
       return namespaceStrings;
     } catch (e) {
