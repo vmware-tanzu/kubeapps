@@ -81,6 +81,7 @@ data:
       }
 
       location ~* /api/assetsvc {
+        rewrite ^ $request_uri; # pass the encoded url downstream as it
         rewrite /api/assetsvc/(.*) /assetsvc/$1 break;
         rewrite /api/assetsvc /assetsvc break;
 
