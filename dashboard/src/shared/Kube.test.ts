@@ -119,4 +119,17 @@ describe("App", () => {
       socket.close();
     });
   });
+
+  describe("canI", () => {
+    beforeEach(() => {
+      moxios.stubRequest(/.*/, {
+        response: { allowed: true },
+        status: 200,
+      });
+    });
+    it("should check permissions", async () => {
+      const allowed = await Kube.canI("cluster", "v1", "namespaces", "create", "");
+      expect(allowed).toBe(true);
+    });
+  });
 });

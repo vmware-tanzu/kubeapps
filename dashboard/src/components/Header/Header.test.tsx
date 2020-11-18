@@ -12,6 +12,7 @@ beforeEach(() => {
   actions.namespace = {
     ...actions.namespace,
     fetchNamespaces: jest.fn(),
+    canCreate: jest.fn(),
   };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -20,6 +21,7 @@ beforeEach(() => {
 afterEach(() => {
   actions.namespace = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
+  jest.resetAllMocks();
 });
 
 const defaultState = {
@@ -35,6 +37,12 @@ const defaultState = {
   auth: { authenticated: true },
   config: { appVersion: "v2.0.0" },
 };
+
+it("fetch namespaces and the ability to create them", () => {
+  mountWrapper(getStore(defaultState), <Header />);
+  expect(actions.namespace.fetchNamespaces).toHaveBeenCalled();
+  expect(actions.namespace.canCreate).toHaveBeenCalled();
+});
 
 it("renders the header links and titles", () => {
   const wrapper = mountWrapper(getStore(defaultState), <Header />);

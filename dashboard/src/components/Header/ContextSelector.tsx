@@ -23,6 +23,7 @@ function ContextSelector() {
   const { clusters } = useSelector((state: IStoreState) => state);
   const currentCluster = clusters.clusters[clusters.currentCluster];
   const namespaceSelected = currentCluster.currentNamespace;
+  const canCreateNS = currentCluster.canCreateNS;
   const error = currentCluster.error;
   const [open, setOpen] = useState(false);
   const [cluster, setStateCluster] = useState(clusters.currentCluster);
@@ -178,7 +179,14 @@ function ContextSelector() {
                   </CdsModalActions>
                 </form>
               </CdsModal>
-              <CdsButton status="inverse" size="sm" action="flat" onClick={openNewNSModal}>
+              <CdsButton
+                disabled={!canCreateNS}
+                status="inverse"
+                size="sm"
+                action="flat"
+                className="flat-btn"
+                onClick={openNewNSModal}
+              >
                 Create Namespace
               </CdsButton>
             </div>

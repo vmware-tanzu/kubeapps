@@ -32,6 +32,7 @@ export const initialState = {
       "default-cluster": {
         currentNamespace: "default",
         namespaces: ["default", "other"],
+        canCreateNS: true,
       },
     },
   },

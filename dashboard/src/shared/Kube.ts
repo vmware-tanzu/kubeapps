@@ -101,4 +101,20 @@ export class Kube {
   public static resourceAPIVersion(kind: ResourceKind) {
     return ResourceKindsWithAPIVersions[kind];
   }
+
+  public static async canI(
+    cluster: string,
+    group: string,
+    resource: string,
+    verb: string,
+    namespace: string,
+  ) {
+    const { data } = await axiosWithAuth.post<{ allowed: boolean }>(url.backend.canI(cluster), {
+      group,
+      resource,
+      verb,
+      namespace,
+    });
+    return data.allowed;
+  }
 }

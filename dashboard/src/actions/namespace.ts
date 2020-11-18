@@ -1,4 +1,5 @@
 import { ThunkAction } from "redux-thunk";
+import { Kube } from "shared/Kube";
 
 import { ActionType, createAction } from "typesafe-actions";
 
@@ -28,6 +29,10 @@ export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
   return (cluster: string, err: Error, op: string) => resolve({ cluster, err, op });
 });
 
+export const setAllowCreate = createAction("ALLOW_CREATE_NAMESPACE", resolve => {
+  return (cluster: string, allowed: boolean) => resolve({ cluster, allowed });
+});
+
 export const clearClusters = createAction("CLEAR_CLUSTERS");
 
 const allActions = [
@@ -38,6 +43,7 @@ const allActions = [
   errorNamespaces,
   clearClusters,
   postNamespace,
+  setAllowCreate,
 ];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
 
@@ -98,5 +104,18 @@ export function setNamespace(
   return async dispatch => {
     setStoredNamespace(cluster, ns);
     dispatch(setNamespaceState(cluster, ns));
+  };
+}
+
+export function canCreate(
+  cluster: string,
+): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+  return async dispatch => {
+    try {
+      const allowed = await Kube.canI(cluster, "", "namespaces", "create", "");
+      dispatch(setAllowCreate(cluster, allowed));
+    } catch (e) {
+      dispatch(errorNamespaces(cluster, e, "get"));
+    }
   };
 }
