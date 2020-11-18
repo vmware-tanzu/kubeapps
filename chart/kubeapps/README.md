@@ -252,12 +252,21 @@ After that you should be able to access the new version of Kubeapps. If the abov
 - Move dependency information from the *requirements.yaml* to the *Chart.yaml*
 - After running `helm dependency update`, a *Chart.lock* file is generated containing the same structure used in the previous *requirements.lock*
 - The different fields present in the *Chart.yaml* file has been ordered alphabetically in a homogeneous way for all the Bitnami Helm Charts
+- In the case of PostgreSQL subchart, apart from the same changes that are described in this section, there are also other major changes due to the master/slave nomenclature was replaced by primary/readReplica. [Here](https://github.com/bitnami/charts/pull/4385) you can find more information about the changes introduced.
 
 **Considerations when upgrading to this version**
 
 - If you want to upgrade to this version from a previous one installed with Helm 3, you shouldn't face any issues
 - If you want to upgrade to this version using Helm 2, this scenario is not supported as this version doesn't support Helm 2 anymore
 - If you installed the previous version with Helm 2 and wants to upgrade to this version with Helm 3, please refer to the [official Helm documentation](https://helm.sh/docs/topics/v2_v3_migration/#migration-use-cases) about migrating from Helm 2 to 3
+
+Apart from the previous considerations, due to the PostgreSQL major version bump, it's necessary to remove the existing statefulsets:
+
+> Note: The command below assumes that Kubeapps has been deployed in the kubeapps namespace using "kubeapps" as release name, if that's not the case, adapt the command accordingly.
+
+```console
+$ kubectl delete statefulset -n kubeapps kubeapps-postgresql-master kubeapps-postgresql-slave
+```
 
 **Useful links**
 
