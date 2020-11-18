@@ -137,7 +137,7 @@ func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 // getChart returns the chart from the given repo
 func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 	repo := decodeParam(params["repo"], w)
-	chartID := fmt.Sprintf("%s/%s", repo, params["chartName"]) // chartName remains unscaped
+	chartID := getChartID(repo, params["chartName"]) // chartName remains unscaped
 	namespace := decodeParam(params["namespace"], w)
 
 	chart, err := manager.getChart(namespace, chartID)
@@ -154,7 +154,7 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 // listChartVersions returns a list of chart versions for the given chart
 func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) {
 	repo := decodeParam(params["repo"], w)
-	chartID := fmt.Sprintf("%s/%s", repo, params["chartName"]) // chartName remains unscaped
+	chartID := getChartID(repo, params["chartName"]) // chartName remains unscaped
 	namespace := decodeParam(params["namespace"], w)
 
 	chart, err := manager.getChart(namespace, chartID)
@@ -171,7 +171,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 // getChartVersion returns the given chart version
 func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 	repo := decodeParam(params["repo"], w)
-	chartID := fmt.Sprintf("%s/%s", repo, params["chartName"]) // chartName remains unscaped
+	chartID := getChartID(repo, params["chartName"]) // chartName remains unscaped
 	namespace := decodeParam(params["namespace"], w)
 	version := decodeParam(params["version"], w)
 
@@ -189,7 +189,7 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 // getChartIcon returns the icon for a given chart
 func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 	repo := decodeParam(params["repo"], w)
-	chartID := fmt.Sprintf("%s/%s", repo, params["chartName"]) // chartName remains unscaped
+	chartID := getChartID(repo, params["chartName"]) // chartName remains unscaped
 	namespace := decodeParam(params["namespace"], w)
 
 	chart, err := manager.getChart(namespace, chartID)
@@ -217,7 +217,7 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Params) {
 	repo := decodeParam(params["repo"], w)
 	version := decodeParam(params["version"], w)
-	fileID := fmt.Sprintf("%s/%s-%s", repo, params["chartName"], version) // chartName remains unscaped
+	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains unscaped
 	namespace := decodeParam(params["namespace"], w)
 
 	files, err := manager.getChartFiles(namespace, fileID)
@@ -239,7 +239,7 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
 	repo := decodeParam(params["repo"], w)
 	version := decodeParam(params["version"], w)
-	fileID := fmt.Sprintf("%s/%s-%s", repo, params["chartName"], version) // chartName remains unscaped
+	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains unscaped
 	namespace := decodeParam(params["namespace"], w)
 
 	files, err := manager.getChartFiles(namespace, fileID)
@@ -256,7 +256,7 @@ func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Para
 func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Params) {
 	repo := decodeParam(params["repo"], w)
 	version := decodeParam(params["version"], w)
-	fileID := fmt.Sprintf("%s/%s-%s", repo, params["chartName"], version) // chartName remains unscaped
+	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains unscaped
 	namespace := decodeParam(params["namespace"], w)
 
 	files, err := manager.getChartFiles(namespace, fileID)
@@ -298,11 +298,11 @@ func newChartResponse(c *models.Chart) *apiResponse {
 		Type:       "chart",
 		ID:         c.ID,
 		Attributes: blankRawIconAndChartVersions(chartAttributes(namespace, *c)),
-		Links:      selfLink{chartPath + c.ID},
+		Links:      selfLink{chartPath + getEncodedChartID(c)},
 		Relationships: relMap{
 			"latestChartVersion": rel{
-				Data:  chartVersionAttributes(namespace, c.ID, latestCV),
-				Links: selfLink{chartPath + c.ID + "/versions/" + latestCV.Version},
+				Data:  chartVersionAttributes(namespace, c.Repo.Name, c.Name, latestCV),
+				Links: selfLink{chartPath + getEncodedChartID(c) + "/versions/" + latestCV.Version},
 			},
 		},
 	}
@@ -325,8 +325,8 @@ func newChartListResponse(charts []*models.Chart) apiListResponse {
 	return cl
 }
 
-func chartVersionAttributes(namespace, cid string, cv models.ChartVersion) models.ChartVersion {
-	versionPath := fmt.Sprintf("%s/ns/%s/assets/%s/versions/%s/", pathPrefix, namespace, cid, cv.Version)
+func chartVersionAttributes(namespace, chartRepoName, chartNameUnencoded string, cv models.ChartVersion) models.ChartVersion {
+	versionPath := fmt.Sprintf("%s/ns/%s/assets/%s/versions/%s/", pathPrefix, namespace, fmt.Sprintf("%s/%s", chartRepoName, url.PathEscape(chartNameUnencoded)), cv.Version)
 	cv.Readme = versionPath + "README.md"
 	cv.Values = versionPath + "values.yaml"
 	return cv
@@ -334,7 +334,7 @@ func chartVersionAttributes(namespace, cid string, cv models.ChartVersion) model
 
 func chartAttributes(namespace string, c models.Chart) models.Chart {
 	if c.RawIcon != nil {
-		c.Icon = pathPrefix + "/ns/" + namespace + "/assets/" + c.ID + "/logo"
+		c.Icon = pathPrefix + "/ns/" + namespace + "/assets/" + getEncodedChartIDString(c.Repo.Name, c.Name) + "/logo"
 	} else {
 		// If the icon wasn't processed, it is either not set or invalid
 		c.Icon = ""
@@ -344,11 +344,11 @@ func chartAttributes(namespace string, c models.Chart) models.Chart {
 
 func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiResponse {
 	namespace := c.Repo.Namespace
-	chartPath := fmt.Sprintf("%s/ns/%s/charts/%s", pathPrefix, namespace, c.ID)
+	chartPath := fmt.Sprintf("%s/ns/%s/charts/%s", pathPrefix, namespace, getEncodedChartID(c))
 	return &apiResponse{
 		Type:       "chartVersion",
 		ID:         fmt.Sprintf("%s-%s", c.ID, cv.Version),
-		Attributes: chartVersionAttributes(namespace, c.ID, cv),
+		Attributes: chartVersionAttributes(namespace, c.Repo.Name, c.Name, cv),
 		Links:      selfLink{chartPath + "/versions/" + cv.Version},
 		Relationships: relMap{
 			"chart": rel{
@@ -377,4 +377,15 @@ func decodeParam(param string, w http.ResponseWriter) string {
 		}
 	}
 	return decodedParam
+}
+
+func getEncodedChartID(c *models.Chart) string {
+	return getEncodedChartIDString(c.Repo.Name, c.Name)
+}
+
+func getEncodedChartIDString(chartRepoName, chartName string) string {
+	return getChartID(chartRepoName, url.PathEscape(chartName))
+}
+func getChartID(chartRepoName, chartName string) string {
+	return fmt.Sprintf("%s/%s", chartRepoName, chartName)
 }

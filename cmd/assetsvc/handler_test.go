@@ -84,13 +84,13 @@ func Test_chartAttributes(t *testing.T) {
 		chart models.Chart
 	}{
 		{"chart enconded has no icon", models.Chart{
-			ID: "stable/foo%2Fwordpress",
+			Repo: testRepo, Name: "foo%2Fwordpress", ID: "my-repo/foo%2Fwordpress",
 		}},
 		{"chart has no icon", models.Chart{
-			ID: "stable/wordpress",
+			Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress",
 		}},
 		{"chart has a icon", models.Chart{
-			ID: "repo/mychart", RawIcon: iconBytes(), IconContentType: "image/svg",
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", RawIcon: iconBytes(), IconContentType: "image/svg",
 		}},
 	}
 
@@ -102,8 +102,8 @@ func Test_chartAttributes(t *testing.T) {
 			if len(tt.chart.RawIcon) == 0 {
 				assert.Equal(t, len(c.Icon), 0, "icon url should be undefined")
 			} else {
-				assert.Equal(t, c.Icon, pathPrefix+"/ns/"+namespace+"/assets/"+tt.chart.ID+"/logo", "the icon url should be the same")
-				assert.Equal(t, c.IconContentType, tt.chart.IconContentType, "the icon content type should be the same")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/assets/"+getEncodedChartIDString(tt.chart.Repo.Name, tt.chart.Name)+"/logo", c.Icon, "the icon url should be the same")
+				assert.Equal(t, tt.chart.IconContentType, c.IconContentType, "the icon content type should be the same")
 			}
 		})
 	}
@@ -115,38 +115,39 @@ func Test_chartVersionAttributes(t *testing.T) {
 		chart models.Chart
 	}{
 		{"my-chart", models.Chart{
-			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
 		}},
 		{"foo%2Fmy-chart", models.Chart{
-			ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
+			Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
 		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cv := chartVersionAttributes(namespace, tt.chart.ID, tt.chart.ChartVersions[0])
+			cv := chartVersionAttributes(namespace, tt.chart.Repo.Name, tt.chart.Name, tt.chart.ChartVersions[0])
 			assert.Equal(t, cv.Version, tt.chart.ChartVersions[0].Version, "version string should be the same")
-			assert.Equal(t, cv.Readme, pathPrefix+"/ns/"+namespace+"/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/README.md", "README.md resource path should be the same")
-			assert.Equal(t, cv.Values, pathPrefix+"/ns/"+namespace+"/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/values.yaml", "values.yaml resource path should be the same")
+			assert.Equal(t, cv.Readme, pathPrefix+"/ns/"+namespace+"/assets/"+getEncodedChartIDString(testRepo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[0].Version+"/README.md", "README.md resource path should be the same")
+			assert.Equal(t, cv.Values, pathPrefix+"/ns/"+namespace+"/assets/"+getEncodedChartIDString(testRepo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[0].Version+"/values.yaml", "values.yaml resource path should be the same")
 		})
 	}
 }
 
 func Test_newChartResponse(t *testing.T) {
 	tests := []struct {
-		name  string
-		chart models.Chart
+		name      string
+		chartName string
+		chart     models.Chart
 	}{
-		{"chart has only one version", models.Chart{
-			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
+		{"chart has only one version", "my-chart", models.Chart{
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
 		},
-		{"chart encoded has only one version", models.Chart{
-			Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
+		{"chart encoded has only one version", "foo%2Fmy-chart", models.Chart{
+			Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
 		},
-		{"chart has many versions", models.Chart{
-			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.2"}, {Version: "0.1.0"}},
+		{"chart has many versions", "my-chart", models.Chart{
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.2"}, {Version: "0.1.0"}},
 		}},
-		{"raw_icon is never sent down the wire", models.Chart{
-			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
+		{"raw_icon is never sent down the wire", "my-chart", models.Chart{
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
 		}},
 	}
 	for _, tt := range tests {
@@ -155,7 +156,7 @@ func Test_newChartResponse(t *testing.T) {
 			assert.Equal(t, cResponse.Type, "chart", "response type is chart")
 			assert.Equal(t, cResponse.ID, tt.chart.ID, "chart ID should be the same")
 			assert.Equal(t, cResponse.Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
-			assert.Equal(t, cResponse.Links.(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, "self link should be the same")
+			assert.Equal(t, cResponse.Links.(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+getEncodedChartIDString(testRepo.Name, tt.chartName), "self link should be the same")
 			// We don't send the raw icon down the wire.
 			assert.Nil(t, cResponse.Attributes.(models.Chart).RawIcon)
 		})
@@ -170,23 +171,23 @@ func Test_newChartListResponse(t *testing.T) {
 	}{
 		{"no charts", []*models.Chart{}, []*models.Chart{}},
 		{"has one chart", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}, []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}},
 		{"has two charts", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}},
 		{"has two encoded charts", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/foo%2Fwordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, Name: "foo/my-chart", ID: "my-repo/foo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "foo/wordpress", ID: "my-repo/foo/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/foo%2Fwordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, Name: "foo/my-chart", ID: "my-repo/foo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "foo/wordpress", ID: "my-repo/foo/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}},
 	}
 
@@ -195,10 +196,10 @@ func Test_newChartListResponse(t *testing.T) {
 			clResponse := newChartListResponse(tt.input)
 			assert.Equal(t, len(clResponse), len(tt.result), "number of charts in response should be the same")
 			for i := range tt.result {
-				assert.Equal(t, clResponse[i].Type, "chart", "response type is chart")
-				assert.Equal(t, clResponse[i].ID, tt.result[i].ID, "chart ID should be the same")
-				assert.Equal(t, clResponse[i].Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, tt.result[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
-				assert.Equal(t, clResponse[i].Links.(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+tt.result[i].ID, "self link should be the same")
+				assert.Equal(t, "chart", clResponse[i].Type, "response type is chart")
+				assert.Equal(t, getEncodedChartIDString(tt.result[i].Repo.Name, tt.result[i].Name), getEncodedChartIDString(tt.result[i].Repo.Name, tt.result[i].Name), "chart ID should be the same")
+				assert.Equal(t, tt.result[i].ChartVersions[0].Version, clResponse[i].Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, "latestChartVersion should match version at index 0")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+getEncodedChartIDString(tt.result[i].Repo.Name, tt.result[i].Name), clResponse[i].Links.(selfLink).Self, "self link should be the same")
 			}
 		})
 	}
@@ -213,19 +214,19 @@ func Test_newChartVersionResponse(t *testing.T) {
 		{
 			name: "my-chart",
 			chart: models.Chart{
-				Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
+				Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
 			},
 		},
 		{
-			name: "foo%2Fmy-chart",
+			name: "foo/my-chart",
 			chart: models.Chart{
-				Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
+				Repo: testRepo, Name: "foo/my-chart", ID: "my-repo/foo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
 			},
 		},
 		{
 			name: "RawIcon is never sent down the wire",
 			chart: models.Chart{
-				Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
+				Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
 			},
 			expectedIcon: "/v1/ns/" + namespace + "/assets/my-repo/my-chart/logo",
 		},
@@ -235,10 +236,10 @@ func Test_newChartVersionResponse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			for i := range tt.chart.ChartVersions {
 				cvResponse := newChartVersionResponse(&tt.chart, tt.chart.ChartVersions[i])
-				assert.Equal(t, cvResponse.Type, "chartVersion", "response type is chartVersion")
-				assert.Equal(t, cvResponse.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "reponse id should have chart version suffix")
-				assert.Equal(t, cvResponse.Links.(interface{}).(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, "self link should be the same")
-				assert.Equal(t, cvResponse.Attributes.(models.ChartVersion).Version, tt.chart.ChartVersions[i].Version, "chart version in the response should be the same")
+				assert.Equal(t, "chartVersion", cvResponse.Type, "response type is chartVersion")
+				assert.Equal(t, tt.chart.Repo.Name+"/"+tt.chart.Name+"-"+tt.chart.ChartVersions[i].Version, cvResponse.ID, "reponse id should have chart version suffix")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+getEncodedChartIDString(tt.chart.Repo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[i].Version, cvResponse.Links.(interface{}).(selfLink).Self, "self link should be the same")
+				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvResponse.Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
 
 				// The chart should have had its icon url set and raw icon data removed.
 				expectedChart := tt.chart
@@ -275,10 +276,10 @@ func Test_newChartVersionListResponse(t *testing.T) {
 			cvListResponse := newChartVersionListResponse(&tt.chart)
 			assert.Equal(t, len(cvListResponse), len(tt.chart.ChartVersions), "number of chart versions in response should be the same")
 			for i := range tt.chart.ChartVersions {
-				assert.Equal(t, cvListResponse[i].Type, "chartVersion", "response type is chartVersion")
-				assert.Equal(t, cvListResponse[i].ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "reponse id should have chart version suffix")
-				assert.Equal(t, cvListResponse[i].Links.(interface{}).(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, "self link should be the same")
-				assert.Equal(t, cvListResponse[i].Attributes.(models.ChartVersion).Version, tt.chart.ChartVersions[i].Version, "chart version in the response should be the same")
+				assert.Equal(t, "chartVersion", cvListResponse[i].Type, "response type is chartVersion")
+				assert.Equal(t, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, cvListResponse[i].ID, "reponse id should have chart version suffix")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+getEncodedChartIDString(tt.chart.Repo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[i].Version, cvListResponse[i].Links.(interface{}).(selfLink).Self, "self link should be the same")
+				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvListResponse[i].Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
 			}
 		})
 	}
@@ -292,21 +293,21 @@ func Test_listCharts(t *testing.T) {
 	}{
 		{"no charts", []*models.Chart{}, meta{1}},
 		{"one chart", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}, meta{1}},
 		{"two charts", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, meta{1}},
 		{"two charts, one encoded", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, meta{1}},
 		{"four charts", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, Name: "drupal", ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, Name: "wordpress", ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{1}},
 	}
 
@@ -343,7 +344,7 @@ func Test_listCharts(t *testing.T) {
 			for i, resp := range data {
 				assert.Equal(t, resp.ID, tt.charts[i].ID, "chart id in the response should be the same")
 				assert.Equal(t, resp.Type, "chart", "response type is chart")
-				assert.Equal(t, resp.Links.(map[string]interface{})["self"], pathPrefix+"/ns/"+namespace+"/charts/"+tt.charts[i].ID, "self link should be the same")
+				assert.Equal(t, resp.Links.(map[string]interface{})["self"], pathPrefix+"/ns/"+namespace+"/charts/"+getEncodedChartIDString(tt.charts[i].Repo.Name, tt.charts[i].Name), "self link should be the same")
 				assert.Equal(t, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			}
 			assert.Equal(t, b.Meta, tt.meta, "response meta should be the same")
@@ -437,31 +438,31 @@ func Test_getChart(t *testing.T) {
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart"},
+			models.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart"},
+			models.Chart{Repo: testRepo, Name: "foo/my-chart", ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			models.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart encoded exists",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			models.Chart{Repo: testRepo, Name: "foo/my-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart has multiple versions",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
+			models.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
 			http.StatusOK,
 		},
 	}
@@ -485,7 +486,7 @@ func Test_getChart(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/charts/"+tt.chart.ID, nil)
+			req := httptest.NewRequest("GET", "/charts/"+getEncodedChartIDString(tt.chart.Repo.Name, tt.chart.Name), nil)
 			parts := strings.Split(tt.chart.ID, "/")
 			params := Params{
 				"namespace": namespace,
@@ -499,10 +500,10 @@ func Test_getChart(t *testing.T) {
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIResponse
 				json.NewDecoder(w.Body).Decode(&b)
-				assert.Equal(t, b.Data.ID, tt.chart.ID, "chart id in the response should be the same")
-				assert.Equal(t, b.Data.Type, "chart", "response type is chart")
-				assert.Equal(t, b.Data.Links.(map[string]interface{})["self"], pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, "self link should be the same")
-				assert.Equal(t, b.Data.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
+				assert.Equal(t, getEncodedChartIDString(tt.chart.Repo.Name, tt.chart.Name), b.Data.ID, "chart id in the response should be the same")
+				assert.Equal(t, "chart", b.Data.Type, "response type is chart")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, b.Data.Links.(map[string]interface{})["self"], "self link should be the same")
+				assert.Equal(t, tt.chart.ChartVersions[0].Version, b.Data.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], "latestChartVersion should match version at index 0")
 			}
 		})
 	}
