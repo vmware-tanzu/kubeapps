@@ -20,6 +20,9 @@ class ErrorBoundary extends React.Component<IErrorBoundaryProps, IErrorBoundaryS
   public state: IErrorBoundaryState = { error: null, errorInfo: null };
 
   public render() {
+    // Errors in the state are caused by uncaught errors in children components
+    // Errors in the props are related to namespace handling. In this case, show a logout
+    // button in case the user wants to login with a privileged account.
     const { error: stateError } = this.state;
     const { error: propsError } = this.props;
     const err = propsError || stateError;
@@ -27,7 +30,7 @@ class ErrorBoundary extends React.Component<IErrorBoundaryProps, IErrorBoundaryS
       return (
         <Alert theme="danger">
           An error occurred: {err.message}.{" "}
-          <CdsInlineButton onClick={this.props.logout}>Logout</CdsInlineButton>
+          {propsError && <CdsInlineButton onClick={this.props.logout}>Logout</CdsInlineButton>}
         </Alert>
       );
     }

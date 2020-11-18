@@ -52,7 +52,7 @@ export function fetchNamespaces(
         dispatch(
           errorNamespaces(
             cluster,
-            new Error("The current account does not have access to any namespace"),
+            new Error("The current account does not have access to any namespaces"),
             "list",
           ),
         );
