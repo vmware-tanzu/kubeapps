@@ -46,6 +46,10 @@ type appRepositoryListResponse struct {
 	AppRepositoryList v1alpha1.AppRepositoryList `json:"appRepository"`
 }
 
+type allowedResponse struct {
+	Allowed bool `json:"allowed"`
+}
+
 // JSONError returns an error code and a JSON response
 func JSONError(w http.ResponseWriter, err interface{}, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -291,6 +295,42 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 	}
 }
 
+// CanI returns a boolean if the user can do the given action
+func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		_, requestCluster := getNamespaceAndCluster(req)
+
+		clientset, err := kubeHandler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		defer req.Body.Close()
+		attributes, err := kube.ParseSelfSubjectAccessRequest(req.Body)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+		allowed, err := clientset.CanI(attributes)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		response := allowedResponse{
+			Allowed: allowed,
+		}
+		responseBody, err := json.Marshal(response)
+		if err != nil {
+			JSONError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(responseBody)
+	}
+}
+
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
 func SetupDefaultRoutes(r *mux.Router, clustersConfig kube.ClustersConfig) error {
 	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), clustersConfig)
@@ -306,6 +346,7 @@ func SetupDefaultRoutes(r *mux.Router, clustersConfig kube.ClustersConfig) error
 	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	r.Methods("GET").Path("/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
 
+	r.Methods("POST").Path("/clusters/{cluster}/can-i").Handler(http.HandlerFunc(CanI(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
