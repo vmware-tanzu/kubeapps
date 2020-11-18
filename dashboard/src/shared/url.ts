@@ -6,7 +6,9 @@ export const app = {
     new: (cluster: string, namespace: string, cv: IChartVersion, version: string) => {
       const repoNamespace = cv.relationships.chart.data.repo.namespace;
       const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
+      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${
+        cv.relationships.chart.data.repo.name
+      }/${encodeURIComponent(cv.relationships.chart.data.name)}/versions/${version}`;
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (cluster: string, namespace: string, releaseName: string) =>
@@ -21,7 +23,9 @@ export const app = {
   charts: {
     get: (cluster: string, namespace: string, chartName: string, repo: IRepo) => {
       const chartsSegment = namespace !== repo?.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${chartName}`;
+      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${encodeURIComponent(
+        chartName,
+      )}`;
     },
     version: (
       cluster: string,
