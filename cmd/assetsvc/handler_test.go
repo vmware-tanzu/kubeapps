@@ -83,6 +83,9 @@ func Test_chartAttributes(t *testing.T) {
 		name  string
 		chart models.Chart
 	}{
+		{"chart enconded has no icon", models.Chart{
+			ID: "stable/foo%2Fwordpress",
+		}},
 		{"chart has no icon", models.Chart{
 			ID: "stable/wordpress",
 		}},
@@ -114,6 +117,9 @@ func Test_chartVersionAttributes(t *testing.T) {
 		{"my-chart", models.Chart{
 			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
 		}},
+		{"foo%2Fmy-chart", models.Chart{
+			ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -132,6 +138,9 @@ func Test_newChartResponse(t *testing.T) {
 	}{
 		{"chart has only one version", models.Chart{
 			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
+		},
+		{"chart encoded has only one version", models.Chart{
+			Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
 		},
 		{"chart has many versions", models.Chart{
 			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.2"}, {Version: "0.1.0"}},
@@ -172,6 +181,13 @@ func Test_newChartListResponse(t *testing.T) {
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}},
+		{"has two encoded charts", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/foo%2Fwordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		}, []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/foo%2Fwordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		}},
 	}
 
 	for _, tt := range tests {
@@ -198,6 +214,12 @@ func Test_newChartVersionResponse(t *testing.T) {
 			name: "my-chart",
 			chart: models.Chart{
 				Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
+			},
+		},
+		{
+			name: "foo%2Fmy-chart",
+			chart: models.Chart{
+				Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
 			},
 		},
 		{
@@ -243,6 +265,9 @@ func Test_newChartVersionListResponse(t *testing.T) {
 		{"chart has many versions", models.Chart{
 			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}, {Version: "0.0.2"}},
 		}},
+		{"chart encoded has many versions", models.Chart{
+			Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}, {Version: "0.0.2"}},
+		}},
 	}
 
 	for _, tt := range tests {
@@ -271,6 +296,10 @@ func Test_listCharts(t *testing.T) {
 		}, meta{1}},
 		{"two charts", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		}, meta{1}},
+		{"two charts, one encoded", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, meta{1}},
 		{"four charts", []*models.Chart{
@@ -344,6 +373,12 @@ func Test_listRepoCharts(t *testing.T) {
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{1}},
+		{"repo has many encoded charts with pagination", "my-repo", "?size=2", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/foo%2Fdokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/foo%2Fdrupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		}, meta{1}},
 	}
 
 	for _, tt := range tests {
@@ -406,9 +441,21 @@ func Test_getChart(t *testing.T) {
 			http.StatusNotFound,
 		},
 		{
+			"chart encoded does not exist",
+			errors.New("return an error when checking if chart exists"),
+			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart"},
+			http.StatusNotFound,
+		},
+		{
 			"chart exists",
 			nil,
 			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			http.StatusOK,
+		},
+		{
+			"chart encoded exists",
+			nil,
+			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
@@ -425,7 +472,8 @@ func Test_getChart(t *testing.T) {
 			defer cleanup()
 
 			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
-				WithArgs(namespace, tt.chart.ID)
+				WithArgs(namespace, decodeParam(tt.chart.ID, nil))
+
 			if tt.err != nil {
 				mockQuery.WillReturnError(tt.err)
 			} else {
@@ -474,9 +522,21 @@ func Test_listChartVersions(t *testing.T) {
 			http.StatusNotFound,
 		},
 		{
+			"chart encoded does not exist",
+			errors.New("return an error when checking if chart exists"),
+			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart"},
+			http.StatusNotFound,
+		},
+		{
 			"chart exists",
 			nil,
 			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			http.StatusOK,
+		},
+		{
+			"chart encoded exists",
+			nil,
+			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
@@ -493,7 +553,7 @@ func Test_listChartVersions(t *testing.T) {
 			defer cleanup()
 
 			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
-				WithArgs(namespace, tt.chart.ID)
+				WithArgs(namespace, decodeParam(tt.chart.ID, nil))
 
 			if tt.err != nil {
 				mockQuery.WillReturnError(tt.err)
@@ -545,9 +605,21 @@ func Test_getChartVersion(t *testing.T) {
 			http.StatusNotFound,
 		},
 		{
+			"chart encoded does not exist",
+			errors.New("return an error when checking if chart exists"),
+			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			http.StatusNotFound,
+		},
+		{
 			"chart exists",
 			nil,
 			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			http.StatusOK,
+		},
+		{
+			"chart encoded exists",
+			nil,
+			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
@@ -564,7 +636,7 @@ func Test_getChartVersion(t *testing.T) {
 			defer cleanup()
 
 			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
-				WithArgs(namespace, tt.chart.ID)
+				WithArgs(namespace, decodeParam(tt.chart.ID, nil))
 
 			if tt.err != nil {
 				mockQuery.WillReturnError(tt.err)
@@ -614,15 +686,33 @@ func Test_getChartIcon(t *testing.T) {
 			http.StatusNotFound,
 		},
 		{
+			"chart encoded does not exist",
+			errors.New("return an error when checking if chart exists"),
+			models.Chart{ID: "my-repo/foo%2Fmy-chart"},
+			http.StatusNotFound,
+		},
+		{
 			"chart has icon",
 			nil,
 			models.Chart{ID: "my-repo/my-chart", RawIcon: iconBytes(), IconContentType: "image/png"},
 			http.StatusOK,
 		},
 		{
+			"chart encoded has icon",
+			nil,
+			models.Chart{ID: "my-repo/foo%2Fmy-chart", RawIcon: iconBytes(), IconContentType: "image/png"},
+			http.StatusOK,
+		},
+		{
 			"chart does not have a icon",
 			nil,
 			models.Chart{ID: "my-repo/my-chart"},
+			http.StatusNotFound,
+		},
+		{
+			"chart encoded does not have a icon",
+			nil,
+			models.Chart{ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
@@ -639,7 +729,7 @@ func Test_getChartIcon(t *testing.T) {
 			defer cleanup()
 
 			mockQuery := mock.ExpectQuery("SELECT info FROM charts").
-				WithArgs(namespace, tt.chart.ID)
+				WithArgs(namespace, decodeParam(tt.chart.ID, nil))
 
 			if tt.err != nil {
 				mockQuery.WillReturnError(tt.err)
@@ -664,14 +754,16 @@ func Test_getChartIcon(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
-				assert.Equal(t, w.Body.Bytes(), tt.chart.RawIcon, "raw icon data should match")
-				assert.Equal(t, w.Header().Get("Content-Type"), tt.chart.IconContentType, "icon content type should match")
+				assert.Equal(t, tt.chart.RawIcon, w.Body.Bytes(), "raw icon data should match")
+				assert.Equal(t, tt.chart.IconContentType, w.Header().Get("Content-Type"), "icon content type should match")
 			}
 		})
 	}
 }
 
 func Test_getChartVersionReadme(t *testing.T) {
+	chartName := "my-chart"
+	chartEncodedName := "foo%2Fmy-chart"
 	tests := []struct {
 		name     string
 		version  string
@@ -683,21 +775,35 @@ func Test_getChartVersionReadme(t *testing.T) {
 			"chart does not exist",
 			"0.1.0",
 			errors.New("return an error when checking if chart exists"),
-			models.ChartFiles{ID: "my-repo/my-chart"},
+			models.ChartFiles{ID: "my-repo/" + chartName},
+			http.StatusNotFound,
+		},
+		{
+			"chart encoded does not exist",
+			"0.1.0",
+			errors.New("return an error when checking if chart exists"),
+			models.ChartFiles{ID: "my-repo/" + chartEncodedName},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			"1.2.3",
 			nil,
-			models.ChartFiles{ID: "my-repo/my-chart", Readme: testChartReadme},
+			models.ChartFiles{ID: "my-repo/" + chartName, Readme: testChartReadme},
+			http.StatusOK,
+		},
+		{
+			"chart encoded exists",
+			"1.2.3",
+			nil,
+			models.ChartFiles{ID: "my-repo/" + chartEncodedName, Readme: testChartReadme},
 			http.StatusOK,
 		},
 		{
 			"chart does not have a readme",
 			"1.1.1",
 			nil,
-			models.ChartFiles{ID: "my-repo/my-chart"},
+			models.ChartFiles{ID: "my-repo/" + chartName},
 			http.StatusNotFound,
 		},
 	}
@@ -708,7 +814,7 @@ func Test_getChartVersionReadme(t *testing.T) {
 			defer cleanup()
 
 			mockQuery := mock.ExpectQuery("SELECT info FROM files").
-				WithArgs(namespace, tt.files.ID+"-0.1.0")
+				WithArgs(namespace, decodeParam(tt.files.ID, nil)+"-0.1.0")
 
 			if tt.err != nil {
 				mockQuery.WillReturnError(tt.err)
@@ -734,7 +840,7 @@ func Test_getChartVersionReadme(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
-				assert.Equal(t, string(w.Body.Bytes()), tt.files.Readme, "content of the readme should match")
+				assert.Equal(t, tt.files.Readme, string(w.Body.Bytes()), "content of the readme should match")
 			}
 		})
 	}
@@ -756,10 +862,24 @@ func Test_getChartVersionValues(t *testing.T) {
 			http.StatusNotFound,
 		},
 		{
+			"chart encoded does not exist",
+			"0.1.0",
+			errors.New("return an error when checking if chart exists"),
+			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart"},
+			http.StatusNotFound,
+		},
+		{
 			"chart exists",
 			"3.2.1",
 			nil,
 			models.ChartFiles{ID: "my-repo/my-chart", Values: testChartValues},
+			http.StatusOK,
+		},
+		{
+			"chart encoded exists",
+			"3.2.1",
+			nil,
+			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart", Values: testChartValues},
 			http.StatusOK,
 		},
 		{
@@ -777,7 +897,7 @@ func Test_getChartVersionValues(t *testing.T) {
 			defer cleanup()
 
 			mockQuery := mock.ExpectQuery("SELECT info FROM files").
-				WithArgs(namespace, tt.files.ID+"-"+tt.version)
+				WithArgs(namespace, decodeParam(tt.files.ID, nil)+"-"+tt.version)
 
 			if tt.err != nil {
 				mockQuery.WillReturnError(tt.err)
@@ -803,7 +923,7 @@ func Test_getChartVersionValues(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
-				assert.Equal(t, string(w.Body.Bytes()), tt.files.Values, "content of values.yaml should match")
+				assert.Equal(t, tt.files.Values, string(w.Body.Bytes()), "content of values.yaml should match")
 			}
 		})
 	}
@@ -825,10 +945,24 @@ func Test_getChartVersionSchema(t *testing.T) {
 			http.StatusNotFound,
 		},
 		{
+			"chart encoded not exist",
+			"0.1.0",
+			errors.New("return an error when checking if chart exists"),
+			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart"},
+			http.StatusNotFound,
+		},
+		{
 			"chart exists",
 			"3.2.1",
 			nil,
 			models.ChartFiles{ID: "my-repo/my-chart", Schema: testChartSchema},
+			http.StatusOK,
+		},
+		{
+			"chart encoded exists",
+			"3.2.1",
+			nil,
+			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart", Schema: testChartSchema},
 			http.StatusOK,
 		},
 		{
@@ -846,7 +980,7 @@ func Test_getChartVersionSchema(t *testing.T) {
 			defer cleanup()
 
 			mockQuery := mock.ExpectQuery("SELECT info FROM files").
-				WithArgs(namespace, tt.files.ID+"-"+tt.version)
+				WithArgs(namespace, decodeParam(tt.files.ID, nil)+"-"+tt.version)
 
 			if tt.err != nil {
 				mockQuery.WillReturnError(tt.err)
@@ -872,7 +1006,7 @@ func Test_getChartVersionSchema(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code, "http status code should match")
 			if tt.wantCode == http.StatusOK {
-				assert.Equal(t, string(w.Body.Bytes()), tt.files.Schema, "content of values.schema.json should match")
+				assert.Equal(t, tt.files.Schema, string(w.Body.Bytes()), "content of values.schema.json should match")
 			}
 		})
 	}

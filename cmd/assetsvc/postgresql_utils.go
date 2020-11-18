@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/kubeapps/common/datastore"
@@ -92,8 +93,9 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	return charts, 1, nil
 }
 
-func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
+func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (models.Chart, error) {
 	var chart models.ChartIconString
+	chartID, _ := url.PathUnescape(chartIDUnescaped)
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		return models.Chart{}, err
@@ -121,7 +123,8 @@ func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart
 	}, nil
 }
 
-func (m *postgresAssetManager) getChartVersion(namespace, chartID, version string) (models.Chart, error) {
+func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, version string) (models.Chart, error) {
+	chartID, _ := url.PathUnescape(chartIDUnescaped)
 	var chart models.Chart
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
@@ -141,7 +144,8 @@ func (m *postgresAssetManager) getChartVersion(namespace, chartID, version strin
 	return chart, nil
 }
 
-func (m *postgresAssetManager) getChartFiles(namespace, filesID string) (models.ChartFiles, error) {
+func (m *postgresAssetManager) getChartFiles(namespace, filesIDUnescaped string) (models.ChartFiles, error) {
+	filesID, _ := url.PathUnescape(filesIDUnescaped)
 	var chartFiles models.ChartFiles
 	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
@@ -159,9 +163,10 @@ func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, 
 	return models.ChartVersion{}, false
 }
 
-func (m *postgresAssetManager) getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error) {
+func (m *postgresAssetManager) getChartsWithFilters(namespace, chartNameUnescaped, version, appVersion string) ([]*models.Chart, error) {
+	chartName, _ := url.PathUnescape(chartNameUnescaped)
 	clauses := []string{"info ->> 'name' = $1"}
-	queryParams := []interface{}{name, namespace}
+	queryParams := []interface{}{chartName, namespace}
 	if namespace != dbutils.AllNamespaces {
 		queryParams = append(queryParams, m.GetKubeappsNamespace())
 		clauses = append(clauses, "(repo_namespace = $2 OR repo_namespace = $3)")
