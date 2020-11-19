@@ -20,7 +20,7 @@ export default function CatalogItems({ charts, csvs, cluster, namespace }: ICata
           item: {
             id: c.id,
             name: c.attributes.name,
-            icon: c.attributes.icon ? `api/assetsvc/${c.attributes.icon}` : undefined,
+            icon: c.attributes.icon ? `api/assetsvc${c.attributes.icon}` : undefined,
             version: c.relationships.latestChartVersion.data.app_version,
             description: c.attributes.description,
             repo: c.attributes.repo,
