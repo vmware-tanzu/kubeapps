@@ -73,6 +73,7 @@ const clusterReducer = (
             ...state.clusters[action.payload.cluster],
             namespaces: action.payload.namespaces,
             currentNamespace: getCurrentNamespace(
+              action.payload.cluster,
               state.clusters[action.payload.cluster].currentNamespace,
               action.payload.namespaces,
             ),
@@ -80,7 +81,7 @@ const clusterReducer = (
           },
         },
       };
-    case getType(actions.namespace.setNamespace):
+    case getType(actions.namespace.setNamespaceState):
       return {
         ...state,
         currentCluster: action.payload.cluster,
@@ -94,10 +95,6 @@ const clusterReducer = (
         },
       };
     case getType(actions.namespace.errorNamespaces):
-      // Ignore error listing namespaces since those are expected
-      if (action.payload.op === "list") {
-        return state;
-      }
       return {
         ...state,
         clusters: {

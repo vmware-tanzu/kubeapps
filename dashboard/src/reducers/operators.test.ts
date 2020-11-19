@@ -34,7 +34,7 @@ describe("catalogReducer", () => {
       requestOperators: getType(actions.operators.requestOperators),
       receiveOperators: getType(actions.operators.receiveOperators),
       errorOperators: getType(actions.operators.errorOperators),
-      setNamespace: getType(actions.namespace.setNamespace),
+      setNamespaceState: getType(actions.namespace.setNamespaceState),
       requestOperator: getType(actions.operators.requestOperator),
       receiveOperator: getType(actions.operators.receiveOperator),
       requestCSVs: getType(actions.operators.requestCSVs),
@@ -165,7 +165,7 @@ describe("catalogReducer", () => {
 
         expect(
           operatorReducer(undefined, {
-            type: actionTypes.setNamespace as any,
+            type: actionTypes.setNamespaceState as any,
           }),
         ).toEqual({ ...initialState });
       });
@@ -187,7 +187,7 @@ describe("catalogReducer", () => {
               operators: [{} as any],
             },
             {
-              type: actionTypes.setNamespace as any,
+              type: actionTypes.setNamespaceState as any,
             },
           ),
         ).toEqual({ ...initialState });

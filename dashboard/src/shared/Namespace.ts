@@ -1,8 +1,8 @@
-import { axiosWithAuth } from "./AxiosInstance";
-import * as url from "./url";
-
+import { get } from "lodash";
 import { Auth } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { ForbiddenError, IResource, NotFoundError } from "./types";
+import * as url from "./url";
 
 export default class Namespace {
   public static async list(cluster: string) {
@@ -52,10 +52,43 @@ export const definedNamespaces = {
   all: "_all",
 };
 
-export function getCurrentNamespace(currentNS: string, availableNS: string[]) {
+// The namespace information will contain a map[cluster]:namespace with the default namespaces
+const namespaceKey = "kubeapps_namespace";
+
+function parseStoredNS() {
+  const ns = localStorage.getItem(namespaceKey) || "{}";
+  let parsedNS = {};
+  try {
+    parsedNS = JSON.parse(ns);
+  } catch (e) {
+    // The stored value should be a json object, if not, ignore it
+  }
+  return parsedNS;
+}
+
+function getStoredNamespace(cluster: string) {
+  return get(parseStoredNS(), cluster, "");
+}
+
+export function setStoredNamespace(cluster: string, namespace: string) {
+  const ns = parseStoredNS();
+  ns[cluster] = namespace;
+  localStorage.setItem(namespaceKey, JSON.stringify(ns));
+}
+
+export function unsetStoredNamespace() {
+  localStorage.removeItem(namespaceKey);
+}
+
+export function getCurrentNamespace(cluster: string, currentNS: string, availableNS: string[]) {
   if (currentNS) {
     // If a namespace has been already selected, use it
     return currentNS;
+  }
+  // Try to get the latest namespace used
+  const storedNS = getStoredNamespace(cluster);
+  if (storedNS && availableNS.includes(storedNS)) {
+    return storedNS;
   }
   // Try to get a namespace from the auth token
   const tokenNS = Auth.defaultNamespaceFromToken(Auth.getAuthToken() || "");
