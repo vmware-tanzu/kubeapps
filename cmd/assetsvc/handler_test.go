@@ -1064,6 +1064,7 @@ func Test_findLatestChart(t *testing.T) {
 		charts := []*models.Chart{
 			{Name: "foo", ID: "stable/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
 			{Name: "foo", ID: "bitnami/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
+			{Name: "bitnami/foo", ID: "other-repo/bitnami/foo", Repo: &models.Repo{Name: "other-repo"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
 		}
 		reqVersion := "1.0.0"
 		reqAppVersion := "0.1.0"
@@ -1101,7 +1102,7 @@ func Test_findLatestChart(t *testing.T) {
 		}
 		data := *b.Data
 
-		assert.Equal(t, len(data), 1, "it should return a single chart")
+		assert.Equal(t, len(data), 2, "it should return a single chart per repo, in this case, 2 charts")
 		if data[0].ID != charts[0].ID {
 			t.Errorf("Expecting %v, received %v", charts[0], data[0].ID)
 		}
