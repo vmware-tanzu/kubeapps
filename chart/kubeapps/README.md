@@ -242,7 +242,7 @@ kubectl apply -f <repo name>.yaml
 
 After that you should be able to access the new version of Kubeapps. If the above doesn't work for you or you run into any other issues please open an [issue](https://github.com/kubeapps/kubeapps/issues/new).
 
-### Upgrading to 5.0.0
+### Upgrading to 2.0.1 (Chart 5.0.0)
 
 [On November 13, 2020, Helm 2 support was formally finished](https://github.com/helm/charts#status-of-the-project), this major version is the result of the required changes applied to the Helm Chart to be able to incorporate the different features added in Helm 3 and to be consistent with the Helm project itself regarding the Helm 2 EOL.
 
@@ -256,11 +256,9 @@ After that you should be able to access the new version of Kubeapps. If the abov
 
 **Considerations when upgrading to this version**
 
-- If you want to upgrade to this version from a previous one installed with Helm 3, you shouldn't face any issues
 - If you want to upgrade to this version using Helm 2, this scenario is not supported as this version doesn't support Helm 2 anymore
 - If you installed the previous version with Helm 2 and wants to upgrade to this version with Helm 3, please refer to the [official Helm documentation](https://helm.sh/docs/topics/v2_v3_migration/#migration-use-cases) about migrating from Helm 2 to 3
-
-Apart from the previous considerations, due to the PostgreSQL major version bump, it's necessary to remove the existing statefulsets:
+- If you want to upgrade to this version from a previous one installed with Helm 3, you shouldn't face any issues related to the new `apiVersion`. Due to the PostgreSQL major version bump, it's necessary to remove the existing statefulsets:
 
 > Note: The command below assumes that Kubeapps has been deployed in the kubeapps namespace using "kubeapps" as release name, if that's not the case, adapt the command accordingly.
 
