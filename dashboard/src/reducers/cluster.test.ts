@@ -85,25 +85,6 @@ describe("clusterReducer", () => {
 
   context("when ERROR_NAMESPACE", () => {
     const err = new Error("Bang!");
-
-    it("when listing leaves namespaces intact and but ignores the error", () => {
-      expect(
-        clusterReducer(initialTestState, {
-          type: getType(actions.namespace.errorNamespaces),
-          payload: { cluster: "initial-cluster", err, op: "list" },
-        }),
-      ).toEqual({
-        ...initialTestState,
-        clusters: {
-          ...initialTestState.clusters,
-          "initial-cluster": {
-            ...initialTestState.clusters["initial-cluster"],
-            error: undefined,
-          },
-        },
-      } as IClustersState);
-    });
-
     it("leaves namespaces intact and sets the error", () => {
       expect(
         clusterReducer(initialTestState, {
