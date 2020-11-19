@@ -255,10 +255,6 @@ type appRepositoryRequest struct {
 	AppRepository appRepositoryRequestDetails `json:"appRepository"`
 }
 
-type selfSubjectAccessRequest struct {
-	AppRepository appRepositoryRequestDetails `json:"appRepository"`
-}
-
 type appRepositoryRequestDetails struct {
 	Name               string                 `json:"name"`
 	RepoURL            string                 `json:"repoURL"`
