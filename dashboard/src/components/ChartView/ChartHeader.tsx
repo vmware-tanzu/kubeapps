@@ -26,6 +26,11 @@ export default function ChartHeader({
   deployButton,
   selectedVersion,
 }: IChartHeaderProps) {
+  let icon = placeholder;
+  if (chartAttrs?.icon) {
+    icon = chartAttrs.icon.startsWith("/") ? chartAttrs.icon : "/".concat(chartAttrs.icon);
+    icon = "api/assetsvc".concat(icon);
+  }
   return (
     <PageHeader
       title={
@@ -34,7 +39,7 @@ export default function ChartHeader({
           : `${chartAttrs.repo.name}/${chartAttrs.name}`
       }
       titleSize="md"
-      icon={chartAttrs.icon ? `api/assetsvc${chartAttrs.icon}` : placeholder}
+      icon={icon}
       helm={true}
       version={
         <>
