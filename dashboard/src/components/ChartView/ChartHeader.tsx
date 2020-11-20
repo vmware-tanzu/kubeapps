@@ -34,7 +34,7 @@ export default function ChartHeader({
           : `${chartAttrs.repo.name}/${chartAttrs.name}`
       }
       titleSize="md"
-      icon={chartAttrs.icon ? `api/assetsvc/${chartAttrs.icon}` : placeholder}
+      icon={chartAttrs.icon ? `api/assetsvc${chartAttrs.icon}` : placeholder}
       helm={true}
       version={
         <>
