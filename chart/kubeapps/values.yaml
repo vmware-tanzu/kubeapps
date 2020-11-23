@@ -612,6 +612,43 @@ authProxy:
       cpu: 25m
       memory: 32Mi
 
+# Pinniped Proxy configuration for converting user OIDC tokens to k8s client authorization certs.
+# ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md
+pinnipedProxy:
+  ## Set to true if Kubeapps should configure pinniped-proxy on the frontend.
+  #
+  enabled: false
+
+  ## Bitnami OAuth2 Proxy image
+  ## ref: https://hub.docker.com/r/bitnami/oauth2-proxy/tags/
+  ##
+  image:
+    registry: docker.io
+    repository: kubeapps/pinniped-proxy
+    tag: latest
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
+  pinnipedNamespace: pinniped-concierge
+  authenticatorType: webhook
+  authenticatorName: local-user-authenticator
+
+  ## OAuth2 Proxy containers' resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    ## Default values set based on usage data from running Kubeapps instances
+    ## ref: https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+    ##
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+
 ## Feature flags
 ## These are used to switch on in development features or new features which are ready to be released.
 featureFlags:

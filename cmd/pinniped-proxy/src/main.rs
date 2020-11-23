@@ -2,7 +2,7 @@ use std::convert::Infallible;
 use std::future::Future;
 use std::pin::Pin;
 
-use anyhow::{Context, Error, Result};
+use anyhow::{Error, Result};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, Response, Server, StatusCode};
 use log::{error, info};
@@ -20,22 +20,12 @@ async fn main() -> Result<()> {
     pretty_env_logger::init();
     let opt = cli::Options::from_args();
 
-    let out_addr = opt.api_server_url;
-    
-    // Use an Option for the cert authority data as it may or may not be present.
-    let cert = match opt.cacert_data.len() {
-        0 => None,
-        _ => Some(https::decode_cert(opt.cacert_data).context("Failed to decode the provided cacert-data.")?),
-    };
-
     let pinniped_executable = opt.pinniped_executable;
 
     let make_svc = make_service_fn(|_conn| {
         // These strings are shadowed inside the closure so that they are captured for reference
         // (without being moved/owned) within the async closure below (as generators/async blocks are stackless).
-        let out_addr = out_addr.clone();
         let pinniped_executable = pinniped_executable.clone();
-        let cert = cert.clone();
         async {
             // Normally the return type of the service_fn closure isn't required, but I was unable to find
             // a way to handle errors separately without explicitly defining the return type. If you
@@ -44,15 +34,37 @@ async fn main() -> Result<()> {
             // Ok::<_, Infallible>(service_fn(move |mut req| {                    
             Ok::<_, Infallible>(service_fn(move |mut req| -> Pin<Box<dyn Future<Output = std::result::Result<Response<Body>, hyper::Error>> + std::marker::Send >> {                    
                 info!("processing request to {}", *req.uri());
+                let headers = req.headers().clone();
+                let k8s_api_server_url = match https::get_api_server_url(&headers) {
+                    Ok(u) => u,
+                    Err(e) => return handle_error(e),
+                };
+
+                let k8s_api_cert_auth_data = match https::get_api_server_cert_auth_data(&headers) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        error!("{:#?}", e);
+                        return handle_error(e);
+                    },
+                };
+                let k8s_api_cert = match https::cert_for_cert_data(k8s_api_cert_auth_data.clone()) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        error!("{:#?}", e);
+                        return handle_error(e);
+                    },
+                };
+
                 // We need to construct the TlsConnector for each request so that we can set
                 // the client cert. It'd be nice if we could do the construction once and just
                 // clone to add the client cert?
                 let mut tls_builder = &mut TlsConnector::builder();
-                tls_builder = https::include_cert_authority(tls_builder, cert.clone());
+                tls_builder = tls_builder.add_root_certificate(k8s_api_cert.clone());
                 
-                tls_builder = match https::include_client_cert(tls_builder, req.headers().clone(), pinniped_executable.clone()) {
+                // The cert data is converted to a &str without checking the error since we already
+                // know from above that it's a valid cert.
+                tls_builder = match https::include_client_cert(tls_builder, req.headers().clone(), k8s_api_server_url, std::str::from_utf8(&k8s_api_cert_auth_data).unwrap(), pinniped_executable.clone()) {
                     Ok(b) => b,
-                    // Try returning an http error response here. May then mean we don't need verbosity above?
                     Err(e) => {
                         error!("{:#?}", e);
                         return handle_error(e);
@@ -70,12 +82,22 @@ async fn main() -> Result<()> {
                 // Currently using client cert auth above (see include_client_cert), rather than an exchange
                 // of header credentials (which will be needed if we switch to pinniped supervisor with OIDC),
                 // so we use a no-op for the proxy_request credential_exchange fn.
-                req = proxy::proxy_request(req, out_addr.clone(), |req| req);
+                req = proxy::proxy_request(req, k8s_api_server_url, |r| r);
 
                 info!("forwarding request with exchanged credentials to {}", *req.uri());
                 
                 let client = Client::builder().build::<_, Body>(conn);
-                Box::pin(client.request(req))
+                Box::pin(async move {
+                    match client.request(req).await {
+                        Ok(r) => Ok(r),
+                        Err(e) => {
+                            error!("{:#?}", e);
+                            let mut response = Response::new(Body::from(e.to_string()));
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            Ok(response)
+                        },
+                    }
+                })
             }))
         }
     });
@@ -83,7 +105,7 @@ async fn main() -> Result<()> {
     let addr = ([127, 0, 0, 1], opt.port).into();
     let server = Server::bind(&addr).serve(make_svc);
 
-    info!("Listening on http://{} and proxying to k8s api server at {}", addr, out_addr);
+    info!("Listening on http://{}", addr);
 
     if let Err(e) = server.await {
         error!("server error: {}", e);

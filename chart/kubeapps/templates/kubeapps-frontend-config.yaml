@@ -54,6 +54,23 @@ data:
         return 200 "healthy\n";
       }
 
+  {{- if .Values.pinnipedProxy.enabled }}
+      # We route via pinnipedProxy to exchange credentials for client certificates.
+      {{- range .Values.clusters }}
+      location ~* /api/clusters/{{ .name }} {
+        rewrite /api/clusters/{{ .name }}/(.*) /$1 break;
+        rewrite /api/clusters/{{ .name }} / break;
+        proxy_set_header PINNIPED_K8S_API_SERVER_URL {{ .apiServiceURL }};
+        proxy_set_header PINNIPED_K8S_API_SERVER_CA_CERT {{ .certificateAuthorityData }};
+        # MANUAL token setting until pinniped concierge supports oidc:
+        proxy_set_header Authorization "Bearer pinny-the-seal:password123";
+
+        proxy_pass http://localhost:3333;
+        include "./server_blocks/k8s-api-proxy.conf";
+      }
+      {{- end }}
+  {{- else }}
+      # We route directly through to the clusters with existing credentials.
       # Ensure each cluster can be reached (should only be
       # used with an auth-proxy where k8s credentials never leave
       # the cluster). See clusters option.
@@ -68,6 +85,7 @@ data:
         include "./server_blocks/k8s-api-proxy.conf";
       }
       {{- end }}
+  {{- end }}
 
       # TODO: The following location is left for backwards compat but will no longer
       # be needed once clients are sending the cluster name.

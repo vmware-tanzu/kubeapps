@@ -4,7 +4,7 @@ use hyper::Request;
 /// potentially exchanging credentials on the request for HTTP-header based
 /// authorization (not used for client cert authentication).
 pub fn proxy_request(mut req: Request<hyper::Body>,
-                    k8s_api_server_url: String,
+                    k8s_api_server_url: &str,
                     credential_exchange: fn(Request<hyper::Body>) -> Request<hyper::Body>) -> Request<hyper::Body> {
     // TODO: Move to separate re-write URL.
     let uri_string = format!(
@@ -41,7 +41,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        req = proxy_request(req, String::from(API_URL), exchange_credentials_dummy);
+        req = proxy_request(req, API_URL, exchange_credentials_dummy);
 
         assert_eq!(req.uri().authority().unwrap(), "127.0.0.1:12345");
         assert_eq!(req.uri().scheme().unwrap(), "https");
@@ -54,7 +54,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        req = proxy_request(req, String::from(API_URL), exchange_credentials_dummy);
+        req = proxy_request(req, API_URL, exchange_credentials_dummy);
 
         assert_eq!(req.uri().authority().unwrap(), "127.0.0.1:12345");
         assert_eq!(req.uri().scheme().unwrap(), "https");

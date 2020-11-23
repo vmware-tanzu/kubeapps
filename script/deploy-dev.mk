@@ -40,6 +40,12 @@ deploy-dev: deploy-dependencies
 	@echo "  kubeapps-user-ldap@example.org:password"
 	@echo "to authenticate with the corresponding permissions."
 
+deploy-dev-pinniped: deploy-dependencies
+	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
+		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-pinniped-proxy.yaml
+
 reset-dev:
 	helm -n kubeapps delete kubeapps || true
 	helm -n dex delete dex || true

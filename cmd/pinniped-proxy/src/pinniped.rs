@@ -9,8 +9,8 @@ use serde::Deserialize;
 use serde_json;
 
 /// pinniped_exchange accepts an authorization header and returns a client cert authentication Identity.
-pub fn pinniped_exchange_for_identity(authorization: &str, pinniped_executable: String) -> Result<Identity> {
-    let exchange_output = call_pinniped_exchange(authorization, &pinniped_executable)?;
+pub fn pinniped_exchange_for_identity(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str, pinniped_executable: String) -> Result<Identity> {
+    let exchange_output = call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data, &pinniped_executable)?;
     if !exchange_output.status.success() {
         let err_msg: String;
         match exchange_output.status.code() {
@@ -28,11 +28,10 @@ pub fn pinniped_exchange_for_identity(authorization: &str, pinniped_executable: 
 /// TODO: use the API - using the client like this is an inherent security risk
 /// as the client may choos to cache credentials on the assumption that the
 /// client is used by a single user.
-fn call_pinniped_exchange(authorization: &str, pinniped_executable: &str) -> Result<Output> {
+fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str, pinniped_executable: &str) -> Result<Output> {
     let mut filtered_env: HashMap<String, String> = env::vars().filter(
         |&(ref k, _)|
-        k == "PINNIPED_NAMESPACE" || k == "PINNIPED_K8S_API_ENDPOINT" || k == "PINNIPED_AUTHENTICATOR_TYPE" || k == "PINNIPED_AUTHENTICATOR_NAME" ||
-        k == "PINNIPED_CA_BUNDLE" || k == "HOME"
+        k == "PINNIPED_NAMESPACE" || k == "PINNIPED_AUTHENTICATOR_TYPE" || k == "PINNIPED_AUTHENTICATOR_NAME" || k == "HOME"
     ).collect();
 
     let auth = match authorization.to_string().strip_prefix("Bearer ") {
@@ -41,7 +40,9 @@ fn call_pinniped_exchange(authorization: &str, pinniped_executable: &str) -> Res
     };
 
     filtered_env.insert("PINNIPED_TOKEN".to_string(), auth);
-    
+    filtered_env.insert("PINNIPED_CA_BUNDLE".to_string(), k8s_api_ca_cert_data.to_string());
+    filtered_env.insert("PINNIPED_K8S_API_ENDPOINT".to_string(), k8s_api_server_url.to_string());
+
     Command::new(pinniped_executable)
         .arg("exchange-credential")
         .env_clear()
