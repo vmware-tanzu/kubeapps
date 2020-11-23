@@ -82,8 +82,8 @@ data:
 
       location ~* /api/assetsvc {
         rewrite ^ $request_uri; # pass the encoded url downstream as it
-        rewrite /api/assetsvc/(.*) /assetsvc/$1 break;
-        rewrite /api/assetsvc /assetsvc break;
+        rewrite /api/assetsvc/(.*) /assetsvc/$1?$args break;
+        rewrite /api/assetsvc /assetsvc?$args break;
 
         {{- if .Values.frontend.proxypassAccessTokenAsBearer }}
         # Google Kubernetes Engine requires the access_token as the Bearer when talking to the k8s api server.

@@ -122,17 +122,23 @@ func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, sho
 
 // listCharts returns a list of charts based on filter params
 func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
-	pageNumber, pageSize := getPageNumberAndSize(req)
-	namespace := decodeParam(params["namespace"], w)
-	repo := decodeParam(params["repo"], w)
+	// Workaround since mux is not routing to the correct functions for some routes
+	if params["chartName"] != "" || req.FormValue("version") != "" || req.FormValue("appversion") != "" {
+		log.Error("Forwarding: %s", req.RequestURI)
+		listChartsWithFilters(w, req, params)
+	} else {
+		pageNumber, pageSize := getPageNumberAndSize(req)
+		namespace := decodeParam(params["namespace"], w)
+		repo := decodeParam(params["repo"], w)
 
-	cl, meta, err := getPaginatedChartList(namespace, repo, pageNumber, pageSize, showDuplicates(req))
-	if err != nil {
-		log.WithError(err).Error("could not fetch charts")
-		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
-		return
+		cl, meta, err := getPaginatedChartList(namespace, repo, pageNumber, pageSize, showDuplicates(req))
+		if err != nil {
+			log.WithError(err).Error("could not fetch charts")
+			response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
+			return
+		}
+		response.NewDataResponseWithMeta(cl, meta).Write(w)
 	}
-	response.NewDataResponseWithMeta(cl, meta).Write(w)
 }
 
 // getChart returns the chart from the given repo
@@ -272,13 +278,19 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 
 // listChartsWithFilters returns the list of repos that contains the given chart and the latest version found
 func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Params) {
+	// Workaround for retrieving chart name from both "chartName" or "name" params
+	chartName := params["chartName"]
+	if chartName == "" {
+		chartName = req.FormValue("name")
+	}
+
 	namespace := decodeParam(params["namespace"], w)
 
-	charts, err := manager.getChartsWithFilters(namespace, params["chartName"], req.FormValue("version"), req.FormValue("appversion"))
+	charts, err := manager.getChartsWithFilters(namespace, chartName, req.FormValue("version"), req.FormValue("appversion"))
 	if err != nil {
 		log.WithError(err).Errorf(
 			"could not find charts with the given name %s, version %s and appversion %s",
-			params["chartName"], req.FormValue("version"), req.FormValue("appversion"),
+			chartName, req.FormValue("version"), req.FormValue("appversion"),
 		)
 		// continue to return empty list
 	}
