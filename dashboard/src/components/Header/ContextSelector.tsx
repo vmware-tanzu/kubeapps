@@ -181,6 +181,7 @@ function ContextSelector() {
               </CdsModal>
               <CdsButton
                 disabled={!canCreateNS}
+                title={canCreateNS ? "" : "missing permissions"}
                 status="inverse"
                 size="sm"
                 action="flat"
