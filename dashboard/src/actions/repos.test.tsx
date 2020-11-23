@@ -493,32 +493,15 @@ describe("installRepo", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("uses kubeapps own namespace if namespace is _all", async () => {
-    await store.dispatch(
-      repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", "", []),
-    );
-
-    expect(AppRepository.create).toHaveBeenCalledWith(
-      "default",
-      "my-repo",
-      "kubeapps-namespace",
-      "http://foo.bar",
-      "",
-      "",
-      {},
-      [],
-    );
-  });
-
   it("includes registry secrets if given", async () => {
     await store.dispatch(
-      repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", "", ["repo-1"]),
+      repoActions.installRepo("my-repo", "foo", "http://foo.bar", "", "", "", ["repo-1"]),
     );
 
     expect(AppRepository.create).toHaveBeenCalledWith(
       "default",
       "my-repo",
-      "kubeapps-namespace",
+      "foo",
       "http://foo.bar",
       "",
       "",

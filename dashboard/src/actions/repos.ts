@@ -3,7 +3,6 @@ import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
 import Chart from "../shared/Chart";
-import { definedNamespaces } from "../shared/Namespace";
 import Secret from "../shared/Secret";
 import {
   IAppRepository,
@@ -232,17 +231,6 @@ function parsePodTemplate(syncJobPodTemplate: string) {
   return syncJobPodTemplateObj;
 }
 
-function getTargetNS(getState: () => IStoreState, namespace: string) {
-  let target = namespace;
-  const {
-    config: { kubeappsNamespace },
-  } = getState();
-  if (namespace === definedNamespaces.all) {
-    target = kubeappsNamespace;
-  }
-  return target;
-}
-
 export const installRepo = (
   name: string,
   namespace: string,
@@ -258,12 +246,11 @@ export const installRepo = (
     } = getState();
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
-      const ns = getTargetNS(getState, namespace);
       dispatch(addRepo());
       const data = await AppRepository.create(
         currentCluster,
         name,
-        ns,
+        namespace,
         repoURL,
         authHeader,
         customCA,
@@ -295,12 +282,11 @@ export const updateRepo = (
     } = getState();
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
-      const ns = getTargetNS(getState, namespace);
       dispatch(requestRepoUpdate());
       const data = await AppRepository.update(
         currentCluster,
         name,
-        ns,
+        namespace,
         repoURL,
         authHeader,
         customCA,

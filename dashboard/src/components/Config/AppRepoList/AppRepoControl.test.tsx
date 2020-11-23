@@ -38,7 +38,8 @@ const defaultProps = {
   } as IAppRepository,
 };
 
-it("deletes the repo and refreshes list", async () => {
+// TODO: Re-enable when the repo view is refactored
+xit("deletes the repo and refreshes list", async () => {
   const deleteRepo = jest.fn();
   const fetchRepos = jest.fn();
   actions.repos = {
@@ -67,7 +68,8 @@ it("deletes the repo and refreshes list", async () => {
   expect(fetchRepos).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.kubeappsNamespace);
 });
 
-it("deletes the repo and refreshes list (in other namespace)", async () => {
+// TODO: Re-enable when the repo view is refactored
+xit("deletes the repo and refreshes list (in other namespace)", async () => {
   const deleteRepo = jest.fn();
   const fetchRepos = jest.fn();
   actions.repos = {

@@ -3,7 +3,6 @@ import * as React from "react";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import RepoListContainer from ".";
-import { definedNamespaces } from "../../shared/Namespace";
 
 const mockStore = configureMockStore([thunk]);
 const currentNamespace = "current-namespace";
@@ -21,7 +20,6 @@ const defaultState = {
     },
   },
   repos: {},
-  displayReposPerNamespaceMsg: false,
 };
 
 describe("RepoListContainer props", () => {
@@ -35,27 +33,6 @@ describe("RepoListContainer props", () => {
 
     expect(component).toHaveProp({
       namespace: currentNamespace,
-      displayReposPerNamespaceMsg: true,
-    });
-  });
-
-  it("passes _all through as a normal namespace to be handled by the component", () => {
-    const store = mockStore({
-      ...defaultState,
-      clusters: {
-        ...defaultState.clusters,
-        clusters: {
-          default: { currentNamespace: definedNamespaces.all },
-        },
-      },
-    });
-    const wrapper = shallow(<RepoListContainer store={store} />);
-
-    const component = wrapper.find("AppRepoList");
-
-    expect(component).toHaveProp({
-      namespace: definedNamespaces.all,
-      displayReposPerNamespaceMsg: false,
     });
   });
 });

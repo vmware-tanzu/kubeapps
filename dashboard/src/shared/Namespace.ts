@@ -48,9 +48,9 @@ export default class Namespace {
 }
 
 // Set of namespaces used accross the applications as default and "all ns" placeholders
-export const definedNamespaces = {
-  all: "_all",
-};
+// export const definedNamespaces = {
+//   all: "_all",
+// };
 
 // The namespace information will contain a map[cluster]:namespace with the default namespaces
 const namespaceKey = "kubeapps_namespace";

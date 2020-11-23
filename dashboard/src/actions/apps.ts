@@ -5,7 +5,6 @@ import { ActionType, createAction } from "typesafe-actions";
 import { App } from "../shared/App";
 import Chart from "../shared/Chart";
 import { hapi } from "../shared/hapi/release";
-import { definedNamespaces } from "../shared/Namespace";
 import { validate } from "../shared/schema";
 import {
   CreateError,
@@ -216,9 +215,6 @@ export function fetchApps(
   ns?: string,
 ): ThunkAction<Promise<IAppOverview[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    if (ns && ns === definedNamespaces.all) {
-      ns = undefined;
-    }
     dispatch(listApps());
     try {
       const apps = await App.listApps(cluster, ns);
@@ -264,12 +260,6 @@ export function deployChart(
   return async (dispatch, getState) => {
     dispatch(requestDeployApp());
     try {
-      // You can not deploy applications unless the namespace is set
-      if (targetNamespace === definedNamespaces.all) {
-        throw new UnprocessableEntity(
-          "Namespace not selected. Please select a namespace using the selector in the top right corner.",
-        );
-      }
       if (values && schema) {
         const validation = validate(values, schema);
         if (!validation.valid) {

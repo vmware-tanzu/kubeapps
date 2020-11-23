@@ -1,9 +1,9 @@
+import AppList from "components/AppList/AppList";
 import LoadingWrapper from "components/LoadingWrapper";
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
 import NotFound from "../../components/NotFound";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
-import AppListContainer from "../../containers/AppListContainer";
 import AppNewContainer from "../../containers/AppNewContainer";
 import AppUpgradeContainer from "../../containers/AppUpgradeContainer";
 import AppViewContainer from "../../containers/AppViewContainer";
@@ -23,7 +23,7 @@ import { app } from "../../shared/url";
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 const privateRoutes = {
-  "/c/:cluster/ns/:namespace/apps": AppListContainer,
+  "/c/:cluster/ns/:namespace/apps": AppList,
   "/c/:cluster/ns/:namespace/apps/:releaseName": AppViewContainer,
   "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgradeContainer,
   "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": AppNewContainer,

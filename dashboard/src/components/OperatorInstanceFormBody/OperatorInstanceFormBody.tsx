@@ -5,7 +5,6 @@ import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
 import * as yaml from "js-yaml";
 import React, { useEffect, useState } from "react";
-import { definedNamespaces } from "../../shared/Namespace";
 import { IResource } from "../../shared/types";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import AdvancedDeploymentForm from "../DeploymentFormBody/AdvancedDeploymentForm";
@@ -73,9 +72,6 @@ function DeploymentFormBody({
     handleDeploy(resource);
   };
 
-  if (namespace === definedNamespaces.all) {
-    return <Alert theme="danger">Select a namespace before creating a new instance.</Alert>;
-  }
   if (isFetching) {
     return <LoadingWrapper loaded={false} />;
   }

@@ -10,7 +10,6 @@ import { push } from "connected-react-router";
 import { flatten, get, intersection, uniq, without } from "lodash";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { definedNamespaces } from "shared/Namespace";
 import { app } from "shared/url";
 import { IPackageManifest, IPackageManifestStatus, IStoreState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
@@ -224,16 +223,7 @@ export default function OperatorList({
                 An error occurred while fetching Operators: {error.message}
               </Alert>
             )}
-            {namespace === definedNamespaces.all ? (
-              <div className="empty-catalog">
-                <CdsIcon shape="file-group" />
-                <h4>A valid namespace should be selected.</h4>
-                <p>
-                  In order to show the catalog of Operators available, a namespace must be selected
-                  using the selector in the top right corner.
-                </p>
-              </div>
-            ) : operators.length === 0 ? (
+            {operators.length === 0 ? (
               <div className="section-not-found">
                 <div>
                   <CdsIcon shape="bundle" size="64" />

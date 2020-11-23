@@ -22,5 +22,6 @@ export default {
   repos,
   shared: {
     pushSearchFilter: (f: string) => push(`?q=${f}`),
+    pushAllNSFilter: (y: boolean) => push(`?allns=${y ? "yes" : "no"}`),
   },
 };

@@ -3,21 +3,15 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import actions from "../../actions";
 import AppRepoList from "../../components/Config/AppRepoList";
-import { definedNamespaces } from "../../shared/Namespace";
 import { IAppRepositoryKey, IStoreState } from "../../shared/types";
 
 function mapStateToProps({ config, clusters: { currentCluster, clusters }, repos }: IStoreState) {
   const repoNamespace = clusters[currentCluster].currentNamespace;
-  let displayReposPerNamespaceMsg = false;
-  if (repoNamespace !== definedNamespaces.all) {
-    displayReposPerNamespaceMsg = true;
-  }
   return {
     errors: repos.errors,
     namespace: repoNamespace,
     cluster: currentCluster,
     repos: repos.repos,
-    displayReposPerNamespaceMsg,
     isFetching: repos.isFetching,
     repoSecrets: repos.repoSecrets,
     validating: repos.validating,
