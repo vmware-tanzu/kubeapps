@@ -23,10 +23,10 @@ test("Upgrades an application", async () => {
   const latestChartVersion = chartVersionValue.split(" ")[0];
 
   await expect(page).toSelect('select[name="chart-versions"]', "7.3.2");
-  await expect(page).toMatchElement("#replicaCount-1");
+  await expect(page).toMatchElement("input[type='number']");
 
   // Increase the number of replicas
-  await page.focus("#replicaCount-1");
+  await page.focus("input[type='number']");
   await page.keyboard.press("Backspace");
   await page.keyboard.type("2");
 
@@ -40,14 +40,14 @@ test("Upgrades an application", async () => {
 
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
-  await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
+  await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
   await expect(page).toSelect(
     'select[name="chart-versions"]',
     latestChartVersion
   );
 
-  await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
+  await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
