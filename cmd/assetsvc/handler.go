@@ -123,8 +123,7 @@ func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, sho
 // listCharts returns a list of charts based on filter params
 func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 	// Workaround since mux is not routing to the correct functions for some routes
-	if params["chartName"] != "" || req.FormValue("version") != "" || req.FormValue("appversion") != "" {
-		log.Error("Forwarding: %s", req.RequestURI)
+	if params["chartName"] != "" || req.FormValue("name") != "" || req.FormValue("version") != "" || req.FormValue("appversion") != "" {
 		listChartsWithFilters(w, req, params)
 	} else {
 		pageNumber, pageSize := getPageNumberAndSize(req)

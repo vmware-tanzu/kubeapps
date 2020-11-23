@@ -278,10 +278,10 @@ describe("fetchRepos", () => {
     AppRepository.list = jest
       .fn()
       .mockImplementationOnce(() => {
-        return { items: [{ name: "repo1" }] };
+        return { items: [{ name: "repo1", metadata: { uid: "uid1" } }] };
       })
       .mockImplementationOnce(() => {
-        return { items: [{ name: "repo2" }] };
+        return { items: [{ name: "repo2", metadata: { uid: "uid2" } }] };
       });
 
     const expectedActions = [
@@ -299,7 +299,10 @@ describe("fetchRepos", () => {
       },
       {
         type: getType(repoActions.receiveRepos),
-        payload: [{ name: "repo1" }, { name: "repo2" }],
+        payload: [
+          { name: "repo1", metadata: { uid: "uid1" } },
+          { name: "repo2", metadata: { uid: "uid2" } },
+        ],
       },
     ];
 
