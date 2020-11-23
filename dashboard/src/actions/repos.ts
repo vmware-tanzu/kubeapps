@@ -208,12 +208,21 @@ export const fetchRepos = (
       if (!otherNamespaces || !otherNamespaces.length) {
         dispatch(receiveRepos(repos.items));
       } else {
-        let totalRepos = repos.items;
+        const totalRepos = repos.items;
         await Promise.all(
           otherNamespaces.map(async otherNamespace => {
             dispatch(requestRepos(otherNamespace));
             const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
-            totalRepos = totalRepos.concat(otherRepos.items);
+            // Avoid addiing duplicated repos
+            otherRepos.items.forEach((otherRepo: IAppRepository) => {
+              if (
+                totalRepos.findIndex(
+                  (r: IAppRepository) => r.metadata.uid === otherRepo.metadata.uid,
+                ) === -1
+              ) {
+                totalRepos.push(otherRepo);
+              }
+            });
           }),
         );
         dispatch(receiveRepos(totalRepos));
