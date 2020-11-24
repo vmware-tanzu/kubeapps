@@ -494,7 +494,7 @@ func Test_newManager(t *testing.T) {
 
 }
 
-func Test_processChartName(t *testing.T) {
+func Test_getNameFromLastSlash(t *testing.T) {
 	tests := []struct {
 		name                   string
 		originalChartName      string
