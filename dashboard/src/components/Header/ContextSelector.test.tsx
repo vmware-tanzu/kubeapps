@@ -76,10 +76,12 @@ it("shows the current cluster", () => {
       foo: {
         currentNamespace: "default",
         namespaces: ["default"],
+        canCreateNS: true,
       },
       bar: {
         currentNamespace: "default",
         namespaces: ["default"],
+        canCreateNS: true,
       },
     },
   } as IClustersState;
@@ -109,7 +111,7 @@ it("submits the form to create a new namespace", () => {
   actions.namespace.createNamespace = createNamespace;
   const wrapper = mountWrapper(defaultStore, <ContextSelector />);
 
-  const modalButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Create Namespace");
+  const modalButton = wrapper.find(".flat-btn");
   act(() => {
     (modalButton.prop("onClick") as any)();
   });
@@ -136,4 +138,19 @@ it("shows an error creating a namespace", () => {
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
   // The error will be within the modal
   expect(wrapper.find(CdsModal).find(Alert)).toExist();
+});
+
+it("disables the create button if not allowed", () => {
+  const clusters = {
+    currentCluster: "foo",
+    clusters: {
+      foo: {
+        currentNamespace: "default",
+        namespaces: ["default"],
+        canCreateNS: false,
+      },
+    },
+  } as IClustersState;
+  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  expect(wrapper.find(".flat-btn")).toBeDisabled();
 });

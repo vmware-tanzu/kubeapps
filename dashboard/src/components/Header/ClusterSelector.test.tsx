@@ -12,10 +12,12 @@ const defaultProps = {
       default: {
         currentNamespace: "default",
         namespaces: ["default", "other"],
+        canCreateNS: true,
       },
       other: {
         currentNamespace: "default",
         namespaces: ["default", "other"],
+        canCreateNS: true,
       },
     },
   },

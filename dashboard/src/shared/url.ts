@@ -87,6 +87,7 @@ export const backend = {
     update: (cluster: string, namespace: string, name: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/${name}`,
   },
+  canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
 };
 
 export const kubeops = {

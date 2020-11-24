@@ -220,3 +220,11 @@
     width: 100%;
   }
 }
+
+// TODO(andresmgot): workaround to avoid styling issue for a disabled CdsButton
+// https://github.com/vmware/clarity/issues/5315
+// We need to apply the target classes manually
+.flat-btn[disabled] {
+  --cds-token-color-neutral-200: transparent;
+  --border-width: 0rem;
+}
