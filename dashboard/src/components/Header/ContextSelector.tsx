@@ -181,7 +181,11 @@ function ContextSelector() {
               </CdsModal>
               <CdsButton
                 disabled={!canCreateNS}
-                title={canCreateNS ? "" : "missing permissions"}
+                title={
+                  canCreateNS
+                    ? "Create a new namespace in the current cluster"
+                    : "You don't have permission to create namespaces on the cluster"
+                }
                 status="inverse"
                 size="sm"
                 action="flat"

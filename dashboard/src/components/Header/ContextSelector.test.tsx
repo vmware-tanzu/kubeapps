@@ -127,7 +127,7 @@ it("submits the form to create a new namespace", () => {
   actions.namespace.createNamespace = createNamespace;
   const wrapper = mountWrapper(defaultStore, <ContextSelector />);
 
-  const modalButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Create Namespace");
+  const modalButton = wrapper.find(".flat-btn");
   act(() => {
     (modalButton.prop("onClick") as any)();
   });
