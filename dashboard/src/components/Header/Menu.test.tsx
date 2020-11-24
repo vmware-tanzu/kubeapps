@@ -19,6 +19,7 @@ const defaultProps = {
       default: {
         currentNamespace: "default",
         namespaces: ["default", "other"],
+        canCreateNS: true,
       },
     },
   } as IClustersState,

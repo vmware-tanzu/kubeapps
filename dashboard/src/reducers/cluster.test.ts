@@ -15,10 +15,12 @@ describe("clusterReducer", () => {
       default: {
         currentNamespace: "initial-namespace",
         namespaces: ["default", "initial-namespace"],
+        canCreateNS: true,
       },
       "initial-cluster": {
         currentNamespace: "initial-namespace",
         namespaces: ["default", "initial-namespace"],
+        canCreateNS: true,
       },
     },
   };
@@ -147,6 +149,7 @@ describe("clusterReducer", () => {
             ...initialTestState.clusters["initial-cluster"],
             currentNamespace: "default",
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -163,11 +166,13 @@ describe("clusterReducer", () => {
               default: {
                 currentNamespace: "",
                 namespaces: ["default"],
+                canCreateNS: true,
               },
               other: {
                 currentNamespace: "",
                 namespaces: ["othernamespace"],
                 error: { action: "create", error: new Error("boom") },
+                canCreateNS: true,
               },
             },
           } as IClustersState,
@@ -185,11 +190,13 @@ describe("clusterReducer", () => {
           default: {
             currentNamespace: "",
             namespaces: ["default"],
+            canCreateNS: true,
           },
           other: {
             currentNamespace: "",
             namespaces: ["bar", "othernamespace"],
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -210,11 +217,13 @@ describe("clusterReducer", () => {
               default: {
                 currentNamespace: "",
                 namespaces: ["default"],
+                canCreateNS: true,
               },
               other: {
                 currentNamespace: "",
                 namespaces: ["othernamespace"],
                 error: { action: "create", error: new Error("boom") },
+                canCreateNS: true,
               },
             },
           } as IClustersState,
@@ -231,12 +240,14 @@ describe("clusterReducer", () => {
         clusters: {
           default: {
             currentNamespace: "",
+            canCreateNS: true,
             namespaces: ["default"],
           },
           other: {
             currentNamespace: "one",
             namespaces: ["one", "two", "three"],
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -252,6 +263,7 @@ describe("clusterReducer", () => {
               other: {
                 currentNamespace: "",
                 namespaces: [],
+                canCreateNS: true,
               },
             },
           } as IClustersState,
@@ -270,6 +282,7 @@ describe("clusterReducer", () => {
             currentNamespace: "two",
             namespaces: ["one", "two", "three"],
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -285,6 +298,7 @@ describe("clusterReducer", () => {
               other: {
                 currentNamespace: "",
                 namespaces: [],
+                canCreateNS: true,
               },
             },
           } as IClustersState,
@@ -303,6 +317,7 @@ describe("clusterReducer", () => {
             currentNamespace: "one",
             namespaces: ["one", "two", "three"],
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -317,6 +332,7 @@ describe("clusterReducer", () => {
               other: {
                 currentNamespace: "three",
                 namespaces: [],
+                canCreateNS: true,
               },
             },
           } as IClustersState,
@@ -335,6 +351,7 @@ describe("clusterReducer", () => {
             currentNamespace: "three",
             namespaces: ["one", "two", "three"],
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -352,6 +369,7 @@ describe("clusterReducer", () => {
               other: {
                 currentNamespace: "",
                 namespaces: [],
+                canCreateNS: true,
               },
             },
           } as IClustersState,
@@ -370,6 +388,7 @@ describe("clusterReducer", () => {
             currentNamespace: "three",
             namespaces: ["one", "two", "three"],
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -385,6 +404,7 @@ describe("clusterReducer", () => {
               other: {
                 currentNamespace: "",
                 namespaces: [],
+                canCreateNS: true,
               },
             },
           } as IClustersState,
@@ -403,6 +423,7 @@ describe("clusterReducer", () => {
             currentNamespace: "one",
             namespaces: ["one", "two", "three"],
             error: undefined,
+            canCreateNS: true,
           },
         },
       } as IClustersState);
@@ -437,10 +458,12 @@ describe("clusterReducer", () => {
           additionalCluster1: {
             currentNamespace: "",
             namespaces: [],
+            canCreateNS: false,
           },
           additionalCluster2: {
             currentNamespace: "",
             namespaces: [],
+            canCreateNS: false,
           },
         },
       } as IClustersState);
@@ -463,14 +486,55 @@ describe("clusterReducer", () => {
           one: {
             currentNamespace: "",
             namespaces: [],
+            canCreateNS: false,
           },
           two: {
             currentNamespace: "",
             namespaces: [],
+            canCreateNS: false,
           },
           three: {
             currentNamespace: "",
             namespaces: [],
+            canCreateNS: false,
+          },
+        },
+      } as IClustersState);
+    });
+  });
+  context("when ALLOW_CREATE_NAMESPACE", () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it("allows to create ns", () => {
+      expect(
+        clusterReducer(
+          {
+            ...initialTestState,
+            clusters: {
+              default: {
+                currentNamespace: "",
+                namespaces: ["default"],
+                canCreateNS: false,
+              },
+            },
+          } as IClustersState,
+          {
+            type: getType(actions.namespace.setAllowCreate),
+            payload: {
+              cluster: "default",
+              allowed: true,
+            },
+          },
+        ),
+      ).toEqual({
+        ...initialTestState,
+        clusters: {
+          default: {
+            currentNamespace: "",
+            canCreateNS: true,
+            namespaces: ["default"],
           },
         },
       } as IClustersState);

@@ -44,6 +44,7 @@ const makeStore = (
       default: {
         currentNamespace: "default",
         namespaces: [],
+        canCreateNS: true,
       },
     },
   };
