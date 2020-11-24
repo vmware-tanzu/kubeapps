@@ -14,13 +14,20 @@ export default function CatalogItems({ charts, csvs, cluster, namespace }: ICata
   const chartItems: ICatalogItemProps[] = useMemo(
     () =>
       charts.map(c => {
+        let icon;
+        if (c.attributes?.icon) {
+          icon = c.attributes.icon.startsWith("/")
+            ? c.attributes.icon
+            : "/".concat(c.attributes.icon);
+          icon = "api/assetsvc".concat(icon);
+        }
         return {
           type: "chart",
           id: `chart/${c.attributes.repo.name}/${c.id}`,
           item: {
             id: c.id,
             name: c.attributes.name,
-            icon: c.attributes.icon ? `api/assetsvc${c.attributes.icon}` : undefined,
+            icon,
             version: c.relationships.latestChartVersion.data.app_version,
             description: c.attributes.description,
             repo: c.attributes.repo,
