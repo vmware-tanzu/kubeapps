@@ -23,6 +23,7 @@ function ContextSelector() {
   const { clusters } = useSelector((state: IStoreState) => state);
   const currentCluster = clusters.clusters[clusters.currentCluster];
   const namespaceSelected = currentCluster.currentNamespace;
+  const canCreateNS = currentCluster.canCreateNS;
   const error = currentCluster.error;
   const [open, setOpen] = useState(false);
   const [cluster, setStateCluster] = useState(clusters.currentCluster);
@@ -178,7 +179,19 @@ function ContextSelector() {
                   </CdsModalActions>
                 </form>
               </CdsModal>
-              <CdsButton status="inverse" size="sm" action="flat" onClick={openNewNSModal}>
+              <CdsButton
+                disabled={!canCreateNS}
+                title={
+                  canCreateNS
+                    ? "Create a new namespace in the current cluster"
+                    : "You don't have permission to create namespaces on the cluster"
+                }
+                status="inverse"
+                size="sm"
+                action="flat"
+                className="flat-btn"
+                onClick={openNewNSModal}
+              >
                 Create Namespace
               </CdsButton>
             </div>

@@ -12,6 +12,7 @@ import { Auth } from "../shared/Auth";
 export interface IClusterState {
   currentNamespace: string;
   namespaces: string[];
+  canCreateNS: boolean;
   error?: { action: string; error: Error };
 }
 
@@ -32,6 +33,7 @@ const getInitialState: () => IClustersState = (): IClustersState => {
       default: {
         currentNamespace: Auth.defaultNamespaceFromToken(token),
         namespaces: [],
+        canCreateNS: false,
       },
     },
   } as IClustersState;
@@ -116,6 +118,17 @@ const clusterReducer = (
           ...initialState.clusters,
         },
       };
+    case getType(actions.namespace.setAllowCreate):
+      return {
+        ...state,
+        clusters: {
+          ...state.clusters,
+          [action.payload.cluster]: {
+            ...state.clusters[action.payload.cluster],
+            canCreateNS: action.payload.allowed,
+          },
+        },
+      };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
       // looks for either or both of /c/:cluster and /ns/:namespace in URL
@@ -145,6 +158,7 @@ const clusterReducer = (
         clusters[cluster] = {
           currentNamespace: "",
           namespaces: [],
+          canCreateNS: false,
         };
       });
 
