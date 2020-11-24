@@ -26,6 +26,7 @@ function Header() {
   useEffect(() => {
     if (authenticated && clusters.currentCluster) {
       dispatch(actions.namespace.fetchNamespaces(clusters.currentCluster));
+      dispatch(actions.namespace.canCreate(clusters.currentCluster));
     }
   }, [dispatch, authenticated, clusters.currentCluster]);
 

@@ -173,6 +173,7 @@ type handler interface {
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
 	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
 	GetOperatorLogo(namespace, name string) ([]byte, error)
+	CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error)
 }
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
@@ -702,4 +703,30 @@ func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 // GetNamespaces return the list of namespaces that the user has permission to access
 func (a *userHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
 	return a.clientset.RestClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do(context.TODO()).Raw()
+}
+
+// ParseSelfSubjectAccessRequest parses a SelfSubjectAccessRequest
+func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*authorizationapi.ResourceAttributes, error) {
+	defer selfSubjectAccessReviewBody.Close()
+	var request authorizationapi.ResourceAttributes
+	err := json.NewDecoder(selfSubjectAccessReviewBody).Decode(&request)
+	if err != nil {
+		log.Infof("unable to decode: %v", err)
+		return nil, err
+	}
+	return &request, nil
+}
+
+// CanI returns if the user is allowed to do the given action
+func (a *userHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
+	res, err := a.clientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
+		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: resourceAttributes,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	return res.Status.Allowed, nil
 }

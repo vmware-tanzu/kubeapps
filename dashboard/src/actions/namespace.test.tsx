@@ -1,8 +1,10 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { Kube } from "shared/Kube";
 import { getType } from "typesafe-actions";
 import Namespace from "../shared/Namespace";
 import {
+  canCreate,
   createNamespace,
   errorNamespaces,
   fetchNamespaces,
@@ -11,6 +13,7 @@ import {
   receiveNamespace,
   receiveNamespaces,
   requestNamespace,
+  setAllowCreate,
   setNamespace,
   setNamespaceState,
 } from "./namespace";
@@ -21,6 +24,9 @@ let store: any;
 
 beforeEach(() => {
   store = mockStore();
+});
+afterEach(() => {
+  jest.resetAllMocks();
 });
 
 // Regular action creators
@@ -185,5 +191,35 @@ describe("setNamespace", () => {
       "kubeapps_namespace",
       '{"default-c":"default-ns"}',
     );
+  });
+});
+
+describe("canCreate", () => {
+  it("checks if it can create namespaces", async () => {
+    Kube.canI = jest.fn().mockReturnValue(true);
+    const expectedActions = [
+      {
+        type: getType(setAllowCreate),
+        payload: { cluster: "default-c", allowed: true },
+      },
+    ];
+    await store.dispatch(canCreate("default-c"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(Kube.canI).toHaveBeenCalledWith("default-c", "", "namespaces", "create", "");
+  });
+
+  it("dispatches an error", async () => {
+    const err = new Error("boom");
+    Kube.canI = jest.fn(() => {
+      throw err;
+    });
+    const expectedActions = [
+      {
+        type: getType(errorNamespaces),
+        payload: { cluster: "default-c", err, op: "get" },
+      },
+    ];
+    await store.dispatch(canCreate("default-c"));
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });
