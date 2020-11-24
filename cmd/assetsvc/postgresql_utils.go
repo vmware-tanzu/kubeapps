@@ -106,7 +106,16 @@ func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (mod
 	chartID, _ := url.PathUnescape(chartIDUnescaped)
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
-		return models.Chart{}, err
+		splittedID := strings.Split(chartID, "/")
+		if len(splittedID) == 2 {
+			alikeChartID := splittedID[0] + "%" + splittedID[1]
+			err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id ILIKE $2", dbutils.ChartTable), namespace, alikeChartID)
+			if err != nil {
+				return models.Chart{}, err
+			}
+		} else {
+			return models.Chart{}, err
+		}
 	}
 
 	// TODO(andresmgot): Store raw_icon as a byte array
@@ -136,7 +145,16 @@ func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, vers
 	var chart models.Chart
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
-		return models.Chart{}, err
+		splittedID := strings.Split(chartID, "/")
+		if len(splittedID) == 2 {
+			alikeChartID := splittedID[0] + "%" + splittedID[1]
+			err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id ILIKE $2", dbutils.ChartTable), namespace, alikeChartID)
+			if err != nil {
+				return models.Chart{}, err
+			}
+		} else {
+			return models.Chart{}, err
+		}
 	}
 	found := false
 	for _, c := range chart.ChartVersions {
@@ -157,7 +175,16 @@ func (m *postgresAssetManager) getChartFiles(namespace, filesIDUnescaped string)
 	var chartFiles models.ChartFiles
 	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
-		return models.ChartFiles{}, err
+		splittedID := strings.Split(filesID, "/")
+		if len(splittedID) == 2 {
+			alikeFilesID := splittedID[0] + "%" + splittedID[1]
+			err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id ILIKE $2", dbutils.ChartFilesTable), namespace, alikeFilesID)
+			if err != nil {
+				return models.ChartFiles{}, err
+			}
+		} else {
+			return models.ChartFiles{}, err
+		}
 	}
 	return chartFiles, nil
 }
