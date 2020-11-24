@@ -1,9 +1,11 @@
+import { CdsInlineButton } from "@clr/react/button";
 import Alert from "components/js/Alert";
 import * as React from "react";
 
 export interface IErrorBoundaryProps {
   error?: Error;
   children: React.ReactChildren | React.ReactNode | string;
+  logout: () => void;
 }
 
 interface IErrorBoundaryState {
@@ -18,13 +20,19 @@ class ErrorBoundary extends React.Component<IErrorBoundaryProps, IErrorBoundaryS
   public state: IErrorBoundaryState = { error: null, errorInfo: null };
 
   public render() {
+    // Errors in the state are caused by uncaught errors in children components
+    // Errors in the props are related to namespace handling. In this case, show a logout
+    // button in case the user wants to login with a privileged account.
     const { error: stateError } = this.state;
     const { error: propsError } = this.props;
-    if (propsError) {
-      return <Alert theme="danger">An error occurred: {propsError.message}</Alert>;
-    }
-    if (stateError) {
-      return <Alert theme="danger">An error occurred: {stateError.message}</Alert>;
+    const err = propsError || stateError;
+    if (err) {
+      return (
+        <Alert theme="danger">
+          An error occurred: {err.message}.{" "}
+          {propsError && <CdsInlineButton onClick={this.props.logout}>Logout</CdsInlineButton>}
+        </Alert>
+      );
     }
     return this.props.children;
   }
