@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
+import { Kube } from "shared/Kube";
 import { IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import PageHeader from "../PageHeader/PageHeader";
@@ -35,6 +36,7 @@ function AppList() {
 
   const [searchFilter, setSearchFilter] = useState("");
   const [allNS, setAllNS] = useState(false);
+  const [canSetAllNS, setCanSetAllNS] = useState(false);
   const [namespace, setNamespace] = useState(currentNamespace);
   const toggleListAllNS = () => {
     submitFilters(!allNS);
@@ -74,6 +76,12 @@ function AppList() {
   }, [dispatch, cluster, namespace]);
 
   useEffect(() => {
+    // In order to be able to list applications in all namespaces, it's necessary to be able
+    // to list/get secrets in all of them.
+    Kube.canI(cluster, "", "secrets", "list", "").then(allowed => setCanSetAllNS(allowed));
+  }, [cluster]);
+
+  useEffect(() => {
     setSearchFilter(searchQuery);
   }, [searchQuery]);
 
@@ -94,16 +102,18 @@ function AppList() {
               value={searchFilter}
               submitFilters={submitSearchFilter}
             />
-            <CdsToggleGroup className="flex-v-center">
-              <CdsToggle>
-                <label>Show apps in all namespaces</label>
-                <input
-                  type="checkbox"
-                  onChange={toggleListAllNS}
-                  checked={allNSQuery === "yes" || allNS}
-                />
-              </CdsToggle>
-            </CdsToggleGroup>
+            {canSetAllNS && (
+              <CdsToggleGroup className="flex-v-center">
+                <CdsToggle>
+                  <label>Show apps in all namespaces</label>
+                  <input
+                    type="checkbox"
+                    onChange={toggleListAllNS}
+                    checked={allNSQuery === "yes" || allNS}
+                  />
+                </CdsToggle>
+              </CdsToggleGroup>
+            )}
           </>
         }
         buttons={[
