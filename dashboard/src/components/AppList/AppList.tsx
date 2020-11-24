@@ -35,7 +35,7 @@ function AppList() {
 
   const [searchFilter, setSearchFilter] = useState("");
   const [allNS, setAllNS] = useState(false);
-  const [namespace, setNamespace] = useState("");
+  const [namespace, setNamespace] = useState(currentNamespace);
   const toggleListAllNS = () => {
     submitFilters(!allNS);
     setAllNS(!allNS);
@@ -96,7 +96,7 @@ function AppList() {
             />
             <CdsToggleGroup className="flex-v-center">
               <CdsToggle>
-                <label>List apps in all namespaces</label>
+                <label>Show apps in all namespaces</label>
                 <input
                   type="checkbox"
                   onChange={toggleListAllNS}
