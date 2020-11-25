@@ -8,6 +8,7 @@ import LoadingWrapper from "components/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
 import * as qs from "qs";
 import { act } from "react-dom/test-utils";
+import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IAppOverview, IStoreState } from "../../shared/types";
 import Alert from "../js/Alert";
@@ -29,6 +30,9 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  Kube.canI = jest.fn().mockReturnValue({
+    then: jest.fn(f => f(true)),
+  });
 });
 
 afterEach(() => {
@@ -75,6 +79,14 @@ context("when changing props", () => {
     });
     expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("default-cluster", "");
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "");
+  });
+
+  it("should hide the all-namespace switch if the user doesn't have permissions", async () => {
+    Kube.canI = jest.fn().mockReturnValue({
+      then: jest.fn((f: any) => f(false)),
+    });
+    const wrapper = mountWrapper(defaultStore, <AppList />);
+    expect(wrapper.find("input[type='checkbox']")).not.toExist();
   });
 });
 
