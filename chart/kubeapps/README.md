@@ -153,6 +153,104 @@ If you have dedicated a namespace only for Kubeapps you can completely clean the
 kubectl delete namespace kubeapps
 ```
 
+## FAQ
+
+- [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes-)
+- [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios-)
+- [How to use Kubeapps?](#how-to-use-kubeapps-)
+- [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
+  * [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
+- [Can Kubeapps be installed in more than one cluster?](#can-kubeapps-be-installed-in-more-than-one-cluster-)
+- [How to install Kubeapps without Internet connection?](#how-to-install-kubeapps-without-internet-connection-)
+- [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories-)
+- [Does Kubeapps support Operators?](#does-kubeapps-support-operators-)
+- [More questions?](#more-questions-)
+
+### How to install Kubeapps for demo purposes?
+
+This snippet shows how to install Kubeapps for exclusively **demo purposes** as explained in [getting started](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md).
+
+```bash
+
+# Create namespace kubeapps
+kubectl create namespace kubeapps
+
+# Add the Bitnami chart repository and install Kubeapps
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install kubeapps --namespace kubeapps bitnami/kubeapps
+
+# Create a serviceaccount with a clusterrolebinding
+kubectl create serviceaccount kubeapps-operator
+kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
+
+# Retrieve the token in linux/macOS
+kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep kubeapps-operator-token) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
+
+# Make Kubeapps accesible from your local address
+kubectl port-forward -n kubeapps svc/kubeapps 8080:80
+
+# Visit http://127.0.0.1:8080 in you browser and enter the token you obtained before.
+```
+
+### How to install Kubeapps in production scenarios?
+
+For any user-facing installation you should [configure an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
+Please also refer to the [Access Control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) documentation to configure fine-grained access control for users.
+
+### How to use Kubeapps?
+
+Have a look to [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/dasboard.md) for knowing how to use the Kubeapps dashboard.
+
+### How to configure Kubeapps with Ingress
+
+The example below will match the URL `http://example.com` to the Kubeapps dashboard. For further configuration, please refer to your specific Ingress configuration docs (e.g., [NGINX](https://github.com/kubernetes/ingress-nginx) or [HAProxy](https://github.com/haproxytech/kubernetes-ingress)).
+
+```bash
+helm install kubeapps --namespace kubeapps \
+  --set ingress.enabled=true \
+  --set ingress.hostname=example.com \
+    bitnami/kubeapps
+```
+#### Serving Kubeapps in a subpath
+
+Eventually, you may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`. If you are using the ingress configuration provided by the Kubeapps chart, note that currently it does not support customizing that `path` value, so, consequently you have to manually patch the ingress object:
+
+```bash
+kubectl patch ingress kubeapps -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"/subpath"}]'
+```
+
+Besides, if you are using the OAuth2/OIDC login (more information in [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
+
+```bash
+helm install kubeapps bitnami/kubeapps \
+  --namespace kubeapps \
+  # ... other OIDC flags 
+  --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
+  --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
+  --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
+```
+
+### Can Kubeapps be installed in more than one cluster?
+
+Yes! Kubeapps 2.0+ supports multicluster environments. Check out [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) to know more.
+
+### How to install Kubeapps without Internet connection?
+
+Yes! Follow [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) to discover how to perform an installation in an air-gapped scenario.
+
+### Does Kubeapps support private repositories?
+
+Of course! Have a look to [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+
+### Does Kubeapps support Operators?
+
+Yes! You can get started with Operators in [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md).
+
+### More questions? 
+
+Feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you have some question! 
+
+
 ## Troubleshooting
 
 ### Nginx Ipv6 error
