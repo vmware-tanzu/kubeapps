@@ -155,16 +155,16 @@ kubectl delete namespace kubeapps
 
 ## FAQ
 
-- [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes-)
-- [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios-)
-- [How to use Kubeapps?](#how-to-use-kubeapps-)
+- [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes)
+- [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios)
+- [How to use Kubeapps?](#how-to-use-kubeapps)
 - [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
   * [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
-- [Can Kubeapps be installed in more than one cluster?](#can-kubeapps-be-installed-in-more-than-one-cluster-)
-- [How to install Kubeapps without Internet connection?](#how-to-install-kubeapps-without-internet-connection-)
-- [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories-)
-- [Does Kubeapps support Operators?](#does-kubeapps-support-operators-)
-- [More questions?](#more-questions-)
+- [Can Kubeapps be installed in more than one cluster?](#can-kubeapps-be-installed-in-more-than-one-cluster)
+- [How to install Kubeapps without Internet connection?](#how-to-install-kubeapps-without-internet-connection)
+- [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
+- [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
+- [More questions?](#more-questions)
 
 ### How to install Kubeapps for demo purposes?
 
