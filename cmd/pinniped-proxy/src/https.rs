@@ -31,7 +31,6 @@ pub fn include_client_cert<'a>(mut tls_builder: &'a mut TlsConnectorBuilder, req
             Ok(identity) => {
                 tls_builder = tls_builder.identity(identity);
             },
-            // TODO update include_*_cert to return Results to handle errors.
             Err(e) => return Err(e),
         };
     }

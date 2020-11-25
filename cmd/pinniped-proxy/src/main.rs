@@ -5,7 +5,7 @@ use std::pin::Pin;
 use anyhow::{Error, Result};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, Response, Server, StatusCode};
-use log::{error, info};
+use log::{debug, error, info};
 use native_tls::TlsConnector;
 use structopt::StructOpt;
 
@@ -13,6 +13,7 @@ use structopt::StructOpt;
 mod cli;
 mod https;
 mod pinniped;
+mod logging;
 mod proxy;
 
 #[tokio::main]
@@ -33,25 +34,27 @@ async fn main() -> Result<()> {
             // a different generator returns for different control flows.
             // Ok::<_, Infallible>(service_fn(move |mut req| {                    
             Ok::<_, Infallible>(service_fn(move |mut req| -> Pin<Box<dyn Future<Output = std::result::Result<Response<Body>, hyper::Error>> + std::marker::Send >> {                    
-                info!("processing request to {}", *req.uri());
                 let headers = req.headers().clone();
                 let k8s_api_server_url = match https::get_api_server_url(&headers) {
                     Ok(u) => u,
-                    Err(e) => return handle_error(e),
+                    Err(e) => return handle_error(e, logging::request_log_data(&req)),
                 };
+
+                req = proxy::rewrite_request(req, k8s_api_server_url);
+                let log_data = logging::request_log_data(&req);
 
                 let k8s_api_cert_auth_data = match https::get_api_server_cert_auth_data(&headers) {
                     Ok(c) => c,
                     Err(e) => {
                         error!("{:#?}", e);
-                        return handle_error(e);
+                        return handle_error(e, log_data);
                     },
                 };
                 let k8s_api_cert = match https::cert_for_cert_data(k8s_api_cert_auth_data.clone()) {
                     Ok(c) => c,
                     Err(e) => {
                         error!("{:#?}", e);
-                        return handle_error(e);
+                        return handle_error(e, log_data);
                     },
                 };
 
@@ -67,7 +70,7 @@ async fn main() -> Result<()> {
                     Ok(b) => b,
                     Err(e) => {
                         error!("{:#?}", e);
-                        return handle_error(e);
+                        return handle_error(e, log_data);
                     },
                 };
 
@@ -75,21 +78,20 @@ async fn main() -> Result<()> {
                     Ok(c) => c,
                     Err(e) => {
                         error!("{:#?}", e);
-                        return handle_error(e);
+                        return handle_error(e, log_data);
                     },
                 };
 
-                // Currently using client cert auth above (see include_client_cert), rather than an exchange
-                // of header credentials (which will be needed if we switch to pinniped supervisor with OIDC),
-                // so we use a no-op for the proxy_request credential_exchange fn.
-                req = proxy::proxy_request(req, k8s_api_server_url, |r| r);
-
-                info!("forwarding request with exchanged credentials to {}", *req.uri());
-                
                 let client = Client::builder().build::<_, Body>(conn);
                 Box::pin(async move {
+                    let mut log_data = & mut log_data.clone();
                     match client.request(req).await {
-                        Ok(r) => Ok(r),
+                        Ok(r) => {
+                            // access log.
+                            log_data = logging::response_log_data(&r, log_data);
+                            info!("{}", log_data);
+                            Ok(r)
+                        },
                         Err(e) => {
                             error!("{:#?}", e);
                             let mut response = Response::new(Body::from(e.to_string()));
@@ -115,10 +117,12 @@ async fn main() -> Result<()> {
 }
 
 /// handle_error converts an error into a 500 message.
-fn handle_error(e: Error) -> Pin<Box<dyn Future<Output = std::result::Result<Response<Body>, hyper::Error>> + std::marker::Send>> {
+fn handle_error(e: Error, log_data: logging::LogData) -> Pin<Box<dyn Future<Output = std::result::Result<Response<Body>, hyper::Error>> + std::marker::Send>> {
     Box::pin(async move {
-        Ok(Response::builder()
+        let response = Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(Body::from(e.to_string())).unwrap())
+            .body(Body::from(e.to_string())).unwrap();
+        info!("{}", logging::response_log_data(&response, &mut log_data.clone()));
+        Ok(response)
     })
 }
