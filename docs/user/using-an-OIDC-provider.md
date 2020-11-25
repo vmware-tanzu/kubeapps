@@ -92,6 +92,14 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.additionalFlags="{--cookie-secure=false,--oidc-issuer-url=https://accounts.google.com}" \
 ```
 
+> If you are serving Kubeapps under a subpath (eg., "example.com/subpath") you also need to set the `authProxy.oauthLoginURI` and `authProxy.oauthLogoutURI` flags, as well as the additional flag `--proxy-prefix`. For instance:
+
+```bash
+ --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
+ --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
+ --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"\
+```
+
 **Example 2: Using a custom oauth2-proxy provider**
 
 Some of the specific providers that come with `oauth2-proxy` are using OpenIDConnect to obtain the required IDToken and can be used instead of the generic oidc provider. Currently this includes only the GitLab, Google and LoginGov providers (see [OAuth2_Proxy's provider configuration](https://oauth2-proxy.github.io/oauth2-proxy/configuration) for the full list of OAuth2 providers). The user authentication flow is the same as above, with some small UI differences, such as the default login button is customized to the provider (rather than "Login with OpenID Connect"), or improved presentation when accepting the requested scopes (as is the case with Google, but only visible if you request extra scopes).
@@ -107,6 +115,13 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.clientSecret=my-client-secret \
   --set authProxy.cookieSecret=$(echo "not-good-secret" | base64) \
   --set authProxy.additionalFlags="{--cookie-secure=false}"
+```
+> If you are serving Kubeapps under a subpath (eg., "example.com/subpath") you also need to set the `authProxy.oauthLoginURI` and `authProxy.oauthLogoutURI` flags, as well as the additional flag `--proxy-prefix`. For instance:
+
+```bash
+ --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
+ --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
+ --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"\
 ```
 
 **Example 3: Authentication for Kubeapps on a GKE cluster**
@@ -130,7 +145,13 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.additionalFlags="{--cookie-secure=false,--scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform}" \
   --set frontend.proxypassAccessTokenAsBearer=true
 ```
+> If you are serving Kubeapps under a subpath (eg., "example.com/subpath") you also need to set the `authProxy.oauthLoginURI` and `authProxy.oauthLogoutURI` flags, as well as the additional flag `--proxy-prefix`. For instance:
 
+```bash
+ --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
+ --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
+ --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"\
+```
 ### Manual deployment
 
 In case you want to manually deploy the proxy, first you will create a Kubernetes deployment and service for the proxy. For the snippet below, you need to set the environment variables `AUTH_PROXY_CLIENT_ID`, `AUTH_PROXY_CLIENT_SECRET`, `AUTH_PROXY_DISCOVERY_URL` with the information from the IdP and `KUBEAPPS_NAMESPACE`.
@@ -175,6 +196,7 @@ spec:
         - -pass-basic-auth=false
         - -pass-access-token=true
         - -pass-authorization-header=true
+         - proxy-prefix=/oauth2
         image: bitnami/oauth2-proxy
         imagePullPolicy: IfNotPresent
         name: kubeapps-auth-proxy
@@ -203,6 +225,7 @@ The above is a sample deployment, depending on the configuration of the Identity
 - `-client-id`, `-client-secret` and `-oidc-issuer-url`: Client ID, Secret and IdP URL as stated in the section above.
 - `-upstream`: Internal URL for the `kubeapps` service.
 - `-http-address=0.0.0.0:3000`: Listen in all the interfaces.
+- `-proxy-prefix=/oauth2`: If you are serving Kubeapps under a subpath, with this parameter the default prefix can be changed.
 
 **NOTE**: If the identity provider is deployed with a self-signed certificate (which may be the case for Keycloak or Dex) you will need to disable the TLS and cookie verification. For doing so you can add the flags `-ssl-insecure-skip-verify` and `--cookie-secure=false` to the deployment above. You can find more options for `oauth2-proxy` [here](https://oauth2-proxy.github.io/oauth2-proxy/configuration).
 
