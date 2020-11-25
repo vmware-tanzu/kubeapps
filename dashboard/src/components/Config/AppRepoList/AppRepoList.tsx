@@ -35,7 +35,7 @@ function AppRepoList() {
     qs.parse(location.search, { ignoreQueryPrefix: true }).allns === "yes" ? true : false;
   const [allNS, setAllNS] = useState(allNSQuery);
   const [canSetAllNS, setCanSetAllNS] = useState(false);
-  const [canEditKubeappsRepos, setCanEditKubeappsRepos] = useState(false);
+  const [canEditGlobalRepos, setCanEditGlobalRepos] = useState(false);
   const [namespace, setNamespace] = useState(allNSQuery ? "" : currentNamespace);
 
   // We do not currently support app repositories on additional clusters.
@@ -83,13 +83,13 @@ function AppRepoList() {
       setCanSetAllNS(allowed),
     );
     Kube.canI(
-      cluster,
+      kubeappsCluster,
       "kubeapps.com",
       "apprepositories",
       "update",
       kubeappsNamespace,
-    ).then(allowed => setCanEditKubeappsRepos(allowed));
-  }, [cluster, kubeappsNamespace]);
+    ).then(allowed => setCanEditGlobalRepos(allowed));
+  }, [cluster, kubeappsCluster, kubeappsNamespace]);
 
   useEffect(() => {
     if (repos) {
@@ -206,7 +206,7 @@ function AppRepoList() {
                   <Table
                     valign="center"
                     columns={tableColumns}
-                    data={getTableData(globalRepos, !canEditKubeappsRepos)}
+                    data={getTableData(globalRepos, !canEditGlobalRepos)}
                   />
                 ) : (
                   <p>No global repositories found.</p>
