@@ -1,12 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
+import { CdsToggle, CdsToggleGroup } from "@clr/react/toggle";
 import actions from "actions";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import PageHeader from "components/PageHeader/PageHeader";
+import { push } from "connected-react-router";
+import * as qs from "qs";
 import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
+import { Kube } from "shared/Kube";
 import { app } from "shared/url";
 import { IAppRepository, IStoreState } from "../../../shared/types";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
@@ -16,36 +21,75 @@ import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
 import "./AppRepoList.css";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
 
-export interface IAppRepoListProps {
-  cluster: string;
-  namespace: string;
-  kubeappsCluster: string;
-  kubeappsNamespace: string;
-}
-
-function AppRepoList({
-  cluster,
-  namespace,
-  kubeappsCluster,
-  kubeappsNamespace,
-}: IAppRepoListProps) {
+function AppRepoList() {
   const dispatch = useDispatch();
+  const location = useLocation();
+  const {
+    repos: { errors, isFetching, repos, repoSecrets },
+    clusters: { clusters, currentCluster },
+    config: { kubeappsCluster, kubeappsNamespace },
+  } = useSelector((state: IStoreState) => state);
+  const cluster = currentCluster;
+  const { currentNamespace } = clusters[cluster];
+  const allNSQuery =
+    qs.parse(location.search, { ignoreQueryPrefix: true }).allns === "yes" ? true : false;
+  const [allNS, setAllNS] = useState(allNSQuery);
+  const [canSetAllNS, setCanSetAllNS] = useState(false);
+  const [canEditKubeappsRepos, setCanEditKubeappsRepos] = useState(false);
+  const [namespace, setNamespace] = useState(allNSQuery ? "" : currentNamespace);
+
   // We do not currently support app repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
+  const refetchRepos: () => void = useCallback(() => {
+    if (!namespace) {
+      // All Namespaces
+      dispatch(actions.repos.fetchRepos(""));
+      return;
+    }
+    if (!supportedCluster || namespace === kubeappsNamespace) {
+      // Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+      return;
+    }
+    // In other case, fetch global and namespace repos
+    dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+  }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
-    if (!supportedCluster || namespace === kubeappsNamespace) {
-      // If we are not in the supported cluster, only fetch global namespaces
-      // TODO(andresmgot): It will likely fail fetching secrets
-      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
-    } else {
-      dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
-    }
-  }, [dispatch, namespace, kubeappsNamespace, supportedCluster]);
+    refetchRepos();
+  }, [refetchRepos]);
 
-  const { errors, isFetching, repos, repoSecrets } = useSelector(
-    (state: IStoreState) => state.repos,
-  );
+  const submitFilters = (allns: boolean) => {
+    if (allns) {
+      dispatch(push("?allns=yes"));
+    } else {
+      dispatch(push("?allns=no"));
+    }
+  };
+  const toggleListAllNS = () => {
+    submitFilters(!allNS);
+    setAllNS(!allNS);
+  };
+  useEffect(() => {
+    if (allNS) {
+      setNamespace("");
+    } else {
+      setNamespace(currentNamespace);
+    }
+  }, [allNS, currentNamespace]);
+
+  useEffect(() => {
+    Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "").then(allowed =>
+      setCanSetAllNS(allowed),
+    );
+    Kube.canI(
+      cluster,
+      "kubeapps.com",
+      "apprepositories",
+      "update",
+      kubeappsNamespace,
+    ).then(allowed => setCanEditKubeappsRepos(allowed));
+  }, [cluster, kubeappsNamespace]);
 
   useEffect(() => {
     if (repos) {
@@ -94,7 +138,7 @@ function AppRepoList({
                 ownerRef => ownerRef.name === repo.metadata.name,
               ),
             )}
-            namespace={namespace}
+            refetchRepos={refetchRepos}
             kubeappsNamespace={kubeappsNamespace}
           />
         ),
@@ -108,11 +152,23 @@ function AppRepoList({
         buttons={[
           <AppRepoAddButton
             key="add-repo-button"
-            namespace={namespace}
+            namespace={currentNamespace}
             kubeappsNamespace={kubeappsNamespace}
           />,
           <AppRepoRefreshAllButton key="refresh-all-button" />,
         ]}
+        filter={
+          canSetAllNS ? (
+            <CdsToggleGroup className="flex-v-center">
+              <CdsToggle>
+                <label>Show repositories in all namespaces</label>
+                <input type="checkbox" onChange={toggleListAllNS} checked={allNS} />
+              </CdsToggle>
+            </CdsToggleGroup>
+          ) : (
+            <></>
+          )
+        }
       />
       {!supportedCluster ? (
         <Alert theme="warning">
@@ -144,25 +200,13 @@ function AppRepoList({
           {!errors.fetch && (
             <>
               <LoadingWrapper loaded={!isFetching}>
-                <h3>Global Repositories</h3>
-                <p>
-                  Global repositories are available for all Kubeapps users.{" "}
-                  {kubeappsCluster &&
-                    (kubeappsCluster !== cluster || namespace !== kubeappsNamespace) && (
-                      <>
-                        Administrators can go to the{" "}
-                        <Link to={app.config.apprepositories(kubeappsCluster, kubeappsNamespace)}>
-                          {kubeappsNamespace}
-                        </Link>{" "}
-                        namespace to manage them.
-                      </>
-                    )}
-                </p>
+                <h3>Global Repositories:</h3>
+                <p>Global repositories are available for all Kubeapps users.</p>
                 {globalRepos.length ? (
                   <Table
                     valign="center"
                     columns={tableColumns}
-                    data={getTableData(globalRepos, namespace !== kubeappsNamespace)}
+                    data={getTableData(globalRepos, !canEditKubeappsRepos)}
                   />
                 ) : (
                   <p>No global repositories found.</p>

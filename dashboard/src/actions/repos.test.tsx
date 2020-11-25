@@ -115,19 +115,8 @@ describe("deleteRepo", () => {
           },
         },
       });
-      const expectedActions = [
-        {
-          type: getType(repoActions.requestRepos),
-          payload: currentNamespace,
-        },
-        {
-          type: getType(repoActions.receiveRepos),
-          payload: { foo: "bar" },
-        },
-      ];
-
       await storeWithFlag.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
-      expect(storeWithFlag.getActions()).toEqual(expectedActions);
+      expect(storeWithFlag.getActions()).toEqual([]);
     });
   });
 

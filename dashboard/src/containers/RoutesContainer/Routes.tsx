@@ -1,4 +1,5 @@
 import AppList from "components/AppList/AppList";
+import AppRepoList from "components/Config/AppRepoList";
 import LoadingWrapper from "components/LoadingWrapper";
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
@@ -17,7 +18,6 @@ import OperatorNewContainer from "../../containers/OperatorNewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
-import RepoListContainer from "../../containers/RepoListContainer";
 import { app } from "../../shared/url";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
@@ -40,7 +40,7 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
-  "/c/:cluster/ns/:namespace/config/repos": RepoListContainer,
+  "/c/:cluster/ns/:namespace/config/repos": AppRepoList,
 } as const;
 
 // Public routes that don't require authentication
