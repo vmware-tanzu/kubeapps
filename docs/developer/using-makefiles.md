@@ -1,10 +1,12 @@
-# How to set up the environment using the provided makefiles
+# How to set up the environment using the provided makefile targets
 
 The main file is [Makefile](https://github.com/kubeapps/kubeapps/blob/master/Makefile), which will compile and prepare the production assets for then generating a set of Docker images. It is the starting point when you want to build the Kubeapps different components.
 
-For setting up the environment for running Kubeapps, we also provide (as it) makefiles for:
+For setting up the environment for running Kubeapps, we also provide (as is) makefile targets for:
 * Creating a multicluster environment with Kind ([cluster-kind.mk](https://github.com/kubeapps/kubeapps/blob/master/script/cluster-kind.mk))
 * Deploying and configuring the components for getting Kubeapps running with OIDC login using Dex ([deploy-dev.mk](https://github.com/kubeapps/kubeapps/blob/master/script/deploy-dev.mk)).
+
+> Disclaimer: these files are not being actively maintained, as they are solely intended for helping Kubeapp developers to set up the environment. If you are a contributor and you are having troubles, please feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new).
 
 ## Makefile for generating images
 
@@ -27,10 +29,15 @@ make kubeapps/asset-syncer
 
 ### Prerequisites
 
-* Install `mkcert`; you gan get it from the [official repository](https://github.com/FiloSottile/mkcert/releases).
+* Install `mkcert`; you can get it from the [official repository](https://github.com/FiloSottile/mkcert/releases).
 * Get the Kind network IP and replace it when necessary.
-    * Retrieve the IP by executing  `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`
-    * Replace `172.18.0.2` with the previous IP the following files:
+    * Retrieve the IP for Dex:
+    It is a requirement to discover the nodes IP address on the bridge network so that Dex can be reached both inside and outside the cluster at the same address. 
+    You can get this IP by inspecting the kind network (`docker network inspect kind`) and setting the value as **the next available IP on that network**.
+    
+        * Another way to do so is to execute `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but it won't work unless you exec `make delete-cluster-kind && make cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
+
+    * Then, replace `172.18.0.2` with the previous IP the following files:
         * [kubeapps-local-dev-additional-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
         * [kubeapps-local-dev-additional-kind-cluster.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
         * [kubeapps-local-dev-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-apiserver-config.yaml)
@@ -49,5 +56,3 @@ make multi-cluster-kind
 # and deploy kubeapps with the proper configuration 
 make deploy-dev
 ```
-
-> Many commands are using `...|| true`, so you will have to manually make sure that every command is, indeed, running OK by checking the logs.
