@@ -40,6 +40,9 @@ function AppRepoList() {
 
   // We do not currently support app repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
+  // useCallback stores the reference to the function, not the function execution
+  // so calling several times to refetchRepos would execute the code inside, even
+  // if the dependencies do not change.
   const refetchRepos: () => void = useCallback(() => {
     if (!namespace) {
       // All Namespaces
