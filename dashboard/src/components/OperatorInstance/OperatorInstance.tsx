@@ -174,7 +174,7 @@ function OperatorInstance({
       </Alert>
     );
   }
-  const error = errors.fetch || errors.delete || errors.update;
+  const error = errors.delete || errors.update;
   return (
     <section>
       <ConfirmDialog
