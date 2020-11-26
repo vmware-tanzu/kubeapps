@@ -116,16 +116,10 @@ export const deleteRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: {
-        currentCluster,
-        clusters: {
-          [currentCluster]: { currentNamespace },
-        },
-      },
+      clusters: { currentCluster },
     } = getState();
     try {
       await AppRepository.delete(currentCluster, namespace, name);
-      dispatch(fetchRepos(currentNamespace));
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "delete"));

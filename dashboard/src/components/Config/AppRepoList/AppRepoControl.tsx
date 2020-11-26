@@ -12,16 +12,16 @@ import "./AppRepoControl.css";
 
 interface IAppRepoListItemProps {
   repo: IAppRepository;
-  namespace: string;
   kubeappsNamespace: string;
   secret?: ISecret;
+  refetchRepos: () => void;
 }
 
 export function AppRepoControl({
-  namespace,
   repo,
   secret,
   kubeappsNamespace,
+  refetchRepos,
 }: IAppRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -29,11 +29,10 @@ export function AppRepoControl({
   const closeModal = () => setModalOpen(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
-  const handleDeleteClick = (repoName: string, repoNamespace: string, currentNamespace: string) => {
+  const handleDeleteClick = (repoName: string, repoNamespace: string) => {
     return async () => {
       await dispatch(actions.repos.deleteRepo(repoName, repoNamespace));
-      // repoNamespace?
-      dispatch(actions.repos.fetchRepos(currentNamespace));
+      refetchRepos();
       closeModal();
     };
   };
@@ -52,7 +51,7 @@ export function AppRepoControl({
   return (
     <div className="apprepo-control-buttons">
       <ConfirmDialog
-        onConfirm={handleDeleteClick(repo.metadata.name, repo.metadata.namespace, namespace)}
+        onConfirm={handleDeleteClick(repo.metadata.name, repo.metadata.namespace)}
         modalIsOpen={modalIsOpen}
         loading={false}
         closeModal={closeModal}

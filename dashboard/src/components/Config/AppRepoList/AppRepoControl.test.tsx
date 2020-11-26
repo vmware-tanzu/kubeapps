@@ -28,7 +28,6 @@ afterEach(() => {
 });
 
 const defaultProps = {
-  namespace: "default",
   kubeappsNamespace: "kubeapps",
   repo: {
     metadata: {
@@ -36,91 +35,19 @@ const defaultProps = {
       namespace: "kubeapps",
     },
   } as IAppRepository,
+  refetchRepos: jest.fn(),
 };
 
-// TODO: Re-enable when the repo view is refactored
-xit("deletes the repo and refreshes list", async () => {
+it("deletes the repo and refreshes list", async () => {
   const deleteRepo = jest.fn();
-  const fetchRepos = jest.fn();
+  const refetchRepos = jest.fn();
   actions.repos = {
     ...actions.repos,
     deleteRepo,
-    fetchRepos,
-  };
-  const wrapper = mountWrapper(defaultStore, <AppRepoControl {...defaultProps} />);
-  const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
-  act(() => {
-    (deleteButton.prop("onClick") as any)();
-  });
-  wrapper.update();
-  expect(wrapper.find(ConfirmDialog).find(Modal)).toIncludeText(
-    "Are you sure you want to delete the repository",
-  );
-  const confirmButton = wrapper
-    .find(ConfirmDialog)
-    .find(Modal)
-    .find(CdsButton)
-    .filterWhere(b => b.text() === "Delete");
-  await act(async () => {
-    await (confirmButton.prop("onClick") as any)();
-  });
-  expect(deleteRepo).toHaveBeenCalled();
-  expect(fetchRepos).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.kubeappsNamespace);
-});
-
-// TODO: Re-enable when the repo view is refactored
-xit("deletes the repo and refreshes list (in other namespace)", async () => {
-  const deleteRepo = jest.fn();
-  const fetchRepos = jest.fn();
-  actions.repos = {
-    ...actions.repos,
-    deleteRepo,
-    fetchRepos,
   };
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoControl
-      {...defaultProps}
-      repo={
-        {
-          metadata: {
-            name: "bitnami",
-            namespace: "other",
-          },
-        } as IAppRepository
-      }
-      namespace="other"
-    />,
-  );
-  const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
-  act(() => {
-    (deleteButton.prop("onClick") as any)();
-  });
-  wrapper.update();
-
-  const confirmButton = wrapper
-    .find(ConfirmDialog)
-    .find(Modal)
-    .find(CdsButton)
-    .filterWhere(b => b.text() === "Delete");
-  await act(async () => {
-    await (confirmButton.prop("onClick") as any)();
-  });
-  expect(deleteRepo).toHaveBeenCalled();
-  expect(fetchRepos).toHaveBeenCalledWith("other", defaultProps.kubeappsNamespace);
-});
-
-it("deletes the repo and refreshes list (for the kubeapps namespace)", async () => {
-  const deleteRepo = jest.fn();
-  const fetchRepos = jest.fn();
-  actions.repos = {
-    ...actions.repos,
-    deleteRepo,
-    fetchRepos,
-  };
-  const wrapper = mountWrapper(
-    defaultStore,
-    <AppRepoControl {...defaultProps} namespace={defaultProps.kubeappsNamespace} />,
+    <AppRepoControl {...defaultProps} refetchRepos={refetchRepos} />,
   );
   const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
   act(() => {
@@ -139,7 +66,7 @@ it("deletes the repo and refreshes list (for the kubeapps namespace)", async () 
     await (confirmButton.prop("onClick") as any)();
   });
   expect(deleteRepo).toHaveBeenCalled();
-  expect(fetchRepos).toHaveBeenCalledWith(defaultProps.kubeappsNamespace);
+  expect(refetchRepos).toHaveBeenCalled();
 });
 
 it("refreshes the repo", () => {
