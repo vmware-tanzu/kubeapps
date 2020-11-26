@@ -24,6 +24,7 @@ export interface IChartViewProps {
   namespace: string;
   cluster: string;
   version: string | undefined;
+  kubeappsNamespace: string;
 }
 
 function callSelectChartVersion(ver: string, versions: IChartVersion[], dispatch: Dispatch) {
@@ -41,6 +42,7 @@ function ChartView({
   isFetching,
   cluster,
   namespace,
+  kubeappsNamespace,
 }: IChartViewProps) {
   const dispatch = useDispatch();
   const { version, readme, error, readmeError, versions } = selected;
@@ -80,7 +82,15 @@ function ChartView({
           versions={versions}
           onSelect={selectVersion}
           deployButton={
-            <Link to={app.apps.new(cluster, namespace, version, version.attributes.version)}>
+            <Link
+              to={app.apps.new(
+                cluster,
+                namespace,
+                version,
+                version.attributes.version,
+                kubeappsNamespace,
+              )}
+            >
               <CdsButton status="primary">
                 <CdsIcon shape="deploy" inverse={true} /> Deploy
               </CdsButton>
@@ -105,7 +115,15 @@ function ChartView({
               chartID={chartID}
             />
             <div className="after-readme-button">
-              <Link to={app.apps.new(cluster, namespace, version, version.attributes.version)}>
+              <Link
+                to={app.apps.new(
+                  cluster,
+                  namespace,
+                  version,
+                  version.attributes.version,
+                  kubeappsNamespace,
+                )}
+              >
                 <CdsButton status="primary">
                   <CdsIcon shape="deploy" inverse={true} /> Deploy
                 </CdsButton>

@@ -88,6 +88,13 @@ function OperatorInstanceUpdateForm({
     }
   };
 
+  if (fetchError) {
+    return (
+      <Alert theme="danger">
+        An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
+      </Alert>
+    );
+  }
   return (
     <section>
       <OperatorHeader title={`Update ${resourceName}`} icon={icon} />

@@ -146,6 +146,9 @@ export default function AppView({
     setResourceRefs(parseResources(parsedManifest, cluster, app.namespace));
   }, [app, cluster]);
 
+  if (error && error.constructor === FetchError) {
+    return <Alert theme="danger">Application not found. Received: {error.message}</Alert>;
+  }
   const {
     services,
     ingresses,

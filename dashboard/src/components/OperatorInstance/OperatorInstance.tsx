@@ -167,6 +167,13 @@ function OperatorInstance({
     }
   };
 
+  if (errors.fetch) {
+    return (
+      <Alert theme="danger">
+        An error occurred while fetching the instance: {errors.fetch.message}
+      </Alert>
+    );
+  }
   const error = errors.fetch || errors.delete || errors.update;
   return (
     <section>

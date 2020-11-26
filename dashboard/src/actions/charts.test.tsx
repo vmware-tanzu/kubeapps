@@ -4,7 +4,7 @@ import { getType } from "typesafe-actions";
 import { axiosWithAuth } from "../shared/AxiosInstance";
 
 import actions from ".";
-import { NotFoundError } from "../shared/types";
+import { FetchError, NotFoundError } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -51,7 +51,7 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.requestCharts) },
       {
         type: getType(actions.charts.errorChart),
-        payload: new NotFoundError("could not find chart"),
+        payload: new FetchError("could not find chart"),
       },
     ];
     axiosGetMock = jest.fn(() => {
@@ -239,7 +239,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       { type: getType(actions.charts.requestCharts) },
       {
         type: getType(actions.charts.errorChart),
-        payload: new NotFoundError("could not find chart"),
+        payload: new FetchError("could not find chart"),
       },
     ];
     axiosGetMock = jest.fn(() => {

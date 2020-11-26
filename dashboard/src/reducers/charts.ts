@@ -88,8 +88,6 @@ const chartsReducer = (
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.namespace.setNamespaceState):
-      return { ...initialState };
     default:
   }
   return state;

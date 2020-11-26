@@ -3,8 +3,9 @@ import * as React from "react";
 
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import PageHeader from "components/PageHeader";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { DeleteError, IResource } from "shared/types";
+import { DeleteError, FetchError, IResource } from "shared/types";
 import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
@@ -79,6 +80,15 @@ describe("AppViewComponent", () => {
 
     const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
     expect(wrapper.find(LoadingWrapper)).toExist();
+  });
+
+  it("renders only a fetch error if exists", () => {
+    const wrapper = mountWrapper(
+      defaultStore,
+      <AppViewComponent {...validProps} error={new FetchError("not found")} />,
+    );
+    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(PageHeader)).not.toExist();
   });
 
   describe("State initialization", () => {

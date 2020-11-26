@@ -139,15 +139,17 @@ export default function DeploymentFormBody({
     }
   };
 
+  if (fetchError) {
+    return (
+      <Alert theme="danger">
+        An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
+      </Alert>
+    );
+  }
   return (
     <section>
       <OperatorHeader title={`Create ${crd?.kind}`} icon={icon} />
       <section>
-        {fetchError && (
-          <Alert theme="danger">
-            An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
-          </Alert>
-        )}
         {createError && (
           <Alert theme="danger">
             An error occurred while creating the instance: {createError.message}

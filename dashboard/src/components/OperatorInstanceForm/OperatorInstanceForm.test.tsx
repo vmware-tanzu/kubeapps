@@ -2,11 +2,12 @@ import actions from "actions";
 import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
 import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
+import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IClusterServiceVersion } from "../../shared/types";
+import { FetchError, IClusterServiceVersion } from "../../shared/types";
 import OperatorInstanceForm, { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
 
 const defaultProps: IOperatorInstanceFormProps = {
@@ -55,12 +56,13 @@ it("renders a fetch error", () => {
   const wrapper = mountWrapper(
     getStore({
       operators: {
-        errors: { csv: { fetch: new Error("Boom!") } },
+        errors: { csv: { fetch: new FetchError("Boom!") } },
       },
     }),
     <OperatorInstanceForm {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 
 it("renders a create error", () => {

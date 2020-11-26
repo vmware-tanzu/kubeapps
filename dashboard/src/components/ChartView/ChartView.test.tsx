@@ -3,6 +3,7 @@ import * as ReactRedux from "react-redux";
 
 import actions from "actions";
 import Alert from "components/js/Alert";
+import { set } from "lodash";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChartState, IChartVersion } from "../../shared/types";
 import ChartMaintainers from "./ChartMaintainers";
@@ -16,6 +17,7 @@ const props: IChartViewProps = {
   cluster: "default",
   selected: { versions: [] } as IChartState["selected"],
   version: undefined,
+  kubeappsNamespace: "kubeapps",
 };
 
 const testChart: IChartVersion["relationships"]["chart"] = {
@@ -106,7 +108,7 @@ it("behaves as a loading component when fetching is true and chart is available"
 
 it("does not render the app version, home and sources sections if not set", () => {
   const version = { ...testVersion, attributes: { ...testVersion.attributes } };
-  delete version.attributes.app_version;
+  set(version, "attributes.app_version", undefined);
   const wrapper = mountWrapper(
     defaultStore,
     <ChartView {...props} selected={{ versions: [], version }} />,
