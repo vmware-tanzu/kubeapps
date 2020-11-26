@@ -16,7 +16,6 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { useDispatch } from "react-redux";
 import "react-tabs/style/react-tabs.css";
-import { definedNamespaces } from "shared/Namespace";
 
 export interface IDeploymentFormProps {
   chartNamespace: string;
@@ -134,42 +133,35 @@ function DeploymentForm({
           </Column>
           <Column span={9}>
             {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
-            {namespace === definedNamespaces.all ? (
-              <Alert theme="danger">
-                Namespace not selected. Please select a namespace using the selector in the top
-                right corner.
-              </Alert>
-            ) : (
-              <form onSubmit={handleDeploy}>
-                <div>
-                  <label
-                    htmlFor="releaseName"
-                    className="deployment-form-label deployment-form-label-text-param"
-                  >
-                    Name
-                  </label>
-                  <input
-                    id="releaseName"
-                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-                    title="Use lower case alphanumeric characters, '-' or '.'"
-                    className="clr-input deployment-form-text-input"
-                    onChange={handleReleaseNameChange}
-                    value={releaseName}
-                    required={true}
-                  />
-                </div>
-                <DeploymentFormBody
-                  deploymentEvent="install"
-                  chartID={chartID}
-                  chartVersion={chartVersion}
-                  chartsIsFetching={chartsIsFetching}
-                  selected={selected}
-                  setValues={handleValuesChange}
-                  appValues={appValues}
-                  setValuesModified={setValuesModifiedTrue}
+            <form onSubmit={handleDeploy}>
+              <div>
+                <label
+                  htmlFor="releaseName"
+                  className="deployment-form-label deployment-form-label-text-param"
+                >
+                  Name
+                </label>
+                <input
+                  id="releaseName"
+                  pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                  title="Use lower case alphanumeric characters, '-' or '.'"
+                  className="clr-input deployment-form-text-input"
+                  onChange={handleReleaseNameChange}
+                  value={releaseName}
+                  required={true}
                 />
-              </form>
-            )}
+              </div>
+              <DeploymentFormBody
+                deploymentEvent="install"
+                chartID={chartID}
+                chartVersion={chartVersion}
+                chartsIsFetching={chartsIsFetching}
+                selected={selected}
+                setValues={handleValuesChange}
+                appValues={appValues}
+                setValuesModified={setValuesModifiedTrue}
+              />
+            </form>
           </Column>
         </Row>
       </LoadingWrapper>

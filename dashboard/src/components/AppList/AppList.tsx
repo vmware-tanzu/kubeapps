@@ -1,71 +1,120 @@
 import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
+import { CdsToggle, CdsToggleGroup } from "@clr/react/toggle";
+import actions from "actions";
+import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import { push } from "connected-react-router";
+import * as qs from "qs";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-
-import { IAppState, IClusterServiceVersion, IResource } from "../../shared/types";
+import { Kube } from "shared/Kube";
+import { IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
-
-import Alert from "components/js/Alert";
-import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import "./AppList.css";
 import AppListGrid from "./AppListGrid";
 
-export interface IAppListProps {
-  apps: IAppState;
-  fetchAppsWithUpdateInfo: (cluster: string, ns: string, all: boolean) => void;
-  cluster: string;
-  namespace: string;
-  pushSearchFilter: (filter: string) => any;
-  filter: string;
-  getCustomResources: (cluster: string, ns: string) => void;
-  customResources: IResource[];
-  isFetchingResources: boolean;
-  csvs: IClusterServiceVersion[];
-  appVersion: string;
-}
+function AppList() {
+  const location = useLocation();
+  const searchQuery = qs.parse(location.search, { ignoreQueryPrefix: true }).q || "";
+  const allNSQuery = qs.parse(location.search, { ignoreQueryPrefix: true }).allns || "";
+  const dispatch = useDispatch();
 
-function AppList(props: IAppListProps) {
-  const [filter, setFilter] = useState("");
   const {
-    fetchAppsWithUpdateInfo,
-    filter: filterProps,
-    namespace,
-    getCustomResources,
     apps: { error, isFetching, listOverview },
-    cluster,
-    isFetchingResources,
-    pushSearchFilter,
-    customResources,
-    appVersion,
-    csvs,
-  } = props;
-  const submitFilters = () => pushSearchFilter(filter);
+    clusters: { clusters, currentCluster },
+    operators: { isFetching: isFetchingResources, resources: customResources, csvs },
+    config: { appVersion },
+  } = useSelector((state: IStoreState) => state);
+  const cluster = currentCluster;
+  const { currentNamespace } = clusters[cluster];
+
+  const [searchFilter, setSearchFilter] = useState("");
+  const [allNS, setAllNS] = useState(false);
+  const [canSetAllNS, setCanSetAllNS] = useState(false);
+  const [namespace, setNamespace] = useState(currentNamespace);
+  const toggleListAllNS = () => {
+    submitFilters(!allNS);
+    setAllNS(!allNS);
+  };
+
+  const submitFilters = (allns: boolean) => {
+    const filters = [];
+    if (allns) {
+      filters.push("allns=yes");
+    } else {
+      filters.push("allns=no");
+    }
+    if (searchFilter) {
+      filters.push(`q=${searchFilter}`);
+    }
+    dispatch(push(`?${filters.join("&")}`));
+  };
+  const submitSearchFilter = () => submitFilters(allNS);
 
   useEffect(() => {
-    fetchAppsWithUpdateInfo(cluster, namespace, true);
-    getCustomResources(cluster, namespace);
-  }, [cluster, namespace, fetchAppsWithUpdateInfo, getCustomResources]);
+    setNamespace(currentNamespace);
+    setAllNS(false);
+  }, [currentNamespace]);
 
   useEffect(() => {
-    setFilter(filterProps);
-  }, [filterProps]);
+    if (allNS) {
+      setNamespace("");
+    } else {
+      setNamespace(currentNamespace);
+    }
+  }, [allNS, currentNamespace]);
+
+  useEffect(() => {
+    dispatch(actions.apps.fetchAppsWithUpdateInfo(cluster, namespace));
+    dispatch(actions.operators.getResources(cluster, namespace));
+  }, [dispatch, cluster, namespace]);
+
+  useEffect(() => {
+    // In order to be able to list applications in all namespaces, it's necessary to be able
+    // to list/get secrets in all of them.
+    Kube.canI(cluster, "", "secrets", "list", "").then(allowed => setCanSetAllNS(allowed));
+  }, [cluster]);
+
+  useEffect(() => {
+    setSearchFilter(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setAllNS(allNSQuery === "yes" ? true : false);
+  }, [allNSQuery]);
 
   return (
     <section>
       <PageHeader
         title="Applications"
         filter={
-          <SearchFilter
-            key="searchFilter"
-            placeholder="search apps..."
-            onChange={setFilter}
-            value={filter}
-            submitFilters={submitFilters}
-          />
+          <>
+            <SearchFilter
+              key="searchFilter"
+              placeholder="search apps..."
+              onChange={setSearchFilter}
+              value={searchFilter}
+              submitFilters={submitSearchFilter}
+            />
+            {canSetAllNS && (
+              <CdsToggleGroup className="flex-v-center">
+                <CdsToggle>
+                  <label>Show apps in all namespaces</label>
+                  <input
+                    type="checkbox"
+                    onChange={toggleListAllNS}
+                    checked={allNSQuery === "yes" || allNS}
+                  />
+                </CdsToggle>
+              </CdsToggleGroup>
+            )}
+          </>
         }
         buttons={[
           <Link to={url.app.catalog(cluster, namespace)} key="deploy-button">
@@ -85,7 +134,7 @@ function AppList(props: IAppListProps) {
             cluster={cluster}
             namespace={namespace}
             appVersion={appVersion}
-            filter={filter}
+            filter={searchFilter}
             csvs={csvs}
           />
         )}

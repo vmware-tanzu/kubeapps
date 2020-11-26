@@ -4,7 +4,6 @@ import { CdsButton } from "@clr/react/button";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { definedNamespaces } from "shared/Namespace";
 import { IAppRepository, ISecret, IStoreState } from "shared/types";
 import actions from "../../../actions";
 import ConfirmDialog from "../../ConfirmDialog/ConfirmDialog";
@@ -13,16 +12,16 @@ import "./AppRepoControl.css";
 
 interface IAppRepoListItemProps {
   repo: IAppRepository;
-  namespace: string;
   kubeappsNamespace: string;
   secret?: ISecret;
+  refetchRepos: () => void;
 }
 
 export function AppRepoControl({
-  namespace,
   repo,
   secret,
   kubeappsNamespace,
+  refetchRepos,
 }: IAppRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -30,22 +29,10 @@ export function AppRepoControl({
   const closeModal = () => setModalOpen(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
-  const handleDeleteClick = (repoName: string, repoNamespace: string, currentNamespace: string) => {
+  const handleDeleteClick = (repoName: string, repoNamespace: string) => {
     return async () => {
       await dispatch(actions.repos.deleteRepo(repoName, repoNamespace));
-      if (currentNamespace !== kubeappsNamespace) {
-        // Re-fetch repos in both namespaces because otherwise, the state
-        // will be updated only with the repos of repoNamespace and removing
-        // the global ones.
-        // TODO(andresmgot): This can be refactored once hex UI is dropped
-        dispatch(actions.repos.fetchRepos(currentNamespace, kubeappsNamespace));
-      } else {
-        if (currentNamespace === definedNamespaces.all || currentNamespace === kubeappsNamespace) {
-          dispatch(actions.repos.fetchRepos(currentNamespace));
-        } else {
-          dispatch(actions.repos.fetchRepos(currentNamespace, kubeappsNamespace));
-        }
-      }
+      refetchRepos();
       closeModal();
     };
   };
@@ -64,7 +51,7 @@ export function AppRepoControl({
   return (
     <div className="apprepo-control-buttons">
       <ConfirmDialog
-        onConfirm={handleDeleteClick(repo.metadata.name, repo.metadata.namespace, namespace)}
+        onConfirm={handleDeleteClick(repo.metadata.name, repo.metadata.namespace)}
         modalIsOpen={modalIsOpen}
         loading={false}
         closeModal={closeModal}

@@ -66,7 +66,7 @@ export const app = {
 };
 
 function withNS(namespace: string) {
-  return namespace === "_all" ? "" : `namespaces/${namespace}/`;
+  return namespace ? `namespaces/${namespace}/` : "";
 }
 
 export const backend = {
@@ -134,7 +134,7 @@ export const api = {
     base: (cluster: string) => `api/clusters/${cluster}`,
     namespaces: (cluster: string) => `${api.k8s.base(cluster)}/api/v1/namespaces`,
     namespace: (cluster: string, namespace: string) =>
-      `${api.k8s.namespaces(cluster)}/${namespace}`,
+      namespace ? `${api.k8s.namespaces(cluster)}/${namespace}` : `${api.k8s.base(cluster)}/api/v1`,
     // clusterservicebrokers and operators operate on the default cluster only, currently.
     clusterservicebrokers: {
       sync: (cluster: string, broker: IServiceBroker) =>
