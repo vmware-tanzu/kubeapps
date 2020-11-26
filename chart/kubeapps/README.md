@@ -19,6 +19,8 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
+> Check out the [getting started](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md) to start deploying apps with Kubeapps.
+
 ## Introduction
 
 This chart bootstraps a [Kubeapps](https://kubeapps.com) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
@@ -101,6 +103,7 @@ To enable ingress integration, please set `ingress.enabled` to `true`
 
 Most likely you will only want to have one hostname that maps to this Kubeapps installation (use the `ingress.hostname` parameter to set the hostname), however, it is possible to have more than one host. To facilitate this, the `ingress.extraHosts` object is an array.
 
+For instance, if you plan to serve Kubeapps under a subpath (eg., `example.com/subpath`), you will have to set `ingress.extraHosts[0].name="example.com"` and `ingress.extraHosts[0].path="/subpath"`
 ##### Annotations
 
 For annotations, please see [this document](https://github.com/kubeapps/kubeapps/blob/master/docs/user-guide/nginx-configuration/annotations.md). Not all annotations are supported by all ingress controllers, but this document does a good job of indicating which annotation is supported by many popular ingress controllers. Annotations can be set using `ingress.annotations`.
@@ -160,46 +163,24 @@ kubectl delete namespace kubeapps
 - [How to use Kubeapps?](#how-to-use-kubeapps)
 - [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
   * [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
-- [Can Kubeapps be installed in more than one cluster?](#can-kubeapps-be-installed-in-more-than-one-cluster)
-- [How to install Kubeapps without Internet connection?](#how-to-install-kubeapps-without-internet-connection)
+- [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
+- [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
 - [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
 - [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
 - [More questions?](#more-questions)
 
 ### How to install Kubeapps for demo purposes?
 
-This snippet shows how to install Kubeapps for exclusively **demo purposes** as explained in [getting started](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md).
-
-```bash
-
-# Create namespace kubeapps
-kubectl create namespace kubeapps
-
-# Add the Bitnami chart repository and install Kubeapps
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install kubeapps --namespace kubeapps bitnami/kubeapps
-
-# Create a serviceaccount with a clusterrolebinding
-kubectl create serviceaccount kubeapps-operator
-kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
-
-# Retrieve the token in linux/macOS
-kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep kubeapps-operator-token) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
-
-# Make Kubeapps accesible from your local address
-kubectl port-forward -n kubeapps svc/kubeapps 8080:80
-
-# Visit http://127.0.0.1:8080 in you browser and enter the token you obtained before.
-```
+Install Kubeapps for exclusively **demo purposes** by simply following the [getting started](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md) docs.
 
 ### How to install Kubeapps in production scenarios?
 
-For any user-facing installation you should [configure an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
+For any user-facing installation, you should [configure an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
 Please also refer to the [Access Control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) documentation to configure fine-grained access control for users.
 
 ### How to use Kubeapps?
 
-Have a look to [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/dasboard.md) for knowing how to use the Kubeapps dashboard.
+Have a look at the [dashboard documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/dashboard.md) for knowing how to use the Kubeapps dashboard: deploying applications, listing and removing the applications running in your cluster and adding new repositories.
 
 ### How to configure Kubeapps with Ingress
 
@@ -213,13 +194,18 @@ helm install kubeapps --namespace kubeapps \
 ```
 #### Serving Kubeapps in a subpath
 
-Eventually, you may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`. If you are using the ingress configuration provided by the Kubeapps chart, note that currently it does not support customizing that `path` value, so, consequently you have to manually patch the ingress object:
+You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.extraHosts` parameter:
 
 ```bash
-kubectl patch ingress kubeapps -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"/subpath"}]'
+helm install kubeapps --namespace kubeapps \
+    --set ingress.enabled=true
+    --set ingress.extraHosts[0].name="console.example.com"
+    --set ingress.extraHosts[0].path="/catalog"
+    bitnami/kubeapps
 ```
+> This will also create an additional ingress rule serving Kubeapps at `kubeapps.local/`. In case you don't want it, you can always patch the ingress object generated before (where we just set the `ingress.hostname`) by executing: `kubectl patch ingress kubeapps -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"/subpath"}]'`
 
-Besides, if you are using the OAuth2/OIDC login (more information in [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
+Besides, if you are using the OAuth2/OIDC login (more information at the [using an OIDC provider documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
 
 ```bash
 helm install kubeapps bitnami/kubeapps \
@@ -230,25 +216,25 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
 ```
 
-### Can Kubeapps be installed in more than one cluster?
+### Can Kubeapps install apps into more than one cluster?
 
-Yes! Kubeapps 2.0+ supports multicluster environments. Check out [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) to know more.
+Yes! Kubeapps 2.0+ supports multicluster environments. Have a look at the [Kubeapps dashboard documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) to know more.
 
-### How to install Kubeapps without Internet connection?
+### Can Kubeapps be installed without Internet connection?
 
-Yes! Follow [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) to discover how to perform an installation in an air-gapped scenario.
+Yes! Follow the [offline installation documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) to discover how to perform an installation in an air-gapped scenario.
 
 ### Does Kubeapps support private repositories?
 
-Of course! Have a look to [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+Of course! Have a look at the [private app repositories documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
 
 ### Does Kubeapps support Operators?
 
-Yes! You can get started with Operators in [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md).
+Yes! You can get started by following the [operators documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md).
 
 ### More questions? 
 
-Feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you have some question! 
+Feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you have any questions! 
 
 
 ## Troubleshooting
