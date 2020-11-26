@@ -103,7 +103,7 @@ To enable ingress integration, please set `ingress.enabled` to `true`
 
 Most likely you will only want to have one hostname that maps to this Kubeapps installation (use the `ingress.hostname` parameter to set the hostname), however, it is possible to have more than one host. To facilitate this, the `ingress.extraHosts` object is an array.
 
-For instance, if you plan to serve Kubeapps under a subpath (eg., `example.com/subpath`), you will have to set `ingress.extraHosts[0].name="example.com"` and `ingress.extraHosts[0].path="/subpath"`
+If you plan to serve Kubeapps under a subpath (eg., `example.com/subpath`), you will have to disable the default path by setting `ingress.hostname=""` and the enter the hostname and path in the extraHost array; for instance: `ingress.extraHosts[0].name="example.com"` and `ingress.extraHosts[0].path="/subpath"`
 ##### Annotations
 
 For annotations, please see [this document](https://github.com/kubeapps/kubeapps/blob/master/docs/user-guide/nginx-configuration/annotations.md). Not all annotations are supported by all ingress controllers, but this document does a good job of indicating which annotation is supported by many popular ingress controllers. Annotations can be set using `ingress.annotations`.
@@ -199,12 +199,11 @@ You may want to serve Kubeapps with a subpath, for instance `http://example.com/
 ```bash
 helm install kubeapps --namespace kubeapps \
     --set ingress.enabled=true
+    --set ingress.hostname=""
     --set ingress.extraHosts[0].name="console.example.com"
     --set ingress.extraHosts[0].path="/catalog"
     bitnami/kubeapps
 ```
-> This will also create an additional ingress rule serving Kubeapps at `kubeapps.local/`. In case you don't want it, you can always patch the ingress object generated before (where we just set the `ingress.hostname`) by executing: `kubectl patch ingress kubeapps -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"/subpath"}]'`
-
 Besides, if you are using the OAuth2/OIDC login (more information at the [using an OIDC provider documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
 
 ```bash
