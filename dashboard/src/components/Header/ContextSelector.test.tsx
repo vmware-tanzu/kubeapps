@@ -8,7 +8,6 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { IClustersState } from "reducers/cluster";
-import { definedNamespaces } from "shared/Namespace";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import ContextSelector from "./ContextSelector";
 
@@ -116,21 +115,6 @@ it("shows the current namespace", () => {
       .at(1)
       .prop("value"),
   ).toBe("other");
-});
-
-it("includes all namespaces", () => {
-  const clusters = cloneDeep(initialState.clusters);
-  clusters.clusters[clusters.currentCluster].currentNamespace = definedNamespaces.all;
-  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(wrapper.find("label").findWhere(l => l.prop("htmlFor") === "namespaces")).toIncludeText(
-    "All Namespaces",
-  );
-  expect(
-    wrapper
-      .find("select")
-      .find("option")
-      .filterWhere(op => op.prop("value") === definedNamespaces.all),
-  ).toExist();
 });
 
 it("submits the form to create a new namespace", () => {

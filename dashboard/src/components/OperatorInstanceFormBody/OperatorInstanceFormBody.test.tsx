@@ -25,11 +25,6 @@ it("set default values", () => {
   expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("foo");
 });
 
-it("renders an error if the namespace is _all", () => {
-  const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} namespace="_all" />);
-  expect(wrapper.find(Alert)).toIncludeText("Select a namespace before creating a new instance");
-});
-
 it("restores the default values", async () => {
   const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} defaultValues="foo" />);
 

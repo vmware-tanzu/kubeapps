@@ -5,7 +5,6 @@ import { getType } from "typesafe-actions";
 import actions from ".";
 import { App } from "../shared/App";
 import Chart from "../shared/Chart";
-import { definedNamespaces } from "../shared/Namespace";
 import { IAppState, UnprocessableEntity } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
@@ -246,28 +245,6 @@ describe("deploy chart", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
-    const res = await store.dispatch(
-      actions.apps.deployChart(
-        "target-cluster",
-        definedNamespaces.all,
-        "my-version" as any,
-        "chart-namespace",
-        "my-release",
-      ),
-    );
-    expect(res).toBe(false);
-    const expectedActions = [
-      { type: getType(actions.apps.requestDeployApp) },
-      {
-        type: getType(actions.apps.errorApp),
-        payload: new UnprocessableEntity(
-          "Namespace not selected. Please select a namespace using the selector in the top right corner.",
-        ),
-      },
-    ];
-    expect(store.getActions()).toEqual(expectedActions);
-  });
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
       actions.apps.deployChart(
@@ -301,7 +278,7 @@ describe("upgradeApp", () => {
     "default-c",
     "kubeapps-ns",
     "my-version" as any,
-    definedNamespaces.all,
+    "kubeapps",
     "my-release",
   );
 
@@ -319,7 +296,7 @@ describe("upgradeApp", () => {
       "default-c",
       "kubeapps-ns",
       "my-release",
-      definedNamespaces.all,
+      "kubeapps",
       "my-version" as any,
       undefined,
     );

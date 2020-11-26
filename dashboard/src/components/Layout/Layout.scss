@@ -30,6 +30,11 @@
   align-items: center;
 }
 
+.flex-v-center {
+  display: flex;
+  align-items: center;
+}
+
 .notification-icon {
   cds-icon {
     --color: hsl(48, 95%, 48%);
