@@ -20,7 +20,7 @@ deploy-openldap:
 
 # Get mkcert from https://github.com/FiloSottile/mkcert/releases
 devel/localhost-cert.pem:
-	mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost 172.19.0.2
+	mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost 172.18.0.2
 
 deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 	kubectl --kubeconfig=${CLUSTER_CONFIG} create namespace kubeapps
@@ -45,13 +45,10 @@ deploy-dev: deploy-dependencies deploy-dev-kubeapps
 	@echo "to authenticate with the corresponding permissions."
 
 reset-dev-kubeapps:
-	helm --kubeconfig=${CLUSTER_CONFIG} -n kubeapps delete kubeapps
-	kubectl -kubeconfig=${CLUSTER_CONFIG} delete jobs -n kubeapps --all
 	kubectl delete namespace --wait kubeapps
 
 reset-dev:
 	helm --kubeconfig=${CLUSTER_CONFIG} -n kubeapps delete kubeapps  || true
-	kubectl -kubeconfig=${CLUSTER_CONFIG} delete jobs -n kubeapps --all || true
 	helm --kubeconfig=${CLUSTER_CONFIG} -n dex delete dex  || true
 	helm --kubeconfig=${CLUSTER_CONFIG} -n ldap delete ldap || true
 	kubectl delete namespace --wait dex ldap kubeapps || true

@@ -31,13 +31,15 @@ make kubeapps/asset-syncer
 
 * Install `mkcert`; you can get it from the [official repository](https://github.com/FiloSottile/mkcert/releases).
 * Get the Kind network IP and replace it when necessary.
-    * Retrieve the IP for Dex:
+    * Retrieve the node's IP address on the kind bridge network so it can be used by Dex:
     It is a requirement to discover the nodes IP address on the bridge network so that Dex can be reached both inside and outside the cluster at the same address. 
-    You can get this IP by inspecting the kind network (`docker network inspect kind`) and setting the value as **the next available IP on that network**.
+    You can get this IP by inspecting the kind network (`docker network inspect kind`) and setting the value as **the next available IP on that network**
+    (if you don't already have any kind clusters launched, this will be the first address after the gateway, ie. something like 172.x.0.2).
     
-        * Another way to do so is to execute `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but it won't work unless you exec `make delete-cluster-kind && make cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
+        * Another way to do so is to start the environment with `make cluster-kind` and manually verify the IP address by executing `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but you will need to re-create the cluster after you've updated the config files (below) by executing `make delete-cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
 
     * Then, replace `172.18.0.2` with the previous IP the following files:
+        * [script/deploy-dev.mk](../../script/deploy-dev.mk)
         * [kubeapps-local-dev-additional-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
         * [kubeapps-local-dev-additional-kind-cluster.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
         * [kubeapps-local-dev-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-apiserver-config.yaml)
