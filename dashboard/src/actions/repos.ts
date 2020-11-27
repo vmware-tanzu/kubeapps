@@ -201,12 +201,25 @@ export const fetchRepos = (
       if (!otherNamespaces || !otherNamespaces.length) {
         dispatch(receiveRepos(repos.items));
       } else {
-        let totalRepos = repos.items;
+        const totalRepos = repos.items;
         await Promise.all(
           otherNamespaces.map(async otherNamespace => {
             dispatch(requestRepos(otherNamespace));
             const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
-            totalRepos = totalRepos.concat(otherRepos.items);
+            // Avoid addiing duplicated repos: if two repos have the same uid, skip one.
+            otherRepos.items.forEach((otherRepo: IAppRepository) => {
+              if (otherRepo?.metadata?.uid) {
+                const index = totalRepos.findIndex((r: IAppRepository) =>
+                  r?.metadata?.uid ? otherRepo.metadata.uid === r?.metadata?.uid : -1,
+                );
+                if (index === -1) {
+                  totalRepos.push(otherRepo);
+                }
+              } else {
+                // if no uid, add it anyway
+                totalRepos.push(otherRepo);
+              }
+            });
           }),
         );
         dispatch(receiveRepos(totalRepos));
