@@ -75,7 +75,16 @@ The next sections explain how you can deploy this proxy either using the Kubeapp
 
 ### Using the chart
 
-Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar container if you specify the necessary flags. In a nutshell you need to enable the feature and set the client ID, secret and the IdP URL. The following examples use Google as the Identity Provider, modify the flags below to adapt them:
+Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar container if you specify the necessary flags. In a nutshell you need to enable the feature and set the client ID, secret and the IdP URL. The following examples use Google as the Identity Provider, modify the flags below to adapt them.
+
+> If you are serving Kubeapps under a subpath (eg., "example.com/subpath") you will also need to set the `authProxy.oauthLoginURI` and `authProxy.oauthLogoutURI` flags, as well as the additional flag `--proxy-prefix`. For instance:
+
+```bash
+  # ... other OIDC flags 
+ --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
+ --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
+ --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"\
+```
 
 **Example 1: Using the OIDC provider**
 
@@ -175,6 +184,7 @@ spec:
         - -pass-basic-auth=false
         - -pass-access-token=true
         - -pass-authorization-header=true
+         - proxy-prefix=/oauth2
         image: bitnami/oauth2-proxy
         imagePullPolicy: IfNotPresent
         name: kubeapps-auth-proxy
@@ -203,6 +213,7 @@ The above is a sample deployment, depending on the configuration of the Identity
 - `-client-id`, `-client-secret` and `-oidc-issuer-url`: Client ID, Secret and IdP URL as stated in the section above.
 - `-upstream`: Internal URL for the `kubeapps` service.
 - `-http-address=0.0.0.0:3000`: Listen in all the interfaces.
+- `-proxy-prefix=/oauth2`: If you are serving Kubeapps under a subpath, with this parameter the default prefix can be changed.
 
 **NOTE**: If the identity provider is deployed with a self-signed certificate (which may be the case for Keycloak or Dex) you will need to disable the TLS and cookie verification. For doing so you can add the flags `-ssl-insecure-skip-verify` and `--cookie-secure=false` to the deployment above. You can find more options for `oauth2-proxy` [here](https://oauth2-proxy.github.io/oauth2-proxy/configuration).
 

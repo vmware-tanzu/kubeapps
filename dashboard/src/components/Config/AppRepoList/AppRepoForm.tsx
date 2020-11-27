@@ -8,7 +8,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { definedNamespaces } from "../../../shared/Namespace";
 import { IAppRepository, ISecret, IStoreState } from "../../../shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
@@ -454,7 +453,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </div>
         </div>
       </div>
-      {(namespace === kubeappsNamespace || namespace === definedNamespaces.all) && (
+      {namespace === kubeappsNamespace && (
         <div className="clr-form-description clr-form-separator">
           <strong>NOTE:</strong> This App Repository will be created in the "{kubeappsNamespace}"
           namespace and charts will be available in all namespaces for installation.

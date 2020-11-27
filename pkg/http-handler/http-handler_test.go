@@ -365,3 +365,65 @@ func TestGetOperatorLogo(t *testing.T) {
 		})
 	}
 }
+
+func TestCanI(t *testing.T) {
+	testCases := []struct {
+		name         string
+		body         string
+		allowed      bool
+		err          error
+		expectedCode int
+	}{
+		{
+			name:         "it should return an allowed response",
+			body:         `{"resource":"namespaces","verb":"create"}`,
+			allowed:      true,
+			expectedCode: 200,
+		},
+		{
+			name:         "it should return a forbidden response",
+			body:         `{"resource":"namespaces","verb":"create"}`,
+			allowed:      false,
+			expectedCode: 200,
+		},
+		{
+			name:         "it should return an error for wrong input",
+			body:         "nope",
+			err:          fmt.Errorf("invalid character 'o' in literal null (expecting 'u')"),
+			expectedCode: 500,
+		},
+		{
+			name:         "it returns a json 500 error as a plain string for internal backend errors",
+			body:         `{"resource":"namespaces","verb":"create"}`,
+			err:          fmt.Errorf("bang"),
+			expectedCode: 500,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			function := CanI(&kube.FakeHandler{Can: tc.allowed, Err: tc.err})
+			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/", strings.NewReader(tc.body))
+			req = mux.SetURLVars(req, map[string]string{"cluster": "default"})
+
+			response := httptest.NewRecorder()
+			function(response, req)
+
+			if got, want := response.Code, tc.expectedCode; got != want {
+				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+
+			if response.Code == 200 {
+				allowedRes := allowedResponse{}
+				err := json.NewDecoder(response.Body).Decode(&allowedRes)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				if allowedRes.Allowed != tc.allowed {
+					t.Errorf("got: %v, want: %v", allowedRes.Allowed, tc.allowed)
+				}
+			} else {
+				checkError(t, response, tc.err)
+			}
+		})
+	}
+}

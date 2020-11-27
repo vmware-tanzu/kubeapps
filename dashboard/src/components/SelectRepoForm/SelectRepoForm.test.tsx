@@ -31,7 +31,7 @@ it("should fetch repositories", () => {
   const fetch = jest.fn();
   actions.repos = { ...actions.repos, fetchRepos: fetch };
   mountWrapper(defaultStore, <SelectRepoForm {...defaultProps} />);
-  expect(fetch).toHaveBeenCalledWith(defaultProps.namespace, initialState.config.kubeappsCluster);
+  expect(fetch).toHaveBeenCalledWith(defaultProps.namespace, initialState.config.kubeappsNamespace);
 });
 
 it("should render a loading page if fetching", () => {

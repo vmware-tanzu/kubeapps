@@ -5,7 +5,6 @@ import * as ReactRedux from "react-redux";
 
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
-import { definedNamespaces } from "shared/Namespace";
 import { IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
@@ -182,16 +181,4 @@ it("triggers a deployment when submitting the form", async () => {
     schema,
   );
   expect(push).toHaveBeenCalledWith(url.app.apps.get("default", "default", "my-release"));
-});
-
-it("hides the form if no namespace is selected", async () => {
-  const wrapper = mount(
-    <DeploymentForm
-      {...defaultProps}
-      selected={{ versions, version: versions[0] }}
-      namespace={definedNamespaces.all}
-    />,
-  );
-  expect(wrapper.find(Alert)).toIncludeText("Namespace not selected");
-  expect(wrapper.find("form")).not.toExist();
 });

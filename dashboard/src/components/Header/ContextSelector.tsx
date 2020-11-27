@@ -11,7 +11,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { definedNamespaces } from "shared/Namespace";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
@@ -23,6 +22,7 @@ function ContextSelector() {
   const { clusters } = useSelector((state: IStoreState) => state);
   const currentCluster = clusters.clusters[clusters.currentCluster];
   const namespaceSelected = currentCluster.currentNamespace;
+  const canCreateNS = currentCluster.canCreateNS;
   const error = currentCluster.error;
   const [open, setOpen] = useState(false);
   const [cluster, setStateCluster] = useState(clusters.currentCluster);
@@ -35,7 +35,7 @@ function ContextSelector() {
   useOutsideClick(setOpen, [ref], open);
 
   useEffect(() => {
-    if (namespaceSelected && namespaceSelected !== definedNamespaces.all) {
+    if (namespaceSelected) {
       dispatch(actions.namespace.getNamespace(clusters.currentCluster, namespaceSelected));
     }
   }, [dispatch, namespaceSelected, clusters.currentCluster]);
@@ -98,9 +98,7 @@ function ContextSelector() {
                   </label>
                   <CdsIcon size="sm" shape="file-group" inverse={true} />
                   <label htmlFor="namespaces" className="kubeapps-dropdown-text">
-                    {namespaceSelected === definedNamespaces.all
-                      ? "All Namespaces"
-                      : namespaceSelected}
+                    {namespaceSelected}
                   </label>
                 </div>
               </div>
@@ -155,9 +153,6 @@ function ContextSelector() {
                     </option>
                   );
                 })}
-                <option key="kubeapps-dropdown-namespace-_all" value={definedNamespaces.all}>
-                  All Namespaces
-                </option>
               </select>
             </div>
             <div className="kubeapps-create-new-ns">
@@ -178,7 +173,19 @@ function ContextSelector() {
                   </CdsModalActions>
                 </form>
               </CdsModal>
-              <CdsButton status="inverse" size="sm" action="flat" onClick={openNewNSModal}>
+              <CdsButton
+                disabled={!canCreateNS}
+                title={
+                  canCreateNS
+                    ? "Create a new namespace in the current cluster"
+                    : "You don't have permission to create namespaces on the cluster"
+                }
+                status="inverse"
+                size="sm"
+                action="flat"
+                className="flat-btn"
+                onClick={openNewNSModal}
+              >
                 Create Namespace
               </CdsButton>
             </div>

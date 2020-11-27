@@ -7,7 +7,6 @@ import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IClustersState } from "reducers/cluster";
-import { definedNamespaces } from "shared/Namespace";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import ContextSelector from "./ContextSelector";
 
@@ -77,10 +76,12 @@ it("shows the current cluster", () => {
       foo: {
         currentNamespace: "default",
         namespaces: ["default"],
+        canCreateNS: true,
       },
       bar: {
         currentNamespace: "default",
         namespaces: ["default"],
+        canCreateNS: true,
       },
     },
   } as IClustersState;
@@ -105,27 +106,12 @@ it("shows the current namespace", () => {
   ).toBe("other");
 });
 
-it("includes all namespaces", () => {
-  const clusters = cloneDeep(initialState.clusters);
-  clusters.clusters[clusters.currentCluster].currentNamespace = definedNamespaces.all;
-  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(wrapper.find("label").findWhere(l => l.prop("htmlFor") === "namespaces")).toIncludeText(
-    "All Namespaces",
-  );
-  expect(
-    wrapper
-      .find("select")
-      .find("option")
-      .filterWhere(op => op.prop("value") === definedNamespaces.all),
-  ).toExist();
-});
-
 it("submits the form to create a new namespace", () => {
   const createNamespace = jest.fn();
   actions.namespace.createNamespace = createNamespace;
   const wrapper = mountWrapper(defaultStore, <ContextSelector />);
 
-  const modalButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Create Namespace");
+  const modalButton = wrapper.find(".flat-btn");
   act(() => {
     (modalButton.prop("onClick") as any)();
   });
@@ -152,4 +138,19 @@ it("shows an error creating a namespace", () => {
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
   // The error will be within the modal
   expect(wrapper.find(CdsModal).find(Alert)).toExist();
+});
+
+it("disables the create button if not allowed", () => {
+  const clusters = {
+    currentCluster: "foo",
+    clusters: {
+      foo: {
+        currentNamespace: "default",
+        namespaces: ["default"],
+        canCreateNS: false,
+      },
+    },
+  } as IClustersState;
+  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  expect(wrapper.find(".flat-btn")).toBeDisabled();
 });

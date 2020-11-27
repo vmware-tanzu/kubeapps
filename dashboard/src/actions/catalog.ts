@@ -2,7 +2,6 @@ import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
-import { definedNamespaces } from "../shared/Namespace";
 import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBinding";
 import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
 import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
@@ -174,9 +173,6 @@ export function getBindings(
     const {
       config: { kubeappsCluster },
     } = getState();
-    if (ns && ns === definedNamespaces.all) {
-      ns = undefined;
-    }
     dispatch(requestBindingsWithSecrets());
     try {
       const bindingsWithSecrets = await ServiceBinding.list(kubeappsCluster, ns);
@@ -224,9 +220,6 @@ export function getInstances(
     const {
       clusters: { currentCluster },
     } = getState();
-    if (ns && ns === definedNamespaces.all) {
-      ns = undefined;
-    }
     dispatch(requestInstances());
     try {
       const instances = await ServiceInstance.list(currentCluster, ns);

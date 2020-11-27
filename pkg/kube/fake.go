@@ -21,6 +21,7 @@ import (
 	"io"
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -33,6 +34,7 @@ type FakeHandler struct {
 	Secrets     []*corev1.Secret
 	ValRes      *ValidationResponse
 	Err         error
+	Can         bool
 }
 
 // AsUser fakes user auth
@@ -108,4 +110,9 @@ func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNa
 // GetOperatorLogo fake
 func (c *FakeHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
 	return []byte{}, nil
+}
+
+// CanI fake
+func (c *FakeHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
+	return c.Can, c.Err
 }

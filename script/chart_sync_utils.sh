@@ -106,7 +106,7 @@ commitAndPushChanges() {
         cd -
         return 1
     fi
-    local chartVersion=$(grep -w version: ${chartYaml} | awk '{print $2}')
+    local chartVersion=$(grep -e '^version:' ${chartYaml} | awk '{print $2}')
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key

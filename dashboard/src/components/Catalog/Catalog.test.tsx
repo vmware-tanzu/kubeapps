@@ -4,7 +4,6 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
-import { definedNamespaces } from "shared/Namespace";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -113,15 +112,6 @@ it("behaves like a loading wrapper", () => {
     <Catalog {...populatedProps} charts={{ isFetching: true, items: [], selected: {} } as any} />,
   );
   expect(wrapper.find("LoadingWrapper")).toExist();
-});
-
-it("shows a message if the namespace has not been selected", () => {
-  const wrapper = mountWrapper(
-    defaultStore,
-    <Catalog {...populatedProps} namespace={definedNamespaces.all} />,
-  );
-  expect(wrapper).toIncludeText("A valid namespace should be selected");
-  expect(wrapper.find(".filters-menu")).not.toExist();
 });
 
 describe("filters by the searched item", () => {

@@ -30,6 +30,11 @@
   align-items: center;
 }
 
+.flex-v-center {
+  display: flex;
+  align-items: center;
+}
+
 .notification-icon {
   cds-icon {
     --color: hsl(48, 95%, 48%);
@@ -214,4 +219,12 @@
   textarea {
     width: 100%;
   }
+}
+
+// TODO(andresmgot): workaround to avoid styling issue for a disabled CdsButton
+// https://github.com/vmware/clarity/issues/5315
+// We need to apply the target classes manually
+.flat-btn[disabled] {
+  --cds-token-color-neutral-200: transparent;
+  --border-width: 0rem;
 }

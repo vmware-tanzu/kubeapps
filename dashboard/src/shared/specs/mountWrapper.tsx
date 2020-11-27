@@ -23,7 +23,11 @@ export const initialState = {
   apps: cloneDeep(appsInitialState),
   auth: cloneDeep(authInitialState),
   charts: cloneDeep(chartsInitialState),
-  config: cloneDeep(configInitialState),
+  config: {
+    ...cloneDeep(configInitialState),
+    kubeappsCluster: "default-cluster",
+    kubeappsNamespace: "kubeapps",
+  },
   kube: cloneDeep(kubeInitialState),
   clusters: {
     ...cloneDeep(clustersInitialState),
@@ -32,6 +36,7 @@ export const initialState = {
       "default-cluster": {
         currentNamespace: "default",
         namespaces: ["default", "other"],
+        canCreateNS: true,
       },
     },
   },
