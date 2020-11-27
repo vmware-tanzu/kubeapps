@@ -3,10 +3,19 @@ use std::env;
 use std::process::{Command, Output};
 
 use anyhow::{Context, Result};
+use k8s_openapi::api::core::v1 as corev1;
+use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
+use kube::{
+    api::{Api, Meta, PostParams},
+    Client, Config, CustomResource,
+};
+use log::info;
 use native_tls::Identity;
 use openssl::{pkcs12::Pkcs12, pkey::PKey, x509::X509};
-use serde::Deserialize;
+use reqwest;
+use serde::{Deserialize, Serialize};
 use serde_json;
+use url::Url;
 
 /// pinniped_exchange accepts an authorization header and returns a client cert authentication Identity.
 pub fn pinniped_exchange_for_identity(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str, pinniped_executable: String) -> Result<Identity> {
@@ -77,4 +86,86 @@ struct ExecCredential {
 struct ExecCredentialStatus {
     client_key_data: String,
     client_certificate_data: String,
+}
+
+/// TokenCredentialRequestSpec 
+#[derive(CustomResource, Deserialize, Serialize, Clone, Debug)]
+#[kube(group = "login.concierge.pinniped.dev", version = "v1alpha1", kind = "TokenCredentialRequest", namespaced)]
+#[kube(status = "TokenCredentialRequestStatus")]
+pub struct TokenCredentialRequestSpec {
+    // Bearer token supplied with the credential request.
+    token: String,
+
+    // Reference to an authenticator which can verify this credential request.
+    authenticator: corev1::TypedLocalObjectReference,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TokenCredentialRequestStatus {
+    // A ClusterCredential will be returned for a successful credential request.
+    credential: ClusterCredential,
+
+    // An error message will be returned for an unsuccessful credential request.
+    message: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+/// ClusterCredential is the cluster-specific credential returned on a successful credential request. It
+/// contains either a valid bearer token or a valid TLS certificate and corresponding private key for the cluster.
+pub struct ClusterCredential {
+    // ExpirationTimestamp indicates a time when the provided credentials expire.
+    expiration_timestamp: metav1::Time,
+
+    // Token is a bearer token used by the client for request authentication.
+    token: String,
+
+    // PEM-encoded client TLS certificates (including intermediates, if any).
+    client_certificate_data: String,
+
+    // PEM-encoded private key for the above certificate.
+    client_key_data: String,
+}
+
+// If we need to support the default trait.
+// impl Default for metav1::Time {
+//     fn default() -> Self{ metav1::Time(DateTime::)}
+// }
+
+/// call_pinniped_exchange returns the output from a `pinniped exchange-credentials` CLI call with the provided authorization.
+/// 
+/// TODO: use the API - using the client like this is an inherent security risk
+/// as the client may choos to cache credentials on the assumption that the
+/// client is used by a single user.
+async fn call_pinniped_exchange2(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str) -> Result<TokenCredentialRequest> {
+    let pinniped_namespace = env::var("PINNIPED_NAMESPACE")?;
+
+    // The URL has already been validated.
+    let mut config = Config::new(Url::parse(k8s_api_server_url)?);
+    config.default_ns = pinniped_namespace.clone();
+    let cert = reqwest::Certificate::from_pem(k8s_api_ca_cert_data.as_bytes())?;
+    config.root_cert = Some(vec![cert]);
+    let client = Client::new(config);
+
+    let auth_token = match authorization.to_string().strip_prefix("Bearer ") {
+        Some(a) => a.to_string(),
+        None => authorization.to_string(),
+    };
+    let token_creds: Api<TokenCredentialRequest> = Api::namespaced(client.clone(), &pinniped_namespace);
+    let cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
+        token: auth_token,    
+        authenticator: corev1::TypedLocalObjectReference {
+            name: env::var("PINNIPED_AUTHENTICATOR_NAME")?,
+            kind: env::var("PINNIPED_AUTHENTICATOR_TYPE")?,
+            api_group: Some("authentication.concierge.pinniped.dev".into()),
+        },
+    }); 
+    // TODO: add token and authenticator to request.
+    match token_creds.create(&PostParams::default(), &cred_request).await {
+        Ok(o) => {
+            info!("created {} ({:?})", Meta::name(&o), o.clone().status.unwrap());
+            Ok(o)
+        },
+        // Err(kube::Error::Api(ae)) => assert_eq!(ae.code, 409), // TODO: update to handle auth.
+        Err(e) => Err(e.into()),
+    }
 }

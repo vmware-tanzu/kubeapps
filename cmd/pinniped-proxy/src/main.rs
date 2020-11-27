@@ -5,7 +5,7 @@ use std::pin::Pin;
 use anyhow::{Error, Result};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, Response, Server, StatusCode};
-use log::{debug, error, info};
+use log::{error, info};
 use native_tls::TlsConnector;
 use structopt::StructOpt;
 
