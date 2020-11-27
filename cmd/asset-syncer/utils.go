@@ -331,15 +331,6 @@ func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Char
 	}
 }
 
-func getNameFromLastSlash(name string) string {
-	fixedName := name
-	if strings.Count(name, "/") > 0 {
-		fixedName = name[strings.LastIndex(name, "/")+1:]
-	}
-	log.WithFields(log.Fields{"oldName": name, "fixedName": fixedName}).Debug("getNameFromLastSlash")
-	return fixedName
-}
-
 func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal) error {
 	if c.Icon == "" {
 		log.WithFields(log.Fields{"name": c.Name}).Info("icon not found")
@@ -443,7 +434,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 	// ie., "foo/bar/wordpress" should return
 	// "wordpress" so that it can be retrieved
 	// in the tarball
-	fixedName := getNameFromLastSlash(name)
+	fixedName := path.Base(name)
 
 	readmeFileName := fixedName + "/README.md"
 	valuesFileName := fixedName + "/values.yaml"

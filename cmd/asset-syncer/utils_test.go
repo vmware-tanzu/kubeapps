@@ -494,27 +494,6 @@ func Test_newManager(t *testing.T) {
 
 }
 
-func Test_getNameFromLastSlash(t *testing.T) {
-	tests := []struct {
-		name                   string
-		originalChartName      string
-		originalFixedChartName string
-	}{
-		{"name without slashes", "wordpress", "wordpress"},
-		{"name with 1 slash", "bitnami/wordpress", "wordpress"},
-		{"name with 2 slashes", "/foo/bitnami/wordpress", "wordpress"},
-		{"name with 3 slashes", "faa/foo/bar/wordpress", "wordpress"},
-		{"name with wrong use of slashes", "bar//wordpress", "wordpress"},
-		{"name with spaces", "bar / wordpress", " wordpress"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fixedName := getNameFromLastSlash(tt.originalChartName)
-			assert.Equal(t, fixedName, tt.originalFixedChartName, "fixed chart name")
-		})
-	}
-}
-
 func Test_fetchAndImportIcon(t *testing.T) {
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace"}
 	t.Run("no icon", func(t *testing.T) {
