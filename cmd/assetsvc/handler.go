@@ -100,13 +100,15 @@ func min(a, b int) int {
 
 func uniqChartList(charts []*models.Chart) []*models.Chart {
 	// We will keep track of unique digest:chart to avoid duplicates
-	chartDigests := map[string]bool{}
+	// chartDigests records when we process a specific chart digest for a specific repository.
+	chartDigests := map[string]map[string]bool{}
 	res := []*models.Chart{}
 	for _, c := range charts {
 		digest := c.ChartVersions[0].Digest
 		// Filter out the chart if we've seen the same digest before
-		if _, ok := chartDigests[digest]; !ok {
-			chartDigests[digest] = true
+		if _, ok := chartDigests[digest][c.Repo.Name]; !ok {
+			chartDigests[digest] = map[string]bool{}
+			chartDigests[digest][c.Repo.Name] = true
 			res = append(res, c)
 		}
 	}
