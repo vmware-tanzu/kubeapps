@@ -108,6 +108,28 @@ func Test_getChartFiles(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
+	expectedFiles := models.ChartFiles{ID: "foo"}
+	filesJSON, err := json.Marshal(expectedFiles)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	mock.ExpectQuery("SELECT info FROM files*").
+		WithArgs("namespace", "foo").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(filesJSON)))
+
+	files, err := pgManager.getChartFiles("namespace", "foo")
+	if err != nil {
+		t.Errorf("Found error %v", err)
+	}
+	if !cmp.Equal(files, expectedFiles) {
+		t.Errorf("Unexpected result %v", cmp.Diff(files, expectedFiles))
+	}
+}
+
+func Test_getChartFiles_withSlashes(t *testing.T) {
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
+
 	expectedFiles := models.ChartFiles{ID: "fo/o"}
 	filesJSON, err := json.Marshal(expectedFiles)
 	if err != nil {
@@ -127,6 +149,42 @@ func Test_getChartFiles(t *testing.T) {
 }
 
 func Test_getChartsWithFilters(t *testing.T) {
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
+
+	dbChart := models.Chart{
+		Name: "foo",
+		ChartVersions: []models.ChartVersion{
+			{Version: "2.0.0", AppVersion: "2.0.2"},
+			{Version: "1.0.0", AppVersion: "1.0.1"},
+		},
+	}
+	dbChartJSON, err := json.Marshal(dbChart)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	mock.ExpectQuery("SELECT info FROM charts WHERE info*").
+		WithArgs("foo", "namespace", "kubeapps").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
+
+	charts, err := pgManager.getChartsWithFilters("namespace", "foo", "1.0.0", "1.0.1")
+	if err != nil {
+		t.Errorf("Found error %v", err)
+	}
+	expectedCharts := []*models.Chart{&models.Chart{
+		Name: "foo",
+		ChartVersions: []models.ChartVersion{
+			{Version: "2.0.0", AppVersion: "2.0.2"},
+			{Version: "1.0.0", AppVersion: "1.0.1"},
+		},
+	}}
+	if !cmp.Equal(charts, expectedCharts) {
+		t.Errorf("Unexpected result %v", cmp.Diff(charts, expectedCharts))
+	}
+}
+
+func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -164,7 +222,8 @@ func Test_getChartsWithFilters(t *testing.T) {
 
 func Test_getPaginatedChartList(t *testing.T) {
 	availableCharts := []*models.Chart{
-		{ID: "fo/o", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
+		{ID: "foo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
+		{ID: "fo/o", ChartVersions: []models.ChartVersion{{Digest: "321"}}},
 		{ID: "bar", ChartVersions: []models.ChartVersion{{Digest: "456"}}},
 		{ID: "copyFoo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
 	}
@@ -189,13 +248,13 @@ func Test_getPaginatedChartList(t *testing.T) {
 			expectedTotalPages: 1,
 		},
 		{
-			name:               "one page withuot duplicates",
+			name:               "one page without duplicates",
 			namespace:          "other-namespace",
 			repo:               "",
 			pageNumber:         1,
 			pageSize:           100,
 			showDuplicates:     false,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
+			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
 			expectedTotalPages: 1,
 		},
 		// TODO(andresmgot): several pages
