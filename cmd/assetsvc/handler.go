@@ -223,14 +223,6 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 	response.NewDataResponse(cvr).Write(w)
 }
 
-/////// PARA DESPUES DESAYUNO
-// SEGUIR TRAZA DE ENCODED HASTA EL POSTRGRSMAMAGER
-// NO DECODE ALLI, GUARDAR TAL CUAL
-// PROBAR
-// LUEGO IR A TESTS
-
-// REVISAR SYNCER LUEGO... QUE MIEDITO
-
 // getChartIcon returns the icon for a given chart
 func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 	repo, err := url.PathUnescape(params["repo"])
