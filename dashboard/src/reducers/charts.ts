@@ -53,7 +53,7 @@ const chartsReducer = (
 ): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
-      return { ...state, isFetching: true };
+      return { ...initialState, isFetching: true };
     case getType(actions.charts.receiveCharts):
       return { ...state, isFetching: false, items: action.payload };
     case getType(actions.charts.receiveChartVersions):

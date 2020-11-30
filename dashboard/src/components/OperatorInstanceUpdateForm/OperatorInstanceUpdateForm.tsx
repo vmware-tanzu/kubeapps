@@ -41,6 +41,11 @@ function OperatorInstanceUpdateForm({
   useEffect(() => {
     dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName));
     dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+    // Clean up component state
+    setDefaultValues("");
+    setCurrentValues("");
+    setCRD(undefined);
+    setIcon(placeholder);
   }, [dispatch, cluster, namespace, csvName, crdName, resourceName]);
 
   const {

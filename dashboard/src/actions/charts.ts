@@ -7,6 +7,8 @@ import { FetchError, IChart, IChartVersion, IStoreState, NotFoundError } from ".
 
 export const requestCharts = createAction("REQUEST_CHARTS");
 
+export const requestChart = createAction("REQUEST_CHART");
+
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
   return (charts: IChart[]) => resolve(charts);
 });
@@ -46,6 +48,7 @@ export const errorReadme = createAction("ERROR_README", resolve => {
 
 const allActions = [
   requestCharts,
+  requestChart,
   errorChart,
   receiveCharts,
   receiveChartVersions,
@@ -122,7 +125,7 @@ export function getChartVersion(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      dispatch(requestCharts());
+      dispatch(requestChart());
       const { chartVersion, values, schema } = await getChart(cluster, namespace, id, version);
       if (chartVersion) {
         dispatch(selectChartVersion(chartVersion, values, schema));

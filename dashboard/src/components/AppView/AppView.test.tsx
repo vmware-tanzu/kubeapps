@@ -82,7 +82,7 @@ describe("AppViewComponent", () => {
     expect(wrapper.find(LoadingWrapper)).toExist();
   });
 
-  it("renders only a fetch error if exists", () => {
+  it("renders a fetch error only", () => {
     const wrapper = mountWrapper(
       defaultStore,
       <AppViewComponent {...validProps} error={new FetchError("not found")} />,

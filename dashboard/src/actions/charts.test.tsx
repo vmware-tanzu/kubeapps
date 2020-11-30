@@ -95,7 +95,7 @@ describe("getChartVersion", () => {
   it("gets a chart version", async () => {
     response = { id: "foo" };
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
         payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
@@ -111,7 +111,7 @@ describe("getChartVersion", () => {
   it("gets a chart version with tag", async () => {
     response = { id: "foo" };
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
         payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
@@ -149,7 +149,7 @@ describe("getChartVersion", () => {
       };
     });
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
         payload: { chartVersion: { id: "foo" }, values: "foo: bar", schema: { properties: "foo" } },
@@ -178,7 +178,7 @@ describe("getChartVersion", () => {
       throw new NotFoundError();
     });
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
         payload: { chartVersion: { id: "foo" }, values: "", schema: {} },
@@ -208,7 +208,7 @@ describe("getChartVersion", () => {
     });
 
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestChart) },
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
     ];
     await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));

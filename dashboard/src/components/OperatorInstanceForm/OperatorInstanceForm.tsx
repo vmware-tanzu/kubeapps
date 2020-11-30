@@ -82,6 +82,10 @@ export default function DeploymentFormBody({
 
   useEffect(() => {
     dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+    // Clean up component state
+    setDefaultValues("");
+    setCRD(undefined);
+    setIcon(placeholder);
   }, [cluster, dispatch, namespace, csvName]);
 
   const {

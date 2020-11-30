@@ -73,7 +73,7 @@ describe("renders an error", () => {
     expect(wrapper.find(Alert).html()).toContain("wrong format!");
   });
 
-  it("only renders a fetch error if exists", () => {
+  it("renders a fetch error only", () => {
     const wrapper = shallow(
       <DeploymentForm
         {...defaultProps}
