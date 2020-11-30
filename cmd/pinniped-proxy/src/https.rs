@@ -13,8 +13,8 @@ const INVALID_SCHEME: &'static str = "invalid scheme, https required";
 
 
 /// validate_url returns a result containing the url or an error if it is not valid.
-fn validate_url(u: &str) -> Result<&str> {
-    let result = Url::parse(u);
+fn validate_url(u: String) -> Result<String> {
+    let result = Url::parse(&u);
     match result {
         Ok(url) => match url.scheme() {
             "https" => Ok(u),
@@ -25,9 +25,9 @@ fn validate_url(u: &str) -> Result<&str> {
 }
 
 /// include_client_cert updates a tls connection to be built with a client cert for authentication.
-pub fn include_client_cert<'a>(mut tls_builder: &'a mut TlsConnectorBuilder, request_headers: HeaderMap<HeaderValue>, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str, pinniped_executable: String) -> Result<&'a mut TlsConnectorBuilder> {
+pub async fn include_client_cert<'a>(mut tls_builder: &'a mut TlsConnectorBuilder, request_headers: HeaderMap<HeaderValue>, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str) -> Result<&'a mut TlsConnectorBuilder> {
     if request_headers.contains_key("Authorization") {
-        match pinniped::pinniped_exchange_for_identity(request_headers["Authorization"].to_str()?, k8s_api_server_url, k8s_api_ca_cert_data, pinniped_executable) {
+        match pinniped::pinniped_exchange_for_identity(request_headers["Authorization"].to_str()?, k8s_api_server_url, k8s_api_ca_cert_data).await {
             Ok(identity) => {
                 tls_builder = tls_builder.identity(identity);
             },
@@ -37,16 +37,16 @@ pub fn include_client_cert<'a>(mut tls_builder: &'a mut TlsConnectorBuilder, req
     Ok(tls_builder)
 }
 
-pub fn get_api_server_url(request_headers: &HeaderMap<HeaderValue>) -> Result<&str> {
+pub fn get_api_server_url(request_headers: &HeaderMap<HeaderValue>) -> Result<String> {
     match request_headers.get(HEADER_K8S_API_SERVER_URL) {
         Some(hv) => {
             // Header values can contain invalid chars.
             match hv.to_str() {
-                Ok(hv) => validate_url(hv),
+                Ok(hv) => validate_url(hv.to_string()),
                 Err(e) => Err(anyhow::anyhow!(e)),
             }
         },
-        None => Ok(DEFAULT_K8S_API_SERVER_URL),
+        None => Ok(DEFAULT_K8S_API_SERVER_URL.to_string()),
     }
 }
 
@@ -134,8 +134,8 @@ mod tests {
 
     #[test]
     fn test_valid_url_success() -> Result<()> {
-        let valid_url = "https://example.com:8443";
-        match validate_url(valid_url) {
+        let valid_url = "https://example.com:8443".to_string();
+        match validate_url(valid_url.clone()) {
             Ok(u) => {
                 assert_eq!(valid_url, u);
                 Ok(())
@@ -146,7 +146,7 @@ mod tests {
 
     #[test]
     fn test_valid_url_failure() -> Result<()> {
-        let bad_url = "https://example space com";
+        let bad_url = "https://example space com".to_string();
         match validate_url(bad_url) {
             Ok(u) => anyhow::bail!("got: {}, want: error", u),
             Err(e) => {
@@ -158,7 +158,7 @@ mod tests {
 
     #[test]
     fn test_invalid_protocol() -> Result<()>{
-        let invalid_proto = "ftp://example.com";
+        let invalid_proto = "ftp://example.com".to_string();
         match validate_url(invalid_proto) {
             Ok(u) => anyhow::bail!("got: {}, want: error", u),
             Err(e) => {

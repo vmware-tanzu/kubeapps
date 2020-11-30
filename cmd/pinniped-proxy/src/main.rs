@@ -21,12 +21,9 @@ async fn main() -> Result<()> {
     pretty_env_logger::init();
     let opt = cli::Options::from_args();
 
-    let pinniped_executable = opt.pinniped_executable;
-
     let make_svc = make_service_fn(|_conn| {
         // These strings are shadowed inside the closure so that they are captured for reference
         // (without being moved/owned) within the async closure below (as generators/async blocks are stackless).
-        let pinniped_executable = pinniped_executable.clone();
         async {
             // Normally the return type of the service_fn closure isn't required, but I was unable to find
             // a way to handle errors separately without explicitly defining the return type. If you
@@ -40,7 +37,7 @@ async fn main() -> Result<()> {
                     Err(e) => return handle_error(e, logging::request_log_data(&req)),
                 };
 
-                req = proxy::rewrite_request(req, k8s_api_server_url);
+                req = proxy::rewrite_request(req, &k8s_api_server_url);
                 let log_data = logging::request_log_data(&req);
 
                 let k8s_api_cert_auth_data = match https::get_api_server_cert_auth_data(&headers) {
@@ -58,32 +55,36 @@ async fn main() -> Result<()> {
                     },
                 };
 
-                // We need to construct the TlsConnector for each request so that we can set
-                // the client cert. It'd be nice if we could do the construction once and just
-                // clone to add the client cert?
-                let mut tls_builder = &mut TlsConnector::builder();
-                tls_builder = tls_builder.add_root_certificate(k8s_api_cert.clone());
-                
-                // The cert data is converted to a &str without checking the error since we already
-                // know from above that it's a valid cert.
-                tls_builder = match https::include_client_cert(tls_builder, req.headers().clone(), k8s_api_server_url, std::str::from_utf8(&k8s_api_cert_auth_data).unwrap(), pinniped_executable.clone()) {
-                    Ok(b) => b,
-                    Err(e) => {
-                        error!("{:#?}", e);
-                        return handle_error(e, log_data);
-                    },
-                };
-
-                let conn = match https::make_https_connector(tls_builder) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        error!("{:#?}", e);
-                        return handle_error(e, log_data);
-                    },
-                };
-
-                let client = Client::builder().build::<_, Body>(conn);
                 Box::pin(async move {
+                    // We need to construct the TlsConnector for each request so that we can set
+                    // the client cert. It'd be nice if we could do the construction once and just
+                    // clone to add the client cert?
+                    let mut tls_builder = &mut TlsConnector::builder();
+                    tls_builder = tls_builder.add_root_certificate(k8s_api_cert.clone());
+                    // The cert data is converted to a &str without checking the error since we already
+                    // know from above that it's a valid cert.
+                    tls_builder = match https::include_client_cert(tls_builder, req.headers().clone(), &k8s_api_server_url, std::str::from_utf8(&k8s_api_cert_auth_data).unwrap()).await {
+                        Ok(b) => b,
+                        Err(e) => {
+                            error!("{:#?}", e);
+                            let mut response = Response::new(Body::from(e.to_string()));
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            return Ok(response);
+                        },
+                    };
+
+                
+                    let conn = match https::make_https_connector(tls_builder) {
+                        Ok(c) => c,
+                        Err(e) => {
+                            error!("{:#?}", e);
+                            let mut response = Response::new(Body::from(e.to_string()));
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            return Ok(response);
+                        },
+                    };
+
+                    let client = Client::builder().build::<_, Body>(conn);
                     let mut log_data = & mut log_data.clone();
                     match client.request(req).await {
                         Ok(r) => {

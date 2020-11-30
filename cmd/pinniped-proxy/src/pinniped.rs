@@ -1,12 +1,11 @@
-use std::collections::HashMap;
 use std::env;
-use std::process::{Command, Output};
 
 use anyhow::{Context, Result};
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
+use k8s_openapi::Metadata;
 use kube::{
-    api::{Api, Meta, PostParams},
+    api::{Api, PostParams},
     Client, Config, CustomResource,
 };
 use log::info;
@@ -18,74 +17,35 @@ use serde_json;
 use url::Url;
 
 /// pinniped_exchange accepts an authorization header and returns a client cert authentication Identity.
-pub fn pinniped_exchange_for_identity(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str, pinniped_executable: String) -> Result<Identity> {
-    let exchange_output = call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data, &pinniped_executable)?;
-    if !exchange_output.status.success() {
-        let err_msg: String;
-        match exchange_output.status.code() {
-            Some(code) => err_msg = format!("{} exited with status code: {}", pinniped_executable, code),
-            None => err_msg = format!("{} terminated by signal", pinniped_executable),
-        }
-        return Err(anyhow::anyhow!(format!("{}\nstdout: {}\nstderr: {}", err_msg, String::from_utf8_lossy(&exchange_output.stdout), String::from_utf8_lossy(&exchange_output.stderr))));
-    }
-
-    identity_for_exchange(exchange_output.stdout)
-}
-
-/// call_pinniped_exchange returns the output from a `pinniped exchange-credentials` CLI call with the provided authorization.
-/// 
-/// TODO: use the API - using the client like this is an inherent security risk
-/// as the client may choos to cache credentials on the assumption that the
-/// client is used by a single user.
-fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str, pinniped_executable: &str) -> Result<Output> {
-    let mut filtered_env: HashMap<String, String> = env::vars().filter(
-        |&(ref k, _)|
-        k == "PINNIPED_NAMESPACE" || k == "PINNIPED_AUTHENTICATOR_TYPE" || k == "PINNIPED_AUTHENTICATOR_NAME" || k == "HOME"
-    ).collect();
-
-    let auth = match authorization.to_string().strip_prefix("Bearer ") {
-        Some(a) => a.to_string(),
-        None => authorization.to_string(),
-    };
-
-    filtered_env.insert("PINNIPED_TOKEN".to_string(), auth);
-    filtered_env.insert("PINNIPED_CA_BUNDLE".to_string(), k8s_api_ca_cert_data.to_string());
-    filtered_env.insert("PINNIPED_K8S_API_ENDPOINT".to_string(), k8s_api_server_url.to_string());
-
-    Command::new(pinniped_executable)
-        .arg("exchange-credential")
-        .env_clear()
-        .envs(&filtered_env)
-        .output()
-        .with_context(|| "Extra info")
+pub async fn pinniped_exchange_for_identity(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str) -> Result<Identity> {
+    let credential_request = call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data).await.context("Failed to exchange credentials")?;
+    match credential_request.status {
+        Some(s) => {
+            match s.credential {
+                Some(c) => return identity_for_exchange(&c),
+                None => match s.message {
+                    // Handle getting a 403 back for "authentication failed" message.
+                    Some(m) => return Err(anyhow::anyhow!(m)),
+                    None => return Err(anyhow::anyhow!("response status neither an error msg or a credential: {:#?}", s)),
+                }
+            }
+        },
+        None => return Err(anyhow::anyhow!("pinniped credential request did not include status: {:#?}", credential_request))
+    }  
 }
 
 /// identity_for_exchange parses the JSON output of the credential exchange and returns the Identity.
 /// 
 /// Note: to create an identity, need to go via a pkcs12 currently.
 /// https://github.com/sfackler/rust-native-tls/issues/27#issuecomment-324262673
-fn identity_for_exchange(stdout: Vec<u8>) -> Result<Identity> {
-
-    let exec_cred : ExecCredential = serde_json::from_str(&String::from_utf8_lossy(&stdout))?;
-    let pkey = PKey::private_key_from_pem(exec_cred.status.client_key_data.as_bytes())?;
-    let x509 = X509::from_pem(exec_cred.status.client_certificate_data.as_bytes())?;
+fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
+    let pkey = PKey::private_key_from_pem(cred.client_key_data.as_bytes())?;
+    let x509 = X509::from_pem(cred.client_certificate_data.as_bytes())?;
 
     let pkcs_cert = Pkcs12::builder()
         .build("", "friendly-name", &pkey, &x509)?;
     let identity = Identity::from_pkcs12(&pkcs_cert.to_der()?, "")?;
     Ok(identity)
-}
-
-#[derive(Deserialize)]
-struct ExecCredential {
-    status: ExecCredentialStatus,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ExecCredentialStatus {
-    client_key_data: String,
-    client_certificate_data: String,
 }
 
 /// TokenCredentialRequestSpec 
@@ -94,7 +54,7 @@ struct ExecCredentialStatus {
 #[kube(status = "TokenCredentialRequestStatus")]
 pub struct TokenCredentialRequestSpec {
     // Bearer token supplied with the credential request.
-    token: String,
+    token: Option<String>,
 
     // Reference to an authenticator which can verify this credential request.
     authenticator: corev1::TypedLocalObjectReference,
@@ -103,21 +63,22 @@ pub struct TokenCredentialRequestSpec {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TokenCredentialRequestStatus {
     // A ClusterCredential will be returned for a successful credential request.
-    credential: ClusterCredential,
+    credential: Option<ClusterCredential>,
 
     // An error message will be returned for an unsuccessful credential request.
-    message: String,
+    message: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 /// ClusterCredential is the cluster-specific credential returned on a successful credential request. It
 /// contains either a valid bearer token or a valid TLS certificate and corresponding private key for the cluster.
+#[serde(rename_all = "camelCase")]
 pub struct ClusterCredential {
     // ExpirationTimestamp indicates a time when the provided credentials expire.
     expiration_timestamp: metav1::Time,
 
     // Token is a bearer token used by the client for request authentication.
-    token: String,
+    token: Option<String>,
 
     // PEM-encoded client TLS certificates (including intermediates, if any).
     client_certificate_data: String,
@@ -136,11 +97,10 @@ pub struct ClusterCredential {
 /// TODO: use the API - using the client like this is an inherent security risk
 /// as the client may choos to cache credentials on the assumption that the
 /// client is used by a single user.
-async fn call_pinniped_exchange2(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str) -> Result<TokenCredentialRequest> {
+async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &str) -> Result<TokenCredentialRequest> {
     let pinniped_namespace = env::var("PINNIPED_NAMESPACE")?;
 
-    // The URL has already been validated.
-    let mut config = Config::new(Url::parse(k8s_api_server_url)?);
+    let mut config = Config::new(Url::parse(k8s_api_server_url).context("Failed parsing url for exchange")?);
     config.default_ns = pinniped_namespace.clone();
     let cert = reqwest::Certificate::from_pem(k8s_api_ca_cert_data.as_bytes())?;
     config.root_cert = Some(vec![cert]);
@@ -151,21 +111,26 @@ async fn call_pinniped_exchange2(authorization: &str, k8s_api_server_url: &str, 
         None => authorization.to_string(),
     };
     let token_creds: Api<TokenCredentialRequest> = Api::namespaced(client.clone(), &pinniped_namespace);
-    let cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
-        token: auth_token,    
+    let mut cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
+        token: Some(auth_token),    
         authenticator: corev1::TypedLocalObjectReference {
             name: env::var("PINNIPED_AUTHENTICATOR_NAME")?,
-            kind: env::var("PINNIPED_AUTHENTICATOR_TYPE")?,
+            kind: "WebhookAuthenticator".into(), //env::var("PINNIPED_AUTHENTICATOR_TYPE")?,
             api_group: Some("authentication.concierge.pinniped.dev".into()),
         },
-    }); 
-    // TODO: add token and authenticator to request.
+    });
+    // The pinniped authenticator cache requires the namespace of the request to be included
+    // explicitly, even if the client is limited to a specific namespace.
+    cred_request.metadata_mut().namespace = Some(pinniped_namespace);
+
+    info!("{}", serde_json::to_string(&cred_request).unwrap());
     match token_creds.create(&PostParams::default(), &cred_request).await {
         Ok(o) => {
-            info!("created {} ({:?})", Meta::name(&o), o.clone().status.unwrap());
+            info!("created {:?}", o.clone().status.unwrap());
             Ok(o)
         },
-        // Err(kube::Error::Api(ae)) => assert_eq!(ae.code, 409), // TODO: update to handle auth.
-        Err(e) => Err(e.into()),
+        Err(e) => {
+            Err(anyhow::anyhow!("err creating token exchange: {:#?}\n{}", serde_json::to_string(&cred_request).unwrap(), e))
+        },
     }
 }

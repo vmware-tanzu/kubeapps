@@ -15,12 +15,4 @@ pub struct Options {
         help = "Specify the port on which pinniped-proxy listens."
     )]
     pub port: u16, 
-
-    #[structopt(
-        long = "pinniped-executable",
-        short = "x",
-        default_value = "pinniped",
-        help = "The name of the executable, including the full path if required",
-    )]
-    pub pinniped_executable: String,
 }
