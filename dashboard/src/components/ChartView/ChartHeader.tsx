@@ -31,8 +31,8 @@ export default function ChartHeader({
     <PageHeader
       title={
         releaseName
-          ? `${releaseName} (${chartAttrs.repo.name}/${chartAttrs.name})`
-          : `${chartAttrs.repo.name}/${chartAttrs.name}`
+          ? `${releaseName} (${chartAttrs.repo.name}/${decodeURIComponent(chartAttrs.name)})`
+          : `${chartAttrs.repo.name}/${decodeURIComponent(chartAttrs.name)}`
       }
       titleSize="md"
       icon={chartAttrs.icon ? `api/assetsvc/${trimStart(chartAttrs.icon, "/")}` : placeholder}
