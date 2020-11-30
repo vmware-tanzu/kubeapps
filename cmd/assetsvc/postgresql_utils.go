@@ -31,6 +31,9 @@ import (
 // TODO(mnelson): standardise error API for package.
 var ErrChartVersionNotFound = errors.New("chart version not found")
 
+// Temporal flag
+var enableFallbackQueryMode = true
+
 type postgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
 }
@@ -101,12 +104,16 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 }
 
 func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (models.Chart, error) {
+	return m.getChartWithFallback(namespace, chartIDUnescaped, enableFallbackQueryMode)
+}
+
+func (m *postgresAssetManager) getChartWithFallback(namespace, chartIDUnescaped string, withFallback bool) (models.Chart, error) {
 	var chart models.ChartIconString
 
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartIDUnescaped)
 	if err != nil {
 		splittedID := strings.Split(chartIDUnescaped, "/")
-		if len(splittedID) == 2 {
+		if withFallback == true && len(splittedID) == 2 {
 			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
 			// this query search 'jfrog <whatever> wordpress'. If multiple results are found, returns just the first one
@@ -143,11 +150,15 @@ func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (mod
 }
 
 func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, version string) (models.Chart, error) {
+	return m.getChartVersionWithFallback(namespace, chartIDUnescaped, version, enableFallbackQueryMode)
+}
+
+func (m *postgresAssetManager) getChartVersionWithFallback(namespace, chartIDUnescaped, version string, withFallback bool) (models.Chart, error) {
 	var chart models.Chart
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartIDUnescaped)
 	if err != nil {
 		splittedID := strings.Split(chartIDUnescaped, "/")
-		if len(splittedID) == 2 {
+		if withFallback == true && len(splittedID) == 2 {
 			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
 			// this query search 'jfrog <whatever> wordpress'. If multiple results are found, returns just the first one
@@ -175,11 +186,15 @@ func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, vers
 }
 
 func (m *postgresAssetManager) getChartFiles(namespace, filesIDUnescaped string) (models.ChartFiles, error) {
+	return m.getChartFilesWithFallback(namespace, filesIDUnescaped, enableFallbackQueryMode)
+}
+
+func (m *postgresAssetManager) getChartFilesWithFallback(namespace, filesIDUnescaped string, withFallback bool) (models.ChartFiles, error) {
 	var chartFiles models.ChartFiles
 	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesIDUnescaped)
 	if err != nil {
 		splittedID := strings.Split(filesIDUnescaped, "/")
-		if len(splittedID) == 2 {
+		if withFallback == true && len(splittedID) == 2 {
 			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
 			// this query search 'jfrog <whatever> wordpress'. If multiple results are found, returns just the first one

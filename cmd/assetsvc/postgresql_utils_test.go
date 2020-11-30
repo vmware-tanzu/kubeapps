@@ -130,13 +130,13 @@ func Test_getChartFiles_withSlashes(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
-	expectedFiles := models.ChartFiles{ID: "fo/o"}
+	expectedFiles := models.ChartFiles{ID: "fo%2Fo"}
 	filesJSON, err := json.Marshal(expectedFiles)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 	mock.ExpectQuery("SELECT info FROM files*").
-		WithArgs("namespace", "fo/o").
+		WithArgs("namespace", "fo%2Fo").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(filesJSON)))
 
 	files, err := pgManager.getChartFiles("namespace", "fo%2Fo")
@@ -189,7 +189,7 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 	defer cleanup()
 
 	dbChart := models.Chart{
-		Name: "fo/o",
+		Name: "fo%2Fo",
 		ChartVersions: []models.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
 			{Version: "1.0.0", AppVersion: "1.0.1"},
@@ -201,7 +201,7 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 	}
 
 	mock.ExpectQuery("SELECT info FROM charts WHERE info*").
-		WithArgs("fo/o", "namespace", "kubeapps").
+		WithArgs("fo%2Fo", "namespace", "kubeapps").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
 	charts, err := pgManager.getChartsWithFilters("namespace", "fo%2Fo", "1.0.0", "1.0.1")
@@ -209,7 +209,7 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 		t.Errorf("Found error %v", err)
 	}
 	expectedCharts := []*models.Chart{&models.Chart{
-		Name: "fo/o",
+		Name: "fo%2Fo",
 		ChartVersions: []models.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
 			{Version: "1.0.0", AppVersion: "1.0.1"},
@@ -223,7 +223,7 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 func Test_getPaginatedChartList(t *testing.T) {
 	availableCharts := []*models.Chart{
 		{ID: "foo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
-		{ID: "fo/o", ChartVersions: []models.ChartVersion{{Digest: "321"}}},
+		{ID: "fo%2Fo", ChartVersions: []models.ChartVersion{{Digest: "321"}}},
 		{ID: "bar", ChartVersions: []models.ChartVersion{{Digest: "456"}}},
 		{ID: "copyFoo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
 	}
