@@ -1,5 +1,6 @@
 import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
+import { trimStart } from "lodash";
 import React from "react";
 import { IChartAttributes, IChartVersion } from "shared/types";
 import placeholder from "../../placeholder.png";
@@ -26,11 +27,6 @@ export default function ChartHeader({
   deployButton,
   selectedVersion,
 }: IChartHeaderProps) {
-  let icon = placeholder;
-  if (chartAttrs?.icon) {
-    icon = chartAttrs.icon.startsWith("/") ? chartAttrs.icon : "/".concat(chartAttrs.icon);
-    icon = "api/assetsvc".concat(icon);
-  }
   return (
     <PageHeader
       title={
@@ -39,7 +35,7 @@ export default function ChartHeader({
           : `${chartAttrs.repo.name}/${chartAttrs.name}`
       }
       titleSize="md"
-      icon={icon}
+      icon={chartAttrs.icon ? `api/assetsvc/${trimStart(chartAttrs.icon, "/")}` : placeholder}
       helm={true}
       version={
         <>
