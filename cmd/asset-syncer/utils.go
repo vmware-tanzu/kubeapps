@@ -193,6 +193,7 @@ func newChart(entry helmrepo.ChartVersions, r *models.Repo) models.Chart {
 	copier.Copy(&c, entry[0])
 	copier.Copy(&c.ChartVersions, entry)
 	c.Repo = r
+	c.Name = url.PathEscape(c.Name) // escaped chart name eg. foo/bar becomes foo%2Fbar
 	c.ID = fmt.Sprintf("%s/%s", r.Name, c.Name)
 	c.Category = entry[0].Annotations["category"]
 	return c
@@ -403,8 +404,8 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 	}
 	log.WithFields(log.Fields{"name": name, "version": cv.Version}).Debug("fetching files")
 
-	url := chartTarballURL(r, cv)
-	req, err := http.NewRequest("GET", url, nil)
+	chartTarballURL := chartTarballURL(r, cv)
+	req, err := http.NewRequest("GET", chartTarballURL, nil)
 	if err != nil {
 		return err
 	}
@@ -430,11 +431,17 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 
 	tarf := tar.NewReader(gzf)
 
+	// decode escaped characters
+	// ie., "foo%2Fbar" should return "foo/bar"
+	decodedName, err := url.PathUnescape(name)
+	if err != nil {
+		log.Errorf("Cannot decode %s", name)
+		return err
+	}
+
 	// get last part of the name
-	// ie., "foo/bar/wordpress" should return
-	// "wordpress" so that it can be retrieved
-	// in the tarball
-	fixedName := path.Base(name)
+	// ie., "foo/bar" should return "bar"
+	fixedName := path.Base(decodedName) // get
 
 	readmeFileName := fixedName + "/README.md"
 	valuesFileName := fixedName + "/values.yaml"

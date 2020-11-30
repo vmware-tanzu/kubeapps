@@ -20,7 +20,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/kubeapps/common/datastore"
@@ -103,14 +102,10 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 
 func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (models.Chart, error) {
 	var chart models.ChartIconString
-	chartID, err := url.PathUnescape(chartIDUnescaped)
-	if err != nil {
-		return models.Chart{}, err
-	}
 
-	err = m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartIDUnescaped)
 	if err != nil {
-		splittedID := strings.Split(chartID, "/")
+		splittedID := strings.Split(chartIDUnescaped, "/")
 		if len(splittedID) == 2 {
 			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
@@ -148,14 +143,10 @@ func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (mod
 }
 
 func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, version string) (models.Chart, error) {
-	chartID, err := url.PathUnescape(chartIDUnescaped)
-	if err != nil {
-		return models.Chart{}, err
-	}
 	var chart models.Chart
-	err = m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartIDUnescaped)
 	if err != nil {
-		splittedID := strings.Split(chartID, "/")
+		splittedID := strings.Split(chartIDUnescaped, "/")
 		if len(splittedID) == 2 {
 			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
@@ -184,14 +175,10 @@ func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, vers
 }
 
 func (m *postgresAssetManager) getChartFiles(namespace, filesIDUnescaped string) (models.ChartFiles, error) {
-	filesID, err := url.PathUnescape(filesIDUnescaped)
-	if err != nil {
-		return models.ChartFiles{}, err
-	}
 	var chartFiles models.ChartFiles
-	err = m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
+	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesIDUnescaped)
 	if err != nil {
-		splittedID := strings.Split(filesID, "/")
+		splittedID := strings.Split(filesIDUnescaped, "/")
 		if len(splittedID) == 2 {
 			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
@@ -218,12 +205,8 @@ func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, 
 }
 
 func (m *postgresAssetManager) getChartsWithFilters(namespace, chartNameUnescaped, version, appVersion string) ([]*models.Chart, error) {
-	chartName, err := url.PathUnescape(chartNameUnescaped)
-	if err != nil {
-		return []*models.Chart{}, err
-	}
 	clauses := []string{"info ->> 'name' = $1"}
-	queryParams := []interface{}{chartName, namespace}
+	queryParams := []interface{}{chartNameUnescaped, namespace}
 	if namespace != dbutils.AllNamespaces {
 		queryParams = append(queryParams, m.GetKubeappsNamespace())
 		clauses = append(clauses, "(repo_namespace = $2 OR repo_namespace = $3)")
