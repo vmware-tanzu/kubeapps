@@ -103,11 +103,18 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 
 func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (models.Chart, error) {
 	var chart models.ChartIconString
-	chartID, _ := url.PathUnescape(chartIDUnescaped)
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
+	chartID, err := url.PathUnescape(chartIDUnescaped)
+	if err != nil {
+		return models.Chart{}, err
+	}
+
+	err = m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		splittedID := strings.Split(chartID, "/")
 		if len(splittedID) == 2 {
+			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
+			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
+			// this query search 'jfrog <whatever> wordpress'. If multiple results are found, returns just the first one
 			alikeChartID := splittedID[0] + "%" + splittedID[1]
 			err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id ILIKE $2", dbutils.ChartTable), namespace, alikeChartID)
 			if err != nil {
@@ -141,12 +148,18 @@ func (m *postgresAssetManager) getChart(namespace, chartIDUnescaped string) (mod
 }
 
 func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, version string) (models.Chart, error) {
-	chartID, _ := url.PathUnescape(chartIDUnescaped)
+	chartID, err := url.PathUnescape(chartIDUnescaped)
+	if err != nil {
+		return models.Chart{}, err
+	}
 	var chart models.Chart
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
+	err = m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		splittedID := strings.Split(chartID, "/")
 		if len(splittedID) == 2 {
+			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
+			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
+			// this query search 'jfrog <whatever> wordpress'. If multiple results are found, returns just the first one
 			alikeChartID := splittedID[0] + "%" + splittedID[1]
 			err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id ILIKE $2", dbutils.ChartTable), namespace, alikeChartID)
 			if err != nil {
@@ -171,12 +184,18 @@ func (m *postgresAssetManager) getChartVersion(namespace, chartIDUnescaped, vers
 }
 
 func (m *postgresAssetManager) getChartFiles(namespace, filesIDUnescaped string) (models.ChartFiles, error) {
-	filesID, _ := url.PathUnescape(filesIDUnescaped)
+	filesID, err := url.PathUnescape(filesIDUnescaped)
+	if err != nil {
+		return models.ChartFiles{}, err
+	}
 	var chartFiles models.ChartFiles
-	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
+	err = m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
 		splittedID := strings.Split(filesID, "/")
 		if len(splittedID) == 2 {
+			// fallback query when a char/file is not being retrieved it occurs when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
+			// and helms only gives 'bitnami/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
+			// this query search 'jfrog <whatever> wordpress'. If multiple results are found, returns just the first one
 			alikeFilesID := splittedID[0] + "%" + splittedID[1]
 			err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id ILIKE $2", dbutils.ChartFilesTable), namespace, alikeFilesID)
 			if err != nil {
@@ -199,7 +218,10 @@ func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, 
 }
 
 func (m *postgresAssetManager) getChartsWithFilters(namespace, chartNameUnescaped, version, appVersion string) ([]*models.Chart, error) {
-	chartName, _ := url.PathUnescape(chartNameUnescaped)
+	chartName, err := url.PathUnescape(chartNameUnescaped)
+	if err != nil {
+		return []*models.Chart{}, err
+	}
 	clauses := []string{"info ->> 'name' = $1"}
 	queryParams := []interface{}{chartName, namespace}
 	if namespace != dbutils.AllNamespaces {
