@@ -251,7 +251,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 			repo:               "",
 			pageNumber:         1,
 			pageSize:           100,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
+			expectedCharts:     availableCharts,
 			expectedTotalPages: 1,
 		},
 		// TODO(andresmgot): several pages
