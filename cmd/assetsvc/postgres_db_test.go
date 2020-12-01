@@ -348,7 +348,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 			},
 		},
 		{
-			name: "it removes duplicates when requested",
+			name: "it does not remove duplicates",
 			existingCharts: map[string]map[string][]models.Chart{
 				namespaceName: map[string][]models.Chart{
 					repoName: []models.Chart{
@@ -363,6 +363,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 			namespace: namespaceName,
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
+				&models.Chart{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
 			},
 		},
 	}
