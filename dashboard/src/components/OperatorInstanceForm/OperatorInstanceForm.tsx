@@ -81,6 +81,10 @@ export default function DeploymentFormBody({
   const [icon, setIcon] = useState(placeholder);
 
   useEffect(() => {
+    // Clean up component state
+    setDefaultValues("");
+    setCRD(undefined);
+    setIcon(placeholder);
     dispatch(actions.operators.getCSV(cluster, namespace, csvName));
   }, [cluster, dispatch, namespace, csvName]);
 
@@ -139,15 +143,17 @@ export default function DeploymentFormBody({
     }
   };
 
+  if (fetchError) {
+    return (
+      <Alert theme="danger">
+        An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
+      </Alert>
+    );
+  }
   return (
     <section>
       <OperatorHeader title={`Create ${crd?.kind}`} icon={icon} />
       <section>
-        {fetchError && (
-          <Alert theme="danger">
-            An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
-          </Alert>
-        )}
         {createError && (
           <Alert theme="danger">
             An error occurred while creating the instance: {createError.message}

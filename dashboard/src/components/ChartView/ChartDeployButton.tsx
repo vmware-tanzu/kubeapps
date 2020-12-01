@@ -8,6 +8,7 @@ import { app } from "../../shared/url";
 export interface IChartDeployButtonProps {
   version: IChartVersion;
   namespace: string;
+  kubeappsNamespace: string;
 }
 
 function ChartDeployButton(props: IChartDeployButtonProps) {
@@ -23,6 +24,7 @@ function ChartDeployButton(props: IChartDeployButtonProps) {
       props.namespace,
       props.version,
       props.version.attributes.version,
+      props.kubeappsNamespace,
     );
     dispatch(push(newAppURL));
   }

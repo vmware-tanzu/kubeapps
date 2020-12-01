@@ -3,9 +3,10 @@ import * as Moniker from "moniker-native";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
 
+import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { FetchError, IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm, { IDeploymentFormProps } from "./DeploymentForm";
@@ -24,6 +25,7 @@ const defaultProps = {
   getChartVersion: jest.fn(),
   namespace: "default",
   cluster: "default",
+  kubeappsNamespace: "kubeapps",
 } as IDeploymentFormProps;
 const versions = [
   { id: "foo", attributes: { version: "1.2.3" }, relationships: { chart: { data: { repo: {} } } } },
@@ -69,6 +71,23 @@ describe("renders an error", () => {
     );
     expect(wrapper.find(Alert).exists()).toBe(true);
     expect(wrapper.find(Alert).html()).toContain("wrong format!");
+  });
+
+  it("renders a fetch error only", () => {
+    const wrapper = shallow(
+      <DeploymentForm
+        {...defaultProps}
+        selected={
+          {
+            version: { attributes: {}, relationships: { chart: { data: {} } } },
+            versions: [{ id: "foo", attributes: {} }],
+          } as IChartState["selected"]
+        }
+        error={new FetchError("not found")}
+      />,
+    );
+    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(ChartHeader)).not.toExist();
   });
 });
 
