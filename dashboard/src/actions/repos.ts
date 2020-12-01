@@ -205,10 +205,12 @@ export const fetchRepos = (
         let totalRepos = repos.items;
         await Promise.all(
           otherNamespaces.map(async otherNamespace => {
-            dispatch(requestRepos(otherNamespace));
-            const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
-            // Avoid adding duplicated repos: if two repos have the same uid, filter out
-            totalRepos = uniqBy(totalRepos.concat(otherRepos.items), "metadata.uid");
+            if (namespace !== otherNamespace) {
+              dispatch(requestRepos(otherNamespace));
+              const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
+              // Avoid adding duplicated repos: if two repos have the same uid, filter out
+              totalRepos = uniqBy(totalRepos.concat(otherRepos.items), "metadata.uid");
+            }
           }),
         );
         dispatch(receiveRepos(totalRepos));
