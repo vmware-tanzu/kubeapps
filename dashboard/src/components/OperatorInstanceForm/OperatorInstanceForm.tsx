@@ -81,11 +81,11 @@ export default function DeploymentFormBody({
   const [icon, setIcon] = useState(placeholder);
 
   useEffect(() => {
-    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
     // Clean up component state
     setDefaultValues("");
     setCRD(undefined);
     setIcon(placeholder);
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
   }, [cluster, dispatch, namespace, csvName]);
 
   const {

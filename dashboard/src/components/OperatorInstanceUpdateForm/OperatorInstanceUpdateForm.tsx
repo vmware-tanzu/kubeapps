@@ -39,13 +39,13 @@ function OperatorInstanceUpdateForm({
   const [icon, setIcon] = useState(placeholder);
 
   useEffect(() => {
-    dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName));
-    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
     // Clean up component state
     setDefaultValues("");
     setCurrentValues("");
     setCRD(undefined);
     setIcon(placeholder);
+    dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName));
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
   }, [dispatch, cluster, namespace, csvName, crdName, resourceName]);
 
   const {
