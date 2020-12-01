@@ -102,7 +102,7 @@ func Test_chartAttributes(t *testing.T) {
 			if len(tt.chart.RawIcon) == 0 {
 				assert.Equal(t, len(c.Icon), 0, "icon url should be undefined")
 			} else {
-				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/assets/"+getChartID(tt.chart.Repo.Name, tt.chart.Name)+"/logo", c.Icon, "the icon url should be the same")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/assets/"+tt.chart.ID+"/logo", c.Icon, "the icon url should be the same")
 				assert.Equal(t, tt.chart.IconContentType, c.IconContentType, "the icon content type should be the same")
 			}
 		})
@@ -125,8 +125,8 @@ func Test_chartVersionAttributes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cv := chartVersionAttributes(namespace, tt.chart.Repo.Name, tt.chart.Name, tt.chart.ChartVersions[0])
 			assert.Equal(t, cv.Version, tt.chart.ChartVersions[0].Version, "version string should be the same")
-			assert.Equal(t, cv.Readme, pathPrefix+"/ns/"+namespace+"/assets/"+getChartID(testRepo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[0].Version+"/README.md", "README.md resource path should be the same")
-			assert.Equal(t, cv.Values, pathPrefix+"/ns/"+namespace+"/assets/"+getChartID(testRepo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[0].Version+"/values.yaml", "values.yaml resource path should be the same")
+			assert.Equal(t, cv.Readme, pathPrefix+"/ns/"+namespace+"/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/README.md", "README.md resource path should be the same")
+			assert.Equal(t, cv.Values, pathPrefix+"/ns/"+namespace+"/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/values.yaml", "values.yaml resource path should be the same")
 		})
 	}
 }
@@ -156,7 +156,7 @@ func Test_newChartResponse(t *testing.T) {
 			assert.Equal(t, cResponse.Type, "chart", "response type is chart")
 			assert.Equal(t, cResponse.ID, tt.chart.ID, "chart ID should be the same")
 			assert.Equal(t, cResponse.Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
-			assert.Equal(t, cResponse.Links.(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+getChartID(testRepo.Name, tt.chartName), "self link should be the same")
+			assert.Equal(t, cResponse.Links.(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, "self link should be the same")
 			// We don't send the raw icon down the wire.
 			assert.Nil(t, cResponse.Attributes.(models.Chart).RawIcon)
 		})
@@ -197,9 +197,9 @@ func Test_newChartListResponse(t *testing.T) {
 			assert.Equal(t, len(clResponse), len(tt.result), "number of charts in response should be the same")
 			for i := range tt.result {
 				assert.Equal(t, "chart", clResponse[i].Type, "response type is chart")
-				assert.Equal(t, getChartID(tt.result[i].Repo.Name, tt.result[i].Name), getChartID(tt.result[i].Repo.Name, tt.result[i].Name), "chart ID should be the same")
+				assert.Equal(t, tt.result[i].ID, clResponse[i].ID, "chart ID should be the same")
 				assert.Equal(t, tt.result[i].ChartVersions[0].Version, clResponse[i].Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, "latestChartVersion should match version at index 0")
-				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+getChartID(tt.result[i].Repo.Name, tt.result[i].Name), clResponse[i].Links.(selfLink).Self, "self link should be the same")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.result[i].ID, clResponse[i].Links.(selfLink).Self, "self link should be the same")
 			}
 		})
 	}
@@ -238,7 +238,7 @@ func Test_newChartVersionResponse(t *testing.T) {
 				cvResponse := newChartVersionResponse(&tt.chart, tt.chart.ChartVersions[i])
 				assert.Equal(t, "chartVersion", cvResponse.Type, "response type is chartVersion")
 				assert.Equal(t, tt.chart.Repo.Name+"/"+tt.chart.Name+"-"+tt.chart.ChartVersions[i].Version, cvResponse.ID, "reponse id should have chart version suffix")
-				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+getChartID(tt.chart.Repo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[i].Version, cvResponse.Links.(interface{}).(selfLink).Self, "self link should be the same")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, cvResponse.Links.(interface{}).(selfLink).Self, "self link should be the same")
 				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvResponse.Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
 
 				// The chart should have had its icon url set and raw icon data removed.
@@ -278,7 +278,7 @@ func Test_newChartVersionListResponse(t *testing.T) {
 			for i := range tt.chart.ChartVersions {
 				assert.Equal(t, "chartVersion", cvListResponse[i].Type, "response type is chartVersion")
 				assert.Equal(t, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, cvListResponse[i].ID, "reponse id should have chart version suffix")
-				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+getChartID(tt.chart.Repo.Name, tt.chart.Name)+"/versions/"+tt.chart.ChartVersions[i].Version, cvListResponse[i].Links.(interface{}).(selfLink).Self, "self link should be the same")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, cvListResponse[i].Links.(interface{}).(selfLink).Self, "self link should be the same")
 				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvListResponse[i].Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
 			}
 		})
@@ -344,7 +344,7 @@ func Test_listCharts(t *testing.T) {
 			for i, resp := range data {
 				assert.Equal(t, resp.ID, tt.charts[i].ID, "chart id in the response should be the same")
 				assert.Equal(t, resp.Type, "chart", "response type is chart")
-				assert.Equal(t, resp.Links.(map[string]interface{})["self"], pathPrefix+"/ns/"+namespace+"/charts/"+getChartID(tt.charts[i].Repo.Name, tt.charts[i].Name), "self link should be the same")
+				assert.Equal(t, resp.Links.(map[string]interface{})["self"], pathPrefix+"/ns/"+namespace+"/charts/"+tt.charts[i].ID, "self link should be the same")
 				assert.Equal(t, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			}
 			assert.Equal(t, b.Meta, tt.meta, "response meta should be the same")
@@ -487,7 +487,7 @@ func Test_getChart(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/charts/"+getChartID(tt.chart.Repo.Name, tt.chart.Name), nil)
+			req := httptest.NewRequest("GET", "/charts/"+tt.chart.ID, nil)
 			parts := strings.Split(tt.chart.ID, "/")
 			params := Params{
 				"namespace": namespace,
@@ -501,7 +501,7 @@ func Test_getChart(t *testing.T) {
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIResponse
 				json.NewDecoder(w.Body).Decode(&b)
-				assert.Equal(t, getChartID(tt.chart.Repo.Name, tt.chart.Name), b.Data.ID, "chart id in the response should be the same")
+				assert.Equal(t, tt.chart.ID, b.Data.ID, "chart id in the response should be the same")
 				assert.Equal(t, "chart", b.Data.Type, "response type is chart")
 				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, b.Data.Links.(map[string]interface{})["self"], "self link should be the same")
 				assert.Equal(t, tt.chart.ChartVersions[0].Version, b.Data.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], "latestChartVersion should match version at index 0")

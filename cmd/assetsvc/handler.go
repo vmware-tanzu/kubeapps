@@ -383,11 +383,11 @@ func newChartResponse(c *models.Chart) *apiResponse {
 		Type:       "chart",
 		ID:         c.ID,
 		Attributes: blankRawIconAndChartVersions(chartAttributes(namespace, *c)),
-		Links:      selfLink{chartPath + getChartID(c.Repo.Name, c.Name)},
+		Links:      selfLink{chartPath + c.ID},
 		Relationships: relMap{
 			"latestChartVersion": rel{
 				Data:  chartVersionAttributes(namespace, c.Repo.Name, c.Name, latestCV),
-				Links: selfLink{chartPath + getChartID(c.Repo.Name, c.Name) + "/versions/" + latestCV.Version},
+				Links: selfLink{chartPath + c.ID + "/versions/" + latestCV.Version},
 			},
 		},
 	}
@@ -419,7 +419,7 @@ func chartVersionAttributes(namespace, chartRepoName, chartNameUnencoded string,
 
 func chartAttributes(namespace string, c models.Chart) models.Chart {
 	if c.RawIcon != nil {
-		c.Icon = pathPrefix + "/ns/" + namespace + "/assets/" + getChartID(c.Repo.Name, c.Name) + "/logo"
+		c.Icon = pathPrefix + "/ns/" + namespace + "/assets/" + c.ID + "/logo"
 	} else {
 		// If the icon wasn't processed, it is either not set or invalid
 		c.Icon = ""
@@ -429,7 +429,7 @@ func chartAttributes(namespace string, c models.Chart) models.Chart {
 
 func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiResponse {
 	namespace := c.Repo.Namespace
-	chartPath := fmt.Sprintf("%s/ns/%s/charts/%s", pathPrefix, namespace, getChartID(c.Repo.Name, c.Name))
+	chartPath := fmt.Sprintf("%s/ns/%s/charts/%s", pathPrefix, namespace, c.ID)
 	return &apiResponse{
 		Type:       "chartVersion",
 		ID:         fmt.Sprintf("%s-%s", c.ID, cv.Version),
