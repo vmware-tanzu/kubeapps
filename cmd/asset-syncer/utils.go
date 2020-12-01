@@ -324,10 +324,9 @@ func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Char
 		}
 	}
 	for j := range chartFiles {
-		name := j.Name
-		log.WithFields(log.Fields{"name": name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
-		if err := f.fetchAndImportFiles(name, r, j.ChartVersion); err != nil {
-			log.WithFields(log.Fields{"name": name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
+		log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
+		if err := f.fetchAndImportFiles(j.Name, r, j.ChartVersion); err != nil {
+			log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
 		}
 	}
 }
