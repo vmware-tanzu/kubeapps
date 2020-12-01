@@ -233,7 +233,6 @@ func Test_getPaginatedChartList(t *testing.T) {
 		repo               string
 		pageNumber         int
 		pageSize           int
-		showDuplicates     bool
 		expectedCharts     []*models.Chart
 		expectedTotalPages int
 	}{
@@ -243,17 +242,15 @@ func Test_getPaginatedChartList(t *testing.T) {
 			repo:               "bitnami",
 			pageNumber:         1,
 			pageSize:           100,
-			showDuplicates:     true,
 			expectedCharts:     availableCharts,
 			expectedTotalPages: 1,
 		},
 		{
-			name:               "one page without duplicates",
+			name:               "one page with duplicates",
 			namespace:          "other-namespace",
 			repo:               "",
 			pageNumber:         1,
 			pageSize:           100,
-			showDuplicates:     false,
 			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
 			expectedTotalPages: 1,
 		},
@@ -280,7 +277,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 				WithArgs(expectedParams...).
 				WillReturnRows(rows)
 
-			charts, totalPages, err := pgManager.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize, tt.showDuplicates)
+			charts, totalPages, err := pgManager.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize)
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}

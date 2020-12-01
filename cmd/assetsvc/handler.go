@@ -99,23 +99,8 @@ func min(a, b int) int {
 	return b
 }
 
-func uniqChartList(charts []*models.Chart) []*models.Chart {
-	// We will keep track of unique digest:chart to avoid duplicates
-	chartDigests := map[string]bool{}
-	res := []*models.Chart{}
-	for _, c := range charts {
-		digest := c.ChartVersions[0].Digest
-		// Filter out the chart if we've seen the same digest before
-		if _, ok := chartDigests[digest]; !ok {
-			chartDigests[digest] = true
-			res = append(res, c)
-		}
-	}
-	return res
-}
-
-func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) (apiListResponse, interface{}, error) {
-	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize, showDuplicates)
+func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) (apiListResponse, interface{}, error) {
+	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize)
 	return newChartListResponse(charts), meta{totalPages}, err
 }
 
@@ -134,7 +119,7 @@ func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 
-	cl, meta, err := getPaginatedChartList(namespace, repo, pageNumber, pageSize, showDuplicates(req))
+	cl, meta, err := getPaginatedChartList(namespace, repo, pageNumber, pageSize)
 	if err != nil {
 		log.WithError(err).Error("could not fetch charts")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
@@ -368,9 +353,6 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 	}
 
 	chartResponse := charts
-	if !showDuplicates(req) {
-		chartResponse = uniqChartList(charts)
-	}
 	cl := newChartListResponse(chartResponse)
 	response.NewDataResponse(cl).Write(w)
 }

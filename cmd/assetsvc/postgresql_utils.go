@@ -55,7 +55,7 @@ func exists(current []string, str string) bool {
 	return false
 }
 
-func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
+func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, error) {
 	clauses := []string{}
 	queryParams := []interface{}{}
 	if namespace != dbutils.AllNamespaces {
@@ -75,22 +75,6 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
 	if err != nil {
 		return nil, 0, err
-	}
-	if !showDuplicates {
-		// Group by unique digest for the latest version (remove duplicates)
-		uniqueCharts := []*models.Chart{}
-		digests := []string{}
-		for _, c := range charts {
-			if len(c.ChartVersions) == 0 {
-				return nil, 0, fmt.Errorf("chart %q missing chart versions", c.ID)
-			}
-			if !exists(digests, c.ChartVersions[0].Digest) {
-				digests = append(digests, c.ChartVersions[0].Digest)
-				uniqueCharts = append(uniqueCharts, c)
-			}
-		}
-		// TODO(andresmgot): Implement pagination but currently Kubeapps don't support it
-		return uniqueCharts, 1, nil
 	}
 	return charts, 1, nil
 }

@@ -1067,7 +1067,7 @@ func Test_findLatestChart(t *testing.T) {
 			t.Errorf("Expecting %v, received %v", chart, data[0].ID)
 		}
 	})
-	t.Run("ignores duplicated chart", func(t *testing.T) {
+	t.Run("includes duplicated chart", func(t *testing.T) {
 		charts := []*models.Chart{
 			{Name: "foo", ID: "stable/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
 			{Name: "foo", ID: "bitnami/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
@@ -1108,58 +1108,12 @@ func Test_findLatestChart(t *testing.T) {
 		}
 		data := *b.Data
 
-		assert.Equal(t, len(data), 1, "it should return a single chart")
+		assert.Equal(t, len(data), 2, "it should return every chart")
 		if data[0].ID != charts[0].ID {
 			t.Errorf("Expecting %v, received %v", charts[0], data[0].ID)
 		}
 	})
-	t.Run("ignores duplicated chart (with slahses)", func(t *testing.T) {
-		charts := []*models.Chart{
-			{Name: "fo/o", ID: "stable/fo/o", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-			{Name: "fo/o", ID: "bitnami/fo/o", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-		}
-		reqVersion := "1.0.0"
-		reqAppVersion := "0.1.0"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		rows := sqlmock.NewRows([]string{"info"})
-		for _, chart := range charts {
-			chartJSON, err := json.Marshal(chart)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
-			rows.AddRow(string(chartJSON))
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE info*").
-			WithArgs("fo/o", "namespace", kubeappsNamespace).
-			WillReturnRows(rows)
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
-		params := Params{
-			"chartName":  charts[0].Name,
-			"version":    reqVersion,
-			"appversion": reqAppVersion,
-			"namespace":  namespace,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		assert.Equal(t, len(data), 1, "it should return a single chart")
-		if data[0].ID != charts[0].ID {
-			t.Errorf("Expecting %v, received %v", charts[0], data[0].ID)
-		}
-	})
-	t.Run("includes duplicated charts when showDuplicates param set", func(t *testing.T) {
+	t.Run("includes duplicated charts always", func(t *testing.T) {
 		charts := []*models.Chart{
 			{Name: "foo", ID: "stable/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
 			{Name: "foo", ID: "bitnami/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
@@ -1183,7 +1137,7 @@ func Test_findLatestChart(t *testing.T) {
 			WillReturnRows(rows)
 
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?showDuplicates=true&name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
+		req := httptest.NewRequest("GET", "/charts?&name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
 		params := Params{
 			"chartName":  charts[0].Name,
 			"version":    reqVersion,
