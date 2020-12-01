@@ -79,21 +79,13 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	if !showDuplicates {
 		// Group by unique digest for the latest version (remove duplicates)
 		uniqueCharts := []*models.Chart{}
-		repoDigests := map[string][]string{}
+		digests := []string{}
 		for _, c := range charts {
-			key := ""
-			if c.Repo != nil {
-				key = c.Repo.Name
-			}
-
-			if repoDigests[key] == nil {
-				repoDigests[key] = []string{}
-			}
 			if len(c.ChartVersions) == 0 {
 				return nil, 0, fmt.Errorf("chart %q missing chart versions", c.ID)
 			}
-			if !exists(repoDigests[key], c.ChartVersions[0].Digest) {
-				repoDigests[key] = append(repoDigests[key], c.ChartVersions[0].Digest)
+			if !exists(digests, c.ChartVersions[0].Digest) {
+				digests = append(digests, c.ChartVersions[0].Digest)
 				uniqueCharts = append(uniqueCharts, c)
 			}
 		}
