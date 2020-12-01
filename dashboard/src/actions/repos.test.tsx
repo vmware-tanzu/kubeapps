@@ -308,8 +308,8 @@ describe("fetchRepos", () => {
       .mockImplementationOnce(() => {
         return {
           items: [
-            { name: "repo2", metadata: { uid: "321" } },
-            { name: "repo3", metadata: { uid: "321" } },
+            { name: "repo2", metadata: { uid: "321" } }, // same uid
+            { name: "repo3", metadata: { uid: "321" } }, // same uid
           ],
         };
       });
@@ -337,6 +337,41 @@ describe("fetchRepos", () => {
     ];
 
     await store.dispatch(repoActions.fetchRepos(namespace, "other-ns"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("fetches repos only if the namespace is the one used for global repos", async () => {
+    AppRepository.list = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
+      })
+      .mockImplementationOnce(() => {
+        // will be skipped
+        return {
+          items: [
+            { name: "repo1", metadata: { uid: "321" } },
+            { name: "repo2", metadata: { uid: "123" } }, // same uid
+          ],
+        };
+      });
+
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestRepos),
+        payload: "other-ns", // just one call to requestRepos
+      },
+      {
+        type: getType(repoActions.receiveReposSecrets),
+        payload: [],
+      },
+      {
+        type: getType(repoActions.receiveRepos),
+        payload: [{ name: "repo1", metadata: { uid: "123" } }],
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepos("other-ns", "other-ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

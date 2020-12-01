@@ -27,6 +27,18 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
+it("should fetch only the global repository", () => {
+  const fetch = jest.fn();
+  actions.repos = { ...actions.repos, fetchRepos: fetch };
+  const props = {
+    cluster: defaultProps.cluster,
+    namespace: initialState.config.kubeappsNamespace, // global
+    chartName: defaultProps.chartName,
+  };
+  mountWrapper(defaultStore, <SelectRepoForm {...props} />);
+  expect(fetch).toHaveBeenCalledWith(initialState.config.kubeappsNamespace);
+});
+
 it("should fetch repositories", () => {
   const fetch = jest.fn();
   actions.repos = { ...actions.repos, fetchRepos: fetch };
