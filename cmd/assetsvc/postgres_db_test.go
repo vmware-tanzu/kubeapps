@@ -212,7 +212,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 		existingCharts map[string]map[string][]models.Chart
 		namespace      string
 		repo           string
-		showDups       bool
 		expectedCharts []*models.Chart
 		expectedErr    error
 	}{
@@ -241,7 +240,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 					},
 				},
 			},
-			showDups: true,
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 			},
@@ -265,7 +263,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 			},
 			repo:      "",
 			namespace: namespaceName,
-			showDups:  true,
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
@@ -295,7 +292,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 			},
 			repo:      "",
 			namespace: namespaceName,
-			showDups:  true,
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 				&models.Chart{ID: "global-repo/global-chart", Name: "global-chart"},
@@ -321,7 +317,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 			},
 			repo:      "",
 			namespace: "_all",
-			showDups:  true,
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
@@ -347,14 +342,13 @@ func TestGetPaginatedChartList(t *testing.T) {
 			},
 			repo:      repoName,
 			namespace: "_all",
-			showDups:  true,
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 			},
 		},
 		{
-			name: "it removes duplicates when requested",
+			name: "it does not remove duplicates",
 			existingCharts: map[string]map[string][]models.Chart{
 				namespaceName: map[string][]models.Chart{
 					repoName: []models.Chart{
@@ -367,9 +361,9 @@ func TestGetPaginatedChartList(t *testing.T) {
 			},
 			repo:      "",
 			namespace: namespaceName,
-			showDups:  false,
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
+				&models.Chart{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
 			},
 		},
 	}
@@ -385,7 +379,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 			}
 
 			// The actual pagination isn't currently implemented as its not yet used by Kubeapps.
-			charts, _, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10, tc.showDups)
+			charts, _, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("got: %+v, want: %+v", got, want)
