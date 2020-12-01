@@ -308,8 +308,8 @@ describe("fetchRepos", () => {
       .mockImplementationOnce(() => {
         return {
           items: [
-            { name: "repo2", metadata: { uid: "321" } }, // same uid
-            { name: "repo3", metadata: { uid: "321" } }, // same uid
+            { name: "repo2", metadata: { uid: "321" } },
+            { name: "repo3", metadata: { uid: "321" } },
           ],
         };
       });
@@ -347,11 +347,10 @@ describe("fetchRepos", () => {
         return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
       })
       .mockImplementationOnce(() => {
-        // will be skipped
         return {
           items: [
             { name: "repo1", metadata: { uid: "321" } },
-            { name: "repo2", metadata: { uid: "123" } }, // same uid
+            { name: "repo2", metadata: { uid: "123" } },
           ],
         };
       });
@@ -359,7 +358,7 @@ describe("fetchRepos", () => {
     const expectedActions = [
       {
         type: getType(repoActions.requestRepos),
-        payload: "other-ns", // just one call to requestRepos
+        payload: "other-ns",
       },
       {
         type: getType(repoActions.receiveReposSecrets),
