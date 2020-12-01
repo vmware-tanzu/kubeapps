@@ -1,12 +1,13 @@
 import { JSONSchema4 } from "json-schema";
-import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
-import { ForbiddenError, IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
+import { FetchError, IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
+
+export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
   return (charts: IChart[]) => resolve(charts);
@@ -47,6 +48,7 @@ export const errorReadme = createAction("ERROR_README", resolve => {
 
 const allActions = [
   requestCharts,
+  requestChart,
   errorChart,
   receiveCharts,
   receiveChartVersions,
@@ -59,16 +61,6 @@ const allActions = [
 ];
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
-
-function dispatchError(dispatch: Dispatch, err: Error) {
-  if (err.message.match("could not find")) {
-    dispatch(errorChart(new NotFoundError(err.message)));
-  } else if (err.message.match("Unable to validate user")) {
-    dispatch(errorChart(new ForbiddenError(err.message)));
-  } else {
-    dispatch(errorChart(err));
-  }
-}
 
 export function fetchCharts(
   cluster: string,
@@ -83,7 +75,7 @@ export function fetchCharts(
         dispatch(receiveCharts(charts));
       }
     } catch (e) {
-      dispatchError(dispatch, e);
+      dispatch(errorChart(new FetchError(e.message)));
     }
   };
 }
@@ -102,7 +94,7 @@ export function fetchChartVersions(
       }
       return versions;
     } catch (e) {
-      dispatchError(dispatch, e);
+      dispatch(errorChart(new FetchError(e.message)));
       return [];
     }
   };
@@ -133,13 +125,13 @@ export function getChartVersion(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      dispatch(requestCharts());
+      dispatch(requestChart());
       const { chartVersion, values, schema } = await getChart(cluster, namespace, id, version);
       if (chartVersion) {
         dispatch(selectChartVersion(chartVersion, values, schema));
       }
     } catch (e) {
-      dispatchError(dispatch, e);
+      dispatch(errorChart(new FetchError(e.message)));
     }
   };
 }
@@ -158,7 +150,7 @@ export function getDeployedChartVersion(
         dispatch(receiveDeployedChartVersion(chartVersion, values, schema));
       }
     } catch (e) {
-      dispatchError(dispatch, e);
+      dispatch(errorChart(new FetchError(e.message)));
     }
   };
 }

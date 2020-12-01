@@ -3,9 +3,15 @@ import { IChartVersion, IRepo } from "./types";
 
 export const app = {
   apps: {
-    new: (cluster: string, namespace: string, cv: IChartVersion, version: string) => {
+    new: (
+      cluster: string,
+      namespace: string,
+      cv: IChartVersion,
+      version: string,
+      globalNamespace: string,
+    ) => {
       const repoNamespace = cv.relationships.chart.data.repo.namespace;
-      const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
+      const newSegment = globalNamespace !== repoNamespace ? "new" : "new-from-global";
       return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
@@ -19,17 +25,16 @@ export const app = {
     `${app.catalog(cluster, namespace)}/${repo}`,
   servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
-    get: (cluster: string, namespace: string, chartName: string, repo: IRepo) => {
-      const chartsSegment = namespace !== repo?.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${chartName}`;
-    },
-    version: (
+    get: (
       cluster: string,
       namespace: string,
       chartName: string,
-      chartVersion: string,
       repo: IRepo,
-    ) => `${app.charts.get(cluster, namespace, chartName, repo)}/versions/${chartVersion}`,
+      globalNamespace: string,
+    ) => {
+      const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
+      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${chartName}`;
+    },
   },
   operators: {
     view: (cluster: string, namespace: string, name: string) =>

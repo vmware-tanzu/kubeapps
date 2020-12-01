@@ -38,22 +38,4 @@ describe("chartReducer", () => {
       }),
     ).toEqual({ ...initialState });
   });
-
-  it("sets the initial state when changing namespace", () => {
-    expect(
-      chartsReducer(
-        {
-          ...initialState,
-          isFetching: true,
-          selected: {
-            ...initialState.selected,
-            error,
-          },
-        },
-        {
-          type: getType(actions.namespace.setNamespaceState) as any,
-        },
-      ),
-    ).toEqual({ ...initialState });
-  });
 });

@@ -28,6 +28,7 @@ function mapStateToProps({ charts, config }: IStoreState, { match: { params } }:
     namespace: params.namespace,
     selected: charts.selected,
     version: params.version,
+    kubeappsNamespace: config.kubeappsNamespace,
   };
 }
 

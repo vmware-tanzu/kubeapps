@@ -3,7 +3,7 @@ import * as Moniker from "moniker-native";
 import React, { useEffect, useState } from "react";
 
 import { JSONSchema4 } from "json-schema";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { CreateError, FetchError, IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -22,7 +22,7 @@ export interface IDeploymentFormProps {
   cluster: string;
   chartID: string;
   chartVersion: string;
-  error: Error | undefined;
+  error: FetchError | CreateError | undefined;
   chartsIsFetching: boolean;
   selected: IChartState["selected"];
   deployChart: (
@@ -38,6 +38,7 @@ export interface IDeploymentFormProps {
   fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
   getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
   namespace: string;
+  kubeappsNamespace: string;
 }
 
 function DeploymentForm({
@@ -52,6 +53,7 @@ function DeploymentForm({
   push,
   fetchChartVersions,
   namespace,
+  kubeappsNamespace,
 }: IDeploymentFormProps) {
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState(Moniker.choose());
@@ -106,8 +108,20 @@ function DeploymentForm({
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    push(url.app.apps.new(cluster, namespace, selected.version!, e.currentTarget.value));
+    push(
+      url.app.apps.new(
+        cluster,
+        namespace,
+        selected.version!,
+        e.currentTarget.value,
+        kubeappsNamespace,
+      ),
+    );
   };
+
+  if (error && error.constructor === FetchError) {
+    return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
+  }
 
   if (!version) {
     return <LoadingWrapper />;

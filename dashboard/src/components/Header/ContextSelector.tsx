@@ -6,9 +6,9 @@ import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@clr
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
-import { push } from "connected-react-router";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
@@ -18,6 +18,8 @@ import Row from "../js/Row";
 import "./ContextSelector.css";
 
 function ContextSelector() {
+  const location = ReactRouter.useLocation();
+  const history = ReactRouter.useHistory();
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const { clusters } = useSelector((state: IStoreState) => state);
   const currentCluster = clusters.clusters[clusters.currentCluster];
@@ -57,7 +59,14 @@ function ContextSelector() {
     setStateNamespace(event.target.value);
   const changeContext = () => {
     dispatch(actions.namespace.setNamespace(cluster, namespace));
-    dispatch(push(app.apps.list(cluster, namespace)));
+    // Regex matching a namespaced route: e.g. /c/cluster/ns/namespace
+    const nsRegex = /^\/c\/([^/]*)\/ns\/[^/]*\//;
+    if (nsRegex.test(location.pathname)) {
+      // Change the namespace in the route
+      history.push(
+        location.pathname.replace(nsRegex, `/c/$1/ns/${namespace}/`).concat(location.search),
+      );
+    }
     setOpen(false);
   };
   const openNewNSModal = () => setNewNSModalIsOpen(true);
@@ -70,7 +79,7 @@ function ContextSelector() {
     if (created) {
       closeNewNSModal();
       dispatch(actions.namespace.setNamespace(cluster, newNS));
-      dispatch(push(app.apps.list(cluster, newNS)));
+      history.push(app.apps.list(cluster, newNS));
       setOpen(false);
     }
   };
