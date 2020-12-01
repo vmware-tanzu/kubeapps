@@ -6,11 +6,14 @@ import { cloneDeep } from "lodash";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import * as ReactRouter from "react-router";
 import { IClustersState } from "reducers/cluster";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import ContextSelector from "./ContextSelector";
 
 let spyOnUseDispatch: jest.SpyInstance;
+let spyOnUseLocation: jest.SpyInstance;
+let spyOnUseHistory: jest.SpyInstance;
 const kubeaActions = { ...actions.operators };
 beforeEach(() => {
   actions.namespace = {
@@ -22,11 +25,19 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockImplementation(() => {
+    return { pathname: "/foo", search: "", state: undefined, hash: "" };
+  });
+  spyOnUseHistory = jest
+    .spyOn(ReactRouter, "useHistory")
+    .mockReturnValue({ push: jest.fn() } as any);
 });
 
 afterEach(() => {
   actions.operators = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
+  spyOnUseLocation.mockRestore();
+  spyOnUseHistory.mockRestore();
 });
 
 it("gets a namespace", () => {
@@ -153,4 +164,48 @@ it("disables the create button if not allowed", () => {
   } as IClustersState;
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
   expect(wrapper.find(".flat-btn")).toBeDisabled();
+});
+
+it("changes the location with the new namespace", () => {
+  const push = jest.fn();
+  spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
+  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockReturnValue({
+    pathname: "/c/cluster-foo/ns/ns-bar/catalog",
+    search: "",
+    state: "",
+  } as any);
+  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
+  wrapper
+    .find("select")
+    .findWhere(s => s.prop("name") === "namespaces")
+    .simulate("change", { target: { value: "other" } });
+  act(() => {
+    (wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.text() === "Change Context")
+      .prop("onClick") as any)();
+  });
+  expect(push).toHaveBeenCalledWith("/c/cluster-foo/ns/other/catalog");
+});
+
+it("don't call push if the pathname is not recognized", () => {
+  const push = jest.fn();
+  spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
+  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockReturnValue({
+    pathname: "/foo",
+    search: "",
+    state: "",
+  } as any);
+  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
+  wrapper
+    .find("select")
+    .findWhere(s => s.prop("name") === "namespaces")
+    .simulate("change", { target: { value: "other" } });
+  act(() => {
+    (wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.text() === "Change Context")
+      .prop("onClick") as any)();
+  });
+  expect(push).not.toHaveBeenCalled();
 });

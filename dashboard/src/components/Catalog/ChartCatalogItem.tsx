@@ -10,9 +10,18 @@ import { IChartCatalogItem } from "./CatalogItem";
 
 export default function ChartCatalogItem(props: IChartCatalogItem) {
   const { icon, name, repo, version, description, namespace, id } = props;
+  const {
+    config: { kubeappsNamespace },
+  } = useSelector((state: IStoreState) => state);
   const iconSrc = icon || placeholder;
   const cluster = useSelector((state: IStoreState) => state.clusters.currentCluster);
-  const link = url.app.charts.get(cluster, namespace, name, repo || ({} as IRepo));
+  const link = url.app.charts.get(
+    cluster,
+    namespace,
+    name,
+    repo || ({} as IRepo),
+    kubeappsNamespace,
+  );
   const bgIcon = helmIcon;
 
   return (

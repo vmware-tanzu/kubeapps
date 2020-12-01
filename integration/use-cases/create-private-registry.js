@@ -104,6 +104,8 @@ test("Creates a private registry", async () => {
     "7.3.16"
   );
 
+  await new Promise((r) => setTimeout(r, 500));
+
   // Ensure that the new value is selected
   chartVersionElement = await expect(page).toMatchElement(
     '.upgrade-form-version-selector select[name="chart-versions"]'

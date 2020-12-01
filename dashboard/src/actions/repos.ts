@@ -1,4 +1,5 @@
 import * as yaml from "js-yaml";
+import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
@@ -204,9 +205,12 @@ export const fetchRepos = (
         let totalRepos = repos.items;
         await Promise.all(
           otherNamespaces.map(async otherNamespace => {
-            dispatch(requestRepos(otherNamespace));
-            const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
-            totalRepos = totalRepos.concat(otherRepos.items);
+            if (namespace !== otherNamespace) {
+              dispatch(requestRepos(otherNamespace));
+              const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
+              // Avoid adding duplicated repos: if two repos have the same uid, filter out
+              totalRepos = uniqBy(totalRepos.concat(otherRepos.items), "metadata.uid");
+            }
           }),
         );
         dispatch(receiveRepos(totalRepos));

@@ -34,7 +34,13 @@ function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps)
   const [repoName, setRepoName] = useState(get(repo, "metadata.name", ""));
 
   useEffect(() => {
-    dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+    if (namespace !== kubeappsNamespace) {
+      // Normal namespace, show local and global repos
+      dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+    } else {
+      // Global namespace, show global repos only
+      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+    }
   }, [dispatch, namespace, kubeappsNamespace]);
 
   const handleChartRepoNameChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {

@@ -8,11 +8,13 @@ import ResourceTabs from "components/AppView/ResourceTabs";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import OperatorHeader from "components/OperatorView/OperatorHeader";
 import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { FetchError } from "shared/types";
 import OperatorInstance from "./OperatorInstance";
 
 const defaultProps = {
@@ -68,12 +70,13 @@ it("renders a fetch error", () => {
   const wrapper = mountWrapper(
     getStore({
       operators: {
-        errors: { resource: { fetch: new Error("Boom!") } },
+        errors: { resource: { fetch: new FetchError("Boom!") } },
       },
     }),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 
 it("renders an update error", () => {

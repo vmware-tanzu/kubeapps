@@ -1,9 +1,11 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
+import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { FetchError } from "shared/types";
 import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
 import { IOperatorInstanceUpgradeFormProps } from "./OperatorInstanceUpdateForm";
 
@@ -98,6 +100,21 @@ it("set default and deployed values", () => {
 it("renders an error if the resource is not populated", () => {
   const wrapper = mountWrapper(defaultStore, <OperatorInstanceUpdateForm {...defaultProps} />);
   expect(wrapper.find(Alert)).toIncludeText("Resource my-foo not found");
+});
+
+it("renders only an error error if the resource is not found", () => {
+  const wrapper = mountWrapper(
+    getStore({
+      operators: {
+        errors: {
+          fetch: new FetchError("not found"),
+        },
+      },
+    }),
+    <OperatorInstanceUpdateForm {...defaultProps} />,
+  );
+  expect(wrapper.find(Alert)).toIncludeText("not found");
+  expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 
 it("should submit the form", () => {
