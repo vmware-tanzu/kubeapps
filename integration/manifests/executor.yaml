@@ -24,5 +24,7 @@ spec:
         - /dev/null
         image: kubeapps/integration-tests:latest
         name: integration
-        resources: {}
+        resources:
+          requests:
+            memory: 100Mi
 status: {}

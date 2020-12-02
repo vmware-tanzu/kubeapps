@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 ## Build conditions
 # Build in any branch or tag
@@ -37,6 +37,11 @@ workflows:
           <<: *build_always
       - local_e2e_tests:
           <<: *build_always
+          matrix:
+            parameters:
+              # Enable the line below to do bundle builds to debug CI issues
+              # number: ["1"]
+              number: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
           requires:
             - test_go
             - test_dashboard
@@ -127,7 +132,7 @@ build_images: &build_images
     - <<: *exports
     - run: |
         mkdir -p images/
-        read -ra IMG_ARRAY <<< "$IMAGES"
+        read -ra IMG_ARRAY \<<< "$IMAGES"
         if [[ -n "${CIRCLE_TAG}" ]]; then
           makeArgs="VERSION=${CIRCLE_TAG}"
         fi
@@ -218,7 +223,14 @@ local_e2e_steps: &local_e2e_steps
         curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-Linux-amd64
         chmod +x kind-Linux-amd64
         sudo mv kind-Linux-amd64 /usr/local/bin/kind
-    - run: kind create cluster
+    - run: |
+        if kind create cluster; then
+          echo "Cluster created"
+        else
+          echo "Cluster creation failed, retrying"
+          kind delete cluster || true
+          kind create cluster
+        fi
     - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
     - <<: *install_kubectl
     - <<: *install_helm_cli
@@ -294,6 +306,9 @@ jobs:
       HELM_VERSION: "v3.0.2"
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
+    parameters:
+      number:
+        type: string
     <<: *local_e2e_steps
   GKE_1_15_MASTER:
     <<: *gke_test
