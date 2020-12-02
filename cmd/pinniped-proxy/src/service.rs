@@ -32,7 +32,9 @@ pub async fn proxy(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     Ok(response)
 }
 
-/// handle_error converts an error into a 500 message.
+/// handle_error converts an error into a BAD_REQUEST response.
+/// 
+/// We may need to expand this to give different responses for different errors.
 fn handle_error(e: Error, log_data: logging::LogData) -> Result<Response<Body>, Infallible> {
     let response = Response::builder()
         .status(StatusCode::BAD_REQUEST)
