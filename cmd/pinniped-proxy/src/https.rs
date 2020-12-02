@@ -1,5 +1,6 @@
 use anyhow::Result;
 use hyper::{HeaderMap, header::HeaderValue};
+use native_tls::Certificate;
 use url::Url;
 
 const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.local";
@@ -43,6 +44,13 @@ pub fn get_api_server_cert_auth_data(request_headers: &HeaderMap<HeaderValue>) -
             Err(e) => Err(anyhow::anyhow!(e)),
         },
         None => Err(anyhow::anyhow!("header {} required but not present", HEADER_K8S_API_SERVER_CA_CERT)),
+    }
+}
+
+pub fn cert_for_cert_data(cert_data: Vec<u8>) -> Result<Certificate> {
+    match Certificate::from_pem(&cert_data) {
+        Ok(c) => Ok(c),
+        Err(e) => Err(anyhow::anyhow!(e)),
     }
 }
 
@@ -162,6 +170,25 @@ mod tests {
                 Ok(())
             },
             _ => anyhow::bail!("got: valid cert, wanted base64::DecodeError"),
+        }
+    }
+
+    #[test]
+    fn cert_for_cert_data_success() -> Result<()> {
+        match cert_for_cert_data(base64::decode(VALID_CERT_BASE64.as_bytes())?) {
+            Ok(_) => Ok(()),
+            Err(e) => anyhow::bail!("got {}, want: valid cert", e),
+        }
+    }
+
+    #[test]
+    fn cert_for_cert_data_invalid_pem() -> Result<()> {
+        match cert_for_cert_data("not valid PEM".as_bytes().to_vec()) {
+            Err(e) => {
+                assert!(e.is::<native_tls::Error>(), "got: {:#?}, want: native_tls::Error", e);
+                Ok(())
+            },
+            _ => anyhow::bail!("got: valid cert, wanted native_tls::Error"),
         }
     }
 }
