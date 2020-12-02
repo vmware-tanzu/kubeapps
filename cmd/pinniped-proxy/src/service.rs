@@ -11,6 +11,7 @@ pub async fn proxy(req: Request<Body>) -> Result<Response<Body>, Infallible> {
 
     // TODO: actual proxying to happen here.
     let _ = https::get_api_server_url(req.headers());
+    let _ = https::get_api_server_cert_auth_data(req.headers());
     let response = Response::new(Body::from("pinniped-proxy stub\n"));
 
     info!("{}", logging::response_log_data(&response, log_data));
