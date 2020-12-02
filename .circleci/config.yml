@@ -40,8 +40,8 @@ workflows:
           matrix:
             parameters:
               # Enable the line below to do bundle builds to debug CI issues
-              # number: ["1"]
-              number: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+              number: ["1"]
+              # number: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
           requires:
             - test_go
             - test_dashboard
