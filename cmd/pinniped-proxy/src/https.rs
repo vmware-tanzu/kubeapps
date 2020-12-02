@@ -1,5 +1,6 @@
 use anyhow::Result;
 use hyper::{HeaderMap, header::HeaderValue};
+use log::debug;
 use native_tls::Certificate;
 use url::Url;
 
@@ -14,9 +15,15 @@ fn validate_url(u: String) -> Result<String> {
     match result {
         Ok(url) => match url.scheme() {
             "https" => Ok(u),
-            _ => Err(anyhow::anyhow!(INVALID_SCHEME_ERROR)),
+            _ => {
+                debug!("url {} does not use https scheme", u);
+                Err(anyhow::anyhow!(INVALID_SCHEME_ERROR))
+            }
         },
-        Err(e) => Err(anyhow::anyhow!(e)),
+        Err(e) => {
+            debug!("unable to parse url '{}': {}", u, e);
+            Err(anyhow::anyhow!(e))
+        },
     }
 }
 
@@ -32,7 +39,10 @@ pub fn get_api_server_url(request_headers: &HeaderMap<HeaderValue>) -> Result<St
                 Err(e) => Err(anyhow::anyhow!(e)),
             }
         },
-        None => Ok(DEFAULT_K8S_API_SERVER_URL.to_string()),
+        None => {
+            debug!("no {} header present, defaulting to {}", HEADER_K8S_API_SERVER_URL, DEFAULT_K8S_API_SERVER_URL);
+            Ok(DEFAULT_K8S_API_SERVER_URL.to_string())
+        },
     }
 }
 
@@ -41,16 +51,25 @@ pub fn get_api_server_cert_auth_data(request_headers: &HeaderMap<HeaderValue>) -
     match request_headers.get(HEADER_K8S_API_SERVER_CA_CERT) {
         Some(header_value_b64) => match base64::decode(header_value_b64.as_bytes()) {
             Ok(data) => Ok(data),
-            Err(e) => Err(anyhow::anyhow!(e)),
+            Err(e) => {
+                debug!("failed to base64 decode {} header data: {}", HEADER_K8S_API_SERVER_CA_CERT, e);
+                Err(anyhow::anyhow!(e))
+            }
         },
-        None => Err(anyhow::anyhow!("header {} required but not present", HEADER_K8S_API_SERVER_CA_CERT)),
+        None => {
+            debug!("header {} required but not present", HEADER_K8S_API_SERVER_CA_CERT);
+            Err(anyhow::anyhow!("header {} required but not present", HEADER_K8S_API_SERVER_CA_CERT))
+        }
     }
 }
 
 pub fn cert_for_cert_data(cert_data: Vec<u8>) -> Result<Certificate> {
     match Certificate::from_pem(&cert_data) {
         Ok(c) => Ok(c),
-        Err(e) => Err(anyhow::anyhow!(e)),
+        Err(e) => {
+            debug!("unable to create certificate from PEM data: {}", e);
+            Err(anyhow::anyhow!(e))
+        },
     }
 }
 
