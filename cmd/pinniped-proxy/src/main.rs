@@ -2,14 +2,17 @@ use std::convert::Infallible;
 
 use anyhow::Result;
 use hyper::{Server, service::{make_service_fn, service_fn}};
+use log::info;
 use structopt::StructOpt;
 
 // Ensure the root crate is aware of the child modules.
 mod cli;
+mod logging;
 mod service;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    pretty_env_logger::init();
     let opt = cli::Options::from_args();
 
     // For every incoming connection, we make a new hyper `Service` to handle
@@ -30,7 +33,7 @@ async fn main() -> Result<()> {
 
     let server = Server::bind(&addr).serve(make_svc);
 
-    println!("Listening on http://{}", addr);
+    info!("Listening on http://{}", addr);
 
     // Run the server for ever. If it returns with an error, return the
     // result, otherwise, if it completes, we return Ok.
