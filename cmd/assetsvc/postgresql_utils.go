@@ -31,7 +31,7 @@ import (
 // TODO(mnelson): standardise error API for package.
 var ErrChartVersionNotFound = errors.New("chart version not found")
 
-// Temporal flag
+// TODO(agamez): temporary flag, use the fallback behavior just when necessary, not globally
 var enableFallbackQueryMode = true
 
 type postgresAssetManager struct {

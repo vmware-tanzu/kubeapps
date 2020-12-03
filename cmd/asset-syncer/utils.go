@@ -440,7 +440,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 
 	// get last part of the name
 	// ie., "foo/bar" should return "bar"
-	fixedName := path.Base(decodedName) // get
+	fixedName := path.Base(decodedName)
 
 	readmeFileName := fixedName + "/README.md"
 	valuesFileName := fixedName + "/values.yaml"
