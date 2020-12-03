@@ -141,8 +141,11 @@ installOrUpgradeKubeapps() {
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
-      --set featureFlags.ui=clarity \
-      --set featureFlags.operators=true
+      --set frontend.replicaCount=1 \
+      --set kubeops.replicaCount=1 \
+      --set assetsvc.replicaCount=1 \
+      --set dashboard.replicaCount=1 \
+      --set postgresql.replication.enabled=false
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -243,7 +246,7 @@ svcs=(
   "kubeapps-ci-internal-dashboard"
 )
 for svc in "${svcs[@]}"; do
-  k8s_wait_for_endpoints kubeapps "$svc" 2
+  k8s_wait_for_endpoints kubeapps "$svc" 1
   info "Endpoints for ${svc} available"
 done
 
