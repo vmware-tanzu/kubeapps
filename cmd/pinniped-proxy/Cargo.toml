@@ -14,10 +14,12 @@ edition = "2018"
 anyhow = "1.0"
 base64 = "0.13"
 hyper = "0.13"
+hyper-tls = "0.4"
 log = "0.4"
 native-tls = "0.2"
 pretty_env_logger = "0.4"
 structopt = "0.3"
 # Update to 0.3 once apparent issue with the nascent 0.3.5 is fixed.
 tokio = { version = "0.2", features = ["full"] }
+tokio-tls = "0.3"
 url = "2.1"
