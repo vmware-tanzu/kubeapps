@@ -12,7 +12,9 @@ export const app = {
     ) => {
       const repoNamespace = cv.relationships.chart.data.repo.namespace;
       const newSegment = globalNamespace !== repoNamespace ? "new" : "new-from-global";
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
+      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${
+        cv.relationships.chart.data.repo.name
+      }/${encodeURIComponent(cv.relationships.chart.data.name)}/versions/${version}`;
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (cluster: string, namespace: string, releaseName: string) =>
@@ -33,7 +35,9 @@ export const app = {
       globalNamespace: string,
     ) => {
       const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${chartName}`;
+      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${encodeURIComponent(
+        chartName,
+      )}`;
     },
   },
   operators: {

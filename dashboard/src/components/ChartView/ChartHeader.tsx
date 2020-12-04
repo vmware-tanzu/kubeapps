@@ -1,5 +1,6 @@
 import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
+import { trimStart } from "lodash";
 import React from "react";
 import { IChartAttributes, IChartVersion } from "shared/types";
 import placeholder from "../../placeholder.png";
@@ -30,11 +31,11 @@ export default function ChartHeader({
     <PageHeader
       title={
         releaseName
-          ? `${releaseName} (${chartAttrs.repo.name}/${chartAttrs.name})`
-          : `${chartAttrs.repo.name}/${chartAttrs.name}`
+          ? `${releaseName} (${chartAttrs.repo.name}/${decodeURIComponent(chartAttrs.name)})`
+          : `${chartAttrs.repo.name}/${decodeURIComponent(chartAttrs.name)}`
       }
       titleSize="md"
-      icon={chartAttrs.icon ? `api/assetsvc/${chartAttrs.icon}` : placeholder}
+      icon={chartAttrs.icon ? `api/assetsvc/${trimStart(chartAttrs.icon, "/")}` : placeholder}
       helm={true}
       version={
         <>

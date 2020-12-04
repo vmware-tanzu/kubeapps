@@ -27,7 +27,7 @@ export default function ChartCatalogItem(props: IChartCatalogItem) {
   return (
     <InfoCard
       key={id}
-      title={name}
+      title={decodeURIComponent(name)}
       link={link}
       info={version || ""}
       icon={iconSrc}
