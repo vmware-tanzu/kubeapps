@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/kubeapps/common/datastore"
@@ -55,7 +56,7 @@ func exists(current []string, str string) bool {
 	return false
 }
 
-func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, error) {
+func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, limit, offset int) ([]*models.Chart, int, int, int, error) {
 	clauses := []string{}
 	queryParams := []interface{}{}
 	if namespace != dbutils.AllNamespaces {
@@ -71,12 +72,29 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 		repoQuery = strings.Join(clauses, " AND ")
 		repoQuery = "WHERE " + repoQuery
 	}
-	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, repoQuery)
+
+	paginationClause := ""
+	if limit > 0 && offset >= 0 {
+		paginationClause = fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+	}
+
+	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC %s", dbutils.ChartTable, repoQuery, paginationClause)
 	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, 0, err
 	}
-	return charts, 1, nil
+
+	dbCountQuery := fmt.Sprintf("SELECT count(info) FROM %s %s", dbutils.ChartTable, repoQuery)
+	count, err := m.QueryCount(dbCountQuery, queryParams...)
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+	numPages := 1
+	if limit > 0 && count > 0 {
+		numPages = int(math.Round(float64(count) / float64(limit)))
+	}
+
+	return charts, offset, numPages, count, nil
 }
 
 func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {

@@ -63,7 +63,9 @@ type rel struct {
 }
 
 type meta struct {
-	TotalPages int `json:"totalPages"`
+	CurrentPages int `json:"currentPage"`
+	TotalPages   int `json:"totalPages"`
+	TotalCharts  int `json:"totalCharts"`
 }
 
 // count is used to parse the result of a $count operation in the database
@@ -71,17 +73,17 @@ type count struct {
 	Count int
 }
 
-// getPageNumberAndSize extracts the page number and size of a request. Default (1, 0) if not set
-func getPageNumberAndSize(req *http.Request) (int, int) {
-	page := req.FormValue("page")
-	size := req.FormValue("size")
-	pageInt, err := strconv.ParseUint(page, 10, 64)
+// getLimitAndOffsetParams extracts the limit and offset of a request. Default (1, 0) if not set
+func getLimitAndOffsetParams(req *http.Request) (int, int) {
+	limit := req.FormValue("limit")
+	offset := req.FormValue("offset")
+	limitInt, err := strconv.ParseUint(limit, 10, 64)
 	if err != nil {
-		pageInt = 1
+		limitInt = 0
 	}
 	// ParseUint will return 0 if size is a not positive integer
-	sizeInt, _ := strconv.ParseUint(size, 10, 64)
-	return int(pageInt), int(sizeInt)
+	offsetInt, _ := strconv.ParseUint(offset, 10, 64)
+	return int(limitInt), int(offsetInt)
 }
 
 // showDuplicates returns if a request wants to retrieve charts. Default false
@@ -99,15 +101,15 @@ func min(a, b int) int {
 	return b
 }
 
-func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) (apiListResponse, interface{}, error) {
-	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize)
-	return newChartListResponse(charts), meta{totalPages}, err
+func getPaginatedChartList(namespace, repo string, limit, offset int) (apiListResponse, interface{}, error) {
+	charts, currentPage, totalPages, totalCharts, err := manager.getPaginatedChartList(namespace, repo, limit, offset)
+	return newChartListResponse(charts), meta{currentPage, totalPages, totalCharts}, err
 }
 
 // listCharts returns a list of charts based on filter params
 func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 
-	pageNumber, pageSize := getPageNumberAndSize(req)
+	limit, offset := getLimitAndOffsetParams(req)
 	namespace, err := url.PathUnescape(params["namespace"])
 	if err != nil {
 		handleDecodeError(params["namespace"], w, err)
@@ -119,7 +121,7 @@ func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 
-	cl, meta, err := getPaginatedChartList(namespace, repo, pageNumber, pageSize)
+	cl, meta, err := getPaginatedChartList(namespace, repo, limit, offset)
 	if err != nil {
 		log.WithError(err).Error("could not fetch charts")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
