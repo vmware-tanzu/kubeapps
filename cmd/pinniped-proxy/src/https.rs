@@ -83,7 +83,10 @@ pub fn cert_for_cert_data(cert_data: Vec<u8>) -> Result<Certificate> {
 /// rewrite_request directs the specified request to the targeted backend api
 /// server.
 pub fn rewrite_request(mut req: Request<hyper::Body>, k8s_api_server_url: String) -> Result<Request<hyper::Body>> {
-    // Update the request URI.
+    // Update the request URI from
+    // http://pinniped-proxy:1234/api/v1/foo?bar
+    // to
+    // https://k8s-api-server-url:5678/api/v1/foo?bar
     let uri_string = format!(
         "{}{}",
         k8s_api_server_url,
