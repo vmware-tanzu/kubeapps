@@ -1,7 +1,13 @@
 use anyhow::Result;
-use hyper::{HeaderMap, header::HeaderValue};
+use hyper::{
+    client::connect::HttpConnector,
+    Client,
+    HeaderMap,
+    header::HeaderValue, Request,
+};
+use hyper_tls::HttpsConnector;
 use log::debug;
-use native_tls::Certificate;
+use native_tls::{Certificate, TlsConnectorBuilder};
 use url::Url;
 
 const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.local";
@@ -63,6 +69,7 @@ pub fn get_api_server_cert_auth_data(request_headers: &HeaderMap<HeaderValue>) -
     }
 }
 
+/// cert_for_cert_data returns a Certificate result for the provided cert data.
 pub fn cert_for_cert_data(cert_data: Vec<u8>) -> Result<Certificate> {
     match Certificate::from_pem(&cert_data) {
         Ok(c) => Ok(c),
@@ -73,11 +80,59 @@ pub fn cert_for_cert_data(cert_data: Vec<u8>) -> Result<Certificate> {
     }
 }
 
+/// rewrite_request directs the specified request to the targeted backend api
+/// server.
+pub fn rewrite_request(mut req: Request<hyper::Body>, k8s_api_server_url: String) -> Result<Request<hyper::Body>> {
+    // Update the request URI from
+    // http://pinniped-proxy:1234/api/v1/foo?bar
+    // to
+    // https://k8s-api-server-url:5678/api/v1/foo?bar
+    let uri_string = format!(
+        "{}{}",
+        k8s_api_server_url,
+        req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("")
+    );
+    let uri: hyper::Uri = uri_string.parse()?;
+    *req.uri_mut() = uri.clone();
+
+    // Update the host header.
+    let host: Option<HeaderValue> = match uri.authority() {
+        Some(auth) => {
+            let mut host_header = auth.host().to_string();
+            host_header = match auth.port() {
+                Some(p) => format!("{}:{}", host_header, p),
+                None => host_header,
+            };
+            Some(HeaderValue::from_str(&host_header)?)
+        },
+        None => None,
+    };
+    match host {
+        Some(h) => req.headers_mut().insert("Host", h),
+        None => None,
+    };
+
+    Ok(req)
+}
+
+/// make_https_connector returns the tls-configured http connector.
+pub fn make_https_client(tls_builder: &mut TlsConnectorBuilder) -> Result<Client<HttpsConnector<HttpConnector>>> {
+    let tls = tls_builder.build()?;
+    let tokio_tls = tokio_tls::TlsConnector::from(tls);
+    let mut http = HttpConnector::new();
+    http.enforce_http(false);
+    let mut https = HttpsConnector::<HttpConnector>::from((http, tokio_tls));
+    https.https_only(true);
+    Ok(Client::builder().build::<_, hyper::Body>(https))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hyper::Body;
 
-    const VALID_API_SERVER_URL: &str = "https://172.1.18.4";
+    const VALID_API_SERVER_HOST: &str = "172.1.18.4:12345";
+    const VALID_API_SERVER_URL: &str = "https://172.1.18.4:12345";
     const VALID_CERT_BASE64: &'static str = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJd01UQXlOakl6TXpBME5Wb1hEVE13TVRBeU5ESXpNekEwTlZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT1ZKCnFuOVBFZUp3UDRQYnI0cFo1ZjZKUmliOFZ5a2tOYjV2K1hzTVZER01aWGZLb293Y29IYjFwRWh5d0pzeDFiME4Kd2YvZ1JURi9maEgzT0drRnNQMlV2a0lHVytzNUlBd0sxMFRXYkN5VzAwT3lzVkdLcnl5bHNWcEhCWXBZRGJBcQpkdnQzc0FkcFJZaGlLZSs2NkVTL3dQNTdLV3g0SVdwZko0UGpyejh2NkJBWlptZ3o5ZzRCSFNMQkhpbTVFbTdYClBJTmpKL1RJTXFzVW1PR1ppUUNHR0ptRnQxZ21jQTd3eHZ0ZXg2ckkxSWdFNkh5NW10UzJ3NDZaMCtlVU1RSzgKSE9UdnI5aGFETnhJenVjbkduaFlCT2Z2U2VVaXNCR0pOUm5QbENydWx4b2NSZGI3N20rQUdzWW52QitNd2prVQpEbXNQTWZBelpSRHEwekhzcGEwQ0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFBWndybXJLa3FVaDJUYld2VHdwSWlOd0o1NzAKaU9lTVl2WWhNakZxTmt6Tk9OUW55c3lPd1laRGJFMDRrV3AxclRLNHVZaUh3NTJUc0cyelJsZ0QzMzNKaEtvUQpIVloyV1hUT3Z5U2RJaWl5bVpKM2N3d0p2T0lhMW5zZnhYY1NJakJnYnNzYXowMndpRCtlazRPdmlRZktjcXJpCnFQbWZabDZDSkk0NU1rd3JwTExFaTZkNVhGbkhDb3d4eklxQjBrUDhwOFlOaGJYWTNYY2JaNElvY2lMemRBamUKQ1l6NXFVSlBlSDJCcHNaM0JXNXRDbjcycGZYazVQUjlYOFRUTHh6aTA4SU9yYjgvRDB4Tnk3emQyMnVjNXM1bwoveXZIeEt6cXBiczVuRXJkT0JFVXNGWnBpUEhaVGc1dExmWlZ4TG00VjNTZzQwRWUyNFd6d09zaDNIOD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=";
 
 
@@ -209,5 +264,19 @@ mod tests {
             },
             _ => anyhow::bail!("got: valid cert, wanted native_tls::Error"),
         }
+    }
+
+    #[test]
+    fn test_rewrite_request_success() -> Result<()> {
+        let mut req = Request::get("http://local.pinniped:9876/foo/bar/zed")
+            .body(Body::empty())
+            .unwrap();
+
+        req = rewrite_request(req, VALID_API_SERVER_URL.into())?;
+
+        let want = format!("{}/foo/bar/zed", VALID_API_SERVER_URL);
+        assert_eq!(want, req.uri().to_string());
+        assert_eq!(VALID_API_SERVER_HOST, req.headers().get("HOST").unwrap().to_str()?);
+        Ok(())
     }
 }
