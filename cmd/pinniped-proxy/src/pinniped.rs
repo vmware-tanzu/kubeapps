@@ -8,7 +8,7 @@ use kube::{
     api::{Api, PostParams},
     Client, Config, CustomResource,
 };
-use log::info;
+use log::debug;
 use native_tls::Identity;
 use openssl::{pkcs12::Pkcs12, pkey::PKey, x509::X509};
 use reqwest;
@@ -17,7 +17,7 @@ use serde_json;
 use url::Url;
 
 /// exchange_token_for_identity accepts an authorization header and returns a client cert authentication Identity in exchange.
-/// 
+///
 /// The token is exchanged with pinniped concierge API running on the identified kubernetes api server.
 pub async fn exchange_token_for_identity(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8]) -> Result<Identity> {
     let credential_request = call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data).await.context("Failed to exchange credentials")?;
@@ -33,11 +33,11 @@ pub async fn exchange_token_for_identity(authorization: &str, k8s_api_server_url
             }
         },
         None => return Err(anyhow::anyhow!("pinniped credential request did not include status: {:#?}", credential_request))
-    }  
+    }
 }
 
 /// identity_for_exchange parses the JSON output of the credential exchange and returns the Identity.
-/// 
+///
 /// Note: to create an identity, need to go via a pkcs12 currently.
 /// https://github.com/sfackler/rust-native-tls/issues/27#issuecomment-324262673
 fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
@@ -50,12 +50,12 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
     Ok(identity)
 }
 
-/// TokenCredentialRequestSpec 
+/// TokenCredentialRequestSpec
 ///
 /// TokenCredentialRequestSpec and the Status including the returned cluster credential
 /// are structs based on the corresponding structs in the pinniped code at:
 /// https://github.com/vmware-tanzu/pinniped/blob/main/generated/1.19/apis/concierge/login/v1alpha1/types_token.go#L11
-/// 
+///
 /// The rust derive macro together with the kube macro creates serializable and deserializable
 /// resources based on the struct. See https://docs.rs/kube/0.43.0/kube/ for more details.
 #[derive(CustomResource, Deserialize, Serialize, Clone, Debug)]
@@ -123,7 +123,7 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
     // explicitly, even if the client is limited to a specific namespace.
     cred_request.metadata_mut().namespace = Some(pinniped_namespace);
 
-    info!("{}", serde_json::to_string(&cred_request).unwrap());
+    debug!("{}", serde_json::to_string(&cred_request).unwrap());
     match token_creds.create(&PostParams::default(), &cred_request).await {
         Ok(o) => Ok(o),
         Err(e) => {
