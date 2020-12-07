@@ -16,6 +16,8 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use url::Url;
 
+const PINNIPED_AUTHENTICATOR_NAME: &str = "PINNIPED_AUTHENTICATOR_NAME";
+const PINNIPED_AUTHENTICATOR_TYPE: &str = "PINNIPED_AUTHENTICATOR_TYPE";
 /// exchange_token_for_identity accepts an authorization header and returns a client cert authentication Identity in exchange.
 ///
 /// The token is exchanged with pinniped concierge API running on the identified kubernetes api server.
@@ -41,12 +43,18 @@ pub async fn exchange_token_for_identity(authorization: &str, k8s_api_server_url
 /// Note: to create an identity, need to go via a pkcs12 currently.
 /// https://github.com/sfackler/rust-native-tls/issues/27#issuecomment-324262673
 fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
-    let pkey = PKey::private_key_from_pem(cred.client_key_data.as_bytes())?;
-    let x509 = X509::from_pem(cred.client_certificate_data.as_bytes())?;
+    let pkey = PKey::private_key_from_pem(cred.client_key_data.as_bytes())
+        .context("error creating private key from pem")?;
+    let x509 = X509::from_pem(cred.client_certificate_data.as_bytes())
+        .context("error creating x509 from pem")?;
 
     let pkcs_cert = Pkcs12::builder()
-        .build("", "friendly-name", &pkey, &x509)?;
-    let identity = Identity::from_pkcs12(&pkcs_cert.to_der()?, "")?;
+        .build("", "friendly-name", &pkey, &x509)
+        .context("Error building Pkcs12 from private key and x509")?;
+    let identity = Identity::from_pkcs12(
+        &pkcs_cert.to_der().context("error creating der from pkcs12")?,
+        "",
+    ).context("error creating identity from der-formatted pkcs12")?;
     Ok(identity)
 }
 
@@ -114,8 +122,8 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
     let mut cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
         token: Some(auth_token),
         authenticator: corev1::TypedLocalObjectReference {
-            name: env::var("PINNIPED_AUTHENTICATOR_NAME")?,
-            kind: "WebhookAuthenticator".into(), //env::var("PINNIPED_AUTHENTICATOR_TYPE")?,
+            name: env::var(PINNIPED_AUTHENTICATOR_NAME).with_context(|| format!("error retrieving {}", PINNIPED_AUTHENTICATOR_NAME))?,
+            kind: env::var(PINNIPED_AUTHENTICATOR_TYPE).with_context(|| format!("error retrieving {}", PINNIPED_AUTHENTICATOR_TYPE))?,
             api_group: Some("authentication.concierge.pinniped.dev".into()),
         },
     });

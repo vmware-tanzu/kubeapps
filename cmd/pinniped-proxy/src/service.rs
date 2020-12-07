@@ -76,7 +76,7 @@ fn handle_error(e: Error, status: StatusCode, log_data: logging::LogData) -> Res
                 Response::builder().status(status).body(Body::empty()).unwrap()
             }
         };
-    // TODO: Add error to log_data so it can be included (with error context).
+    error!("{:?}", e);
     info!("{}", logging::response_log_data(&response, log_data));
     Ok(response)
 }
