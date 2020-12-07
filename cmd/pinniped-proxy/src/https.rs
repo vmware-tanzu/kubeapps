@@ -10,6 +10,8 @@ use log::debug;
 use native_tls::{Certificate, TlsConnectorBuilder};
 use url::Url;
 
+use crate::pinniped;
+
 const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.local";
 const HEADER_K8S_API_SERVER_URL: &str = "PINNIPED_PROXY_API_SERVER_URL";
 const HEADER_K8S_API_SERVER_CA_CERT: &str = "PINNIPED_PROXY_API_SERVER_CERT";
@@ -31,6 +33,22 @@ fn validate_url(u: String) -> Result<String> {
             Err(anyhow::anyhow!(e))
         },
     }
+}
+
+/// include_client_cert updates a tls connection to be built with a client cert for authentication.
+/// 
+/// The client cert is obtained by exchanging the authorization token for a client identity via
+/// pinniped.
+pub async fn include_client_identity_for_headers<'a>(mut tls_builder: &'a mut TlsConnectorBuilder, request_headers: HeaderMap<HeaderValue>, k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8]) -> Result<&'a mut TlsConnectorBuilder> {
+    if request_headers.contains_key("Authorization") {
+        match pinniped::exchange_token_for_identity(request_headers["Authorization"].to_str()?, k8s_api_server_url, k8s_api_ca_cert_data).await {
+            Ok(identity) => {
+                tls_builder = tls_builder.identity(identity);
+            },
+            Err(e) => return Err(e),
+        };
+    }
+    Ok(tls_builder)
 }
 
 /// get_api_server_url returns a string result from the specified header.
