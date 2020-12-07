@@ -19,7 +19,7 @@ export class App {
     const { data } = await axiosWithAuth.post(endpoint, {
       appRepositoryResourceName: chartAttrs.repo.name,
       appRepositoryResourceNamespace: chartNamespace,
-      chartName: chartAttrs.name,
+      chartName: decodeURIComponent(chartAttrs.name),
       releaseName,
       values,
       version: chartVersion.attributes.version,
@@ -40,7 +40,7 @@ export class App {
     const { data } = await axiosWithAuth.put(endpoint, {
       appRepositoryResourceName: chartAttrs.repo.name,
       appRepositoryResourceNamespace: chartNamespace,
-      chartName: chartAttrs.name,
+      chartName: decodeURIComponent(chartAttrs.name),
       releaseName,
       values,
       version: chartVersion.attributes.version,

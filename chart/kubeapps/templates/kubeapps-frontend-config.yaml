@@ -80,9 +80,15 @@ data:
         include "./server_blocks/k8s-api-proxy.conf";
       }
 
+      # Forward '/api/assetsvc' to '/assetsvc'
+      # but preserving the encoding (eg. '%2F' is not converted to '/')
+      # see https://serverfault.com/a/906479
+      # Ex: from "/api/assetsvc/what$2Fever?param=value"
+      #     it matches as $1="/what$2Fever" and $args="param=value"
+      #     downstream services will receive "/assetsvc/what$2Fever?param=value"
       location ~* /api/assetsvc {
-        rewrite /api/assetsvc/(.*) /assetsvc/$1 break;
-        rewrite /api/assetsvc /assetsvc break;
+        rewrite ^ $request_uri; # pass the encoded url downstream as is, 
+        rewrite /api/assetsvc([^?]*) /assetsvc$1?$args break;
 
         {{- if .Values.frontend.proxypassAccessTokenAsBearer }}
         # Google Kubernetes Engine requires the access_token as the Bearer when talking to the k8s api server.

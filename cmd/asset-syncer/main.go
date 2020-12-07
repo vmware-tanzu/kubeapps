@@ -47,7 +47,7 @@ func main() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost", "Database URL")
+	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost:5432", "Database URL")
 	rootCmd.PersistentFlags().StringVar(&databaseName, "database-name", "charts", "Name of the database to use")
 	rootCmd.PersistentFlags().StringVar(&databaseUser, "database-user", "", "Database user")
 	rootCmd.PersistentFlags().StringVar(&namespace, "namespace", "", "Namespace of the repository being synced")
