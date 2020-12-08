@@ -12,9 +12,9 @@ use url::Url;
 
 use crate::pinniped;
 
-const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.local";
+pub const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.local";
 const HEADER_K8S_API_SERVER_URL: &str = "PINNIPED_PROXY_API_SERVER_URL";
-const HEADER_K8S_API_SERVER_CA_CERT: &str = "PINNIPED_PROXY_API_SERVER_CERT";
+pub const HEADER_K8S_API_SERVER_CA_CERT: &str = "PINNIPED_PROXY_API_SERVER_CERT";
 const INVALID_SCHEME_ERROR: &'static str = "invalid scheme, https required";
 
 /// validate_url returns a result containing the validated url or an error if it is invalid.
@@ -36,7 +36,7 @@ fn validate_url(u: String) -> Result<String> {
 }
 
 /// include_client_cert updates a tls connection to be built with a client cert for authentication.
-/// 
+///
 /// The client cert is obtained by exchanging the authorization token for a client identity via
 /// pinniped.
 pub async fn include_client_identity_for_headers<'a>(mut tls_builder: &'a mut TlsConnectorBuilder, request_headers: HeaderMap<HeaderValue>, k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8]) -> Result<&'a mut TlsConnectorBuilder> {
@@ -71,18 +71,12 @@ pub fn get_api_server_url(request_headers: &HeaderMap<HeaderValue>) -> Result<St
 }
 
 /// get_api_server_cert_auth_data returns a byte vector result containing the base64 decoded value.
-pub fn get_api_server_cert_auth_data(request_headers: &HeaderMap<HeaderValue>) -> Result<Vec<u8>> {
-    match request_headers.get(HEADER_K8S_API_SERVER_CA_CERT) {
-        Some(header_value_b64) => match base64::decode(header_value_b64.as_bytes()) {
-            Ok(data) => Ok(data),
-            Err(e) => {
-                debug!("failed to base64 decode {} header data: {}", HEADER_K8S_API_SERVER_CA_CERT, e);
-                Err(anyhow::anyhow!(e))
-            }
-        },
-        None => {
-            debug!("header {} required but not present", HEADER_K8S_API_SERVER_CA_CERT);
-            Err(anyhow::anyhow!("header {} required but not present", HEADER_K8S_API_SERVER_CA_CERT))
+pub fn get_api_server_cert_auth_data(cacert_header: &HeaderValue) -> Result<Vec<u8>> {
+    match base64::decode(cacert_header.as_bytes()) {
+        Ok(data) => Ok(data),
+        Err(e) => {
+            debug!("failed to base64 decode {} header data: {}", HEADER_K8S_API_SERVER_CA_CERT, e);
+            Err(anyhow::anyhow!(e))
         }
     }
 }
@@ -239,10 +233,7 @@ mod tests {
 
     #[test]
     fn test_api_server_cert_auth_data_valid() -> Result<()> {
-        let mut headers = HeaderMap::new();
-        headers.insert(HEADER_K8S_API_SERVER_CA_CERT, HeaderValue::from_static(VALID_CERT_BASE64));
-
-        match get_api_server_cert_auth_data(&headers) {
+        match get_api_server_cert_auth_data(&HeaderValue::from_static(VALID_CERT_BASE64)) {
             Ok(data) => {
                 assert_eq!(data, base64::decode(VALID_CERT_BASE64.as_bytes())?);
                 Ok(())
@@ -253,10 +244,7 @@ mod tests {
 
     #[test]
     fn get_api_server_cert_auth_data_nonb64() -> Result<()> {
-        let mut headers = HeaderMap::new();
-        headers.insert(HEADER_K8S_API_SERVER_CA_CERT, HeaderValue::from_static("not base64 data"));
-
-        match get_api_server_cert_auth_data(&headers) {
+        match get_api_server_cert_auth_data(&HeaderValue::from_static("not base64 data")) {
             Err(e) => {
                 assert!(e.is::<base64::DecodeError>(), "got: {:#?}, want: base64::DecodeErro", e);
                 Ok(())

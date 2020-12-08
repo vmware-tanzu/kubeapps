@@ -1,6 +1,7 @@
 use std::convert::Infallible;
+use std::fs;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use hyper::{Server, service::{make_service_fn, service_fn}};
 use log::info;
 use structopt::StructOpt;
@@ -17,17 +18,26 @@ async fn main() -> Result<()> {
     pretty_env_logger::init();
     let opt = cli::Options::from_args();
 
+    // Load the default certificate authority data on startup once.
+    let default_ca_data = fs::read_to_string(opt.default_ca_cert.clone())
+        .with_context(|| format!("error loading default-ca-cert at {}", opt.default_ca_cert))?;
+
     // For every incoming connection, we make a new hyper `Service` to handle
     // all incoming HTTP requests on that connection. This is done by passing a
     // closure to the hyper `make_service_fn` which returns our custom `make_svc`
-    // function that can be used for each connection. 
+    // function that can be used for each connection.
     let make_svc = make_service_fn(|_conn| {
+        let default_ca_data = default_ca_data.clone();
         // The closure just returns an async block that runs a service to handle
         // all requests for the connection.
         async {
             // `service_fn` is a helper from the hyper crate which converts a
-            // function that returns a Response into a `Service`.
-            Ok::<_, Infallible>(service_fn(service::proxy))
+            // function that returns a Response into a `Service`. We pass a
+            // closure to service_fn here so we can pass the default certificate
+            // authority data.
+            Ok::<_, Infallible>(service_fn(move |req| {
+                service::proxy(req, default_ca_data.clone().into_bytes())
+            }))
         }
     });
 

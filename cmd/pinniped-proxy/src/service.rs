@@ -12,7 +12,7 @@ use crate::https;
 ///
 /// The request must include an authorization token which is exchanged with pinniped-concierge
 /// for an X509 client identity cert with which the request is forwarded on.
-pub async fn proxy(mut req: Request<Body>) -> Result<Response<Body>, Infallible> {
+pub async fn proxy(mut req: Request<Body>, default_ca_data: Vec<u8>) -> Result<Response<Body>, Infallible> {
 
     let mut log_data = logging::request_log_data(&req);
     let k8s_api_server_url = match https::get_api_server_url(req.headers()) {
@@ -29,10 +29,27 @@ pub async fn proxy(mut req: Request<Body>) -> Result<Response<Body>, Infallible>
 
     // TODO: don't call this if we're using https://kubernetes.local, instead
     // grab the data from the file system.
-    let cert_auth_data = match https::get_api_server_cert_auth_data(req.headers()) {
-        Ok(c) => c,
-        Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
+    let cert_auth_data = match req.headers().get(https::HEADER_K8S_API_SERVER_CA_CERT) {
+        // TODO: update to just pass the header not all the headers.
+        Some(header_value_b64) => match https::get_api_server_cert_auth_data(header_value_b64) {
+            Ok(c) => c,
+            Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
+        },
+        None => {
+            // If there was no header present, we use the default value if the
+            // url is the default one, otherwise error.
+            match k8s_api_server_url.as_str() {
+                https::DEFAULT_K8S_API_SERVER_URL => {
+                    default_ca_data
+                },
+                _ => {
+                    let e = anyhow::anyhow!("header {} required but not present", https::HEADER_K8S_API_SERVER_CA_CERT);
+                    return handle_error(e, StatusCode::BAD_REQUEST, log_data);
+                },
+            }
+        }
     };
+
     let k8s_api_cert = match https::cert_for_cert_data(cert_auth_data.clone()) {
         Ok(c) => c,
         Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
