@@ -27,10 +27,7 @@ pub async fn proxy(mut req: Request<Body>, default_ca_data: Vec<u8>) -> Result<R
     // Recreate the log data now that the request host has been rewritten.
     log_data = logging::request_log_data(&req);
 
-    // TODO: don't call this if we're using https://kubernetes.local, instead
-    // grab the data from the file system.
     let cert_auth_data = match req.headers().get(https::HEADER_K8S_API_SERVER_CA_CERT) {
-        // TODO: update to just pass the header not all the headers.
         Some(header_value_b64) => match https::get_api_server_cert_auth_data(header_value_b64) {
             Ok(c) => c,
             Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
