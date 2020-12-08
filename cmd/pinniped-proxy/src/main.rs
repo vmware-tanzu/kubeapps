@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
 
     // Load the default certificate authority data on startup once.
     let default_ca_data = fs::read_to_string(opt.default_ca_cert.clone())
-        .with_context(|| format!("error loading default-ca-cert at {}", opt.default_ca_cert))?;
+        .with_context(|| format!("unable to load default-ca-cert at {}", opt.default_ca_cert))?;
 
     // For every incoming connection, we make a new hyper `Service` to handle
     // all incoming HTTP requests on that connection. This is done by passing a
