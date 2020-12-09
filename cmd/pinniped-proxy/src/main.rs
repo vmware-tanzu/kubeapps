@@ -9,6 +9,7 @@ use structopt::StructOpt;
 mod cli;
 mod https;
 mod logging;
+mod pinniped;
 mod service;
 
 #[tokio::main]
