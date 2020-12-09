@@ -24,7 +24,7 @@ import (
 type assetManager interface {
 	Init() error
 	Close() error
-	getPaginatedChartList(namespace, repo string, limit, offset int) ([]*models.Chart, int, int, int, error)
+	getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, int, error)
 	getChart(namespace, chartID string) (models.Chart, error)
 	getChartVersion(namespace, chartID, version string) (models.Chart, error)
 	getChartFiles(namespace, filesID string) (models.ChartFiles, error)

@@ -291,24 +291,24 @@ func Test_listCharts(t *testing.T) {
 		charts []*models.Chart
 		meta   meta
 	}{
-		{"no charts", []*models.Chart{}, meta{1}},
+		{"no charts", []*models.Chart{}, meta{TotalPages: 1, TotalCharts: 0}},
 		{"one chart", []*models.Chart{
 			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-		}, meta{1}},
+		}, meta{TotalPages: 1, TotalCharts: 1}},
 		{"two charts", []*models.Chart{
 			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, meta{1}},
+		}, meta{TotalPages: 2, TotalCharts: 2}},
 		{"two charts, one encoded", []*models.Chart{
 			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, meta{1}},
+		}, meta{TotalPages: 2, TotalCharts: 2}},
 		{"four charts", []*models.Chart{
 			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, Name: "drupal", ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, Name: "wordpress", ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{1}},
+		}, meta{TotalPages: 4, TotalCharts: 4}},
 	}
 
 	for _, tt := range tests {
@@ -317,6 +317,8 @@ func Test_listCharts(t *testing.T) {
 			defer cleanup()
 
 			rows := sqlmock.NewRows([]string{"info"})
+			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tt.charts))
+
 			for _, chart := range tt.charts {
 				chartJSON, err := json.Marshal(chart)
 				if err != nil {
@@ -328,6 +330,9 @@ func Test_listCharts(t *testing.T) {
 				WithArgs(namespace, kubeappsNamespace).
 				WillReturnRows(rows)
 
+			mock.ExpectQuery("^SELECT count(.+) FROM").
+				WillReturnRows(rowCount)
+
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/charts", nil)
 			listCharts(w, req, Params{"namespace": namespace})
@@ -337,17 +342,17 @@ func Test_listCharts(t *testing.T) {
 			var b bodyAPIListResponse
 			json.NewDecoder(w.Body).Decode(&b)
 			if b.Data == nil {
-				t.Fatal("chart list shouldn't be null")
+				t.Fatal("In '" + tt.name + "': " + "chart list shouldn't be null")
 			}
 			data := *b.Data
 			assert.Len(t, data, len(tt.charts))
 			for i, resp := range data {
-				assert.Equal(t, resp.ID, tt.charts[i].ID, "chart id in the response should be the same")
-				assert.Equal(t, resp.Type, "chart", "response type is chart")
-				assert.Equal(t, resp.Links.(map[string]interface{})["self"], pathPrefix+"/ns/"+namespace+"/charts/"+tt.charts[i].ID, "self link should be the same")
-				assert.Equal(t, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
+				assert.Equal(t, resp.ID, tt.charts[i].ID, "In '"+tt.name+"': "+"chart id in the response should be the same")
+				assert.Equal(t, resp.Type, "chart", "In '"+tt.name+"': "+"response type is chart")
+				assert.Equal(t, resp.Links.(map[string]interface{})["self"], pathPrefix+"/ns/"+namespace+"/charts/"+tt.charts[i].ID, "In '"+tt.name+"': "+"self link should be the same")
+				assert.Equal(t, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "In '"+tt.name+"': "+"latestChartVersion should match version at index 0")
 			}
-			assert.Equal(t, b.Meta, tt.meta, "response meta should be the same")
+			assert.Equal(t, b.Meta, tt.meta, "In '"+tt.name+"': "+"response meta should be the same")
 		})
 	}
 }
@@ -360,26 +365,38 @@ func Test_listRepoCharts(t *testing.T) {
 		charts []*models.Chart
 		meta   meta
 	}{
-		{"repo has no charts", "my-repo", "", []*models.Chart{}, meta{1}},
+		{"repo has no charts", "my-repo", "", []*models.Chart{}, meta{TotalPages: 1, TotalCharts: 0}},
 		{"repo has one chart", "my-repo", "", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-		}, meta{1}},
+		}, meta{TotalPages: 1, TotalCharts: 1}},
 		{"repo has many charts", "my-repo", "", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, meta{1}},
-		{"repo has many charts with pagination", "my-repo", "?size=2", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{1}},
-		{"repo has many encoded charts with pagination", "my-repo", "?size=2", []*models.Chart{
+		}, meta{TotalPages: 2, TotalCharts: 2}},
+		{"repo has many encoded charts with pagination", "my-repo", "?page=1&size=2", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/foo%2Fdokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/foo%2Fdrupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{1}},
+		}, meta{TotalPages: 2, TotalCharts: 4}},
+		{"repo has many charts with pagination (2 pages)", "my-repo", "?page=2&size=2", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		}, meta{TotalPages: 2, TotalCharts: 4}},
+		{"repo has many charts with pagination (non existing page)", "my-repo", "?page=3&size=2", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		}, meta{TotalPages: 2, TotalCharts: 4}},
+		{"repo has many charts with pagination (out of range size)", "my-repo", "?page=1&size=100", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		}, meta{TotalPages: 1, TotalCharts: 4}},
 	}
 
 	for _, tt := range tests {
@@ -388,6 +405,8 @@ func Test_listRepoCharts(t *testing.T) {
 			defer cleanup()
 
 			rows := sqlmock.NewRows([]string{"info"})
+			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tt.charts))
+
 			for _, chart := range tt.charts {
 				chartJSON, err := json.Marshal(chart)
 				if err != nil {
@@ -402,6 +421,9 @@ func Test_listRepoCharts(t *testing.T) {
 			mock.ExpectQuery("SELECT info FROM charts").
 				WithArgs(expectedParams...).
 				WillReturnRows(rows)
+
+			mock.ExpectQuery("^SELECT count(.+) FROM").
+				WillReturnRows(rowCount)
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/charts/"+tt.repo+tt.query, nil)
@@ -419,11 +441,12 @@ func Test_listRepoCharts(t *testing.T) {
 			data := *b.Data
 			assert.Len(t, data, len(tt.charts))
 			for i, resp := range data {
-				assert.Equal(t, resp.ID, tt.charts[i].ID, "chart id in the response should be the same")
-				assert.Equal(t, resp.Type, "chart", "response type is chart")
-				assert.Equal(t, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
+				assert.Equal(t, tt.charts[i].ID, resp.ID, "In '"+tt.name+"': "+"chart id in the response should be the same")
+				assert.Equal(t, "chart", resp.Type, "In '"+tt.name+"': "+"response type is chart")
+				assert.Equal(t, tt.charts[i].ChartVersions[0].Version, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], "In '"+tt.name+"': "+"latestChartVersion should match version at index 0")
 			}
-			assert.Equal(t, b.Meta, tt.meta, "response meta should be the same")
+			assert.Equal(t, tt.meta, b.Meta, "In '"+tt.name+"': "+"response meta should be the same")
+			assert.Equal(t, len(tt.charts), b.Meta.TotalCharts, "In '"+tt.name+"': "+"total charts in the response should be the same")
 		})
 	}
 }
@@ -501,10 +524,10 @@ func Test_getChart(t *testing.T) {
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIResponse
 				json.NewDecoder(w.Body).Decode(&b)
-				assert.Equal(t, tt.chart.ID, b.Data.ID, "chart id in the response should be the same")
-				assert.Equal(t, "chart", b.Data.Type, "response type is chart")
-				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, b.Data.Links.(map[string]interface{})["self"], "self link should be the same")
-				assert.Equal(t, tt.chart.ChartVersions[0].Version, b.Data.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], "latestChartVersion should match version at index 0")
+				assert.Equal(t, tt.chart.ID, b.Data.ID, "In '"+tt.name+"': "+"chart id in the response should be the same")
+				assert.Equal(t, "chart", b.Data.Type, "In '"+tt.name+"': "+"response type is chart")
+				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, b.Data.Links.(map[string]interface{})["self"], "In '"+tt.name+"': "+"self link should be the same")
+				assert.Equal(t, tt.chart.ChartVersions[0].Version, b.Data.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], "In '"+tt.name+"': "+"latestChartVersion should match version at index 0")
 			}
 		})
 	}
@@ -585,9 +608,9 @@ func Test_listChartVersions(t *testing.T) {
 				json.NewDecoder(w.Body).Decode(&b)
 				data := *b.Data
 				for i, resp := range data {
-					assert.Equal(t, resp.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "chart id in the response should be the same")
-					assert.Equal(t, resp.Type, "chartVersion", "response type is chartVersion")
-					assert.Equal(t, resp.Attributes.(map[string]interface{})["version"], tt.chart.ChartVersions[i].Version, "chart version should match")
+					assert.Equal(t, resp.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "In '"+tt.name+"': "+"chart id in the response should be the same")
+					assert.Equal(t, resp.Type, "chartVersion", "In '"+tt.name+"': "+"response type is chartVersion")
+					assert.Equal(t, resp.Attributes.(map[string]interface{})["version"], tt.chart.ChartVersions[i].Version, "In '"+tt.name+"': "+"chart version should match")
 				}
 			}
 		})
@@ -668,9 +691,9 @@ func Test_getChartVersion(t *testing.T) {
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIResponse
 				json.NewDecoder(w.Body).Decode(&b)
-				assert.Equal(t, b.Data.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[0].Version, "chart id in the response should be the same")
-				assert.Equal(t, b.Data.Type, "chartVersion", "response type is chartVersion")
-				assert.Equal(t, b.Data.Attributes.(map[string]interface{})["version"], tt.chart.ChartVersions[0].Version, "chart version should match")
+				assert.Equal(t, b.Data.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[0].Version, "In '"+tt.name+"': "+"chart id in the response should be the same")
+				assert.Equal(t, b.Data.Type, "chartVersion", "In '"+tt.name+"': "+"response type is chartVersion")
+				assert.Equal(t, b.Data.Attributes.(map[string]interface{})["version"], tt.chart.ChartVersions[0].Version, "In '"+tt.name+"': "+"chart version should match")
 			}
 		})
 	}

@@ -92,10 +92,10 @@ func TestGetChart(t *testing.T) {
 			chart, err := pam.getChart(tc.namespace, tc.chartId)
 
 			if got, want := err, tc.expectedErr; got != want {
-				t.Fatalf("got: %+v, want: %+v", got, want)
+				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
 			}
 			if got, want := chart.Name, tc.expectedChart; got != want {
-				t.Errorf("got: %q, want: %q", got, want)
+				t.Errorf("In '"+tc.name+"': "+"got: %q, want: %q", got, want)
 			}
 		})
 	}
@@ -209,17 +209,21 @@ func TestGetPaginatedChartList(t *testing.T) {
 	testCases := []struct {
 		name string
 		// existingCharts is a map of charts per namespace and repo
-		existingCharts map[string]map[string][]models.Chart
-		namespace      string
-		repo           string
-		expectedCharts []*models.Chart
-		expectedErr    error
+		existingCharts   map[string]map[string][]models.Chart
+		namespace        string
+		repo             string
+		expectedCharts   []*models.Chart
+		expectedErr      error
+		expectedNumPages int
+		expectedCount    int
 	}{
 		{
-			name:           "it returns an empty list if the repo or namespace do not exist",
-			repo:           "repo-doesnt-exist",
-			namespace:      "doesnt-exist",
-			expectedCharts: []*models.Chart{},
+			name:             "it returns an empty list if the repo or namespace do not exist",
+			repo:             "repo-doesnt-exist",
+			namespace:        "doesnt-exist",
+			expectedCharts:   []*models.Chart{},
+			expectedNumPages: 1,
+			expectedCount:    0,
 		},
 		{
 			name:      "it returns charts from a specific repo in a specific namespace",
@@ -243,6 +247,8 @@ func TestGetPaginatedChartList(t *testing.T) {
 			expectedCharts: []*models.Chart{
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 			},
+			expectedNumPages: 1,
+			expectedCount:    1,
 		},
 		{
 			name: "it returns charts from multiple repos in a specific namespace",
@@ -267,6 +273,8 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
+			expectedNumPages: 1,
+			expectedCount:    2,
 		},
 		{
 			name: "it includes charts from global repositories and the specific namespace",
@@ -297,6 +305,8 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: "global-repo/global-chart", Name: "global-chart"},
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
+			expectedNumPages: 1,
+			expectedCount:    3,
 		},
 		{
 			name: "it returns charts from multiple repos across all namespaces",
@@ -322,6 +332,8 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
+			expectedNumPages: 1,
+			expectedCount:    3,
 		},
 		{
 			name: "it returns charts from a single repo across all namespaces",
@@ -346,6 +358,8 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 			},
+			expectedNumPages: 1,
+			expectedCount:    2,
 		},
 		{
 			name: "it does not remove duplicates",
@@ -365,6 +379,8 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
 				&models.Chart{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
 			},
+			expectedNumPages: 1,
+			expectedCount:    2,
 		},
 	}
 
@@ -378,14 +394,19 @@ func TestGetPaginatedChartList(t *testing.T) {
 				}
 			}
 
-			// The actual pagination isn't currently implemented as its not yet used by Kubeapps.
-			charts, _, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10)
+			charts, numPages, count, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
-				t.Fatalf("got: %+v, want: %+v", got, want)
+				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
+			}
+			if got, want := numPages, tc.expectedNumPages; got != want {
+				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
+			}
+			if got, want := count, tc.expectedCount; got != want {
+				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
 			}
 			if got, want := charts, tc.expectedCharts; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+				t.Errorf("In '"+tc.name+"': "+"mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}
