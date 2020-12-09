@@ -12,7 +12,7 @@ use url::Url;
 
 use crate::pinniped;
 
-pub const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.local";
+pub const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.default";
 const HEADER_K8S_API_SERVER_URL: &str = "PINNIPED_PROXY_API_SERVER_URL";
 pub const HEADER_K8S_API_SERVER_CA_CERT: &str = "PINNIPED_PROXY_API_SERVER_CERT";
 const INVALID_SCHEME_ERROR: &'static str = "invalid scheme, https required";
