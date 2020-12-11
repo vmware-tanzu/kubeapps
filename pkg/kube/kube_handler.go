@@ -113,10 +113,6 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 		return config, nil
 	}
 
-	// Could set the proxy here, but how to set the header for the target??
-	// Also the TLS client config needs to be a header :/
-	// So, if pinniped-proxy is set, host gets set and TLS client config CA data
-	// is set in header, but how? Customise RoundTrip?
 	config.Host = clusterConfig.APIServiceURL
 	config.TLSClientConfig = rest.TLSClientConfig{}
 	config.TLSClientConfig.Insecure = clusterConfig.Insecure
@@ -246,24 +242,11 @@ func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Con
 }
 
 func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
-	// Create a different cluster config here for pinniped-proxy? Needs to add specific headers.
-	// Problem is that we really shouldn't be adding headers in the transport/roundtripper.
-	// How can we update the client or restclient's Do with the headers?
-	// Could we instead just send requests via the nginx frontend and not require kubeops to
-	// know the cluster config at all? Not really, as difference with Service account requests.
 	config, err := NewClusterConfig(&a.config, token, cluster, a.clustersConfig)
 	if err != nil {
 		log.Errorf("unable to create config: %v", err)
 		return nil, err
 	}
-	// This one needs modifying. Clone the config and modify before creating?
-	// But this would require changing the request which seems to be forbidden for
-	// transport / roundtripper. Plus the config already has the TLS config set so
-	// the roundtripper can't be used :/
-	// Another option would be to send all requests through the proxy but don't do the credential
-	// exchange for service account requests (how to tell?)
-	// store separate configs for user and service?
-	// or use a custom/wrapped client - https://developer20.com/add-header-to-every-request-in-go/
 	clientset, err := a.clientsetForConfig(config)
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
