@@ -28,6 +28,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	authorizationapi "k8s.io/api/authorization/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -916,7 +917,12 @@ func TestGetNamespaces(t *testing.T) {
 				clientsetForConfig:   func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
 				kubeappsNamespace:    "kubeapps",
 				kubeappsSvcClientset: svcClientSet,
-				clustersConfig:       ClustersConfig{KubeappsClusterName: "default"},
+				clustersConfig: ClustersConfig{
+					KubeappsClusterName: "default",
+					Clusters: map[string]ClusterConfig{
+						"default": {},
+					},
+				},
 			}
 
 			userHandler, err := handler.AsUser("token", "default")
@@ -1053,7 +1059,7 @@ func TestValidateAppRepository(t *testing.T) {
 func TestNewClusterConfig(t *testing.T) {
 	testCases := []struct {
 		name            string
-		token           string
+		userToken       string
 		cluster         string
 		clustersConfig  ClustersConfig
 		inClusterConfig *rest.Config
@@ -1061,10 +1067,15 @@ func TestNewClusterConfig(t *testing.T) {
 		errorExpected   bool
 	}{
 		{
-			name:           "returns an in-cluster with explicit token for the default cluster",
-			token:          "token-1",
-			cluster:        "default",
-			clustersConfig: ClustersConfig{KubeappsClusterName: "default"},
+			name:      "returns an in-cluster with explicit token for the default cluster",
+			userToken: "token-1",
+			cluster:   "default",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"default": {},
+				},
+			},
 			inClusterConfig: &rest.Config{
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
@@ -1075,12 +1086,13 @@ func TestNewClusterConfig(t *testing.T) {
 			},
 		},
 		{
-			name:    "returns a config setup for an additional cluster",
-			token:   "token-1",
-			cluster: "cluster-1",
+			name:      "returns a config setup for an additional cluster",
+			userToken: "token-1",
+			cluster:   "cluster-1",
 			clustersConfig: ClustersConfig{
 				KubeappsClusterName: "default",
 				Clusters: map[string]ClusterConfig{
+					"default": {},
 					"cluster-1": {
 						APIServiceURL:            "https://cluster-1.example.com:7890",
 						CertificateAuthorityData: "ca-file-data",
@@ -1107,12 +1119,13 @@ func TestNewClusterConfig(t *testing.T) {
 			},
 		},
 		{
-			name:    "assumes a public cert if no ca data provided",
-			token:   "token-1",
-			cluster: "cluster-1",
+			name:      "assumes a public cert if no ca data provided",
+			userToken: "token-1",
+			cluster:   "cluster-1",
 			clustersConfig: ClustersConfig{
 				KubeappsClusterName: "default",
 				Clusters: map[string]ClusterConfig{
+					"default": {},
 					"cluster-1": {
 						APIServiceURL: "https://cluster-1.example.com:7890",
 					},
@@ -1138,17 +1151,59 @@ func TestNewClusterConfig(t *testing.T) {
 			inClusterConfig: &rest.Config{},
 			errorExpected:   true,
 		},
+		{
+			name:      "returns a config to proxy via pinniped-proxy",
+			userToken: "token-1",
+			cluster:   "default",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"default": {
+						APIServiceURL:            "https://kubernetes.default",
+						CertificateAuthorityData: "SGVsbG8K",
+						PinnipedProxyURL:         "https://172.0.1.18:3333",
+					},
+				},
+			},
+			inClusterConfig: &rest.Config{
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://172.0.1.18:3333",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			config, err := NewClusterConfig(tc.inClusterConfig, tc.token, tc.cluster, tc.clustersConfig)
+			config, err := NewClusterConfig(tc.inClusterConfig, tc.userToken, tc.cluster, tc.clustersConfig)
 			if got, want := err != nil, tc.errorExpected; got != want {
 				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
 			}
 
-			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got) {
+			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got, cmpopts.IgnoreFields(rest.Config{}, "WrapTransport")) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+			// If the test case defined a pinniped proxy url, verify that the expected headers
+			// are added to the request.
+			if clusterConfig, ok := tc.clustersConfig.Clusters[tc.cluster]; ok && clusterConfig.PinnipedProxyURL != "" {
+				if config.WrapTransport == nil {
+					t.Errorf("expected config.WrapTransport to be set but it is nil")
+				} else {
+					req := http.Request{}
+					roundTripper := config.WrapTransport(&fakeRoundTripper{})
+					roundTripper.RoundTrip(&req)
+					want := http.Header{
+						"Pinniped_proxy_api_server_url":  []string{clusterConfig.APIServiceURL},
+						"Pinniped_proxy_api_server_cert": []string{clusterConfig.CertificateAuthorityData},
+					}
+					if got := req.Header; !cmp.Equal(want, got) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+					}
+				}
 			}
 		})
 	}
@@ -1234,7 +1289,12 @@ func TestCanI(t *testing.T) {
 			handler := kubeHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
 				kubeappsNamespace:  "kubeapps",
-				clustersConfig:     ClustersConfig{KubeappsClusterName: "default"},
+				clustersConfig: ClustersConfig{
+					KubeappsClusterName: "default",
+					Clusters: map[string]ClusterConfig{
+						"default": {},
+					},
+				},
 			}
 
 			userHandler, err := handler.AsUser("token", "default")

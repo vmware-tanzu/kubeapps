@@ -59,7 +59,14 @@ type ClusterConfig struct {
 	// required functionality.
 	ServiceToken string
 
+	// Insecure should only be used in test or development environments and enables
+	// TLS requests without requiring the cert authority validation.
 	Insecure bool `json:"insecure"`
+
+	// PinnipedProxy enables user requests to the cluster api server to be
+	// proxied via pinniped for an exchange of the user token for client certs.
+	// This is required on clusters which are not configured with OIDC support.
+	PinnipedProxyURL string `json:"pinnipedProxyURL"`
 }
 
 // ClustersConfig is an alias for a map of additional cluster configs.
@@ -68,27 +75,54 @@ type ClustersConfig struct {
 	Clusters            map[string]ClusterConfig
 }
 
-// NewClusterConfig returns a copy of an in-cluster config with a custom token and/or custom cluster host
-func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string, clustersConfig ClustersConfig) (*rest.Config, error) {
+// NewClusterConfig returns a copy of an in-cluster config with a user token (leave blank for
+// when configuring a service account). and/or custom cluster host
+func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster string, clustersConfig ClustersConfig) (*rest.Config, error) {
 	config := rest.CopyConfig(inClusterConfig)
-	config.BearerToken = token
+	config.BearerToken = userToken
 	config.BearerTokenFile = ""
+
+	clusterConfig, ok := clustersConfig.Clusters[cluster]
+	if !ok {
+		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
+	}
+
+	if userToken != "" && clusterConfig.PinnipedProxyURL != "" {
+		// Create a config for routing requests via the pinniped-proxy for credential
+		// exchange.
+		config.Host = clusterConfig.PinnipedProxyURL
+		// set roundtripper.
+		// https://github.com/kubernetes/client-go/issues/407
+		existingWrapTransport := config.WrapTransport
+		config.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+			if existingWrapTransport != nil {
+				rt = existingWrapTransport(rt)
+			}
+			return &pinnipedProxyRoundTripper{
+				headers: map[string][]string{
+					"PINNIPED_PROXY_API_SERVER_URL":  {clusterConfig.APIServiceURL},
+					"PINNIPED_PROXY_API_SERVER_CERT": {clusterConfig.CertificateAuthorityData},
+				},
+				rt: rt,
+			}
+		}
+		return config, nil
+	}
 
 	if cluster == clustersConfig.KubeappsClusterName {
 		return config, nil
 	}
 
-	additionalCluster, ok := clustersConfig.Clusters[cluster]
-	if !ok {
-		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
-	}
-
-	config.Host = additionalCluster.APIServiceURL
+	// Could set the proxy here, but how to set the header for the target??
+	// Also the TLS client config needs to be a header :/
+	// So, if pinniped-proxy is set, host gets set and TLS client config CA data
+	// is set in header, but how? Customise RoundTrip?
+	config.Host = clusterConfig.APIServiceURL
 	config.TLSClientConfig = rest.TLSClientConfig{}
-	config.TLSClientConfig.Insecure = additionalCluster.Insecure
-	if additionalCluster.CertificateAuthorityData != "" {
-		config.TLSClientConfig.CAData = []byte(additionalCluster.CertificateAuthorityData)
-		config.CAFile = additionalCluster.CAFile
+	config.TLSClientConfig.Insecure = clusterConfig.Insecure
+	if clusterConfig.CertificateAuthorityData != "" {
+		config.TLSClientConfig.CAData = []byte(clusterConfig.CertificateAuthorityData)
+		config.CAFile = clusterConfig.CAFile
 	}
 	return config, nil
 }
@@ -212,11 +246,24 @@ func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Con
 }
 
 func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
+	// Create a different cluster config here for pinniped-proxy? Needs to add specific headers.
+	// Problem is that we really shouldn't be adding headers in the transport/roundtripper.
+	// How can we update the client or restclient's Do with the headers?
+	// Could we instead just send requests via the nginx frontend and not require kubeops to
+	// know the cluster config at all? Not really, as difference with Service account requests.
 	config, err := NewClusterConfig(&a.config, token, cluster, a.clustersConfig)
 	if err != nil {
 		log.Errorf("unable to create config: %v", err)
 		return nil, err
 	}
+	// This one needs modifying. Clone the config and modify before creating?
+	// But this would require changing the request which seems to be forbidden for
+	// transport / roundtripper. Plus the config already has the TLS config set so
+	// the roundtripper can't be used :/
+	// Another option would be to send all requests through the proxy but don't do the credential
+	// exchange for service account requests (how to tell?)
+	// store separate configs for user and service?
+	// or use a custom/wrapped client - https://developer20.com/add-header-to-every-request-in-go/
 	clientset, err := a.clientsetForConfig(config)
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
