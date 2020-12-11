@@ -183,7 +183,7 @@ type AuthHandler interface {
 	AsSVC(cluster string) (handler, error)
 }
 
-func (a *kubeHandler) getSvcClientSetForCluster(cluster string, config *rest.Config) (combinedClientsetInterface, error) {
+func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Config) (combinedClientsetInterface, error) {
 	// Just use the service clientset if we're on the cluster on which Kubeapps
 	// is installed, but otherwise create a new clientset using a configured
 	// service token for a specific cluster. This is used when requesting the
@@ -223,7 +223,7 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 		return nil, err
 	}
 
-	svcClientset, err := a.getSvcClientSetForCluster(cluster, config)
+	svcClientset, err := a.getSvcClientsetForCluster(cluster, config)
 	if err != nil {
 		log.Errorf("unable to create svc clientset: %v", err)
 		return nil, err
@@ -243,7 +243,7 @@ func (a *kubeHandler) AsSVC(cluster string) (handler, error) {
 		return nil, err
 	}
 
-	svcClientset, err := a.getSvcClientSetForCluster(cluster, config)
+	svcClientset, err := a.getSvcClientsetForCluster(cluster, config)
 	if err != nil {
 		log.Errorf("unable to create svc clientset: %v", err)
 		return nil, err
