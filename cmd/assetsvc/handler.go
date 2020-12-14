@@ -72,16 +72,18 @@ type count struct {
 	Count int
 }
 
-// getPageAndSizeParams extracts the page number and the page size of a request. Default (1, 0) if not set
+// getPageAndSizeParams extracts the page number and the page size of a request. Default (page,size) = (1, 0) if not set
 func getPageAndSizeParams(req *http.Request) (int, int) {
 	pageNumber := req.FormValue("page")
 	pageSize := req.FormValue("size")
-	pageSizeInt, err := strconv.ParseUint(pageSize, 10, 64)
+
+	pageNumberInt, err := strconv.ParseUint(pageNumber, 10, 64)
 	if err != nil {
-		pageSizeInt = 1
+		pageNumberInt = 1
 	}
 	// ParseUint will return 0 if size is a not positive integer
-	pageNumberInt, _ := strconv.ParseUint(pageNumber, 10, 64)
+	pageSizeInt, _ := strconv.ParseUint(pageSize, 10, 64)
+
 	return int(pageNumberInt), int(pageSizeInt)
 }
 
