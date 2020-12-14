@@ -282,15 +282,12 @@ func Test_getPaginatedChartList(t *testing.T) {
 			mock.ExpectQuery("^SELECT count(.+) FROM").
 				WillReturnRows(rowCount)
 
-			charts, totalPages, count, err := pgManager.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize)
+			charts, totalPages, err := pgManager.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize)
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}
 			if totalPages != tt.expectedTotalPages {
 				t.Errorf("Unexpected number of pages, got %d expecting %d", totalPages, tt.expectedTotalPages)
-			}
-			if count != len(tt.expectedCharts) {
-				t.Errorf("Unexpected count, got %d expecting %d", count, tt.expectedTotalPages)
 			}
 			if !cmp.Equal(charts, tt.expectedCharts) {
 				t.Errorf("Unexpected result %v", cmp.Diff(charts, tt.expectedCharts))

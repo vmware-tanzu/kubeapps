@@ -63,8 +63,7 @@ type rel struct {
 }
 
 type meta struct {
-	TotalPages  int `json:"totalPages"`
-	TotalCharts int `json:"totalCharts"`
+	TotalPages int `json:"totalPages"`
 }
 
 // count is used to parse the result of a $count operation in the database
@@ -103,8 +102,8 @@ func min(a, b int) int {
 }
 
 func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) (apiListResponse, interface{}, error) {
-	charts, totalPages, totalCharts, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize)
-	return newChartListResponse(charts), meta{TotalPages: totalPages, TotalCharts: totalCharts}, err
+	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize)
+	return newChartListResponse(charts), meta{TotalPages: totalPages}, err
 }
 
 // listCharts returns a list of charts based on filter params

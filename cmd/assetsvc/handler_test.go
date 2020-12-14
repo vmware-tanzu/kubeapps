@@ -291,24 +291,24 @@ func Test_listCharts(t *testing.T) {
 		charts []*models.Chart
 		meta   meta
 	}{
-		{"no charts", []*models.Chart{}, meta{TotalPages: 1, TotalCharts: 0}},
+		{"no charts", []*models.Chart{}, meta{TotalPages: 1}},
 		{"one chart", []*models.Chart{
 			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-		}, meta{TotalPages: 1, TotalCharts: 1}},
+		}, meta{TotalPages: 1}},
 		{"two charts", []*models.Chart{
 			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, meta{TotalPages: 1, TotalCharts: 2}},
+		}, meta{TotalPages: 1}},
 		{"two charts, one encoded", []*models.Chart{
 			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, meta{TotalPages: 1, TotalCharts: 2}},
+		}, meta{TotalPages: 1}},
 		{"four charts", []*models.Chart{
 			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, Name: "drupal", ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, Name: "wordpress", ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 1, TotalCharts: 4}},
+		}, meta{TotalPages: 1}},
 	}
 
 	for _, tt := range tests {
@@ -365,62 +365,62 @@ func Test_listRepoCharts(t *testing.T) {
 		charts []*models.Chart
 		meta   meta
 	}{
-		{"repo has no charts", "my-repo", "", []*models.Chart{}, meta{TotalPages: 1, TotalCharts: 0}},
+		{"repo has no charts", "my-repo", "", []*models.Chart{}, meta{TotalPages: 1}},
 		{"repo has one chart", "my-repo", "", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-		}, meta{TotalPages: 1, TotalCharts: 1}},
+		}, meta{TotalPages: 1}},
 		{"repo has many charts", "my-repo", "", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, meta{TotalPages: 1, TotalCharts: 2}},
+		}, meta{TotalPages: 1}},
 		{"repo has many encoded charts with pagination", "my-repo", "?page=1&size=2", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/foo%2Fdokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/foo%2Fdrupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 2, TotalCharts: 4}},
+		}, meta{TotalPages: 2}},
 		{"repo has many charts with pagination (2 pages)", "my-repo", "?page=2&size=2", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 2, TotalCharts: 4}},
+		}, meta{TotalPages: 2}},
 		{"repo has many charts with pagination (non existing page)", "my-repo", "?page=3&size=2", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 2, TotalCharts: 4}},
+		}, meta{TotalPages: 2}},
 		{"repo has many charts with pagination (out of range size)", "my-repo", "?page=1&size=100", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 1, TotalCharts: 4}},
+		}, meta{TotalPages: 1}},
 		{"repo has many charts with pagination (w/ page, w size)", "my-repo", "?page=2size=3", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 1, TotalCharts: 4}},
+		}, meta{TotalPages: 1}},
 		{"repo has many charts with pagination (w/ page, w/o size)", "my-repo", "?page=2", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 1, TotalCharts: 4}},
+		}, meta{TotalPages: 1}},
 		{"repo has many charts with pagination (w/o page, w/ size)", "my-repo", "?size=2", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 2, TotalCharts: 4}},
+		}, meta{TotalPages: 2}},
 		{"repo has many charts with pagination (w/o page, w/o size)", "my-repo", "", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
-		}, meta{TotalPages: 1, TotalCharts: 4}},
+		}, meta{TotalPages: 1}},
 	}
 
 	for _, tt := range tests {
@@ -470,7 +470,6 @@ func Test_listRepoCharts(t *testing.T) {
 				assert.Equal(t, tt.charts[i].ChartVersions[0].Version, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], "In '"+tt.name+"': "+"latestChartVersion should match version at index 0")
 			}
 			assert.Equal(t, tt.meta, b.Meta, "In '"+tt.name+"': "+"response meta should be the same")
-			assert.Equal(t, len(tt.charts), b.Meta.TotalCharts, "In '"+tt.name+"': "+"total charts in the response should be the same")
 		})
 	}
 }

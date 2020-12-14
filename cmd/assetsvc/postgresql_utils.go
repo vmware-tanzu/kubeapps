@@ -56,7 +56,7 @@ func exists(current []string, str string) bool {
 	return false
 }
 
-func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, int, error) {
+func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, error) {
 	clauses := []string{}
 	queryParams := []interface{}{}
 	if namespace != dbutils.AllNamespaces {
@@ -82,20 +82,20 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC %s", dbutils.ChartTable, repoQuery, paginationClause)
 	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, 0, err
 	}
 
-	dbCountQuery := fmt.Sprintf("SELECT count(info) FROM %s %s", dbutils.ChartTable, repoQuery)
-	count, err := m.QueryCount(dbCountQuery, queryParams...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
 	numPages := 1
-	if pageSize > 0 && count > 0 {
+	if pageSize > 0 {
+		dbCountQuery := fmt.Sprintf("SELECT count(info) FROM %s %s", dbutils.ChartTable, repoQuery)
+		count, err := m.QueryCount(dbCountQuery, queryParams...)
+		if err != nil {
+			return nil, 0, err
+		}
 		numPages = int(math.Ceil(float64(count) / float64(pageSize)))
 	}
 
-	return charts, numPages, count, nil
+	return charts, numPages, nil
 }
 
 func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {

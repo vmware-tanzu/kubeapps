@@ -215,7 +215,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 		expectedCharts   []*models.Chart
 		expectedErr      error
 		expectedNumPages int
-		expectedCount    int
 	}{
 		{
 			name:             "it returns an empty list if the repo or namespace do not exist",
@@ -223,7 +222,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 			namespace:        "doesnt-exist",
 			expectedCharts:   []*models.Chart{},
 			expectedNumPages: 1,
-			expectedCount:    0,
 		},
 		{
 			name:      "it returns charts from a specific repo in a specific namespace",
@@ -248,7 +246,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 			},
 			expectedNumPages: 1,
-			expectedCount:    1,
 		},
 		{
 			name: "it returns charts from multiple repos in a specific namespace",
@@ -274,7 +271,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
 			expectedNumPages: 1,
-			expectedCount:    2,
 		},
 		{
 			name: "it includes charts from global repositories and the specific namespace",
@@ -306,7 +302,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
 			expectedNumPages: 1,
-			expectedCount:    3,
 		},
 		{
 			name: "it returns charts from multiple repos across all namespaces",
@@ -333,7 +328,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
 			expectedNumPages: 1,
-			expectedCount:    3,
 		},
 		{
 			name: "it returns charts from a single repo across all namespaces",
@@ -359,7 +353,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 			},
 			expectedNumPages: 1,
-			expectedCount:    2,
 		},
 		{
 			name: "it does not remove duplicates",
@@ -380,7 +373,6 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
 			},
 			expectedNumPages: 1,
-			expectedCount:    2,
 		},
 	}
 
@@ -394,15 +386,12 @@ func TestGetPaginatedChartList(t *testing.T) {
 				}
 			}
 
-			charts, numPages, count, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10)
+			charts, numPages, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
 			}
 			if got, want := numPages, tc.expectedNumPages; got != want {
-				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
-			}
-			if got, want := count, tc.expectedCount; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
 			}
 			if got, want := charts, tc.expectedCharts; !cmp.Equal(want, got) {
