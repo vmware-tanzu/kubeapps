@@ -53,3 +53,7 @@ Versions of Monocular 0.7 and older include a basic ability to install, view and
 - [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps)
 
 Click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack org.
+
+## FAQ
+
+We maintain a section for frequently asked questions on the [Kubeapps chart README](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md#faq).

@@ -2,44 +2,95 @@ use std::convert::Infallible;
 
 use anyhow::Error;
 use hyper::{Body, Request, Response, StatusCode};
-use log::info;
+use log::{error, info};
+use native_tls::TlsConnector;
 
 use crate::logging;
 use crate::https;
 
-pub async fn proxy(req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let log_data = logging::request_log_data(&req);
+/// The proxy service accepts a request and returns the proxied response from the api server.
+///
+/// The request must include an authorization token which is exchanged with pinniped-concierge
+/// for an X509 client identity cert with which the request is forwarded on.
+pub async fn proxy(mut req: Request<Body>, default_ca_data: Vec<u8>) -> Result<Response<Body>, Infallible> {
 
-    let _ = match https::get_api_server_url(req.headers()) {
+    let mut log_data = logging::request_log_data(&req);
+    let k8s_api_server_url = match https::get_api_server_url(req.headers()) {
         Ok(u) => u,
-        Err(e) => return handle_error(e, log_data),
+        Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
     };
-    // TODO: don't call this if we're using https://kubernetes.local, instead
-    // grab the data from the file system.
-    let cert_auth_data = match https::get_api_server_cert_auth_data(req.headers()) {
-        Ok(c) => c,
-        Err(e) => return handle_error(e, log_data),
+    req = match https::rewrite_request(req, k8s_api_server_url.clone()) {
+        Ok(r) => r,
+        Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
     };
-    let _ = match https::cert_for_cert_data(cert_auth_data) {
-        Ok(c) => c,
-        Err(e) => return handle_error(e, log_data),
-    };
-    // TODO: actual proxying to happen here.
-    let response = Response::new(Body::from("pinniped-proxy stub\n"));
 
-    info!("{}", logging::response_log_data(&response, log_data));
+    // Recreate the log data now that the request host has been rewritten.
+    log_data = logging::request_log_data(&req);
 
-    Ok(response)
+    let cert_auth_data = match req.headers().get(https::HEADER_K8S_API_SERVER_CA_CERT) {
+        Some(header_value_b64) => match https::get_api_server_cert_auth_data(header_value_b64) {
+            Ok(c) => c,
+            Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
+        },
+        None => {
+            // If there was no header present, we use the default value if the
+            // url is the default one, otherwise error.
+            match k8s_api_server_url.as_str() {
+                https::DEFAULT_K8S_API_SERVER_URL => {
+                    default_ca_data
+                },
+                _ => {
+                    let e = anyhow::anyhow!("header {} required but not present", https::HEADER_K8S_API_SERVER_CA_CERT);
+                    return handle_error(e, StatusCode::BAD_REQUEST, log_data);
+                },
+            }
+        }
+    };
+
+    let k8s_api_cert = match https::cert_for_cert_data(cert_auth_data.clone()) {
+        Ok(c) => c,
+        Err(e) => return handle_error(e, StatusCode::BAD_REQUEST, log_data),
+    };
+
+    // Create an https client with which to proxy the request.
+    // We need to construct the TlsConnector for each request so that we can set
+    // the client cert. It'd be nice if we could do the construction once and just
+    // clone to add the client cert?
+    let mut tls_builder = &mut TlsConnector::builder();
+    // Ensure we can talk to the k8s api server via TLS by setting the api server cert.
+    tls_builder = tls_builder.add_root_certificate(k8s_api_cert.clone());
+    // Ensure the user is authenticated by exchanging the header authz token for a client identity X509 cert.
+    tls_builder = match https::include_client_identity_for_headers(tls_builder, req.headers().clone(), &k8s_api_server_url, &cert_auth_data).await {
+        Ok(b) => b,
+        Err(e) => return handle_error(e, StatusCode::INTERNAL_SERVER_ERROR, log_data),
+    };
+
+    let client = match https::make_https_client(tls_builder) {
+        Ok(c) => c,
+        Err(e) => return handle_error(e, StatusCode::INTERNAL_SERVER_ERROR, log_data),
+    };
+
+    match client.request(req).await {
+        Ok(r) => {
+            info!("{}", logging::response_log_data(&r, log_data));
+            Ok(r)
+        },
+        Err(e) => return handle_error(anyhow::anyhow!(e), StatusCode::INTERNAL_SERVER_ERROR, log_data),
+    }
 }
 
-/// handle_error converts an error into a BAD_REQUEST response.
-/// 
-/// We may need to expand this to give different responses for different errors.
-fn handle_error(e: Error, log_data: logging::LogData) -> Result<Response<Body>, Infallible> {
-    let response = Response::builder()
-        .status(StatusCode::BAD_REQUEST)
-        .body(Body::from(e.to_string())).unwrap();
-    // TODO: Add error to log_data so it can be included (with error context).
+/// handle_error converts an error into an http response.
+fn handle_error(e: Error, status: StatusCode, log_data: logging::LogData) -> Result<Response<Body>, Infallible> {
+    let response = match Response::builder()
+        .status(status)
+        .body(Body::from(e.to_string())) {
+            Ok(r) => r,
+            Err(e) => {
+                error!("{}", e);
+                Response::builder().status(status).body(Body::empty()).unwrap()
+            }
+        };
+    error!("{:?}", e);
     info!("{}", logging::response_log_data(&response, log_data));
     Ok(response)
 }

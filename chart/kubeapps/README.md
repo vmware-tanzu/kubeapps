@@ -166,6 +166,7 @@ kubectl delete namespace kubeapps
 - [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
 - [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
 - [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
+- [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
 - [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
 - [More questions?](#more-questions)
 
@@ -226,6 +227,16 @@ Yes! Follow the [offline installation documentation](https://github.com/kubeapps
 ### Does Kubeapps support private repositories?
 
 Of course! Have a look at the [private app repositories documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+
+### Why can't I configure global private repositories?
+
+You can, but you will need to configure the `imagePullSecrets` manually.
+
+Kubeapps does not allow you to add `imagePullSecrets` to an AppRepository that is available to the whole cluster because it would require that Kubeapps copies those secrets to the target namespace when a user deploys an app.
+
+If you create a global AppRepository but the images are on a private registry requiring `imagePullSecrets`, the best way to configure that is to ensure your [Kubernetes nodes are configured with the required `imagePullSecrets`](https://kubernetes.io/docs/concepts/containers/images/#configuring-nodes-to-authenticate-to-a-private-registry) - this allows all users (of those nodes) to use those images in their deployments without ever requiring access to the secrets.
+
+You could alternatively ensure that the `imagePullSecret` is available in all namespaces in which you want people to deploy, but this unnecessarily compromises the secret.
 
 ### Does Kubeapps support Operators?
 
