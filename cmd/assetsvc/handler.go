@@ -76,8 +76,9 @@ func getPageAndSizeParams(req *http.Request) (int, int) {
 	pageNumber := req.FormValue("page")
 	pageSize := req.FormValue("size")
 
+	// if page is a non-positive int or 0, defaults to 1
 	pageNumberInt, err := strconv.ParseUint(pageNumber, 10, 64)
-	if err != nil {
+	if err != nil || pageNumberInt == 0 {
 		pageNumberInt = 1
 	}
 	// ParseUint will return 0 if size is a not positive integer
