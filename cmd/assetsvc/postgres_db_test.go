@@ -221,7 +221,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 			repo:             "repo-doesnt-exist",
 			namespace:        "doesnt-exist",
 			expectedCharts:   []*models.Chart{},
-			expectedNumPages: 1,
+			expectedNumPages: 0,
 		},
 		{
 			name:      "it returns charts from a specific repo in a specific namespace",
@@ -389,10 +389,10 @@ func TestGetPaginatedChartList(t *testing.T) {
 			charts, numPages, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
-				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
+				t.Fatalf("In '"+tc.name+"': "+"got err: %+v, want: %+v", got, want)
 			}
 			if got, want := numPages, tc.expectedNumPages; got != want {
-				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
+				t.Fatalf("In '"+tc.name+"': "+"got numPages: %+v, want: %+v", got, want)
 			}
 			if got, want := charts, tc.expectedCharts; !cmp.Equal(want, got) {
 				t.Errorf("In '"+tc.name+"': "+"mismatch (-want +got):\n%s", cmp.Diff(want, got))
