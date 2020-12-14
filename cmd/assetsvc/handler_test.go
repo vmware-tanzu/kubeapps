@@ -237,7 +237,7 @@ func Test_newChartVersionResponse(t *testing.T) {
 			for i := range tt.chart.ChartVersions {
 				cvResponse := newChartVersionResponse(&tt.chart, tt.chart.ChartVersions[i])
 				assert.Equal(t, "chartVersion", cvResponse.Type, "response type is chartVersion")
-				assert.Equal(t, tt.chart.Repo.Name+"/"+tt.chart.Name+"-"+tt.chart.ChartVersions[i].Version, cvResponse.ID, "reponse id should have chart version suffix")
+				assert.Equal(t, tt.chart.Repo.Name+"/"+tt.chart.Name+"-"+tt.chart.ChartVersions[i].Version, cvResponse.ID, "response id should have chart version suffix")
 				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, cvResponse.Links.(interface{}).(selfLink).Self, "self link should be the same")
 				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvResponse.Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
 
@@ -277,7 +277,7 @@ func Test_newChartVersionListResponse(t *testing.T) {
 			assert.Equal(t, len(cvListResponse), len(tt.chart.ChartVersions), "number of chart versions in response should be the same")
 			for i := range tt.chart.ChartVersions {
 				assert.Equal(t, "chartVersion", cvListResponse[i].Type, "response type is chartVersion")
-				assert.Equal(t, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, cvListResponse[i].ID, "reponse id should have chart version suffix")
+				assert.Equal(t, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, cvListResponse[i].ID, "response id should have chart version suffix")
 				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, cvListResponse[i].Links.(interface{}).(selfLink).Self, "self link should be the same")
 				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvListResponse[i].Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
 			}
