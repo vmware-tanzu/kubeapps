@@ -4,7 +4,7 @@ Issue https://github.com/kubeapps/kubeapps/issues/1354
 
 The goal of this proposal is to define how the new UI of Kubeapps will look like. To make collaboration easier, a Google doc is available:
 
-https://docs.google.com/document/d/1rnrU2T3YB-mk68XpCW9GXnkcg2v2xLz7tijSLMR3GEc/
+https://docs.google.com/document/d/1_7k-YeegranjvW8CbvaGU_f4bCC46WrnRGIRMtMDlr8/
 
 Also, the design is also available in Figma:
 

@@ -7,7 +7,7 @@ to the destination k8s API server.
 
 `pinniped-proxy` can be used by our Kubeapps frontend to ensure OIDC requests for the Kubernetes API server are forwarded through only after exchanging the OIDC id token for client certificates used by the Kubernetes API server, for situations where the Kubernetes API server is not configured for OIDC.
 
-You can read more in the [investigation and POC design document for `pinniped-proxy`](https://docs.google.com/document/d/1Sqhq_JIfb7M3K5RloV4T2itznu56EDJm_PEz2yrPk1E/edit#).
+You can read more in the [investigation and POC design document for `pinniped-proxy`](https://docs.google.com/document/d/1WzDWQh1CDZ6fRg9Md-2l2l7JqVzFkZGACZA1WWog9AU/).
 
 ## Prerequisites
 

@@ -20,7 +20,7 @@ The following constraints are for wider discussion. While we cannot achieve a so
 
 ## Design overview
 
-The overview displayed below shows the simpest scenario of the multi-cluster support (ie. without private app repository support), which is discussed further in the [design doc](https://docs.google.com/document/d/1-6cKxOsW6K5u3lK7Om2zQeVYVPxzHT6dVwej5wy3_9A/edit).
+The overview displayed below shows the simpest scenario of the multi-cluster support (ie. without private app repository support), which is discussed further in the [design doc](https://docs.google.com/document/d/1Ch9MjazQDBa9nya4cSwiiciolWhtcnLOjYQKB2XIYuM/).
 
 ![Kubeapps Multi-cluster Overview](img/Kubeapps-Multi-cluster-simple.png)
 
@@ -31,4 +31,4 @@ Similarly, the proposed extension including private repositories on additional c
 
 ## Details and discussion
 
-More details, design considerations and discussion is in the separate [design doc](https://docs.google.com/document/d/1-6cKxOsW6K5u3lK7Om2zQeVYVPxzHT6dVwej5wy3_9A/edit).
+More details, design considerations and discussion is in the separate [design doc](https://docs.google.com/document/d/1Ch9MjazQDBa9nya4cSwiiciolWhtcnLOjYQKB2XIYuM/).

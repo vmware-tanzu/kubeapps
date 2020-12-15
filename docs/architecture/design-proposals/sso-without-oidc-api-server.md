@@ -8,4 +8,4 @@ Recently the [VMware Pinniped project](https://github.com/vmware-tanzu/pinniped)
 
 ## Design overview and discussion
 
-You can read and comment on the design doc for [Kubeapps with Pinniped for Auth](https://docs.google.com/document/d/1Sqhq_JIfb7M3K5RloV4T2itznu56EDJm_PEz2yrPk1E/edit#).
+You can read and comment on the design doc for [Kubeapps with Pinniped for Auth](https://docs.google.com/document/d/1WzDWQh1CDZ6fRg9Md-2l2l7JqVzFkZGACZA1WWog9AU/).
