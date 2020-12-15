@@ -105,6 +105,142 @@ func Test_GetCharts(t *testing.T) {
 	}
 }
 
+func Test_GetChartCategories(t *testing.T) {
+	ts := httptest.NewServer(setupRoutes())
+	defer ts.Close()
+
+	tests := []struct {
+		name                    string
+		charts                  []*models.Chart
+		expectedChartCategories []*models.ChartCategory
+	}{
+		{
+			"no charts",
+			[]*models.Chart{},
+			[]*models.ChartCategory{},
+		},
+		{
+			"two charts - same category",
+			[]*models.Chart{
+				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			},
+			[]*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+		{
+			"two charts - different category",
+			[]*models.Chart{
+				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat2", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			}, []*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			rows := sqlmock.NewRows([]string{"name", "count"})
+			for _, chartCategories := range tt.expectedChartCategories {
+				rows.AddRow(chartCategories.Name, chartCategories.Count)
+			}
+
+			mock.ExpectQuery("SELECT (info ->> 'category')*").
+				WithArgs("my-namespace", kubeappsNamespace).
+				WillReturnRows(rows)
+
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/categories")
+			assert.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
+
+			var b bodyAPIListResponse
+			json.NewDecoder(res.Body).Decode(&b)
+			assert.Len(t, *b.Data, len(tt.expectedChartCategories))
+		})
+	}
+}
+
+func Test_GetChartCategoriesRepo(t *testing.T) {
+	ts := httptest.NewServer(setupRoutes())
+	defer ts.Close()
+
+	tests := []struct {
+		name                    string
+		repo                    string
+		charts                  []*models.Chart
+		expectedChartCategories []*models.ChartCategory
+	}{
+		{
+			"no charts",
+			"my-repo",
+			[]*models.Chart{},
+			[]*models.ChartCategory{},
+		},
+		{
+			"two charts - same category",
+			"my-repo",
+			[]*models.Chart{
+				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			},
+			[]*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+		{
+			"two charts - different category",
+			"my-repo",
+			[]*models.Chart{
+				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat2", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			}, []*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+
+			rows := sqlmock.NewRows([]string{"name", "count"})
+			for _, chartCategories := range tt.expectedChartCategories {
+				rows.AddRow(chartCategories.Name, chartCategories.Count)
+			}
+
+			mock.ExpectQuery("SELECT (info ->> 'category')*").
+				WithArgs("my-namespace", kubeappsNamespace, tt.repo).
+				WillReturnRows(rows)
+
+			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.repo + "/categories")
+			assert.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
+
+			var b bodyAPIListResponse
+			json.NewDecoder(res.Body).Decode(&b)
+			assert.Len(t, *b.Data, len(tt.expectedChartCategories))
+		})
+	}
+}
+
 // tests the GET /{apiVersion}/clusters/default/namespaces/{namespace}/charts/{repo} endpoint
 func Test_GetChartsInRepo(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())

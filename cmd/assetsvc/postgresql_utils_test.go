@@ -220,6 +220,62 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 	}
 }
 
+func Test_getAllChartCategories(t *testing.T) {
+
+	tests := []struct {
+		name                    string
+		namespace               string
+		repo                    string
+		availableCharts         []*models.Chart
+		expectedChartCategories []*models.ChartCategory
+	}{
+		{
+			name:      "oasasasasaepo",
+			namespace: "other-namespace",
+			repo:      "bitnami",
+			availableCharts: []*models.Chart{
+				{Name: "foo1", Category: "cat1", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
+				{Name: "foo21", Category: "cat2", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
+				{Name: "foo22", Category: "cat2", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
+				{Name: "foo31", Category: "cat3", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
+				{Name: "foo32", Category: "cat3", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
+				{Name: "foo33", Category: "cat3", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
+			},
+			expectedChartCategories: []*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pgManager, mock, cleanup := getMockManager(t)
+			defer cleanup()
+
+			rows := sqlmock.NewRows([]string{"name", "count"})
+			for _, chartCategories := range tt.expectedChartCategories {
+				rows.AddRow(chartCategories.Name, chartCategories.Count)
+			}
+
+			expectedParams := []driver.Value{"other-namespace", "kubeapps"}
+			if tt.repo != "" {
+				expectedParams = append(expectedParams, "bitnami")
+			}
+			mock.ExpectQuery("SELECT (info ->> 'category')*").
+				WithArgs(expectedParams...).
+				WillReturnRows(rows)
+
+			chartCategories, err := pgManager.getAllChartCategories(tt.namespace, tt.repo)
+			if err != nil {
+				t.Fatalf("Found error %v", err)
+			}
+			if !cmp.Equal(chartCategories, tt.expectedChartCategories) {
+				t.Errorf("Unexpected result %v", cmp.Diff(chartCategories, tt.expectedChartCategories))
+			}
+		})
+	}
+}
 func Test_getPaginatedChartList(t *testing.T) {
 	availableCharts := []*models.Chart{
 		{ID: "foo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
