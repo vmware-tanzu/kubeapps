@@ -24,6 +24,7 @@ import (
 	"image/color"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -403,6 +404,18 @@ func Test_listRepoCharts(t *testing.T) {
 			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
 			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
+		{"repo has many charts with pagination (w/ page, w zero size)", "my-repo", "?page=2size=0", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		}, meta{TotalPages: 1}},
+		{"repo has many charts with pagination (w/ wrong page, w/ size)", "my-repo", "?page=-2size=2", []*models.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		}, meta{TotalPages: 1}},
 		{"repo has many charts with pagination (w/ page, w/o size)", "my-repo", "?page=2", []*models.Chart{
 			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
@@ -451,9 +464,14 @@ func Test_listRepoCharts(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/charts/"+tt.repo+tt.query, nil)
+
+			page, size := getPageAndSizeParams(req)
+
 			params := Params{
 				"repo":      "my-repo",
 				"namespace": namespace,
+				"page":      strconv.Itoa(page),
+				"size":      strconv.Itoa(size),
 			}
 
 			listCharts(w, req, params)
