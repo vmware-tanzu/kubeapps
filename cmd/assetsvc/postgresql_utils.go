@@ -72,9 +72,13 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 		repoQuery = strings.Join(clauses, " AND ")
 		repoQuery = "WHERE " + repoQuery
 	}
+	// Default (pageNumber,pageSize) = (1, 0) as in the handler.go
+	if pageNumber <= 0 {
+		pageNumber = 1
+	}
 
 	paginationClause := ""
-	if pageSize > 0 && pageNumber > 0 {
+	if pageSize > 0 {
 		offset := (pageNumber - 1) * pageSize
 		paginationClause = fmt.Sprintf("LIMIT %d OFFSET %d", pageSize, offset)
 	}
