@@ -280,7 +280,7 @@ func (c *Controller) syncHandler(key string) error {
 			}
 
 			// TODO: Workaround until the sync jobs are moved to the repoNamespace (#1647)
-			// Delete the cronjobo in the Kubeapps namespace to avoid re-syncing the repository
+			// Delete the cronjob in the Kubeapps namespace to avoid re-syncing the repository
 			err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Delete(context.TODO(), cronJobName(namespace, name), metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				log.Errorf("Unable to delete sync cronjob: %v", err)
