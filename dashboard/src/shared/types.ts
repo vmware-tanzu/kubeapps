@@ -90,6 +90,9 @@ export interface IChartAttributes {
 }
 
 export interface IChartState {
+  status: string;
+  page: number;
+  size: number;
   isFetching: boolean;
   selected: {
     error?: FetchError | Error;

@@ -9,6 +9,9 @@ describe("chartReducer", () => {
 
   beforeEach(() => {
     initialState = {
+      status: actions.charts.idleStatus,
+      page: 1,
+      size: 32,
       isFetching: false,
       items: [],
       selected: {

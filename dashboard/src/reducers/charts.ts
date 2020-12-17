@@ -1,3 +1,4 @@
+import { uniqBy } from "lodash";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -6,6 +7,9 @@ import { NamespaceAction } from "../actions/namespace";
 import { IChartState } from "../shared/types";
 
 export const initialState: IChartState = {
+  status: actions.charts.idleStatus,
+  page: 1,
+  size: 32,
   isFetching: false,
   items: [],
   selected: {
@@ -52,20 +56,18 @@ const chartsReducer = (
   action: ChartsAction | NamespaceAction,
 ): IChartState => {
   switch (action.type) {
-    case getType(actions.charts.requestCharts):
-      return { ...initialState, isFetching: true };
-    case getType(actions.charts.receiveCharts):
-      return { ...state, isFetching: false, items: action.payload };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
         isFetching: false,
+        status: actions.charts.idleStatus,
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.selectChartVersion):
       return {
         ...state,
         isFetching: false,
+        status: actions.charts.idleStatus,
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.requestDeployedChartVersion):
@@ -77,16 +79,37 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
+        status: actions.charts.idleStatus,
         deployed: { ...state.deployed, ...action.payload },
       };
     case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.selectReadme):
     case getType(actions.charts.errorReadme):
+    case getType(actions.charts.requestCharts):
+      return {
+        ...state,
+        isFetching: true,
+        status: actions.charts.loadingStatus,
+      };
+    case getType(actions.charts.receiveCharts):
+      return {
+        ...state,
+        items: uniqBy([...state.items, ...action.payload], "id"),
+        page: state.page + 1,
+        isFetching: false,
+        status: actions.charts.idleStatus,
+      };
+    case getType(actions.charts.reachEnd):
+      return {
+        ...state,
+        isFetching: false,
+        status: actions.charts.finishedStatus,
+      };
     case getType(actions.charts.errorChart):
       return {
         ...state,
         isFetching: false,
-        selected: chartsSelectedReducer(state.selected, action),
+        status: actions.charts.errorStatus,
       };
     default:
   }

@@ -27,8 +27,13 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    fetchCharts: (cluster: string, namespace: string, repo: string) =>
-      dispatch(actions.charts.fetchCharts(cluster, namespace, repo)),
+    fetchChartsWithPagination: (
+      cluster: string,
+      namespace: string,
+      repo: string,
+      page: number,
+      size: number,
+    ) => dispatch(actions.charts.fetchChartsWithPagination(cluster, namespace, repo, page, size)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
     getCSVs: (cluster: string, namespace: string) =>
       dispatch(actions.operators.getCSVs(cluster, namespace)),

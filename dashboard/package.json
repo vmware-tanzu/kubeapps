@@ -55,6 +55,7 @@
     "react": "^16.13.0",
     "react-ace": "^8.0.0",
     "react-compound-slider": "^2.3.0",
+    "react-content-loader": "^5.1.4",
     "react-copy-to-clipboard": "^5.0.2",
     "react-dom": "^16.13.0",
     "react-feather": "^1.0.8",

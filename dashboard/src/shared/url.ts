@@ -119,6 +119,13 @@ export const api = {
       `${api.charts.get(cluster, namespace, id)}/versions/${encodeURIComponent(version)}`,
     list: (cluster: string, namespace: string, repo?: string) =>
       `${api.charts.base(cluster, namespace)}/charts${repo ? `/${repo}` : ""}`,
+    listWithPagination: (
+      cluster: string,
+      namespace: string,
+      page: number,
+      size: number,
+      repo?: string,
+    ) => `${api.charts.list(cluster, namespace, repo)}?page=${page}&size=${size}`,
     listVersions: (cluster: string, namespace: string, id: string) =>
       `${api.charts.get(cluster, namespace, id)}/versions`,
     getReadme: (cluster: string, namespace: string, id: string, version: string) =>

@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
@@ -10,6 +11,9 @@ import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
+  status: actions.charts.idleStatus,
+  page: 1,
+  size: 32,
   isFetching: false,
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
@@ -20,7 +24,7 @@ const defaultProps = {
   charts: defaultChartState,
   repo: "",
   filter: {},
-  fetchCharts: jest.fn(),
+  fetchChartsWithPagination: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
   namespace: "kubeapps",

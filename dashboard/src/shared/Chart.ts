@@ -4,9 +4,16 @@ import { IChart, IChartVersion } from "./types";
 import * as URL from "./url";
 
 export default class Chart {
-  public static async fetchCharts(cluster: string, namespace: string, repo: string) {
+  public static async fetchChartsWithPagination(
+    cluster: string,
+    namespace: string,
+    repo: string,
+    page: number,
+    size: number,
+  ) {
     const { data } = await axiosWithAuth.get<{ data: IChart[] }>(
-      URL.api.charts.list(cluster, namespace, repo),
+      URL.api.charts.listWithPagination(cluster, namespace, page, size, repo),
+      {},
     );
     return data.data;
   }

@@ -5,8 +5,14 @@ import { ActionType, createAction } from "typesafe-actions";
 import Chart from "../shared/Chart";
 import { FetchError, IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 
-export const requestCharts = createAction("REQUEST_CHARTS");
+export const reachEnd = createAction("REACH_END");
 
+export const idleStatus = "IDLE";
+export const errorStatus = "ERROR";
+export const loadingStatus = "LOADING";
+export const finishedStatus = "FINISHED";
+
+export const requestCharts = createAction("REQUEST_CHARTS");
 export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
@@ -47,32 +53,37 @@ export const errorReadme = createAction("ERROR_README", resolve => {
 });
 
 const allActions = [
-  requestCharts,
-  requestChart,
   errorChart,
-  receiveCharts,
-  receiveChartVersions,
-  selectChartVersion,
-  requestDeployedChartVersion,
-  receiveDeployedChartVersion,
-  resetChartVersion,
-  selectReadme,
   errorReadme,
+  reachEnd,
+  receiveChartVersions,
+  receiveCharts,
+  receiveDeployedChartVersion,
+  requestChart,
+  requestCharts,
+  requestDeployedChartVersion,
+  resetChartVersion,
+  selectChartVersion,
+  selectReadme,
 ];
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
 
-export function fetchCharts(
+export function fetchChartsWithPagination(
   cluster: string,
   namespace: string,
   repo: string,
+  page: number,
+  size: number,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
-      const charts = await Chart.fetchCharts(cluster, namespace, repo);
-      if (charts) {
+      const charts = await Chart.fetchChartsWithPagination(cluster, namespace, repo, page, size);
+      if (charts && charts.length > 0) {
         dispatch(receiveCharts(charts));
+      } else {
+        dispatch(reachEnd());
       }
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
