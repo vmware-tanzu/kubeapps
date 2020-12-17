@@ -107,4 +107,37 @@ func Test_QueryAll(t *testing.T) {
 	if !cmp.Equal(charts, expectedCharts) {
 		t.Errorf("Unexpected result %v", cmp.Diff(charts, expectedCharts))
 	}
+
+}
+
+func Test_QueryAllChartCategories(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	manager := PostgresAssetManager{
+		connStr: "localhost",
+		DB:      db,
+	}
+	query := "SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM charts WHERE (repo_namespace = 'kubeapps' OR repo_namespace = 'default') GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC"
+	rows := sqlmock.NewRows([]string{"name", "count"}).
+		AddRow("cat1", 1).
+		AddRow("cat2", 2).
+		AddRow("cat3", 3)
+	mock.ExpectQuery("SELECT (info ->> 'category')*").WillReturnRows(rows)
+	chartCategories, err := manager.QueryAllChartCategories(query)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+	expectedChartCategories := []*models.ChartCategory{
+		{Name: "cat1", Count: 1},
+		{Name: "cat2", Count: 2},
+		{Name: "cat3", Count: 3},
+	}
+	if !cmp.Equal(chartCategories, expectedChartCategories) {
+		t.Errorf("Unexpected result %v", cmp.Diff(chartCategories, expectedChartCategories))
+	}
 }

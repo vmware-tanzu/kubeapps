@@ -220,6 +220,63 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 	}
 }
 
+func Test_getAllChartCategories(t *testing.T) {
+
+	tests := []struct {
+		name                    string
+		namespace               string
+		repo                    string
+		expectedChartCategories []*models.ChartCategory
+	}{
+		{
+			name:      "without repo",
+			namespace: "other-namespace",
+			repo:      "",
+			expectedChartCategories: []*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+		{
+			name:      "with repo",
+			namespace: "other-namespace",
+			repo:      "bitnami",
+			expectedChartCategories: []*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pgManager, mock, cleanup := getMockManager(t)
+			defer cleanup()
+
+			rows := sqlmock.NewRows([]string{"name", "count"})
+			for _, chartCategories := range tt.expectedChartCategories {
+				rows.AddRow(chartCategories.Name, chartCategories.Count)
+			}
+
+			expectedParams := []driver.Value{"other-namespace", "kubeapps"}
+			if tt.repo != "" {
+				expectedParams = append(expectedParams, tt.repo)
+			}
+			mock.ExpectQuery("SELECT (info ->> 'category')*").
+				WithArgs(expectedParams...).
+				WillReturnRows(rows)
+
+			chartCategories, err := pgManager.getAllChartCategories(tt.namespace, tt.repo)
+			if err != nil {
+				t.Fatalf("Found error %v", err)
+			}
+			if !cmp.Equal(chartCategories, tt.expectedChartCategories) {
+				t.Errorf("Unexpected result %v", cmp.Diff(chartCategories, tt.expectedChartCategories))
+			}
+		})
+	}
+}
 func Test_getPaginatedChartList(t *testing.T) {
 	availableCharts := []*models.Chart{
 		{ID: "bar", ChartVersions: []models.ChartVersion{{Digest: "456"}}},

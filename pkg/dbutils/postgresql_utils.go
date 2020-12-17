@@ -52,6 +52,7 @@ type PostgresAssetManagerIface interface {
 	QueryCount(query string, args ...interface{}) (int, error)
 	QueryOne(target interface{}, query string, args ...interface{}) error
 	QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error)
+	QueryAllChartCategories(query string, args ...interface{}) ([]*models.ChartCategory, error)
 	InitTables() error
 	InvalidateCache() error
 	EnsureRepoExists(repoNamespace, repoName string) (int, error)
@@ -127,6 +128,29 @@ func (m *PostgresAssetManager) QueryAllCharts(query string, args ...interface{})
 			return nil, err
 		}
 		result = append(result, &chart)
+	}
+	return result, nil
+}
+
+// QueryAllChartCategories performs the query and return the array of all the chart categories
+func (m *PostgresAssetManager) QueryAllChartCategories(query string, args ...interface{}) ([]*models.ChartCategory, error) {
+	rows, err := m.DB.Query(query, args...)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+	result := []*models.ChartCategory{}
+	for rows.Next() {
+		var name string
+		var count int
+		err := rows.Scan(&name, &count)
+		if err != nil {
+			return nil, err
+		}
+		chartCategory := models.ChartCategory{Name: name, Count: count}
+		result = append(result, &chartCategory)
 	}
 	return result, nil
 }
