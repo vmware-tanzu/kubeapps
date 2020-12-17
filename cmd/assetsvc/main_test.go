@@ -105,41 +105,31 @@ func Test_GetCharts(t *testing.T) {
 	}
 }
 
+// tests the GET /{apiVersion}/clusters/default/namespaces/{namespace}/charts/categories endpoint
+// particularly, it just tests that the endpoint is running the expected count query
 func Test_GetChartCategories(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
 
 	tests := []struct {
 		name                    string
-		charts                  []*models.Chart
 		expectedChartCategories []*models.ChartCategory
 	}{
 		{
 			"no charts",
-			[]*models.Chart{},
 			[]*models.ChartCategory{},
 		},
 		{
 			"two charts - same category",
-			[]*models.Chart{
-				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-			},
 			[]*models.ChartCategory{
-				{Name: "cat1", Count: 1},
-				{Name: "cat2", Count: 2},
-				{Name: "cat3", Count: 3},
+				{Name: "cat1", Count: 2},
 			},
 		},
 		{
 			"two charts - different category",
-			[]*models.Chart{
-				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat2", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-			}, []*models.ChartCategory{
+			[]*models.ChartCategory{
 				{Name: "cat1", Count: 1},
-				{Name: "cat2", Count: 2},
-				{Name: "cat3", Count: 3},
+				{Name: "cat2", Count: 1},
 			},
 		},
 	}
@@ -153,7 +143,6 @@ func Test_GetChartCategories(t *testing.T) {
 			for _, chartCategories := range tt.expectedChartCategories {
 				rows.AddRow(chartCategories.Name, chartCategories.Count)
 			}
-
 			mock.ExpectQuery("SELECT (info ->> 'category')*").
 				WithArgs("my-namespace", kubeappsNamespace).
 				WillReturnRows(rows)
@@ -171,6 +160,8 @@ func Test_GetChartCategories(t *testing.T) {
 	}
 }
 
+// tests the GET /{apiVersion}/clusters/default/namespaces/{namespace}/charts/{repo}/categories endpoint
+// particularly, it just tests that the endpoint is running the expected count query
 func Test_GetChartCategoriesRepo(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -178,22 +169,16 @@ func Test_GetChartCategoriesRepo(t *testing.T) {
 	tests := []struct {
 		name                    string
 		repo                    string
-		charts                  []*models.Chart
 		expectedChartCategories []*models.ChartCategory
 	}{
 		{
 			"no charts",
 			"my-repo",
-			[]*models.Chart{},
 			[]*models.ChartCategory{},
 		},
 		{
 			"two charts - same category",
 			"my-repo",
-			[]*models.Chart{
-				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-			},
 			[]*models.ChartCategory{
 				{Name: "cat1", Count: 1},
 				{Name: "cat2", Count: 2},
@@ -203,10 +188,7 @@ func Test_GetChartCategoriesRepo(t *testing.T) {
 		{
 			"two charts - different category",
 			"my-repo",
-			[]*models.Chart{
-				{Repo: testRepo, ID: "my-repo/my-chart", Category: "cat1", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-				{Repo: testRepo, ID: "my-repo/dokuwiki", Category: "cat2", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-			}, []*models.ChartCategory{
+			[]*models.ChartCategory{
 				{Name: "cat1", Count: 1},
 				{Name: "cat2", Count: 2},
 				{Name: "cat3", Count: 3},
@@ -223,7 +205,6 @@ func Test_GetChartCategoriesRepo(t *testing.T) {
 			for _, chartCategories := range tt.expectedChartCategories {
 				rows.AddRow(chartCategories.Name, chartCategories.Count)
 			}
-
 			mock.ExpectQuery("SELECT (info ->> 'category')*").
 				WithArgs("my-namespace", kubeappsNamespace, tt.repo).
 				WillReturnRows(rows)

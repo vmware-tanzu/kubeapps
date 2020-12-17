@@ -226,21 +226,22 @@ func Test_getAllChartCategories(t *testing.T) {
 		name                    string
 		namespace               string
 		repo                    string
-		availableCharts         []*models.Chart
 		expectedChartCategories []*models.ChartCategory
 	}{
 		{
-			name:      "oasasasasaepo",
+			name:      "without repo",
+			namespace: "other-namespace",
+			repo:      "",
+			expectedChartCategories: []*models.ChartCategory{
+				{Name: "cat1", Count: 1},
+				{Name: "cat2", Count: 2},
+				{Name: "cat3", Count: 3},
+			},
+		},
+		{
+			name:      "with repo",
 			namespace: "other-namespace",
 			repo:      "bitnami",
-			availableCharts: []*models.Chart{
-				{Name: "foo1", Category: "cat1", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
-				{Name: "foo21", Category: "cat2", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
-				{Name: "foo22", Category: "cat2", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
-				{Name: "foo31", Category: "cat3", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
-				{Name: "foo32", Category: "cat3", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
-				{Name: "foo33", Category: "cat3", Repo: &models.Repo{Name: "bitnami", Namespace: "namespace"}},
-			},
 			expectedChartCategories: []*models.ChartCategory{
 				{Name: "cat1", Count: 1},
 				{Name: "cat2", Count: 2},
@@ -260,7 +261,7 @@ func Test_getAllChartCategories(t *testing.T) {
 
 			expectedParams := []driver.Value{"other-namespace", "kubeapps"}
 			if tt.repo != "" {
-				expectedParams = append(expectedParams, "bitnami")
+				expectedParams = append(expectedParams, tt.repo)
 			}
 			mock.ExpectQuery("SELECT (info ->> 'category')*").
 				WithArgs(expectedParams...).
