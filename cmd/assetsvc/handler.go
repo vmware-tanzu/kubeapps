@@ -52,12 +52,7 @@ type apiResponse struct {
 
 type apiListResponse []*apiResponse
 
-type apiChartCategoryResponse struct {
-	Name  string `json:"name"`
-	Count int    `json:"count"`
-}
-
-type apiChartCategoryListResponse []*apiChartCategoryResponse
+type apiChartCategoryListResponse []*models.ChartCategory
 
 type selfLink struct {
 	Self string `json:"self"`
@@ -410,9 +405,8 @@ func newChartResponse(c *models.Chart) *apiResponse {
 	}
 }
 
-func newChartCategoryResponse(c *models.ChartCategory) *apiChartCategoryResponse {
-	return &apiChartCategoryResponse{
-
+func newChartCategoryResponse(c *models.ChartCategory) *models.ChartCategory {
+	return &models.ChartCategory{
 		Name:  c.Name,
 		Count: c.Count,
 	}

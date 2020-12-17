@@ -68,8 +68,7 @@ func (m *postgresAssetManager) getAllChartCategories(namespace, repo string) ([]
 	}
 	repoQuery := ""
 	if len(clauses) > 0 {
-		repoQuery = strings.Join(clauses, " AND ")
-		repoQuery = "WHERE " + repoQuery
+		repoQuery = "WHERE " + strings.Join(clauses, " AND ")
 	}
 	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, repoQuery)
 
@@ -93,8 +92,7 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	}
 	repoQuery := ""
 	if len(clauses) > 0 {
-		repoQuery = strings.Join(clauses, " AND ")
-		repoQuery = "WHERE " + repoQuery
+		repoQuery = "WHERE " + strings.Join(clauses, " AND ")
 	}
 	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, repoQuery)
 	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
