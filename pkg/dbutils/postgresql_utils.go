@@ -49,6 +49,7 @@ type PostgresDB interface {
 // The interface is used by the tests to implement a fake PostgresAssetManagerIface
 type PostgresAssetManagerIface interface {
 	AssetManager
+	QueryCount(query string, args ...interface{}) (int, error)
 	QueryOne(target interface{}, query string, args ...interface{}) error
 	QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error)
 	QueryAllChartCategories(query string, args ...interface{}) ([]*models.ChartCategory, error)
@@ -152,6 +153,17 @@ func (m *PostgresAssetManager) QueryAllChartCategories(query string, args ...int
 		result = append(result, &chartCategory)
 	}
 	return result, nil
+}
+
+// QueryCount count the returned results from a given query
+func (m *PostgresAssetManager) QueryCount(query string, args ...interface{}) (int, error) {
+	var count int
+	row := m.DB.QueryRow(query, args...)
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 // InitTables creates the required tables for the postgresql backend for assets.

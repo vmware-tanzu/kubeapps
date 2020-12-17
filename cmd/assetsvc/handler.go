@@ -73,17 +73,20 @@ type count struct {
 	Count int
 }
 
-// getPageNumberAndSize extracts the page number and size of a request. Default (1, 0) if not set
-func getPageNumberAndSize(req *http.Request) (int, int) {
-	page := req.FormValue("page")
-	size := req.FormValue("size")
-	pageInt, err := strconv.ParseUint(page, 10, 64)
-	if err != nil {
-		pageInt = 1
+// getPageAndSizeParams extracts the page number and the page size of a request. Default (page,size) = (1, 0) if not set
+func getPageAndSizeParams(req *http.Request) (int, int) {
+	pageNumber := req.FormValue("page")
+	pageSize := req.FormValue("size")
+
+	// if page is a non-positive int or 0, defaults to 1
+	pageNumberInt, err := strconv.ParseUint(pageNumber, 10, 64)
+	if err != nil || pageNumberInt == 0 {
+		pageNumberInt = 1
 	}
 	// ParseUint will return 0 if size is a not positive integer
-	sizeInt, _ := strconv.ParseUint(size, 10, 64)
-	return int(pageInt), int(sizeInt)
+	pageSizeInt, _ := strconv.ParseUint(pageSize, 10, 64)
+
+	return int(pageNumberInt), int(pageSizeInt)
 }
 
 // showDuplicates returns if a request wants to retrieve charts. Default false
@@ -103,7 +106,7 @@ func min(a, b int) int {
 
 func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) (apiListResponse, interface{}, error) {
 	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize)
-	return newChartListResponse(charts), meta{totalPages}, err
+	return newChartListResponse(charts), meta{TotalPages: totalPages}, err
 }
 
 func getAllChartCategories(namespace, repo string) (apiChartCategoryListResponse, error) {
@@ -114,7 +117,7 @@ func getAllChartCategories(namespace, repo string) (apiChartCategoryListResponse
 // listCharts returns a list of charts based on filter params
 func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 
-	pageNumber, pageSize := getPageNumberAndSize(req)
+	pageNumber, pageSize := getPageAndSizeParams(req)
 	namespace, err := url.PathUnescape(params["namespace"])
 	if err != nil {
 		handleDecodeError(params["namespace"], w, err)

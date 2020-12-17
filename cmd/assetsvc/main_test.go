@@ -81,6 +81,8 @@ func Test_GetCharts(t *testing.T) {
 			defer cleanup()
 
 			rows := sqlmock.NewRows([]string{"info"})
+			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tt.charts))
+
 			for _, chart := range tt.charts {
 				chartJSON, err := json.Marshal(chart)
 				if err != nil {
@@ -91,6 +93,9 @@ func Test_GetCharts(t *testing.T) {
 			mock.ExpectQuery("SELECT info FROM charts WHERE *").
 				WithArgs("my-namespace", kubeappsNamespace).
 				WillReturnRows(rows)
+
+			mock.ExpectQuery("^SELECT count(.+) FROM").
+				WillReturnRows(rowCount)
 
 			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts")
 			assert.NoError(t, err)
@@ -248,6 +253,8 @@ func Test_GetChartsInRepo(t *testing.T) {
 			defer cleanup()
 
 			rows := sqlmock.NewRows([]string{"info"})
+			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tt.charts))
+
 			for _, chart := range tt.charts {
 				chartJSON, err := json.Marshal(chart)
 				if err != nil {
@@ -258,6 +265,9 @@ func Test_GetChartsInRepo(t *testing.T) {
 			mock.ExpectQuery("SELECT info FROM charts WHERE *").
 				WithArgs("my-namespace", kubeappsNamespace, tt.repo).
 				WillReturnRows(rows)
+
+			mock.ExpectQuery("^SELECT count(.+) FROM").
+				WillReturnRows(rowCount)
 
 			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.repo)
 			assert.NoError(t, err)

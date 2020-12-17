@@ -279,10 +279,10 @@ func Test_getAllChartCategories(t *testing.T) {
 }
 func Test_getPaginatedChartList(t *testing.T) {
 	availableCharts := []*models.Chart{
-		{ID: "foo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
-		{ID: "fo%2Fo", ChartVersions: []models.ChartVersion{{Digest: "321"}}},
 		{ID: "bar", ChartVersions: []models.ChartVersion{{Digest: "456"}}},
 		{ID: "copyFoo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
+		{ID: "foo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
+		{ID: "fo%2Fo", ChartVersions: []models.ChartVersion{{Digest: "321"}}},
 	}
 	tests := []struct {
 		name               string
@@ -311,7 +311,82 @@ func Test_getPaginatedChartList(t *testing.T) {
 			expectedCharts:     availableCharts,
 			expectedTotalPages: 1,
 		},
-		// TODO(andresmgot): several pages
+		{
+			name:               "repo has many charts with pagination (2 pages)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageNumber:         2,
+			pageSize:           2,
+			expectedCharts:     []*models.Chart{availableCharts[2], availableCharts[3]},
+			expectedTotalPages: 2,
+		},
+		{
+			name:               "repo has many charts with pagination (non existing page)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageNumber:         3,
+			pageSize:           2,
+			expectedCharts:     []*models.Chart{},
+			expectedTotalPages: 2,
+		},
+		{
+			name:               "repo has many charts with pagination (out of range size)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageNumber:         1,
+			pageSize:           100,
+			expectedCharts:     availableCharts,
+			expectedTotalPages: 1,
+		},
+		{
+			name:               "repo has many charts with pagination (w/ page, w size)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageSize:           3,
+			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
+			expectedTotalPages: 2,
+		},
+		{
+			name:               "repo has many charts with pagination (w/ page, w zero size)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageNumber:         2,
+			pageSize:           0,
+			expectedCharts:     availableCharts,
+			expectedTotalPages: 1,
+		},
+		{
+			name:               "repo has many charts with pagination (w/ wrong page, w/ size)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageNumber:         -2,
+			pageSize:           2,
+			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
+			expectedTotalPages: 2,
+		},
+		{
+			name:               "repo has many charts with pagination (w/ page, w/o size)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageNumber:         2,
+			expectedCharts:     availableCharts,
+			expectedTotalPages: 1,
+		},
+		{
+			name:               "repo has many charts with pagination (w/o page, w/ size)",
+			namespace:          "other-namespace",
+			repo:               "",
+			pageSize:           2,
+			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
+			expectedTotalPages: 2,
+		},
+		{
+			name:               "repo has many charts with pagination (w/o page, w/o size)",
+			namespace:          "other-namespace",
+			repo:               "",
+			expectedCharts:     availableCharts,
+			expectedTotalPages: 1,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -319,7 +394,9 @@ func Test_getPaginatedChartList(t *testing.T) {
 			defer cleanup()
 
 			rows := sqlmock.NewRows([]string{"info"})
-			for _, chart := range availableCharts {
+			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(availableCharts))
+
+			for _, chart := range tt.expectedCharts {
 				chartJSON, err := json.Marshal(chart)
 				if err != nil {
 					t.Fatalf("%+v", err)
@@ -330,9 +407,13 @@ func Test_getPaginatedChartList(t *testing.T) {
 			if tt.repo != "" {
 				expectedParams = append(expectedParams, "bitnami")
 			}
+
 			mock.ExpectQuery("SELECT info FROM *").
 				WithArgs(expectedParams...).
 				WillReturnRows(rows)
+
+			mock.ExpectQuery("^SELECT count(.+) FROM").
+				WillReturnRows(rowCount)
 
 			charts, totalPages, err := pgManager.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize)
 			if err != nil {
@@ -341,8 +422,13 @@ func Test_getPaginatedChartList(t *testing.T) {
 			if totalPages != tt.expectedTotalPages {
 				t.Errorf("Unexpected number of pages, got %d expecting %d", totalPages, tt.expectedTotalPages)
 			}
+			if tt.pageSize > 0 {
+				if len(charts) > tt.pageSize {
+					t.Errorf("Unexpected number of charts, got %d expecting %d", len(charts), tt.pageSize)
+				}
+			}
 			if !cmp.Equal(charts, tt.expectedCharts) {
-				t.Errorf("Unexpected result %v", cmp.Diff(charts, tt.expectedCharts))
+				t.Errorf("Unexpected result %v", cmp.Diff(tt.expectedCharts, charts))
 			}
 		})
 	}

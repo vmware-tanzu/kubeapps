@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/kubeapps/common/datastore"
@@ -94,12 +95,34 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	if len(clauses) > 0 {
 		repoQuery = "WHERE " + strings.Join(clauses, " AND ")
 	}
-	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, repoQuery)
+	// Default (pageNumber,pageSize) = (1, 0) as in the handler.go
+	if pageNumber <= 0 {
+		pageNumber = 1
+	}
+
+	paginationClause := ""
+	if pageSize > 0 {
+		offset := (pageNumber - 1) * pageSize
+		paginationClause = fmt.Sprintf("LIMIT %d OFFSET %d", pageSize, offset)
+	}
+
+	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC %s", dbutils.ChartTable, repoQuery, paginationClause)
 	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
 	if err != nil {
 		return nil, 0, err
 	}
-	return charts, 1, nil
+
+	numPages := 1
+	if pageSize > 0 {
+		dbCountQuery := fmt.Sprintf("SELECT count(info) FROM %s %s", dbutils.ChartTable, repoQuery)
+		count, err := m.QueryCount(dbCountQuery, queryParams...)
+		if err != nil {
+			return nil, 0, err
+		}
+		numPages = int(math.Ceil(float64(count) / float64(pageSize)))
+	}
+
+	return charts, numPages, nil
 }
 
 func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
