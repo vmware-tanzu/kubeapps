@@ -111,9 +111,9 @@ func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) (ap
 	return newChartListResponse(charts), meta{totalPages}, err
 }
 
-func getAllChartCategories(namespace, repo string) (apiChartCategoryListResponse, interface{}, error) {
+func getAllChartCategories(namespace, repo string) (apiChartCategoryListResponse, error) {
 	chartCategories, err := manager.getAllChartCategories(namespace, repo)
-	return newChartCategoryListResponse(chartCategories), meta{}, err
+	return newChartCategoryListResponse(chartCategories), err
 }
 
 // listCharts returns a list of charts based on filter params
@@ -154,13 +154,13 @@ func getChartCategories(w http.ResponseWriter, req *http.Request, params Params)
 		return
 	}
 
-	chartCategories, meta, err := getAllChartCategories(namespace, repo)
+	chartCategories, err := getAllChartCategories(namespace, repo)
 	if err != nil {
 		log.WithError(err).Error("could not fetch categories")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch chart categories").Write(w)
 		return
 	}
-	response.NewDataResponseWithMeta(chartCategories, meta).Write(w)
+	response.NewDataResponse(chartCategories).Write(w)
 }
 
 // getChart returns the chart from the given repo
