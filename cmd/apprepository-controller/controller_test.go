@@ -905,11 +905,7 @@ func Test_newCleanupJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob(&apprepov1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      tt.repoName,
-					Namespace: tt.repoNamespace,
-				}}, makeDefaultConfig())
+			result := newCleanupJob("kubeapps", tt.repoNamespace, tt.repoName, makeDefaultConfig())
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

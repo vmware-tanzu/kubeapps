@@ -58,6 +58,13 @@ type Chart struct {
 	ChartVersions   []ChartVersion     `json:"chartVersions"`
 }
 
+// ChartCategory is the representation of the chart category query
+// Note "name" and "count" names are not columns but select aliases
+type ChartCategory struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
 // ChartIconString is a higher-level representation of a chart package
 // TODO(andresmgot) Replace this type when the icon is stored as a binary
 type ChartIconString struct {

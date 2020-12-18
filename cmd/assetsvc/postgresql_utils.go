@@ -56,6 +56,30 @@ func exists(current []string, str string) bool {
 	return false
 }
 
+func (m *postgresAssetManager) getAllChartCategories(namespace, repo string) ([]*models.ChartCategory, error) {
+	clauses := []string{}
+	queryParams := []interface{}{}
+	if namespace != dbutils.AllNamespaces {
+		queryParams = append(queryParams, namespace, m.GetKubeappsNamespace())
+		clauses = append(clauses, "(repo_namespace = $1 OR repo_namespace = $2)")
+	}
+	if repo != "" {
+		queryParams = append(queryParams, repo)
+		clauses = append(clauses, fmt.Sprintf("repo_name = $%d", len(queryParams)))
+	}
+	repoQuery := ""
+	if len(clauses) > 0 {
+		repoQuery = "WHERE " + strings.Join(clauses, " AND ")
+	}
+	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, repoQuery)
+
+	chartsCategories, err := m.QueryAllChartCategories(dbQuery, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	return chartsCategories, nil
+}
+
 func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, error) {
 	clauses := []string{}
 	queryParams := []interface{}{}
@@ -69,8 +93,7 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	}
 	repoQuery := ""
 	if len(clauses) > 0 {
-		repoQuery = strings.Join(clauses, " AND ")
-		repoQuery = "WHERE " + repoQuery
+		repoQuery = "WHERE " + strings.Join(clauses, " AND ")
 	}
 	// Default (pageNumber,pageSize) = (1, 0) as in the handler.go
 	if pageNumber <= 0 {
