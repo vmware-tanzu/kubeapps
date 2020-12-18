@@ -52,6 +52,8 @@ type apiResponse struct {
 
 type apiListResponse []*apiResponse
 
+type apiChartCategoryListResponse []*models.ChartCategory
+
 type selfLink struct {
 	Self string `json:"self"`
 }
@@ -107,6 +109,11 @@ func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) (ap
 	return newChartListResponse(charts), meta{TotalPages: totalPages}, err
 }
 
+func getAllChartCategories(namespace, repo string) (apiChartCategoryListResponse, error) {
+	chartCategories, err := manager.getAllChartCategories(namespace, repo)
+	return newChartCategoryListResponse(chartCategories), err
+}
+
 // listCharts returns a list of charts based on filter params
 func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 
@@ -129,6 +136,29 @@ func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 	response.NewDataResponseWithMeta(cl, meta).Write(w)
+}
+
+// getChartCategories returns all the distinct chart categories name and count
+func getChartCategories(w http.ResponseWriter, req *http.Request, params Params) {
+
+	namespace, err := url.PathUnescape(params["namespace"])
+	if err != nil {
+		handleDecodeError(params["namespace"], w, err)
+		return
+	}
+	repo, err := url.PathUnescape(params["repo"])
+	if err != nil {
+		handleDecodeError(params["repo"], w, err)
+		return
+	}
+
+	chartCategories, err := getAllChartCategories(namespace, repo)
+	if err != nil {
+		log.WithError(err).Error("could not fetch categories")
+		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch chart categories").Write(w)
+		return
+	}
+	response.NewDataResponse(chartCategories).Write(w)
 }
 
 // getChart returns the chart from the given repo
@@ -378,6 +408,13 @@ func newChartResponse(c *models.Chart) *apiResponse {
 	}
 }
 
+func newChartCategoryResponse(c *models.ChartCategory) *models.ChartCategory {
+	return &models.ChartCategory{
+		Name:  c.Name,
+		Count: c.Count,
+	}
+}
+
 // blankRawIconAndChartVersions returns the same chart data but with a blank raw icon field and no chartversions.
 // TODO(mnelson): The raw icon data should be stored in a separate postgresql column
 // rather than the json field so that this isn't necessary.
@@ -391,6 +428,14 @@ func newChartListResponse(charts []*models.Chart) apiListResponse {
 	cl := apiListResponse{}
 	for _, c := range charts {
 		cl = append(cl, newChartResponse(c))
+	}
+	return cl
+}
+
+func newChartCategoryListResponse(charts []*models.ChartCategory) apiChartCategoryListResponse {
+	cl := apiChartCategoryListResponse{}
+	for _, c := range charts {
+		cl = append(cl, newChartCategoryResponse(c))
 	}
 	return cl
 }
