@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
@@ -89,53 +90,9 @@ func getPageAndSizeParams(req *http.Request) (int, int) {
 	return int(pageNumberInt), int(pageSizeInt)
 }
 
-// showDuplicates returns if a request wants to retrieve charts. Default false
-func showDuplicates(req *http.Request) bool {
-	return len(req.FormValue("showDuplicates")) > 0
-}
-
-// min returns the minimum of two integers.
-// We are not using math.Min since that compares float64
-// and it's unnecessarily complex.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) (apiListResponse, interface{}, error) {
-	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize)
-	return newChartListResponse(charts), meta{TotalPages: totalPages}, err
-}
-
 func getAllChartCategories(namespace, repo string) (apiChartCategoryListResponse, error) {
 	chartCategories, err := manager.getAllChartCategories(namespace, repo)
 	return newChartCategoryListResponse(chartCategories), err
-}
-
-// listCharts returns a list of charts based on filter params
-func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
-
-	pageNumber, pageSize := getPageAndSizeParams(req)
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
-		return
-	}
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-
-	cl, meta, err := getPaginatedChartList(namespace, repo, pageNumber, pageSize)
-	if err != nil {
-		log.WithError(err).Error("could not fetch charts")
-		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
-		return
-	}
-	response.NewDataResponseWithMeta(cl, meta).Write(w)
 }
 
 // getChartCategories returns all the distinct chart categories name and count
@@ -375,19 +332,35 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 		handleDecodeError(params["namespace"], w, err)
 		return
 	}
-
-	charts, err := manager.getChartsWithFilters(namespace, params["chartName"], req.FormValue("version"), req.FormValue("appversion")) // chartName remains encoded
+	repo, err := url.PathUnescape(params["repo"])
 	if err != nil {
-		log.WithError(err).Errorf(
-			"could not find charts with the given name %s, version %s and appversion %s",
-			params["chartName"], req.FormValue("version"), req.FormValue("appversion"),
+		handleDecodeError(params["repo"], w, err)
+		return
+	}
+
+	cq := chartQuery{
+		namespace:   namespace,
+		chartName:   req.FormValue("name"), // chartName remains encoded
+		version:     req.FormValue("version"),
+		appVersion:  req.FormValue("appversion"),
+		repos:       append(strings.Split(strings.TrimSpace(req.FormValue("repos")), ","), repo),
+		categories:  strings.Split(strings.TrimSpace(req.FormValue("categories")), ","),
+		searchQuery: req.FormValue("q"),
+	}
+
+	pageNumber, pageSize := getPageAndSizeParams(req)
+	charts, totalPages, err := manager.getPaginatedChartListWithFilters(cq, pageNumber, pageSize)
+	if err != nil {
+		log.WithError(err).Errorf("could not find charts with the given namespace=%s, chartName=%s, version=%s, appversion=%s, repos=%s, categories=%s, searchQuery=%s",
+			cq.namespace, cq.chartName, cq.version, cq.appVersion, cq.repos, cq.categories, cq.searchQuery,
 		)
 		// continue to return empty list
 	}
 
 	chartResponse := charts
 	cl := newChartListResponse(chartResponse)
-	response.NewDataResponse(cl).Write(w)
+
+	response.NewDataResponseWithMeta(cl, meta{TotalPages: totalPages}).Write(w)
 }
 
 func newChartResponse(c *models.Chart) *apiResponse {

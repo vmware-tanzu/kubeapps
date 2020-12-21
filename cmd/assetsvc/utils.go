@@ -24,11 +24,10 @@ import (
 type assetManager interface {
 	Init() error
 	Close() error
-	getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, error)
 	getChart(namespace, chartID string) (models.Chart, error)
 	getChartVersion(namespace, chartID, version string) (models.Chart, error)
 	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
-	getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error)
+	getPaginatedChartListWithFilters(cq chartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
 	getAllChartCategories(namespace, repo string) ([]*models.ChartCategory, error)
 }
 
