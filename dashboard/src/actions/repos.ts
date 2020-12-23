@@ -162,14 +162,18 @@ export const fetchRepoSecrets = (
     const {
       clusters: { currentCluster },
     } = getState();
-    // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
-    // to avoid listing secrets
-    // https://github.com/kubeapps/kubeapps/issues/1686
-    const secrets = await Secret.list(currentCluster, namespace);
-    const repoSecrets = secrets.items?.filter(s =>
-      s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
-    );
-    dispatch(receiveReposSecrets(repoSecrets));
+    try {
+      // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
+      // to avoid listing secrets
+      // https://github.com/kubeapps/kubeapps/issues/1686
+      const secrets = await Secret.list(currentCluster, namespace);
+      const repoSecrets = secrets.items?.filter(s =>
+        s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
+      );
+      dispatch(receiveReposSecrets(repoSecrets));
+    } catch (e) {
+      dispatch(errorRepos(e, "fetch"));
+    }
   };
 };
 
