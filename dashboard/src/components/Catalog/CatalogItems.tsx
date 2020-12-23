@@ -9,9 +9,16 @@ interface ICatalogItemsProps {
   csvs: IClusterServiceVersion[];
   cluster: string;
   namespace: string;
+  hasFinished: boolean;
 }
 
-export default function CatalogItems({ charts, csvs, cluster, namespace }: ICatalogItemsProps) {
+export default function CatalogItems({
+  charts,
+  csvs,
+  cluster,
+  namespace,
+  hasFinished,
+}: ICatalogItemsProps) {
   const chartItems: ICatalogItemProps[] = useMemo(
     () =>
       charts.map(c => {
@@ -67,7 +74,7 @@ export default function CatalogItems({ charts, csvs, cluster, namespace }: ICata
     .concat(crdItems)
     .sort((a, b) => (a.item.name.toLowerCase() > b.item.name.toLowerCase() ? 1 : -1));
 
-  if (sortedItems.length === 0) {
+  if (hasFinished && sortedItems.length === 0) {
     return <p>No application matches the current filter.</p>;
   }
   return (

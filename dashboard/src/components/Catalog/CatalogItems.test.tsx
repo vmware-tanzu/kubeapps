@@ -49,11 +49,13 @@ const defaultProps = {
   csvs: [],
   cluster: "default",
   namespace: "default",
+  hasFinished: false,
 };
 const populatedProps = {
   ...defaultProps,
   charts: [chartItem, chartItem2],
   csvs: [csv],
+  hasFinished: true,
 };
 
 it("shows a message if no items are passed", () => {

@@ -30,10 +30,29 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchChartsWithPagination: (
       cluster: string,
       namespace: string,
-      repo: string,
+      repos: string,
+      query: string,
       page: number,
       size: number,
-    ) => dispatch(actions.charts.fetchChartsWithPagination(cluster, namespace, repo, page, size)),
+      nextPage: number,
+    ) =>
+      dispatch(
+        actions.charts.fetchChartsWithPagination(
+          cluster,
+          namespace,
+          repos,
+          query,
+          page,
+          size,
+          nextPage,
+        ),
+      ),
+    fetchChartsSearch: (cluster: string, namespace: string, repos: string, query: string) =>
+      dispatch(actions.charts.fetchChartsSearch(cluster, namespace, repos, query, 1, 0)),
+    fetchChartCategories: (cluster: string, namespace: string, repos: string) =>
+      dispatch(actions.charts.fetchChartCategories(cluster, namespace, repos)),
+    resetChartsSearch: () => dispatch(actions.charts.resetChartsSearch()),
+    resetPagination: () => dispatch(actions.charts.resetPaginaton()),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
     getCSVs: (cluster: string, namespace: string) =>
       dispatch(actions.operators.getCSVs(cluster, namespace)),

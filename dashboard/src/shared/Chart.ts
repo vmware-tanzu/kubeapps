@@ -1,19 +1,26 @@
 import { JSONSchema4 } from "json-schema";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IChart, IChartVersion } from "./types";
+import { IChart, IChartCategory, IChartVersion } from "./types";
 import * as URL from "./url";
 
 export default class Chart {
   public static async fetchChartsWithPagination(
     cluster: string,
     namespace: string,
-    repo: string,
+    repos: string,
+    query: string,
     page: number,
     size: number,
   ) {
     const { data } = await axiosWithAuth.get<{ data: IChart[] }>(
-      URL.api.charts.listWithPagination(cluster, namespace, page, size, repo),
-      {},
+      URL.api.charts.listWithPagination(cluster, namespace, page, size, query, repos),
+    );
+    return data.data;
+  }
+
+  public static async fetchChartCategories(cluster: string, namespace: string, repos: string) {
+    const { data } = await axiosWithAuth.get<{ data: IChartCategory[] }>(
+      URL.api.charts.getChartCategories(cluster, namespace, repos),
     );
     return data.data;
   }

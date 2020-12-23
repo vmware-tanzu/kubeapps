@@ -7,11 +7,17 @@ import { NamespaceAction } from "../actions/namespace";
 import { IChartState } from "../shared/types";
 
 export const initialState: IChartState = {
-  status: actions.charts.idleStatus,
+  status: actions.charts.unstartedStatus,
+  nextPage: 1,
   page: 1,
-  size: 32,
+  size: 100,
   isFetching: false,
   items: [],
+  search: {
+    items: [],
+    query: "",
+  },
+  categories: [],
   selected: {
     versions: [],
   },
@@ -60,14 +66,18 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        status: actions.charts.idleStatus,
         selected: chartsSelectedReducer(state.selected, action),
+      };
+    case getType(actions.charts.receiveChartCategories):
+      return {
+        ...state,
+        isFetching: false,
+        categories: action.payload,
       };
     case getType(actions.charts.selectChartVersion):
       return {
         ...state,
         isFetching: false,
-        status: actions.charts.idleStatus,
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.requestDeployedChartVersion):
@@ -79,26 +89,76 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        status: actions.charts.idleStatus,
         deployed: { ...state.deployed, ...action.payload },
       };
     case getType(actions.charts.resetChartVersion):
+      return {
+        ...state,
+        isFetching: false,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
     case getType(actions.charts.selectReadme):
+      return {
+        ...state,
+        isFetching: false,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
     case getType(actions.charts.errorReadme):
+      return {
+        ...state,
+        isFetching: false,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
     case getType(actions.charts.requestCharts):
       return {
         ...state,
         isFetching: true,
+        nextPage: action.payload + 1 > state.nextPage ? action.payload + 1 : state.nextPage,
+        // status: state.status === actions.charts.finishedStatus ? state.status : actions.charts.loadingStatus,
         status: actions.charts.loadingStatus,
+      };
+    case getType(actions.charts.requestChartsCategories):
+      return {
+        ...state,
+        isFetching: true,
+      };
+    case getType(actions.charts.requestChartsVersions):
+      return {
+        // ...state,
+        // selected: initialState.selected,
+        ...initialState,
+        isFetching: true,
+      };
+    case getType(actions.charts.requestChartsSearch):
+      return {
+        ...state,
+        isFetching: true,
+        status:
+          state.status === actions.charts.finishedStatus
+            ? state.status
+            : actions.charts.loadingStatus,
+        search: { query: action.payload, items: [] },
       };
     case getType(actions.charts.receiveCharts):
       return {
         ...state,
-        items: uniqBy([...state.items, ...action.payload], "id"),
-        page: state.page + 1,
+        items: uniqBy([...state.items, ...action.payload], "id"), // TODO(agamez): add canceling request features to avoid this workaround
+        page: state.page === state.nextPage ? state.page + 1 : state.nextPage,
         isFetching: false,
-        status: actions.charts.idleStatus,
+        status:
+          state.status === actions.charts.finishedStatus ? state.status : actions.charts.idleStatus,
       };
+    case getType(actions.charts.receiveChartsSearch):
+      if (action.meta === state.search.query) {
+        return {
+          ...state,
+          search: { items: action.payload, query: action.meta },
+          isFetching: false,
+          status: actions.charts.finishedStatus,
+        };
+      } else {
+        return state;
+      }
     case getType(actions.charts.reachEnd):
       return {
         ...state,
@@ -110,6 +170,22 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         status: actions.charts.errorStatus,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
+    case getType(actions.charts.resetChartsSearch):
+      return {
+        ...state,
+        search: { items: [], query: "" },
+        status: actions.charts.idleStatus,
+      };
+    case getType(actions.charts.resetPaginaton):
+      return {
+        ...state,
+        nextPage: initialState.nextPage,
+        page: initialState.page,
+        items: initialState.items,
+        isFetching: false,
+        status: actions.charts.idleStatus,
       };
     default:
   }

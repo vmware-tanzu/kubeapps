@@ -5,20 +5,29 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import Spinner from "components/js/Spinner/Spinner";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { push } from "connected-react-router";
-import { flatten, get, intersection, uniq, without } from "lodash";
+import {
+  debounce,
+  flatten,
+  get,
+  intersection,
+  isEqual,
+  throttle,
+  trimStart,
+  uniq,
+  without,
+} from "lodash";
 import React, { useCallback, useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
-import { IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IChartState, IClusterServiceVersion, IStoreState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import "./Catalog.css";
-// import CatalogItemLoader from "./CatalogItemLoader";
 import CatalogItems from "./CatalogItems";
 
 function categoryToReadable(category: string) {
@@ -39,12 +48,16 @@ interface ICatalogProps {
     cluster: string,
     namespace: string,
     repo: string,
+    query: string,
+    nextPage: number,
     page: number,
     size: number,
   ) => void;
+  fetchChartsSearch: (cluster: string, namespace: string, repo: string, query: string) => void;
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
+  fetchChartCategories: (cluster: string, namespace: string, repo: string) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
@@ -79,86 +92,237 @@ function Catalog(props: ICatalogProps) {
   const {
     charts: {
       isFetching,
+      nextPage,
       page,
       size,
       status,
       selected: { error },
       items: charts,
+      search,
+      categories,
     },
     fetchChartsWithPagination,
+    fetchChartsSearch,
+    fetchChartCategories,
+    getCSVs,
     cluster,
     namespace,
-    getCSVs,
     csvs,
-    repo,
     filter: propsFilter,
   } = props;
+  const {
+    repos: { repos },
+    config: { kubeappsCluster, kubeappsNamespace },
+  } = useSelector((state: IStoreState) => state);
+
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
+  const [currentSearchQuery, setCurrentSearchQuery] = useState("");
+  const [currentRepo, setCurrentRepo] = useState("");
+
+  const pushFilters = (newFilters: any, type: string) => {
+    dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
+
+    if (type === filterNames.REPO) {
+      // if the repo changes, force reset
+      dispatch(actions.charts.resetPaginaton());
+      fetchChartsSearch(cluster, namespace, newFilters[filterNames.REPO], currentSearchQuery);
+      fetchChartCategories(cluster, namespace, newFilters[filterNames.REPO]); // get corresponding categories
+    }
+  };
+  const addFilter = (type: string, value: string) => {
+    pushFilters(
+      {
+        ...filters,
+        [type]: filters[type].concat(value),
+      },
+      type,
+    );
+  };
+  const removeFilter = (type: string, value: string) => {
+    pushFilters(
+      {
+        ...filters,
+        [type]: without(filters[type], value),
+      },
+      type,
+    );
+  };
+  const removeFilterFunc = (type: string, value: string) => {
+    return () => removeFilter(type, value);
+  };
+  const removeSearchQuery = () => {
+    return () => {
+      dispatch(actions.charts.resetChartsSearch());
+      setCurrentSearchQuery("");
+    };
+  };
+  const clearAllFilters = () => {
+    if (filters[filterNames.REPO]) {
+      dispatch(actions.charts.resetPaginaton());
+    }
+    dispatch(actions.charts.resetChartsSearch());
+    setCurrentSearchQuery("");
+    pushFilters({}, "");
+  };
+
+  const allRepos = uniq(repos.map(c => c.metadata.name));
+  const allProviders = uniq(csvs.map(c => c.spec.provider.name));
+  const allCategories = uniq(
+    categories
+      .map(c => categoryToReadable(c.name))
+      .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
+  ).sort();
+
+  // We do not currently support app repositories on additional clusters.
+  const supportedCluster = cluster === kubeappsCluster;
+  // const fetchRepos: () => void = useCallback(() => {
+  //   if (!namespace) {
+  //     // All Namespaces
+  //     dispatch(actions.repos.fetchRepos(""));
+  //     return;
+  //   }
+  //   if (!supportedCluster || namespace === kubeappsNamespace) {
+  //     // Global namespace or other cluster, show global repos only
+  //     dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+  //     return;
+  //   }
+  //   // In other case, fetch global and namespace repos
+  //   dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+  // }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter].split(",");
     });
+    setCurrentRepo(propsFilter[filterNames.REPO]);
     setFilters({
       ...initialFilterState(),
       ...newFilters,
     });
   }, [propsFilter]);
 
-  const pushFilters = (newFilters: any) => {
-    dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
-  };
-  const addFilter = (type: string, value: string) => {
-    pushFilters({
-      ...filters,
-      [type]: filters[type].concat(value),
-    });
-  };
-  const removeFilter = (type: string, value: string) => {
-    pushFilters({
-      ...filters,
-      [type]: without(filters[type], value),
-    });
-  };
-  const removeFilterFunc = (type: string, value: string) => {
-    return () => removeFilter(type, value);
-  };
-  const clearAllFilters = () => {
-    pushFilters({});
-  };
-  const submitFilters = () => {
-    pushFilters(filters);
-  };
+  const firstUpdate = useRef(true);
 
-  const allRepos = uniq(charts.map(c => c.attributes.repo.name));
-  const allProviders = uniq(csvs.map(c => c.spec.provider.name));
-  const allCategories = uniq(
-    charts
-      .map(c => categoryToReadable(c.attributes.category))
-      .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
-  ).sort();
+  const namespaceUpdate = useRef({ namespace });
+  useEffect(() => {
+    if (firstUpdate.current || namespaceUpdate.current.namespace !== namespace) {
+      // initial actions or if only the namespace is changing, refresh
+      firstUpdate.current = false;
+      setCurrentSearchQuery("");
+      setCurrentRepo("");
+      setFilters({ ...initialFilterState() });
+      dispatch(actions.charts.resetPaginaton());
+      dispatch(actions.charts.resetChartsSearch());
+      fetchChartsWithPagination(cluster, namespace, currentRepo, "", 1, size, nextPage); // get the first charts
+      getCSVs(cluster, namespace);
+      dispatch(actions.charts.resetPaginaton()); // start from page=1 again
+    }
+    namespaceUpdate.current.namespace = namespace;
+  }, [
+    dispatch,
+    getCSVs,
+    fetchChartsWithPagination,
+    cluster,
+    namespace,
+    currentRepo,
+    page,
+    size,
+    nextPage,
+  ]);
 
   useEffect(() => {
-    getCSVs(cluster, namespace); // inital load of all the operators
-  }, [getCSVs, cluster, namespace]);
+    // when the current repo changes, re-fetch categories
+    fetchChartCategories(cluster, namespace, currentRepo);
+  }, [fetchChartCategories, cluster, namespace, currentRepo]);
+
+  useEffect(() => {
+    // when the namespace changes, re-fetch repos
+    if (!namespace) {
+      // All Namespaces
+      dispatch(actions.repos.fetchRepos(""));
+      return;
+    }
+    if (!supportedCluster || namespace === kubeappsNamespace) {
+      // Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+      return;
+    }
+    // In other case, fetch global and namespace repos
+    dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+  }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
+
+  const debouncedfetchChartsSearch = useCallback(
+    debounce((q: string) => {
+      fetchChartsSearch(cluster, namespace, currentRepo, q);
+    }, 500),
+    [fetchChartsSearch, cluster, namespace, currentRepo],
+  );
+
+  const throttledfetchChartsSearch = useCallback(
+    throttle((q: string) => {
+      fetchChartsSearch(cluster, namespace, currentRepo, q);
+    }, 300),
+    [fetchChartsSearch, cluster, namespace, currentRepo],
+  );
+
+  const debouncedFetchChartsWithPagination = useCallback(
+    debounce(() => {
+      fetchChartsWithPagination(cluster, namespace, currentRepo, "", page, size, nextPage);
+    }, 1000),
+    [
+      fetchChartsWithPagination,
+      status,
+      cluster,
+      namespace,
+      currentRepo,
+      page,
+      size,
+      isFetching,
+      nextPage,
+    ],
+  );
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH][0] || "";
-  const setSearchFilter = (searchTerm: string) => {
-    setFilters({
-      ...filters,
-      [filterNames.SEARCH]: [searchTerm],
-    });
-  };
+
+  const setSearchFilter = useCallback(
+    (query: string) => {
+      setCurrentSearchQuery(trimStart(query));
+      if (currentSearchQuery.length) {
+        if (currentSearchQuery.length < 5 || currentSearchQuery.endsWith(" ")) {
+          throttledfetchChartsSearch(currentSearchQuery);
+        } else {
+          debouncedfetchChartsSearch(currentSearchQuery);
+        }
+      }
+    },
+    [currentSearchQuery, throttledfetchChartsSearch, debouncedfetchChartsSearch],
+  );
 
   const filteredCharts = charts
     .filter(
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
+    // .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
+    .filter(
+      c =>
+        filters[filterNames.REPO].length === 0 ||
+        filters[filterNames.REPO].includes(c.attributes.repo.name),
+    )
+    .filter(
+      c =>
+        filters[filterNames.CATEGORY].length === 0 ||
+        filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
+    );
+  const filteredChartsSearch = search.items
+    .filter(
+      () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
+    )
+    .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
+    // .filter(c => new RegExp(escapeRegExp(search.query), "i").test(c.id))
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
@@ -188,6 +352,8 @@ function Catalog(props: ICatalogProps) {
     );
 
   const observeBorder = useCallback(
+    // Check if the IntersectionAPI is enabled
+    // TODO(agamez): add a "load more" manual button at the end if not
     node => {
       if (
         "IntersectionObserver" in window &&
@@ -203,10 +369,11 @@ function Catalog(props: ICatalogProps) {
                 if (
                   entry.isIntersecting &&
                   !isFetching &&
-                  status !== actions.charts.loadingStatus &&
+                  !search.query.length &&
+                  // status !== actions.charts.loadingStatus &&
                   status !== actions.charts.finishedStatus
                 ) {
-                  fetchChartsWithPagination(cluster, namespace, repo, page, size);
+                  debouncedFetchChartsWithPagination();
                 }
               });
             },
@@ -218,15 +385,12 @@ function Catalog(props: ICatalogProps) {
         }
       }
     },
-    [fetchChartsWithPagination, status, cluster, namespace, repo, page, size, isFetching],
+    [debouncedFetchChartsWithPagination, search.query, status, isFetching],
   );
 
-  const handleLoadMoreButton = useCallback(
-    node => {
-      fetchChartsWithPagination(cluster, namespace, repo, page, size);
-    },
-    [fetchChartsWithPagination, cluster, namespace, repo, page, size],
-  );
+  const handleLoadMoreButton = useCallback(() => {
+    fetchChartsWithPagination(cluster, namespace, currentRepo, "", page, size, nextPage);
+  }, [fetchChartsWithPagination, cluster, namespace, currentRepo, page, size, nextPage]);
 
   const renderError = (err: Error) => {
     return (
@@ -257,7 +421,7 @@ function Catalog(props: ICatalogProps) {
           <div className="filters-menu">
             <h5>
               Filters{" "}
-              {flatten(Object.values(filters)).length ? (
+              {flatten(Object.values(filters)).length || search.query.length ? (
                 <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
                   Clear All
                 </CdsButton>
@@ -317,10 +481,12 @@ function Catalog(props: ICatalogProps) {
         </Column>
         <Column span={8}>
           <>
+            {/* <h1>{JSON.stringify(isFetching)}</h1>
+            <h1>{JSON.stringify(status)}</h1> */}
             <div className="filter-summary">
               {Object.keys(filters).map(filterName => {
                 if (filters[filterName].length) {
-                  return filters[filterName].map((filterValue: string, i: number) => (
+                  return filters[filterName].map((filterValue: string) => (
                     <span key={`${filterName}-${filterValue}`} className="label label-info">
                       {filterName}: {filterValue}{" "}
                       <CdsIcon shape="times" onClick={removeFilterFunc(filterName, filterValue)} />
@@ -329,15 +495,31 @@ function Catalog(props: ICatalogProps) {
                 }
                 return null;
               })}
+              {search.query.length ? (
+                <>
+                  <span key={`query-${search.query}`} className="label label-info">
+                    Query: {search.query}
+                    <CdsIcon shape="times" onClick={removeSearchQuery()} />
+                  </span>
+                  <span>
+                    {filteredChartsSearch.length} result
+                    {filteredChartsSearch.length !== 1 ? "s" : ""}{" "}
+                    {status === actions.charts.finishedStatus ? "" : "- loading more..."}
+                  </span>
+                </>
+              ) : (
+                <></>
+              )}
             </div>
             <div className="catalogContainer">
               <Row>
                 <>
                   <CatalogItems
-                    charts={filteredCharts}
+                    charts={search.query.length > 0 ? filteredChartsSearch : filteredCharts}
                     csvs={filteredCSVs}
                     cluster={cluster}
                     namespace={namespace}
+                    hasFinished={status === actions.charts.finishedStatus}
                   />
                   {status === actions.charts.errorStatus && (
                     <div className="endPageMessage">
@@ -346,7 +528,8 @@ function Catalog(props: ICatalogProps) {
                       </CdsButton>
                     </div>
                   )}
-                  {status === actions.charts.loadingStatus && isFetching && (
+                  {/* {status === actions.charts.loadingStatus && isFetching && ( */}
+                  {status !== actions.charts.finishedStatus && (
                     // TODO(agamez): decide which one we prefer: placeholder or spinner
 
                     // <div className="catalogItemLoaderContainer">
@@ -356,10 +539,12 @@ function Catalog(props: ICatalogProps) {
                     //   <CatalogItemLoader />
                     // </div>
                     <div className="endPageMessage">
-                      <Spinner text={"Loading more items..."} />
+                      <LoadingWrapper loaded={false} />
+                      <span>Scroll down to discover more applications</span>
+                      {/* <Spinner text={"Loading more items..."} /> */}
                     </div>
                   )}
-                  {status === actions.charts.finishedStatus && (
+                  {!search.query.length && status === actions.charts.finishedStatus && (
                     <div className="endPageMessage">
                       <span>No remaining applications</span>
                     </div>
@@ -384,19 +569,21 @@ function Catalog(props: ICatalogProps) {
             key="searchFilter"
             placeholder="search charts..."
             onChange={setSearchFilter}
-            value={searchFilter}
-            submitFilters={submitFilters}
+            value={currentSearchQuery}
+            submitFilters={setSearchFilter}
           />
         }
       />
-      <LoadingWrapper loaded={!false || isFetching}>
-        <div>
-          {error && renderError(error)}
-          {false && charts.length === 0 && csvs.length === 0
-            ? renderEmptyCatalog()
-            : renderCatalogContent()}
-        </div>
-      </LoadingWrapper>
+      <div>
+        {error && renderError(error)}
+        {isEqual(filters, initialFilterState()) &&
+        !repos &&
+        status !== actions.charts.unstartedStatus &&
+        charts.length === 0 &&
+        csvs.length === 0
+          ? renderEmptyCatalog()
+          : renderCatalogContent()}
+      </div>
     </section>
   );
 }

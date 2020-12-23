@@ -11,13 +11,19 @@ import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
-  status: actions.charts.idleStatus,
+  status: actions.charts.unstartedStatus,
+  nextPage: 1,
   page: 1,
-  size: 32,
+  size: 100,
   isFetching: false,
+  search: {
+    items: [],
+    query: "",
+  },
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
+  categories: [],
   updatesInfo: {},
 } as IChartState;
 const defaultProps = {
@@ -25,6 +31,8 @@ const defaultProps = {
   repo: "",
   filter: {},
   fetchChartsWithPagination: jest.fn(),
+  fetchChartsSearch: jest.fn(),
+  fetchChartCategories: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
   namespace: "kubeapps",

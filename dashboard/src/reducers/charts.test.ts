@@ -11,13 +11,16 @@ describe("chartReducer", () => {
     initialState = {
       status: actions.charts.idleStatus,
       page: 1,
-      size: 32,
+      size: 100,
       isFetching: false,
       items: [],
+      categories: [],
       selected: {
         versions: [],
       },
       deployed: {},
+      nextPage: 1,
+      search: { items: [], query: "" },
     };
   });
   const error = new Error("Boom");
