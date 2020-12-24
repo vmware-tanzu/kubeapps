@@ -338,7 +338,7 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 		return
 	}
 
-	cq := chartQuery{
+	cq := ChartQuery{
 		namespace:   namespace,
 		chartName:   req.FormValue("name"), // chartName remains encoded
 		version:     req.FormValue("version"),

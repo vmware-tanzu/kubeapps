@@ -386,7 +386,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 				}
 			}
 
-			charts, numPages, err := pam.getPaginatedChartListWithFilters(chartQuery{namespace: tc.namespace, repos: []string{tc.repo}}, 1, 10)
+			charts, numPages, err := pam.getPaginatedChartListWithFilters(ChartQuery{namespace: tc.namespace, repos: []string{tc.repo}}, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got err: %+v, want: %+v", got, want)
@@ -500,7 +500,7 @@ func TestGetChartsWithFilters(t *testing.T) {
 				}
 			}
 
-			charts, _, err := pam.getPaginatedChartListWithFilters(chartQuery{namespace: tc.namespace, chartName: tc.chartName, version: tc.chartVersion, appVersion: tc.appVersion}, 1, 0)
+			charts, _, err := pam.getPaginatedChartListWithFilters(ChartQuery{namespace: tc.namespace, chartName: tc.chartName, version: tc.chartVersion, appVersion: tc.appVersion}, 1, 0)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}

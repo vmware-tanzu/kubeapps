@@ -39,16 +39,6 @@ type postgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
 }
 
-type chartQuery struct {
-	namespace   string
-	chartName   string
-	version     string
-	appVersion  string
-	searchQuery string
-	repos       []string
-	categories  []string
-}
-
 func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
 	m, err := dbutils.NewPGManager(config, kubeappsNamespace)
 	if err != nil {
@@ -62,7 +52,7 @@ func (m *postgresAssetManager) getAllChartCategories(namespace, repo string) ([]
 	if repo != "" {
 		repos = []string{repo}
 	}
-	whereQuery, whereQueryParams := m._generateWhereClause(chartQuery{namespace: namespace, repos: repos})
+	whereQuery, whereQueryParams := m._generateWhereClause(ChartQuery{namespace: namespace, repos: repos})
 	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, whereQuery)
 
 	chartsCategories, err := m.QueryAllChartCategories(dbQuery, whereQueryParams...)
@@ -213,7 +203,7 @@ func (m *postgresAssetManager) _getChartFilesWithFallback(namespace, filesID str
 	return chartFiles, nil
 }
 
-func (m *postgresAssetManager) getPaginatedChartListWithFilters(cq chartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error) {
+func (m *postgresAssetManager) getPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error) {
 	whereQuery, whereQueryParams := m._generateWhereClause(cq)
 	charts, numPages, err := m._getPaginatedChartList(whereQuery, whereQueryParams, pageNumber, pageSize)
 	if err != nil {
@@ -222,7 +212,7 @@ func (m *postgresAssetManager) getPaginatedChartListWithFilters(cq chartQuery, p
 	return charts, numPages, nil
 }
 
-func (m *postgresAssetManager) _generateWhereClause(cq chartQuery) (string, []interface{}) {
+func (m *postgresAssetManager) _generateWhereClause(cq ChartQuery) (string, []interface{}) {
 	whereClauses := []string{}
 	whereQueryParams := []interface{}{}
 	whereQuery := ""

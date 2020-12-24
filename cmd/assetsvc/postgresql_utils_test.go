@@ -168,7 +168,7 @@ func Test_getChartsWithFilters(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "foo").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.getPaginatedChartListWithFilters(chartQuery{namespace: "namespace", chartName: "foo", version: "1.0.0", appVersion: "1.0.1"}, 1, 0)
+	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "foo", version: "1.0.0", appVersion: "1.0.1"}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -204,7 +204,7 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "fo%2Fo").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.getPaginatedChartListWithFilters(chartQuery{namespace: "namespace", chartName: "fo%2Fo", version: "1.0.0", appVersion: "1.0.1"}, 1, 0)
+	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "fo%2Fo", version: "1.0.0", appVersion: "1.0.1"}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -415,7 +415,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 			mock.ExpectQuery("^SELECT count(.+) FROM").
 				WillReturnRows(rowCount)
 
-			charts, totalPages, err := pgManager.getPaginatedChartListWithFilters(chartQuery{namespace: tt.namespace, repos: []string{tt.repo}}, tt.pageNumber, tt.pageSize)
+			charts, totalPages, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}}, tt.pageNumber, tt.pageSize)
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}
