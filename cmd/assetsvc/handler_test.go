@@ -1179,7 +1179,7 @@ func Test_findLatestChart(t *testing.T) {
 			},
 		},
 		{
-			name: "returns mocked chart (by version and appversion)", // TODO(agamez): edit after avoid hardcoded query
+			name: "returns mocked chart (by version and appversion)",
 			charts: []*models.Chart{
 				chart1,
 				chart2,
@@ -1281,7 +1281,8 @@ func Test_findLatestChart(t *testing.T) {
 				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, tt.chartName)
 			}
 			if tt.version != "" && tt.appVersion != "" {
-				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace) // TODO(agamez): edit after avoid hardcoded query
+				parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, tt.version, tt.appVersion)
+				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, parametrizedJsonbLiteral)
 			}
 			if tt.repos != "" {
 				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, tt.repos)

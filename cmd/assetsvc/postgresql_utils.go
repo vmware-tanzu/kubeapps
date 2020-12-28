@@ -230,9 +230,9 @@ func (m *postgresAssetManager) generateWhereClause(cq ChartQuery) (string, []int
 		))
 	}
 	if cq.version != "" && cq.appVersion != "" {
-		whereClauses = append(whereClauses, fmt.Sprintf(
-			"(info->'chartVersions' @> '[{\"version\":\"%s\",\"app_version\":\"%s\"}]'::jsonb)", cq.version, cq.appVersion,
-		))
+		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, cq.version, cq.appVersion)
+		whereQueryParams = append(whereQueryParams, parametrizedJsonbLiteral)
+		whereClauses = append(whereClauses, fmt.Sprintf("(info->'chartVersions' @> $%d::jsonb)", len(whereQueryParams)))
 	}
 
 	if cq.repos != nil && len(cq.repos) > 0 {

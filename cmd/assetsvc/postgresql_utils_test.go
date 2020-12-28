@@ -20,6 +20,7 @@ import (
 	"database/sql/driver"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -164,11 +165,15 @@ func Test_getChartsWithFilters(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
+	version := "1.0.0"
+	appVersion := "1.0.1"
+	parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, version, appVersion)
+
 	mock.ExpectQuery("SELECT info FROM charts WHERE *").
-		WithArgs("namespace", "kubeapps", "foo").
+		WithArgs("namespace", "kubeapps", "foo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "foo", version: "1.0.0", appVersion: "1.0.1"}, 1, 0)
+	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "foo", version: version, appVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -200,11 +205,15 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
+	version := "1.0.0"
+	appVersion := "1.0.1"
+	parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, version, appVersion)
+
 	mock.ExpectQuery("SELECT info FROM charts WHERE *").
-		WithArgs("namespace", "kubeapps", "fo%2Fo").
+		WithArgs("namespace", "kubeapps", "fo%2Fo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "fo%2Fo", version: "1.0.0", appVersion: "1.0.1"}, 1, 0)
+	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "fo%2Fo", version: version, appVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -516,8 +525,8 @@ func Test_generateWhereClause(t *testing.T) {
 			repos:          []string{""},
 			categories:     []string{""},
 			query:          "",
-			expectedClause: `WHERE (repo_namespace = $1 OR repo_namespace = $2) AND (info->'chartVersions' @> '[{"version":"1.0.0","app_version":"0.1.0"}]'::jsonb)`,
-			expectedParams: []interface{}{string(""), string("kubeapps")},
+			expectedClause: `WHERE (repo_namespace = $1 OR repo_namespace = $2) AND (info->'chartVersions' @> $3::jsonb)`,
+			expectedParams: []interface{}{string(""), string("kubeapps"), string(`[{"version":"1.0.0","app_version":"0.1.0"}]`)},
 		},
 		{
 			name:           "returns where clause - no params",
@@ -636,8 +645,8 @@ func Test_generateWhereClause(t *testing.T) {
 			repos:          []string{"my-repo1", "my-repo2"},
 			categories:     []string{"my-category1", "my-category2"},
 			query:          "best chart",
-			expectedClause: `WHERE (repo_namespace = $1 OR repo_namespace = $2) AND (info->>'name' = $3) AND (info->'chartVersions' @> '[{"version":"1.0.0","app_version":"0.1.0"}]'::jsonb) AND ((repo_name = $4) OR (repo_name = $5)) AND (info->>'category' = $6 OR info->>'category' = $7) AND ((info ->> 'name' ILIKE $8) OR (info ->> 'description' ILIKE $8) OR (info -> 'repo' ->> 'name' ILIKE $8) OR (info ->> 'keywords' ILIKE $8) OR (info ->> 'sources' ILIKE $8) OR (info -> 'maintainers' ->> 'name' ILIKE $8))`,
-			expectedParams: []interface{}{string("my-ns"), string("kubeapps"), string("my-chart"), string("my-repo1"), string("my-repo2"), string("my-category1"), string("my-category2"), string("%best chart%")},
+			expectedClause: `WHERE (repo_namespace = $1 OR repo_namespace = $2) AND (info->>'name' = $3) AND (info->'chartVersions' @> $4::jsonb) AND ((repo_name = $5) OR (repo_name = $6)) AND (info->>'category' = $7 OR info->>'category' = $8) AND ((info ->> 'name' ILIKE $9) OR (info ->> 'description' ILIKE $9) OR (info -> 'repo' ->> 'name' ILIKE $9) OR (info ->> 'keywords' ILIKE $9) OR (info ->> 'sources' ILIKE $9) OR (info -> 'maintainers' ->> 'name' ILIKE $9))`,
+			expectedParams: []interface{}{string("my-ns"), string("kubeapps"), string("my-chart"), string(`[{"version":"1.0.0","app_version":"0.1.0"}]`), string("my-repo1"), string("my-repo2"), string("my-category1"), string("my-category2"), string("%best chart%")},
 		},
 	}
 	for _, tt := range tests {
