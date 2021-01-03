@@ -1,4 +1,4 @@
-FROM bitnami/node:12.18.3 AS build
+FROM bitnami/node:12.20.0 AS build
 WORKDIR /app
 
 COPY package.json yarn.lock /app/
@@ -9,5 +9,5 @@ COPY . /app
 RUN yarn run prettier-check && yarn run ts-compile-check
 RUN yarn run build
 
-FROM bitnami/nginx:1.19.2-debian-10-r32
+FROM bitnami/nginx:1.19.6-debian-10-r18
 COPY --from=build /app/build /app
