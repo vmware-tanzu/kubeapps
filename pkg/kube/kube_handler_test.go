@@ -528,9 +528,9 @@ func TestDeleteAppRepository(t *testing.T) {
 				&fakeRest.RESTClient{},
 			}
 			handler := kubeHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
-				kubeappsNamespace:  kubeappsNamespace,
-				svcClientset:       cs,
+				clientsetForConfig:   func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
+				kubeappsNamespace:    kubeappsNamespace,
+				kubeappsSvcClientset: cs,
 				clustersConfig: ClustersConfig{
 					KubeappsClusterName: "cluster",
 					Clusters: map[string]ClusterConfig{
@@ -913,10 +913,10 @@ func TestGetNamespaces(t *testing.T) {
 			)
 
 			handler := kubeHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
-				kubeappsNamespace:  "kubeapps",
-				svcClientset:       svcClientSet,
-				clustersConfig:     ClustersConfig{KubeappsClusterName: "default"},
+				clientsetForConfig:   func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
+				kubeappsNamespace:    "kubeapps",
+				kubeappsSvcClientset: svcClientSet,
+				clustersConfig:       ClustersConfig{KubeappsClusterName: "default"},
 			}
 
 			userHandler, err := handler.AsUser("token", "default")

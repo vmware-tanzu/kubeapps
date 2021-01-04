@@ -124,8 +124,9 @@ type kubeHandler struct {
 	// The namespace in which (currently) app repositories are created on the default cluster.
 	kubeappsNamespace string
 
-	// clientset using the pod serviceaccount on the default cluster.
-	svcClientset combinedClientsetInterface
+	// kubeappsSvcClientset is the clientset using the pod serviceaccount on the
+	// cluster on which kubeapps is installed.
+	kubeappsSvcClientset combinedClientsetInterface
 
 	// Configuration for additional clusters which may be requested.
 	clustersConfig ClustersConfig
@@ -143,7 +144,7 @@ type userHandler struct {
 	// The namespace in which (currently) app repositories are created.
 	kubeappsNamespace string
 
-	// clientset using the pod serviceaccount for the default cluster
+	// clientset using the pod serviceaccount for the specific cluster
 	svcClientset combinedClientsetInterface
 
 	// clientset for a specific user token on a specific cluster.
@@ -182,16 +183,17 @@ type AuthHandler interface {
 	AsSVC(cluster string) (handler, error)
 }
 
-func (a *kubeHandler) svcClientSet(cluster string, config *rest.Config) (combinedClientsetInterface, error) {
-	// Just use the service clientset if we're on the default cluster, but otherwise
-	// create a new clientset using a configured service token for a specific cluster.
-	// This is used when requesting the namespaces for a cluster (to populate the selector)
-	// iff the users own credential does not suffice. If a service token is not configured
-	// for the cluster, the namespace selector remains unpopulated.
+func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Config) (combinedClientsetInterface, error) {
+	// Just use the service clientset if we're on the cluster on which Kubeapps
+	// is installed, but otherwise create a new clientset using a configured
+	// service token for a specific cluster. This is used when requesting the
+	// namespaces for a cluster (to populate the selector) iff the users own
+	// credential does not suffice. If a service token is not configured for the
+	// cluster, the namespace selector remains unpopulated.
 	var svcClientset combinedClientsetInterface
 	var err error
 	if cluster == a.clustersConfig.KubeappsClusterName {
-		svcClientset = a.svcClientset
+		svcClientset = a.kubeappsSvcClientset
 	} else {
 		additionalCluster, ok := a.clustersConfig.Clusters[cluster]
 		if !ok {
@@ -221,7 +223,7 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 		return nil, err
 	}
 
-	svcClientset, err := a.svcClientSet(cluster, config)
+	svcClientset, err := a.getSvcClientsetForCluster(cluster, config)
 	if err != nil {
 		log.Errorf("unable to create svc clientset: %v", err)
 		return nil, err
@@ -236,8 +238,12 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 
 func (a *kubeHandler) AsSVC(cluster string) (handler, error) {
 	config, err := NewClusterConfig(&a.config, "", cluster, a.clustersConfig)
+	if err != nil {
+		log.Errorf("unable to create svc clientset: %v", err)
+		return nil, err
+	}
 
-	svcClientset, err := a.svcClientSet(cluster, config)
+	svcClientset, err := a.getSvcClientsetForCluster(cluster, config)
 	if err != nil {
 		log.Errorf("unable to create svc clientset: %v", err)
 		return nil, err
@@ -303,9 +309,9 @@ func NewHandler(kubeappsNamespace string, clustersConfig ClustersConfig) (AuthHa
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
-		clientsetForConfig: clientsetForConfig,
-		svcClientset:       svcClientset,
-		clustersConfig:     clustersConfig,
+		clientsetForConfig:   clientsetForConfig,
+		kubeappsSvcClientset: svcClientset,
+		clustersConfig:       clustersConfig,
 	}, nil
 }
 
