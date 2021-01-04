@@ -95,7 +95,7 @@ installChartmuseum() {
     local user=$1
     local password=$2
     info "Installing ChartMuseum ..."
-    helm install chartmuseum --namespace kubeapps https://kubernetes-charts.storage.googleapis.com/chartmuseum-2.14.2.tgz \
+    helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-2.14.2/chartmuseum-2.14.2.tgz \
       --set env.open.DISABLE_API=false \
       --set persistence.enabled=true \
       --set secret.AUTH_USER=$user \
