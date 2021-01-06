@@ -98,12 +98,16 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 			if existingWrapTransport != nil {
 				rt = existingWrapTransport(rt)
 			}
+			headers := map[string][]string{}
+			if clusterConfig.APIServiceURL != "" {
+				headers["PINNIPED_PROXY_API_SERVER_URL"] = []string{clusterConfig.APIServiceURL}
+			}
+			if clusterConfig.CertificateAuthorityData != "" {
+				headers["PINNIPED_PROXY_API_SERVER_CERT"] = []string{clusterConfig.CertificateAuthorityData}
+			}
 			return &pinnipedProxyRoundTripper{
-				headers: map[string][]string{
-					"PINNIPED_PROXY_API_SERVER_URL":  {clusterConfig.APIServiceURL},
-					"PINNIPED_PROXY_API_SERVER_CERT": {clusterConfig.CertificateAuthorityData},
-				},
-				rt: rt,
+				headers: headers,
+				rt:      rt,
 			}
 		}
 		return config, nil

@@ -1175,6 +1175,30 @@ func TestNewClusterConfig(t *testing.T) {
 				BearerTokenFile: "",
 			},
 		},
+		{
+			name:      "returns a config to proxy via pinniped-proxy without headers for kubernetes.default",
+			userToken: "token-1",
+			cluster:   "default",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"default": {
+						APIServiceURL:            "",
+						CertificateAuthorityData: "",
+						PinnipedProxyURL:         "https://172.0.1.18:3333",
+					},
+				},
+			},
+			inClusterConfig: &rest.Config{
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://172.0.1.18:3333",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1196,9 +1220,13 @@ func TestNewClusterConfig(t *testing.T) {
 					req := http.Request{}
 					roundTripper := config.WrapTransport(&fakeRoundTripper{})
 					roundTripper.RoundTrip(&req)
-					want := http.Header{
-						"Pinniped_proxy_api_server_url":  []string{clusterConfig.APIServiceURL},
-						"Pinniped_proxy_api_server_cert": []string{clusterConfig.CertificateAuthorityData},
+					want := http.Header{}
+					if clusterConfig.APIServiceURL != "" {
+						want["Pinniped_proxy_api_server_url"] = []string{clusterConfig.APIServiceURL}
+					}
+					if clusterConfig.CertificateAuthorityData != "" {
+
+						want["Pinniped_proxy_api_server_cert"] = []string{clusterConfig.CertificateAuthorityData}
 					}
 					if got := req.Header; !cmp.Equal(want, got) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
