@@ -24,12 +24,22 @@ import (
 type assetManager interface {
 	Init() error
 	Close() error
-	getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, error)
 	getChart(namespace, chartID string) (models.Chart, error)
 	getChartVersion(namespace, chartID, version string) (models.Chart, error)
 	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
-	getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error)
+	getPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
 	getAllChartCategories(namespace, repo string) ([]*models.ChartCategory, error)
+}
+
+// ChartQuery is a container for passing the supported query paramters for generating the WHERE query
+type ChartQuery struct {
+	namespace   string
+	chartName   string
+	version     string
+	appVersion  string
+	searchQuery string
+	repos       []string
+	categories  []string
 }
 
 func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (assetManager, error) {

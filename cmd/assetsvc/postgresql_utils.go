@@ -47,54 +47,22 @@ func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManag
 	return &postgresAssetManager{m}, nil
 }
 
-func exists(current []string, str string) bool {
-	for _, s := range current {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
 func (m *postgresAssetManager) getAllChartCategories(namespace, repo string) ([]*models.ChartCategory, error) {
-	clauses := []string{}
-	queryParams := []interface{}{}
-	if namespace != dbutils.AllNamespaces {
-		queryParams = append(queryParams, namespace, m.GetKubeappsNamespace())
-		clauses = append(clauses, "(repo_namespace = $1 OR repo_namespace = $2)")
-	}
+	var repos []string
 	if repo != "" {
-		queryParams = append(queryParams, repo)
-		clauses = append(clauses, fmt.Sprintf("repo_name = $%d", len(queryParams)))
+		repos = []string{repo}
 	}
-	repoQuery := ""
-	if len(clauses) > 0 {
-		repoQuery = "WHERE " + strings.Join(clauses, " AND ")
-	}
-	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, repoQuery)
+	whereQuery, whereQueryParams := m.generateWhereClause(ChartQuery{namespace: namespace, repos: repos})
+	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, whereQuery)
 
-	chartsCategories, err := m.QueryAllChartCategories(dbQuery, queryParams...)
+	chartsCategories, err := m.QueryAllChartCategories(dbQuery, whereQueryParams...)
 	if err != nil {
 		return nil, err
 	}
 	return chartsCategories, nil
 }
 
-func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int) ([]*models.Chart, int, error) {
-	clauses := []string{}
-	queryParams := []interface{}{}
-	if namespace != dbutils.AllNamespaces {
-		queryParams = append(queryParams, namespace, m.GetKubeappsNamespace())
-		clauses = append(clauses, "(repo_namespace = $1 OR repo_namespace = $2)")
-	}
-	if repo != "" {
-		queryParams = append(queryParams, repo)
-		clauses = append(clauses, fmt.Sprintf("repo_name = $%d", len(queryParams)))
-	}
-	repoQuery := ""
-	if len(clauses) > 0 {
-		repoQuery = "WHERE " + strings.Join(clauses, " AND ")
-	}
+func (m *postgresAssetManager) getPaginatedChartList(whereQuery string, whereQueryParams []interface{}, pageNumber, pageSize int) ([]*models.Chart, int, error) {
 	// Default (pageNumber,pageSize) = (1, 0) as in the handler.go
 	if pageNumber <= 0 {
 		pageNumber = 1
@@ -106,22 +74,21 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 		paginationClause = fmt.Sprintf("LIMIT %d OFFSET %d", pageSize, offset)
 	}
 
-	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC %s", dbutils.ChartTable, repoQuery, paginationClause)
-	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
+	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY (info->>'name') ASC %s", dbutils.ChartTable, whereQuery, paginationClause)
+	charts, err := m.QueryAllCharts(dbQuery, whereQueryParams...)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	numPages := 1
 	if pageSize > 0 {
-		dbCountQuery := fmt.Sprintf("SELECT count(info) FROM %s %s", dbutils.ChartTable, repoQuery)
-		count, err := m.QueryCount(dbCountQuery, queryParams...)
+		dbCountQuery := fmt.Sprintf("SELECT count(info) FROM %s %s", dbutils.ChartTable, whereQuery)
+		count, err := m.QueryCount(dbCountQuery, whereQueryParams...)
 		if err != nil {
 			return nil, 0, err
 		}
 		numPages = int(math.Ceil(float64(count) / float64(pageSize)))
 	}
-
 	return charts, numPages, nil
 }
 
@@ -177,6 +144,7 @@ func (m *postgresAssetManager) getChartVersion(namespace, chartID, version strin
 }
 
 func (m *postgresAssetManager) getChartVersionWithFallback(namespace, chartID, version string, withFallback bool) (models.Chart, error) {
+
 	var chart models.Chart
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
@@ -235,34 +203,77 @@ func (m *postgresAssetManager) getChartFilesWithFallback(namespace, filesID stri
 	return chartFiles, nil
 }
 
-func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, appVersion string) (models.ChartVersion, bool) {
-	for _, ch := range chartVersions {
-		if ch.Version == version && ch.AppVersion == appVersion {
-			return ch, true
-		}
+func (m *postgresAssetManager) getPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error) {
+	whereQuery, whereQueryParams := m.generateWhereClause(cq)
+	charts, numPages, err := m.getPaginatedChartList(whereQuery, whereQueryParams, pageNumber, pageSize)
+	if err != nil {
+		return []*models.Chart{}, 0, err
 	}
-	return models.ChartVersion{}, false
+	return charts, numPages, nil
 }
 
-func (m *postgresAssetManager) getChartsWithFilters(namespace, chartName, version, appVersion string) ([]*models.Chart, error) {
-	clauses := []string{"info ->> 'name' = $1"}
-	queryParams := []interface{}{chartName, namespace}
-	if namespace != dbutils.AllNamespaces {
-		queryParams = append(queryParams, m.GetKubeappsNamespace())
-		clauses = append(clauses, "(repo_namespace = $2 OR repo_namespace = $3)")
-	} else {
-		clauses = append(clauses, "repo_namespace = $2")
+func (m *postgresAssetManager) generateWhereClause(cq ChartQuery) (string, []interface{}) {
+	whereClauses := []string{}
+	whereQueryParams := []interface{}{}
+	whereQuery := ""
+
+	if cq.namespace != dbutils.AllNamespaces {
+		whereQueryParams = append(whereQueryParams, cq.namespace, m.GetKubeappsNamespace())
+		whereClauses = append(whereClauses, fmt.Sprintf(
+			"(repo_namespace = $%d OR repo_namespace = $%d)", len(whereQueryParams)-1, len(whereQueryParams),
+		))
 	}
-	dbQuery := fmt.Sprintf("SELECT info FROM %s WHERE %s ORDER BY info ->> 'ID' ASC", dbutils.ChartTable, strings.Join(clauses, " AND "))
-	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
-	if err != nil {
-		return nil, err
+	if cq.chartName != "" {
+		whereQueryParams = append(whereQueryParams, cq.chartName)
+		whereClauses = append(whereClauses, fmt.Sprintf(
+			"(info->>'name' = $%d)", len(whereQueryParams),
+		))
 	}
-	result := []*models.Chart{}
-	for _, c := range charts {
-		if _, found := containsVersionAndAppVersion(c.ChartVersions, version, appVersion); found {
-			result = append(result, c)
+	if cq.version != "" && cq.appVersion != "" {
+		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, cq.version, cq.appVersion)
+		whereQueryParams = append(whereQueryParams, parametrizedJsonbLiteral)
+		whereClauses = append(whereClauses, fmt.Sprintf("(info->'chartVersions' @> $%d::jsonb)", len(whereQueryParams)))
+	}
+
+	if cq.repos != nil && len(cq.repos) > 0 {
+		repoClauses := []string{}
+		for _, repo := range cq.repos {
+			if repo != "" {
+				whereQueryParams = append(whereQueryParams, repo)
+				repoClauses = append(repoClauses, fmt.Sprintf("(repo_name = $%d)", len(whereQueryParams)))
+			}
+		}
+		if len(repoClauses) > 0 {
+			repoQuery := "(" + strings.Join(repoClauses, " OR ") + ")"
+			whereClauses = append(whereClauses, repoQuery)
 		}
 	}
-	return result, nil
+	if cq.categories != nil && len(cq.categories) > 0 {
+		categoryClauses := []string{}
+		for _, category := range cq.categories {
+			if category != "" {
+				whereQueryParams = append(whereQueryParams, category)
+				categoryClauses = append(categoryClauses, fmt.Sprintf("info->>'category' = $%d", len(whereQueryParams)))
+			}
+		}
+		if len(categoryClauses) > 0 {
+			categoryQuery := "(" + strings.Join(categoryClauses, " OR ") + ")"
+			whereClauses = append(whereClauses, categoryQuery)
+		}
+	}
+	if cq.searchQuery != "" {
+		whereQueryParams = append(whereQueryParams, "%"+cq.searchQuery+"%")
+		searchClause := fmt.Sprintf("((info ->> 'name' ILIKE $%d) OR ", len(whereQueryParams)) +
+			fmt.Sprintf("(info ->> 'description' ILIKE $%d) OR ", len(whereQueryParams)) +
+			fmt.Sprintf("(info -> 'repo' ->> 'name' ILIKE $%d) OR ", len(whereQueryParams)) +
+			fmt.Sprintf("(info ->> 'keywords' ILIKE $%d) OR ", len(whereQueryParams)) +
+			fmt.Sprintf("(info ->> 'sources' ILIKE $%d) OR ", len(whereQueryParams)) +
+			fmt.Sprintf("(info -> 'maintainers' ->> 'name' ILIKE $%d))", len(whereQueryParams))
+		whereClauses = append(whereClauses, searchClause)
+	}
+	if len(whereClauses) > 0 {
+		whereQuery = "WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	return whereQuery, whereQueryParams
 }
