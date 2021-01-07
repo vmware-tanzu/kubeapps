@@ -36,6 +36,7 @@ var (
 	assetsvcURL                  string
 	helmDriverArg                string
 	listLimit                    int
+	pinnipedProxyURL             string
 	settings                     environment.EnvSettings
 	timeout                      int64
 	userAgentComment             string
@@ -51,6 +52,7 @@ func init() {
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&clustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	pflag.StringVar(&additionalClustersConfigPath, "additional-clusters-config-path", "", "Configuration for clusters")
+	pflag.StringVar(&pinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps.kubeapps:3333", "url to be used for requests to clusters configured for credential proxying via pinniped")
 }
 
 func main() {
@@ -204,6 +206,7 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 	}
 
 	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
+	configs.PinnipedProxyURL = pinnipedProxyURL
 	for _, c := range clusterConfigs {
 		if c.APIServiceURL == "" {
 			if configs.KubeappsClusterName == "" {

@@ -27,9 +27,9 @@ func TestParseClusterConfig(t *testing.T) {
 						APIServiceURL:            "https://example.com",
 						CertificateAuthorityData: "ca-cert-data\n",
 						ServiceToken:             "abcd",
-						PinnipedProxyURL:         "http://172.0.1.18:3333",
 					},
 				},
+				PinnipedProxyURL: "http://kubeapps.kubeapps:3333",
 			},
 		},
 		{
@@ -51,6 +51,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData: "ca-cert-data-additional\n",
 					},
 				},
+				PinnipedProxyURL: "http://kubeapps.kubeapps:3333",
 			},
 		},
 		{
@@ -77,6 +78,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData: "ca-cert-data-additional\n",
 					},
 				},
+				PinnipedProxyURL: "http://kubeapps.kubeapps:3333",
 			},
 		},
 
