@@ -21,7 +21,7 @@ import AppListGrid from "./AppListGrid";
 
 function AppList() {
   const location = useLocation();
-  const searchQuery = qs.parse(location.search, { ignoreQueryPrefix: true }).q || "";
+  const searchQuery = qs.parse(location.search, { ignoreQueryPrefix: true }).q?.toString() || "";
   const allNSQuery = qs.parse(location.search, { ignoreQueryPrefix: true }).allns || "";
   const dispatch = useDispatch();
 
