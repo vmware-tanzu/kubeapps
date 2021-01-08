@@ -6,6 +6,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, uniq, without } from "lodash";
+import { ParsedQs } from "qs";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
@@ -31,7 +32,7 @@ function getOperatorCategories(c: IClusterServiceVersion): string[] {
 interface ICatalogProps {
   charts: IChartState;
   repo: string;
-  filter: { [name: string]: string };
+  filter: ParsedQs;
   fetchCharts: (cluster: string, namespace: string, repo: string) => void;
   cluster: string;
   namespace: string;
@@ -87,7 +88,7 @@ function Catalog(props: ICatalogProps) {
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
-      newFilters[filter] = propsFilter[filter].split(",");
+      newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
     setFilters({
       ...initialFilterState(),

@@ -4,6 +4,7 @@ import { RouterAction } from "connected-react-router";
 import { assignWith } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
+// @ts-ignore
 import * as yaml from "yaml";
 import placeholder from "../../placeholder.png";
 

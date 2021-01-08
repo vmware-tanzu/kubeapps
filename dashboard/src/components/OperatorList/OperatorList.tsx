@@ -8,6 +8,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, uniq, without } from "lodash";
+import { ParsedQs } from "qs";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { app } from "shared/url";
@@ -29,7 +30,7 @@ import OperatorItems from "./OperatorItems";
 export interface IOperatorListProps {
   cluster: string;
   namespace: string;
-  filter: { [name: string]: string };
+  filter: ParsedQs;
 }
 
 function getDefaultChannel(packageStatus: IPackageManifestStatus) {
@@ -79,7 +80,7 @@ export default function OperatorList({
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
-      newFilters[filter] = propsFilter[filter].split(",");
+      newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
     setFilters({
       ...initialFilterState(),

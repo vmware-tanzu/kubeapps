@@ -56,7 +56,7 @@ function DeploymentFormBody({
     e.preventDefault();
     // Clean possible previous errors
     setParseError(undefined);
-    let resource: IResource = {} as any;
+    let resource: any = {};
     try {
       resource = yaml.safeLoad(values);
     } catch (e) {
