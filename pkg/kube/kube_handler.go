@@ -293,7 +293,7 @@ func (a *kubeHandler) AsSVC(cluster string) (handler, error) {
 
 	svcClientset, err := a.getSvcClientsetForCluster(cluster, config)
 	if err != nil {
-		log.Errorf("unable t create svc clientset: %v", err)
+		log.Errorf("unable to create svc clientset: %v", err)
 		return nil, err
 	}
 
