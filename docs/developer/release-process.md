@@ -28,13 +28,12 @@ helm dependency update ./chart/kubeapps
 
 to update the requirements.lock file.
 
-Lastly, running
+Lastly, look for any vulnerabilities in the dashboard and upgrade required dependencies if needed:
 
 ```bash
-yarn upgrade
+yarn audit
+# Upgrade reported dependencies
 ```
-
-in the dashboard directory will update the frontend packages to the latest compatible versions.
 
 ## 1 - Create a new git tag
 
