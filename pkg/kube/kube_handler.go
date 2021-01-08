@@ -74,7 +74,7 @@ type ClusterConfig struct {
 type PinnipedConciergeConfig struct {
 	// ExchangeCredentials just flags whether this cluster should use
 	// pinniped to exchange credentials.
-	ExchangeCredentials bool `json:"bool"`
+	ExchangeCredentials bool `json:"exchangeCredentials"`
 	// The Namespace, AuthenticatorType and Authenticator name to use
 	// when exchanging credentials.
 	Namespace         string `json:"namespace,omitempty"`
