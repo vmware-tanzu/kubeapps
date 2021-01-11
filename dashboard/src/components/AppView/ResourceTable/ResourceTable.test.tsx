@@ -22,7 +22,7 @@ const sampleResourceRef = {
   name: "foo",
   namespace: "default",
   filter: "",
-  plural: "namespaces",
+  plural: "deployments",
   namespaced: true,
   getResourceURL: jest.fn(() => "deployment-foo"),
   watchResourceURL: jest.fn(),

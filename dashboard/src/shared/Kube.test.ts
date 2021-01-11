@@ -314,7 +314,6 @@ describe("App", () => {
           },
         },
       },
-      // Seguir aqui
     ].forEach(t => {
       it(t.description, async () => {
         moxios.stubRequest(/.*api\/v1/, t.apiV1Response);
