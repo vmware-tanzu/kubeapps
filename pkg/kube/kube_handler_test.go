@@ -1161,7 +1161,7 @@ func TestNewClusterConfig(t *testing.T) {
 					"default": {
 						APIServiceURL:            "https://kubernetes.default",
 						CertificateAuthorityData: "SGVsbG8K",
-						PinnipedConfig:           PinnipedConciergeConfig{ExchangeCredentials: true},
+						PinnipedConfig:           PinnipedConciergeConfig{Enable: true},
 					},
 				},
 				PinnipedProxyURL: "https://172.0.1.18:3333",
@@ -1186,7 +1186,7 @@ func TestNewClusterConfig(t *testing.T) {
 					"default": {
 						APIServiceURL:            "",
 						CertificateAuthorityData: "",
-						PinnipedConfig:           PinnipedConciergeConfig{ExchangeCredentials: true},
+						PinnipedConfig:           PinnipedConciergeConfig{Enable: true},
 					},
 				},
 				PinnipedProxyURL: "https://172.0.1.18:3333",
@@ -1215,7 +1215,7 @@ func TestNewClusterConfig(t *testing.T) {
 			}
 			// If the test case defined a pinniped proxy url, verify that the expected headers
 			// are added to the request.
-			if clusterConfig, ok := tc.clustersConfig.Clusters[tc.cluster]; ok && clusterConfig.PinnipedConfig.ExchangeCredentials {
+			if clusterConfig, ok := tc.clustersConfig.Clusters[tc.cluster]; ok && clusterConfig.PinnipedConfig.Enable {
 				if config.WrapTransport == nil {
 					t.Errorf("expected config.WrapTransport to be set but it is nil")
 				} else {

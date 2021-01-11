@@ -83,7 +83,7 @@ func TestParseClusterConfig(t *testing.T) {
 		},
 		{
 			name:       "parses a cluster with pinniped token exchange",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedConfig": {"exchangeCredentials": true}}]`,
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedConfig": {"enable": true}}]`,
 			expectedConfig: kube.ClustersConfig{
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
@@ -92,7 +92,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData: "ca-cert-data\n",
 						ServiceToken:             "abcd",
 						PinnipedConfig: kube.PinnipedConciergeConfig{
-							ExchangeCredentials: true,
+							Enable: true,
 						},
 					},
 				},
