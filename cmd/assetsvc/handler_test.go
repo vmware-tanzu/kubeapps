@@ -21,9 +21,11 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"image/color"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -1085,404 +1087,246 @@ func Test_getChartVersionSchema(t *testing.T) {
 }
 
 func Test_findLatestChart(t *testing.T) {
-	t.Run("returns no charts", func(t *testing.T) {
-		chart := &models.Chart{
-			Name: "foo",
-			ID:   "foo",
-			Repo: &models.Repo{Name: "bar"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+	chart1 := &models.Chart{
+		Name:        "foo",
+		ID:          "foo",
+		Category:    "cat1",
+		Description: "best chart",
+		Repo: &models.Repo{
+			Name:      "bar",
+			Namespace: kubeappsNamespace,
+		},
+		ChartVersions: []models.ChartVersion{
+			{Version: "1.0.0", AppVersion: "0.1.0"},
+			{Version: "1.0.0", AppVersion: "whatever"},
+			{Version: "whatever", AppVersion: "1.0.0"},
+		},
+	}
+	chart2 := &models.Chart{
+		Name:        "no-name",
+		ID:          "no-id",
+		Category:    "no-category",
+		Description: "no-description",
+		Repo: &models.Repo{
+			Name:      "no-repo",
+			Namespace: kubeappsNamespace,
+		},
+		ChartVersions: []models.ChartVersion{
+			{Version: "1.0.0", AppVersion: "whatever"},
+			{Version: "whatever", AppVersion: "1.0.0"},
+		},
+	}
+	chartDup1 := &models.Chart{
+		Name: "foo",
+		ID:   "stable/foo",
+		Repo: &models.Repo{Name: "bar"},
+		ChartVersions: []models.ChartVersion{
+			{Version: "1.0.0",
+				AppVersion: "0.1.0",
+				Digest:     "123",
 			},
-		}
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		chartJSON, err := json.Marshal(chart)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("namespace", kubeappsNamespace, "foo").
-			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?name=NON-EXISTING-CHART", nil)
-		params := Params{
-			"chartName": chart.Name,
-			"namespace": namespace,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		if len(data) > 0 {
-			t.Errorf("Expecting %v, received %v", 0, len(data))
-		}
-	})
-	t.Run("returns mocked chart (by version and appversion)", func(t *testing.T) {
-		chart := &models.Chart{
-			Name: "foo",
-			ID:   "foo",
-			Repo: &models.Repo{Name: "bar"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+		},
+	}
+	chartDup2 := &models.Chart{
+		Name: "foo",
+		ID:   "bitnami/foo",
+		Repo: &models.Repo{Name: "bar"},
+		ChartVersions: []models.ChartVersion{
+			{Version: "1.0.0",
+				AppVersion: "0.1.0",
+				Digest:     "123",
 			},
-		}
-		reqVersion := "1.0.0"
-		reqAppVersion := "0.1.0"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		chartJSON, err := json.Marshal(chart)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("namespace", kubeappsNamespace, "foo").
-			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON))
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?name="+chart.Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
-		params := Params{
-			"chartName":  chart.Name,
-			"version":    reqVersion,
-			"appversion": reqAppVersion,
-			"namespace":  namespace,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		if data[0].ID != chart.ID {
-			t.Errorf("Expecting %v, received %v", chart, data[0].ID)
-		}
-	})
-	t.Run("returns mocked chart (by repos)", func(t *testing.T) {
-		chartOK := &models.Chart{
-			Name:        "foo",
-			ID:          "foo",
-			Category:    "cat1",
-			Description: "best chart",
-			Repo:        &models.Repo{Name: "bar", Namespace: "kubeapps"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+		},
+	}
+	tests := []struct {
+		name           string
+		charts         []*models.Chart
+		chartName      string
+		version        string
+		appVersion     string
+		repos          string
+		categories     string
+		query          string
+		expectedCharts []*models.Chart
+	}{
+		{
+			name: "returns no charts (by name)",
+			charts: []*models.Chart{
+				chart1,
 			},
-		}
-		chartNOK := &models.Chart{
-			Name:        "no-name",
-			ID:          "no-id",
-			Category:    "no-category",
-			Description: "no-description",
-			Repo:        &models.Repo{Name: "no-repo", Namespace: "kubeapps"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+			chartName:      "nothing",
+			version:        "",
+			appVersion:     "",
+			repos:          "",
+			categories:     "",
+			query:          "",
+			expectedCharts: []*models.Chart{},
+		},
+		{
+			name: "returns mocked chart (by name)",
+			charts: []*models.Chart{
+				chart1,
+				chart2,
 			},
-		}
-		repos := "bar"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		chartJSON1, err := json.Marshal(chartOK)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		chartJSON2, err := json.Marshal(chartNOK)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("kubeapps", kubeappsNamespace, repos).
-			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON1).AddRow(chartJSON2))
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?repos="+repos, nil)
-		params := Params{
-			"namespace": "kubeapps",
-			"repos":     repos,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		if data[0].ID != chartOK.ID {
-			t.Errorf("Expecting %v, received %v", chartOK, data[0].ID)
-		}
-	})
-	t.Run("returns mocked chart (by category)", func(t *testing.T) {
-		chartOK := &models.Chart{
-			Name:        "foo",
-			ID:          "foo",
-			Category:    "cat1",
-			Description: "best chart",
-			Repo:        &models.Repo{Name: "bar", Namespace: "kubeapps"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+			chartName:  "foo",
+			version:    "",
+			appVersion: "",
+			repos:      "",
+			categories: "",
+			query:      "",
+			expectedCharts: []*models.Chart{
+				chart1,
 			},
-		}
-		chartNOK := &models.Chart{
-			Name:        "no-name",
-			ID:          "no-id",
-			Category:    "no-category",
-			Description: "no-description",
-			Repo:        &models.Repo{Name: "no-repo", Namespace: "kubeapps"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+		},
+		{
+			name: "returns mocked chart (by version and appversion)",
+			charts: []*models.Chart{
+				chart1,
+				chart2,
 			},
-		}
-		categories := "cat1"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		chartJSON1, err := json.Marshal(chartOK)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		chartJSON2, err := json.Marshal(chartNOK)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("kubeapps", kubeappsNamespace, categories).
-			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON1).AddRow(chartJSON2))
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?categories="+categories, nil)
-		params := Params{
-			"namespace":  "kubeapps",
-			"categories": categories,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		if data[0].ID != chartOK.ID {
-			t.Errorf("Expecting %v, received %v", chartOK, data[0].ID)
-		}
-	})
-	t.Run("returns mocked chart (by query)", func(t *testing.T) {
-		chartOK := &models.Chart{
-			Name:        "foo",
-			ID:          "foo",
-			Category:    "cat1",
-			Description: "best chart",
-			Repo:        &models.Repo{Name: "bar", Namespace: "kubeapps"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+			chartName:  "",
+			version:    "1.0.0",
+			appVersion: "0.1.0",
+			repos:      "",
+			categories: "",
+			query:      "",
+			expectedCharts: []*models.Chart{
+				chart1,
 			},
-		}
-		chartNOK := &models.Chart{
-			Name:        "no-name",
-			ID:          "no-id",
-			Category:    "no-category",
-			Description: "no-description",
-			Repo:        &models.Repo{Name: "no-repo", Namespace: "kubeapps"},
-			ChartVersions: []models.ChartVersion{
-				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
-				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
+		},
+		{
+			name: "returns mocked chart (by repos)",
+			charts: []*models.Chart{
+				chart1,
+				chart2,
 			},
-		}
-		query := "best"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		chartJSON1, err := json.Marshal(chartOK)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		chartJSON2, err := json.Marshal(chartNOK)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("kubeapps", kubeappsNamespace, "%"+query+"%").
-			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(chartJSON1).AddRow(chartJSON2))
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?q="+query, nil)
-		params := Params{
-			"namespace": "kubeapps",
-			"q":         query,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		if data[0].ID != chartOK.ID {
-			t.Errorf("Expecting %v, received %v", chartOK, data[0].ID)
-		}
-	})
-	t.Run("includes duplicated chart", func(t *testing.T) {
-		charts := []*models.Chart{
-			{Name: "foo", ID: "stable/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-			{Name: "foo", ID: "bitnami/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-		}
-		reqVersion := "1.0.0"
-		reqAppVersion := "0.1.0"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		rows := sqlmock.NewRows([]string{"info"})
-		for _, chart := range charts {
-			chartJSON, err := json.Marshal(chart)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			chartName:  "",
+			version:    "",
+			appVersion: "",
+			repos:      "bar",
+			categories: "",
+			query:      "",
+			expectedCharts: []*models.Chart{
+				chart1,
+			},
+		},
+		{
+			name: "returns mocked chart (by category)",
+			charts: []*models.Chart{
+				chart1,
+				chart2,
+			},
+			chartName:  "",
+			version:    "",
+			appVersion: "",
+			repos:      "",
+			categories: "cat1",
+			query:      "",
+			expectedCharts: []*models.Chart{
+				chart1,
+			},
+		},
+		{
+			name: "returns mocked chart (by query)",
+			charts: []*models.Chart{
+				chart1,
+				chart2,
+			},
+			chartName:  "",
+			version:    "",
+			appVersion: "",
+			repos:      "",
+			categories: "",
+			query:      "best",
+			expectedCharts: []*models.Chart{
+				chart1,
+			},
+		},
+		{
+			name: "includes duplicated charts",
+			charts: []*models.Chart{
+				chartDup1,
+				chartDup2,
+			},
+			chartName:  "",
+			version:    "",
+			appVersion: "",
+			repos:      "",
+			categories: "",
+			query:      "",
+			expectedCharts: []*models.Chart{
+				chartDup1,
+				chartDup2,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, cleanup := setMockManager(t)
+			defer cleanup()
+			mockQuery := mock.ExpectQuery("SELECT info FROM charts WHERE *")
+			rows := sqlmock.NewRows([]string{"info"})
+			for _, chart := range tt.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				queryMatch, _ := regexp.MatchString(tt.query, string(chartJSON))
+				shouldAddRow := tt.chartName == chart.Name || (tt.version == chart.ChartVersions[0].Version && tt.appVersion == chart.ChartVersions[0].AppVersion) || tt.repos == chart.Repo.Name || tt.categories == chart.Category || (tt.query != "" && queryMatch)
+				if shouldAddRow {
+					rows.AddRow(chartJSON)
+				}
 			}
-			rows.AddRow(string(chartJSON))
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("namespace", kubeappsNamespace, "foo").
-			WillReturnRows(rows)
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
-		params := Params{
-			"chartName":  charts[0].Name,
-			"version":    reqVersion,
-			"appversion": reqAppVersion,
-			"namespace":  namespace,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		assert.Equal(t, len(data), 2, "it should return every chart")
-		if data[0].ID != charts[0].ID {
-			t.Errorf("Expecting %v, received %v", charts[0], data[0].ID)
-		}
-	})
-	t.Run("includes duplicated charts always", func(t *testing.T) {
-		charts := []*models.Chart{
-			{Name: "foo", ID: "stable/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-			{Name: "foo", ID: "bitnami/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-		}
-		reqVersion := "1.0.0"
-		reqAppVersion := "0.1.0"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		rows := sqlmock.NewRows([]string{"info"})
-		for _, chart := range charts {
-			chartJSON, err := json.Marshal(chart)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if tt.chartName != "" {
+				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, tt.chartName)
 			}
-			rows.AddRow(string(chartJSON))
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("namespace", kubeappsNamespace, "foo").
-			WillReturnRows(rows)
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?&name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
-		params := Params{
-			"chartName":  charts[0].Name,
-			"version":    reqVersion,
-			"appversion": reqAppVersion,
-			"namespace":  namespace,
-		}
-
-		listChartsWithFilters(w, req, params)
-
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
-
-		assert.Equal(t, len(data), 2, "it should return both charts")
-	})
-	t.Run("includes duplicated charts when showDuplicates param set (with slashes)", func(t *testing.T) {
-		charts := []*models.Chart{
-			{Name: "fo/o", ID: "stable/fo/o", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-			{Name: "fo/o", ID: "bitnami/fo/o", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-		}
-		reqVersion := "1.0.0"
-		reqAppVersion := "0.1.0"
-
-		mock, cleanup := setMockManager(t)
-		defer cleanup()
-
-		rows := sqlmock.NewRows([]string{"info"})
-		for _, chart := range charts {
-			chartJSON, err := json.Marshal(chart)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if tt.version != "" && tt.appVersion != "" {
+				parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, tt.version, tt.appVersion)
+				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, parametrizedJsonbLiteral)
 			}
-			rows.AddRow(string(chartJSON))
-		}
-		mock.ExpectQuery("SELECT info FROM charts WHERE *").
-			WithArgs("namespace", kubeappsNamespace, "fo/o").
-			WillReturnRows(rows)
+			if tt.repos != "" {
+				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, tt.repos)
+			}
+			if tt.categories != "" {
+				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, tt.categories)
+			}
+			if tt.query != "" {
+				mockQuery.WithArgs(kubeappsNamespace, kubeappsNamespace, "%"+tt.query+"%")
+			}
 
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/charts?showDuplicates=true&name="+charts[0].Name+"&version="+reqVersion+"&appversion="+reqAppVersion, nil)
-		params := Params{
-			"chartName":  charts[0].Name,
-			"version":    reqVersion,
-			"appversion": reqAppVersion,
-			"namespace":  namespace,
-		}
+			mockQuery.WillReturnRows(rows)
 
-		listChartsWithFilters(w, req, params)
+			w := httptest.NewRecorder()
+			requestURI := fmt.Sprintf("/charts?name=%s&version=%s&appversion=%s&repos=%s&categories=%s&q=%s", tt.chartName, tt.version, tt.appVersion, tt.repos, tt.categories, tt.query)
+			req := httptest.NewRequest("GET", requestURI, nil)
+			params := Params{
+				"namespace":  kubeappsNamespace,
+				"name":       tt.chartName,
+				"version":    tt.version,
+				"appversion": tt.appVersion,
+				"repos":      tt.repos,
+				"categories": tt.categories,
+				"q":          tt.query,
+			}
 
-		var b bodyAPIListResponse
-		json.NewDecoder(w.Body).Decode(&b)
-		if b.Data == nil {
-			t.Fatal("chart list shouldn't be null")
-		}
-		data := *b.Data
+			listChartsWithFilters(w, req, params)
 
-		assert.Equal(t, len(data), 2, "it should return both charts")
-	})
+			var b bodyAPIListResponse
+			json.NewDecoder(w.Body).Decode(&b)
+			if b.Data == nil {
+				t.Fatal("chart list shouldn't be null")
+			}
+			data := *b.Data
+
+			if len(tt.expectedCharts) != len(data) {
+				t.Errorf("Expecting %v charts, received %v in '%s'", len(tt.expectedCharts), len(data), tt.name)
+			}
+
+			for i := range data {
+				assert.Equal(t, tt.charts[i].ID, data[i].ID, "In '"+tt.name+"': "+"chart id in the response should be the same")
+				assert.Equal(t, tt.charts[i].ChartVersions[0].Version, data[i].Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], "In '"+tt.name+"': "+"latestChartVersion should match version at index 0")
+			}
+
+		})
+	}
 }

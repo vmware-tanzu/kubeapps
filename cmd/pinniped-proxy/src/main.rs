@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
         }
     });
 
-    let addr = ([127, 0, 0, 1], opt.port).into();
+    let addr = ([0, 0, 0, 0], opt.port).into();
 
     let server = Server::bind(&addr).serve(make_svc);
 

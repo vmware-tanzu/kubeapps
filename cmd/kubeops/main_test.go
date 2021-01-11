@@ -19,7 +19,7 @@ func TestParseClusterConfig(t *testing.T) {
 	}{
 		{
 			name:       "parses a single cluster",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd"}]`,
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedProxyURL": "http://172.0.1.18:3333"}]`,
 			expectedConfig: kube.ClustersConfig{
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
@@ -27,6 +27,7 @@ func TestParseClusterConfig(t *testing.T) {
 						APIServiceURL:            "https://example.com",
 						CertificateAuthorityData: "ca-cert-data\n",
 						ServiceToken:             "abcd",
+						PinnipedProxyURL:         "http://172.0.1.18:3333",
 					},
 				},
 			},
