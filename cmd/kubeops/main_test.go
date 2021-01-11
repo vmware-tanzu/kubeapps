@@ -29,7 +29,7 @@ func TestParseClusterConfig(t *testing.T) {
 						ServiceToken:             "abcd",
 					},
 				},
-				PinnipedProxyURL: "http://kubeapps.kubeapps:3333",
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
 			},
 		},
 		{
@@ -51,7 +51,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData: "ca-cert-data-additional\n",
 					},
 				},
-				PinnipedProxyURL: "http://kubeapps.kubeapps:3333",
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
 			},
 		},
 		{
@@ -78,7 +78,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData: "ca-cert-data-additional\n",
 					},
 				},
-				PinnipedProxyURL: "http://kubeapps.kubeapps:3333",
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
 			},
 		},
 		{
@@ -96,7 +96,7 @@ func TestParseClusterConfig(t *testing.T) {
 						},
 					},
 				},
-				PinnipedProxyURL: "http://kubeapps.kubeapps:3333",
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
 			},
 		},
 		{
