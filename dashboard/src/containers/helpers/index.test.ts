@@ -34,8 +34,8 @@ describe("filterByResourceRefs", () => {
   };
   it("returns the IKubeItems in the state referenced by each ResourceRef", () => {
     const resourceRefs: ResourceRef[] = [
-      new ResourceRef(svc1, clusterName),
-      new ResourceRef(svc2, clusterName),
+      new ResourceRef(svc1, clusterName, "services", true),
+      new ResourceRef(svc2, clusterName, "services", true),
     ];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc1 }, { item: svc2 }]);
@@ -51,8 +51,8 @@ describe("filterByResourceRefs", () => {
       },
     } as IResource;
     const resourceRefs: ResourceRef[] = [
-      new ResourceRef(svc2, clusterName),
-      new ResourceRef(missingSvc, clusterName),
+      new ResourceRef(svc2, clusterName, "services", true),
+      new ResourceRef(missingSvc, clusterName, "services", true),
     ];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc2 }]);

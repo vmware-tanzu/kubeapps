@@ -6,7 +6,6 @@ import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
-import { ResourceKind } from "./ResourceKinds";
 
 // Allow defining multiple error classes
 // tslint:disable:max-classes-per-file
@@ -187,7 +186,7 @@ export interface IResourceMetadata {
 
 export interface IResource {
   apiVersion: string;
-  kind: ResourceKind;
+  kind: string;
   type: string;
   spec: any;
   status: any;
@@ -537,9 +536,16 @@ export interface IKubeItem<T> {
   error?: Error;
 }
 
+export interface IKind {
+  apiVersion: string;
+  plural: string;
+  namespaced: boolean;
+}
+
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
   sockets: { [s: string]: { socket: WebSocket; closeTimer: () => void } };
+  kinds: { [kind: string]: IKind };
 }
 
 export interface IBasicFormParam {

@@ -1,24 +1,20 @@
 import { filter, matches } from "lodash";
 import { Kube } from "./Kube";
-import { ResourceKind } from "./ResourceKinds";
-import { IClusterServiceVersionCRDResource, IK8sList, IResource } from "./types";
+import { IClusterServiceVersionCRDResource, IK8sList, IKind, IResource } from "./types";
 
 export function fromCRD(
   r: IClusterServiceVersionCRDResource,
+  kind: IKind,
   cluster: string,
   namespace: string,
   ownerReference: any,
 ) {
   const resource = {
-    apiVersion: Kube.resourceAPIVersion(r.kind as ResourceKind),
+    apiVersion: kind.apiVersion,
     kind: r.kind,
     metadata: {},
   } as IResource;
-  // Avoid namespace for cluster-wide resources supported (ClusterRole, ClusterRoleBinding)
-  // TODO(andresmgot): This won't work for new resource types, we would need to dinamically
-  // resolve those
-  const resourceNamespace = r.kind.startsWith("Cluster") ? "" : namespace;
-  const ref = new ResourceRef(resource, cluster, resourceNamespace);
+  const ref = new ResourceRef(resource, cluster, kind.plural, kind.namespaced, namespace);
   ref.filter = {
     metadata: { ownerReferences: [ownerReference] },
   };
@@ -30,19 +26,29 @@ export function fromCRD(
 class ResourceRef {
   public cluster: string;
   public apiVersion: string;
-  public kind: ResourceKind;
+  public kind: string;
+  public plural: string;
+  public namespaced: boolean;
   public name: string;
   public namespace: string;
   public filter: any;
 
   // Creates a new ResourceRef instance from an existing IResource. Provide
   // defaultNamespace to set if the IResource doesn't specify a namespace.
-  constructor(r: IResource, cluster: string, defaultNamespace?: string) {
+  constructor(
+    r: IResource,
+    cluster: string,
+    plural: string,
+    namespaced: boolean,
+    defaultNamespace?: string,
+  ) {
     this.cluster = cluster;
+    this.plural = plural;
     this.apiVersion = r.apiVersion;
     this.kind = r.kind;
     this.name = r.metadata.name;
-    this.namespace = r.metadata.namespace || defaultNamespace || "";
+    this.namespace = namespaced ? r.metadata.namespace || defaultNamespace || "" : "";
+    this.namespaced = namespaced;
     return this;
   }
 
@@ -51,7 +57,8 @@ class ResourceRef {
     return Kube.getResourceURL(
       this.cluster,
       this.apiVersion,
-      Kube.resourcePlural(this.kind),
+      this.plural,
+      this.namespaced,
       this.namespace,
       this.name,
     );
@@ -61,7 +68,8 @@ class ResourceRef {
     return Kube.watchResourceURL(
       this.cluster,
       this.apiVersion,
-      Kube.resourcePlural(this.kind),
+      this.plural,
+      this.namespaced,
       this.namespace,
       this.name,
     );
@@ -71,7 +79,8 @@ class ResourceRef {
     const resource = await Kube.getResource(
       this.cluster,
       this.apiVersion,
-      Kube.resourcePlural(this.kind),
+      this.plural,
+      this.namespaced,
       this.namespace,
       this.name,
     );
@@ -91,7 +100,8 @@ class ResourceRef {
     return Kube.watchResource(
       this.cluster,
       this.apiVersion,
-      Kube.resourcePlural(this.kind),
+      this.plural,
+      this.namespaced,
       this.namespace,
       this.name,
     );

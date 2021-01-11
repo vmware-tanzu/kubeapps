@@ -27,6 +27,7 @@ function Header() {
     if (authenticated && clusters.currentCluster) {
       dispatch(actions.namespace.fetchNamespaces(clusters.currentCluster));
       dispatch(actions.namespace.canCreate(clusters.currentCluster));
+      dispatch(actions.kube.getResourceKinds(clusters.currentCluster));
     }
   }, [dispatch, authenticated, clusters.currentCluster]);
 

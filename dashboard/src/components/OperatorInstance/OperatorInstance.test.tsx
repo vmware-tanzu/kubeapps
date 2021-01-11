@@ -187,7 +187,10 @@ it("deletes the resource", async () => {
 
 it("updates the state with the CRD resources", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { csv: defaultCSV, resource } }),
+    getStore({
+      operators: { csv: defaultCSV, resource },
+      kube: { kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } } },
+    }),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(ResourceTabs).prop("deployments")).toMatchObject([
@@ -224,7 +227,10 @@ it("updates the state with all the resources if the CRD doesn't define any", () 
     },
   } as any;
   const wrapper = mountWrapper(
-    getStore({ operators: { csv: csvWithoutResource, resource } }),
+    getStore({
+      operators: { csv: csvWithoutResource, resource },
+      kube: { kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } } },
+    }),
     <OperatorInstance {...defaultProps} />,
   );
   const resources = wrapper.find(ResourceTabs).props();

@@ -16,7 +16,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName);
+      const ref = new ResourceRef(r, clusterName, "deployments", true);
       expect(ref).toBeInstanceOf(ResourceRef);
       expect(ref).toEqual({
         cluster: clusterName,
@@ -24,6 +24,8 @@ describe("ResourceRef", () => {
         kind: r.kind,
         name: r.metadata.name,
         namespace: r.metadata.namespace,
+        namespaced: true,
+        plural: "deployments",
       });
     });
 
@@ -36,7 +38,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName, "default");
+      const ref = new ResourceRef(r, clusterName, "deployments", true, "default");
       expect(ref.namespace).toBe("default");
     });
 
@@ -49,7 +51,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName, "bar");
+      const ref = new ResourceRef(r, clusterName, "deployments", true, "bar");
       expect(ref.namespace).toBe("bar");
     });
 
@@ -65,7 +67,12 @@ describe("ResourceRef", () => {
             name: "test",
           },
         };
-        const res = fromCRD(r, clusterName, "default", ownerRef);
+        const kind = {
+          apiVersion: "apps/v1",
+          plural: "deployments",
+          namespaced: true,
+        };
+        const res = fromCRD(r, kind, clusterName, "default", ownerRef);
         expect(res).toMatchObject({
           apiVersion: "apps/v1",
           kind: "Deployment",
@@ -86,7 +93,12 @@ describe("ResourceRef", () => {
             name: "test",
           },
         };
-        const res = fromCRD(r, clusterName, "default", ownerRef);
+        const kind = {
+          apiVersion: "rbac.authorization.k8s.io/v1",
+          plural: "clusterroles",
+          namespaced: false,
+        };
+        const res = fromCRD(r, kind, clusterName, "default", ownerRef);
         expect(res).toMatchObject({
           apiVersion: "rbac.authorization.k8s.io/v1",
           kind: "ClusterRole",
@@ -117,10 +129,17 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName);
+      const ref = new ResourceRef(r, clusterName, "services", true);
 
       ref.getResourceURL();
-      expect(kubeGetResourceURLMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
+      expect(kubeGetResourceURLMock).toBeCalledWith(
+        clusterName,
+        "v1",
+        "services",
+        true,
+        "bar",
+        "foo",
+      );
     });
   });
 
@@ -143,10 +162,17 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName);
+      const ref = new ResourceRef(r, clusterName, "services", true);
 
       ref.watchResourceURL();
-      expect(kubeWatchResourceURLMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
+      expect(kubeWatchResourceURLMock).toBeCalledWith(
+        clusterName,
+        "v1",
+        "services",
+        true,
+        "bar",
+        "foo",
+      );
     });
   });
 
@@ -171,10 +197,10 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName);
+      const ref = new ResourceRef(r, clusterName, "services", true);
 
       ref.getResource();
-      expect(kubeGetResourceMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
+      expect(kubeGetResourceMock).toBeCalledWith(clusterName, "v1", "services", true, "bar", "foo");
     });
 
     it("filters out the result when receiving a list", async () => {
@@ -187,7 +213,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName);
+      const ref = new ResourceRef(r, clusterName, "services", true);
       ref.filter = { metadata: { name: "bar" } };
       Kube.getResource = jest.fn().mockReturnValue({
         items: [r],
@@ -216,10 +242,17 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, clusterName);
+      const ref = new ResourceRef(r, clusterName, "services", true);
 
       ref.watchResource();
-      expect(kubeWatchResourceMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
+      expect(kubeWatchResourceMock).toBeCalledWith(
+        clusterName,
+        "v1",
+        "services",
+        true,
+        "bar",
+        "foo",
+      );
     });
   });
 });

@@ -22,10 +22,6 @@ export function getValueFromEvent(
   return value;
 }
 
-export async function wait(ms: number = 1) {
-  await new Promise(resolve => setTimeout(() => resolve(), ms));
-}
-
 // 3 lines description max
 const MAX_DESC_LENGTH = 90;
 
