@@ -177,27 +177,16 @@ function Catalog(props: ICatalogProps) {
 
   // We do not currently support app repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
-  // const fetchRepos: () => void = useCallback(() => {
-  //   if (!namespace) {
-  //     // All Namespaces
-  //     dispatch(actions.repos.fetchRepos(""));
-  //     return;
-  //   }
-  //   if (!supportedCluster || namespace === kubeappsNamespace) {
-  //     // Global namespace or other cluster, show global repos only
-  //     dispatch(actions.repos.fetchRepos(kubeappsNamespace));
-  //     return;
-  //   }
-  //   // In other case, fetch global and namespace repos
-  //   dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
-  // }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
-    // setCurrentRepo(propsFilter[filterNames.REPO].toString()); //FIXME(agamez): fix it once merged
+    const repo = propsFilter[filterNames.REPO]?.toString();
+    if (repo) {
+      setCurrentRepo(repo);
+    }
     setFilters({
       ...initialFilterState(),
       ...newFilters,

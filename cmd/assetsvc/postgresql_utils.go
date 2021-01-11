@@ -39,16 +39,6 @@ type postgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
 }
 
-type chartQuery struct {
-	namespace   string
-	chartName   string
-	version     string
-	appVersion  string
-	searchQuery string
-	repos       []string
-	categories  []string
-}
-
 func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
 	m, err := dbutils.NewPGManager(config, kubeappsNamespace)
 	if err != nil {
@@ -103,10 +93,10 @@ func (m *postgresAssetManager) getPaginatedChartList(whereQuery string, whereQue
 }
 
 func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
-	return m._getChartWithFallback(namespace, chartID, enableFallbackQueryMode)
+	return m.getChartWithFallback(namespace, chartID, enableFallbackQueryMode)
 }
 
-func (m *postgresAssetManager) _getChartWithFallback(namespace, chartID string, withFallback bool) (models.Chart, error) {
+func (m *postgresAssetManager) getChartWithFallback(namespace, chartID string, withFallback bool) (models.Chart, error) {
 	var chart models.ChartIconString
 
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
@@ -150,7 +140,7 @@ func (m *postgresAssetManager) _getChartWithFallback(namespace, chartID string, 
 }
 
 func (m *postgresAssetManager) getChartVersion(namespace, chartID, version string) (models.Chart, error) {
-	return m._getChartVersionWithFallback(namespace, chartID, version, enableFallbackQueryMode)
+	return m.getChartVersionWithFallback(namespace, chartID, version, enableFallbackQueryMode)
 }
 
 func (m *postgresAssetManager) getChartVersionWithFallback(namespace, chartID, version string, withFallback bool) (models.Chart, error) {
@@ -188,10 +178,10 @@ func (m *postgresAssetManager) getChartVersionWithFallback(namespace, chartID, v
 }
 
 func (m *postgresAssetManager) getChartFiles(namespace, filesID string) (models.ChartFiles, error) {
-	return m._getChartFilesWithFallback(namespace, filesID, enableFallbackQueryMode)
+	return m.getChartFilesWithFallback(namespace, filesID, enableFallbackQueryMode)
 }
 
-func (m *postgresAssetManager) _getChartFilesWithFallback(namespace, filesID string, withFallback bool) (models.ChartFiles, error) {
+func (m *postgresAssetManager) getChartFilesWithFallback(namespace, filesID string, withFallback bool) (models.ChartFiles, error) {
 	var chartFiles models.ChartFiles
 	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
