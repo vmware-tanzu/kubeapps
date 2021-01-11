@@ -52,7 +52,7 @@ func init() {
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&clustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	pflag.StringVar(&additionalClustersConfigPath, "additional-clusters-config-path", "", "Configuration for clusters")
-	pflag.StringVar(&pinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps.kubeapps:3333", "url to be used for requests to clusters configured for credential proxying via pinniped")
+	pflag.StringVar(&pinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
 }
 
 func main() {
