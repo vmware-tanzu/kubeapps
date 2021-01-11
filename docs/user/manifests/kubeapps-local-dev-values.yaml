@@ -18,5 +18,4 @@ ingress:
   enabled: true
   hostname: localhost
   tls: true
-pinnipedProxy:
-  enabled: true
+

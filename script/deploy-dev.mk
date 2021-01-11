@@ -28,21 +28,11 @@ deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 		--key ./devel/localhost-key.pem \
 		--cert ./devel/localhost-cert.pem
 
-deploy-pinniped:
-	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.3.0/install-pinniped-concierge.yaml
-
-
-add-pinniped-jwt-authenticator:
-	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f ./docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml
-
-
-deploy-dev-kubeapps:
+deploy-dev-kubeapps: 
 	helm --kubeconfig=${CLUSTER_CONFIG} install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set kubeops.image.tag=test-pinniped-1a --set kubeops.image.pullPolicy=Never \
-		--set pinnipedProxy.image.tag=test-pinniped-1a --set pinnipedProxy.image.pullPolicy=Never
+		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
 
 deploy-dev: deploy-dependencies deploy-dev-kubeapps
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
