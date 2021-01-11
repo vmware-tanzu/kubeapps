@@ -5,6 +5,7 @@ import AJV from "ajv";
 import * as jsonpatch from "fast-json-patch";
 import * as jsonSchema from "json-schema";
 import { isEmpty, set } from "lodash";
+// @ts-ignore
 import * as YAML from "yaml";
 import { IBasicFormParam } from "./types";
 
