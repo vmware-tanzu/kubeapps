@@ -18,6 +18,7 @@ import {
   uniq,
   without,
 } from "lodash";
+import { ParsedQs } from "qs";
 import React, { useCallback, useEffect, useState } from "react";
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -43,7 +44,7 @@ function getOperatorCategories(c: IClusterServiceVersion): string[] {
 interface ICatalogProps {
   charts: IChartState;
   repo: string;
-  filter: { [name: string]: string };
+  filter: ParsedQs;
   fetchChartsWithPagination: (
     cluster: string,
     namespace: string,
@@ -194,9 +195,9 @@ function Catalog(props: ICatalogProps) {
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
-      newFilters[filter] = propsFilter[filter].split(",");
+      newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
-    setCurrentRepo(propsFilter[filterNames.REPO]);
+    // setCurrentRepo(propsFilter[filterNames.REPO].toString()); //FIXME(agamez): fix it once merged
     setFilters({
       ...initialFilterState(),
       ...newFilters,
