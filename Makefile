@@ -17,6 +17,9 @@ GO_PACKAGES = ./...
 all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubeapps/assetsvc kubeapps/asset-syncer
 
 # TODO(miguel) Create Makefiles per component
+# TODO(mnelson) Or at least don't send the whole repo as the context for each project.
+# Currently the go projects include the whole repository as the docker context
+# only because the shared pkg/ directories?
 kubeapps/%:
 	DOCKER_BUILDKIT=1 docker build -t kubeapps/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
 
@@ -28,7 +31,7 @@ test:
 
 test-db:
 	# It's not supported to run tests that involve a database in parallel since they are currently
-	# using the same PG schema. We need to run them sequentially 
+	# using the same PG schema. We need to run them sequentially
 	cd cmd/asset-syncer; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
 	cd cmd/assetsvc; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
 
