@@ -13,7 +13,7 @@ ${CLUSTER_CONFIG}:
 	kind create cluster \
 		--kubeconfig ${CLUSTER_CONFIG} \
 		--name ${CLUSTER_NAME} \
-		--config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml \
+		--config=./docs/user/manifests/kubeapps-local-dev-apiserver-no-oidc-config.yaml \
 		--retain \
 		--wait 10s
 	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
