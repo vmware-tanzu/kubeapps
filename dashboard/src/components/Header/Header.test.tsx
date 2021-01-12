@@ -14,6 +14,10 @@ beforeEach(() => {
     fetchNamespaces: jest.fn(),
     canCreate: jest.fn(),
   };
+  actions.kube = {
+    ...actions.kube,
+    getResourceKinds: jest.fn(),
+  };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
 });
@@ -42,6 +46,11 @@ it("fetch namespaces and the ability to create them", () => {
   mountWrapper(getStore(defaultState), <Header />);
   expect(actions.namespace.fetchNamespaces).toHaveBeenCalled();
   expect(actions.namespace.canCreate).toHaveBeenCalled();
+});
+
+it("fetch resource kinds", () => {
+  mountWrapper(getStore(defaultState), <Header />);
+  expect(actions.kube.getResourceKinds).toHaveBeenCalled();
 });
 
 it("renders the header links and titles", () => {

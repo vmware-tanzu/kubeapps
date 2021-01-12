@@ -19,7 +19,7 @@ import { ThunkDispatch } from "redux-thunk";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import { fromCRD } from "../../shared/ResourceRef";
-import { IClusterServiceVersionCRD, IResource, IStoreState } from "../../shared/types";
+import { IClusterServiceVersionCRD, IKind, IResource, IStoreState } from "../../shared/types";
 import { app } from "../../shared/url";
 import AccessURLTable from "../AppView/AccessURLTable/AccessURLTable";
 import AppValues from "../AppView/AppValues/AppValues";
@@ -36,6 +36,7 @@ export interface IOperatorInstanceProps {
 }
 
 function parseResource(
+  kind: IKind,
   cluster: string,
   namespace: string,
   resource: IResource,
@@ -55,37 +56,41 @@ function parseResource(
     crd.resources?.forEach(r => {
       switch (r.kind) {
         case "Deployment":
-          result.deployments.push(fromCRD(r, cluster, namespace, ownerRef));
+          result.deployments.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;
         case "StatefulSet":
-          result.statefulsets.push(fromCRD(r, cluster, namespace, ownerRef));
+          result.statefulsets.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;
         case "DaemonSet":
-          result.daemonsets.push(fromCRD(r, cluster, namespace, ownerRef));
+          result.daemonsets.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;
         case "Service":
-          result.services.push(fromCRD(r, cluster, namespace, ownerRef));
+          result.services.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;
         case "Ingress":
-          result.ingresses.push(fromCRD(r, cluster, namespace, ownerRef));
+          result.ingresses.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;
         case "Secret":
-          result.secrets.push(fromCRD(r, cluster, namespace, ownerRef));
+          result.secrets.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;
         default:
-          result.otherResources.push(fromCRD(r, cluster, namespace, ownerRef));
+          result.otherResources.push(fromCRD(r, kind, cluster, namespace, ownerRef));
       }
     });
   } else {
     const emptyCRD = { kind: "", name: "", version: "" };
     // The CRD definition doesn't define any service so pull everything
     result = {
-      deployments: [fromCRD({ ...emptyCRD, kind: "Deployment" }, cluster, namespace, ownerRef)],
-      ingresses: [fromCRD({ ...emptyCRD, kind: "Ingress" }, cluster, namespace, ownerRef)],
-      statefulsets: [fromCRD({ ...emptyCRD, kind: "StatefulSet" }, cluster, namespace, ownerRef)],
-      daemonsets: [fromCRD({ ...emptyCRD, kind: "DaemonSet" }, cluster, namespace, ownerRef)],
-      services: [fromCRD({ ...emptyCRD, kind: "Service" }, cluster, namespace, ownerRef)],
-      secrets: [fromCRD({ ...emptyCRD, kind: "Secret" }, cluster, namespace, ownerRef)],
+      deployments: [
+        fromCRD({ ...emptyCRD, kind: "Deployment" }, kind, cluster, namespace, ownerRef),
+      ],
+      ingresses: [fromCRD({ ...emptyCRD, kind: "Ingress" }, kind, cluster, namespace, ownerRef)],
+      statefulsets: [
+        fromCRD({ ...emptyCRD, kind: "StatefulSet" }, kind, cluster, namespace, ownerRef),
+      ],
+      daemonsets: [fromCRD({ ...emptyCRD, kind: "DaemonSet" }, kind, cluster, namespace, ownerRef)],
+      services: [fromCRD({ ...emptyCRD, kind: "Service" }, kind, cluster, namespace, ownerRef)],
+      secrets: [fromCRD({ ...emptyCRD, kind: "Secret" }, kind, cluster, namespace, ownerRef)],
       otherResources: [],
     };
   }
@@ -132,6 +137,7 @@ function OperatorInstance({
       resource,
       errors: { resource: errors },
     },
+    kube: { kinds },
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
@@ -147,9 +153,12 @@ function OperatorInstance({
 
   useEffect(() => {
     if (crd && resource) {
-      setResourceRefs(parseResource(cluster, namespace, resource, crd));
+      const kind = kinds[resource.kind];
+      if (kind) {
+        setResourceRefs(parseResource(kind, cluster, namespace, resource, crd));
+      }
     }
-  }, [crd, resource, cluster, namespace]);
+  }, [crd, resource, cluster, kinds, namespace]);
 
   const onUpdateClick = () =>
     dispatch(

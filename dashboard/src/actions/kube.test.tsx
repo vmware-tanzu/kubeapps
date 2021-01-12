@@ -55,11 +55,18 @@ describe("getResource", () => {
       },
     } as IResource;
 
-    const ref = new ResourceRef(r, clusterName);
+    const ref = new ResourceRef(r, clusterName, "services", true);
 
     await store.dispatch(actions.kube.getResource(ref));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(getResourceMock).toHaveBeenCalledWith(clusterName, "v1", "services", "default", "foo");
+    expect(getResourceMock).toHaveBeenCalledWith(
+      clusterName,
+      "v1",
+      "services",
+      true,
+      "default",
+      "foo",
+    );
   });
 
   it("does not fetch a resource that is already being fetched", async () => {
@@ -82,7 +89,7 @@ describe("getResource", () => {
       },
     } as IResource;
 
-    const ref = new ResourceRef(r, clusterName);
+    const ref = new ResourceRef(r, clusterName, "services", true);
 
     await store.dispatch(actions.kube.getResource(ref));
     expect(store.getActions()).toEqual([]);
@@ -101,7 +108,7 @@ describe("getAndWatchResource", () => {
       },
     } as IResource;
 
-    const ref = new ResourceRef(r, clusterName);
+    const ref = new ResourceRef(r, clusterName, "services", true);
 
     const expectedActions = [
       {
@@ -120,7 +127,14 @@ describe("getAndWatchResource", () => {
 
     store.dispatch(actions.kube.getAndWatchResource(ref));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(getResourceMock).toHaveBeenCalledWith(clusterName, "v1", "services", "default", "foo");
+    expect(getResourceMock).toHaveBeenCalledWith(
+      clusterName,
+      "v1",
+      "services",
+      true,
+      "default",
+      "foo",
+    );
   });
 
   it("dispatches a getResource and openWatchResource action for a list", () => {
@@ -138,7 +152,13 @@ describe("getAndWatchResource", () => {
       },
     } as IResource;
 
-    const r = fromCRD(ref, clusterName, "default", {});
+    const r = fromCRD(
+      ref,
+      { apiVersion: "v1", plural: "services", namespaced: true },
+      clusterName,
+      "default",
+      {},
+    );
     const expectedActions = [
       {
         type: getType(actions.kube.requestResource),
@@ -161,6 +181,7 @@ describe("getAndWatchResource", () => {
       clusterName,
       "v1",
       "services",
+      true,
       "default",
       undefined,
     );
@@ -177,5 +198,58 @@ describe("getAndWatchResource", () => {
     const expectedUpdatedActions = expectedActions.concat(newAction as any);
     const updatedActions = store.getActions();
     expect(updatedActions).toEqual(expectedUpdatedActions);
+  });
+});
+
+describe("getResourceKinds", () => {
+  beforeEach(() => {
+    Kube.getAPIGroups = jest.fn().mockResolvedValue([]);
+    Kube.getResourceKinds = jest.fn().mockResolvedValue({});
+  });
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("retrieves resource kinds", async () => {
+    const groups = ["foo"];
+    const kinds = { test: "data" };
+    Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
+    Kube.getResourceKinds = jest.fn().mockResolvedValue(kinds);
+    const expectedActions = [
+      {
+        type: getType(actions.kube.requestResourceKinds),
+      },
+      {
+        type: getType(actions.kube.receiveResourceKinds),
+        payload: kinds,
+      },
+    ];
+    await store.dispatch(actions.kube.getResourceKinds("cluster-1"));
+
+    const testActions = store.getActions();
+    expect(testActions).toEqual(expectedActions);
+    expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
+    expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", groups);
+  });
+
+  it("returns an error if fails to retrieve kinds", async () => {
+    const groups = ["foo"];
+    Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
+    Kube.getResourceKinds = jest.fn().mockRejectedValue(new Error("boom!"));
+    const expectedActions = [
+      {
+        type: getType(actions.kube.requestResourceKinds),
+      },
+      {
+        type: getType(actions.kube.receiveKindsError),
+        payload: new Error("boom!"),
+      },
+    ];
+    await store.dispatch(actions.kube.getResourceKinds("cluster-1"));
+
+    const testActions = store.getActions();
+    expect(testActions).toEqual(expectedActions);
+    expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
+    expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", groups);
   });
 });

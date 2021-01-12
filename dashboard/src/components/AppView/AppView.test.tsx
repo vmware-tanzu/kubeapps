@@ -4,6 +4,7 @@ import * as React from "react";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
+import { initialKinds } from "reducers/kube";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError, IResource } from "shared/types";
 import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
@@ -39,6 +40,7 @@ describe("AppViewComponent", () => {
     cluster: "default",
     releaseName: "mr-sunshine",
     push: jest.fn(),
+    kinds: initialKinds,
   };
 
   const resources = {
@@ -115,13 +117,31 @@ describe("AppViewComponent", () => {
 
       const tabs = wrapper.find(ResourceTabs);
       expect(tabs.prop("deployments")).toEqual([
-        new ResourceRef(resources.deployment, validProps.cluster, appRelease.namespace),
+        new ResourceRef(
+          resources.deployment,
+          validProps.cluster,
+          "deployments",
+          true,
+          appRelease.namespace,
+        ),
       ]);
       expect(tabs.prop("services")).toEqual([
-        new ResourceRef(resources.service, validProps.cluster, appRelease.namespace),
+        new ResourceRef(
+          resources.service,
+          validProps.cluster,
+          "services",
+          true,
+          appRelease.namespace,
+        ),
       ]);
       expect(tabs.prop("secrets")).toEqual([
-        new ResourceRef(resources.secret, validProps.cluster, appRelease.namespace),
+        new ResourceRef(
+          resources.secret,
+          validProps.cluster,
+          "secrets",
+          true,
+          appRelease.namespace,
+        ),
       ]);
     });
 
@@ -274,10 +294,26 @@ describe("AppViewComponent", () => {
     const tabs = wrapper.find(ResourceTabs);
     expect(tabs.props()).toMatchObject({
       deployments: [
-        new ResourceRef(resources.deployment, validProps.cluster, appRelease.namespace),
+        new ResourceRef(
+          resources.deployment,
+          validProps.cluster,
+          "deployments",
+          true,
+          appRelease.namespace,
+        ),
       ],
-      services: [new ResourceRef(resources.service, validProps.cluster, appRelease.namespace)],
-      otherResources: [new ResourceRef(obj, validProps.cluster, appRelease.namespace)],
+      services: [
+        new ResourceRef(
+          resources.service,
+          validProps.cluster,
+          "services",
+          true,
+          appRelease.namespace,
+        ),
+      ],
+      otherResources: [
+        new ResourceRef(obj, validProps.cluster, "clusterroles", false, appRelease.namespace),
+      ],
     });
   });
 
@@ -301,10 +337,26 @@ describe("AppViewComponent", () => {
     const tabs = wrapper.find(ResourceTabs);
     expect(tabs.props()).toMatchObject({
       deployments: [
-        new ResourceRef(resources.deployment, validProps.cluster, appRelease.namespace),
+        new ResourceRef(
+          resources.deployment,
+          validProps.cluster,
+          "deployments",
+          true,
+          appRelease.namespace,
+        ),
       ],
-      services: [new ResourceRef(resources.service, validProps.cluster, appRelease.namespace)],
-      otherResources: [new ResourceRef(obj, validProps.cluster, appRelease.namespace)],
+      services: [
+        new ResourceRef(
+          resources.service,
+          validProps.cluster,
+          "services",
+          true,
+          appRelease.namespace,
+        ),
+      ],
+      otherResources: [
+        new ResourceRef(obj, validProps.cluster, "clusterroles", false, appRelease.namespace),
+      ],
     });
   });
 
@@ -324,10 +376,22 @@ describe("AppViewComponent", () => {
     expect(applicationStatus).toExist();
 
     expect(applicationStatus.prop("statefulsetRefs")).toEqual([
-      new ResourceRef(resources.statefulset, validProps.cluster, appRelease.namespace),
+      new ResourceRef(
+        resources.statefulset,
+        validProps.cluster,
+        "statefulsets",
+        true,
+        appRelease.namespace,
+      ),
     ]);
     expect(applicationStatus.prop("daemonsetRefs")).toEqual([
-      new ResourceRef(resources.daemonset, validProps.cluster, appRelease.namespace),
+      new ResourceRef(
+        resources.daemonset,
+        validProps.cluster,
+        "daemonsets",
+        true,
+        appRelease.namespace,
+      ),
     ]);
   });
 });

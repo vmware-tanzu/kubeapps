@@ -6,7 +6,6 @@ import * as React from "react";
 import { act } from "react-dom/test-utils";
 import { Redirect } from "react-router";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { wait } from "shared/utils";
 import itBehavesLike from "../../shared/specs";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
@@ -148,13 +147,7 @@ describe("oauth login form", () => {
   });
 
   it("doesn't render the login form if the cookie has not been checked yet", () => {
-    const checkCookieAuthentication = jest.fn(async () => {
-      await wait(1);
-      return true;
-    });
-    const wrapper = mount(
-      <LoginForm {...props} checkCookieAuthentication={checkCookieAuthentication} />,
-    );
+    const wrapper = shallow(<LoginForm {...props} />);
     expect(wrapper.find(LoadingWrapper)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
   });
