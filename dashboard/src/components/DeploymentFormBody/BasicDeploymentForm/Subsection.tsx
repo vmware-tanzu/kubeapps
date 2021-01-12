@@ -46,6 +46,7 @@ function Subsection({
           return (
             <Param
               param={childrenParam}
+              otherParams={param.children ? param.children : []}
               id={id}
               key={id}
               handleBasicFormParamChange={handleChildrenParamChange}

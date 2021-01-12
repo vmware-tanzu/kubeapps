@@ -21,7 +21,7 @@ function BasicDeploymentForm(props: IBasicDeploymentFormProps) {
         const id = `${param.path}-${i}`;
         return (
           <div key={id}>
-            <Param {...props} param={param} id={id} />
+            <Param {...props} otherParams={props.params} param={param} id={id} />
             <hr className="param-separator" />
           </div>
         );

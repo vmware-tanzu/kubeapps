@@ -11,6 +11,7 @@ interface IParamProps {
   appValues: string;
   param: IBasicFormParam;
   id: string;
+  otherParams: IBasicFormParam[];
   handleBasicFormParamChange: (
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
@@ -21,6 +22,7 @@ interface IParamProps {
 export default function Param({
   appValues,
   param,
+  otherParams,
   id,
   handleBasicFormParamChange,
   handleValuesChange,
@@ -73,10 +75,11 @@ export default function Param({
   ): boolean => {
     if (paramDeploymentEvent == null) {
       let val = getValue(appValues, path);
-      // no value is provided, but there is a default one in the schema (hidden.value)
+      // retrieve the value that the property pointed by path should have to be hidden.
       // https://github.com/kubeapps/kubeapps/issues/1913
-      if (!val && typeof param.hidden === "object") {
-        val = param.hidden?.value;
+      if (val === undefined) {
+        const target = otherParams.find(p => p.path === path);
+        val = target?.value;
       }
       return val === (expectedValue ?? true);
     } else {
