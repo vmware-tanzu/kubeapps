@@ -29,6 +29,16 @@ exports[`renders a basic deployment with a disk size 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="size-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "type": "string",
+              "value": "10Gi",
+            },
+          ]
+        }
         param={
           Object {
             "path": "size",
@@ -394,6 +404,14 @@ exports[`renders a basic deployment with a email 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressEmail-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+          ]
+        }
         param={
           Object {
             "path": "wordpressEmail",
@@ -480,6 +498,15 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="enableMetrics-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "enableMetrics",
+              "type": "boolean",
+              "value": true,
+            },
+          ]
+        }
         param={
           Object {
             "path": "enableMetrics",
@@ -675,6 +702,15 @@ exports[`renders a basic deployment with a generic number 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="replicas-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "replicas",
+              "type": "integer",
+              "value": 1,
+            },
+          ]
+        }
         param={
           Object {
             "path": "replicas",
@@ -764,6 +800,15 @@ exports[`renders a basic deployment with a generic string 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="blogName-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         param={
           Object {
             "path": "blogName",
@@ -854,6 +899,16 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="size-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "type": "integer",
+              "value": 10,
+            },
+          ]
+        }
         param={
           Object {
             "path": "size",
@@ -1221,6 +1276,16 @@ exports[`renders a basic deployment with a number disk size 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="size-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "type": "number",
+              "value": 10,
+            },
+          ]
+        }
         param={
           Object {
             "path": "size",
@@ -1586,6 +1651,14 @@ exports[`renders a basic deployment with a password 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressPassword-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+          ]
+        }
         param={
           Object {
             "path": "wordpressPassword",
@@ -1671,6 +1744,14 @@ exports[`renders a basic deployment with a username 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressUsername-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+          ]
+        }
         param={
           Object {
             "path": "wordpressUsername",
@@ -1759,6 +1840,17 @@ Second line",
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="configuration-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "configuration",
+              "render": "textArea",
+              "type": "string",
+              "value": "First line
+Second line",
+            },
+          ]
+        }
         param={
           Object {
             "path": "configuration",
@@ -1858,6 +1950,20 @@ exports[`renders a basic deployment with slider parameters 1`] = `
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="size-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "sliderMax": 100,
+              "sliderMin": 1,
+              "sliderStep": 1,
+              "sliderUnit": "Gi",
+              "type": "string",
+              "value": "10Gi",
+            },
+          ]
+        }
         param={
           Object {
             "path": "size",
@@ -2250,6 +2356,27 @@ exports[`renders a basic deployment with username, password, email and a generic
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressUsername-0"
+        otherParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         param={
           Object {
             "path": "wordpressUsername",
@@ -2326,6 +2453,27 @@ exports[`renders a basic deployment with username, password, email and a generic
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressPassword-1"
+        otherParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         param={
           Object {
             "path": "wordpressPassword",
@@ -2402,6 +2550,27 @@ exports[`renders a basic deployment with username, password, email and a generic
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="wordpressEmail-2"
+        otherParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         param={
           Object {
             "path": "wordpressEmail",
@@ -2478,6 +2647,27 @@ exports[`renders a basic deployment with username, password, email and a generic
         handleBasicFormParamChange={[MockFunction]}
         handleValuesChange={[MockFunction]}
         id="blogName-3"
+        otherParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         param={
           Object {
             "path": "blogName",

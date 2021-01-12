@@ -221,6 +221,36 @@ it("should hide an element if it depends on a single param (object)", () => {
   expect(hiddenParam).toExist();
 });
 
+it("should hide an element using hidden path and values even if it is not present in values.yaml", () => {
+  const params = [
+    {
+      default: "a",
+      enum: ["a", "b"],
+      path: "dropdown",
+      type: "string",
+      value: "a",
+    },
+    {
+      hidden: { path: "dropdown", value: "b" },
+      path: "a",
+      type: "string",
+    },
+    {
+      hidden: { path: "dropdown", value: "a" },
+      path: "b",
+      type: "string",
+    },
+  ] as IBasicFormParam[];
+  const appValues = "";
+  const wrapper = mount(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+  expect(hiddenParam.text()).toBe("b");
+});
+
 it("should hide an element if it depends on multiple params (AND) (object)", () => {
   const params = [
     {
