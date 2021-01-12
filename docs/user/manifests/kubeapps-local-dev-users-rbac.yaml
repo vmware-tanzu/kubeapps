@@ -17,6 +17,13 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: Group
   name: oidc:kubeapps-operators
+# pinniped doesn't use a prefix, unlike the cluster oidc config:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: kubeapps-operator@example.com
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: kubeapps-operators
 # kubeapps-user has access only to the kubeapps-user-namespace namespace
 ---
 kind: Namespace
