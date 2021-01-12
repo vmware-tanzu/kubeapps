@@ -276,7 +276,7 @@ func Test_getAllChartCategories(t *testing.T) {
 				WithArgs(expectedParams...).
 				WillReturnRows(rows)
 
-			chartCategories, err := pgManager.getAllChartCategories(tt.namespace, tt.repo)
+			chartCategories, err := pgManager.getAllChartCategories(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}})
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}
