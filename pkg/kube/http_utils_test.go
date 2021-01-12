@@ -149,7 +149,7 @@ func TestInitNetClient(t *testing.T) {
 							{
 								Env: []corev1.EnvVar{
 									{
-										Name:  "http_proxy",
+										Name:  "https_proxy",
 										Value: proxyURL,
 									},
 								},
@@ -222,6 +222,9 @@ func TestInitNetClient(t *testing.T) {
 				t.Fatalf("unable to assert expected type")
 			}
 			transport, ok := client.Transport.(*http.Transport)
+			if !ok {
+				t.Fatalf("unable to assert expected type")
+			}
 			certPool := transport.TLSClientConfig.RootCAs
 
 			if got, want := len(certPool.Subjects()), tc.numCertsExpected; got != want {
@@ -248,18 +251,21 @@ func TestInitNetClient(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-			requestURL, err := transport.Proxy(&http.Request{URL: u})
+			reqURL, err := transport.Proxy(&http.Request{URL: u})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			if tc.expectProxied {
-				if got, want := requestURL.String(), proxyURL; got != want {
+				if reqURL == nil {
+					t.Fatalf("Expecting the URL %s to be proxied", requestURL)
+				}
+				if got, want := reqURL.String(), proxyURL; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
 			} else {
 				// The proxy function returns nil (with a nil error) if the
 				// request should not be proxied
-				if got := requestURL; got != nil {
+				if got := reqURL; got != nil {
 					t.Errorf("got: %q, want: nil", got)
 				}
 			}
