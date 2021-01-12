@@ -28,7 +28,7 @@ type assetManager interface {
 	getChartVersion(namespace, chartID, version string) (models.Chart, error)
 	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
 	getPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
-	getAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
+	getAllChartCategories(namespace, repo string) ([]*models.ChartCategory, error)
 }
 
 // ChartQuery is a container for passing the supported query paramters for generating the WHERE query

@@ -47,8 +47,12 @@ func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManag
 	return &postgresAssetManager{m}, nil
 }
 
-func (m *postgresAssetManager) getAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error) {
-	whereQuery, whereQueryParams := m.generateWhereClause(cq)
+func (m *postgresAssetManager) getAllChartCategories(namespace, repo string) ([]*models.ChartCategory, error) {
+	var repos []string
+	if repo != "" {
+		repos = []string{repo}
+	}
+	whereQuery, whereQueryParams := m.generateWhereClause(ChartQuery{namespace: namespace, repos: repos})
 	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, whereQuery)
 
 	chartsCategories, err := m.QueryAllChartCategories(dbQuery, whereQueryParams...)

@@ -90,8 +90,8 @@ func getPageAndSizeParams(req *http.Request) (int, int) {
 	return int(pageNumberInt), int(pageSizeInt)
 }
 
-func getAllChartCategories(cq ChartQuery) (apiChartCategoryListResponse, error) {
-	chartCategories, err := manager.getAllChartCategories(cq)
+func getAllChartCategories(namespace, repo string) (apiChartCategoryListResponse, error) {
+	chartCategories, err := manager.getAllChartCategories(namespace, repo)
 	return newChartCategoryListResponse(chartCategories), err
 }
 
@@ -109,12 +109,7 @@ func getChartCategories(w http.ResponseWriter, req *http.Request, params Params)
 		return
 	}
 
-	cq := ChartQuery{
-		namespace: namespace,
-		repos:     append(strings.Split(strings.TrimSpace(req.FormValue("repos")), ","), repo),
-	}
-
-	chartCategories, err := getAllChartCategories(cq)
+	chartCategories, err := getAllChartCategories(namespace, repo)
 	if err != nil {
 		log.WithError(err).Error("could not fetch categories")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch chart categories").Write(w)
