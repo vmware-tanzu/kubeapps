@@ -16,8 +16,9 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use url::Url;
 
-const PINNIPED_AUTHENTICATOR_NAME: &str = "PINNIPED_AUTHENTICATOR_NAME";
-const PINNIPED_AUTHENTICATOR_TYPE: &str = "PINNIPED_AUTHENTICATOR_TYPE";
+const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
+const DEFAULT_PINNIPED_AUTHENTICATOR_NAME: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_NAME";
+const DEFAULT_PINNIPED_AUTHENTICATOR_TYPE: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_TYPE";
 /// exchange_token_for_identity accepts an authorization header and returns a client cert authentication Identity in exchange.
 ///
 /// The token is exchanged with pinniped concierge API running on the identified kubernetes api server.
@@ -106,7 +107,7 @@ pub struct ClusterCredential {
 
 /// call_pinniped_exchange returns the resulting TokenCredentialRequest with Status after requesting a token credential exchange.
 async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8]) -> Result<TokenCredentialRequest> {
-    let pinniped_namespace = env::var("PINNIPED_NAMESPACE")?;
+    let pinniped_namespace = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
 
     let mut config = Config::new(Url::parse(k8s_api_server_url).context("Failed parsing url for exchange")?);
     config.default_ns = pinniped_namespace.clone();
@@ -122,8 +123,8 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
     let mut cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
         token: Some(auth_token),
         authenticator: corev1::TypedLocalObjectReference {
-            name: env::var(PINNIPED_AUTHENTICATOR_NAME).with_context(|| format!("error retrieving {}", PINNIPED_AUTHENTICATOR_NAME))?,
-            kind: env::var(PINNIPED_AUTHENTICATOR_TYPE).with_context(|| format!("error retrieving {}", PINNIPED_AUTHENTICATOR_TYPE))?,
+            name: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME).with_context(|| format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_NAME))?,
+            kind: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE).with_context(|| format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_TYPE))?,
             api_group: Some("authentication.concierge.pinniped.dev".into()),
         },
     });

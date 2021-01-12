@@ -27,9 +27,9 @@ func TestParseClusterConfig(t *testing.T) {
 						APIServiceURL:            "https://example.com",
 						CertificateAuthorityData: "ca-cert-data\n",
 						ServiceToken:             "abcd",
-						PinnipedProxyURL:         "http://172.0.1.18:3333",
 					},
 				},
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
 			},
 		},
 		{
@@ -51,6 +51,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData: "ca-cert-data-additional\n",
 					},
 				},
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
 			},
 		},
 		{
@@ -77,9 +78,27 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData: "ca-cert-data-additional\n",
 					},
 				},
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
 			},
 		},
-
+		{
+			name:       "parses a cluster with pinniped token exchange",
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedConfig": {"enable": true}}]`,
+			expectedConfig: kube.ClustersConfig{
+				Clusters: map[string]kube.ClusterConfig{
+					"cluster-2": {
+						Name:                     "cluster-2",
+						APIServiceURL:            "https://example.com",
+						CertificateAuthorityData: "ca-cert-data\n",
+						ServiceToken:             "abcd",
+						PinnipedConfig: kube.PinnipedConciergeConfig{
+							Enable: true,
+						},
+					},
+				},
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
+			},
+		},
 		{
 			name:        "errors if the cluster configs cannot be parsed",
 			configJSON:  `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "extracomma",}]`,
@@ -123,7 +142,7 @@ func TestParseClusterConfig(t *testing.T) {
 				if clusterConfig.CertificateAuthorityData != "" {
 					fileCAData, err := ioutil.ReadFile(config.Clusters[clusterName].CAFile)
 					if err != nil {
-						t.Fatalf("%+v", err)
+						t.Fatalf("error opening %s: %+v", config.Clusters[clusterName].CAFile, err)
 					}
 					if got, want := string(fileCAData), clusterConfig.CertificateAuthorityData; got != want {
 						t.Errorf("got: %q, want: %q", got, want)

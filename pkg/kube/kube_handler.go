@@ -63,15 +63,29 @@ type ClusterConfig struct {
 	// TLS requests without requiring the cert authority validation.
 	Insecure bool `json:"insecure"`
 
-	// PinnipedProxy enables user requests to the cluster api server to be
-	// proxied via pinniped for an exchange of the user token for client certs.
-	// This is required on clusters which are not configured with OIDC support.
-	PinnipedProxyURL string `json:"pinnipedProxyURL"`
+	// PinnipedConfig is an optional per-cluster configuration specifying
+	// the pinniped namespace, authenticator type and authenticator name
+	// that should be used for any credential exchange.
+	PinnipedConfig PinnipedConciergeConfig `json:"pinnipedConfig,omitempty"`
+}
+
+// PinnipedConciergeConfig enables each cluster configuration to specify the
+// pinniped-concierge installation to use for any credential exchange.
+type PinnipedConciergeConfig struct {
+	// Enable flags whether this cluster should use
+	// pinniped to exchange credentials.
+	Enable bool `json:"enable"`
+	// The Namespace, AuthenticatorType and Authenticator name to use
+	// when exchanging credentials.
+	Namespace         string `json:"namespace,omitempty"`
+	AuthenticatorType string `json:"authenticatorType,omitempty"`
+	AuthenticatorName string `json:"authenticatorName,omitempty"`
 }
 
 // ClustersConfig is an alias for a map of additional cluster configs.
 type ClustersConfig struct {
 	KubeappsClusterName string
+	PinnipedProxyURL    string
 	Clusters            map[string]ClusterConfig
 }
 
@@ -87,10 +101,10 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
 	}
 
-	if userToken != "" && clusterConfig.PinnipedProxyURL != "" {
+	if userToken != "" && clusterConfig.PinnipedConfig.Enable {
 		// Create a config for routing requests via the pinniped-proxy for credential
 		// exchange.
-		config.Host = clusterConfig.PinnipedProxyURL
+		config.Host = clustersConfig.PinnipedProxyURL
 		// set roundtripper.
 		// https://github.com/kubernetes/client-go/issues/407
 		existingWrapTransport := config.WrapTransport
