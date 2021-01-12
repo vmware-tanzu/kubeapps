@@ -54,7 +54,6 @@ interface ICatalogProps {
     page: number,
     size: number,
   ) => void;
-  fetchChartsSearch: (cluster: string, namespace: string, repo: string, query: string) => void;
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
@@ -103,7 +102,6 @@ function Catalog(props: ICatalogProps) {
       categories,
     },
     fetchChartsWithPagination,
-    fetchChartsSearch,
     fetchChartCategories,
     getCSVs,
     cluster,
@@ -127,7 +125,15 @@ function Catalog(props: ICatalogProps) {
     if (type === filterNames.REPO) {
       // if the repo changes, force reset
       dispatch(actions.charts.resetPaginaton());
-      fetchChartsSearch(cluster, namespace, newFilters[filterNames.REPO], currentSearchQuery);
+      fetchChartsWithPagination(
+        cluster,
+        namespace,
+        newFilters[filterNames.REPO],
+        currentSearchQuery,
+        1,
+        size,
+        nextPage,
+      );
       fetchChartCategories(cluster, namespace, newFilters[filterNames.REPO]); // get corresponding categories
     }
   };
@@ -198,7 +204,7 @@ function Catalog(props: ICatalogProps) {
   const namespaceUpdate = useRef({ namespace });
   useEffect(() => {
     if (firstUpdate.current || namespaceUpdate.current.namespace !== namespace) {
-      // initial actions or if only the namespace is changing, refresh
+      // actions when the component is mounted for the first time OR when there is a change in the selected namespace
       firstUpdate.current = false;
       setCurrentSearchQuery("");
       setCurrentRepo("");
@@ -207,7 +213,7 @@ function Catalog(props: ICatalogProps) {
       dispatch(actions.charts.resetChartsSearch());
       fetchChartsWithPagination(cluster, namespace, currentRepo, "", 1, size, nextPage); // get the first charts
       getCSVs(cluster, namespace);
-      dispatch(actions.charts.resetPaginaton()); // start from page=1 again
+      // dispatch(actions.charts.resetPaginaton()); // start from page=1 again
     }
     namespaceUpdate.current.namespace = namespace;
   }, [
@@ -245,16 +251,16 @@ function Catalog(props: ICatalogProps) {
 
   const debouncedfetchChartsSearch = useCallback(
     debounce((q: string) => {
-      fetchChartsSearch(cluster, namespace, currentRepo, q);
+      fetchChartsWithPagination(cluster, namespace, currentRepo, q, 1, size, nextPage);
     }, 500),
-    [fetchChartsSearch, cluster, namespace, currentRepo],
+    [fetchChartsWithPagination, cluster, namespace, currentRepo],
   );
 
   const throttledfetchChartsSearch = useCallback(
     throttle((q: string) => {
-      fetchChartsSearch(cluster, namespace, currentRepo, q);
+      fetchChartsWithPagination(cluster, namespace, currentRepo, q, 1, size, nextPage);
     }, 300),
-    [fetchChartsSearch, cluster, namespace, currentRepo],
+    [fetchChartsWithPagination, cluster, namespace, currentRepo],
   );
 
   const debouncedFetchChartsWithPagination = useCallback(
@@ -296,7 +302,6 @@ function Catalog(props: ICatalogProps) {
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
-    // .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
@@ -312,7 +317,6 @@ function Catalog(props: ICatalogProps) {
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
-    // .filter(c => new RegExp(escapeRegExp(search.query), "i").test(c.id))
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
@@ -343,7 +347,6 @@ function Catalog(props: ICatalogProps) {
 
   const observeBorder = useCallback(
     // Check if the IntersectionAPI is enabled
-    // TODO(agamez): add a "load more" manual button at the end if not
     node => {
       if (
         "IntersectionObserver" in window &&
@@ -360,7 +363,6 @@ function Catalog(props: ICatalogProps) {
                   entry.isIntersecting &&
                   !isFetching &&
                   !search.query.length &&
-                  // status !== actions.charts.loadingStatus &&
                   status !== actions.charts.finishedStatus
                 ) {
                   debouncedFetchChartsWithPagination();
@@ -471,8 +473,6 @@ function Catalog(props: ICatalogProps) {
         </Column>
         <Column span={8}>
           <>
-            {/* <h1>{JSON.stringify(isFetching)}</h1>
-            <h1>{JSON.stringify(status)}</h1> */}
             <div className="filter-summary">
               {Object.keys(filters).map(filterName => {
                 if (filters[filterName].length) {
@@ -509,7 +509,7 @@ function Catalog(props: ICatalogProps) {
                     csvs={filteredCSVs}
                     cluster={cluster}
                     namespace={namespace}
-                    hasFinished={status === actions.charts.finishedStatus}
+                    hasFinishedFetching={status === actions.charts.finishedStatus}
                   />
                   {status === actions.charts.errorStatus && (
                     <div className="endPageMessage">
@@ -520,18 +520,9 @@ function Catalog(props: ICatalogProps) {
                   )}
                   {/* {status === actions.charts.loadingStatus && isFetching && ( */}
                   {status !== actions.charts.finishedStatus && (
-                    // TODO(agamez): decide which one we prefer: placeholder or spinner
-
-                    // <div className="catalogItemLoaderContainer">
-                    //   <CatalogItemLoader />
-                    //   <CatalogItemLoader />
-                    //   <CatalogItemLoader />
-                    //   <CatalogItemLoader />
-                    // </div>
                     <div className="endPageMessage">
                       <LoadingWrapper loaded={false} />
                       <span>Scroll down to discover more applications</span>
-                      {/* <Spinner text={"Loading more items..."} /> */}
                     </div>
                   )}
                   {!search.query.length && status === actions.charts.finishedStatus && (
@@ -567,8 +558,8 @@ function Catalog(props: ICatalogProps) {
       <div>
         {error && renderError(error)}
         {isEqual(filters, initialFilterState()) &&
-        !repos &&
-        status !== actions.charts.unstartedStatus &&
+        repos.length === 0 &&
+        status === actions.charts.finishedStatus &&
         charts.length === 0 &&
         csvs.length === 0
           ? renderEmptyCatalog()

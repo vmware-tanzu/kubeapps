@@ -14,7 +14,6 @@ import {
 
 export const reachEnd = createAction("REACH_END");
 
-export const unstartedStatus = "UNSTARTED";
 export const idleStatus = "IDLE";
 export const errorStatus = "ERROR";
 export const loadingStatus = "LOADING";
@@ -120,6 +119,9 @@ export function fetchChartsWithPagination(
     try {
       if (page === nextPage && !(query === "" && size === 0)) {
         dispatch(requestCharts(page)); // set the current processing page
+        if (query.length > 0) {
+          requestChartsSearch(query);
+        }
         const charts = await Chart.fetchChartsWithPagination(
           cluster,
           namespace,
@@ -129,7 +131,11 @@ export function fetchChartsWithPagination(
           size,
         );
         if (charts && charts.length > 0) {
-          dispatch(receiveCharts(charts));
+          if (query.length > 0) {
+            dispatch(receiveChartsSearch(charts, query));
+          } else {
+            dispatch(receiveCharts(charts));
+          }
         } else {
           dispatch(reachEnd());
         }
@@ -137,34 +143,6 @@ export function fetchChartsWithPagination(
       } else {
         return [];
       }
-    } catch (e) {
-      dispatch(errorChart(new FetchError(e.message)));
-      return [];
-    }
-  };
-}
-
-export function fetchChartsSearch(
-  cluster: string,
-  namespace: string,
-  repos: string,
-  query: string,
-  page: number,
-  size: number,
-): ThunkAction<Promise<IChart[]>, IStoreState, null, ChartsAction> {
-  return async dispatch => {
-    dispatch(requestChartsSearch(query));
-    try {
-      const charts = await Chart.fetchChartsWithPagination(
-        cluster,
-        namespace,
-        repos,
-        query,
-        page,
-        size,
-      );
-      dispatch(receiveChartsSearch(charts, query));
-      return charts;
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
       return [];

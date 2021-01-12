@@ -47,8 +47,6 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
           nextPage,
         ),
       ),
-    fetchChartsSearch: (cluster: string, namespace: string, repos: string, query: string) =>
-      dispatch(actions.charts.fetchChartsSearch(cluster, namespace, repos, query, 1, 0)),
     fetchChartCategories: (cluster: string, namespace: string, repos: string) =>
       dispatch(actions.charts.fetchChartCategories(cluster, namespace, repos)),
     resetChartsSearch: () => dispatch(actions.charts.resetChartsSearch()),

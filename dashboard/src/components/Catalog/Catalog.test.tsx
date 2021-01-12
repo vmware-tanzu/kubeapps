@@ -11,7 +11,7 @@ import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
-  status: actions.charts.unstartedStatus,
+  status: actions.charts.idleStatus,
   nextPage: 1,
   page: 1,
   size: 100,

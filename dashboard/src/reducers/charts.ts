@@ -7,7 +7,7 @@ import { NamespaceAction } from "../actions/namespace";
 import { IChartState } from "../shared/types";
 
 export const initialState: IChartState = {
-  status: actions.charts.unstartedStatus,
+  status: actions.charts.idleStatus,
   nextPage: 1,
   page: 1,
   size: 100,
