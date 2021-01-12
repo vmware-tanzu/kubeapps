@@ -72,7 +72,13 @@ export default function Param({
     paramDeploymentEvent?: DeploymentEvent,
   ): boolean => {
     if (paramDeploymentEvent == null) {
-      return getValue(appValues, path) === (expectedValue ?? true);
+      let val = getValue(appValues, path);
+      // no value is provided, but there is a default one in the schema (hidden.value)
+      // https://github.com/kubeapps/kubeapps/issues/1913
+      if (!val && typeof param.hidden === "object") {
+        val = param.hidden?.value;
+      }
+      return val === (expectedValue ?? true);
     } else {
       return paramDeploymentEvent === deploymentEvent;
     }
