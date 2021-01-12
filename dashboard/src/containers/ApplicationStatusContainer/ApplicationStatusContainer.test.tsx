@@ -1,5 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
+import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
@@ -14,6 +15,7 @@ const clusterName = "cluster-Name";
 const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
     items: resources,
+    kinds: initialKinds,
     sockets: {},
   };
   return mockStore({ kube: state, config: { featureFlags: {} } });
@@ -37,6 +39,8 @@ describe("ApplicationStatusContainer", () => {
         },
       } as IResource,
       clusterName,
+      "deployments",
+      true,
     );
     const wrapper = shallow(
       <ApplicationStatusContainer

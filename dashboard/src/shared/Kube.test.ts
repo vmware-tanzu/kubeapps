@@ -16,43 +16,83 @@ describe("App", () => {
     [
       {
         description: "returns the version and resource",
-        args: [clusterName, "v1", "pods"],
-        result: `api/clusters/${clusterName}/api/v1/pods`,
-      },
-      {
-        description: "returns the version and resource",
-        args: [clusterName, "v1", "pods"],
-        result: `api/clusters/${clusterName}/api/v1/pods`,
-      },
-      {
-        description: "returns the version and resource",
-        args: [clusterName, "v1", "pods"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "v1",
+          resource: "pods",
+          namespaced: true,
+        },
         result: `api/clusters/${clusterName}/api/v1/pods`,
       },
       {
         description: "defaults version to api/v1 if undefined",
-        args: [clusterName, "", "pods"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+        },
         result: `api/clusters/${clusterName}/api/v1/pods`,
       },
       {
+        description: "skips the namespace if non-namespaced",
+        args: {
+          cluster: clusterName,
+          apiVersion: "v1",
+          resource: "clusterroles",
+          namespaced: false,
+          namespace: "default",
+        },
+        result: `api/clusters/${clusterName}/api/v1/clusterroles`,
+      },
+      {
         description: "returns the version, resource in a namespace",
-        args: [clusterName, "v1", "pods", "default"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+          namespace: "default",
+        },
         result: `api/clusters/${clusterName}/api/v1/namespaces/default/pods`,
       },
       {
         description: "returns the version, resource in a namespace with a name",
-        args: [clusterName, "v1", "pods", "default", "foo"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+          namespace: "default",
+          name: "foo",
+        },
         result: `api/clusters/${clusterName}/api/v1/namespaces/default/pods/foo`,
       },
       {
         description: "returns the version, resource in a namespace with a name and a query",
-        args: [clusterName, "v1", "pods", "default", "foo", "label=bar"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+          namespace: "default",
+          name: "foo",
+          label: "label=bar",
+        },
         result: `api/clusters/${clusterName}/api/v1/namespaces/default/pods/foo?label=bar`,
       },
     ].forEach(t => {
       it(t.description, () => {
         expect(
-          Kube.getResourceURL(t.args[0], t.args[1], t.args[2], t.args[3], t.args[4], t.args[5]),
+          Kube.getResourceURL(
+            t.args.cluster,
+            t.args.apiVersion,
+            t.args.resource,
+            t.args.namespaced,
+            t.args.namespace,
+            t.args.name,
+            t.args.label,
+          ),
         ).toBe(t.result);
       });
     });
@@ -62,28 +102,62 @@ describe("App", () => {
     [
       {
         description: "returns the version and resource",
-        args: [clusterName, "v1", "pods"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+        },
         result: `ws://localhost/api/clusters/${clusterName}/api/v1/pods?watch=true`,
       },
       {
         description: "returns the version, resource in a namespace",
-        args: [clusterName, "v1", "pods", "default"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+          namespace: "default",
+        },
         result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true`,
       },
       {
         description: "returns the version, resource in a namespace with a name",
-        args: [clusterName, "v1", "pods", "default", "foo"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+          namespace: "default",
+          name: "foo",
+        },
         result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
       },
       {
         description: "returns the version, resource in a namespace with a name and a query",
-        args: [clusterName, "v1", "pods", "default", "foo", "label=bar"],
+        args: {
+          cluster: clusterName,
+          apiVersion: "",
+          resource: "pods",
+          namespaced: true,
+          namespace: "default",
+          name: "foo",
+          query: "label=bar",
+        },
         result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo&label=bar`,
       },
     ].forEach(t => {
       it(t.description, () => {
         expect(
-          Kube.watchResourceURL(t.args[0], t.args[1], t.args[2], t.args[3], t.args[4], t.args[5]),
+          Kube.watchResourceURL(
+            t.args.cluster,
+            t.args.apiVersion,
+            t.args.resource,
+            t.args.namespaced,
+            t.args.namespace,
+            t.args.name,
+            t.args.query,
+          ),
         ).toBe(t.result);
       });
     });
@@ -99,7 +173,7 @@ describe("App", () => {
     });
     it("should request a resource", async () => {
       expect(
-        await Kube.getResource(clusterName, "v1", "pods", "default", "foo", "label=bar"),
+        await Kube.getResource(clusterName, "v1", "pods", true, "default", "foo", "label=bar"),
       ).toEqual({
         data: resource,
       });
@@ -111,12 +185,145 @@ describe("App", () => {
 
   describe("watchResource", () => {
     it("should open a socket", async () => {
-      const socket = Kube.watchResource(clusterName, "v1", "pods", "default", "foo");
+      const socket = Kube.watchResource(clusterName, "v1", "pods", true, "default", "foo");
       expect(socket.url).toBe(
         `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
       );
       // it's a mock socket, so doesn't actually need to be closed
       socket.close();
+    });
+  });
+
+  describe("getAPIGroups", () => {
+    const groups = [
+      {
+        name: "apiregistration.k8s.io",
+        versions: [
+          {
+            groupVersion: "apiregistration.k8s.io/v1",
+            version: "v1",
+          },
+        ],
+        preferredVersion: {
+          groupVersion: "apiregistration.k8s.io/v1",
+          version: "v1",
+        },
+      },
+    ];
+    beforeEach(() => {
+      moxios.stubRequest(/.*/, {
+        // Sample response to /apis
+        response: { kind: "APIGroupList", apiVersion: "v1", groups },
+        status: 200,
+      });
+    });
+
+    it("should request API groups", async () => {
+      expect(await Kube.getAPIGroups(clusterName)).toEqual(groups);
+      expect(moxios.requests.mostRecent().url).toBe(`api/clusters/${clusterName}/apis`);
+    });
+  });
+
+  describe("getResourceKinds", () => {
+    [
+      {
+        description: "returns v1 kinds",
+        apiV1Response: {
+          // Sample response to /api/v1
+          response: {
+            resources: [{ kind: "Pod", name: "pods", namespaced: true }],
+          },
+          status: 200,
+        },
+        groups: [],
+        result: {
+          Pod: {
+            apiVersion: "v1",
+            plural: "pods",
+            namespaced: true,
+          },
+        },
+      },
+      {
+        description: "returns additional groups kinds",
+        apiV1Response: {
+          // Sample response to /api/v1
+          response: {
+            resources: [{ kind: "Pod", name: "pods", namespaced: true }],
+          },
+          status: 200,
+        },
+        groups: [
+          {
+            input: { preferredVersion: { groupVersion: "rbac.authorization.k8s.io/v1" } },
+            apiResponse: {
+              response: {
+                resources: [{ kind: "Role", name: "roles", namespaced: true }],
+              },
+            },
+          },
+        ],
+        result: {
+          Pod: {
+            apiVersion: "v1",
+            plural: "pods",
+            namespaced: true,
+          },
+          Role: {
+            apiVersion: "rbac.authorization.k8s.io/v1",
+            plural: "roles",
+            namespaced: true,
+          },
+        },
+      },
+      {
+        description: "ignores subresources",
+        apiV1Response: {
+          // Sample response to /api/v1
+          response: {
+            resources: [
+              { kind: "Pod", name: "pods", namespaced: true },
+              { kind: "Pod", name: "pods/portforward", namespaced: true },
+            ],
+          },
+          status: 200,
+        },
+        groups: [
+          {
+            input: { preferredVersion: { groupVersion: "rbac.authorization.k8s.io/v1" } },
+            apiResponse: {
+              response: {
+                resources: [
+                  { kind: "Role", name: "roles", namespaced: true },
+                  { kind: "Role", name: "roles/other", namespaced: true },
+                ],
+              },
+            },
+          },
+        ],
+        result: {
+          Pod: {
+            apiVersion: "v1",
+            plural: "pods",
+            namespaced: true,
+          },
+          Role: {
+            apiVersion: "rbac.authorization.k8s.io/v1",
+            plural: "roles",
+            namespaced: true,
+          },
+        },
+      },
+    ].forEach(t => {
+      it(t.description, async () => {
+        moxios.stubRequest(/.*api\/v1/, t.apiV1Response);
+        const groups: any[] = [];
+        t.groups.forEach((g: any) => {
+          groups.push(g.input);
+          moxios.stubOnce("GET", /.*apis\/.*/, g.apiResponse);
+        });
+        expect(await Kube.getResourceKinds("cluster", groups)).toEqual(t.result);
+      });
     });
   });
 

@@ -16,6 +16,8 @@ const sampleResourceRef = {
   name: "foo",
   namespace: "default",
   filter: "",
+  plural: "secrets",
+  namespaced: true,
   getResourceURL: jest.fn(() => "secret-foo"),
   watchResourceURL: jest.fn(),
   getResource: jest.fn(),

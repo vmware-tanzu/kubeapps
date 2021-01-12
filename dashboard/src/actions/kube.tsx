@@ -1,4 +1,5 @@
 import { ThunkAction } from "redux-thunk";
+import { Kube } from "shared/Kube";
 import { ActionType, createAction } from "typesafe-actions";
 import ResourceRef from "../shared/ResourceRef";
 import { IK8sList, IResource, IStoreState } from "../shared/types";
@@ -10,6 +11,16 @@ export const requestResource = createAction("REQUEST_RESOURCE", resolve => {
 export const receiveResource = createAction("RECEIVE_RESOURCE", resolve => {
   return (resource: { key: string; resource: IResource | IK8sList<IResource, {}> }) =>
     resolve(resource);
+});
+
+export const requestResourceKinds = createAction("REQUEST_RESOURCE_KINDS");
+
+export const receiveResourceKinds = createAction("RECEIVE_RESOURCE_KINDS", resolve => {
+  return (kinds: {}) => resolve(kinds);
+});
+
+export const receiveKindsError = createAction("RECEIVE_KIND_API_ERROR", resolve => {
+  return (err: Error) => resolve(err);
 });
 
 export const receiveResourceFromList = createAction("RECEIVE_RESOURCE_FROM_LIST", resolve => {
@@ -41,9 +52,27 @@ const allActions = [
   openWatchResource,
   closeWatchResource,
   receiveResourceFromList,
+  requestResourceKinds,
+  receiveResourceKinds,
+  receiveKindsError,
 ];
 
 export type KubeAction = ActionType<typeof allActions[number]>;
+
+export function getResourceKinds(
+  cluster: string,
+): ThunkAction<Promise<void>, IStoreState, null, KubeAction> {
+  return async dispatch => {
+    dispatch(requestResourceKinds());
+    try {
+      const groups = await Kube.getAPIGroups(cluster);
+      const kinds = await Kube.getResourceKinds(cluster, groups);
+      dispatch(receiveResourceKinds(kinds));
+    } catch (e) {
+      dispatch(receiveKindsError(e));
+    }
+  };
+}
 
 export function getResource(
   ref: ResourceRef,

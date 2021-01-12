@@ -15,7 +15,14 @@ import PageHeader from "components/PageHeader/PageHeader";
 import { Link } from "react-router-dom";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import ResourceRef from "../../shared/ResourceRef";
-import { DeleteError, FetchError, IK8sList, IRelease, IResource } from "../../shared/types";
+import {
+  DeleteError,
+  FetchError,
+  IK8sList,
+  IKubeState,
+  IRelease,
+  IResource,
+} from "../../shared/types";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
@@ -29,6 +36,7 @@ import ResourceTabs from "./ResourceTabs";
 
 export interface IAppViewProps {
   cluster: string;
+  kinds: IKubeState["kinds"];
   namespace: string;
   releaseName: string;
   app?: IRelease;
@@ -55,6 +63,7 @@ export interface IAppViewResourceRefs {
 
 function parseResources(
   resources: Array<IResource | IK8sList<IResource, {}>>,
+  kinds: IKubeState["kinds"],
   cluster: string,
   releaseNamespace: string,
 ) {
@@ -77,34 +86,49 @@ function parseResources(
       // the List, concatenating items from both.
       assignWith(
         result,
-        parseResources((i as IK8sList<IResource, {}>).items, cluster, releaseNamespace),
+        parseResources((i as IK8sList<IResource, {}>).items, kinds, cluster, releaseNamespace),
         // Merge the list with the current result
         (prev, newArray) => prev.concat(newArray),
       );
     } else {
       const item = i as IResource;
       const resource = { isFetching: true, item };
+      const kind = kinds[item.kind] || {};
       switch (i.kind) {
         case "Deployment":
-          result.deployments.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          result.deployments.push(
+            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
+          );
           break;
         case "StatefulSet":
-          result.statefulsets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          result.statefulsets.push(
+            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
+          );
           break;
         case "DaemonSet":
-          result.daemonsets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          result.daemonsets.push(
+            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
+          );
           break;
         case "Service":
-          result.services.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          result.services.push(
+            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
+          );
           break;
         case "Ingress":
-          result.ingresses.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          result.ingresses.push(
+            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
+          );
           break;
         case "Secret":
-          result.secrets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          result.secrets.push(
+            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
+          );
           break;
         default:
-          result.otherResources.push(new ResourceRef(resource.item, cluster, releaseNamespace));
+          result.otherResources.push(
+            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
+          );
       }
     }
   });
@@ -117,6 +141,7 @@ export default function AppView({
   releaseName,
   app,
   error,
+  kinds,
   getAppWithUpdateInfo,
 }: IAppViewProps) {
   const [resourceRefs, setResourceRefs] = useState({
@@ -144,8 +169,8 @@ export default function AppView({
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
-    setResourceRefs(parseResources(parsedManifest, cluster, app.namespace));
-  }, [app, cluster]);
+    setResourceRefs(parseResources(parsedManifest, kinds, cluster, app.namespace));
+  }, [app, cluster, kinds]);
 
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Application not found. Received: {error.message}</Alert>;
