@@ -10,8 +10,8 @@ import TextParam from "./TextParam";
 interface IParamProps {
   appValues: string;
   param: IBasicFormParam;
+  allParams: IBasicFormParam[];
   id: string;
-  otherParams: IBasicFormParam[];
   handleBasicFormParamChange: (
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
@@ -22,7 +22,7 @@ interface IParamProps {
 export default function Param({
   appValues,
   param,
-  otherParams,
+  allParams,
   id,
   handleBasicFormParamChange,
   handleValuesChange,
@@ -68,6 +68,19 @@ export default function Param({
     }
   };
 
+  const getParamMatchingPath = (params: IBasicFormParam[], path: string): any => {
+    let targetParam;
+    for (const p of params) {
+      if (p.path === path) {
+        targetParam = p;
+        break;
+      } else if (p.children && p.children?.length > 0) {
+        targetParam = getParamMatchingPath(p.children, path);
+      }
+    }
+    return targetParam;
+  };
+
   const evalCondition = (
     path: string,
     expectedValue?: any,
@@ -78,7 +91,7 @@ export default function Param({
       // retrieve the value that the property pointed by path should have to be hidden.
       // https://github.com/kubeapps/kubeapps/issues/1913
       if (val === undefined) {
-        const target = otherParams.find(p => p.path === path);
+        const target = getParamMatchingPath(allParams, path);
         val = target?.value;
       }
       return val === (expectedValue ?? true);
@@ -105,6 +118,7 @@ export default function Param({
         handleValuesChange={handleValuesChange}
         appValues={appValues}
         param={param}
+        allParams={allParams}
         deploymentEvent={deploymentEvent}
       />
     );

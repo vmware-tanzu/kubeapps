@@ -18,46 +18,13 @@ exports[`should render a external database section 1`] = `
     </span>
   </div>
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
     handleValuesChange={[MockFunction]}
     id="externalDatabase.database-0"
     key="externalDatabase.database-0"
-    otherParams={
-      Array [
-        Object {
-          "path": "externalDatabase.database",
-          "type": "string",
-          "value": "bitnami_wordpress",
-        },
-        Object {
-          "path": "externalDatabase.host",
-          "type": "string",
-          "value": "localhost",
-        },
-        Object {
-          "path": "externalDatabase.password",
-          "type": "string",
-        },
-        Object {
-          "path": "externalDatabase.port",
-          "type": "integer",
-          "value": 3306,
-        },
-        Object {
-          "path": "externalDatabase.user",
-          "type": "string",
-          "value": "bn_wordpress",
-        },
-        Object {
-          "path": "mariadb.enabled",
-          "title": "Enable External Database",
-          "type": "boolean",
-          "value": true,
-        },
-      ]
-    }
     param={
       Object {
         "path": "externalDatabase.database",
@@ -67,46 +34,13 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
     handleValuesChange={[MockFunction]}
     id="externalDatabase.host-1"
     key="externalDatabase.host-1"
-    otherParams={
-      Array [
-        Object {
-          "path": "externalDatabase.database",
-          "type": "string",
-          "value": "bitnami_wordpress",
-        },
-        Object {
-          "path": "externalDatabase.host",
-          "type": "string",
-          "value": "localhost",
-        },
-        Object {
-          "path": "externalDatabase.password",
-          "type": "string",
-        },
-        Object {
-          "path": "externalDatabase.port",
-          "type": "integer",
-          "value": 3306,
-        },
-        Object {
-          "path": "externalDatabase.user",
-          "type": "string",
-          "value": "bn_wordpress",
-        },
-        Object {
-          "path": "mariadb.enabled",
-          "title": "Enable External Database",
-          "type": "boolean",
-          "value": true,
-        },
-      ]
-    }
     param={
       Object {
         "path": "externalDatabase.host",
@@ -116,46 +50,13 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
     handleValuesChange={[MockFunction]}
     id="externalDatabase.password-2"
     key="externalDatabase.password-2"
-    otherParams={
-      Array [
-        Object {
-          "path": "externalDatabase.database",
-          "type": "string",
-          "value": "bitnami_wordpress",
-        },
-        Object {
-          "path": "externalDatabase.host",
-          "type": "string",
-          "value": "localhost",
-        },
-        Object {
-          "path": "externalDatabase.password",
-          "type": "string",
-        },
-        Object {
-          "path": "externalDatabase.port",
-          "type": "integer",
-          "value": 3306,
-        },
-        Object {
-          "path": "externalDatabase.user",
-          "type": "string",
-          "value": "bn_wordpress",
-        },
-        Object {
-          "path": "mariadb.enabled",
-          "title": "Enable External Database",
-          "type": "boolean",
-          "value": true,
-        },
-      ]
-    }
     param={
       Object {
         "path": "externalDatabase.password",
@@ -164,46 +65,13 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
     handleValuesChange={[MockFunction]}
     id="externalDatabase.port-3"
     key="externalDatabase.port-3"
-    otherParams={
-      Array [
-        Object {
-          "path": "externalDatabase.database",
-          "type": "string",
-          "value": "bitnami_wordpress",
-        },
-        Object {
-          "path": "externalDatabase.host",
-          "type": "string",
-          "value": "localhost",
-        },
-        Object {
-          "path": "externalDatabase.password",
-          "type": "string",
-        },
-        Object {
-          "path": "externalDatabase.port",
-          "type": "integer",
-          "value": 3306,
-        },
-        Object {
-          "path": "externalDatabase.user",
-          "type": "string",
-          "value": "bn_wordpress",
-        },
-        Object {
-          "path": "mariadb.enabled",
-          "title": "Enable External Database",
-          "type": "boolean",
-          "value": true,
-        },
-      ]
-    }
     param={
       Object {
         "path": "externalDatabase.port",
@@ -213,46 +81,13 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
     handleValuesChange={[MockFunction]}
     id="externalDatabase.user-4"
     key="externalDatabase.user-4"
-    otherParams={
-      Array [
-        Object {
-          "path": "externalDatabase.database",
-          "type": "string",
-          "value": "bitnami_wordpress",
-        },
-        Object {
-          "path": "externalDatabase.host",
-          "type": "string",
-          "value": "localhost",
-        },
-        Object {
-          "path": "externalDatabase.password",
-          "type": "string",
-        },
-        Object {
-          "path": "externalDatabase.port",
-          "type": "integer",
-          "value": 3306,
-        },
-        Object {
-          "path": "externalDatabase.user",
-          "type": "string",
-          "value": "bn_wordpress",
-        },
-        Object {
-          "path": "mariadb.enabled",
-          "title": "Enable External Database",
-          "type": "boolean",
-          "value": true,
-        },
-      ]
-    }
     param={
       Object {
         "path": "externalDatabase.user",
@@ -262,46 +97,13 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
     handleValuesChange={[MockFunction]}
     id="mariadb.enabled-5"
     key="mariadb.enabled-5"
-    otherParams={
-      Array [
-        Object {
-          "path": "externalDatabase.database",
-          "type": "string",
-          "value": "bitnami_wordpress",
-        },
-        Object {
-          "path": "externalDatabase.host",
-          "type": "string",
-          "value": "localhost",
-        },
-        Object {
-          "path": "externalDatabase.password",
-          "type": "string",
-        },
-        Object {
-          "path": "externalDatabase.port",
-          "type": "integer",
-          "value": 3306,
-        },
-        Object {
-          "path": "externalDatabase.user",
-          "type": "string",
-          "value": "bn_wordpress",
-        },
-        Object {
-          "path": "mariadb.enabled",
-          "title": "Enable External Database",
-          "type": "boolean",
-          "value": true,
-        },
-      ]
-    }
     param={
       Object {
         "path": "mariadb.enabled",

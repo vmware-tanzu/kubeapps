@@ -24,12 +24,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
       key="size-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="size-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "size",
@@ -39,6 +34,11 @@ exports[`renders a basic deployment with a disk size 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="size-0"
         param={
           Object {
             "path": "size",
@@ -399,12 +399,7 @@ exports[`renders a basic deployment with a email 1`] = `
       key="wordpressEmail-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="wordpressEmail-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "wordpressEmail",
@@ -412,6 +407,11 @@ exports[`renders a basic deployment with a email 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="wordpressEmail-0"
         param={
           Object {
             "path": "wordpressEmail",
@@ -493,12 +493,7 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
       key="enableMetrics-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="enableMetrics-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "enableMetrics",
@@ -507,6 +502,11 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="enableMetrics-0"
         param={
           Object {
             "path": "enableMetrics",
@@ -697,12 +697,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
       key="replicas-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="replicas-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "replicas",
@@ -711,6 +706,11 @@ exports[`renders a basic deployment with a generic number 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="replicas-0"
         param={
           Object {
             "path": "replicas",
@@ -795,12 +795,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
       key="blogName-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="blogName-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "blogName",
@@ -809,6 +804,11 @@ exports[`renders a basic deployment with a generic string 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="blogName-0"
         param={
           Object {
             "path": "blogName",
@@ -894,12 +894,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
       key="size-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="size-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "size",
@@ -909,6 +904,11 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="size-0"
         param={
           Object {
             "path": "size",
@@ -1271,12 +1271,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
       key="size-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="size-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "size",
@@ -1286,6 +1281,11 @@ exports[`renders a basic deployment with a number disk size 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="size-0"
         param={
           Object {
             "path": "size",
@@ -1646,12 +1646,7 @@ exports[`renders a basic deployment with a password 1`] = `
       key="wordpressPassword-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="wordpressPassword-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "wordpressPassword",
@@ -1659,6 +1654,11 @@ exports[`renders a basic deployment with a password 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="wordpressPassword-0"
         param={
           Object {
             "path": "wordpressPassword",
@@ -1739,12 +1739,7 @@ exports[`renders a basic deployment with a username 1`] = `
       key="wordpressUsername-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="wordpressUsername-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "wordpressUsername",
@@ -1752,6 +1747,11 @@ exports[`renders a basic deployment with a username 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="wordpressUsername-0"
         param={
           Object {
             "path": "wordpressUsername",
@@ -1835,12 +1835,7 @@ Second line",
       key="configuration-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="configuration-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "configuration",
@@ -1851,6 +1846,11 @@ Second line",
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="configuration-0"
         param={
           Object {
             "path": "configuration",
@@ -1945,12 +1945,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
       key="size-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="size-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "size",
@@ -1964,6 +1959,11 @@ exports[`renders a basic deployment with slider parameters 1`] = `
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="size-0"
         param={
           Object {
             "path": "size",
@@ -2351,12 +2351,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="wordpressUsername-0"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="wordpressUsername-0"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "wordpressUsername",
@@ -2377,6 +2372,11 @@ exports[`renders a basic deployment with username, password, email and a generic
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="wordpressUsername-0"
         param={
           Object {
             "path": "wordpressUsername",
@@ -2448,12 +2448,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="wordpressPassword-1"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="wordpressPassword-1"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "wordpressUsername",
@@ -2474,6 +2469,11 @@ exports[`renders a basic deployment with username, password, email and a generic
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="wordpressPassword-1"
         param={
           Object {
             "path": "wordpressPassword",
@@ -2545,12 +2545,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="wordpressEmail-2"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="wordpressEmail-2"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "wordpressUsername",
@@ -2571,6 +2566,11 @@ exports[`renders a basic deployment with username, password, email and a generic
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="wordpressEmail-2"
         param={
           Object {
             "path": "wordpressEmail",
@@ -2642,12 +2642,7 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="blogName-3"
     >
       <Param
-        appValues=""
-        deploymentEvent="install"
-        handleBasicFormParamChange={[MockFunction]}
-        handleValuesChange={[MockFunction]}
-        id="blogName-3"
-        otherParams={
+        allParams={
           Array [
             Object {
               "path": "wordpressUsername",
@@ -2668,6 +2663,11 @@ exports[`renders a basic deployment with username, password, email and a generic
             },
           ]
         }
+        appValues=""
+        deploymentEvent="install"
+        handleBasicFormParamChange={[MockFunction]}
+        handleValuesChange={[MockFunction]}
+        id="blogName-3"
         param={
           Object {
             "path": "blogName",

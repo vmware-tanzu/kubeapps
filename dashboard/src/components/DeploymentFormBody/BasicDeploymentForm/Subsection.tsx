@@ -7,6 +7,7 @@ import Param from "./Param";
 export interface ISubsectionProps {
   label: string;
   param: IBasicFormParam;
+  allParams: IBasicFormParam[];
   appValues: string;
   deploymentEvent: DeploymentEvent;
   handleValuesChange: (value: string) => void;
@@ -15,6 +16,7 @@ export interface ISubsectionProps {
 function Subsection({
   label,
   param,
+  allParams,
   appValues,
   deploymentEvent,
   handleValuesChange,
@@ -46,7 +48,7 @@ function Subsection({
           return (
             <Param
               param={childrenParam}
-              otherParams={param.children ? param.children : []}
+              allParams={allParams}
               id={id}
               key={id}
               handleBasicFormParamChange={handleChildrenParamChange}
