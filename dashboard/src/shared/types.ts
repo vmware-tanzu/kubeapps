@@ -49,7 +49,7 @@ export interface IRepo {
 
 export interface IChartCategory {
   name: string;
-  count: IChartVersionAttributes;
+  count: number;
 }
 
 export interface IChartVersion {
