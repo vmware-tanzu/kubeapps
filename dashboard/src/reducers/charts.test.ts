@@ -14,7 +14,6 @@ describe("chartReducer", () => {
       size: 100,
       isFetching: false,
       items: [],
-      categories: [],
       selected: {
         versions: [],
       },

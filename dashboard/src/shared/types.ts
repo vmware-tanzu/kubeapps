@@ -47,11 +47,6 @@ export interface IRepo {
   url: string;
 }
 
-export interface IChartCategory {
-  name: string;
-  count: IChartVersionAttributes;
-}
-
 export interface IChartVersion {
   id: string;
   attributes: IChartVersionAttributes;
@@ -118,7 +113,6 @@ export interface IChartState {
     items: IChart[];
     query: string;
   };
-  categories: IChartCategory[];
 }
 
 export interface IChartUpdateInfo {

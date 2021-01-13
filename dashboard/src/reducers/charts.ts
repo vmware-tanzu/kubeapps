@@ -17,7 +17,6 @@ export const initialState: IChartState = {
     items: [],
     query: "",
   },
-  categories: [],
   selected: {
     versions: [],
   },
@@ -68,12 +67,6 @@ const chartsReducer = (
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.receiveChartCategories):
-      return {
-        ...state,
-        isFetching: false,
-        categories: action.payload,
-      };
     case getType(actions.charts.selectChartVersion):
       return {
         ...state,
@@ -116,11 +109,6 @@ const chartsReducer = (
         nextPage: action.payload + 1 > state.nextPage ? action.payload + 1 : state.nextPage,
         // status: state.status === actions.charts.finishedStatus ? state.status : actions.charts.loadingStatus,
         status: actions.charts.loadingStatus,
-      };
-    case getType(actions.charts.requestChartsCategories):
-      return {
-        ...state,
-        isFetching: true,
       };
     case getType(actions.charts.requestChartsVersions):
       return {

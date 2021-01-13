@@ -32,7 +32,6 @@ const defaultProps = {
   filter: {},
   fetchChartsWithPagination: jest.fn(),
   fetchChartsSearch: jest.fn(),
-  fetchChartCategories: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
   namespace: "kubeapps",

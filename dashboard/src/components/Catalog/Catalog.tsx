@@ -57,7 +57,6 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  fetchChartCategories: (cluster: string, namespace: string, repo: string) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
@@ -99,10 +98,8 @@ function Catalog(props: ICatalogProps) {
       selected: { error },
       items: charts,
       search,
-      categories,
     },
     fetchChartsWithPagination,
-    fetchChartCategories,
     getCSVs,
     cluster,
     namespace,
@@ -117,7 +114,10 @@ function Catalog(props: ICatalogProps) {
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
   const [currentSearchQuery, setCurrentSearchQuery] = useState("");
-  const [currentRepo, setCurrentRepo] = useState("");
+  const initialRepoValue = propsFilter[filterNames.REPO]
+    ? String(propsFilter[filterNames.REPO])
+    : "";
+  const [currentRepo, setCurrentRepo] = useState(initialRepoValue);
 
   const pushFilters = (newFilters: any, type: string) => {
     dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
@@ -134,7 +134,7 @@ function Catalog(props: ICatalogProps) {
         size,
         nextPage,
       );
-      fetchChartCategories(cluster, namespace, newFilters[filterNames.REPO]); // get corresponding categories
+      // fetchChartCategories(cluster, namespace, newFilters[filterNames.REPO]); // get corresponding categories
     }
   };
   const addFilter = (type: string, value: string) => {
@@ -176,8 +176,8 @@ function Catalog(props: ICatalogProps) {
   const allRepos = uniq(repos.map(c => c.metadata.name));
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
-    categories
-      .map(c => categoryToReadable(c.name))
+    charts
+      .map(c => categoryToReadable(c.attributes.category))
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
@@ -189,10 +189,7 @@ function Catalog(props: ICatalogProps) {
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
-    const repo = propsFilter[filterNames.REPO]?.toString();
-    if (repo) {
-      setCurrentRepo(repo);
-    }
+    setCurrentRepo(propsFilter[filterNames.REPO] ? String(propsFilter[filterNames.REPO]) : "");
     setFilters({
       ...initialFilterState(),
       ...newFilters,
@@ -227,11 +224,6 @@ function Catalog(props: ICatalogProps) {
     size,
     nextPage,
   ]);
-
-  useEffect(() => {
-    // when the current repo changes, re-fetch categories
-    fetchChartCategories(cluster, namespace, currentRepo);
-  }, [fetchChartCategories, cluster, namespace, currentRepo]);
 
   useEffect(() => {
     // when the namespace changes, re-fetch repos

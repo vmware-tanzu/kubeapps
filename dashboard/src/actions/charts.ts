@@ -3,14 +3,7 @@ import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
-import {
-  FetchError,
-  IChart,
-  IChartCategory,
-  IChartVersion,
-  IStoreState,
-  NotFoundError,
-} from "../shared/types";
+import { FetchError, IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 
 export const reachEnd = createAction("REACH_END");
 
@@ -27,8 +20,6 @@ export const requestChartsSearch = createAction("REQUEST_CHARTS_SEARCH", resolve
   return (query: string) => resolve(query);
 });
 
-export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
-
 export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
@@ -37,10 +28,6 @@ export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
 
 export const receiveChartsSearch = createAction("RECEIVE_CHARTS_SEARCH", resolve => {
   return (charts: IChart[], query: string) => resolve(charts, query);
-});
-
-export const receiveChartCategories = createAction("RECEIVE_CHART_CATEGORIES", resolve => {
-  return (categories: IChartCategory[]) => resolve(categories);
 });
 
 export const requestChartsVersions = createAction("REQUEST_CHART_VERSIONS");
@@ -86,14 +73,12 @@ const allActions = [
   errorChart,
   errorReadme,
   reachEnd,
-  receiveChartCategories,
   receiveChartVersions,
   receiveCharts,
   receiveChartsSearch,
   receiveDeployedChartVersion,
   requestChart,
   requestCharts,
-  requestChartsCategories,
   requestChartsSearch,
   requestChartsVersions,
   requestDeployedChartVersion,
@@ -143,26 +128,6 @@ export function fetchChartsWithPagination(
       } else {
         return [];
       }
-    } catch (e) {
-      dispatch(errorChart(new FetchError(e.message)));
-      return [];
-    }
-  };
-}
-
-export function fetchChartCategories(
-  cluster: string,
-  namespace: string,
-  repos: string,
-): ThunkAction<Promise<IChartCategory[]>, IStoreState, null, ChartsAction> {
-  return async dispatch => {
-    dispatch(requestChartsCategories());
-    try {
-      const categories = await Chart.fetchChartCategories(cluster, namespace, repos);
-      if (categories) {
-        dispatch(receiveChartCategories(categories));
-      }
-      return categories;
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
       return [];
