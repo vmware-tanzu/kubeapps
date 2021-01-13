@@ -14,6 +14,7 @@ const defaultChartState = {
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
+  categories: [],
   updatesInfo: {},
 } as IChartState;
 const defaultProps = {
@@ -21,6 +22,7 @@ const defaultProps = {
   repo: "",
   filter: {},
   fetchCharts: jest.fn(),
+  fetchChartCategories: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
   namespace: "kubeapps",
