@@ -80,7 +80,7 @@ Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar
 > If you are serving Kubeapps under a subpath (eg., "example.com/subpath") you will also need to set the `authProxy.oauthLoginURI` and `authProxy.oauthLogoutURI` flags, as well as the additional flag `--proxy-prefix`. For instance:
 
 ```bash
-  # ... other OIDC flags 
+  # ... other OIDC flags
  --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
  --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
  --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"\
@@ -241,3 +241,59 @@ spec:
         path: /
 EOF
 ```
+
+## Debugging auth failures when using OIDC
+
+If you find after configuring your OIDC/OAuth2 setup following the above instructions, that although you can successfully authenticate with your provider you are nonetheless unable to login to Kubeapps but instead see a 403 or 401 request in the browser's debugger, then you will need to investigate *why* the Kubernetes cluster is not accepting your credential.
+
+### Viewing the JWT id token
+
+The easiest way to check the credential that is being used is to temporarily set the `--set-authorization-header=true` option for oauth2 proxy of the kubeapps deployment. Edit the `kubeapps` deployment in the specific namespace on your cluster and add the option to the command for the oauth2 proxy container. Once the deployment runs a new container with the extra option, Kubeapps will then include the `id_token` that is being used to authenticate you with the Kubernetes api server in the response back to the browser.
+
+To view the token, in your browser debugger's Requests tab, watch for the request to `/api/clusters/default` or similar which will have a 40X status. Click on this request to view the headers and in the Response headers look for the `Authentication` header. The value here will be the base64-encoded `id_token`. Copy the value.
+
+
+### Testing the JWT Token directly with your Kubernetes cluster
+
+If the credential is for a real environment, you can decode it on a command line with:
+
+```bash
+export TOKEN=<paste value here>
+echo $TOKEN | base64 -d
+```
+
+to check that the user and groups associated with the credential are what you expect for your Kubernetes server. If the credential is for a test environment, you can instead just paste the value into a site like `https://jwt.io` to have it decoded and neatly formatted.
+
+If the user and group values are what you expected you can then confirm that the appropriate `RoleBinding` or `ClusterRoleBinding` is specified on your cluster.
+
+To use the token value with a query directly to your Kubernetes api server (ie. to verify that Kubeapps isn't actually involved), you can:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" https://my.k8s.cluster/
+```
+
+You should see the same status that you saw in the browser (as Kubeapps is using the token in exactly the same way).
+
+### Checking your Kubernetes cluster OIDC options
+
+Once you can reproduce the issue, there are a couple of possibilities for the cause which commonly trip people up.
+One common issue is that the Kubernetes cluster's api server is not configured for oidc (some people don't realise this is necessary). This is easy to check by grepping for `oidc` in the api server pod output, for example, if your cluster *is* configured for OpenID Connect, you should see something like:
+
+```bash
+$ kubectl -n kube-system get po -l component=kube-apiserver -o yaml | grep oidc
+      - --oidc-ca-file=/etc/kubernetes/pki/apiserver.crt
+      - --oidc-client-id=default
+      - --oidc-groups-claim=groups
+      - '--oidc-groups-prefix=oidc:'
+      - --oidc-issuer-url=https://172.18.0.2:32000
+      - --oidc-username-claim=email
+      - '--oidc-username-prefix=oidc:'
+```
+
+### Checking your OIDC prefix
+
+Another common point of confusion is the `--oidc-username-prefix` option specified above. If it is set to a value such as `oidc:` (or using a [default value](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server) without being set explicitly), then a JWT token identifying a user of `myname@example.com` will require the RBAC RoleBinding to specify the user as `oidc:myname@example.com` to match the OIDC user with the defined RBAC.
+
+### Checking the logs of your Kubernetes API server
+
+Finally, if none of the above are relevant to your issue, you can check the logs of the Kubernetes API server deployment for OIDC-related lines at the time of your login attempt. These may show a configuration issue with the API server itself.
