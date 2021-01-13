@@ -23,6 +23,7 @@ package main
 
 import (
 	"database/sql"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -401,6 +402,14 @@ func TestGetPaginatedChartList(t *testing.T) {
 	}
 }
 
+// ByID implements sort.Interface for []models.Chart based on
+// the ID field.
+type byID []*models.Chart
+
+func (a byID) Len() int           { return len(a) }
+func (a byID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byID) Less(i, j int) bool { return a[i].ID < a[j].ID }
+
 func TestGetChartsWithFilters(t *testing.T) {
 	pgtest.SkipIfNoDB(t)
 	const (
@@ -505,6 +514,8 @@ func TestGetChartsWithFilters(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
+			sort.Sort(byID(charts))
+			sort.Sort(byID(tc.expectedCharts))
 			if got, want := charts, tc.expectedCharts; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
