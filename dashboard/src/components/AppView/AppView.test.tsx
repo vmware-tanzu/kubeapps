@@ -1,11 +1,13 @@
 import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
+import * as ReactRedux from "react-redux";
+import * as ReactRouter from "react-router";
 
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
-import { initialKinds } from "reducers/kube";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError, IResource } from "shared/types";
 import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
 import { hapi } from "../../shared/hapi/release";
@@ -15,6 +17,30 @@ import AppNotes from "./AppNotes";
 import AppViewComponent from "./AppView";
 import ChartInfo from "./ChartInfo/ChartInfo";
 import ResourceTabs from "./ResourceTabs";
+
+const routeParams = {
+  cluster: "cluster-1",
+  namespace: "default",
+  releaseName: "mr-sunshine",
+};
+let spyOnUseDispatch: jest.SpyInstance;
+let spyOnUseParams: jest.SpyInstance;
+const appActions = { ...actions.apps };
+beforeEach(() => {
+  actions.apps = {
+    ...actions.apps,
+    getAppWithUpdateInfo: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  spyOnUseParams = jest.spyOn(ReactRouter, "useParams").mockReturnValue(routeParams);
+});
+
+afterEach(() => {
+  actions.apps = { ...appActions };
+  spyOnUseDispatch.mockRestore();
+  spyOnUseParams.mockRestore();
+});
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -31,17 +57,7 @@ describe("AppViewComponent", () => {
     namespace: "weee",
   });
 
-  const validProps = {
-    app: appRelease,
-    deleteApp: jest.fn(),
-    error: undefined,
-    getAppWithUpdateInfo: jest.fn(),
-    namespace: "my-happy-place",
-    cluster: "default",
-    releaseName: "mr-sunshine",
-    push: jest.fn(),
-    kinds: initialKinds,
-  };
+  const validState = { apps: { selected: appRelease } };
 
   const resources = {
     configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
@@ -75,19 +91,14 @@ describe("AppViewComponent", () => {
   };
 
   it("renders a loading wrapper", () => {
-    const props = {
-      ...validProps,
-      app: { ...validProps.app, info: null },
-    } as any;
-
-    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+    const wrapper = mountWrapper(defaultStore, <AppViewComponent />);
     expect(wrapper.find(LoadingWrapper)).toExist();
   });
 
   it("renders a fetch error only", () => {
     const wrapper = mountWrapper(
-      defaultStore,
-      <AppViewComponent {...validProps} error={new FetchError("not found")} />,
+      getStore({ apps: { error: new FetchError("boom!") } }),
+      <AppViewComponent />,
     );
     expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(PageHeader)).not.toExist();
@@ -106,20 +117,16 @@ describe("AppViewComponent", () => {
         resources.secret,
       ]);
 
-      const props = {
-        ...validProps,
-        app: {
-          ...validProps.app,
-          manifest,
-        } as any,
-      };
-      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+      const wrapper = mountWrapper(
+        getStore({ apps: { selected: { ...appRelease, manifest } } }),
+        <AppViewComponent />,
+      );
 
       const tabs = wrapper.find(ResourceTabs);
       expect(tabs.prop("deployments")).toEqual([
         new ResourceRef(
           resources.deployment,
-          validProps.cluster,
+          routeParams.cluster,
           "deployments",
           true,
           appRelease.namespace,
@@ -128,7 +135,7 @@ describe("AppViewComponent", () => {
       expect(tabs.prop("services")).toEqual([
         new ResourceRef(
           resources.service,
-          validProps.cluster,
+          routeParams.cluster,
           "services",
           true,
           appRelease.namespace,
@@ -137,7 +144,7 @@ describe("AppViewComponent", () => {
       expect(tabs.prop("secrets")).toEqual([
         new ResourceRef(
           resources.secret,
-          validProps.cluster,
+          routeParams.cluster,
           "secrets",
           true,
           appRelease.namespace,
@@ -153,14 +160,10 @@ describe("AppViewComponent", () => {
         resources.secret,
       ]);
 
-      const props = {
-        ...validProps,
-        app: {
-          ...validProps.app,
-          manifest,
-        } as any,
-      };
-      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+      const wrapper = mountWrapper(
+        getStore({ apps: { selected: { ...appRelease, manifest } } }),
+        <AppViewComponent />,
+      );
 
       const tabs = wrapper.find(ResourceTabs);
       const otherResources: ResourceRef[] = tabs.prop("otherResources");
@@ -180,14 +183,10 @@ describe("AppViewComponent", () => {
         " ",
       ]);
 
-      const props = {
-        ...validProps,
-        app: {
-          ...validProps.app,
-          manifest,
-        } as any,
-      };
-      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+      const wrapper = mountWrapper(
+        getStore({ apps: { selected: { ...appRelease, manifest } } }),
+        <AppViewComponent />,
+      );
 
       const tabs = wrapper.find(ResourceTabs);
       expect(tabs.prop("otherResources")).toEqual([]);
@@ -207,15 +206,11 @@ describe("AppViewComponent", () => {
           chart: cm-1.2.3
 `;
 
-      const props = {
-        ...validProps,
-        app: {
-          ...validProps.app,
-          manifest,
-        } as any,
-      };
       expect(() => {
-        mountWrapper(defaultStore, <AppViewComponent {...props} />);
+        mountWrapper(
+          getStore({ apps: { selected: { ...appRelease, manifest } } }),
+          <AppViewComponent />,
+        );
       }).not.toThrow();
     });
 
@@ -227,15 +222,11 @@ describe("AppViewComponent", () => {
         name: !!string foo
 `;
 
-      const props = {
-        ...validProps,
-        app: {
-          ...validProps.app,
-          manifest,
-        } as any,
-      };
       expect(() => {
-        const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+        const wrapper = mountWrapper(
+          getStore({ apps: { selected: { ...appRelease, manifest } } }),
+          <AppViewComponent />,
+        );
         const tabs = wrapper.find(ResourceTabs);
         expect(tabs.prop("deployments")[0].name).toEqual("foo");
       }).not.toThrow();
@@ -244,7 +235,7 @@ describe("AppViewComponent", () => {
 
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
-      const wrapper = mountWrapper(defaultStore, <AppViewComponent {...validProps} />);
+      const wrapper = mountWrapper(getStore(validState), <AppViewComponent />);
       expect(wrapper.find(ChartInfo)).toExist();
       expect(wrapper.find(ApplicationStatusContainer)).toExist();
       expect(wrapper.find(".control-buttons")).toExist();
@@ -255,8 +246,8 @@ describe("AppViewComponent", () => {
 
     it("renders an error if error prop is set", () => {
       const wrapper = mountWrapper(
-        defaultStore,
-        <AppViewComponent {...validProps} error={new Error("Boom!")} />,
+        getStore({ ...validState, apps: { ...validState.apps, error: new Error("Boom!") } }),
+        <AppViewComponent />,
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();
@@ -265,8 +256,8 @@ describe("AppViewComponent", () => {
 
     it("renders a delete-error", () => {
       const wrapper = mountWrapper(
-        defaultStore,
-        <AppViewComponent {...validProps} error={new DeleteError("Boom!")} />,
+        getStore({ ...validState, apps: { ...validState.apps, error: new DeleteError("Boom!") } }),
+        <AppViewComponent />,
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();
@@ -282,21 +273,17 @@ describe("AppViewComponent", () => {
     };
     const manifest = generateYamlManifest([resources.service, list]);
 
-    const props = {
-      ...validProps,
-      app: {
-        ...validProps.app,
-        manifest,
-      } as any,
-    };
-    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+    const wrapper = mountWrapper(
+      getStore({ apps: { selected: { ...appRelease, manifest } } }),
+      <AppViewComponent />,
+    );
 
     const tabs = wrapper.find(ResourceTabs);
     expect(tabs.props()).toMatchObject({
       deployments: [
         new ResourceRef(
           resources.deployment,
-          validProps.cluster,
+          routeParams.cluster,
           "deployments",
           true,
           appRelease.namespace,
@@ -305,14 +292,14 @@ describe("AppViewComponent", () => {
       services: [
         new ResourceRef(
           resources.service,
-          validProps.cluster,
+          routeParams.cluster,
           "services",
           true,
           appRelease.namespace,
         ),
       ],
       otherResources: [
-        new ResourceRef(obj, validProps.cluster, "clusterroles", false, appRelease.namespace),
+        new ResourceRef(obj, routeParams.cluster, "clusterroles", false, appRelease.namespace),
       ],
     });
   });
@@ -325,21 +312,17 @@ describe("AppViewComponent", () => {
     };
     const manifest = generateYamlManifest([resources.service, list]);
 
-    const props = {
-      ...validProps,
-      app: {
-        ...validProps.app,
-        manifest,
-      } as any,
-    };
-    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+    const wrapper = mountWrapper(
+      getStore({ apps: { selected: { ...appRelease, manifest } } }),
+      <AppViewComponent />,
+    );
 
     const tabs = wrapper.find(ResourceTabs);
     expect(tabs.props()).toMatchObject({
       deployments: [
         new ResourceRef(
           resources.deployment,
-          validProps.cluster,
+          routeParams.cluster,
           "deployments",
           true,
           appRelease.namespace,
@@ -348,14 +331,14 @@ describe("AppViewComponent", () => {
       services: [
         new ResourceRef(
           resources.service,
-          validProps.cluster,
+          routeParams.cluster,
           "services",
           true,
           appRelease.namespace,
         ),
       ],
       otherResources: [
-        new ResourceRef(obj, validProps.cluster, "clusterroles", false, appRelease.namespace),
+        new ResourceRef(obj, routeParams.cluster, "clusterroles", false, appRelease.namespace),
       ],
     });
   });
@@ -363,14 +346,10 @@ describe("AppViewComponent", () => {
   it("forwards statefulsets and daemonsets to the application status", () => {
     const r = [resources.statefulset, resources.daemonset];
     const manifest = generateYamlManifest(r);
-    const props = {
-      ...validProps,
-      app: {
-        ...validProps.app,
-        manifest,
-      } as any,
-    };
-    const wrapper = mountWrapper(defaultStore, <AppViewComponent {...props} />);
+    const wrapper = mountWrapper(
+      getStore({ apps: { selected: { ...appRelease, manifest } } }),
+      <AppViewComponent />,
+    );
 
     const applicationStatus = wrapper.find(ApplicationStatusContainer);
     expect(applicationStatus).toExist();
@@ -378,7 +357,7 @@ describe("AppViewComponent", () => {
     expect(applicationStatus.prop("statefulsetRefs")).toEqual([
       new ResourceRef(
         resources.statefulset,
-        validProps.cluster,
+        routeParams.cluster,
         "statefulsets",
         true,
         appRelease.namespace,
@@ -387,7 +366,7 @@ describe("AppViewComponent", () => {
     expect(applicationStatus.prop("daemonsetRefs")).toEqual([
       new ResourceRef(
         resources.daemonset,
-        validProps.cluster,
+        routeParams.cluster,
         "daemonsets",
         true,
         appRelease.namespace,
