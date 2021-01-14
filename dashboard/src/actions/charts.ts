@@ -12,6 +12,11 @@ import {
   NotFoundError,
 } from "../shared/types";
 
+export const idleStatus = "IDLE";
+export const errorStatus = "ERROR";
+export const loadingStatus = "LOADING";
+export const finishedStatus = "FINISHED";
+
 export const requestCharts = createAction("REQUEST_CHARTS");
 
 export const requestChart = createAction("REQUEST_CHART");
@@ -22,8 +27,16 @@ export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
 
 export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
 
+export const requestChartsSearch = createAction("REQUEST_CHARTS_SEARCH", resolve => {
+  return (query: string) => resolve(query);
+});
+
 export const receiveChartCategories = createAction("RECEIVE_CHART_CATEGORIES", resolve => {
   return (categories: IChartCategory[]) => resolve(categories);
+});
+
+export const receiveChartsSearch = createAction("RECEIVE_CHARTS_SEARCH", resolve => {
+  return (charts: IChart[], query: string) => resolve(charts, query);
 });
 
 export const receiveChartVersions = createAction("RECEIVE_CHART_VERSIONS", resolve => {
@@ -53,7 +66,11 @@ export const receiveDeployedChartVersion = createAction(
   },
 );
 
+export const resetChartsSearch = createAction("RESET_CHARTS_SEARCH");
+
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
+
+export const reachEnd = createAction("REACH_END");
 
 export const selectReadme = createAction("SELECT_README", resolve => {
   return (readme: string) => resolve(readme);
@@ -69,13 +86,17 @@ const allActions = [
   errorChart,
   errorChartCatetories,
   requestChartsCategories,
+  requestChartsSearch,
   receiveCharts,
   receiveChartCategories,
+  receiveChartsSearch,
   receiveChartVersions,
   selectChartVersion,
   requestDeployedChartVersion,
   receiveDeployedChartVersion,
+  resetChartsSearch,
   resetChartVersion,
+  reachEnd,
   selectReadme,
   errorReadme,
 ];
@@ -85,14 +106,21 @@ export type ChartsAction = ActionType<typeof allActions[number]>;
 export function fetchCharts(
   cluster: string,
   namespace: string,
-  repo: string,
+  repos: string,
+  query: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
+    if (query.length > 0) {
+      dispatch(requestChartsSearch(query));
+    }
     try {
-      const charts = await Chart.fetchCharts(cluster, namespace, repo);
-      if (charts) {
+      const charts = await Chart.fetchCharts(cluster, namespace, repos, query);
+      if (query.length > 0) {
+        dispatch(receiveChartsSearch(charts, query));
+      } else {
         dispatch(receiveCharts(charts));
+        dispatch(reachEnd());
       }
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
