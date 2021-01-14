@@ -81,6 +81,79 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func()) {
 	return mock, func() { db.Close(); manager = origManager }
 }
 
+func Test_extractDecodedNamespaceAndRepoAndVersionParams(t *testing.T) {
+	tests := []struct {
+		name             string
+		namespace        string
+		repo             string
+		version          string
+		expectedParamErr []string
+	}{
+		{"params OK", "namespace", "repo", "version", nil},
+		{"params one error", "%%3", "repo", "version", []string{"%%3"}},
+		{"params two errors", "%%3", "%%3", "version", []string{"%%3", "%%3"}},
+		{"params three errors", "%%3", "%%3", "%%3", []string{"%%3", "%%3", "%%3"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params := Params{
+				"namespace": tt.namespace,
+				"repo":      tt.repo,
+				"version":   tt.version,
+			}
+			namespace, repo, version, paramErr, _ := extractDecodedNamespaceAndRepoAndVersionParams(params)
+			if tt.expectedParamErr != nil {
+				assert.Equal(t, tt.expectedParamErr, paramErr, "expectedParamErr should be the same")
+			} else {
+				assert.Equal(t, tt.namespace, namespace, "namespace should be the same")
+				assert.Equal(t, tt.repo, repo, "repo should be the same")
+				assert.Equal(t, tt.version, version, "version should be the same")
+			}
+		})
+	}
+}
+func Test_extractChartQueryFromRequest(t *testing.T) {
+	tests := []struct {
+		name               string
+		namespace          string
+		repo               string
+		chartName          string
+		version            string
+		appVersion         string
+		searchQuery        string
+		repos              string
+		categories         string
+		expectedRepos      []string
+		expectedCategories []string
+	}{
+		{"no params ", "", "", "", "", "", "", "", "", []string{}, []string{}},
+		{"only categories", "", "", "", "", "", "", "", "cat1,cat2", []string{}, []string{"cat1", "cat2"}},
+		{"only repo ", "", "repo1", "", "", "", "", "", "", []string{"repo1"}, []string{}},
+		{"only repos ", "", "", "", "", "", "", "repo2,repo3", "", []string{"repo2", "repo3"}, []string{}},
+		{"only repo and repos ", "", "repo1", "", "", "", "", "repo2,repo3", "", []string{"repo1", "repo2", "repo3"}, []string{}},
+		{"every param", "namespace", "repo1", "chartName", "version", "appVersion", "searchQuery", "repo2,repo3", "cat1,cat2", []string{"repo1", "repo2", "repo3"}, []string{"cat1", "cat2"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requestURI := fmt.Sprintf("/charts?name=%s&version=%s&appversion=%s&repos=%s&categories=%s&q=%s", tt.chartName, tt.version, tt.appVersion, tt.repos, tt.categories, tt.searchQuery)
+			req := httptest.NewRequest("GET", requestURI, nil)
+
+			cq := extractChartQueryFromRequest(tt.namespace, tt.repo, req)
+
+			assert.Equal(t, tt.namespace, cq.namespace, "namespace should be the same")
+			assert.Equal(t, tt.chartName, cq.chartName, "chartName should be the same")
+			assert.Equal(t, tt.version, cq.version, "version should be the same")
+			assert.Equal(t, tt.appVersion, cq.appVersion, "appVersion should be the same")
+			assert.Equal(t, tt.searchQuery, cq.searchQuery, "searchQuery should be the same")
+			assert.Equal(t, tt.expectedRepos, cq.repos, "repos should be the same")
+			assert.Equal(t, tt.expectedCategories, cq.categories, "categories should be the same")
+
+		})
+	}
+}
+
 func Test_chartAttributes(t *testing.T) {
 	tests := []struct {
 		name  string

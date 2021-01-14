@@ -90,6 +90,57 @@ func getPageAndSizeParams(req *http.Request) (int, int) {
 	return int(pageNumberInt), int(pageSizeInt)
 }
 
+func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, string, string, []string, []error) {
+	paramErr := []string{}
+
+	namespace, namespaceErr := url.PathUnescape(params["namespace"])
+	repo, repoErr := url.PathUnescape(params["repo"])
+	version, versionErr := url.PathUnescape(params["version"])
+
+	if namespaceErr != nil || repoErr != nil || versionErr != nil {
+		errors := []error{}
+		if namespaceErr != nil {
+			paramErr = append(paramErr, params["namespace"])
+			errors = append(errors, namespaceErr)
+		}
+		if repoErr != nil {
+			paramErr = append(paramErr, params["repo"])
+			errors = append(errors, repoErr)
+		}
+		if versionErr != nil {
+			paramErr = append(paramErr, params["version"])
+			errors = append(errors, versionErr)
+		}
+		return namespace, repo, version, paramErr, errors
+	}
+	return namespace, repo, version, paramErr, nil
+}
+
+func extractChartQueryFromRequest(namespace, repo string, req *http.Request) ChartQuery {
+	repos := []string{}
+	if repo != "" {
+		repos = append(repos, repo)
+	}
+
+	if req.FormValue("repos") != "" {
+		repos = append(repos, strings.Split(strings.TrimSpace(req.FormValue("repos")), ",")...)
+	}
+	categories := []string{}
+	if req.FormValue("categories") != "" {
+		categories = strings.Split(strings.TrimSpace(req.FormValue("categories")), ",")
+	}
+
+	return ChartQuery{
+		namespace:   namespace,
+		chartName:   req.FormValue("name"), // chartName remains encoded
+		version:     req.FormValue("version"),
+		appVersion:  req.FormValue("appversion"),
+		repos:       repos,
+		categories:  categories,
+		searchQuery: req.FormValue("q"),
+	}
+}
+
 func getAllChartCategories(cq ChartQuery) (apiChartCategoryListResponse, error) {
 	chartCategories, err := manager.getAllChartCategories(cq)
 	return newChartCategoryListResponse(chartCategories), err
@@ -97,22 +148,12 @@ func getAllChartCategories(cq ChartQuery) (apiChartCategoryListResponse, error) 
 
 // getChartCategories returns all the distinct chart categories name and count
 func getChartCategories(w http.ResponseWriter, req *http.Request, params Params) {
-
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-
-	cq := ChartQuery{
-		namespace: namespace,
-		repos:     append(strings.Split(strings.TrimSpace(req.FormValue("repos")), ","), repo),
-	}
+	cq := extractChartQueryFromRequest(namespace, repo, req)
 
 	chartCategories, err := getAllChartCategories(cq)
 	if err != nil {
@@ -125,14 +166,9 @@ func getChartCategories(w http.ResponseWriter, req *http.Request, params Params)
 
 // getChart returns the chart from the given repo
 func getChart(w http.ResponseWriter, req *http.Request, params Params) {
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -150,14 +186,9 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 
 // listChartVersions returns a list of chart versions for the given chart
 func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) {
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -175,19 +206,9 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 
 // getChartVersion returns the given chart version
 func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
-		return
-	}
-	version, err := url.PathUnescape(params["version"])
-	if err != nil {
-		handleDecodeError(params["version"], w, err)
+	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -205,14 +226,9 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 
 // getChartIcon returns the icon for a given chart
 func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -240,19 +256,9 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 
 // getChartVersionReadme returns the README for a given chart
 func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Params) {
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-	version, err := url.PathUnescape(params["version"])
-	if err != nil {
-		handleDecodeError(params["version"], w, err)
-		return
-	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
@@ -274,19 +280,9 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 
 // getChartVersionValues returns the values.yaml for a given chart
 func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-	version, err := url.PathUnescape(params["version"])
-	if err != nil {
-		handleDecodeError(params["version"], w, err)
-		return
-	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
@@ -303,19 +299,9 @@ func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Para
 
 // getChartVersionSchema returns the values.schema.json for a given chart
 func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Params) {
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-	version, err := url.PathUnescape(params["version"])
-	if err != nil {
-		handleDecodeError(params["version"], w, err)
-		return
-	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
@@ -332,26 +318,12 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 
 // listChartsWithFilters returns the list of repos that contains the given chart and the latest version found
 func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		handleDecodeError(params["namespace"], w, err)
+	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if errors != nil {
+		handleDecodeError(paramErr, w, errors)
 		return
 	}
-	repo, err := url.PathUnescape(params["repo"])
-	if err != nil {
-		handleDecodeError(params["repo"], w, err)
-		return
-	}
-
-	cq := ChartQuery{
-		namespace:   namespace,
-		chartName:   req.FormValue("name"), // chartName remains encoded
-		version:     req.FormValue("version"),
-		appVersion:  req.FormValue("appversion"),
-		repos:       append(strings.Split(strings.TrimSpace(req.FormValue("repos")), ","), repo),
-		categories:  strings.Split(strings.TrimSpace(req.FormValue("categories")), ","),
-		searchQuery: req.FormValue("q"),
-	}
+	cq := extractChartQueryFromRequest(namespace, repo, req)
 
 	pageNumber, pageSize := getPageAndSizeParams(req)
 	charts, totalPages, err := manager.getPaginatedChartListWithFilters(cq, pageNumber, pageSize)
@@ -461,9 +433,11 @@ func newChartVersionListResponse(c *models.Chart) apiListResponse {
 	return cvl
 }
 
-func handleDecodeError(param string, w http.ResponseWriter, err error) {
-	log.WithError(err).Errorf("could not decode param %s", param)
-	response.NewErrorResponse(http.StatusBadRequest, "could not decode param: "+param).Write(w)
+func handleDecodeError(paramErr []string, w http.ResponseWriter, errors []error) {
+	for i, err := range errors {
+		log.WithError(err).Errorf("could not decode param %s", paramErr[i])
+	}
+	response.NewErrorResponse(http.StatusBadRequest, "could not decode params").Write(w)
 }
 
 func getChartID(chartRepoName, chartName string) string {
