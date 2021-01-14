@@ -18,6 +18,7 @@ exports[`should render a external database section 1`] = `
     </span>
   </div>
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
@@ -33,6 +34,7 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
@@ -48,6 +50,7 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
@@ -62,6 +65,7 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
@@ -77,6 +81,7 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}
@@ -92,6 +97,7 @@ exports[`should render a external database section 1`] = `
     }
   />
   <Param
+    allParams={Array []}
     appValues="externalDatabase: {}"
     deploymentEvent="install"
     handleBasicFormParamChange={[Function]}

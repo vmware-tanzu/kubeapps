@@ -33,6 +33,7 @@ const defaultProps = {
     description: "description of the param",
     type: "object",
   } as IBasicFormParam,
+  allParams: [],
   appValues: "externalDatabase: {}",
   deploymentEvent: "install",
   handleValuesChange: jest.fn(),

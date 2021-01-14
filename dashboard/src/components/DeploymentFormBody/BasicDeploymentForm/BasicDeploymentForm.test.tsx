@@ -221,6 +221,84 @@ it("should hide an element if it depends on a single param (object)", () => {
   expect(hiddenParam).toExist();
 });
 
+it("should hide an element using hidden path and values even if it is not present in values.yaml (simple)", () => {
+  const params = [
+    {
+      default: "a",
+      enum: ["a", "b"],
+      path: "dropdown",
+      type: "string",
+      value: "a",
+    },
+    {
+      hidden: { path: "dropdown", value: "b" },
+      path: "a",
+      type: "string",
+    },
+    {
+      hidden: { path: "dropdown", value: "a" },
+      path: "b",
+      type: "string",
+    },
+  ] as IBasicFormParam[];
+  const appValues = "";
+  const wrapper = mount(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+  expect(hiddenParam.text()).toBe("b");
+});
+
+it("should hide an element using hidden path and values even if it is not present in values.yaml (different depth levels)", () => {
+  const params = [
+    {
+      default: "a",
+      enum: ["a", "b"],
+      path: "dropdown",
+      type: "string",
+      value: "a",
+    },
+    {
+      hidden: { path: "secondLevelProperties/2dropdown", value: "2b" },
+      path: "a",
+      type: "string",
+    },
+    {
+      hidden: { path: "secondLevelProperties/2dropdown", value: "2a" },
+      path: "b",
+      type: "string",
+    },
+    {
+      default: "2a",
+      enum: ["2a", "2b"],
+      path: "secondLevelProperties/2dropdown",
+      type: "string",
+      value: "2a",
+    },
+    {
+      hidden: { path: "dropdown", value: "b" },
+      path: "secondLevelProperties/2a",
+      type: "string",
+    },
+    {
+      hidden: { path: "dropdown", value: "a" },
+      path: "secondLevelProperties/2b",
+      type: "string",
+    },
+  ] as IBasicFormParam[];
+  const appValues = "";
+  const wrapper = mount(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+  expect(hiddenParam.filterWhere(p => p.text().includes("b"))).toExist();
+  expect(hiddenParam.filterWhere(p => p.text().includes("2b"))).toExist();
+});
+
 it("should hide an element if it depends on multiple params (AND) (object)", () => {
   const params = [
     {
