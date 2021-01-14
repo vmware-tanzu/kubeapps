@@ -90,30 +90,23 @@ func getPageAndSizeParams(req *http.Request) (int, int) {
 	return int(pageNumberInt), int(pageSizeInt)
 }
 
-func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, string, string, []string, []error) {
-	paramErr := []string{}
-
-	namespace, namespaceErr := url.PathUnescape(params["namespace"])
-	repo, repoErr := url.PathUnescape(params["repo"])
-	version, versionErr := url.PathUnescape(params["version"])
-
-	if namespaceErr != nil || repoErr != nil || versionErr != nil {
-		errors := []error{}
-		if namespaceErr != nil {
-			paramErr = append(paramErr, params["namespace"])
-			errors = append(errors, namespaceErr)
-		}
-		if repoErr != nil {
-			paramErr = append(paramErr, params["repo"])
-			errors = append(errors, repoErr)
-		}
-		if versionErr != nil {
-			paramErr = append(paramErr, params["version"])
-			errors = append(errors, versionErr)
-		}
-		return namespace, repo, version, paramErr, errors
+func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, string, string, string, error) {
+	namespace, err := url.PathUnescape(params["namespace"])
+	if err != nil {
+		return "", "", "", params["namespace"], err
 	}
-	return namespace, repo, version, paramErr, nil
+
+	repo, err := url.PathUnescape(params["repo"])
+	if err != nil {
+		return "", "", "", params["repo"], err
+	}
+
+	version, err := url.PathUnescape(params["version"])
+	if err != nil {
+		return "", "", "", params["version"], err
+	}
+
+	return namespace, repo, version, "", nil
 }
 
 func extractChartQueryFromRequest(namespace, repo string, req *http.Request) ChartQuery {
@@ -148,9 +141,9 @@ func getAllChartCategories(cq ChartQuery) (apiChartCategoryListResponse, error) 
 
 // getChartCategories returns all the distinct chart categories name and count
 func getChartCategories(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, _, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	cq := extractChartQueryFromRequest(namespace, repo, req)
@@ -166,9 +159,9 @@ func getChartCategories(w http.ResponseWriter, req *http.Request, params Params)
 
 // getChart returns the chart from the given repo
 func getChart(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, _, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -186,9 +179,9 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 
 // listChartVersions returns a list of chart versions for the given chart
 func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, _, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -206,9 +199,9 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 
 // getChartVersion returns the given chart version
 func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, version, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -226,9 +219,9 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 
 // getChartIcon returns the icon for a given chart
 func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, _, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
@@ -256,9 +249,9 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 
 // getChartVersionReadme returns the README for a given chart
 func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, version, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
@@ -280,9 +273,9 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 
 // getChartVersionValues returns the values.yaml for a given chart
 func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, version, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
@@ -299,9 +292,9 @@ func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Para
 
 // getChartVersionSchema returns the values.schema.json for a given chart
 func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, version, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, version, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
@@ -318,9 +311,9 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 
 // listChartsWithFilters returns the list of repos that contains the given chart and the latest version found
 func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, _, paramErr, errors := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if errors != nil {
-		handleDecodeError(paramErr, w, errors)
+	namespace, repo, _, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
+	if err != nil {
+		handleDecodeError(paramErr, w, err)
 		return
 	}
 	cq := extractChartQueryFromRequest(namespace, repo, req)
@@ -433,10 +426,8 @@ func newChartVersionListResponse(c *models.Chart) apiListResponse {
 	return cvl
 }
 
-func handleDecodeError(paramErr []string, w http.ResponseWriter, errors []error) {
-	for i, err := range errors {
-		log.WithError(err).Errorf("could not decode param %s", paramErr[i])
-	}
+func handleDecodeError(paramErr string, w http.ResponseWriter, err error) {
+	log.WithError(err).Errorf("could not decode param %s", paramErr)
 	response.NewErrorResponse(http.StatusBadRequest, "could not decode params").Write(w)
 }
 

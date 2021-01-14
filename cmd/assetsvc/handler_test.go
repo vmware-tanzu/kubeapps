@@ -87,12 +87,13 @@ func Test_extractDecodedNamespaceAndRepoAndVersionParams(t *testing.T) {
 		namespace        string
 		repo             string
 		version          string
-		expectedParamErr []string
+		expectedParamErr string
 	}{
-		{"params OK", "namespace", "repo", "version", nil},
-		{"params one error", "%%3", "repo", "version", []string{"%%3"}},
-		{"params two errors", "%%3", "%%3", "version", []string{"%%3", "%%3"}},
-		{"params three errors", "%%3", "%%3", "%%3", []string{"%%3", "%%3", "%%3"}},
+		{"params OK", "namespace", "repo", "version", ""},
+		{"params NOK namespace", "%%1", "repo", "version", "%%1"},
+		{"params NOK repo", "namespace", "%%1", "version", "%%1"},
+		{"params NOK version", "namespace", "repo", "%%1", "%%1"},
+		{"params NOK (returns the first one errored)", "%%1", "%%2", "%%3", "%%1"},
 	}
 
 	for _, tt := range tests {
@@ -103,7 +104,7 @@ func Test_extractDecodedNamespaceAndRepoAndVersionParams(t *testing.T) {
 				"version":   tt.version,
 			}
 			namespace, repo, version, paramErr, _ := extractDecodedNamespaceAndRepoAndVersionParams(params)
-			if tt.expectedParamErr != nil {
+			if tt.expectedParamErr != "" {
 				assert.Equal(t, tt.expectedParamErr, paramErr, "expectedParamErr should be the same")
 			} else {
 				assert.Equal(t, tt.namespace, namespace, "namespace should be the same")
