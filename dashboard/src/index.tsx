@@ -17,6 +17,14 @@ addAuthHeaders(axiosWithAuth);
 
 ReactDOM.render(<Root />, document.getElementById("root") as HTMLElement);
 
+// Allow to load custom styling.
+// The dashboard webserver will return this style file.
+const link = document.createElement("link");
+link.href = "/custom_style.css";
+link.type = "text/css";
+link.rel = "stylesheet";
+document.getElementsByTagName("head")[0].appendChild(link);
+
 // TODO: Look into re-enabling service worker
 // registerServiceWorker();
 

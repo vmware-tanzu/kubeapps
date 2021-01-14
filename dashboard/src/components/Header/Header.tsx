@@ -6,7 +6,6 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 
-import logo from "../../logo.svg";
 import { app } from "../../shared/url";
 import ContextSelector from "./ContextSelector";
 import "./Header.css";
@@ -47,9 +46,9 @@ function Header() {
     <section>
       <div className="container">
         <header className="header header-7">
-          <div className="branding">
+          <div className="">
             <NavLink to="/">
-              <img src={logo} alt="Kubeapps logo" className="kubeapps__logo" />
+              <div className="kubeapps__logo" />
             </NavLink>
           </div>
           {showNav && (

@@ -489,6 +489,13 @@ dashboard:
   ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   ##
   tolerations: {}
+  ## Custom CSS injected to the Dashboard to customize Kubeapps look and feel
+  ## e.g:
+  ##  customStyle: |-
+  ##    .header.header-7 {
+  ##      background-color: #991700;
+  ##    }
+  customStyle: ""
 
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
