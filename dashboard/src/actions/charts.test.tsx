@@ -38,11 +38,12 @@ describe("fetchCharts", () => {
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.receiveCharts), payload: response },
+      { type: getType(actions.charts.reachEnd) },
     ];
-    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
+    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo", ""));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?&repos=foo`,
     );
   });
 
@@ -58,7 +59,7 @@ describe("fetchCharts", () => {
       throw new Error("could not find chart");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
+    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo", ""));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -71,7 +72,7 @@ describe("fetchCharts", () => {
       throw new Error("something went wrong");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
+    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo", ""));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

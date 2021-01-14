@@ -49,6 +49,7 @@ const defaultProps = {
   csvs: [],
   cluster: "default",
   namespace: "default",
+  hasFinishedFetching: true,
 };
 const populatedProps = {
   ...defaultProps,
@@ -56,8 +57,19 @@ const populatedProps = {
   csvs: [csv],
 };
 
-it("shows a message if no items are passed", () => {
-  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} />);
+it("shows nothing if no items are passed but it's still fetching", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <CatalogItems {...defaultProps} hasFinishedFetching={false} />,
+  );
+  expect(wrapper).toIncludeText("");
+});
+
+it("shows a message if no items are passed and it stopped fetching", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <CatalogItems {...defaultProps} hasFinishedFetching={true} />,
+  );
   expect(wrapper).toIncludeText("No application matches the current filter");
 });
 

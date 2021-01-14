@@ -9,7 +9,12 @@ describe("chartReducer", () => {
 
   beforeEach(() => {
     initialState = {
+      status: actions.charts.idleStatus,
       isFetching: false,
+      search: {
+        items: [],
+        query: "",
+      },
       items: [],
       categories: [],
       selected: {
@@ -27,6 +32,7 @@ describe("chartReducer", () => {
     expect(state).toEqual({
       ...initialState,
       isFetching: false,
+      status: actions.charts.errorStatus,
       selected: {
         ...initialState.selected,
         error,
