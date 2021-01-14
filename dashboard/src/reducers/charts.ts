@@ -93,6 +93,12 @@ const chartsReducer = (
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
+    case getType(actions.charts.errorChartCatetories):
+      return {
+        ...state,
+        isFetching: false,
+        categories: [],
+      };
     default:
   }
   return state;

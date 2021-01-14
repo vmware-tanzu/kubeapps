@@ -34,6 +34,10 @@ export const errorChart = createAction("ERROR_CHART", resolve => {
   return (err: Error) => resolve(err);
 });
 
+export const errorChartCatetories = createAction("ERROR_CHART_CATEGORIES", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve => {
   return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
     resolve({ chartVersion, values, schema });
@@ -63,6 +67,7 @@ const allActions = [
   requestCharts,
   requestChart,
   errorChart,
+  errorChartCatetories,
   requestChartsCategories,
   receiveCharts,
   receiveChartCategories,
@@ -99,7 +104,7 @@ export function fetchChartCategories(
   cluster: string,
   namespace: string,
   repos: string,
-): ThunkAction<Promise<IChartCategory[]>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestChartsCategories());
     try {
@@ -107,10 +112,8 @@ export function fetchChartCategories(
       if (categories) {
         dispatch(receiveChartCategories(categories));
       }
-      return categories;
     } catch (e) {
-      dispatch(errorChart(new FetchError(e.message)));
-      return [];
+      dispatch(errorChartCatetories(new FetchError(e.message)));
     }
   };
 }
