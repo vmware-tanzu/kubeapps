@@ -185,8 +185,12 @@ export const fetchRepoSecret = (
     const {
       clusters: { currentCluster },
     } = getState();
-    const secret = await Secret.get(currentCluster, namespace, name);
-    dispatch(receiveReposSecret(secret));
+    try {
+      const secret = await Secret.get(currentCluster, namespace, name);
+      dispatch(receiveReposSecret(secret));
+    } catch (e) {
+      dispatch(errorRepos(e, "fetch"));
+    }
   };
 };
 
