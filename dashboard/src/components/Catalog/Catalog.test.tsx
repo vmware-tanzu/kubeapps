@@ -116,21 +116,22 @@ it("should render an error if it exists", () => {
 });
 
 describe("filters by the searched item", () => {
-  it("filters using prop", () => {
+  it("modifying the search box invokes fetchCharts function", () => {
+    const fetchCharts = jest.fn();
+    const props = {
+      ...populatedProps,
+      fetchCharts,
+    };
     const wrapper = mountWrapper(
       defaultStore,
-      <Catalog {...populatedProps} filter={{ Search: "bar" }} />,
+      <Catalog {...props} filter={{ [filterNames.SEARCH]: "bar" }} />,
     );
-    expect(wrapper.find(InfoCard)).toHaveLength(1);
-  });
-
-  it("filters modifying the search box", () => {
-    const wrapper = mountWrapper(defaultStore, <Catalog {...populatedProps} />);
     act(() => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
+      (wrapper.find(SearchFilter).prop("submitFilters") as any)("bar");
     });
     wrapper.update();
-    expect(wrapper.find(InfoCard)).toHaveLength(1);
+    expect(fetchCharts).toHaveBeenCalled();
   });
 });
 
