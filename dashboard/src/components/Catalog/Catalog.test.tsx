@@ -96,16 +96,7 @@ it("shows all the elements", () => {
 });
 
 it("should render a message if there are no elements in the catalog", () => {
-  const props = {
-    ...populatedProps,
-    charts: {
-      ...defaultChartState,
-      items: [],
-      search: { query: "", items: [] },
-      status: actions.charts.finishedStatus,
-    },
-  };
-  const wrapper = mountWrapper(defaultStore, <Catalog {...props} />);
+  const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
   const message = wrapper.find(".empty-catalog");
   expect(message).toExist();
   expect(message).toIncludeText("The current catalog is empty");
@@ -123,17 +114,6 @@ it("should render an error if it exists", () => {
   expect(error.prop("theme")).toBe("danger");
   expect(error).toIncludeText("Boom!");
 });
-
-// it("behaves like a loading wrapper", () => {
-//   const wrapper = mountWrapper(
-//     defaultStore,
-//     <Catalog
-//       {...populatedProps}
-//       charts={{ isFetching: true, items: [], categories: [], selected: {} } as any}
-//     />,
-//   );
-//   expect(wrapper.find("LoadingWrapper")).toExist();
-// });
 
 describe("filters by the searched item", () => {
   it("filters using prop", () => {
@@ -176,7 +156,7 @@ describe("filters by application type", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
     input.simulate("change", { target: { value: "Charts" } });
     // It should have pushed with the filter
-    expect(store.getActions()[0].payload).toEqual({
+    expect(store.getActions()[1].payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Type=Charts"],
       method: "push",
     });
@@ -196,7 +176,7 @@ describe("filters by application type", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
     input.simulate("change", { target: { value: "Operators" } });
     // It should have pushed with the filter
-    expect(store.getActions()[0].payload).toEqual({
+    expect(store.getActions()[1].payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Type=Operators"],
       method: "push",
     });
@@ -226,7 +206,7 @@ describe("filters by application repository", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
     input.simulate("change", { target: { value: "foo" } });
     // It should have pushed with the filter
-    expect(store.getActions()[0].payload).toEqual({
+    expect(store.getActions()[1].payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Repository=foo"],
       method: "push",
     });
@@ -259,7 +239,7 @@ describe("filters by operator provider", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you" } });
     // It should have pushed with the filter
-    expect(store.getActions()[0].payload).toEqual({
+    expect(store.getActions()[1].payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Provider=you"],
       method: "push",
     });
@@ -314,7 +294,7 @@ describe("filters by category", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
     input.simulate("change", { target: { value: "Database" } });
     // It should have pushed with the filter
-    expect(store.getActions()[0].payload).toEqual({
+    expect(store.getActions()[1].payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Category=Database"],
       method: "push",
     });
