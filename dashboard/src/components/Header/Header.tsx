@@ -47,7 +47,9 @@ function Header() {
       <div className="container">
         <header className="header header-7">
           <NavLink to="/">
-            <div className="kubeapps__logo" />
+            <div className="kubeapps__logo">
+              <span className="sr-only">Homepage</span>
+            </div>
           </NavLink>
           {showNav && (
             <nav className="header-nav">
