@@ -143,7 +143,6 @@ function Catalog(props: ICatalogProps) {
       // actions when the component is mounted for the first time
       firstUpdate.current = false;
       setCurrentRepo("");
-      setFilters({ ...initialFilterState() });
       fetchChartCategories(cluster, namespace);
       fetchCharts(cluster, namespace, repo);
       getCSVs(cluster, namespace);
