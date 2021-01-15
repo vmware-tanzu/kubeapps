@@ -46,11 +46,9 @@ function Header() {
     <section>
       <div className="container">
         <header className="header header-7">
-          <div className="">
-            <NavLink to="/">
-              <div className="kubeapps__logo" />
-            </NavLink>
-          </div>
+          <NavLink to="/">
+            <div className="kubeapps__logo" />
+          </NavLink>
           {showNav && (
             <nav className="header-nav">
               {routesToRender.map(route => {
