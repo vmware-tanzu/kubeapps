@@ -121,7 +121,7 @@ export const api = {
       `${api.charts.base(cluster, namespace)}/charts?${query ? "&q=" + query : ""}${
         repos ? `&repos=${repos}` : ""
       }`,
-    getChartCategories: (cluster: string, namespace: string, repos: string) =>
+    getChartCategories: (cluster: string, namespace: string, repos?: string) =>
       `${api.charts.base(cluster, namespace)}/charts/categories${repos ? `?repos=${repos}` : ""}`,
     listVersions: (cluster: string, namespace: string, id: string) =>
       `${api.charts.get(cluster, namespace, id)}/versions`,

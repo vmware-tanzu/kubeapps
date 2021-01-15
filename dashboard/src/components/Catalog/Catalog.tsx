@@ -6,7 +6,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
-import { debounce, flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
+import { debounce, flatten, get, intersection, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -37,7 +37,7 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  fetchChartCategories: (cluster: string, namespace: string, repo: string) => void;
+  fetchChartCategories: (cluster: string, namespace: string, repo?: string) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
@@ -145,11 +145,6 @@ function Catalog(props: ICatalogProps) {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
-  useEffect(() => {
-    // when the current repo changes, re-fetch categories
-    fetchChartCategories(cluster, namespace, currentRepo);
-  }, [fetchChartCategories, cluster, namespace, currentRepo]);
-
   const firstUpdate = useRef(true);
   useEffect(() => {
     if (firstUpdate.current) {
@@ -157,12 +152,22 @@ function Catalog(props: ICatalogProps) {
       firstUpdate.current = false;
       setCurrentSearchQuery("");
       setCurrentRepo("");
-      setFilters({ ...initialFilterState() });
       dispatch(actions.charts.resetChartsSearch());
       fetchCharts(cluster, namespace, repo, currentSearchQuery);
       getCSVs(cluster, namespace);
+      fetchChartCategories(cluster, namespace);
     }
-  }, [dispatch, getCSVs, fetchCharts, cluster, namespace, currentRepo, currentSearchQuery, repo]);
+  }, [
+    dispatch,
+    getCSVs,
+    fetchCharts,
+    fetchChartCategories,
+    cluster,
+    namespace,
+    currentRepo,
+    currentSearchQuery,
+    repo,
+  ]);
 
   const debouncedfetchChartsSearch = useCallback(
     debounce((q: string) => {
@@ -220,7 +225,13 @@ function Catalog(props: ICatalogProps) {
         filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Operators"),
     )
     .filter(() => filters[filterNames.REPO].length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name))
+    .filter(c => {
+      const regex = new RegExp(escapeRegExp(currentSearchQuery), "i");
+      return (
+        regex.test(c.metadata.name) ||
+        c?.spec?.customresourcedefinitions?.owned.find(crd => regex.test(crd.displayName))
+      );
+    })
     .filter(
       c =>
         filters[filterNames.OPERATOR_PROVIDER].length === 0 ||
@@ -249,10 +260,7 @@ function Catalog(props: ICatalogProps) {
       {error && (
         <Alert theme="danger">An error occurred while fetching the catalog: {error.message}</Alert>
       )}
-      {isEqual(filters, initialFilterState()) &&
-      status === actions.charts.finishedStatus &&
-      charts.length === 0 &&
-      csvs.length === 0 ? (
+      {charts.length === 0 && filteredChartsSearch.length === 0 && csvs.length === 0 ? (
         <div className="empty-catalog">
           <CdsIcon shape="bundle" />
           <p>The current catalog is empty.</p>
@@ -350,10 +358,6 @@ function Catalog(props: ICatalogProps) {
                     <span key={`query-${search.query}`} className="label label-info">
                       Query: {search.query}
                       <CdsIcon shape="times" onClick={removeSearchQuery()} />
-                    </span>
-                    <span>
-                      {filteredChartsSearch.length} result
-                      {filteredChartsSearch.length !== 1 ? "s" : ""}{" "}
                     </span>
                   </>
                 ) : (
