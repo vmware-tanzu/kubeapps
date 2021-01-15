@@ -11,7 +11,7 @@ export default class Chart {
     return data.data;
   }
 
-  public static async fetchChartCategories(cluster: string, namespace: string, repos: string) {
+  public static async fetchChartCategories(cluster: string, namespace: string, repos?: string) {
     const { data } = await axiosWithAuth.get<{ data: IChartCategory[] }>(
       URL.api.charts.getChartCategories(cluster, namespace, repos),
     );

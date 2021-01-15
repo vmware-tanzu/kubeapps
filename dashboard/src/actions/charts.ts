@@ -103,7 +103,7 @@ export function fetchCharts(
 export function fetchChartCategories(
   cluster: string,
   namespace: string,
-  repos: string,
+  repos?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestChartsCategories());

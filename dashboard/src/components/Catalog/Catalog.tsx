@@ -7,7 +7,7 @@ import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
@@ -37,7 +37,7 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  fetchChartCategories: (cluster: string, namespace: string, repo: string) => void;
+  fetchChartCategories: (cluster: string, namespace: string, repo?: string) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
@@ -137,11 +137,18 @@ function Catalog(props: ICatalogProps) {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
+  const firstUpdate = useRef(true);
   useEffect(() => {
-    fetchCharts(cluster, namespace, repo);
-    getCSVs(cluster, namespace);
-    fetchChartCategories(cluster, namespace, currentRepo);
-  }, [cluster, namespace, repo, currentRepo, fetchCharts, getCSVs, fetchChartCategories]);
+    if (firstUpdate.current) {
+      // actions when the component is mounted for the first time
+      firstUpdate.current = false;
+      setCurrentRepo("");
+      setFilters({ ...initialFilterState() });
+      fetchChartCategories(cluster, namespace);
+      fetchCharts(cluster, namespace, repo);
+      getCSVs(cluster, namespace);
+    }
+  }, [dispatch, getCSVs, fetchCharts, fetchChartCategories, cluster, namespace, currentRepo, repo]);
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH][0] || "";
