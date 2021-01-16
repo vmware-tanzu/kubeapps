@@ -59,7 +59,7 @@ const chartsReducer = (
 ): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
-      return { ...initialState, isFetching: true, status: actions.charts.loadingStatus };
+      return { ...state, items: [], isFetching: true, status: actions.charts.loadingStatus };
     case getType(actions.charts.requestChartsCategories):
       return { ...state, isFetching: true };
     case getType(actions.charts.requestChartsSearch):
