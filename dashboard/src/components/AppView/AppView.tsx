@@ -1,6 +1,5 @@
 import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
-import { RouterAction } from "connected-react-router";
 import { assignWith } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
@@ -8,11 +7,16 @@ import React, { useEffect, useState } from "react";
 import * as yaml from "yaml";
 import placeholder from "../../placeholder.png";
 
+import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { useDispatch, useSelector } from "react-redux";
+import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import ResourceRef from "../../shared/ResourceRef";
 import {
@@ -20,8 +24,8 @@ import {
   FetchError,
   IK8sList,
   IKubeState,
-  IRelease,
   IResource,
+  IStoreState,
 } from "../../shared/types";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -33,23 +37,6 @@ import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
 import ChartInfo from "./ChartInfo/ChartInfo";
 import ResourceTabs from "./ResourceTabs";
-
-export interface IAppViewProps {
-  cluster: string;
-  kinds: IKubeState["kinds"];
-  namespace: string;
-  releaseName: string;
-  app?: IRelease;
-  error?: FetchError | DeleteError;
-  getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
-  deleteApp: (
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    purge: boolean,
-  ) => Promise<boolean>;
-  push: (location: string) => RouterAction;
-}
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -135,15 +122,15 @@ function parseResources(
   return result;
 }
 
-export default function AppView({
-  cluster,
-  namespace,
-  releaseName,
-  app,
-  error,
-  kinds,
-  getAppWithUpdateInfo,
-}: IAppViewProps) {
+interface IRouteParams {
+  cluster: string;
+  namespace: string;
+  releaseName: string;
+}
+
+export default function AppView() {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const { cluster, namespace, releaseName } = ReactRouter.useParams() as IRouteParams;
   const [resourceRefs, setResourceRefs] = useState({
     ingresses: [],
     deployments: [],
@@ -153,10 +140,13 @@ export default function AppView({
     services: [],
     secrets: [],
   } as IAppViewResourceRefs);
-
+  const {
+    apps: { error, selected: app },
+    kube: { kinds },
+  } = useSelector((state: IStoreState) => state);
   useEffect(() => {
-    getAppWithUpdateInfo(cluster, namespace, releaseName);
-  }, [getAppWithUpdateInfo, cluster, namespace, releaseName]);
+    dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName));
+  }, [cluster, dispatch, namespace, releaseName]);
 
   useEffect(() => {
     if (!app?.manifest) {
