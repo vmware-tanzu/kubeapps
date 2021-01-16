@@ -155,11 +155,21 @@ function Catalog(props: ICatalogProps) {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
-  // fetch categories and fetch csvs when cluster OR namespace changes
+  // fetch categories AND fetch csvs when: i) (cluster OR namespace) changes
   useEffect(() => {
     fetchChartCategories(cluster, namespace);
     getCSVs(cluster, namespace);
   }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
+
+  // fetch charts when  i) the namespace changes; 2) the (repo OR cluster OR namespace) changes if no search query
+  const namespaceUpdate = useRef(namespace);
+  useEffect(() => {
+    if (namespaceUpdate.current !== namespace || !currentSearchQuery.length) {
+      // otherwise, fetching will be managed by setSearchFilter
+      fetchCharts(cluster, namespace, repo, currentSearchQuery);
+    }
+    namespaceUpdate.current = namespace;
+  }, [dispatch, fetchCharts, currentSearchQuery, cluster, namespace, repo]);
 
   const debouncedfetchChartsSearch = useCallback(
     debounce((q: string) => {
@@ -174,14 +184,6 @@ function Catalog(props: ICatalogProps) {
     }, 300),
     [dispatch, fetchCharts, setFilter, cluster, namespace, repo],
   );
-
-  // fetch charts when no search query when selected repo OR cluster OR namespace changes
-  useEffect(() => {
-    if (!currentSearchQuery.length) {
-      // otherwise, it will be managed by setSearchFilter
-      fetchCharts(cluster, namespace, repo, "");
-    }
-  }, [dispatch, fetchCharts, currentSearchQuery, cluster, namespace, repo]);
 
   // handle the scenario when a url with "?Search=foo" is requested by the user
   const shouldForceSearchFilter = useRef(true);
