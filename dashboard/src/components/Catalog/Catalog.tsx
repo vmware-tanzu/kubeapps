@@ -8,7 +8,7 @@ import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { debounce, flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
@@ -96,11 +96,12 @@ function Catalog(props: ICatalogProps) {
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
+
     setFilters({
       ...initialFilterState(),
       ...newFilters,
     });
-  }, [propsFilter]);
+  }, [propsFilter, currentSearchQuery]);
 
   const pushFiltersFunc = (newFilters: any, type?: string) => {
     pushFilters(newFilters, type);
@@ -119,7 +120,16 @@ function Catalog(props: ICatalogProps) {
       [type]: filters[type].concat(value),
     });
   };
+  const setFilter = (type: string, value?: any) => {
+    pushFiltersFunc({
+      ...filters,
+      [type]: value ? value : [],
+    });
+  };
   const removeFilter = (type: string, value: string) => {
+    if (filterNames.SEARCH === type) {
+      setCurrentSearchQuery("");
+    }
     pushFiltersFunc({
       ...filters,
       [type]: without(filters[type], value),
@@ -128,25 +138,14 @@ function Catalog(props: ICatalogProps) {
   const removeFilterFunc = (type: string, value: string) => {
     return () => removeFilter(type, value);
   };
-  const removeSearchQueryFunc = () => {
-    return () => {
-      removeSearchQuery();
-    };
-  };
   const clearAllFiltersFunc = () => {
     clearAllFilters();
   };
 
-  const removeSearchQuery = useCallback(() => {
-    dispatch(actions.charts.resetChartsSearch());
+  const clearAllFilters = useCallback(() => {
     setCurrentSearchQuery("");
     pushFilters(initialFilterState(), "");
-  }, [dispatch, pushFilters]);
-
-  const clearAllFilters = useCallback(() => {
-    removeSearchQuery();
-    pushFilters(initialFilterState(), "");
-  }, [pushFilters, removeSearchQuery]);
+  }, [pushFilters, setCurrentSearchQuery]);
 
   const allRepos = uniq(charts.map(c => c.attributes.repo.name));
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
@@ -156,55 +155,63 @@ function Catalog(props: ICatalogProps) {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
-  // reset filters when cluster OR namespace changes
-  useEffect(() => {
-    clearAllFilters();
-  }, [clearAllFilters, cluster, namespace]);
-
   // fetch categories and fetch csvs when cluster OR namespace changes
   useEffect(() => {
     fetchChartCategories(cluster, namespace);
     getCSVs(cluster, namespace);
   }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
 
+  const debouncedfetchChartsSearch = useCallback(
+    debounce((q: string) => {
+      if (q.length) {
+        fetchCharts(cluster, namespace, repo, q);
+        setFilter(filterNames.SEARCH, [q]);
+      } else {
+        setFilter(filterNames.SEARCH, []);
+        setCurrentSearchQuery("");
+        // dispatch(actions.charts.resetChartsSearch());
+      }
+    }, 300),
+    [dispatch, fetchCharts, setFilter, cluster, namespace, repo],
+  );
+
   // fetch charts when no search query when selected repo OR cluster OR namespace changes
   useEffect(() => {
     if (!currentSearchQuery.length) {
-      // otherwise, setSearchFilter will be invoked
-      removeSearchQuery();
+      // otherwise, it will be managed by setSearchFilter
       fetchCharts(cluster, namespace, repo, "");
     }
-  }, [
-    dispatch,
-    fetchCharts,
-    removeSearchQuery,
-    clearAllFilters,
-    currentSearchQuery,
-    cluster,
-    namespace,
-    repo,
-  ]);
+  }, [dispatch, fetchCharts, currentSearchQuery, cluster, namespace, repo]);
 
-  const debouncedfetchChartsSearch = useCallback(
-    debounce((q: string) => {
-      fetchCharts(cluster, namespace, repo, q);
-    }, 300),
-    [fetchCharts, cluster, namespace, repo],
-  );
+  // handle the scenario when a url with "?Search=foo" is requested by the user
+  const shouldForceSearchFilter = useRef(true);
+  useEffect(() => {
+    if (shouldForceSearchFilter.current) {
+      const existsSearchFilter =
+        filters[filterNames.SEARCH] !== undefined &&
+        filters[filterNames.SEARCH][0] !== undefined &&
+        filters[filterNames.SEARCH][0] !== "";
+      if (existsSearchFilter && !currentSearchQuery.length && !search.items.length) {
+        shouldForceSearchFilter.current = false;
+        setCurrentSearchQuery(filters[filterNames.SEARCH][0]);
+        debouncedfetchChartsSearch(filters[filterNames.SEARCH][0]);
+      }
+    }
+  }, [filters, debouncedfetchChartsSearch, currentSearchQuery, search]);
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH][0] || "";
   const setSearchFilter = useCallback(
     (searchTerm: string) => {
-      let trimmedSearchTerm = trimStart(searchTerm);
-      setCurrentSearchQuery(trimmedSearchTerm);
-      if (trimmedSearchTerm.length) {
+      const trimmedSearchTerm = trimStart(searchTerm);
+      if (trimmedSearchTerm.length || currentSearchQuery.length) {
+        if (trimmedSearchTerm.length) {
+          setCurrentSearchQuery(trimmedSearchTerm);
+        }
         debouncedfetchChartsSearch(trimmedSearchTerm);
-      } else {
-        removeSearchQuery();
       }
     },
-    [removeSearchQuery, debouncedfetchChartsSearch],
+    [debouncedfetchChartsSearch, currentSearchQuery],
   );
 
   const filteredCharts = charts
@@ -297,7 +304,7 @@ function Catalog(props: ICatalogProps) {
             <div className="filters-menu">
               <h5>
                 Filters{" "}
-                {flatten(Object.values(filters)).length || search.query.length ? (
+                {flatten(Object.values(filters)).length ? (
                   <CdsButton size="sm" action="flat" onClick={clearAllFiltersFunc}>
                     Clear All
                   </CdsButton>
@@ -372,20 +379,14 @@ function Catalog(props: ICatalogProps) {
                   }
                   return null;
                 })}
-                {search.query.length ? (
-                  <>
-                    <span key={`query-${search.query}`} className="label label-info">
-                      Query: {search.query}
-                      <CdsIcon shape="times" onClick={removeSearchQueryFunc()} />
-                    </span>
-                  </>
-                ) : (
-                  <></>
-                )}
               </div>
               <Row>
                 <CatalogItems
-                  charts={search.query.length > 0 ? filteredChartsSearch : filteredCharts}
+                  charts={
+                    search.query.length && currentSearchQuery.length
+                      ? filteredChartsSearch
+                      : filteredCharts
+                  }
                   csvs={filteredCSVs}
                   cluster={cluster}
                   namespace={namespace}
