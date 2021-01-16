@@ -87,17 +87,12 @@ function Catalog(props: ICatalogProps) {
   } = props;
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
-  const initialRepoValue = propsFilter[filterNames.REPO]
-    ? String(propsFilter[filterNames.REPO])
-    : "";
-  const [currentRepo, setCurrentRepo] = useState(initialRepoValue);
 
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
-    setCurrentRepo(propsFilter[filterNames.REPO] ? String(propsFilter[filterNames.REPO]) : "");
     setFilters({
       ...initialFilterState(),
       ...newFilters,
@@ -142,12 +137,11 @@ function Catalog(props: ICatalogProps) {
     if (firstUpdate.current) {
       // actions when the component is mounted for the first time
       firstUpdate.current = false;
-      setCurrentRepo("");
       fetchChartCategories(cluster, namespace);
       fetchCharts(cluster, namespace, repo);
       getCSVs(cluster, namespace);
     }
-  }, [dispatch, getCSVs, fetchCharts, fetchChartCategories, cluster, namespace, currentRepo, repo]);
+  }, [dispatch, getCSVs, fetchCharts, fetchChartCategories, cluster, namespace, repo]);
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH][0] || "";
