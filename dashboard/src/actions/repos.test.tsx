@@ -375,6 +375,106 @@ describe("fetchRepos", () => {
   });
 });
 
+describe("fetchRepoSecrets", () => {
+  const namespace = "default";
+  it("dispatches receiveReposSecrets if no error", async () => {
+    const appRepoSecret = {
+      metadata: {
+        name: "foo",
+        ownerReferences: [{ kind: "AppRepository" }],
+      },
+    };
+    const otherSecret = {
+      metadata: {
+        name: "bar",
+        ownerReferences: [{ kind: "Other" }],
+      },
+    };
+    Secret.list = jest.fn().mockReturnValue({
+      items: [appRepoSecret, otherSecret],
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.receiveReposSecrets),
+        payload: [
+          {
+            metadata: {
+              name: "foo",
+              ownerReferences: [{ kind: "AppRepository" }],
+            },
+          },
+        ],
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepoSecrets(namespace));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches errorRepos if error fetching secrets", async () => {
+    Secret.list = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(repoActions.errorRepos),
+        payload: { err: new Error("Boom!"), op: "fetch" },
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepoSecrets(namespace));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("fetchRepoSecret", () => {
+  const namespace = "default";
+  it("dispatches receiveReposSecret if no error", async () => {
+    const appRepoSecret = {
+      metadata: {
+        name: "foo",
+        ownerReferences: [{ kind: "AppRepository" }],
+      },
+    };
+    Secret.get = jest.fn().mockReturnValue({
+      appRepoSecret,
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.receiveReposSecret),
+        payload: {
+          appRepoSecret: {
+            metadata: {
+              name: "foo",
+              ownerReferences: [{ kind: "AppRepository" }],
+            },
+          },
+        },
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepoSecret(namespace, "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches errorRepos if error fetching secret", async () => {
+    Secret.get = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(repoActions.errorRepos),
+        payload: { err: new Error("Boom!"), op: "fetch" },
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepoSecret(namespace, "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
 describe("installRepo", () => {
   const installRepoCMD = repoActions.installRepo(
     "my-repo",

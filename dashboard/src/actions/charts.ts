@@ -131,12 +131,11 @@ export function fetchCharts(
 export function fetchChartCategories(
   cluster: string,
   namespace: string,
-  repos?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestChartsCategories());
     try {
-      const categories = await Chart.fetchChartCategories(cluster, namespace, repos);
+      const categories = await Chart.fetchChartCategories(cluster, namespace);
       if (categories) {
         dispatch(receiveChartCategories(categories));
       }

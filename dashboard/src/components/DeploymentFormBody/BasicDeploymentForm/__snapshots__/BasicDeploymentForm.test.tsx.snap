@@ -24,6 +24,16 @@ exports[`renders a basic deployment with a disk size 1`] = `
       key="size-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "type": "string",
+              "value": "10Gi",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -389,6 +399,14 @@ exports[`renders a basic deployment with a email 1`] = `
       key="wordpressEmail-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -475,6 +493,15 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
       key="enableMetrics-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "enableMetrics",
+              "type": "boolean",
+              "value": true,
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -670,6 +697,15 @@ exports[`renders a basic deployment with a generic number 1`] = `
       key="replicas-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "replicas",
+              "type": "integer",
+              "value": 1,
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -759,6 +795,15 @@ exports[`renders a basic deployment with a generic string 1`] = `
       key="blogName-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -849,6 +894,16 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
       key="size-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "type": "integer",
+              "value": 10,
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -1216,6 +1271,16 @@ exports[`renders a basic deployment with a number disk size 1`] = `
       key="size-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "type": "number",
+              "value": 10,
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -1581,6 +1646,14 @@ exports[`renders a basic deployment with a password 1`] = `
       key="wordpressPassword-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -1666,6 +1739,14 @@ exports[`renders a basic deployment with a username 1`] = `
       key="wordpressUsername-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -1754,6 +1835,17 @@ Second line",
       key="configuration-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "configuration",
+              "render": "textArea",
+              "type": "string",
+              "value": "First line
+Second line",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -1853,6 +1945,20 @@ exports[`renders a basic deployment with slider parameters 1`] = `
       key="size-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "size",
+              "render": "slider",
+              "sliderMax": 100,
+              "sliderMin": 1,
+              "sliderStep": 1,
+              "sliderUnit": "Gi",
+              "type": "string",
+              "value": "10Gi",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -2245,6 +2351,27 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="wordpressUsername-0"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -2321,6 +2448,27 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="wordpressPassword-1"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -2397,6 +2545,27 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="wordpressEmail-2"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}
@@ -2473,6 +2642,27 @@ exports[`renders a basic deployment with username, password, email and a generic
       key="blogName-3"
     >
       <Param
+        allParams={
+          Array [
+            Object {
+              "path": "wordpressUsername",
+              "value": "user",
+            },
+            Object {
+              "path": "wordpressPassword",
+              "value": "sserpdrow",
+            },
+            Object {
+              "path": "wordpressEmail",
+              "value": "user@example.com",
+            },
+            Object {
+              "path": "blogName",
+              "type": "string",
+              "value": "my-blog",
+            },
+          ]
+        }
         appValues=""
         deploymentEvent="install"
         handleBasicFormParamChange={[MockFunction]}

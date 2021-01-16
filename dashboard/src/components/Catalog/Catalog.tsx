@@ -8,7 +8,7 @@ import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { debounce, flatten, get, intersection, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
@@ -37,7 +37,7 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  fetchChartCategories: (cluster: string, namespace: string, repo?: string) => void;
+  fetchChartCategories: (cluster: string, namespace: string) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
@@ -89,10 +89,6 @@ function Catalog(props: ICatalogProps) {
 
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
-  const initialRepoValue = propsFilter[filterNames.REPO]
-    ? String(propsFilter[filterNames.REPO])
-    : "";
-  const [currentRepo, setCurrentRepo] = useState(initialRepoValue);
   const [currentSearchQuery, setCurrentSearchQuery] = useState("");
 
   useEffect(() => {
@@ -100,7 +96,6 @@ function Catalog(props: ICatalogProps) {
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
-    setCurrentRepo(propsFilter[filterNames.REPO] ? String(propsFilter[filterNames.REPO]) : "");
     setFilters({
       ...initialFilterState(),
       ...newFilters,
@@ -145,35 +140,20 @@ function Catalog(props: ICatalogProps) {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
-  const firstUpdate = useRef(true);
   useEffect(() => {
-    if (firstUpdate.current) {
-      // actions when the component is mounted for the first time
-      firstUpdate.current = false;
-      setCurrentSearchQuery("");
-      setCurrentRepo("");
-      dispatch(actions.charts.resetChartsSearch());
-      fetchCharts(cluster, namespace, repo, currentSearchQuery);
-      getCSVs(cluster, namespace);
-      fetchChartCategories(cluster, namespace);
-    }
-  }, [
-    dispatch,
-    getCSVs,
-    fetchCharts,
-    fetchChartCategories,
-    cluster,
-    namespace,
-    currentRepo,
-    currentSearchQuery,
-    repo,
-  ]);
+    fetchChartCategories(cluster, namespace);
+    getCSVs(cluster, namespace);
+  }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
+
+  useEffect(() => {
+    fetchCharts(cluster, namespace, repo, currentSearchQuery);
+  }, [dispatch, fetchCharts, cluster, namespace, repo, currentSearchQuery]);
 
   const debouncedfetchChartsSearch = useCallback(
     debounce((q: string) => {
-      fetchCharts(cluster, namespace, currentRepo, q);
+      fetchCharts(cluster, namespace, repo, q);
     }, 500),
-    [fetchCharts, cluster, namespace, currentRepo],
+    [fetchCharts, cluster, namespace, repo],
   );
 
   // Only one search filter can be set

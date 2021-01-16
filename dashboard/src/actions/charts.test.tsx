@@ -91,19 +91,6 @@ describe("fetchChartCategories", () => {
     );
   });
 
-  it("fetches chart categories by repos", async () => {
-    response = [{ id: "foo" }];
-    const expectedActions = [
-      { type: getType(actions.charts.requestChartsCategories) },
-      { type: getType(actions.charts.receiveChartCategories), payload: response },
-    ];
-    await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace, "foo,bar"));
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/categories?repos=foo,bar`,
-    );
-  });
-
   it("returns a 404 error", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestChartsCategories) },
