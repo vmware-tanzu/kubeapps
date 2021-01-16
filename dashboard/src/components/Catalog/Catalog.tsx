@@ -37,7 +37,7 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  fetchChartCategories: (cluster: string, namespace: string, repo?: string) => void;
+  fetchChartCategories: (cluster: string, namespace: string) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
