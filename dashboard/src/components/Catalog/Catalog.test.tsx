@@ -157,7 +157,10 @@ describe("filters by application type", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
     input.simulate("change", { target: { value: "Charts" } });
     // It should have pushed with the filter
-    expect(store.getActions()[1].payload).toEqual({
+    const historyAction = store
+      .getActions()
+      .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(historyAction.payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Type=Charts"],
       method: "push",
     });
@@ -177,7 +180,10 @@ describe("filters by application type", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
     input.simulate("change", { target: { value: "Operators" } });
     // It should have pushed with the filter
-    expect(store.getActions()[1].payload).toEqual({
+    const historyAction = store
+      .getActions()
+      .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(historyAction.payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Type=Operators"],
       method: "push",
     });
@@ -207,7 +213,10 @@ describe("filters by application repository", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
     input.simulate("change", { target: { value: "foo" } });
     // It should have pushed with the filter
-    expect(store.getActions()[1].payload).toEqual({
+    const historyAction = store
+      .getActions()
+      .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(historyAction.payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Repository=foo"],
       method: "push",
     });
@@ -240,7 +249,10 @@ describe("filters by operator provider", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you" } });
     // It should have pushed with the filter
-    expect(store.getActions()[1].payload).toEqual({
+    const historyAction = store
+      .getActions()
+      .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(historyAction.payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Provider=you"],
       method: "push",
     });
@@ -295,7 +307,10 @@ describe("filters by category", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
     input.simulate("change", { target: { value: "Database" } });
     // It should have pushed with the filter
-    expect(store.getActions()[1].payload).toEqual({
+    const historyAction = store
+      .getActions()
+      .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(historyAction.payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Category=Database"],
       method: "push",
     });
