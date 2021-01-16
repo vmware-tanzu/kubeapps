@@ -7,7 +7,7 @@ import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
@@ -132,16 +132,14 @@ function Catalog(props: ICatalogProps) {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
-  const firstUpdate = useRef(true);
   useEffect(() => {
-    if (firstUpdate.current) {
-      // actions when the component is mounted for the first time
-      firstUpdate.current = false;
-      fetchChartCategories(cluster, namespace);
-      fetchCharts(cluster, namespace, repo);
-      getCSVs(cluster, namespace);
-    }
-  }, [dispatch, getCSVs, fetchCharts, fetchChartCategories, cluster, namespace, repo]);
+    fetchChartCategories(cluster, namespace);
+    getCSVs(cluster, namespace);
+  }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
+
+  useEffect(() => {
+    fetchCharts(cluster, namespace, repo);
+  }, [dispatch, fetchCharts, cluster, namespace, repo]);
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH][0] || "";
