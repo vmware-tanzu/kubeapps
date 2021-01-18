@@ -6,7 +6,6 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 
-import logo from "../../logo.svg";
 import { app } from "../../shared/url";
 import ContextSelector from "./ContextSelector";
 import "./Header.css";
@@ -47,11 +46,11 @@ function Header() {
     <section>
       <div className="container">
         <header className="header header-7">
-          <div className="branding">
-            <NavLink to="/">
-              <img src={logo} alt="Kubeapps logo" className="kubeapps__logo" />
-            </NavLink>
-          </div>
+          <NavLink to="/">
+            <div className="kubeapps__logo">
+              <span className="sr-only">Homepage</span>
+            </div>
+          </NavLink>
           {showNav && (
             <nav className="header-nav">
               {routesToRender.map(route => {
