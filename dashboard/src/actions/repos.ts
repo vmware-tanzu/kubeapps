@@ -197,30 +197,25 @@ export const fetchRepoSecret = (
 // fetchRepos fetches the AppRepositories in a specified namespace.
 export const fetchRepos = (
   namespace: string,
-  ...otherNamespaces: string[]
+  listGlobal?: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
+      config: { kubeappsNamespace },
     } = getState();
     try {
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(currentCluster, namespace);
       dispatch(fetchRepoSecrets(namespace));
-      if (!otherNamespaces || !otherNamespaces.length) {
+      if (!listGlobal || namespace === kubeappsNamespace) {
         dispatch(receiveRepos(repos.items));
       } else {
         let totalRepos = repos.items;
-        await Promise.all(
-          otherNamespaces.map(async otherNamespace => {
-            if (namespace !== otherNamespace) {
-              dispatch(requestRepos(otherNamespace));
-              const otherRepos = await AppRepository.list(currentCluster, otherNamespace);
-              // Avoid adding duplicated repos: if two repos have the same uid, filter out
-              totalRepos = uniqBy(totalRepos.concat(otherRepos.items), "metadata.uid");
-            }
-          }),
-        );
+        dispatch(requestRepos(kubeappsNamespace));
+        const globalRepos = await AppRepository.list(currentCluster, kubeappsNamespace);
+        // Avoid adding duplicated repos: if two repos have the same uid, filter out
+        totalRepos = uniqBy(totalRepos.concat(globalRepos.items), "metadata.uid");
         dispatch(receiveRepos(totalRepos));
       }
     } catch (e) {
