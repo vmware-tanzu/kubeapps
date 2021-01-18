@@ -36,9 +36,11 @@ function Layout({ children }: any) {
           <div className="content-area">
             <ErrorBoundaryContainer logout={logout}>
               {kindsError && (
-                <AlertGroup status="warning" closable={true} size="sm">
-                  Unable to retrieve API info: ${kindsError.message}
-                </AlertGroup>
+                <div className="margin-t-sm">
+                  <AlertGroup status="warning" closable={true} size="sm">
+                    Unable to retrieve API info: ${kindsError.message}
+                  </AlertGroup>
+                </div>
               )}
               {children}
             </ErrorBoundaryContainer>
