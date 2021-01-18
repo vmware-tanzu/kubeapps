@@ -86,11 +86,12 @@ export function fetchCharts(
   cluster: string,
   namespace: string,
   repo: string,
+  query: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
-      const charts = await Chart.fetchCharts(cluster, namespace, repo);
+      const charts = await Chart.fetchCharts(cluster, namespace, repo, query);
       if (charts) {
         dispatch(receiveCharts(charts));
       }

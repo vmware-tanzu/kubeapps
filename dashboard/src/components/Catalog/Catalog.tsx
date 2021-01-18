@@ -33,7 +33,7 @@ interface ICatalogProps {
   charts: IChartState;
   repo: string;
   filter: ParsedQs;
-  fetchCharts: (cluster: string, namespace: string, repo: string) => void;
+  fetchCharts: (cluster: string, namespace: string, repo: string, query: string) => void;
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
@@ -137,17 +137,19 @@ function Catalog(props: ICatalogProps) {
     getCSVs(cluster, namespace);
   }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
 
-  useEffect(() => {
-    fetchCharts(cluster, namespace, repo);
-  }, [dispatch, fetchCharts, cluster, namespace, repo]);
-
   // Only one search filter can be set
-  const searchFilter = filters[filterNames.SEARCH][0] || "";
+  const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
+  useEffect(() => {
+    fetchCharts(cluster, namespace, repo, searchFilter);
+  }, [dispatch, fetchCharts, cluster, namespace, repo, searchFilter]);
+
   const setSearchFilter = (searchTerm: string) => {
-    setFilters({
+    const newFilters = {
       ...filters,
       [filterNames.SEARCH]: [searchTerm],
-    });
+    };
+    setFilters(newFilters);
+    pushFilters(newFilters);
   };
 
   const filteredCharts = charts
@@ -155,7 +157,6 @@ function Catalog(props: ICatalogProps) {
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
