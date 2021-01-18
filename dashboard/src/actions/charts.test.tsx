@@ -124,53 +124,6 @@ describe("fetchChartCategories", () => {
   });
 });
 
-describe("fetchChartCategories", () => {
-  it("fetches chart categories", async () => {
-    response = [{ id: "foo" }];
-    const expectedActions = [
-      { type: getType(actions.charts.requestChartsCategories) },
-      { type: getType(actions.charts.receiveChartCategories), payload: response },
-    ];
-    await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace));
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/categories`,
-    );
-  });
-
-  it("returns a 404 error", async () => {
-    const expectedActions = [
-      { type: getType(actions.charts.requestChartsCategories) },
-      {
-        type: getType(actions.charts.errorChartCatetories),
-        payload: new FetchError("could not find chart categories"),
-      },
-    ];
-    axiosGetMock = jest.fn(() => {
-      throw new Error("could not find chart categories");
-    });
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("returns a generic error", async () => {
-    const expectedActions = [
-      { type: getType(actions.charts.requestChartsCategories) },
-      {
-        type: getType(actions.charts.errorChartCatetories),
-        payload: new Error("something went wrong"),
-      },
-    ];
-    axiosGetMock = jest.fn(() => {
-      throw new Error("something went wrong");
-    });
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
 describe("fetchChartVersions", () => {
   it("fetches chart versions", async () => {
     response = [{ id: "foo" }];
