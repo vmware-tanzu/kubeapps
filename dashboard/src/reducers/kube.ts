@@ -141,8 +141,7 @@ const kubeReducer = (
     case getType(actions.kube.receiveResourceKinds):
       return { ...state, kinds: action.payload };
     case getType(actions.kube.receiveKindsError):
-      // no-op: If unable to get kinds, return the default set
-      return { ...state, kinds: initialKinds };
+      return { ...state, kinds: initialKinds, kindsError: action.payload };
     case getType(actions.kube.receiveResourceFromList):
       const stateListItem = state.items[action.payload.key].item as IK8sList<IResource, {}>;
       const newItem = action.payload.resource as IResource;

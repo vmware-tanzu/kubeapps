@@ -18,6 +18,7 @@ describe("kubeReducer", () => {
     receiveResourceFromList: getType(actions.kube.receiveResourceFromList),
     receiveResourceKinds: getType(actions.kube.receiveResourceKinds),
     requestResourceKinds: getType(actions.kube.requestResourceKinds),
+    receiveKindsError: getType(actions.kube.receiveKindsError),
   };
 
   const ref = new ResourceRef(
@@ -237,6 +238,17 @@ describe("kubeReducer", () => {
         expect(newState).toEqual({
           ...initialState,
           kinds,
+        });
+      });
+
+      it("sets an error", () => {
+        const newState = kubeReducer(undefined, {
+          type: actionTypes.receiveKindsError,
+          payload: new Error("nope!"),
+        });
+        expect(newState).toEqual({
+          ...initialState,
+          kindsError: new Error("nope!"),
         });
       });
     });

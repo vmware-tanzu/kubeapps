@@ -552,6 +552,7 @@ export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
   sockets: { [s: string]: { socket: WebSocket; closeTimer: () => void } };
   kinds: { [kind: string]: IKind };
+  kindsError?: Error;
 }
 
 export interface IBasicFormParam {
