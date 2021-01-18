@@ -11,6 +11,7 @@ describe("chartReducer", () => {
     initialState = {
       isFetching: false,
       items: [],
+      categories: [],
       selected: {
         versions: [],
       },

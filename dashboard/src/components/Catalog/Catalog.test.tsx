@@ -14,6 +14,7 @@ const defaultChartState = {
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
+  categories: [],
   updatesInfo: {},
 } as IChartState;
 const defaultProps = {
@@ -21,6 +22,7 @@ const defaultProps = {
   repo: "",
   filter: {},
   fetchCharts: jest.fn(),
+  fetchChartCategories: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
   namespace: "kubeapps",
@@ -109,7 +111,10 @@ it("should render an error if it exists", () => {
 it("behaves like a loading wrapper", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <Catalog {...populatedProps} charts={{ isFetching: true, items: [], selected: {} } as any} />,
+    <Catalog
+      {...populatedProps}
+      charts={{ isFetching: true, items: [], categories: [], selected: {} } as any}
+    />,
   );
   expect(wrapper.find("LoadingWrapper")).toExist();
 });
@@ -261,7 +266,14 @@ describe("filters by category", () => {
   it("renders a Unknown category if not set", () => {
     const wrapper = mountWrapper(
       defaultStore,
-      <Catalog {...defaultProps} charts={{ ...defaultChartState, items: [chartItem] }} />,
+      <Catalog
+        {...defaultProps}
+        charts={{
+          ...defaultChartState,
+          items: [chartItem],
+          categories: [{ name: chartItem.attributes.category, count: 1 }],
+        }}
+      />,
     );
     expect(wrapper.find("input").findWhere(i => i.prop("value") === "Unknown")).toExist();
   });
@@ -272,7 +284,14 @@ describe("filters by category", () => {
       store,
       <Catalog
         {...defaultProps}
-        charts={{ ...defaultChartState, items: [chartItem, chartItem2] }}
+        charts={{
+          ...defaultChartState,
+          items: [chartItem, chartItem2],
+          categories: [
+            { name: chartItem.attributes.category, count: 1 },
+            { name: chartItem2.attributes.category, count: 1 },
+          ],
+        }}
       />,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(2);
@@ -290,7 +309,14 @@ describe("filters by category", () => {
       defaultStore,
       <Catalog
         {...defaultProps}
-        charts={{ ...defaultChartState, items: [chartItem, chartItem2] }}
+        charts={{
+          ...defaultChartState,
+          items: [chartItem, chartItem2],
+          categories: [
+            { name: chartItem.attributes.category, count: 1 },
+            { name: chartItem2.attributes.category, count: 1 },
+          ],
+        }}
         filter={{ [filterNames.CATEGORY]: "Database" }}
       />,
     );

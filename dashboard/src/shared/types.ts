@@ -47,6 +47,11 @@ export interface IRepo {
   url: string;
 }
 
+export interface IChartCategory {
+  name: string;
+  count: number;
+}
+
 export interface IChartVersion {
   id: string;
   attributes: IChartVersionAttributes;
@@ -105,6 +110,7 @@ export interface IChartState {
     schema?: jsonSchema.JSONSchema4;
   };
   items: IChart[];
+  categories: IChartCategory[];
 }
 
 export interface IChartUpdateInfo {

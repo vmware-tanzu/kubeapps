@@ -8,6 +8,7 @@ import { IChartState } from "../shared/types";
 export const initialState: IChartState = {
   isFetching: false,
   items: [],
+  categories: [],
   selected: {
     versions: [],
   },
@@ -54,8 +55,12 @@ const chartsReducer = (
   switch (action.type) {
     case getType(actions.charts.requestCharts):
       return { ...initialState, isFetching: true };
+    case getType(actions.charts.requestChartsCategories):
+      return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
       return { ...state, isFetching: false, items: action.payload };
+    case getType(actions.charts.receiveChartCategories):
+      return { ...state, isFetching: false, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
@@ -87,6 +92,12 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
+      };
+    case getType(actions.charts.errorChartCatetories):
+      return {
+        ...state,
+        isFetching: false,
+        categories: [],
       };
     default:
   }

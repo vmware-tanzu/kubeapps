@@ -119,6 +119,8 @@ export const api = {
       `${api.charts.get(cluster, namespace, id)}/versions/${encodeURIComponent(version)}`,
     list: (cluster: string, namespace: string, repo?: string) =>
       `${api.charts.base(cluster, namespace)}/charts${repo ? `/${repo}` : ""}`,
+    getChartCategories: (cluster: string, namespace: string) =>
+      `${api.charts.base(cluster, namespace)}/charts/categories`,
     listVersions: (cluster: string, namespace: string, id: string) =>
       `${api.charts.get(cluster, namespace, id)}/versions`,
     getReadme: (cluster: string, namespace: string, id: string, version: string) =>

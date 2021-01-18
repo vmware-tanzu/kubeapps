@@ -37,6 +37,7 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
+  fetchChartCategories: (cluster: string, namespace: string) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
@@ -73,10 +74,12 @@ function Catalog(props: ICatalogProps) {
       isFetching,
       selected: { error },
       items: charts,
+      categories,
     },
     fetchCharts,
     cluster,
     namespace,
+    fetchChartCategories,
     getCSVs,
     csvs,
     repo,
@@ -96,7 +99,7 @@ function Catalog(props: ICatalogProps) {
     });
   }, [propsFilter]);
 
-  const pushFilters = (newFilters: any) => {
+  const pushFilters = (newFilters: any, type?: string) => {
     dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
   };
   const addFilter = (type: string, value: string) => {
@@ -124,15 +127,19 @@ function Catalog(props: ICatalogProps) {
   const allRepos = uniq(charts.map(c => c.attributes.repo.name));
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
-    charts
-      .map(c => categoryToReadable(c.attributes.category))
+    categories
+      .map(c => categoryToReadable(c.name))
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
   useEffect(() => {
-    fetchCharts(cluster, namespace, repo);
+    fetchChartCategories(cluster, namespace);
     getCSVs(cluster, namespace);
-  }, [cluster, namespace, repo, fetchCharts, getCSVs]);
+  }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
+
+  useEffect(() => {
+    fetchCharts(cluster, namespace, repo);
+  }, [dispatch, fetchCharts, cluster, namespace, repo]);
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH][0] || "";
