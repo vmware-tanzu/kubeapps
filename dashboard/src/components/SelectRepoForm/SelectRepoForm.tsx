@@ -36,7 +36,7 @@ function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps)
   useEffect(() => {
     if (namespace !== kubeappsNamespace) {
       // Normal namespace, show local and global repos
-      dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+      dispatch(actions.repos.fetchRepos(namespace, true));
     } else {
       // Global namespace, show global repos only
       dispatch(actions.repos.fetchRepos(kubeappsNamespace));

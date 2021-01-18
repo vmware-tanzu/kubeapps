@@ -55,7 +55,7 @@ function AppRepoList() {
       return;
     }
     // In other case, fetch global and namespace repos
-    dispatch(actions.repos.fetchRepos(namespace, kubeappsNamespace));
+    dispatch(actions.repos.fetchRepos(namespace, true));
   }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {

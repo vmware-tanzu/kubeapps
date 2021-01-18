@@ -263,7 +263,7 @@ describe("fetchRepos", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("fetches repos from several namespaces and joins them", async () => {
+  it("fetches additional repos from the global namespace and joins them", async () => {
     AppRepository.list = jest
       .fn()
       .mockImplementationOnce(() => {
@@ -280,7 +280,7 @@ describe("fetchRepos", () => {
       },
       {
         type: getType(repoActions.requestRepos),
-        payload: "other-ns",
+        payload: kubeappsNamespace,
       },
       {
         type: getType(repoActions.receiveReposSecrets),
@@ -295,7 +295,7 @@ describe("fetchRepos", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace, "other-ns"));
+    await store.dispatch(repoActions.fetchRepos(namespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -321,7 +321,7 @@ describe("fetchRepos", () => {
       },
       {
         type: getType(repoActions.requestRepos),
-        payload: "other-ns",
+        payload: kubeappsNamespace,
       },
       {
         type: getType(repoActions.receiveReposSecrets),
@@ -336,7 +336,7 @@ describe("fetchRepos", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace, "other-ns"));
+    await store.dispatch(repoActions.fetchRepos(namespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -358,19 +358,19 @@ describe("fetchRepos", () => {
     const expectedActions = [
       {
         type: getType(repoActions.requestRepos),
-        payload: "other-ns",
-      },
-      {
-        type: getType(repoActions.receiveReposSecrets),
-        payload: [],
+        payload: kubeappsNamespace,
       },
       {
         type: getType(repoActions.receiveRepos),
         payload: [{ name: "repo1", metadata: { uid: "123" } }],
       },
+      {
+        type: getType(repoActions.receiveReposSecrets),
+        payload: [],
+      },
     ];
 
-    await store.dispatch(repoActions.fetchRepos("other-ns", "other-ns"));
+    await store.dispatch(repoActions.fetchRepos(kubeappsNamespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
