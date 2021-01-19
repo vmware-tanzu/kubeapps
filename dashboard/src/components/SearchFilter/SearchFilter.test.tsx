@@ -10,6 +10,8 @@ const defaultProps: ISearchFilterProps = {
   submitFilters: jest.fn(),
 };
 
+jest.useFakeTimers();
+
 it("should render a PageHeader", () => {
   const wrapper = shallow(<SearchFilter {...defaultProps} value="test" />);
   expect(wrapper).toMatchSnapshot();
@@ -20,6 +22,7 @@ it("changes the filter", () => {
   const onChange = jest.fn();
   const wrapper = shallow(<SearchFilter {...defaultProps} value="test" onChange={onChange} />);
   wrapper.find(Input).simulate("change", { currentTarget: { value: "foo" } });
+  jest.runAllTimers();
   expect(onChange).toHaveBeenCalledWith("foo");
 });
 
