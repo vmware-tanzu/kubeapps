@@ -13,6 +13,8 @@ export const initialState: IChartState = {
     versions: [],
   },
   deployed: {},
+  page: 1,
+  size: 0,
 };
 
 const chartsSelectedReducer = (

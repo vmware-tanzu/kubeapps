@@ -14,6 +14,8 @@ let response: any;
 
 const namespace = "chart-namespace";
 const cluster = "default";
+const defaultPage = 1;
+const defaultSize = 0;
 
 beforeEach(() => {
   store = mockStore();
@@ -39,10 +41,12 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.receiveCharts), payload: response },
     ];
-    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
+    await store.dispatch(
+      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?&repos=foo`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&repos=foo`,
     );
   });
 
@@ -52,10 +56,12 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.requestCharts), payload: "foo" },
       { type: getType(actions.charts.receiveCharts), payload: response },
     ];
-    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "", "foo"));
+    await store.dispatch(
+      actions.charts.fetchCharts(cluster, namespace, "", defaultPage, defaultSize, "foo"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?&q=foo`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&q=foo`,
     );
   });
 
@@ -71,7 +77,9 @@ describe("fetchCharts", () => {
       throw new Error("could not find chart");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
+    await store.dispatch(
+      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -84,7 +92,9 @@ describe("fetchCharts", () => {
       throw new Error("something went wrong");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
+    await store.dispatch(
+      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

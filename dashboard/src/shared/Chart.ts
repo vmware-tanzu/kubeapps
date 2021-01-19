@@ -8,10 +8,12 @@ export default class Chart {
     cluster: string,
     namespace: string,
     repos: string,
+    page: number,
+    size: number,
     query?: string,
   ) {
     const { data } = await axiosWithAuth.get<{ data: IChart[] }>(
-      URL.api.charts.list(cluster, namespace, repos, query),
+      URL.api.charts.list(cluster, namespace, repos, page, size, query),
     );
     return data.data;
   }
