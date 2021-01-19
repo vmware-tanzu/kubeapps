@@ -5,7 +5,7 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 
@@ -211,8 +211,9 @@ describe("filters by application repository", () => {
   });
 
   it("push filter for repo", () => {
-    const store = getStore({});
-    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
+    const store = getStore({ repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] } });
+    const fetchRepos = jest.fn();
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} fetchRepos={fetchRepos} />);
     // The repo name is "foo"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
     input.simulate("change", { target: { value: "foo" } });
@@ -220,6 +221,7 @@ describe("filters by application repository", () => {
     const historyAction = store
       .getActions()
       .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
     expect(historyAction.payload).toEqual({
       args: ["/c/default/ns/kubeapps/catalog?Repository=foo"],
       method: "push",

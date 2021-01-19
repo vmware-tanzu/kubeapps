@@ -94,16 +94,12 @@ function Catalog(props: ICatalogProps) {
 
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
-  const [currentRepo, setCurrentRepo] = useState(
-    propsFilter[filterNames.REPO] ? String(propsFilter[filterNames.REPO]) : "",
-  );
 
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
-    setCurrentRepo(propsFilter[filterNames.REPO] ? String(propsFilter[filterNames.REPO]) : "");
     setFilters({
       ...initialFilterState(),
       ...newFilters,
@@ -146,11 +142,6 @@ function Catalog(props: ICatalogProps) {
   // We do not currently support app repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
-    if (!namespace) {
-      // All Namespaces
-      fetchRepos("");
-      return;
-    }
     if (!supportedCluster || namespace === kubeappsNamespace) {
       // Global namespace or other cluster, show global repos only
       fetchRepos(kubeappsNamespace);
@@ -167,9 +158,10 @@ function Catalog(props: ICatalogProps) {
 
   // Only one search filter can be set
   const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
+  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
-    fetchCharts(cluster, namespace, currentRepo, searchFilter);
-  }, [fetchCharts, cluster, namespace, currentRepo, searchFilter]);
+    fetchCharts(cluster, namespace, reposFilter, searchFilter);
+  }, [fetchCharts, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
     const newFilters = {
