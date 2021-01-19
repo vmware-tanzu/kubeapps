@@ -62,8 +62,8 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        items: !action?.meta.length ? action.payload : state.items,
-        searchItems: action?.meta.length ? action.payload : state.searchItems,
+        items: !action?.meta?.length ? action.payload : state.items,
+        searchItems: action?.meta?.length ? action.payload : state.searchItems,
       };
     case getType(actions.charts.receiveChartCategories):
       return { ...state, isFetching: false, categories: action.payload };

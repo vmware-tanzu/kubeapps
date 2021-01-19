@@ -1,11 +1,25 @@
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 
-import { IChartState } from "../shared/types";
+import { IChart, IChartCategory, IChartState } from "../shared/types";
 import chartsReducer from "./charts";
 
 describe("chartReducer", () => {
   let initialState: IChartState;
+  const chartItem = {
+    id: "foo",
+    attributes: {
+      name: "foo",
+      description: "",
+      category: "",
+      repo: { name: "foo", namespace: "chart-namespace" },
+    },
+    relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
+  } as IChart;
+  const chartCategoryItem = {
+    name: "foo",
+    count: 1,
+  } as IChartCategory;
 
   beforeEach(() => {
     initialState = {
@@ -39,5 +53,124 @@ describe("chartReducer", () => {
         type: getType(actions.namespace.setNamespaceState) as any,
       }),
     ).toEqual({ ...initialState });
+  });
+
+  it("requestChartsCategories", () => {
+    const state = chartsReducer(undefined, {
+      type: getType(actions.charts.requestChartsCategories) as any,
+    });
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: true,
+    });
+  });
+
+  it("receiveChartCategories", () => {
+    const state = chartsReducer(undefined, {
+      type: getType(actions.charts.receiveChartCategories) as any,
+      payload: [chartCategoryItem],
+    });
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: false,
+      categories: [chartCategoryItem],
+    });
+  });
+
+  it("errorChartCatetories", () => {
+    const state = chartsReducer(undefined, {
+      type: getType(actions.charts.errorChartCatetories) as any,
+    });
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: false,
+      categories: [],
+    });
+  });
+
+  it("single requestCharts without query", () => {
+    const state = chartsReducer(undefined, {
+      type: getType(actions.charts.requestCharts) as any,
+    });
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: true,
+    });
+  });
+
+  it("single requestCharts with query", () => {
+    const state = chartsReducer(undefined, {
+      type: getType(actions.charts.requestCharts) as any,
+      payload: "query",
+    });
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: true,
+    });
+  });
+
+  it("single receiveCharts without query", () => {
+    const state = chartsReducer(undefined, {
+      type: getType(actions.charts.receiveCharts) as any,
+      payload: [chartItem],
+    });
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: false,
+      items: [chartItem],
+    });
+  });
+
+  it("single receiveCharts with query", () => {
+    const state = chartsReducer(undefined, {
+      type: getType(actions.charts.receiveCharts) as any,
+      payload: [chartItem],
+      meta: "query",
+    });
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: false,
+      items: [],
+      searchItems: [chartItem],
+    });
+  });
+
+  it("two mixed receiveCharts don't override items/searchItems", () => {
+    const state1 = chartsReducer(undefined, {
+      type: getType(actions.charts.receiveCharts) as any,
+      payload: [chartItem],
+    });
+    const state2 = chartsReducer(state1, {
+      type: getType(actions.charts.receiveCharts) as any,
+      payload: [chartItem],
+      meta: "query",
+    });
+    expect(state2).toEqual({
+      ...initialState,
+      isFetching: false,
+      items: [chartItem],
+      searchItems: [chartItem],
+    });
+  });
+
+  it("two mixed receiveCharts and then errorChart", () => {
+    const state1 = chartsReducer(undefined, {
+      type: getType(actions.charts.receiveCharts) as any,
+      payload: [chartItem],
+    });
+    const state2 = chartsReducer(state1, {
+      type: getType(actions.charts.receiveCharts) as any,
+      payload: [chartItem],
+      meta: "query",
+    });
+    const state3 = chartsReducer(state2, {
+      type: getType(actions.charts.errorChart) as any,
+    });
+    expect(state3).toEqual({
+      ...initialState,
+      isFetching: false,
+      items: [],
+      searchItems: [],
+    });
   });
 });
