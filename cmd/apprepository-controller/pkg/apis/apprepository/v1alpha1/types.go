@@ -45,6 +45,9 @@ type AppRepositorySpec struct {
 	// in the same namespace as the AppRepository and should be included
 	// automatically for matching images.
 	DockerRegistrySecrets []string `json:"dockerRegistrySecrets,omitempty"`
+	// In case of an OCI type, the list of repositories is needed
+	// as there is no API for the index
+	Repositories []string `json:"repositories,omitempty"`
 }
 
 // AppRepositoryAuth is the auth for an AppRepository resource
@@ -53,11 +56,13 @@ type AppRepositoryAuth struct {
 	CustomCA *AppRepositoryCustomCA   `json:"customCA,omitempty"`
 }
 
+// AppRepositoryAuthHeader secret-key reference
 type AppRepositoryAuthHeader struct {
 	// Selects a key of a secret in the pod's namespace
 	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
+// AppRepositoryCustomCA secret-key reference
 type AppRepositoryCustomCA struct {
 	// Selects a key of a secret in the pod's namespace
 	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
