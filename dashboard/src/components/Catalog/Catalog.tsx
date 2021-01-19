@@ -1,19 +1,19 @@
 import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";
-import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
-import { debounce, flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
+import { flatten, get, intersection, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
 import { IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import "./Catalog.css";
@@ -71,11 +71,11 @@ export function filtersToQuery(filters: any) {
 function Catalog(props: ICatalogProps) {
   const {
     charts: {
-      status,
+      isFetching,
       selected: { error },
       items: charts,
+      searchItems: searchedCharts,
       categories,
-      search,
     },
     fetchCharts,
     cluster,
@@ -89,48 +89,29 @@ function Catalog(props: ICatalogProps) {
 
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
-  const [currentSearchQuery, setCurrentSearchQuery] = useState("");
 
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       newFilters[filter] = propsFilter[filter]?.toString().split(",");
     });
-
     setFilters({
       ...initialFilterState(),
       ...newFilters,
     });
-  }, [propsFilter, currentSearchQuery]);
+  }, [propsFilter]);
 
-  const pushFiltersFunc = (newFilters: any, type?: string) => {
-    pushFilters(newFilters, type);
+  const pushFilters = (newFilters: any) => {
+    dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
   };
-  const pushFilters = useCallback(
-    (newFilters: any, type?: string) => {
-      if (!isEqual(filters, newFilters)) {
-        dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
-      }
-    },
-    [filters, dispatch, cluster, namespace],
-  );
   const addFilter = (type: string, value: string) => {
-    pushFiltersFunc({
+    pushFilters({
       ...filters,
       [type]: filters[type].concat(value),
     });
   };
-  const setFilter = (type: string, value?: any) => {
-    pushFiltersFunc({
-      ...filters,
-      [type]: value ? value : [],
-    });
-  };
   const removeFilter = (type: string, value: string) => {
-    if (filterNames.SEARCH === type) {
-      setCurrentSearchQuery("");
-    }
-    pushFiltersFunc({
+    pushFilters({
       ...filters,
       [type]: without(filters[type], value),
     });
@@ -138,14 +119,12 @@ function Catalog(props: ICatalogProps) {
   const removeFilterFunc = (type: string, value: string) => {
     return () => removeFilter(type, value);
   };
-  const clearAllFiltersFunc = () => {
-    clearAllFilters();
+  const clearAllFilters = () => {
+    pushFilters({});
   };
-
-  const clearAllFilters = useCallback(() => {
-    setCurrentSearchQuery("");
-    pushFilters(initialFilterState(), "");
-  }, [pushFilters, setCurrentSearchQuery]);
+  const submitFilters = () => {
+    pushFilters(filters);
+  };
 
   const allRepos = uniq(charts.map(c => c.attributes.repo.name));
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
@@ -155,73 +134,31 @@ function Catalog(props: ICatalogProps) {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
-  // fetch categories AND fetch csvs when: i) (cluster OR namespace) changes
   useEffect(() => {
     fetchChartCategories(cluster, namespace);
     getCSVs(cluster, namespace);
-  }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
-
-  // fetch charts when  i) the namespace changes; 2) the (repo OR cluster OR namespace) changes if no search query
-  const namespaceUpdate = useRef(namespace);
-  useEffect(() => {
-    if (namespaceUpdate.current !== namespace || !currentSearchQuery.length) {
-      // otherwise, fetching will be managed by setSearchFilter
-      fetchCharts(cluster, namespace, repo, currentSearchQuery);
-    }
-    namespaceUpdate.current = namespace;
-  }, [dispatch, fetchCharts, currentSearchQuery, cluster, namespace, repo]);
-
-  const debouncedfetchChartsSearch = useCallback(
-    debounce((q: string) => {
-      if (q.length) {
-        fetchCharts(cluster, namespace, repo, q);
-        setFilter(filterNames.SEARCH, [q]);
-      } else {
-        setFilter(filterNames.SEARCH, []);
-        setCurrentSearchQuery("");
-        // dispatch(actions.charts.resetChartsSearch());
-      }
-    }, 300),
-    [dispatch, fetchCharts, setFilter, cluster, namespace, repo],
-  );
-
-  // handle the scenario when a url with "?Search=foo" is requested by the user
-  const shouldForceSearchFilter = useRef(true);
-  useEffect(() => {
-    if (shouldForceSearchFilter.current) {
-      const existsSearchFilter =
-        filters[filterNames.SEARCH] !== undefined &&
-        filters[filterNames.SEARCH][0] !== undefined &&
-        filters[filterNames.SEARCH][0] !== "";
-      if (existsSearchFilter && !currentSearchQuery.length && !search.items.length) {
-        shouldForceSearchFilter.current = false;
-        setCurrentSearchQuery(filters[filterNames.SEARCH][0]);
-        debouncedfetchChartsSearch(filters[filterNames.SEARCH][0]);
-      }
-    }
-  }, [filters, debouncedfetchChartsSearch, currentSearchQuery, search]);
+  }, [getCSVs, fetchChartCategories, cluster, namespace]);
 
   // Only one search filter can be set
-  const searchFilter = filters[filterNames.SEARCH][0] || "";
-  const setSearchFilter = useCallback(
-    (searchTerm: string) => {
-      const trimmedSearchTerm = trimStart(searchTerm);
-      if (trimmedSearchTerm.length || currentSearchQuery.length) {
-        if (trimmedSearchTerm.length) {
-          setCurrentSearchQuery(trimmedSearchTerm);
-        }
-        debouncedfetchChartsSearch(trimmedSearchTerm);
-      }
-    },
-    [debouncedfetchChartsSearch, currentSearchQuery],
-  );
+  const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
+  useEffect(() => {
+    fetchCharts(cluster, namespace, repo, searchFilter);
+  }, [fetchCharts, cluster, namespace, repo, searchFilter]);
+
+  const setSearchFilter = (searchTerm: string) => {
+    const newFilters = {
+      ...filters,
+      [filterNames.SEARCH]: [trimStart(searchTerm)],
+    };
+    setFilters(newFilters);
+    pushFilters(newFilters);
+  };
 
   const filteredCharts = charts
     .filter(
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
@@ -232,7 +169,7 @@ function Catalog(props: ICatalogProps) {
         filters[filterNames.CATEGORY].length === 0 ||
         filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
     );
-  const filteredChartsSearch = search.items
+  const filteredSearchedCharts = searchedCharts
     .filter(
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
@@ -254,7 +191,7 @@ function Catalog(props: ICatalogProps) {
     )
     .filter(() => filters[filterNames.REPO].length === 0)
     .filter(c => {
-      const regex = new RegExp(escapeRegExp(currentSearchQuery), "i");
+      const regex = new RegExp(escapeRegExp(searchFilter), "i");
       return (
         regex.test(c.metadata.name) ||
         c?.spec?.customresourcedefinitions?.owned.find(crd => regex.test(crd.displayName))
@@ -280,125 +217,128 @@ function Catalog(props: ICatalogProps) {
             key="searchFilter"
             placeholder="search charts..."
             onChange={setSearchFilter}
-            value={currentSearchQuery}
-            submitFilters={setSearchFilter}
+            value={searchFilter}
+            submitFilters={submitFilters}
           />
         }
       />
-      {error && (
-        <Alert theme="danger">An error occurred while fetching the catalog: {error.message}</Alert>
-      )}
-      {charts.length === 0 && filteredChartsSearch.length === 0 && csvs.length === 0 ? (
-        <div className="empty-catalog">
-          <CdsIcon shape="bundle" />
-          <p>The current catalog is empty.</p>
-          <p>
-            Manage your Helm chart repositories in Kubeapps by visiting the App repositories
-            configuration page.
-          </p>
-          <Link to={app.config.apprepositories(cluster, namespace)}>
-            <CdsButton>Manage App Repositories</CdsButton>
-          </Link>
-        </div>
-      ) : (
-        <Row>
-          <Column span={2}>
-            <div className="filters-menu">
-              <h5>
-                Filters{" "}
-                {flatten(Object.values(filters)).length ? (
-                  <CdsButton size="sm" action="flat" onClick={clearAllFiltersFunc}>
-                    Clear All
-                  </CdsButton>
-                ) : (
-                  <></>
-                )}{" "}
-              </h5>
-              {csvs.length > 0 && (
-                <div className="filter-section">
-                  <label>Application Type</label>
-                  <FilterGroup
-                    name={filterNames.TYPE}
-                    options={["Operators", "Charts"]}
-                    currentFilters={filters[filterNames.TYPE]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
-                </div>
-              )}
-              {allCategories.length > 0 && (
-                <div className="filter-section">
-                  <label className="filter-label">Category</label>
-                  <FilterGroup
-                    name={filterNames.CATEGORY}
-                    options={allCategories}
-                    currentFilters={filters[filterNames.CATEGORY]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
-                </div>
-              )}
-              {allRepos.length > 0 && (
-                <div className="filter-section">
-                  <label>Application Repository</label>
-                  <FilterGroup
-                    name={filterNames.REPO}
-                    options={allRepos}
-                    currentFilters={filters[filterNames.REPO]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
-                </div>
-              )}
-              {allProviders.length > 0 && (
-                <div className="filter-section">
-                  <label className="filter-label">Operator Provider</label>
-                  <FilterGroup
-                    name={filterNames.OPERATOR_PROVIDER}
-                    options={allProviders}
-                    currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
-                </div>
-              )}
-            </div>
-          </Column>
-          <Column span={10}>
-            <>
-              <div className="filter-summary">
-                {Object.keys(filters).map(filterName => {
-                  if (filters[filterName].length) {
-                    return filters[filterName].map((filterValue: string) => (
-                      <span key={`${filterName}-${filterValue}`} className="label label-info">
-                        {filterName}: {filterValue}{" "}
-                        <CdsIcon
-                          shape="times"
-                          onClick={removeFilterFunc(filterName, filterValue)}
-                        />
-                      </span>
-                    ));
-                  }
-                  return null;
-                })}
+      <LoadingWrapper loaded={!isFetching}>
+        {error && (
+          <Alert theme="danger">
+            An error occurred while fetching the catalog: {error.message}
+          </Alert>
+        )}
+        {charts.length === 0 && searchedCharts.length === 0 && csvs.length === 0 ? (
+          <div className="empty-catalog">
+            <CdsIcon shape="bundle" />
+            <p>The current catalog is empty.</p>
+            <p>
+              Manage your Helm chart repositories in Kubeapps by visiting the App repositories
+              configuration page.
+            </p>
+            <Link to={app.config.apprepositories(cluster, namespace)}>
+              <CdsButton>Manage App Repositories</CdsButton>
+            </Link>
+          </div>
+        ) : (
+          <Row>
+            <Column span={2}>
+              <div className="filters-menu">
+                <h5>
+                  Filters{" "}
+                  {flatten(Object.values(filters)).length ? (
+                    <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
+                      Clear All
+                    </CdsButton>
+                  ) : (
+                    <></>
+                  )}{" "}
+                </h5>
+                {csvs.length > 0 && (
+                  <div className="filter-section">
+                    <label>Application Type</label>
+                    <FilterGroup
+                      name={filterNames.TYPE}
+                      options={["Operators", "Charts"]}
+                      currentFilters={filters[filterNames.TYPE]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </div>
+                )}
+                {allCategories.length > 0 && (
+                  <div className="filter-section">
+                    <label className="filter-label">Category</label>
+                    <FilterGroup
+                      name={filterNames.CATEGORY}
+                      options={allCategories}
+                      currentFilters={filters[filterNames.CATEGORY]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </div>
+                )}
+                {allRepos.length > 0 && (
+                  <div className="filter-section">
+                    <label>Application Repository</label>
+                    <FilterGroup
+                      name={filterNames.REPO}
+                      options={allRepos}
+                      currentFilters={filters[filterNames.REPO]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </div>
+                )}
+                {allProviders.length > 0 && (
+                  <div className="filter-section">
+                    <label className="filter-label">Operator Provider</label>
+                    <FilterGroup
+                      name={filterNames.OPERATOR_PROVIDER}
+                      options={allProviders}
+                      currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </div>
+                )}
               </div>
-              <Row>
-                <CatalogItems
-                  charts={
-                    search.query.length && currentSearchQuery.length
-                      ? filteredChartsSearch
-                      : filteredCharts
-                  }
-                  csvs={filteredCSVs}
-                  cluster={cluster}
-                  namespace={namespace}
-                  hasFinishedFetching={status === actions.charts.finishedStatus}
-                />
-              </Row>
-            </>
-          </Column>
-        </Row>
-      )}
+            </Column>
+            <Column span={10}>
+              <>
+                <div className="filter-summary">
+                  {Object.keys(filters).map(filterName => {
+                    if (filters[filterName].length) {
+                      return filters[filterName].map((filterValue: string) =>
+                        filterValue.length ? (
+                          <span key={`${filterName}-${filterValue}`} className="label label-info">
+                            {filterName}: {filterValue}{" "}
+                            <CdsIcon
+                              shape="times"
+                              onClick={removeFilterFunc(filterName, filterValue)}
+                            />
+                          </span>
+                        ) : (
+                          ""
+                        ),
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+                <Row>
+                  <CatalogItems
+                    charts={searchFilter.length ? filteredSearchedCharts : filteredCharts}
+                    csvs={filteredCSVs}
+                    cluster={cluster}
+                    namespace={namespace}
+                  />
+                </Row>
+              </>
+            </Column>
+          </Row>
+        )}
+      </LoadingWrapper>
     </section>
   );
 }

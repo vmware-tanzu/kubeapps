@@ -94,7 +94,6 @@ export interface IChartAttributes {
 }
 
 export interface IChartState {
-  status: string;
   isFetching: boolean;
   selected: {
     error?: FetchError | Error;
@@ -111,11 +110,8 @@ export interface IChartState {
     schema?: jsonSchema.JSONSchema4;
   };
   items: IChart[];
+  searchItems: IChart[];
   categories: IChartCategory[];
-  search: {
-    items: IChart[];
-    query: string;
-  };
 }
 
 export interface IChartUpdateInfo {

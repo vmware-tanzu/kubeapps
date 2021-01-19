@@ -11,17 +11,27 @@ export interface ISearchFilterProps {
   className?: string;
   placeholder: string;
   onChange: (filter: string) => void;
-  submitFilters: (filter: string) => void;
+  submitFilters: () => void;
 }
 
 function SearchFilter(props: ISearchFilterProps) {
+  const [value, setValue] = React.useState(props.value);
+  const [timeout, setTimeoutState] = React.useState({} as NodeJS.Timeout);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    props.onChange(e.currentTarget.value);
+    // Copy is needed to avoid losing the reference
+    const valueCopy = e.currentTarget.value;
+    setValue(e.currentTarget.value);
+    // Gather changes before submitting
+    clearTimeout(timeout);
+    setTimeoutState(
+      setTimeout(() => {
+        props.onChange(valueCopy);
+      }, 300),
+    );
   };
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    props.submitFilters((e.currentTarget.elements[0] as HTMLInputElement).value);
+    props.submitFilters();
   };
   return (
     <div className="search-box">
@@ -38,7 +48,7 @@ function SearchFilter(props: ISearchFilterProps) {
               placeholder={props.placeholder}
               autoComplete="off"
               onChange={handleChange}
-              value={props.value}
+              value={value}
               {...Input.defaultProps}
             />
           </Column>

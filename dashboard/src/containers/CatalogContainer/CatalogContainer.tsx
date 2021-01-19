@@ -27,7 +27,7 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    fetchCharts: (cluster: string, namespace: string, repos: string, query: string) =>
+    fetchCharts: (cluster: string, namespace: string, repos: string, query?: string) =>
       dispatch(actions.charts.fetchCharts(cluster, namespace, repos, query)),
     fetchChartCategories: (cluster: string, namespace: string) =>
       dispatch(actions.charts.fetchChartCategories(cluster, namespace)),

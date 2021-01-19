@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
@@ -11,15 +10,11 @@ import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
-  status: actions.charts.idleStatus,
   isFetching: false,
-  search: {
-    items: [],
-    query: "",
-  },
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
+  searchItems: [],
   categories: [],
   updatesInfo: {},
 } as IChartState;
