@@ -54,11 +54,15 @@ const chartsReducer = (
 ): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
-      return { ...initialState, isFetching: true };
+      return { ...state, isFetching: true };
     case getType(actions.charts.requestChartsCategories):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
-      return { ...state, isFetching: false, items: action.payload };
+      return {
+        ...state,
+        isFetching: false,
+        items: action.payload,
+      };
     case getType(actions.charts.receiveChartCategories):
       return { ...state, isFetching: false, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):
@@ -91,6 +95,7 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
+        items: [],
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.errorChartCatetories):

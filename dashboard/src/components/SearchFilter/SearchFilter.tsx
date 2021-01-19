@@ -15,8 +15,19 @@ export interface ISearchFilterProps {
 }
 
 function SearchFilter(props: ISearchFilterProps) {
+  const [value, setValue] = React.useState(props.value);
+  const [timeout, setTimeoutState] = React.useState({} as NodeJS.Timeout);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    props.onChange(e.currentTarget.value);
+    // Copy is needed to avoid losing the reference
+    const valueCopy = e.currentTarget.value;
+    setValue(e.currentTarget.value);
+    // Gather changes before submitting
+    clearTimeout(timeout);
+    setTimeoutState(
+      setTimeout(() => {
+        props.onChange(valueCopy);
+      }, 300),
+    );
   };
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,7 +48,7 @@ function SearchFilter(props: ISearchFilterProps) {
               placeholder={props.placeholder}
               autoComplete="off"
               onChange={handleChange}
-              value={props.value}
+              value={value}
               {...Input.defaultProps}
             />
           </Column>

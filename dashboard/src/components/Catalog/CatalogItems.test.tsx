@@ -56,7 +56,12 @@ const populatedProps = {
   csvs: [csv],
 };
 
-it("shows a message if no items are passed", () => {
+it("shows nothing if no items are passed but it's still fetching", () => {
+  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} />);
+  expect(wrapper).toIncludeText("");
+});
+
+it("shows a message if no items are passed and it stopped fetching", () => {
   const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} />);
   expect(wrapper).toIncludeText("No application matches the current filter");
 });

@@ -12,7 +12,9 @@ import {
   NotFoundError,
 } from "../shared/types";
 
-export const requestCharts = createAction("REQUEST_CHARTS");
+export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
+  return (query?: string) => resolve(query);
+});
 
 export const requestChart = createAction("REQUEST_CHART");
 
@@ -85,15 +87,14 @@ export type ChartsAction = ActionType<typeof allActions[number]>;
 export function fetchCharts(
   cluster: string,
   namespace: string,
-  repo: string,
+  repos: string,
+  query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestCharts());
+    dispatch(requestCharts(query));
     try {
-      const charts = await Chart.fetchCharts(cluster, namespace, repo);
-      if (charts) {
-        dispatch(receiveCharts(charts));
-      }
+      const charts = await Chart.fetchCharts(cluster, namespace, repos, query);
+      dispatch(receiveCharts(charts));
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
     }

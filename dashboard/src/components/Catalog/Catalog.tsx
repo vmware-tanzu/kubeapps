@@ -5,7 +5,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
-import { flatten, get, intersection, uniq, without } from "lodash";
+import { flatten, get, intersection, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -33,7 +33,7 @@ interface ICatalogProps {
   charts: IChartState;
   repo: string;
   filter: ParsedQs;
-  fetchCharts: (cluster: string, namespace: string, repo: string) => void;
+  fetchCharts: (cluster: string, namespace: string, repos: string, query: string) => void;
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
@@ -85,6 +85,7 @@ function Catalog(props: ICatalogProps) {
     repo,
     filter: propsFilter,
   } = props;
+
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
 
@@ -99,7 +100,7 @@ function Catalog(props: ICatalogProps) {
     });
   }, [propsFilter]);
 
-  const pushFilters = (newFilters: any, type?: string) => {
+  const pushFilters = (newFilters: any) => {
     dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
   };
   const addFilter = (type: string, value: string) => {
@@ -135,19 +136,21 @@ function Catalog(props: ICatalogProps) {
   useEffect(() => {
     fetchChartCategories(cluster, namespace);
     getCSVs(cluster, namespace);
-  }, [dispatch, getCSVs, fetchChartCategories, cluster, namespace]);
-
-  useEffect(() => {
-    fetchCharts(cluster, namespace, repo);
-  }, [dispatch, fetchCharts, cluster, namespace, repo]);
+  }, [getCSVs, fetchChartCategories, cluster, namespace]);
 
   // Only one search filter can be set
-  const searchFilter = filters[filterNames.SEARCH][0] || "";
+  const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
+  useEffect(() => {
+    fetchCharts(cluster, namespace, repo, searchFilter);
+  }, [fetchCharts, cluster, namespace, repo, searchFilter]);
+
   const setSearchFilter = (searchTerm: string) => {
-    setFilters({
+    const newFilters = {
       ...filters,
-      [filterNames.SEARCH]: [searchTerm],
-    });
+      [filterNames.SEARCH]: [trimStart(searchTerm)],
+    };
+    setFilters(newFilters);
+    pushFilters(newFilters);
   };
 
   const filteredCharts = charts
@@ -155,7 +158,6 @@ function Catalog(props: ICatalogProps) {
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
@@ -172,7 +174,13 @@ function Catalog(props: ICatalogProps) {
         filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Operators"),
     )
     .filter(() => filters[filterNames.REPO].length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name))
+    .filter(c => {
+      const regex = new RegExp(escapeRegExp(searchFilter), "i");
+      return (
+        regex.test(c.metadata.name) ||
+        c?.spec?.customresourcedefinitions?.owned.find(crd => regex.test(crd.displayName))
+      );
+    })
     .filter(
       c =>
         filters[filterNames.OPERATOR_PROVIDER].length === 0 ||
@@ -285,15 +293,19 @@ function Catalog(props: ICatalogProps) {
                 <div className="filter-summary">
                   {Object.keys(filters).map(filterName => {
                     if (filters[filterName].length) {
-                      return filters[filterName].map((filterValue: string, i: number) => (
-                        <span key={`${filterName}-${filterValue}`} className="label label-info">
-                          {filterName}: {filterValue}{" "}
-                          <CdsIcon
-                            shape="times"
-                            onClick={removeFilterFunc(filterName, filterValue)}
-                          />
-                        </span>
-                      ));
+                      return filters[filterName].map((filterValue: string) =>
+                        filterValue.length ? (
+                          <span key={`${filterName}-${filterValue}`} className="label label-info">
+                            {filterName}: {filterValue}{" "}
+                            <CdsIcon
+                              shape="times"
+                              onClick={removeFilterFunc(filterName, filterValue)}
+                            />
+                          </span>
+                        ) : (
+                          ""
+                        ),
+                      );
                     }
                     return null;
                   })}

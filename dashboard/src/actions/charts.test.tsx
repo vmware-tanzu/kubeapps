@@ -42,7 +42,20 @@ describe("fetchCharts", () => {
     await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo`,
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?&repos=foo`,
+    );
+  });
+
+  it("fetches charts with query", async () => {
+    response = [{ id: "foo" }];
+    const expectedActions = [
+      { type: getType(actions.charts.requestCharts), payload: "foo" },
+      { type: getType(actions.charts.receiveCharts), payload: response },
+    ];
+    await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "", "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?&q=foo`,
     );
   });
 
