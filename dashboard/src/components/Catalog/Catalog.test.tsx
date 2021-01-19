@@ -23,7 +23,6 @@ const defaultProps = {
   repo: "",
   filter: {},
   fetchCharts: jest.fn(),
-  fetchChartsSearch: jest.fn(),
   fetchChartCategories: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
@@ -76,7 +75,7 @@ const csv = {
 const populatedProps = {
   ...defaultProps,
   csvs: [csv],
-  charts: { ...defaultChartState, items: [chartItem, chartItem2] },
+  charts: { ...defaultChartState, items: [chartItem, chartItem2], searchItems: [chartItem] },
 };
 
 it("retrieves csvs in the namespace", () => {
@@ -108,6 +107,17 @@ it("should render an error if it exists", () => {
   const error = wrapper.find(Alert);
   expect(error.prop("theme")).toBe("danger");
   expect(error).toIncludeText("Boom!");
+});
+
+it("behaves like a loading wrapper", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog
+      {...populatedProps}
+      charts={{ isFetching: true, searchItems: [], items: [], categories: [], selected: {} } as any}
+    />,
+  );
+  expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
 describe("filters by the searched item", () => {

@@ -20,7 +20,7 @@ it("changes the filter", () => {
   const onChange = jest.fn();
   const wrapper = shallow(<SearchFilter {...defaultProps} value="test" onChange={onChange} />);
   wrapper.find(Input).simulate("change", { currentTarget: { value: "foo" } });
-  expect(onChange).toHaveBeenCalled();
+  expect(onChange).toHaveBeenCalledWith("foo");
 });
 
 it("should render a PageHeader", () => {
