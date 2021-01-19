@@ -4,6 +4,8 @@ import Chart from "./Chart";
 
 const clusterName = "cluster-name";
 const namespaceName = "namespace-name";
+const defaultPage = 1;
+const defaultSize = 0;
 
 describe("App", () => {
   beforeEach(() => {
@@ -25,9 +27,11 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           repos: "",
+          page: defaultPage,
+          size: defaultSize,
           query: "",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?`,
+        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}`,
       },
       {
         description: "fetch charts url without repos, with query",
@@ -35,9 +39,11 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           repos: "",
+          page: defaultPage,
+          size: defaultSize,
           query: "cms",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?&q=cms`,
+        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}&q=cms`,
       },
       {
         description: "fetch charts url with repos, without query",
@@ -45,9 +51,11 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           repos: "repo1,repo2",
+          page: defaultPage,
+          size: defaultSize,
           query: "",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?&repos=repo1,repo2`,
+        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}&repos=repo1,repo2`,
       },
       {
         description: "fetch charts url wtih repos, with query",
@@ -55,14 +63,23 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           repos: "repo1,repo2",
+          page: defaultPage,
+          size: defaultSize,
           query: "cms",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?&q=cms&repos=repo1,repo2`,
+        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}&q=cms&repos=repo1,repo2`,
       },
     ].forEach(t => {
       it(t.description, async () => {
         expect(
-          await Chart.fetchCharts(t.args.cluster, t.args.namespace, t.args.repos, t.args.query),
+          await Chart.fetchCharts(
+            t.args.cluster,
+            t.args.namespace,
+            t.args.repos,
+            t.args.page,
+            t.args.size,
+            t.args.query,
+          ),
         ).toStrictEqual("ok");
         expect(moxios.requests.mostRecent().url).toStrictEqual(t.result);
       });

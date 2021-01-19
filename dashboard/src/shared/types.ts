@@ -111,6 +111,8 @@ export interface IChartState {
   };
   items: IChart[];
   categories: IChartCategory[];
+  page: number;
+  size: number;
 }
 
 export interface IChartUpdateInfo {

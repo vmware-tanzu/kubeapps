@@ -33,7 +33,14 @@ interface ICatalogProps {
   charts: IChartState;
   repo: string;
   filter: ParsedQs;
-  fetchCharts: (cluster: string, namespace: string, repos: string, query: string) => void;
+  fetchCharts: (
+    cluster: string,
+    namespace: string,
+    repos: string,
+    page: number,
+    size: number,
+    query?: string,
+  ) => void;
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
@@ -76,6 +83,8 @@ function Catalog(props: ICatalogProps) {
       selected: { error },
       items: charts,
       categories,
+      page,
+      size,
     },
     fetchCharts,
     cluster,
@@ -160,8 +169,8 @@ function Catalog(props: ICatalogProps) {
   const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
-    fetchCharts(cluster, namespace, reposFilter, searchFilter);
-  }, [fetchCharts, cluster, namespace, reposFilter, searchFilter]);
+    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
+  }, [fetchCharts, cluster, namespace, reposFilter, page, size, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
     const newFilters = {

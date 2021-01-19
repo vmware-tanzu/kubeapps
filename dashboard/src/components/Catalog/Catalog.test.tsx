@@ -16,6 +16,8 @@ const defaultChartState = {
   items: [],
   categories: [],
   updatesInfo: {},
+  page: 1,
+  size: 0,
 } as IChartState;
 const defaultProps = {
   charts: defaultChartState,
@@ -135,7 +137,7 @@ describe("filters by the searched item", () => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
     });
     wrapper.update();
-    expect(fetchCharts).toHaveBeenCalledWith("default", "kubeapps", "", "bar");
+    expect(fetchCharts).toHaveBeenCalledWith("default", "kubeapps", "", 1, 0, "bar");
   });
 });
 

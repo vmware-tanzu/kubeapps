@@ -88,12 +88,14 @@ export function fetchCharts(
   cluster: string,
   namespace: string,
   repos: string,
+  page: number,
+  size: number,
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts(query));
     try {
-      const charts = await Chart.fetchCharts(cluster, namespace, repos, query);
+      const charts = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
       dispatch(receiveCharts(charts));
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
