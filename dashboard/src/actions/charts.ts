@@ -19,7 +19,7 @@ export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
 export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
-  return (charts: IChart[], query?: string) => resolve(charts, query);
+  return (charts: IChart[]) => resolve(charts);
 });
 
 export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
@@ -94,7 +94,7 @@ export function fetchCharts(
     dispatch(requestCharts(query));
     try {
       const charts = await Chart.fetchCharts(cluster, namespace, repos, query);
-      dispatch(receiveCharts(charts, query));
+      dispatch(receiveCharts(charts));
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
     }

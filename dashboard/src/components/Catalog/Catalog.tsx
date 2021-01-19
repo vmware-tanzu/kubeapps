@@ -74,7 +74,6 @@ function Catalog(props: ICatalogProps) {
       isFetching,
       selected: { error },
       items: charts,
-      searchItems: searchedCharts,
       categories,
     },
     fetchCharts,
@@ -169,21 +168,6 @@ function Catalog(props: ICatalogProps) {
         filters[filterNames.CATEGORY].length === 0 ||
         filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
     );
-  const filteredSearchedCharts = searchedCharts
-    .filter(
-      () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
-    )
-    .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
-    .filter(
-      c =>
-        filters[filterNames.REPO].length === 0 ||
-        filters[filterNames.REPO].includes(c.attributes.repo.name),
-    )
-    .filter(
-      c =>
-        filters[filterNames.CATEGORY].length === 0 ||
-        filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
-    );
   const filteredCSVs = csvs
     .filter(
       () =>
@@ -228,7 +212,7 @@ function Catalog(props: ICatalogProps) {
             An error occurred while fetching the catalog: {error.message}
           </Alert>
         )}
-        {charts.length === 0 && searchedCharts.length === 0 && csvs.length === 0 ? (
+        {charts.length === 0 && csvs.length === 0 ? (
           <div className="empty-catalog">
             <CdsIcon shape="bundle" />
             <p>The current catalog is empty.</p>
@@ -328,7 +312,7 @@ function Catalog(props: ICatalogProps) {
                 </div>
                 <Row>
                   <CatalogItems
-                    charts={searchFilter.length ? filteredSearchedCharts : filteredCharts}
+                    charts={filteredCharts}
                     csvs={filteredCSVs}
                     cluster={cluster}
                     namespace={namespace}

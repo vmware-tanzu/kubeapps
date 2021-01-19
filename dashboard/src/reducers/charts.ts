@@ -8,7 +8,6 @@ import { IChartState } from "../shared/types";
 export const initialState: IChartState = {
   isFetching: false,
   items: [],
-  searchItems: [],
   categories: [],
   selected: {
     versions: [],
@@ -62,8 +61,7 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        items: !action?.meta?.length ? action.payload : state.items,
-        searchItems: action?.meta?.length ? action.payload : state.searchItems,
+        items: action.payload,
       };
     case getType(actions.charts.receiveChartCategories):
       return { ...state, isFetching: false, categories: action.payload };
@@ -98,7 +96,6 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         items: [],
-        searchItems: [],
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.errorChartCatetories):

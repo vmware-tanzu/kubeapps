@@ -110,7 +110,6 @@ export interface IChartState {
     schema?: jsonSchema.JSONSchema4;
   };
   items: IChart[];
-  searchItems: IChart[];
   categories: IChartCategory[];
 }
 

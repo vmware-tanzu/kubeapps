@@ -14,7 +14,6 @@ const defaultChartState = {
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
-  searchItems: [],
   categories: [],
   updatesInfo: {},
 } as IChartState;
@@ -75,7 +74,7 @@ const csv = {
 const populatedProps = {
   ...defaultProps,
   csvs: [csv],
-  charts: { ...defaultChartState, items: [chartItem, chartItem2], searchItems: [chartItem] },
+  charts: { ...defaultChartState, items: [chartItem, chartItem2] },
 };
 
 it("retrieves csvs in the namespace", () => {
@@ -114,14 +113,14 @@ it("behaves like a loading wrapper", () => {
     defaultStore,
     <Catalog
       {...populatedProps}
-      charts={{ isFetching: true, searchItems: [], items: [], categories: [], selected: {} } as any}
+      charts={{ isFetching: true, items: [], categories: [], selected: {} } as any}
     />,
   );
   expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
 describe("filters by the searched item", () => {
-  it("modifying the search box invokes fetchCharts function", () => {
+  it("filters modifying the search box", () => {
     const fetchCharts = jest.fn();
     const props = {
       ...populatedProps,
@@ -133,10 +132,9 @@ describe("filters by the searched item", () => {
     );
     act(() => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
-      (wrapper.find(SearchFilter).prop("submitFilters") as any)("bar");
     });
     wrapper.update();
-    expect(fetchCharts).toHaveBeenCalled();
+    expect(fetchCharts).toHaveBeenCalledWith("default", "kubeapps", "", "bar");
   });
 });
 

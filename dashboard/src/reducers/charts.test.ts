@@ -25,7 +25,6 @@ describe("chartReducer", () => {
     initialState = {
       isFetching: false,
       items: [],
-      searchItems: [],
       categories: [],
       selected: {
         versions: [],
@@ -125,31 +124,27 @@ describe("chartReducer", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
       payload: [chartItem],
-      meta: "query",
     });
     expect(state).toEqual({
       ...initialState,
       isFetching: false,
-      items: [],
-      searchItems: [chartItem],
+      items: [chartItem],
     });
   });
 
-  it("two mixed receiveCharts don't override items/searchItems", () => {
+  it("two mixed receiveCharts should override items", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
       payload: [chartItem],
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: [chartItem],
-      meta: "query",
+      payload: [],
     });
     expect(state2).toEqual({
       ...initialState,
       isFetching: false,
-      items: [chartItem],
-      searchItems: [chartItem],
+      items: [],
     });
   });
 
@@ -160,8 +155,6 @@ describe("chartReducer", () => {
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: [chartItem],
-      meta: "query",
     });
     const state3 = chartsReducer(state2, {
       type: getType(actions.charts.errorChart) as any,
@@ -170,7 +163,6 @@ describe("chartReducer", () => {
       ...initialState,
       isFetching: false,
       items: [],
-      searchItems: [],
     });
   });
 });

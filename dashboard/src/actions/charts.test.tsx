@@ -50,7 +50,7 @@ describe("fetchCharts", () => {
     response = [{ id: "foo" }];
     const expectedActions = [
       { type: getType(actions.charts.requestCharts), payload: "foo" },
-      { type: getType(actions.charts.receiveCharts), payload: response, meta: "foo" },
+      { type: getType(actions.charts.receiveCharts), payload: response },
     ];
     await store.dispatch(actions.charts.fetchCharts(cluster, namespace, "", "foo"));
     expect(store.getActions()).toEqual(expectedActions);
