@@ -23,6 +23,7 @@ const defaultProps = {
   filter: {},
   fetchCharts: jest.fn(),
   fetchChartCategories: jest.fn(),
+  fetchRepos: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: "default",
   namespace: "kubeapps",
