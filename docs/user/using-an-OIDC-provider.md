@@ -70,6 +70,7 @@ In the case of Google we can use an OAuth 2.0 client ID. You can find more infor
 Login to VMware Cloud Services and select the organization which you want to use.
 
 1. Select View Organization (under Organization settings of the org menu),
+  ![Copying the bearer token](../img/csp-view-organization.png)
 2. Click on the OAuth Apps tab,
 3. Click Create App, select Web App and continue,
 4. Enter a name and description for your OAuth app,
@@ -79,7 +80,7 @@ Login to VMware Cloud Services and select the organization which you want to use
 
 You will now see a dialog with the app id and secret. Click on the Download JSON option as there is other useful info in the JSON.
 
-Your cluster will need to be configured with the following options (the staging VMware cloud services issuer URL is used in the example below):
+Your Kubernetes cluster's API server will need to be configured with the following options (the staging VMware cloud services issuer URL is used in the example below):
 
 ```json
     kind: ClusterConfiguration
@@ -105,10 +106,10 @@ authProxy:
     # For production, use https://console.cloud.vmware.com/csp/gateway/am/api
     - --oidc-issuer-url=https://console-stg.cloud.vmware.com/csp/gateway/am/api
     - --scope=openid email group_names
-    - --insecure-oidc-skip-issuer-verification # TODO, explain this.
+    - --insecure-oidc-skip-issuer-verification
 ```
 
-Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://gaz-preview.csp-vidm-prod.com`. It is for this reason that the `--insecure-oidc-skip-issuer-verification` option is required above. For the same reason, the OIDC `id_token`s that are minted specify the parent issuer as well, which is why the Kubernetes API server config above uses that.
+Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration`](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://gaz-preview.csp-vidm-prod.com`. It is for this reason that the `--insecure-oidc-skip-issuer-verification` option is required above. For the same reason, the OIDC `id_token`s that are minted specify the parent issuer as well, which is why the Kubernetes API server config above uses that.
 
 Once deployed, if you experience issues logging in, please refer to the [Debugging auth failures when using OIDC](#debugging-auth-failures-when-using-oidc) section below.
 ## Deploying a proxy to access Kubeapps
