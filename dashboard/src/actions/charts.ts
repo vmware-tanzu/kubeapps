@@ -5,9 +5,9 @@ import { ActionType, createAction } from "typesafe-actions";
 import Chart from "../shared/Chart";
 import {
   FetchError,
-  IChart,
   IChartCategory,
   IChartVersion,
+  IReceiveChartsActionPayload,
   IStoreState,
   NotFoundError,
 } from "../shared/types";
@@ -19,7 +19,8 @@ export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
 export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
-  return (charts: IChart[], hasFinished?: boolean) => resolve(charts, hasFinished);
+  return (payload: IReceiveChartsActionPayload, hasFinished?: boolean) =>
+    resolve(payload, hasFinished);
 });
 
 export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
@@ -102,7 +103,7 @@ export function fetchCharts(
       dispatch(requestCharts(page, query));
       try {
         const response = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
-        dispatch(receiveCharts(response.data, response.meta.totalPages <= page));
+        dispatch(receiveCharts({ items: response.data, page }, response?.meta?.totalPages <= page));
       } catch (e) {
         dispatch(errorChart(new FetchError(e.message)));
       }

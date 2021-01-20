@@ -64,14 +64,20 @@ const chartsReducer = (
     case getType(actions.charts.requestChartsCategories):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
-      state.records.set(state.page, true);
-      state.records.set(state.page + 1, false);
+      // only update the records if the received page matches the requested one
+      const areMatchingPages = action.payload.page === state.page;
+      if (areMatchingPages) {
+        state.records.set(state.page, true); // mark the current page as successfully retrieved
+        state.records.set(state.page + 1, false); // mark the next page as pending (not undefined)
+      }
       return {
         ...state,
         isFetching: false,
         hasFinished: action?.meta,
-        items: uniqBy([...state.items, ...action.payload], "id"), // TODO(agamez): handle undesired requests to avoid this workaround
-        page: action?.meta ? state.page : state.page + 1, // if action.meta==true, it's the last chunk
+        items: areMatchingPages
+          ? uniqBy([...state.items, ...action.payload.items], "id")
+          : state.items, // if pages don't match, ignore payload to avoid duplicates
+        page: action?.meta ? action.payload.page : action.payload.page + 1, // if action.meta==true, it's the last chunk
         records: state.records,
       };
     case getType(actions.charts.receiveChartCategories):
@@ -118,6 +124,8 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         hasFinished: false,
+        page: 1,
+        records: new Map<number, boolean>().set(1, false),
         items: [],
         selected: chartsSelectedReducer(state.selected, action),
       };
