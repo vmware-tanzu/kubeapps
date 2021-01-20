@@ -78,6 +78,10 @@ export interface IChart {
   };
 }
 
+export interface IChartListMeta {
+  totalPages: number;
+}
+
 export interface IChartAttributes {
   name: string;
   description: string;

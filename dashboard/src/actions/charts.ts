@@ -101,8 +101,8 @@ export function fetchCharts(
     if (records.get(page) === false && page <= lastPendingPage) {
       dispatch(requestCharts(page, query));
       try {
-        const charts = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
-        dispatch(receiveCharts(charts, charts.length === 0));
+        const response = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
+        dispatch(receiveCharts(response.data, response.meta.totalPages <= page));
       } catch (e) {
         dispatch(errorChart(new FetchError(e.message)));
       }
