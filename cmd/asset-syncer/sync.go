@@ -53,7 +53,12 @@ var syncCmd = &cobra.Command{
 		defer manager.Close()
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
-		repoIface, err := getRepo(namespace, args[0], args[1], args[2], authorizationHeader)
+		var repoIface Repo
+		if args[2] == "helm" {
+			repoIface, err = getHelmRepo(namespace, args[0], args[1], authorizationHeader)
+		} else {
+			repoIface, err = getOCIRepo(namespace, args[0], args[1], authorizationHeader, ociRepositories)
+		}
 		if err != nil {
 			logrus.Fatal(err)
 		}

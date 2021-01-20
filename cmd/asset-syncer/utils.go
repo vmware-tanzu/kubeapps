@@ -216,8 +216,41 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 	}, nil
 }
 
-func getRepo(namespace, name, repoURL, repoType, authorizationHeader string) (Repo, error) {
-	// TODO(andresmgot): Handle type: oci
+// OCIRegistry implements the Repo interface for OCI repositories
+type OCIRegistry struct {
+	repositories []string
+	*models.RepoInternal
+}
+
+// Checksum returns the sha256 of the repo
+func (r *OCIRegistry) Checksum() (string, error) {
+	// TBD
+	return "", nil
+}
+
+// Repo returns the repo information
+func (r *OCIRegistry) Repo() *models.RepoInternal {
+	// TBD
+	return r.RepoInternal
+}
+
+// Charts retrieve the list of charts exposed in the repo
+func (r *OCIRegistry) Charts() ([]models.Chart, error) {
+	// TBD
+	return []models.Chart{}, nil
+}
+
+// FetchFiles retrieves the important files of a chart and version from the repo
+func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
+	// TBD
+	return map[string]string{
+		values: "",
+		readme: "",
+		schema: "",
+	}, nil
+}
+
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -230,6 +263,15 @@ func getRepo(namespace, name, repoURL, repoType, authorizationHeader string) (Re
 	}
 
 	return &HelmRepo{content: repoBytes, RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader}}, nil
+}
+
+func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos []string) (Repo, error) {
+	url, err := parseRepoURL(repoURL)
+	if err != nil {
+		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
+		return nil, err
+	}
+	return &OCIRegistry{repositories: ociRepos, RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader}}, nil
 }
 
 func fetchRepoIndex(url, authHeader string) ([]byte, error) {
