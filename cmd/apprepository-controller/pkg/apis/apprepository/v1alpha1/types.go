@@ -47,7 +47,7 @@ type AppRepositorySpec struct {
 	DockerRegistrySecrets []string `json:"dockerRegistrySecrets,omitempty"`
 	// In case of an OCI type, the list of repositories is needed
 	// as there is no API for the index
-	Repositories []string `json:"repositories,omitempty"`
+	OCIRepositories []string `json:"ociRepositories,omitempty"`
 }
 
 // AppRepositoryAuth is the auth for an AppRepository resource
