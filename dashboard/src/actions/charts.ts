@@ -13,13 +13,13 @@ import {
 } from "../shared/types";
 
 export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
-  return (query?: string) => resolve(query);
+  return (page?: number, query?: string) => resolve(page, query);
 });
 
 export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
-  return (charts: IChart[]) => resolve(charts);
+  return (charts: IChart[], hasFinished?: boolean) => resolve(charts, hasFinished);
 });
 
 export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
@@ -57,6 +57,8 @@ export const receiveDeployedChartVersion = createAction(
 
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
 
+export const resetRequestCharts = createAction("RESET_REQUEST_CHARTS");
+
 export const selectReadme = createAction("SELECT_README", resolve => {
   return (readme: string) => resolve(readme);
 });
@@ -78,6 +80,7 @@ const allActions = [
   requestDeployedChartVersion,
   receiveDeployedChartVersion,
   resetChartVersion,
+  resetRequestCharts,
   selectReadme,
   errorReadme,
 ];
@@ -90,15 +93,19 @@ export function fetchCharts(
   repos: string,
   page: number,
   size: number,
+  records: Map<number, boolean>,
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestCharts(query));
-    try {
-      const charts = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
-      dispatch(receiveCharts(charts));
-    } catch (e) {
-      dispatch(errorChart(new FetchError(e.message)));
+    const latestElement = Array.from(records.keys()).pop() || 1;
+    if (records.get(page) === false && page <= latestElement) {
+      dispatch(requestCharts(page, query));
+      try {
+        const charts = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
+        dispatch(receiveCharts(charts, charts.length === 0));
+      } catch (e) {
+        dispatch(errorChart(new FetchError(e.message)));
+      }
     }
   };
 }

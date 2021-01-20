@@ -24,6 +24,7 @@ describe("chartReducer", () => {
   beforeEach(() => {
     initialState = {
       isFetching: false,
+      hasFinished: false,
       items: [],
       categories: [],
       selected: {
@@ -31,7 +32,8 @@ describe("chartReducer", () => {
       },
       deployed: {},
       page: 1,
-      size: 0,
+      size: 100,
+      records: new Map<number, boolean>().set(1, false),
     };
   });
   const error = new Error("Boom");

@@ -2,16 +2,34 @@
   text-align: center;
   width: 100%;
   height: calc(100vh - 6rem);
-  // margin-top: 2rem;
+
   cds-icon {
     margin-top: 2rem;
     width: 4rem;
     height: 4rem;
   }
+
   cds-button {
     margin-top: 2rem;
   }
+
   p {
     margin-top: 0.6rem;
   }
+}
+
+.scrollHandler {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  min-height: 50vh;
+}
+
+.catalogContainer {
+  padding-bottom: 5vh;
+}
+
+.endPageMessage {
+  width: 100%;
+  margin-top: 2rem;
+  text-align: center;
 }

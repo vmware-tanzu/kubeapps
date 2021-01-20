@@ -95,6 +95,7 @@ export interface IChartAttributes {
 
 export interface IChartState {
   isFetching: boolean;
+  hasFinished: boolean;
   selected: {
     error?: FetchError | Error;
     version?: IChartVersion;
@@ -113,6 +114,7 @@ export interface IChartState {
   categories: IChartCategory[];
   page: number;
   size: number;
+  records: Map<number, boolean>;
 }
 
 export interface IChartUpdateInfo {

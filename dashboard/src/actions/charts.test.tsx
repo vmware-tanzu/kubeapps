@@ -16,6 +16,7 @@ const namespace = "chart-namespace";
 const cluster = "default";
 const defaultPage = 1;
 const defaultSize = 0;
+const defaultRecords = new Map<number, boolean>().set(1, false);
 
 beforeEach(() => {
   store = mockStore();
@@ -42,7 +43,14 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.receiveCharts), payload: response },
     ];
     await store.dispatch(
-      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        defaultPage,
+        defaultSize,
+        defaultRecords,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
@@ -57,7 +65,15 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.receiveCharts), payload: response },
     ];
     await store.dispatch(
-      actions.charts.fetchCharts(cluster, namespace, "", defaultPage, defaultSize, "foo"),
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "",
+        defaultPage,
+        defaultSize,
+        defaultRecords,
+        "foo",
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
@@ -78,7 +94,14 @@ describe("fetchCharts", () => {
     });
     axiosWithAuth.get = axiosGetMock;
     await store.dispatch(
-      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        defaultPage,
+        defaultSize,
+        defaultRecords,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -93,7 +116,14 @@ describe("fetchCharts", () => {
     });
     axiosWithAuth.get = axiosGetMock;
     await store.dispatch(
-      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        defaultPage,
+        defaultSize,
+        defaultRecords,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });

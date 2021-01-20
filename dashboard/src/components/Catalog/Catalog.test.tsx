@@ -11,13 +11,15 @@ import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
   isFetching: false,
+  hasFinished: false,
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
   categories: [],
   updatesInfo: {},
   page: 1,
-  size: 0,
+  size: 100,
+  records: new Map<number, boolean>().set(1, false),
 } as IChartState;
 const defaultProps = {
   charts: defaultChartState,
@@ -26,6 +28,7 @@ const defaultProps = {
   fetchCharts: jest.fn(),
   fetchChartCategories: jest.fn(),
   fetchRepos: jest.fn(),
+  resetRequestCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",

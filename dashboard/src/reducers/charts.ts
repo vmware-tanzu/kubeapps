@@ -1,3 +1,4 @@
+import { uniqBy } from "lodash";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -7,6 +8,7 @@ import { IChartState } from "../shared/types";
 
 export const initialState: IChartState = {
   isFetching: false,
+  hasFinished: false,
   items: [],
   categories: [],
   selected: {
@@ -14,7 +16,8 @@ export const initialState: IChartState = {
   },
   deployed: {},
   page: 1,
-  size: 0,
+  size: 100,
+  records: new Map<number, boolean>().set(1, false),
 };
 
 const chartsSelectedReducer = (
@@ -56,14 +59,20 @@ const chartsReducer = (
 ): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
-      return { ...state, isFetching: true };
+      state.records.set(action.payload, false);
+      return { ...state, isFetching: true, records: state.records };
     case getType(actions.charts.requestChartsCategories):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
+      state.records.set(state.page, true);
+      state.records.set(state.page + 1, false);
       return {
         ...state,
         isFetching: false,
-        items: action.payload,
+        hasFinished: action?.meta,
+        items: uniqBy([...state.items, ...action.payload], "id"), // TODO(agamez): handle undesired requests to avoid this workaround
+        page: action?.meta ? state.page : state.page + 1, // if action.meta==true, it's the last chunk
+        records: state.records,
       };
     case getType(actions.charts.receiveChartCategories):
       return { ...state, isFetching: false, categories: action.payload };
@@ -90,6 +99,17 @@ const chartsReducer = (
         isFetching: false,
         deployed: { ...state.deployed, ...action.payload },
       };
+    case getType(actions.charts.resetRequestCharts):
+      state.records.clear();
+      state.records.set(1, false);
+      return {
+        ...state,
+        isFetching: false,
+        hasFinished: false,
+        items: [],
+        page: 1,
+        records: state.records,
+      };
     case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.selectReadme):
     case getType(actions.charts.errorReadme):
@@ -97,6 +117,7 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
+        hasFinished: false,
         items: [],
         selected: chartsSelectedReducer(state.selected, action),
       };
