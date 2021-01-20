@@ -39,8 +39,12 @@ describe("fetchCharts", () => {
   it("fetches charts from a repo", async () => {
     response = [{ id: "foo" }];
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveCharts), payload: response },
+      { type: getType(actions.charts.requestCharts), payload: 1 },
+      {
+        type: getType(actions.charts.receiveCharts),
+        payload: { items: response, page: 1 },
+        meta: false,
+      },
     ];
     await store.dispatch(
       actions.charts.fetchCharts(
@@ -61,8 +65,12 @@ describe("fetchCharts", () => {
   it("fetches charts with query", async () => {
     response = [{ id: "foo" }];
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts), payload: "foo" },
-      { type: getType(actions.charts.receiveCharts), payload: response },
+      { type: getType(actions.charts.requestCharts), payload: 1, meta: "foo" },
+      {
+        type: getType(actions.charts.receiveCharts),
+        payload: { items: response, page: 1 },
+        meta: false,
+      },
     ];
     await store.dispatch(
       actions.charts.fetchCharts(
@@ -83,7 +91,7 @@ describe("fetchCharts", () => {
 
   it("returns a 404 error", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestCharts), payload: 1 },
       {
         type: getType(actions.charts.errorChart),
         payload: new FetchError("could not find chart"),
@@ -108,7 +116,7 @@ describe("fetchCharts", () => {
 
   it("returns a generic error", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestCharts), payload: 1 },
       { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
     ];
     axiosGetMock = jest.fn(() => {

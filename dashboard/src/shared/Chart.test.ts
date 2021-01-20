@@ -80,7 +80,7 @@ describe("App", () => {
             t.args.size,
             t.args.query,
           ),
-        ).toStrictEqual("ok");
+        ).toStrictEqual({ data: "ok" });
         expect(moxios.requests.mostRecent().url).toStrictEqual(t.result);
       });
     });
