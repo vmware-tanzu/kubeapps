@@ -27,11 +27,11 @@ import (
 )
 
 var syncCmd = &cobra.Command{
-	Use:   "sync [REPO NAME] [REPO URL]",
+	Use:   "sync [REPO NAME] [REPO URL] [REPO TYPE]",
 	Short: "add a new chart repository, and resync its charts periodically",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 2 {
-			logrus.Info("Need exactly two arguments: [REPO NAME] [REPO URL]")
+		if len(args) != 3 {
+			logrus.Info("Need exactly two arguments: [REPO NAME] [REPO URL] [REPO TYPE]")
 			cmd.Help()
 			return
 		}
@@ -53,25 +53,25 @@ var syncCmd = &cobra.Command{
 		defer manager.Close()
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
-		repo, repoContent, err := getRepo(namespace, args[0], args[1], authorizationHeader)
+		repoIface, err := getRepo(namespace, args[0], args[1], args[2], authorizationHeader)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		repo := repoIface.Repo()
+		checksum, err := repoIface.Checksum()
 		if err != nil {
 			logrus.Fatal(err)
 		}
 
 		// Check if the repo has been already processed
-		if manager.RepoAlreadyProcessed(models.Repo{Namespace: repo.Namespace, Name: repo.Name}, repo.Checksum) {
+		if manager.RepoAlreadyProcessed(models.Repo{Namespace: repo.Namespace, Name: repo.Name}, checksum) {
 			logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Skipping repository since there are no updates")
 			return
 		}
 
-		index, err := parseRepoIndex(repoContent)
+		charts, err := repoIface.Charts()
 		if err != nil {
 			logrus.Fatal(err)
-		}
-
-		charts := chartsFromIndex(index, &models.Repo{Namespace: repo.Namespace, Name: repo.Name, URL: repo.URL})
-		if len(charts) == 0 {
-			logrus.Fatal("no charts in repository index")
 		}
 
 		if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
@@ -80,10 +80,10 @@ var syncCmd = &cobra.Command{
 
 		// Fetch and store chart icons
 		fImporter := fileImporter{manager}
-		fImporter.fetchFiles(charts, repo)
+		fImporter.fetchFiles(charts, repoIface)
 
 		// Update cache in the database
-		if err = manager.UpdateLastCheck(repo.Namespace, repo.Name, repo.Checksum, time.Now()); err != nil {
+		if err = manager.UpdateLastCheck(repo.Namespace, repo.Name, checksum, time.Now()); err != nil {
 			logrus.Fatal(err)
 		}
 		logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Stored repository update in cache")

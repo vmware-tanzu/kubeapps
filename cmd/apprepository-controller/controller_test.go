@@ -89,6 +89,7 @@ func Test_newCronJob(t *testing.T) {
 												"--namespace=kubeapps",
 												"my-charts",
 												"https://charts.acme.com/my-charts",
+												"helm",
 											},
 											Env: []corev1.EnvVar{
 												{
@@ -180,6 +181,7 @@ func Test_newCronJob(t *testing.T) {
 												"--namespace=kubeapps",
 												"my-charts",
 												"https://charts.acme.com/my-charts",
+												"helm",
 											},
 											Env: []corev1.EnvVar{
 												{
@@ -267,6 +269,7 @@ func Test_newCronJob(t *testing.T) {
 												"--namespace=otherns",
 												"my-charts-in-otherns",
 												"https://charts.acme.com/my-charts",
+												"helm",
 											},
 											Env: []corev1.EnvVar{
 												{
@@ -373,6 +376,7 @@ func Test_newSyncJob(t *testing.T) {
 										"--namespace=kubeapps",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
+										"helm",
 									},
 									Env: []corev1.EnvVar{
 										{
@@ -439,6 +443,7 @@ func Test_newSyncJob(t *testing.T) {
 										"--namespace=my-other-namespace",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
+										"helm",
 									},
 									Env: []corev1.EnvVar{
 										{
@@ -520,6 +525,7 @@ func Test_newSyncJob(t *testing.T) {
 										"--namespace=kubeapps",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
+										"helm",
 									},
 									Env: []corev1.EnvVar{
 										{
@@ -606,6 +612,7 @@ func Test_newSyncJob(t *testing.T) {
 										"--namespace=kubeapps",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
+										"helm",
 									},
 									Env: []corev1.EnvVar{
 										{
@@ -704,6 +711,7 @@ func Test_newSyncJob(t *testing.T) {
 										"--namespace=kubeapps",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
+										"helm",
 									},
 									Env: []corev1.EnvVar{
 										{
@@ -820,6 +828,7 @@ func Test_newSyncJob(t *testing.T) {
 										"--namespace=kubeapps",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
+										"helm",
 									},
 									Env: []corev1.EnvVar{
 										{Name: "FOO", Value: "BAR"},

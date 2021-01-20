@@ -30,6 +30,7 @@ type Repo struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 	URL       string `json:"url"`
+	Type      string `json:"type"`
 }
 
 // RepoInternal holds the App repository details including auth and checksum
@@ -37,8 +38,8 @@ type RepoInternal struct {
 	Namespace           string `json:"namespace"`
 	Name                string `json:"name"`
 	URL                 string `json:"url"`
+	Type                string `json:"type"`
 	AuthorizationHeader string `bson:"-"`
-	Checksum            string
 }
 
 // Chart is a higher-level representation of a chart package
