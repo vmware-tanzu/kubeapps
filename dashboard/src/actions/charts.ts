@@ -97,8 +97,8 @@ export function fetchCharts(
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    const latestElement = Array.from(records.keys()).pop() || 1;
-    if (records.get(page) === false && page <= latestElement) {
+    const lastPendingPage = Array.from(records.keys()).pop() || 1;
+    if (records.get(page) === false && page <= lastPendingPage) {
       dispatch(requestCharts(page, query));
       try {
         const charts = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
