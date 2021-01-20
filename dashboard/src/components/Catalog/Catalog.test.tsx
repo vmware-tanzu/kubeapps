@@ -1,9 +1,10 @@
-import * as React from "react";
-
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
+import lodash from "lodash";
+import * as React from "react";
 import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -127,7 +128,13 @@ it("behaves like a loading wrapper", () => {
 
 describe("filters by the searched item", () => {
   it("filters modifying the search box", () => {
+    let spyOnUseDispatch: jest.SpyInstance;
+    let spyOnDebounce: jest.SpyInstance;
     const fetchCharts = jest.fn();
+    const mockDispatch = jest.fn();
+    spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+    spyOnDebounce = jest.spyOn(lodash, "debounce").mockReturnValue(fetchCharts as any);
+
     const props = {
       ...populatedProps,
       fetchCharts,
@@ -140,7 +147,16 @@ describe("filters by the searched item", () => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
     });
     wrapper.update();
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 0, "bar");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Search=bar"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
+
+    spyOnUseDispatch.mockRestore();
+    spyOnDebounce.mockRestore();
   });
 });
 
