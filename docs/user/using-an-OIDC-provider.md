@@ -248,10 +248,18 @@ If you find after configuring your OIDC/OAuth2 setup following the above instruc
 
 ### Viewing the JWT id token
 
-The easiest way to check the credential that is being used is to temporarily set the `--set-authorization-header=true` option for oauth2 proxy of the kubeapps deployment. Edit the `kubeapps` deployment in the specific namespace on your cluster and add the option to the command for the oauth2 proxy container. Once the deployment runs a new container with the extra option, Kubeapps will then include the `id_token` that is being used to authenticate you with the Kubernetes api server in the response back to the browser.
+The easiest way to check the credential that is being used is to temporarily set the `--set-authorization-header=true` option for the oauth2 proxy of the kubeapps deployment.
 
-To view the token, in your browser debugger's Requests tab, watch for the request to `/api/clusters/default` or similar which will have a 40X status. Click on this request to view the headers and in the Response headers look for the `Authentication` header. The value here will be the base64-encoded `id_token`. Copy the value.
+```bash
+kubectl -n kubeapps patch deployments kubeapps --type=json \
+  -p '[{"op": "add", "path": "/spec/template/spec/containers/1/args/-", "value": "--set-authorization-header=true" }]'
+```
 
+Once the deployment runs a new container with the extra option, Kubeapps will then include the `id_token` that is being used to authenticate you with the Kubernetes api server in the response back to the browser.
+
+To view the token, in your browser debugger's Network tab, watch for the request to `/api/clusters/default` or similar which will have a 40X status. Click on this request to view the headers and in the Response headers look for the `Authorization` header. The bearer token of the value will be the base64-encoded `id_token`. Copy the token as shown:
+
+  ![Copying the bearer token](../img/oidc-debug-copy-bearer-token.png)
 
 ### Testing the JWT Token directly with your Kubernetes cluster
 
