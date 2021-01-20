@@ -8,10 +8,10 @@ import { push } from "connected-react-router";
 import { flatten, get, intersection, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
-import { IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IChartState, IClusterServiceVersion, IStoreState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import PageHeader from "../PageHeader/PageHeader";
@@ -45,6 +45,7 @@ interface ICatalogProps {
   namespace: string;
   kubeappsNamespace: string;
   fetchChartCategories: (cluster: string, namespace: string) => void;
+  fetchRepos: (namespace: string, listGlobal?: boolean) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   csvs: IClusterServiceVersion[];
 }
@@ -89,11 +90,16 @@ function Catalog(props: ICatalogProps) {
     cluster,
     namespace,
     fetchChartCategories,
+    fetchRepos,
     getCSVs,
     csvs,
-    repo,
     filter: propsFilter,
   } = props;
+
+  const {
+    repos: { repos },
+    config: { kubeappsCluster, kubeappsNamespace },
+  } = useSelector((state: IStoreState) => state);
 
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
@@ -134,13 +140,25 @@ function Catalog(props: ICatalogProps) {
     pushFilters(filters);
   };
 
-  const allRepos = uniq(charts.map(c => c.attributes.repo.name));
+  const allRepos = uniq(repos.map(c => c.metadata.name));
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
       .map(c => categoryToReadable(c.name))
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
+
+  // We do not currently support app repositories on additional clusters.
+  const supportedCluster = cluster === kubeappsCluster;
+  useEffect(() => {
+    if (!supportedCluster || namespace === kubeappsNamespace) {
+      // Global namespace or other cluster, show global repos only
+      fetchRepos(kubeappsNamespace);
+      return;
+    }
+    // In other case, fetch global and namespace repos
+    fetchRepos(namespace, true);
+  }, [fetchRepos, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
     fetchChartCategories(cluster, namespace);
@@ -149,9 +167,10 @@ function Catalog(props: ICatalogProps) {
 
   // Only one search filter can be set
   const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
+  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
-    fetchCharts(cluster, namespace, repo, page, size, searchFilter);
-  }, [fetchCharts, cluster, namespace, repo, page, size, searchFilter]);
+    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
+  }, [fetchCharts, cluster, namespace, reposFilter, page, size, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
     const newFilters = {

@@ -4,8 +4,8 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 
@@ -25,8 +25,9 @@ const defaultProps = {
   filter: {},
   fetchCharts: jest.fn(),
   fetchChartCategories: jest.fn(),
+  fetchRepos: jest.fn(),
   pushSearchFilter: jest.fn(),
-  cluster: "default",
+  cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
   csvs: [],
@@ -136,7 +137,7 @@ describe("filters by the searched item", () => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
     });
     wrapper.update();
-    expect(fetchCharts).toHaveBeenCalledWith("default", "kubeapps", "", 1, 0, "bar");
+    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 0, "bar");
   });
 });
 
@@ -166,7 +167,7 @@ describe("filters by application type", () => {
       .getActions()
       .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
     expect(historyAction.payload).toEqual({
-      args: ["/c/default/ns/kubeapps/catalog?Type=Charts"],
+      args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Charts"],
       method: "push",
     });
   });
@@ -189,7 +190,7 @@ describe("filters by application type", () => {
       .getActions()
       .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
     expect(historyAction.payload).toEqual({
-      args: ["/c/default/ns/kubeapps/catalog?Type=Operators"],
+      args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Operators"],
       method: "push",
     });
   });
@@ -212,8 +213,9 @@ describe("filters by application repository", () => {
   });
 
   it("push filter for repo", () => {
-    const store = getStore({});
-    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
+    const store = getStore({ repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] } });
+    const fetchRepos = jest.fn();
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} fetchRepos={fetchRepos} />);
     // The repo name is "foo"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
     input.simulate("change", { target: { value: "foo" } });
@@ -221,10 +223,56 @@ describe("filters by application repository", () => {
     const historyAction = store
       .getActions()
       .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
     expect(historyAction.payload).toEqual({
-      args: ["/c/default/ns/kubeapps/catalog?Repository=foo"],
+      args: ["/c/default-cluster/ns/kubeapps/catalog?Repository=foo"],
       method: "push",
     });
+  });
+});
+
+it("push filter for repo", () => {
+  const store = getStore({
+    ...defaultStore,
+    repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+  });
+  const fetchRepos = jest.fn();
+  const wrapper = mountWrapper(store, <Catalog {...populatedProps} fetchRepos={fetchRepos} />);
+  // The repo name is "foo"
+  const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+  input.simulate("change", { target: { value: "foo" } });
+  // It should have pushed with the filter
+  const historyAction = store
+    .getActions()
+    .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+  expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
+  expect(historyAction.payload).toEqual({
+    args: ["/c/default-cluster/ns/kubeapps/catalog?Repository=foo"],
+    method: "push",
+  });
+});
+
+it("push filter for repo in other ns", () => {
+  const store = getStore({
+    ...defaultStore,
+    repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+  });
+  const fetchRepos = jest.fn();
+  const wrapper = mountWrapper(
+    store,
+    <Catalog {...populatedProps} namespace={"my-ns"} fetchRepos={fetchRepos} />,
+  );
+  // The repo name is "foo", the ns name is "my-ns"
+  const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+  input.simulate("change", { target: { value: "foo" } });
+  // It should have pushed with the filter
+  const historyAction = store
+    .getActions()
+    .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+  expect(fetchRepos).toHaveBeenCalledWith("my-ns", true);
+  expect(historyAction.payload).toEqual({
+    args: ["/c/default-cluster/ns/my-ns/catalog?Repository=foo"],
+    method: "push",
   });
 });
 
@@ -258,7 +306,7 @@ describe("filters by operator provider", () => {
       .getActions()
       .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
     expect(historyAction.payload).toEqual({
-      args: ["/c/default/ns/kubeapps/catalog?Provider=you"],
+      args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you"],
       method: "push",
     });
   });
@@ -316,7 +364,7 @@ describe("filters by category", () => {
       .getActions()
       .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
     expect(historyAction.payload).toEqual({
-      args: ["/c/default/ns/kubeapps/catalog?Category=Database"],
+      args: ["/c/default-cluster/ns/kubeapps/catalog?Category=Database"],
       method: "push",
     });
   });
