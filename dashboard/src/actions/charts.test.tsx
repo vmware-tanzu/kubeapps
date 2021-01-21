@@ -4,7 +4,13 @@ import { getType } from "typesafe-actions";
 import { axiosWithAuth } from "../shared/AxiosInstance";
 
 import actions from ".";
-import { FetchError, NotFoundError } from "../shared/types";
+import {
+  FetchError,
+  IChart,
+  IChartListMeta,
+  IReceiveChartsActionPayload,
+  NotFoundError,
+} from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -18,14 +24,23 @@ const defaultPage = 1;
 const defaultSize = 0;
 const defaultRecords = new Map<number, boolean>().set(1, false);
 
+const chartItem = {
+  id: "foo",
+  attributes: {
+    name: "foo",
+    description: "",
+    category: "",
+    repo: { name: "foo", namespace: "chart-namespace" },
+  },
+  relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
+} as IChart;
+
 beforeEach(() => {
   store = mockStore();
   axiosGetMock.mockImplementation(() => {
     return {
       status: 200,
-      data: {
-        data: response,
-      },
+      data: response,
     };
   });
   axiosWithAuth.get = axiosGetMock;
@@ -37,15 +52,19 @@ afterEach(() => {
 
 describe("fetchCharts", () => {
   it("fetches charts from a repo", async () => {
-    response = [{ id: "foo" }];
+    response = { data: [chartItem] as IChart[], meta: { totalPages: 2 } as IChartListMeta };
     const expectedActions = [
       { type: getType(actions.charts.requestCharts), payload: 1 },
       {
         type: getType(actions.charts.receiveCharts),
-        payload: { items: response, page: 1 },
-        meta: false,
+        payload: {
+          items: response.data,
+          page: 1,
+          totalPages: response.meta.totalPages,
+        } as IReceiveChartsActionPayload,
       },
     ];
+    axiosWithAuth.get = axiosGetMock;
     await store.dispatch(
       actions.charts.fetchCharts(
         cluster,
@@ -59,33 +78,6 @@ describe("fetchCharts", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&repos=foo`,
-    );
-  });
-
-  it("fetches charts with query", async () => {
-    response = [{ id: "foo" }];
-    const expectedActions = [
-      { type: getType(actions.charts.requestCharts), payload: 1, meta: "foo" },
-      {
-        type: getType(actions.charts.receiveCharts),
-        payload: { items: response, page: 1 },
-        meta: false,
-      },
-    ];
-    await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "",
-        defaultPage,
-        defaultSize,
-        defaultRecords,
-        "foo",
-      ),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&q=foo`,
     );
   });
 
@@ -139,10 +131,10 @@ describe("fetchCharts", () => {
 
 describe("fetchChartCategories", () => {
   it("fetches chart categories", async () => {
-    response = [{ id: "foo" }];
+    response = { data: [{ id: "foo" }] };
     const expectedActions = [
       { type: getType(actions.charts.requestChartsCategories) },
-      { type: getType(actions.charts.receiveChartCategories), payload: response },
+      { type: getType(actions.charts.receiveChartCategories), payload: response.data },
     ];
     await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace));
     expect(store.getActions()).toEqual(expectedActions);
@@ -186,10 +178,10 @@ describe("fetchChartCategories", () => {
 
 describe("fetchChartVersions", () => {
   it("fetches chart versions", async () => {
-    response = [{ id: "foo" }];
+    response = { data: [{ id: "foo" }] };
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveChartVersions), payload: response },
+      { type: getType(actions.charts.receiveChartVersions), payload: response.data },
     ];
     await store.dispatch(actions.charts.fetchChartVersions(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
@@ -201,12 +193,16 @@ describe("fetchChartVersions", () => {
 
 describe("getChartVersion", () => {
   it("gets a chart version", async () => {
-    response = { id: "foo" };
+    response = { data: { id: "foo" } };
     const expectedActions = [
       { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
-        payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
+        payload: {
+          chartVersion: response.data,
+          schema: { data: response.data },
+          values: { data: response.data },
+        },
       },
     ];
     await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
@@ -217,12 +213,16 @@ describe("getChartVersion", () => {
   });
 
   it("gets a chart version with tag", async () => {
-    response = { id: "foo" };
+    response = { data: { id: "foo" } };
     const expectedActions = [
       { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
-        payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
+        payload: {
+          chartVersion: response.data,
+          schema: { data: response.data },
+          values: { data: response.data },
+        },
       },
     ];
     await store.dispatch(
@@ -326,11 +326,14 @@ describe("getChartVersion", () => {
 
 describe("fetchChartVersionsAndSelectVersion", () => {
   it("fetches charts and select a version", async () => {
-    response = [{ id: "foo", attributes: { version: "1.0.0" } }];
+    response = { data: [{ id: "foo", attributes: { version: "1.0.0" } }] };
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveChartVersions), payload: response },
-      { type: getType(actions.charts.selectChartVersion), payload: { chartVersion: response[0] } },
+      { type: getType(actions.charts.receiveChartVersions), payload: response.data },
+      {
+        type: getType(actions.charts.selectChartVersion),
+        payload: { chartVersion: response.data[0] },
+      },
     ];
     await store.dispatch(
       actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", "1.0.0"),
@@ -342,7 +345,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
   });
 
   it("returns a not found error", async () => {
-    response = [{ id: "foo", attributes: { version: "1.0.0" } }];
+    response = { data: [{ id: "foo", attributes: { version: "1.0.0" } }] };
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
       {
@@ -366,12 +369,16 @@ describe("fetchChartVersionsAndSelectVersion", () => {
 
 describe("getDeployedChartVersion", () => {
   it("should request a deployed chart", async () => {
-    response = { id: "foo" };
+    response = { data: { id: "foo" } };
     const expectedActions = [
       { type: getType(actions.charts.requestDeployedChartVersion) },
       {
         type: getType(actions.charts.receiveDeployedChartVersion),
-        payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
+        payload: {
+          chartVersion: response.data,
+          schema: { data: response.data },
+          values: { data: response.data },
+        },
       },
     ];
     await store.dispatch(

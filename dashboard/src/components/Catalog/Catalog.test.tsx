@@ -12,7 +12,7 @@ import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
   isFetching: false,
-  hasFinished: false,
+  hasFinishedFetching: false,
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
@@ -95,8 +95,19 @@ it("shows all the elements", () => {
   expect(wrapper.find(InfoCard)).toHaveLength(3);
 });
 
-it("should render a message if there are no elements in the catalog", () => {
+it("should not render a message if there are no elements in the catalog but the fetching hasn't ended", () => {
   const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
+  const message = wrapper.find(".empty-catalog");
+  expect(message).not.toExist();
+  expect(message).not.toIncludeText("The current catalog is empty");
+});
+
+it("should render a message if there are no elements in the catalog and the fetching has ended", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...defaultProps} charts={{ ...defaultChartState, hasFinishedFetching: true }} />,
+  );
+  wrapper.setProps({ searchFilter: "" });
   const message = wrapper.find(".empty-catalog");
   expect(message).toExist();
   expect(message).toIncludeText("The current catalog is empty");

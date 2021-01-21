@@ -85,6 +85,7 @@ export interface IChartListMeta {
 export interface IReceiveChartsActionPayload {
   items: IChart[];
   page: number;
+  totalPages: number;
 }
 
 export interface IChartAttributes {
@@ -104,7 +105,7 @@ export interface IChartAttributes {
 
 export interface IChartState {
   isFetching: boolean;
-  hasFinished: boolean;
+  hasFinishedFetching: boolean;
   selected: {
     error?: FetchError | Error;
     version?: IChartVersion;

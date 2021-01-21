@@ -24,7 +24,7 @@ describe("chartReducer", () => {
   beforeEach(() => {
     initialState = {
       isFetching: false,
-      hasFinished: false,
+      hasFinishedFetching: false,
       items: [],
       categories: [],
       selected: {
@@ -106,7 +106,6 @@ describe("chartReducer", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.requestCharts) as any,
       payload: 1,
-      meta: "query",
     });
     expect(state).toEqual({
       ...initialState,
@@ -117,13 +116,12 @@ describe("chartReducer", () => {
   it("single receiveCharts no finished", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1 } as IReceiveChartsActionPayload,
-      meta: false,
+      payload: { items: [chartItem], page: 1, totalPages: 2 } as IReceiveChartsActionPayload,
     });
     expect(state).toEqual({
       ...initialState,
       isFetching: false,
-      hasFinished: false,
+      hasFinishedFetching: false,
       items: [chartItem],
       page: 2,
       records: new Map<number, boolean>().set(1, true).set(2, false),
@@ -133,13 +131,12 @@ describe("chartReducer", () => {
   it("single receiveCharts finished", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1 } as IReceiveChartsActionPayload,
-      meta: true,
+      payload: { items: [chartItem], page: 1, totalPages: 1 } as IReceiveChartsActionPayload,
     });
     expect(state).toEqual({
       ...initialState,
       isFetching: false,
-      hasFinished: true,
+      hasFinishedFetching: true,
       items: [chartItem],
       page: 1,
       records: new Map<number, boolean>().set(1, true).set(2, false),
@@ -149,18 +146,16 @@ describe("chartReducer", () => {
   it("two receiveCharts should add items", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1 } as IReceiveChartsActionPayload,
-      meta: false,
+      payload: { items: [chartItem], page: 1, totalPages: 2 } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [], page: 2 } as IReceiveChartsActionPayload,
-      meta: true,
+      payload: { items: [], page: 2, totalPages: 2 } as IReceiveChartsActionPayload,
     });
     expect(state2).toEqual({
       ...initialState,
       isFetching: false,
-      hasFinished: true,
+      hasFinishedFetching: true,
       items: [chartItem],
       page: 2,
       records: new Map<number, boolean>()
@@ -173,13 +168,11 @@ describe("chartReducer", () => {
   it("two receiveCharts and then errorChart", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1 } as IReceiveChartsActionPayload,
-      meta: true,
+      payload: { items: [chartItem], page: 1, totalPages: 1 } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [], page: 2 } as IReceiveChartsActionPayload,
-      meta: true,
+      payload: { items: [], page: 2, totalPages: 2 } as IReceiveChartsActionPayload,
     });
     const state3 = chartsReducer(state2, {
       type: getType(actions.charts.errorChart) as any,

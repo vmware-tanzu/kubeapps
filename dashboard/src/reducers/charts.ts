@@ -8,7 +8,7 @@ import { IChartState } from "../shared/types";
 
 export const initialState: IChartState = {
   isFetching: false,
-  hasFinished: false,
+  hasFinishedFetching: false,
   items: [],
   categories: [],
   selected: {
@@ -59,7 +59,8 @@ const chartsReducer = (
 ): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
-      state.records.set(action.payload, false);
+      const page = action?.payload ? action.payload : 1; // default page to 1 if not provided
+      state.records.set(page, false);
       return { ...state, isFetching: true, records: state.records };
     case getType(actions.charts.requestChartsCategories):
       return { ...state, isFetching: true };
@@ -70,14 +71,15 @@ const chartsReducer = (
         state.records.set(state.page, true); // mark the current page as successfully retrieved
         state.records.set(state.page + 1, false); // mark the next page as pending (not undefined)
       }
+      const isLastPage = action.payload.page >= action.payload.totalPages;
       return {
         ...state,
         isFetching: false,
-        hasFinished: action?.meta,
+        hasFinishedFetching: isLastPage,
         items: areMatchingPages
           ? uniqBy([...state.items, ...action.payload.items], "id")
           : state.items, // if pages don't match, ignore payload to avoid duplicates
-        page: action?.meta ? action.payload.page : action.payload.page + 1, // if action.meta==true, it's the last chunk
+        page: isLastPage ? action.payload.page : action.payload.page + 1, // if action.meta==true, it's the last chunk
         records: state.records,
       };
     case getType(actions.charts.receiveChartCategories):
@@ -111,7 +113,7 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        hasFinished: false,
+        hasFinishedFetching: false,
         items: [],
         page: 1,
         records: state.records,
@@ -123,7 +125,7 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        hasFinished: false,
+        hasFinishedFetching: false,
         page: 1,
         records: new Map<number, boolean>().set(1, false),
         items: [],

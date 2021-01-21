@@ -81,7 +81,7 @@ export function filtersToQuery(filters: any) {
 function Catalog(props: ICatalogProps) {
   const {
     charts: {
-      hasFinished,
+      hasFinishedFetching,
       selected: { error },
       items: charts,
       categories,
@@ -267,7 +267,7 @@ function Catalog(props: ICatalogProps) {
                     filters[filterNames.TYPE].find((type: string) => type === "Charts")) &&
                   // Disable scrolling if all the charts have been fetched
                   // && !isFetching
-                  !hasFinished &&
+                  !hasFinishedFetching &&
                   // Enable scrolling just if every parameter is already updated
                   clusterUpdate.current === cluster &&
                   namespaceUpdate.current === namespace &&
@@ -286,7 +286,15 @@ function Catalog(props: ICatalogProps) {
         }
       }
     },
-    [debouncedFetchCharts, filters, hasFinished, cluster, namespace, reposFilter, searchFilter],
+    [
+      debouncedFetchCharts,
+      filters,
+      hasFinishedFetching,
+      cluster,
+      namespace,
+      reposFilter,
+      searchFilter,
+    ],
   );
 
   return (
@@ -306,7 +314,10 @@ function Catalog(props: ICatalogProps) {
       {error && (
         <Alert theme="danger">An error occurred while fetching the catalog: {error.message}</Alert>
       )}
-      {charts.length === 0 && csvs.length === 0 ? (
+      {hasFinishedFetching &&
+      searchFilter.length === 0 &&
+      charts.length === 0 &&
+      csvs.length === 0 ? (
         <div className="empty-catalog">
           <CdsIcon shape="bundle" />
           <p>The current catalog is empty.</p>
@@ -413,7 +424,7 @@ function Catalog(props: ICatalogProps) {
                       cluster={cluster}
                       namespace={namespace}
                     />
-                    {!hasFinished &&
+                    {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||
                         filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
                         <div className="endPageMessage">
@@ -421,12 +432,12 @@ function Catalog(props: ICatalogProps) {
                           <span>Scroll down to discover more applications</span>
                         </div>
                       )}
-                    {!searchFilter.length && hasFinished && (
+                    {!searchFilter.length && hasFinishedFetching && (
                       <div className="endPageMessage">
                         <span>No remaining applications</span>
                       </div>
                     )}
-                    {!hasFinished && <div className="scrollHandler" ref={observeBorder} />}
+                    {!hasFinishedFetching && <div className="scrollHandler" ref={observeBorder} />}
                   </>
                 </Row>
               </div>

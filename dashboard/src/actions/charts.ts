@@ -13,14 +13,13 @@ import {
 } from "../shared/types";
 
 export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
-  return (page?: number, query?: string) => resolve(page, query);
+  return (page?: number) => resolve(page);
 });
 
 export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
-  return (payload: IReceiveChartsActionPayload, hasFinished?: boolean) =>
-    resolve(payload, hasFinished);
+  return (payload: IReceiveChartsActionPayload) => resolve(payload);
 });
 
 export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
@@ -100,10 +99,16 @@ export function fetchCharts(
   return async dispatch => {
     const lastPendingPage = Array.from(records.keys()).pop() || 1;
     if (records.get(page) === false && page <= lastPendingPage) {
-      dispatch(requestCharts(page, query));
+      dispatch(requestCharts(page));
       try {
         const response = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
-        dispatch(receiveCharts({ items: response.data, page }, response?.meta?.totalPages <= page));
+        dispatch(
+          receiveCharts({
+            items: response.data,
+            page,
+            totalPages: response.meta.totalPages,
+          } as IReceiveChartsActionPayload),
+        );
       } catch (e) {
         dispatch(errorChart(new FetchError(e.message)));
       }
