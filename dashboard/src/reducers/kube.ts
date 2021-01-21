@@ -122,6 +122,7 @@ export const initialState: IKubeState = {
   items: {},
   kinds: initialKinds,
   sockets: {},
+  timers: {},
 };
 
 const kubeReducer = (
@@ -187,13 +188,13 @@ const kubeReducer = (
       }
       const socket = ref.watchResource();
       socket.addEventListener("message", handler);
-      const { onErrorHandler, closeTimer } = onError;
+      const { onErrorHandler } = onError;
       socket.addEventListener("error", onErrorHandler);
       return {
         ...state,
         sockets: {
           ...state.sockets,
-          [key]: { socket, closeTimer },
+          [key]: { socket },
         },
       };
     // TODO(adnan): this won't handle cases where one component closes a socket
@@ -203,15 +204,46 @@ const kubeReducer = (
       key = action.payload.watchResourceURL();
       const { sockets } = state;
       const { [key]: foundSocket, ...otherSockets } = sockets;
+      const timerID = action.payload.getResourceURL();
+      const timer = state.timers[timerID];
       // close the socket if it exists
       if (foundSocket !== undefined) {
         foundSocket.socket.close();
-        foundSocket.closeTimer();
+      }
+      if (timer) {
+        clearInterval(timer);
       }
       return {
         ...state,
         sockets: otherSockets,
+        timers: {
+          ...state.timers,
+          [timerID]: undefined,
+        },
       };
+    case getType(actions.kube.addTimer):
+      if (!state.timers[action.payload.id]) {
+        return {
+          ...state,
+          timers: {
+            ...state.timers,
+            [action.payload.id]: setInterval(action.payload.timer, 5000),
+          },
+        };
+      }
+      return state;
+    case getType(actions.kube.removeTimer):
+      if (state.timers[action.payload]) {
+        clearInterval(state.timers[action.payload] as NodeJS.Timer);
+        return {
+          ...state,
+          timers: {
+            ...state.timers,
+            [action.payload]: undefined,
+          },
+        };
+      }
+      return state;
     case LOCATION_CHANGE:
       return {
         ...state,

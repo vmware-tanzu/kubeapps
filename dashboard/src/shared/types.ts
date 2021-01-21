@@ -552,9 +552,10 @@ export interface IKind {
 
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
-  sockets: { [s: string]: { socket: WebSocket; closeTimer: () => void } };
+  sockets: { [s: string]: { socket: WebSocket } };
   kinds: { [kind: string]: IKind };
   kindsError?: Error;
+  timers: { [id: string]: NodeJS.Timer | undefined };
 }
 
 export interface IBasicFormParam {
