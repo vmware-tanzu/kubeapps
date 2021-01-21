@@ -22,7 +22,7 @@ const namespace = "chart-namespace";
 const cluster = "default";
 const defaultPage = 1;
 const defaultSize = 0;
-const defaultRecords = new Map<number, boolean>().set(1, false);
+let defaultRecords = new Map<number, boolean>().set(1, false);
 
 const chartItem = {
   id: "foo",
@@ -44,6 +44,7 @@ beforeEach(() => {
     };
   });
   axiosWithAuth.get = axiosGetMock;
+  defaultRecords = new Map<number, boolean>().set(1, false);
 });
 
 afterEach(() => {
@@ -51,8 +52,8 @@ afterEach(() => {
 });
 
 describe("fetchCharts", () => {
-  it("fetches charts from a repo", async () => {
-    response = { data: [chartItem] as IChart[], meta: { totalPages: 2 } as IChartListMeta };
+  it("fetches charts from a repo (first page)", async () => {
+    response = { data: [chartItem] as IChart[], meta: { totalPages: 1 } as IChartListMeta };
     const expectedActions = [
       { type: getType(actions.charts.requestCharts), payload: 1 },
       {
@@ -79,6 +80,132 @@ describe("fetchCharts", () => {
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&repos=foo`,
     );
+  });
+
+  it("fetches charts from a repo (middle page)", async () => {
+    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
+    const expectedActions = [
+      { type: getType(actions.charts.requestCharts), payload: 2 },
+      {
+        type: getType(actions.charts.receiveCharts),
+        payload: {
+          items: response.data,
+          page: 2,
+          totalPages: response.meta.totalPages,
+        } as IReceiveChartsActionPayload,
+      },
+    ];
+    axiosWithAuth.get = axiosGetMock;
+    await store.dispatch(
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        2,
+        defaultSize,
+        defaultRecords.set(1, true).set(2, false),
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=foo`,
+    );
+  });
+
+  it("fetches charts from a repo (last page)", async () => {
+    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
+    const expectedActions = [
+      { type: getType(actions.charts.requestCharts), payload: 3 },
+      {
+        type: getType(actions.charts.receiveCharts),
+        payload: {
+          items: response.data,
+          page: 3,
+          totalPages: response.meta.totalPages,
+        } as IReceiveChartsActionPayload,
+      },
+    ];
+    axiosWithAuth.get = axiosGetMock;
+    await store.dispatch(
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        3,
+        defaultSize,
+        defaultRecords
+          .set(1, true)
+          .set(2, true)
+          .set(3, false),
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${3}&size=${defaultSize}&repos=foo`,
+    );
+  });
+
+  it("fetches charts from a repo (already processed page)", async () => {
+    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
+    const expectedActions = [] as any;
+    axiosWithAuth.get = axiosGetMock;
+    await store.dispatch(
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        2, // request page 2
+        defaultSize,
+        defaultRecords
+          .set(1, true)
+          .set(2, true)
+          .set(3, false), // but the next one should be page 3
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls).toHaveLength(0);
+  });
+
+  it("fetches charts from a repo (not-yet-requested page)", async () => {
+    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
+    const expectedActions = [] as any;
+    axiosWithAuth.get = axiosGetMock;
+    await store.dispatch(
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        4, // request page 4
+        defaultSize,
+        defaultRecords
+          .set(1, true)
+          .set(2, true)
+          .set(3, false), // but the next one should be page 3
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls).toHaveLength(0);
+  });
+
+  it("fetches charts from a repo (already-requested page)", async () => {
+    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
+    const expectedActions = [] as any;
+    axiosWithAuth.get = axiosGetMock;
+    await store.dispatch(
+      actions.charts.fetchCharts(
+        cluster,
+        namespace,
+        "foo",
+        2, // request page 2
+        defaultSize,
+        defaultRecords
+          .set(1, true)
+          .set(2, true)
+          .set(3, false), // but the next one should be page 3
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls).toHaveLength(0);
   });
 
   it("returns a 404 error", async () => {

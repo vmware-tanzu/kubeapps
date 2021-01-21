@@ -98,6 +98,9 @@ export function fetchCharts(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     const lastPendingPage = Array.from(records.keys()).pop() || 1;
+    // to avoid duplicated requests and race conditions, check if:
+    //   'page' has been marked as pending (false value)
+    //   the current requested 'page' is not greater than the last pending one
     if (records.get(page) === false && page <= lastPendingPage) {
       dispatch(requestCharts(page));
       try {
