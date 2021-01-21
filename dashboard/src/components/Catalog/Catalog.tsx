@@ -175,7 +175,7 @@ function Catalog(props: ICatalogProps) {
   const setSearchFilter = (searchTerm: string) => {
     const newFilters = {
       ...filters,
-      [filterNames.SEARCH]: [trimStart(searchTerm)],
+      [filterNames.SEARCH]: trimStart(searchTerm) ? [trimStart(searchTerm)] : [],
     };
     setFilters(newFilters);
     pushFilters(newFilters);
