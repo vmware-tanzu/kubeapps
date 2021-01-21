@@ -33,7 +33,7 @@ type Repo struct {
 	Type      string `json:"type"`
 }
 
-// RepoInternal holds the App repository details including auth and checksum
+// RepoInternal holds the App repository details including auth
 type RepoInternal struct {
 	Namespace           string `json:"namespace"`
 	Name                string `json:"name"`
