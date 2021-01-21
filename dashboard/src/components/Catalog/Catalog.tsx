@@ -5,7 +5,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
-import { debounce, flatten, get, intersection, trimStart, uniq, without } from "lodash";
+import { debounce, flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -314,7 +314,8 @@ function Catalog(props: ICatalogProps) {
       {error && (
         <Alert theme="danger">An error occurred while fetching the catalog: {error.message}</Alert>
       )}
-      {hasFinishedFetching &&
+      {isEqual(filters, initialFilterState()) &&
+      hasFinishedFetching &&
       searchFilter.length === 0 &&
       charts.length === 0 &&
       csvs.length === 0 ? (
@@ -429,7 +430,11 @@ function Catalog(props: ICatalogProps) {
                         filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
                         <div className="endPageMessage">
                           <LoadingWrapper loaded={false} />
-                          <span>Scroll down to discover more applications</span>
+                          <span>
+                            {!charts.length && !csvs.length
+                              ? "Loading catalog..."
+                              : "Scroll down to discover more applications"}
+                          </span>
                         </div>
                       )}
                     {!searchFilter.length && hasFinishedFetching && (
