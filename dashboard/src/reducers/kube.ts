@@ -188,13 +188,12 @@ const kubeReducer = (
       }
       const socket = ref.watchResource();
       socket.addEventListener("message", handler);
-      const { onErrorHandler } = onError;
-      socket.addEventListener("error", onErrorHandler);
+      socket.addEventListener("error", onError);
       return {
         ...state,
         sockets: {
           ...state.sockets,
-          [key]: { socket },
+          [key]: { socket, onError },
         },
       };
     // TODO(adnan): this won't handle cases where one component closes a socket
@@ -208,6 +207,7 @@ const kubeReducer = (
       const timer = state.timers[timerID];
       // close the socket if it exists
       if (foundSocket !== undefined) {
+        foundSocket.socket.removeEventListener("error", foundSocket.onError);
         foundSocket.socket.close();
       }
       if (timer) {

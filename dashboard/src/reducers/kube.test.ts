@@ -114,7 +114,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: jest.fn(),
-            onError: { onErrorHandler: jest.fn() },
+            onError: jest.fn(),
           },
         });
         const socket = newState.sockets[ref.watchResourceURL()];
@@ -123,7 +123,7 @@ describe("kubeReducer", () => {
 
       it("does not open a new socket if one exists in the state", () => {
         const existingSocket = ref.watchResource();
-        const socket = { socket: existingSocket };
+        const socket = { socket: existingSocket, onError: jest.fn() };
         const state = {
           ...initialState,
           sockets: {
@@ -135,7 +135,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: jest.fn(),
-            onError: { onErrorHandler: jest.fn() },
+            onError: jest.fn(),
           },
         });
         expect(newState).toBe(state);
@@ -149,7 +149,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: mock,
-            onError: { onErrorHandler: jest.fn() },
+            onError: jest.fn(),
           },
         });
         const socket = newState.sockets[ref.watchResourceURL()].socket;
@@ -168,7 +168,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: jest.fn(),
-            onError: { onErrorHandler: mock },
+            onError: mock,
           },
         });
         const socket = newState.sockets[ref.watchResourceURL()].socket;
@@ -185,10 +185,11 @@ describe("kubeReducer", () => {
       it("closes the WebSocket and the timer for the requested resource and removes it from the state", () => {
         const socket = ref.watchResource();
         const spy = jest.spyOn(socket, "close");
+        socket.removeEventListener = jest.fn();
         const state = {
           ...initialState,
           sockets: {
-            [ref.watchResourceURL()]: { socket },
+            [ref.watchResourceURL()]: { socket, onError: jest.fn() },
           },
           timers: {
             [ref.getResourceURL()]: {} as NodeJS.Timer,
@@ -206,7 +207,7 @@ describe("kubeReducer", () => {
       it("does nothing if the socket doesn't exist", () => {
         const state = {
           ...initialState,
-          sockets: { dontdeleteme: { socket: {} as WebSocket } },
+          sockets: { dontdeleteme: { socket: {} as WebSocket, onError: jest.fn() } },
         };
         const newState = kubeReducer(state, {
           type: actionTypes.closeWatchResource,

@@ -34,11 +34,8 @@ export const receiveResourceError = createAction("RECEIVE_RESOURCE_ERROR", resol
 // Takes a ResourceRef to open a WebSocket for and a handler to process messages
 // from the socket.
 export const openWatchResource = createAction("OPEN_WATCH_RESOURCE", resolve => {
-  return (
-    ref: ResourceRef,
-    handler: (e: MessageEvent) => void,
-    onError: { onErrorHandler: (e: Event) => void },
-  ) => resolve({ ref, handler, onError });
+  return (ref: ResourceRef, handler: (e: MessageEvent) => void, onError: (e: Event) => void) =>
+    resolve({ ref, handler, onError });
 });
 
 export const closeWatchResource = createAction("CLOSE_WATCH_RESOURCE", resolve => {
@@ -137,13 +134,11 @@ export function getAndWatchResource(
             dispatch(receiveResource({ key, resource }));
           }
         },
-        {
-          onErrorHandler: (e: Event) => {
-            // If the Socket fails, create an interval to re-request the resource
-            // every 5 seconds. This interval needs to be closed calling closeTimer
-            const timer = () => dispatch(getResource(ref, true));
-            dispatch(addTimer(ref.getResourceURL(), timer));
-          },
+        () => {
+          // If the Socket fails, create an interval to re-request the resource
+          // every 5 seconds. This interval needs to be closed calling closeTimer
+          const timer = () => dispatch(getResource(ref, true));
+          dispatch(addTimer(ref.getResourceURL(), timer));
         },
       ),
     );
