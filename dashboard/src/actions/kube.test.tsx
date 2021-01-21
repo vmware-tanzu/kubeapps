@@ -120,7 +120,7 @@ describe("getAndWatchResource", () => {
         payload: {
           ref,
           handler: expect.any(Function),
-          onError: { onErrorHandler: expect.any(Function) },
+          onError: expect.any(Function),
         },
       },
     ];
@@ -169,7 +169,7 @@ describe("getAndWatchResource", () => {
         payload: {
           ref: r,
           handler: expect.any(Function),
-          onError: { onErrorHandler: expect.any(Function) },
+          onError: expect.any(Function),
         },
       },
     ];
@@ -238,7 +238,7 @@ describe("getAndWatchResource", () => {
         payload: {
           ref: r,
           handler: expect.any(Function),
-          onError: { onErrorHandler: expect.any(Function) },
+          onError: expect.any(Function),
         },
       },
     ];
@@ -256,7 +256,7 @@ describe("getAndWatchResource", () => {
     );
 
     const watchFunction = (testActions[1].payload as any).handler as (e: any) => void;
-    const onErrorFunction = (testActions[1].payload as any).onError.onErrorHandler as () => void;
+    const onErrorFunction = (testActions[1].payload as any).onError as () => void;
     onErrorFunction();
     watchFunction({ data: `{"object": ${JSON.stringify(svc)}}` });
     const newActions = [
