@@ -60,28 +60,25 @@ const chartsReducer = (
   switch (action.type) {
     case getType(actions.charts.requestCharts):
       const page = action?.payload ? action.payload : 1; // default page to 1 if not provided
-      state.records.set(page, false);
-      return { ...state, isFetching: true, records: state.records };
+      return { ...state, isFetching: true, records: state.records.set(page, false) };
     case getType(actions.charts.requestChartsCategories):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
       // only update the records if the received page matches the requested one
-      const areMatchingPages = action.payload.page === state.page;
-      if (areMatchingPages) {
-        state.records.set(state.page, true); // mark the current page as successfully retrieved
-        state.records.set(state.page + 1, false); // mark the next page as pending (not undefined)
+      if (action.payload.page === state.page) {
+        const isLastPage = action.payload.page >= action.payload.totalPages;
+        state.records.set(state.page, true); // set current page as fetched
+        return {
+          ...state,
+          isFetching: false,
+          hasFinishedFetching: isLastPage,
+          items: uniqBy([...state.items, ...action.payload.items], "id"),
+          page: isLastPage ? action.payload.page : action.payload.page + 1, // if it's the last page, don't increment page
+          records: isLastPage ? state.records : state.records.set(state.page + 1, false), // set next page as pending (false) if it isn't the last page
+        };
+      } else {
+        return state;
       }
-      const isLastPage = action.payload.page >= action.payload.totalPages;
-      return {
-        ...state,
-        isFetching: false,
-        hasFinishedFetching: isLastPage,
-        items: areMatchingPages
-          ? uniqBy([...state.items, ...action.payload.items], "id")
-          : state.items, // if pages don't match, ignore payload to avoid duplicates
-        page: isLastPage ? action.payload.page : action.payload.page + 1, // if action.meta==true, it's the last chunk
-        records: state.records,
-      };
     case getType(actions.charts.receiveChartCategories):
       return { ...state, isFetching: false, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):
@@ -108,15 +105,13 @@ const chartsReducer = (
         deployed: { ...state.deployed, ...action.payload },
       };
     case getType(actions.charts.resetRequestCharts):
-      state.records.clear();
-      state.records.set(1, false);
       return {
         ...state,
         isFetching: false,
         hasFinishedFetching: false,
         items: [],
         page: 1,
-        records: state.records,
+        records: new Map<number, boolean>().set(1, false),
       };
     case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.selectReadme):
