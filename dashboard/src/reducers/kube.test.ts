@@ -255,7 +255,7 @@ describe("kubeReducer", () => {
       });
     });
 
-    describe("addTimer", () => {
+    describe("removeTimer", () => {
       it("remove a timer", () => {
         jest.useFakeTimers();
         const f1 = jest.fn();
