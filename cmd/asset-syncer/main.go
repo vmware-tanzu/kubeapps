@@ -29,6 +29,7 @@ var (
 	databasePassword string
 	debug            bool
 	namespace        string
+	ociRepositories  []string
 )
 
 var rootCmd = &cobra.Command{
@@ -57,6 +58,7 @@ func init() {
 
 	databasePassword = os.Getenv("DB_PASSWORD")
 
+	syncCmd.Flags().StringSliceVar(&ociRepositories, "oci-repositories", []string{}, "List of OCI Repositories in case the type is OCI")
 	cmds := []*cobra.Command{syncCmd, deleteCmd, invalidateCacheCmd}
 	for _, cmd := range cmds {
 		rootCmd.AddCommand(cmd)
