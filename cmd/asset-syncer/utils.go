@@ -23,7 +23,6 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"image"
 	"io"
@@ -222,10 +221,52 @@ type OCIRegistry struct {
 	*models.RepoInternal
 }
 
+func doReq(url, authHeader string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("User-Agent", userAgent())
+	if len(authHeader) > 0 {
+		req.Header.Set("Authorization", authHeader)
+	}
+
+	res, err := netClient.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request failed: %v", err)
+	}
+
+	return ioutil.ReadAll(res.Body)
+}
+
 // Checksum returns the sha256 of the repo
 func (r *OCIRegistry) Checksum() (string, error) {
-	// TBD
-	return "", nil
+	// repositoryAPIurl := fmt.Sprintf("%s://%s/v2%s", url.Scheme, url.Host, url.Path)
+	content := []byte{}
+	for _, appName := range r.repositories {
+		url, err := parseRepoURL(r.RepoInternal.URL)
+		if err != nil {
+			return "", err
+		}
+		// Retrieve the list of tags to add it to the list
+		// Caveat: Mutated image tags won't be detected as new
+		url.Path = path.Join("v2", url.Path, appName, "tags/list")
+		data, err := doReq(url.String(), r.RepoInternal.AuthorizationHeader)
+		if err != nil {
+			return "", err
+		}
+		content = append(content, data...)
+	}
+
+	return getSha256(content)
 }
 
 // Repo returns the repo information
@@ -281,36 +322,7 @@ func fetchRepoIndex(url, authHeader string) ([]byte, error) {
 		return nil, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
-	req, err := http.NewRequest("GET", indexURL.String(), nil)
-	if err != nil {
-		log.WithFields(log.Fields{"url": req.URL.String()}).WithError(err).Error("could not build repo index request")
-		return nil, err
-	}
-
-	req.Header.Set("User-Agent", userAgent())
-	if len(authHeader) > 0 {
-		req.Header.Set("Authorization", authHeader)
-	}
-
-	res, err := netClient.Do(req)
-	if res != nil {
-		defer res.Body.Close()
-	}
-	if err != nil {
-		log.WithFields(log.Fields{"url": req.URL.String()}).WithError(err).Error("error requesting repo index")
-		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{"url": req.URL.String(), "status": res.StatusCode}).Error("error requesting repo index, are you sure this is a chart repository?")
-		return nil, errors.New("repo index request failed")
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
+	return doReq(indexURL.String(), authHeader)
 }
 
 func parseRepoIndex(body []byte) (*helmrepo.IndexFile, error) {
