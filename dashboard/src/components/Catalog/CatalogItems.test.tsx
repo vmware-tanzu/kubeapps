@@ -50,6 +50,7 @@ const defaultProps = {
   cluster: "default",
   namespace: "default",
   isFetching: false,
+  page: 1,
   hasFinishedFetching: true,
 };
 const populatedProps = {
@@ -59,13 +60,31 @@ const populatedProps = {
 };
 
 it("shows nothing if no items are passed but it's still fetching", () => {
-  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} isFetching={true} />);
   expect(wrapper).toIncludeText("");
 });
 
 it("shows a message if no items are passed and it stopped fetching", () => {
-  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} isFetching={false} />);
   expect(wrapper).toIncludeText("No application matches the current filter");
+});
+
+it("no items if it's fetching and it's the first page (prevents showing incomplete list during the first render)", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <CatalogItems {...populatedProps} isFetching={true} page={1} />,
+  );
+  const items = wrapper.find(CatalogItem);
+  expect(items).toHaveLength(0);
+});
+
+it("show items if it's fetching but it is NOT the first page (allow pagination without scrolling issues)", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <CatalogItems {...populatedProps} isFetching={true} page={2} />,
+  );
+  const items = wrapper.find(CatalogItem);
+  expect(items).toHaveLength(3);
 });
 
 it("order elements by name", () => {

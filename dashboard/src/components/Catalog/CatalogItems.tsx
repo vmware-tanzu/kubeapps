@@ -9,6 +9,7 @@ interface ICatalogItemsProps {
   csvs: IClusterServiceVersion[];
   cluster: string;
   namespace: string;
+  page: number;
   isFetching: boolean;
   hasFinishedFetching: boolean;
 }
@@ -18,6 +19,7 @@ export default function CatalogItems({
   csvs,
   cluster,
   namespace,
+  page,
   isFetching,
   hasFinishedFetching,
 }: ICatalogItemsProps) {
@@ -72,11 +74,12 @@ export default function CatalogItems({
     [csvs, cluster, namespace],
   );
 
-  const sortedItems = !isFetching
-    ? chartItems
-        .concat(crdItems)
-        .sort((a, b) => (a.item.name.toLowerCase() > b.item.name.toLowerCase() ? 1 : -1))
-    : [];
+  const sortedItems =
+    isFetching && page === 1
+      ? []
+      : chartItems
+          .concat(crdItems)
+          .sort((a, b) => (a.item.name.toLowerCase() > b.item.name.toLowerCase() ? 1 : -1));
 
   if (hasFinishedFetching && sortedItems.length === 0) {
     return <p>No application matches the current filter.</p>;

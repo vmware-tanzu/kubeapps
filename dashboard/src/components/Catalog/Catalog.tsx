@@ -409,6 +409,7 @@ function Catalog(props: ICatalogProps) {
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}
+                      page={page}
                       isFetching={isFetching}
                       hasFinishedFetching={hasFinishedFetching}
                     />
