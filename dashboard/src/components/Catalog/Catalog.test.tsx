@@ -18,7 +18,7 @@ const defaultChartState = {
   categories: [],
   updatesInfo: {},
   page: 1,
-  size: 100,
+  size: 20,
   records: new Map<number, boolean>().set(1, false),
 } as IChartState;
 const defaultProps = {
@@ -315,6 +315,128 @@ describe("filters by application type", () => {
       args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Operators"],
       method: "push",
     });
+  });
+});
+
+describe("pagination", () => {
+  let spyOnUseState: jest.SpyInstance;
+  let spyOnUseEffect: jest.SpyInstance;
+
+  afterEach(() => {
+    spyOnUseEffect.mockRestore();
+    spyOnUseState.mockRestore();
+  });
+
+  it("sets the initial state page to 1", () => {
+    const fetchCharts = jest.fn();
+    const resetRequestCharts = jest.fn();
+    const setState = jest.fn();
+    const mockUseEffect = jest.fn();
+    //  @ts-ignore
+    spyOnUseState = jest
+      .spyOn(React, "useState")
+      .mockImplementation((init: any) => [init, setState]);
+    //  @ts-ignore
+    spyOnUseEffect = jest
+      .spyOn(React, "useEffect")
+      .mockImplementation((f, n) => f(mockUseEffect(n)));
+
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...populatedProps}
+        fetchCharts={fetchCharts}
+        resetRequestCharts={resetRequestCharts}
+        charts={
+          {
+            ...defaultChartState,
+            hasFinishedFetching: false,
+            isFetching: false,
+            items: [],
+          } as any
+        }
+      />,
+    );
+
+    expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
+    expect(setState).toHaveBeenCalledWith(1);
+    expect(mockUseEffect).toHaveBeenNthCalledWith(3, [false, false]); // [hasRequestedFirstPage, isFetching])
+    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 1, 20, ""); // [hasRequestedFirstPage, isFetching])
+    expect(mockUseEffect).toHaveBeenCalledTimes(7);
+    expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
+  });
+
+  it("sets state params when fetching charts", () => {
+    const fetchCharts = jest.fn();
+    const resetRequestCharts = jest.fn();
+    const setState = jest.fn();
+    const mockUseEffect = jest.fn();
+    //  @ts-ignore
+    spyOnUseState = jest
+      .spyOn(React, "useState")
+      .mockImplementation((init: any) => [init, setState]);
+    //  @ts-ignore
+    spyOnUseEffect = jest
+      .spyOn(React, "useEffect")
+      .mockImplementation((f, n) => f(mockUseEffect(n)));
+
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...populatedProps}
+        fetchCharts={fetchCharts}
+        resetRequestCharts={resetRequestCharts}
+        charts={
+          {
+            ...defaultChartState,
+            hasFinishedFetching: false,
+            isFetching: true, // true
+            items: [chartItem, chartItem2],
+          } as any
+        }
+      />,
+    );
+    expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
+    expect(setState).toHaveBeenCalledWith(1);
+    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
+    expect(mockUseEffect).toHaveBeenCalledTimes(6);
+    expect(resetRequestCharts).toHaveBeenCalledWith();
+  });
+
+  it("sets state params when charts have been fetched", () => {
+    const fetchCharts = jest.fn();
+    const resetRequestCharts = jest.fn();
+    const setState = jest.fn();
+    const mockUseEffect = jest.fn();
+    //  @ts-ignore
+    spyOnUseState = jest
+      .spyOn(React, "useState")
+      .mockImplementation((init: any) => [init, setState]);
+    //  @ts-ignore
+    spyOnUseEffect = jest
+      .spyOn(React, "useEffect")
+      .mockImplementation((f, n) => f(mockUseEffect(n)));
+
+    const wrapper = mountWrapper(
+      defaultStore,
+      <Catalog
+        {...populatedProps}
+        fetchCharts={fetchCharts}
+        resetRequestCharts={resetRequestCharts}
+        charts={
+          {
+            ...defaultChartState,
+            hasFinishedFetching: true,
+            isFetching: false,
+            items: [chartItem, chartItem2],
+          } as any
+        }
+      />,
+    );
+    expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
+    expect(setState).toHaveBeenCalledWith(1);
+    expect(mockUseEffect).toHaveBeenCalledTimes(9);
+    expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
 });
 
