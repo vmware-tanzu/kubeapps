@@ -38,7 +38,7 @@ function Layout({ children }: any) {
               {kindsError && (
                 <div className="margin-t-sm">
                   <AlertGroup status="warning" closable={true} size="sm">
-                    Unable to retrieve API info: ${kindsError.message}
+                    Unable to retrieve API info: {kindsError.message}
                   </AlertGroup>
                 </div>
               )}
