@@ -22,7 +22,7 @@ deploy-openldap:
 devel/localhost-cert.pem:
 	mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost 172.18.0.2
 
-deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
+deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem deploy-pinniped
 	kubectl --kubeconfig=${CLUSTER_CONFIG} create namespace kubeapps
 	kubectl --kubeconfig=${CLUSTER_CONFIG} -n kubeapps create secret tls localhost-tls \
 		--key ./devel/localhost-key.pem \
@@ -41,8 +41,7 @@ deploy-dev-kubeapps:
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set kubeops.image.tag=test-pinniped-1a --set kubeops.image.pullPolicy=Never \
-		--set pinnipedProxy.image.tag=test-pinniped-1a --set pinnipedProxy.image.pullPolicy=Never
+		--set pinnipedProxy.image.tag=test-pinniped --set pinnipedProxy.image.pullPolicy=Never
 
 deploy-dev: deploy-dependencies deploy-dev-kubeapps
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"

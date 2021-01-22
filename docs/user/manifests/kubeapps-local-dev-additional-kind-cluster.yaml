@@ -1,9 +1,11 @@
 clusters:
  - name: mydefaultcluster
+   pinnipedConfig:
+    enable: true
  - name: second-cluster
    apiServiceURL: https://172.18.0.3:6443
    # insecure is set to true only for local dev cluster testing. Always specify the
-   # certificateAuthorityData as documented in teh values.yaml.
+   # certificateAuthorityData as documented in the values.yaml.
    insecure: true
    # serviceToken is only required if users viewing the additional cluster should be able
    # to see the namespaces to which they have access in the namespace selector (and should
