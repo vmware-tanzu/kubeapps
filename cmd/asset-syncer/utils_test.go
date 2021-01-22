@@ -184,7 +184,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := getRepo("namespace", "test", tt.repoURL, "")
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "")
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -347,7 +347,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 			createTestTarball(&b, tt.files)
 			r := bytes.NewReader(b.Bytes())
 			tarf := tar.NewReader(r)
-			files, err := extractFilesFromTarball([]string{tt.filename}, tarf)
+			files, err := extractFilesFromTarball(map[string]string{tt.filename: tt.filename}, tarf)
 			assert.NoErr(t, err)
 			assert.Equal(t, files[tt.filename], tt.want, "file body")
 		})
@@ -359,7 +359,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 		createTestTarball(&b, tFiles)
 		r := bytes.NewReader(b.Bytes())
 		tarf := tar.NewReader(r)
-		files, err := extractFilesFromTarball([]string{tFiles[0].Name, tFiles[1].Name}, tarf)
+		files, err := extractFilesFromTarball(map[string]string{tFiles[0].Name: tFiles[0].Name, tFiles[1].Name: tFiles[1].Name}, tarf)
 		assert.NoErr(t, err)
 		assert.Equal(t, len(files), 2, "matches")
 		for _, f := range tFiles {
@@ -373,7 +373,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 		r := bytes.NewReader(b.Bytes())
 		tarf := tar.NewReader(r)
 		name := "file2.txt"
-		files, err := extractFilesFromTarball([]string{name}, tarf)
+		files, err := extractFilesFromTarball(map[string]string{name: name}, tarf)
 		assert.NoErr(t, err)
 		assert.Equal(t, files[name], "", "file body")
 	})
@@ -383,7 +383,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 		rand.Read(b)
 		r := bytes.NewReader(b)
 		tarf := tar.NewReader(r)
-		files, err := extractFilesFromTarball([]string{"file2.txt"}, tarf)
+		files, err := extractFilesFromTarball(map[string]string{values: "file2.txt"}, tarf)
 		assert.Err(t, io.ErrUnexpectedEOF, err)
 		assert.Equal(t, len(files), 0, "file body")
 	})
@@ -556,6 +556,32 @@ func Test_fetchAndImportIcon(t *testing.T) {
 	})
 }
 
+type fakeRepo struct {
+	*models.RepoInternal
+	charts     []models.Chart
+	chartFiles models.ChartFiles
+}
+
+func (r *fakeRepo) Checksum() (string, error) {
+	return "checksum", nil
+}
+
+func (r *fakeRepo) Repo() *models.RepoInternal {
+	return r.RepoInternal
+}
+
+func (r *fakeRepo) Charts() ([]models.Chart, error) {
+	return r.charts, nil
+}
+
+func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
+	return map[string]string{
+		values: r.chartFiles.Values,
+		readme: r.chartFiles.Readme,
+		schema: r.chartFiles.Schema,
+	}, nil
+}
+
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
@@ -571,6 +597,11 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		Repo:   charts[0].Repo,
 		Digest: chartVersion.Digest,
 	}
+	fRepo := &fakeRepo{
+		RepoInternal: repo,
+		charts:       charts,
+		chartFiles:   chartFiles,
+	}
 
 	t.Run("http error", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
@@ -581,7 +612,11 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 		netClient = &badHTTPClient{}
 		fImporter := fileImporter{pgManager}
-		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion))
+		helmRepo := &HelmRepo{
+			content:      []byte{},
+			RepoInternal: repo,
+		}
+		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -608,7 +643,11 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		netClient = &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
 
 		fImporter := fileImporter{pgManager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
+		helmRepo := &HelmRepo{
+			content:      []byte{},
+			RepoInternal: repo,
+		}
+		err := fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion)
 		assert.NoErr(t, err)
 	})
 
@@ -629,7 +668,11 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		fImporter := fileImporter{pgManager}
 
 		r := &models.RepoInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, r, chartVersion)
+		repo := &HelmRepo{
+			RepoInternal: r,
+			content:      []byte{},
+		}
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
 		assert.NoErr(t, err)
 	})
 
@@ -647,7 +690,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		netClient = &goodTarballClient{c: charts[0]}
 		fImporter := fileImporter{pgManager}
 
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion)
 		assert.NoErr(t, err)
 	})
 
@@ -660,7 +703,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(`true`))
 
 		fImporter := fileImporter{pgManager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion)
 		assert.NoErr(t, err)
 	})
 }

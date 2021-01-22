@@ -26,6 +26,7 @@ import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import OLMNotFound from "./OLMNotFound";
 import OperatorItems from "./OperatorItems";
+import "./OperatorList.css";
 
 export interface IOperatorListProps {
   cluster: string;
@@ -307,16 +308,20 @@ export default function OperatorList({
                     </div>
                     {installedOperators.length > 0 && (
                       <>
-                        <h3>Installed</h3>
-                        <Row>
-                          <OperatorItems operators={installedOperators} cluster={cluster} />
-                        </Row>
+                        <div className="operatorListContainer">
+                          <h3>Installed</h3>
+                          <Row>
+                            <OperatorItems operators={installedOperators} cluster={cluster} />
+                          </Row>
+                        </div>
                       </>
                     )}
-                    <h3>Available Operators</h3>
-                    <Row>
-                      <OperatorItems operators={availableOperators} cluster={cluster} />
-                    </Row>
+                    <div className="operatorListContainer">
+                      <h3>Available Operators</h3>
+                      <Row>
+                        <OperatorItems operators={availableOperators} cluster={cluster} />
+                      </Row>
+                    </div>
                   </>
                 </Column>
               </Row>

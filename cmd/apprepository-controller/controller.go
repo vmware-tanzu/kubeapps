@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -581,7 +582,13 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 		args = append(args, "--user-agent-comment="+config.UserAgentComment)
 	}
 
-	return append(args, "--namespace="+apprepo.GetNamespace(), apprepo.GetName(), apprepo.Spec.URL)
+	args = append(args, "--namespace="+apprepo.GetNamespace(), apprepo.GetName(), apprepo.Spec.URL, apprepo.Spec.Type)
+
+	if len(apprepo.Spec.OCIRepositories) > 0 {
+		args = append(args, "--oci-repositories", strings.Join(apprepo.Spec.OCIRepositories, ","))
+	}
+
+	return args
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container

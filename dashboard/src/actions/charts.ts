@@ -93,28 +93,21 @@ export function fetchCharts(
   repos: string,
   page: number,
   size: number,
-  records: Map<number, boolean>,
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    const lastPendingPage = Array.from(records.keys()).pop() || 1;
-    // to avoid duplicated requests and race conditions, check if:
-    //   'page' has been marked as pending (false value)
-    //   the current requested 'page' is not greater than the last pending one
-    if (records.get(page) === false && page <= lastPendingPage) {
-      dispatch(requestCharts(page));
-      try {
-        const response = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
-        dispatch(
-          receiveCharts({
-            items: response.data,
-            page,
-            totalPages: response.meta.totalPages,
-          } as IReceiveChartsActionPayload),
-        );
-      } catch (e) {
-        dispatch(errorChart(new FetchError(e.message)));
-      }
+    dispatch(requestCharts(page));
+    try {
+      const response = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
+      dispatch(
+        receiveCharts({
+          items: response.data,
+          page,
+          totalPages: response.meta.totalPages,
+        } as IReceiveChartsActionPayload),
+      );
+    } catch (e) {
+      dispatch(errorChart(new FetchError(e.message)));
     }
   };
 }
