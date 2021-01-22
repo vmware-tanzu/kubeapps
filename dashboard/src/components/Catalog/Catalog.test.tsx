@@ -1,7 +1,6 @@
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
-import lodash from "lodash";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -114,30 +113,33 @@ it("should render a message if there are no elements in the catalog and the fetc
   expect(message).toIncludeText("The current catalog is empty");
 });
 
-it("should render a message if there are no elements", () => {
+it("should render a spinner if there are no elements but it's still fetching", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <Catalog {...defaultProps} charts={{ ...defaultChartState, hasFinishedFetching: false }} />,
   );
   const spinner = wrapper.find(".endPageMessage span").at(1);
-  const message = wrapper.find(".endPageMessage span").at(2);
   expect(spinner).toExist();
   expect(spinner).toIncludeText("Loading...");
-  expect(message).toExist();
-  expect(message).toIncludeText("Loading catalog...");
 });
 
-it("should render a message if there already are elements", () => {
+it("should not render a spinner if there are no elements and it finished fetching", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...defaultProps} charts={{ ...defaultChartState, hasFinishedFetching: true }} />,
+  );
+  const spinner = wrapper.find(".endPageMessage span").at(1);
+  expect(spinner).not.toExist();
+});
+
+it("should render a spinner if there already pending elements", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <Catalog {...populatedProps} charts={{ ...populatedChartProps, hasFinishedFetching: false }} />,
   );
   const spinner = wrapper.find(".endPageMessage span").at(1);
-  const message = wrapper.find(".endPageMessage span").at(2);
   expect(spinner).toExist();
   expect(spinner).toIncludeText("Loading...");
-  expect(message).toExist();
-  expect(message).toIncludeText("Scroll down to discover more applications");
 });
 
 it("should not render a message if only operators are selected", () => {
@@ -155,14 +157,13 @@ it("should not render a message if only operators are selected", () => {
   expect(message).not.toExist();
 });
 
-it("should render a message if there are no more elements", () => {
+it("should not render a message if there are no more elements", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <Catalog {...populatedProps} charts={{ ...populatedChartProps, hasFinishedFetching: true }} />,
   );
   const message = wrapper.find(".endPageMessage");
-  expect(message).toExist();
-  expect(message).toIncludeText("No remaining applications");
+  expect(message).not.toExist();
 });
 
 it("should not render a message if there are no more elements but it's searching", () => {
@@ -223,14 +224,11 @@ it("behaves like a loading wrapper", () => {
 
 describe("filters by the searched item", () => {
   let spyOnUseDispatch: jest.SpyInstance;
-  let spyOnDebounce: jest.SpyInstance;
   let spyOnUseEffect: jest.SpyInstance;
-  // beforeEach(() => {
-  // });
+
   afterEach(() => {
     spyOnUseDispatch.mockRestore();
     spyOnUseEffect.mockRestore();
-    spyOnDebounce.mockRestore();
   });
 
   it("filters modifying the search box", () => {
@@ -241,7 +239,6 @@ describe("filters by the searched item", () => {
 
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
     spyOnUseEffect = jest.spyOn(React, "useEffect").mockReturnValue(mockUseEffect as any);
-    spyOnDebounce = jest.spyOn(lodash, "debounce").mockImplementation(fetchCharts as any);
 
     const props = {
       ...populatedProps,
@@ -263,8 +260,6 @@ describe("filters by the searched item", () => {
       },
       type: "@@router/CALL_HISTORY_METHOD",
     });
-
-    expect(fetchCharts).toBeCalled(); // TODO: investigate how to check "[Function anonymous], 500"
   });
 });
 

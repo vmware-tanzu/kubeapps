@@ -43,9 +43,7 @@ describe("chartReducer", () => {
         versions: [],
       },
       deployed: {},
-      page: 1,
-      size: 100,
-      records: new Map<number, boolean>().set(1, false),
+      size: 20,
     };
   });
   const error = new Error("Boom");
@@ -77,7 +75,6 @@ describe("chartReducer", () => {
     });
     expect(state).toEqual({
       ...initialState,
-      isFetching: true,
     });
   });
 
@@ -111,7 +108,6 @@ describe("chartReducer", () => {
     expect(state).toEqual({
       ...initialState,
       isFetching: true,
-      records: initialState.records.set(1, false),
     });
   });
 
@@ -123,7 +119,6 @@ describe("chartReducer", () => {
     expect(state).toEqual({
       ...initialState,
       isFetching: true,
-      records: initialState.records.set(2, false),
     });
   });
 
@@ -137,14 +132,12 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: false,
       items: [chartItem],
-      page: 2,
-      records: new Map<number, boolean>().set(1, true).set(2, false),
     });
   });
 
   it("single receiveCharts (middle page) having visited the previous ones should be ignored", () => {
     const state = chartsReducer(
-      { ...initialState, page: 2, records: initialState.records.set(1, true).set(2, false) },
+      { ...initialState },
       {
         type: getType(actions.charts.receiveCharts) as any,
         payload: { items: [chartItem], page: 2, totalPages: 3 } as IReceiveChartsActionPayload,
@@ -155,17 +148,13 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: false,
       items: [chartItem],
-      page: 3,
-      records: initialState.records
-        .set(1, true)
-        .set(2, true)
-        .set(3, false),
+      // page: 3,
     });
   });
 
   it("single receiveCharts (middle page) not visiting the previous ones should be ignored", () => {
     const state = chartsReducer(
-      { ...initialState, page: 2, records: initialState.records.set(1, false).set(2, false) },
+      { ...initialState },
       {
         type: getType(actions.charts.receiveCharts) as any,
         payload: { items: [chartItem], page: 2, totalPages: 3 } as IReceiveChartsActionPayload,
@@ -176,8 +165,7 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: false,
       items: [chartItem],
-      page: 3,
-      records: initialState.records.set(1, false).set(2, false),
+      // page: 3,
     });
   });
 
@@ -185,11 +173,6 @@ describe("chartReducer", () => {
     const state = chartsReducer(
       {
         ...initialState,
-        page: 3,
-        records: initialState.records
-          .set(1, true)
-          .set(2, true)
-          .set(3, false),
       },
       {
         type: getType(actions.charts.receiveCharts) as any,
@@ -201,11 +184,6 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: true,
       items: [chartItem],
-      page: 3,
-      records: initialState.records
-        .set(1, true)
-        .set(2, true)
-        .set(3, true),
     });
   });
 
@@ -223,8 +201,6 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: true,
       items: [chartItem, chartItem2],
-      page: 2,
-      records: initialState.records.set(1, true).set(2, true),
     });
     expect(state2.items.length).toBe(2);
   });
@@ -243,8 +219,6 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: true,
       items: [chartItem],
-      page: 2,
-      records: initialState.records.set(1, true).set(2, true),
     });
     expect(state2.items.length).toBe(1);
   });
@@ -259,8 +233,6 @@ describe("chartReducer", () => {
       isFetching: true,
       hasFinishedFetching: false,
       items: [],
-      page: 1,
-      records: initialState.records.set(1, true),
     });
     const stateRec1 = chartsReducer(stateReq1, {
       type: getType(actions.charts.receiveCharts) as any,
@@ -271,8 +243,6 @@ describe("chartReducer", () => {
       isFetching: false,
       items: [chartItem],
       hasFinishedFetching: false,
-      page: 2,
-      records: initialState.records.set(1, true).set(2, false),
     });
     const stateReq2 = chartsReducer(stateRec1, {
       type: getType(actions.charts.requestCharts) as any,
@@ -283,11 +253,6 @@ describe("chartReducer", () => {
       isFetching: true,
       hasFinishedFetching: false,
       items: [chartItem],
-      page: 2,
-      records: initialState.records
-        .set(1, true)
-        .set(2, true)
-        .set(3, false),
     });
     const stateRec2 = chartsReducer(stateReq2, {
       type: getType(actions.charts.receiveCharts) as any,
@@ -297,12 +262,7 @@ describe("chartReducer", () => {
       ...initialState,
       isFetching: false,
       hasFinishedFetching: false,
-      page: 3,
       items: [chartItem, chartItem2],
-      records: initialState.records
-        .set(1, true)
-        .set(2, true)
-        .set(3, false),
     });
     const stateReq3 = chartsReducer(stateRec2, {
       type: getType(actions.charts.requestCharts) as any,
@@ -313,11 +273,6 @@ describe("chartReducer", () => {
       isFetching: true,
       hasFinishedFetching: false,
       items: [chartItem, chartItem2],
-      page: 3,
-      records: initialState.records
-        .set(1, true)
-        .set(2, true)
-        .set(3, false),
     });
     const stateRec3 = chartsReducer(stateReq3, {
       type: getType(actions.charts.receiveCharts) as any,
@@ -327,12 +282,7 @@ describe("chartReducer", () => {
       ...initialState,
       isFetching: false,
       hasFinishedFetching: true,
-      page: 3,
       items: [chartItem, chartItem2],
-      records: initialState.records
-        .set(1, true)
-        .set(2, true)
-        .set(3, true),
     });
   });
 

@@ -49,6 +49,8 @@ const defaultProps = {
   csvs: [],
   cluster: "default",
   namespace: "default",
+  isFetching: false,
+  hasFinishedFetching: true,
 };
 const populatedProps = {
   ...defaultProps,

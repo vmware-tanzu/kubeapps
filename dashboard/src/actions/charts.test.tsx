@@ -20,9 +20,9 @@ let response: any;
 
 const namespace = "chart-namespace";
 const cluster = "default";
+const repos = "foo";
 const defaultPage = 1;
 const defaultSize = 0;
-let defaultRecords = new Map<number, boolean>().set(1, false);
 
 const chartItem = {
   id: "foo",
@@ -44,168 +44,137 @@ beforeEach(() => {
     };
   });
   axiosWithAuth.get = axiosGetMock;
-  defaultRecords = new Map<number, boolean>().set(1, false);
 });
 
 afterEach(() => {
   jest.resetAllMocks();
 });
 
-describe("fetchCharts", () => {
-  it("fetches charts from a repo (first page)", async () => {
-    response = { data: [chartItem] as IChart[], meta: { totalPages: 1 } as IChartListMeta };
-    const expectedActions = [
+interface IFetchChartsTestCase {
+  name: string;
+  responseData: IChart[];
+  responseMeta: IChartListMeta;
+  requestedRepos: string;
+  requestedPage: number;
+  expectedActions: any;
+  expectedURL: string;
+}
+
+const fetchChartsTestCases: IFetchChartsTestCase[] = [
+  {
+    name: "fetches charts from a repo (first page)",
+    responseData: [chartItem],
+    responseMeta: { totalPages: 3 },
+    requestedRepos: repos,
+    requestedPage: 1,
+    expectedActions: [
       { type: getType(actions.charts.requestCharts), payload: 1 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: response.data,
+          items: [chartItem],
           page: 1,
-          totalPages: response.meta.totalPages,
+          totalPages: 3,
         } as IReceiveChartsActionPayload,
       },
-    ];
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        defaultPage,
-        defaultSize,
-        defaultRecords,
-      ),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&repos=foo`,
-    );
-  });
-
-  it("fetches charts from a repo (middle page)", async () => {
-    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
-    const expectedActions = [
+    ],
+    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${1}&size=${defaultSize}&repos=foo`,
+  },
+  {
+    name: "fetches charts from a repo (middle page)",
+    responseData: [chartItem],
+    responseMeta: { totalPages: 3 },
+    requestedRepos: repos,
+    requestedPage: 2,
+    expectedActions: [
       { type: getType(actions.charts.requestCharts), payload: 2 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: response.data,
+          items: [chartItem],
           page: 2,
-          totalPages: response.meta.totalPages,
+          totalPages: 3,
         } as IReceiveChartsActionPayload,
       },
-    ];
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        2,
-        defaultSize,
-        defaultRecords.set(1, true).set(2, false),
-      ),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=foo`,
-    );
-  });
-
-  it("fetches charts from a repo (last page)", async () => {
-    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
-    const expectedActions = [
+    ],
+    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
+  },
+  {
+    name: "fetches charts from a repo (last page)",
+    responseData: [chartItem],
+    responseMeta: { totalPages: 3 },
+    requestedRepos: repos,
+    requestedPage: 3,
+    expectedActions: [
       { type: getType(actions.charts.requestCharts), payload: 3 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: response.data,
+          items: [chartItem],
           page: 3,
-          totalPages: response.meta.totalPages,
+          totalPages: 3,
         } as IReceiveChartsActionPayload,
       },
-    ];
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        3,
-        defaultSize,
-        defaultRecords
-          .set(1, true)
-          .set(2, true)
-          .set(3, false),
-      ),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${3}&size=${defaultSize}&repos=foo`,
-    );
-  });
+    ],
+    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${3}&size=${defaultSize}&repos=${repos}`,
+  },
+  {
+    name: "fetches charts from a repo (already processed page)",
+    responseData: [chartItem],
+    responseMeta: { totalPages: 3 },
+    requestedRepos: repos,
+    requestedPage: 2,
+    expectedActions: [
+      { type: getType(actions.charts.requestCharts), payload: 2 },
+      {
+        type: getType(actions.charts.receiveCharts),
+        payload: {
+          items: [chartItem],
+          page: 2,
+          totalPages: 3,
+        } as IReceiveChartsActionPayload,
+      },
+    ],
+    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
+  },
+  {
+    name: "fetches charts from a repo (off-limits page)",
+    responseData: [chartItem],
+    responseMeta: { totalPages: 3 },
+    requestedRepos: repos,
+    requestedPage: 4,
+    expectedActions: [
+      { type: getType(actions.charts.requestCharts), payload: 4 },
+      {
+        type: getType(actions.charts.receiveCharts),
+        payload: {
+          items: [chartItem],
+          page: 4,
+          totalPages: 3,
+        } as IReceiveChartsActionPayload,
+      },
+    ],
+    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${4}&size=${defaultSize}&repos=${repos}`,
+  },
+];
 
-  it("fetches charts from a repo (already processed page)", async () => {
-    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
-    const expectedActions = [] as any;
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        2, // request page 2
-        defaultSize,
-        defaultRecords
-          .set(1, true)
-          .set(2, true)
-          .set(3, false), // but the next one should be page 3
-      ),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls).toHaveLength(0);
-  });
-
-  it("fetches charts from a repo (not-yet-requested page)", async () => {
-    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
-    const expectedActions = [] as any;
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        4, // request page 4
-        defaultSize,
-        defaultRecords
-          .set(1, true)
-          .set(2, true)
-          .set(3, false), // but the next one should be page 3
-      ),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls).toHaveLength(0);
-  });
-
-  it("fetches charts from a repo (already-requested page)", async () => {
-    response = { data: [chartItem] as IChart[], meta: { totalPages: 3 } as IChartListMeta };
-    const expectedActions = [] as any;
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        2, // request page 2
-        defaultSize,
-        defaultRecords
-          .set(1, true)
-          .set(2, true)
-          .set(3, false), // but the next one should be page 3
-      ),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls).toHaveLength(0);
+describe("fetchCharts", () => {
+  fetchChartsTestCases.forEach(tc => {
+    it(tc.name, async () => {
+      response = { data: tc.responseData, meta: tc.responseMeta };
+      axiosWithAuth.get = axiosGetMock;
+      await store.dispatch(
+        actions.charts.fetchCharts(
+          cluster,
+          namespace,
+          tc.requestedRepos,
+          tc.requestedPage,
+          defaultSize,
+        ),
+      );
+      expect(store.getActions()).toEqual(tc.expectedActions);
+      expect(axiosGetMock.mock.calls[0][0]).toBe(tc.expectedURL);
+    });
   });
 
   it("returns a 404 error", async () => {
@@ -221,14 +190,7 @@ describe("fetchCharts", () => {
     });
     axiosWithAuth.get = axiosGetMock;
     await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        defaultPage,
-        defaultSize,
-        defaultRecords,
-      ),
+      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -243,14 +205,7 @@ describe("fetchCharts", () => {
     });
     axiosWithAuth.get = axiosGetMock;
     await store.dispatch(
-      actions.charts.fetchCharts(
-        cluster,
-        namespace,
-        "foo",
-        defaultPage,
-        defaultSize,
-        defaultRecords,
-      ),
+      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
