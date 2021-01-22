@@ -22,7 +22,13 @@ type CheckerForRequest func(clustersConfig kube.ClustersConfig, req *http.Reques
 func AuthCheckerForRequest(clustersConfig kube.ClustersConfig, req *http.Request) (Checker, error) {
 	token := ExtractToken(req.Header.Get("Authorization"))
 	if token == "" {
-		return nil, fmt.Errorf("Authorization token missing")
+		// TODO: Get `sessionid` cookie name from Helm config `authProxy.cookieName`
+		cookie, err := req.Cookie("sessionid")
+		if err != nil {
+			return nil, fmt.Errorf("Authorization token missing")
+		} else {
+			token = cookie.Value
+		}
 	}
 	clusterName := mux.Vars(req)["cluster"]
 	return NewAuth(token, clusterName, clustersConfig)

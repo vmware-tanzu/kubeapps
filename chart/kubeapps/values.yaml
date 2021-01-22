@@ -552,6 +552,10 @@ testImage:
 # Auth Proxy configuration for OIDC support
 # ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md
 authProxy:
+  ## Set to the name of your auth cookie. Enables implicit session-based SSO.
+  # TODO: Default to "" as this should be an opt-in feature.
+  cookieName: "sessionid"
+
   ## Set to true if Kubeapps should configure the OAuth login/logout URIs defined below.
   #
   enabled: false

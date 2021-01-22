@@ -13,10 +13,17 @@ export interface IAuthState {
 }
 
 const getInitialState: () => IAuthState = (): IAuthState => {
-  const token = Auth.getAuthToken() || "";
+  // let authenticated = await Auth.isAuthenticatedWithCookie("default");
+  let authenticated = false;
+  if (!authenticated) {
+    const token = Auth.getAuthToken() || "";
+    if (token !== "") {
+      authenticated = true;
+    }
+  }
   return {
     sessionExpired: false,
-    authenticated: token !== "",
+    authenticated,
     authenticating: false,
     oidcAuthenticated: Auth.usingOIDCToken(),
   };
