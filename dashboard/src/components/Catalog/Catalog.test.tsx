@@ -1,9 +1,10 @@
-import * as React from "react";
-
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
+import lodash from "lodash";
+import * as React from "react";
 import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -11,13 +12,15 @@ import Catalog, { filterNames } from "./Catalog";
 
 const defaultChartState = {
   isFetching: false,
+  hasFinishedFetching: false,
   selected: {} as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   items: [],
   categories: [],
   updatesInfo: {},
   page: 1,
-  size: 0,
+  size: 100,
+  records: new Map<number, boolean>().set(1, false),
 } as IChartState;
 const defaultProps = {
   charts: defaultChartState,
@@ -26,6 +29,7 @@ const defaultProps = {
   fetchCharts: jest.fn(),
   fetchChartCategories: jest.fn(),
   fetchRepos: jest.fn(),
+  resetRequestCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
   cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
@@ -74,10 +78,11 @@ const csv = {
     },
   },
 } as IClusterServiceVersion;
+const populatedChartProps = { ...defaultChartState, items: [chartItem, chartItem2] };
 const populatedProps = {
   ...defaultProps,
   csvs: [csv],
-  charts: { ...defaultChartState, items: [chartItem, chartItem2] },
+  charts: populatedChartProps,
 };
 
 it("retrieves csvs in the namespace", () => {
@@ -91,11 +96,105 @@ it("shows all the elements", () => {
   expect(wrapper.find(InfoCard)).toHaveLength(3);
 });
 
-it("should render a message if there are no elements in the catalog", () => {
+it("should not render a message if there are no elements in the catalog but the fetching hasn't ended", () => {
   const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
+  const message = wrapper.find(".empty-catalog");
+  expect(message).not.toExist();
+  expect(message).not.toIncludeText("The current catalog is empty");
+});
+
+it("should render a message if there are no elements in the catalog and the fetching has ended", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...defaultProps} charts={{ ...defaultChartState, hasFinishedFetching: true }} />,
+  );
+  wrapper.setProps({ searchFilter: "" });
   const message = wrapper.find(".empty-catalog");
   expect(message).toExist();
   expect(message).toIncludeText("The current catalog is empty");
+});
+
+it("should render a message if there are no elements", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...defaultProps} charts={{ ...defaultChartState, hasFinishedFetching: false }} />,
+  );
+  const spinner = wrapper.find(".endPageMessage span").at(1);
+  const message = wrapper.find(".endPageMessage span").at(2);
+  expect(spinner).toExist();
+  expect(spinner).toIncludeText("Loading...");
+  expect(message).toExist();
+  expect(message).toIncludeText("Loading catalog...");
+});
+
+it("should render a message if there already are elements", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...populatedProps} charts={{ ...populatedChartProps, hasFinishedFetching: false }} />,
+  );
+  const spinner = wrapper.find(".endPageMessage span").at(1);
+  const message = wrapper.find(".endPageMessage span").at(2);
+  expect(spinner).toExist();
+  expect(spinner).toIncludeText("Loading...");
+  expect(message).toExist();
+  expect(message).toIncludeText("Scroll down to discover more applications");
+});
+
+it("should not render a message if only operators are selected", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog
+      {...populatedProps}
+      charts={{ ...populatedChartProps, hasFinishedFetching: true }}
+      filter={{ [filterNames.TYPE]: "Operators" }}
+    />,
+  );
+  const spinner = wrapper.find(".endPageMessage span").at(1);
+  const message = wrapper.find(".endPageMessage span").at(2);
+  expect(spinner).not.toExist();
+  expect(message).not.toExist();
+});
+
+it("should render a message if there are no more elements", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...populatedProps} charts={{ ...populatedChartProps, hasFinishedFetching: true }} />,
+  );
+  const message = wrapper.find(".endPageMessage");
+  expect(message).toExist();
+  expect(message).toIncludeText("No remaining applications");
+});
+
+it("should not render a message if there are no more elements but it's searching", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog
+      {...populatedProps}
+      charts={{ ...populatedChartProps, hasFinishedFetching: true }}
+      filter={{ [filterNames.SEARCH]: "bar" }}
+    />,
+  );
+  const message = wrapper.find(".endPageMessage");
+  expect(message).not.toExist();
+});
+
+it("should render the scroll handler if not finished", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...populatedProps} charts={{ ...populatedChartProps, hasFinishedFetching: false }} />,
+  );
+  const scroll = wrapper.find(".scrollHandler");
+  expect(scroll).toExist();
+  expect(scroll).toHaveProperty("ref");
+});
+
+it("should not render the scroll handler if finished", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog {...populatedProps} charts={{ ...populatedChartProps, hasFinishedFetching: true }} />,
+  );
+  const scroll = wrapper.find(".scrollHandler");
+  expect(scroll).not.toExist();
 });
 
 it("should render an error if it exists", () => {
@@ -123,11 +222,31 @@ it("behaves like a loading wrapper", () => {
 });
 
 describe("filters by the searched item", () => {
+  let spyOnUseDispatch: jest.SpyInstance;
+  let spyOnDebounce: jest.SpyInstance;
+  let spyOnUseEffect: jest.SpyInstance;
+  // beforeEach(() => {
+  // });
+  afterEach(() => {
+    spyOnUseDispatch.mockRestore();
+    spyOnUseEffect.mockRestore();
+    spyOnDebounce.mockRestore();
+  });
+
   it("filters modifying the search box", () => {
     const fetchCharts = jest.fn();
+    const resetRequestCharts = jest.fn();
+    const mockDispatch = jest.fn();
+    const mockUseEffect = jest.fn();
+
+    spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+    spyOnUseEffect = jest.spyOn(React, "useEffect").mockReturnValue(mockUseEffect as any);
+    spyOnDebounce = jest.spyOn(lodash, "debounce").mockImplementation(fetchCharts as any);
+
     const props = {
       ...populatedProps,
       fetchCharts,
+      resetRequestCharts,
     };
     const wrapper = mountWrapper(
       defaultStore,
@@ -137,7 +256,15 @@ describe("filters by the searched item", () => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
     });
     wrapper.update();
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 0, "bar");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Search=bar"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
+
+    expect(fetchCharts).toBeCalled(); // TODO: investigate how to check "[Function anonymous], 500"
   });
 });
 

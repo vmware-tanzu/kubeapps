@@ -78,6 +78,16 @@ export interface IChart {
   };
 }
 
+export interface IChartListMeta {
+  totalPages: number;
+}
+
+export interface IReceiveChartsActionPayload {
+  items: IChart[];
+  page: number;
+  totalPages: number;
+}
+
 export interface IChartAttributes {
   name: string;
   description: string;
@@ -95,6 +105,7 @@ export interface IChartAttributes {
 
 export interface IChartState {
   isFetching: boolean;
+  hasFinishedFetching: boolean;
   selected: {
     error?: FetchError | Error;
     version?: IChartVersion;
@@ -113,6 +124,7 @@ export interface IChartState {
   categories: IChartCategory[];
   page: number;
   size: number;
+  records: Map<number, boolean>;
 }
 
 export interface IChartUpdateInfo {

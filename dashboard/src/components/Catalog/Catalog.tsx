@@ -5,9 +5,9 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
-import { flatten, get, intersection, trimStart, uniq, without } from "lodash";
+import { debounce, flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
@@ -39,6 +39,7 @@ interface ICatalogProps {
     repos: string,
     page: number,
     size: number,
+    records: Map<number, boolean>,
     query?: string,
   ) => void;
   cluster: string;
@@ -47,6 +48,7 @@ interface ICatalogProps {
   fetchChartCategories: (cluster: string, namespace: string) => void;
   fetchRepos: (namespace: string, listGlobal?: boolean) => void;
   getCSVs: (cluster: string, namespace: string) => void;
+  resetRequestCharts: () => void;
   csvs: IClusterServiceVersion[];
 }
 
@@ -79,12 +81,13 @@ export function filtersToQuery(filters: any) {
 function Catalog(props: ICatalogProps) {
   const {
     charts: {
-      isFetching,
+      hasFinishedFetching,
       selected: { error },
       items: charts,
       categories,
       page,
       size,
+      records,
     },
     fetchCharts,
     cluster,
@@ -92,6 +95,7 @@ function Catalog(props: ICatalogProps) {
     fetchChartCategories,
     fetchRepos,
     getCSVs,
+    resetRequestCharts,
     csvs,
     filter: propsFilter,
   } = props;
@@ -168,9 +172,22 @@ function Catalog(props: ICatalogProps) {
   // Only one search filter can be set
   const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
+
+  const clusterUpdate = useRef(cluster);
+  const namespaceUpdate = useRef(namespace);
+  const reposFilterUpdate = useRef(reposFilter);
+  const searchFilterUpdate = useRef(searchFilter);
+
+  // detect changes in cluster/ns/repos/search but do NOT update them
+  // until a resetRequestCharts has been called to avoid colissions
+  // fetchCharts is only called in observeBorder
   useEffect(() => {
-    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
-  }, [fetchCharts, cluster, namespace, reposFilter, page, size, searchFilter]);
+    clusterUpdate.current = cluster;
+    namespaceUpdate.current = namespace;
+    reposFilterUpdate.current = reposFilter;
+    searchFilterUpdate.current = searchFilter;
+    resetRequestCharts();
+  }, [resetRequestCharts, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
     const newFilters = {
@@ -220,6 +237,66 @@ function Catalog(props: ICatalogProps) {
         intersection(filters[filterNames.CATEGORY], getOperatorCategories(c)).length,
     );
 
+  // avoid repeating the same requests with the same params with useCallback
+  // avoid overloading the backend with a max rate of 2 reqs/second (= debounce 0.5s)
+  const debouncedFetchCharts = useCallback(
+    debounce(() => {
+      fetchCharts(cluster, namespace, reposFilter, page, size, records, searchFilter);
+    }, 500),
+    [fetchCharts, cluster, namespace, reposFilter, page, size, records, searchFilter],
+  );
+
+  const observeBorder = useCallback(
+    // Check if the IntersectionAPI is enabled
+    node => {
+      if (
+        "IntersectionObserver" in window &&
+        "IntersectionObserverEntry" in window &&
+        "isIntersecting" in window.IntersectionObserverEntry.prototype
+      ) {
+        if (node !== null) {
+          // https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver
+          new IntersectionObserver(
+            entries => {
+              // https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserverEntry
+              entries.forEach(entry => {
+                if (
+                  entry.isIntersecting &&
+                  // Disable scrolling when only operators are selected
+                  (!filters[filterNames.TYPE].length ||
+                    filters[filterNames.TYPE].find((type: string) => type === "Charts")) &&
+                  // Disable scrolling if all the charts have been fetched
+                  // && !isFetching
+                  !hasFinishedFetching &&
+                  // Enable scrolling just if every parameter is already updated
+                  clusterUpdate.current === cluster &&
+                  namespaceUpdate.current === namespace &&
+                  reposFilterUpdate.current === reposFilter &&
+                  searchFilterUpdate.current === searchFilter
+                ) {
+                  debouncedFetchCharts();
+                }
+              });
+            },
+            {
+              threshold: 0,
+              rootMargin: "-50% 0px 0px 0px",
+            },
+          ).observe(node);
+        }
+      }
+    },
+    [
+      debouncedFetchCharts,
+      filters,
+      hasFinishedFetching,
+      cluster,
+      namespace,
+      reposFilter,
+      searchFilter,
+    ],
+  );
+
   return (
     <section>
       <PageHeader
@@ -234,123 +311,145 @@ function Catalog(props: ICatalogProps) {
           />
         }
       />
-      <LoadingWrapper loaded={!isFetching}>
-        {error && (
-          <Alert theme="danger">
-            An error occurred while fetching the catalog: {error.message}
-          </Alert>
-        )}
-        {charts.length === 0 && csvs.length === 0 ? (
-          <div className="empty-catalog">
-            <CdsIcon shape="bundle" />
-            <p>The current catalog is empty.</p>
-            <p>
-              Manage your Helm chart repositories in Kubeapps by visiting the App repositories
-              configuration page.
-            </p>
-            <Link to={app.config.apprepositories(cluster, namespace)}>
-              <CdsButton>Manage App Repositories</CdsButton>
-            </Link>
-          </div>
-        ) : (
-          <Row>
-            <Column span={2}>
-              <div className="filters-menu">
-                <h5>
-                  Filters{" "}
-                  {flatten(Object.values(filters)).length ? (
-                    <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
-                      Clear All
-                    </CdsButton>
-                  ) : (
-                    <></>
-                  )}{" "}
-                </h5>
-                {csvs.length > 0 && (
-                  <div className="filter-section">
-                    <label>Application Type</label>
-                    <FilterGroup
-                      name={filterNames.TYPE}
-                      options={["Operators", "Charts"]}
-                      currentFilters={filters[filterNames.TYPE]}
-                      onAddFilter={addFilter}
-                      onRemoveFilter={removeFilter}
-                    />
-                  </div>
-                )}
-                {allCategories.length > 0 && (
-                  <div className="filter-section">
-                    <label className="filter-label">Category</label>
-                    <FilterGroup
-                      name={filterNames.CATEGORY}
-                      options={allCategories}
-                      currentFilters={filters[filterNames.CATEGORY]}
-                      onAddFilter={addFilter}
-                      onRemoveFilter={removeFilter}
-                    />
-                  </div>
-                )}
-                {allRepos.length > 0 && (
-                  <div className="filter-section">
-                    <label>Application Repository</label>
-                    <FilterGroup
-                      name={filterNames.REPO}
-                      options={allRepos}
-                      currentFilters={filters[filterNames.REPO]}
-                      onAddFilter={addFilter}
-                      onRemoveFilter={removeFilter}
-                    />
-                  </div>
-                )}
-                {allProviders.length > 0 && (
-                  <div className="filter-section">
-                    <label className="filter-label">Operator Provider</label>
-                    <FilterGroup
-                      name={filterNames.OPERATOR_PROVIDER}
-                      options={allProviders}
-                      currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
-                      onAddFilter={addFilter}
-                      onRemoveFilter={removeFilter}
-                    />
-                  </div>
-                )}
-              </div>
-            </Column>
-            <Column span={10}>
-              <>
-                <div className="filter-summary">
-                  {Object.keys(filters).map(filterName => {
-                    if (filters[filterName].length) {
-                      return filters[filterName].map((filterValue: string) =>
-                        filterValue.length ? (
-                          <span key={`${filterName}-${filterValue}`} className="label label-info">
-                            {filterName}: {filterValue}{" "}
-                            <CdsIcon
-                              shape="times"
-                              onClick={removeFilterFunc(filterName, filterValue)}
-                            />
-                          </span>
-                        ) : (
-                          ""
-                        ),
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-                <Row>
-                  <CatalogItems
-                    charts={filteredCharts}
-                    csvs={filteredCSVs}
-                    cluster={cluster}
-                    namespace={namespace}
+      {error && (
+        <Alert theme="danger">An error occurred while fetching the catalog: {error.message}</Alert>
+      )}
+      {isEqual(filters, initialFilterState()) &&
+      hasFinishedFetching &&
+      searchFilter.length === 0 &&
+      charts.length === 0 &&
+      csvs.length === 0 ? (
+        <div className="empty-catalog">
+          <CdsIcon shape="bundle" />
+          <p>The current catalog is empty.</p>
+          <p>
+            Manage your Helm chart repositories in Kubeapps by visiting the App repositories
+            configuration page.
+          </p>
+          <Link to={app.config.apprepositories(cluster, namespace)}>
+            <CdsButton>Manage App Repositories</CdsButton>
+          </Link>
+        </div>
+      ) : (
+        <Row>
+          <Column span={2}>
+            <div className="filters-menu">
+              <h5>
+                Filters{" "}
+                {flatten(Object.values(filters)).length ? (
+                  <CdsButton size="sm" action="flat" onClick={clearAllFilters}>
+                    Clear All
+                  </CdsButton>
+                ) : (
+                  <></>
+                )}{" "}
+              </h5>
+              {csvs.length > 0 && (
+                <div className="filter-section">
+                  <label>Application Type</label>
+                  <FilterGroup
+                    name={filterNames.TYPE}
+                    options={["Operators", "Charts"]}
+                    currentFilters={filters[filterNames.TYPE]}
+                    onAddFilter={addFilter}
+                    onRemoveFilter={removeFilter}
                   />
+                </div>
+              )}
+              {allCategories.length > 0 && (
+                <div className="filter-section">
+                  <label className="filter-label">Category</label>
+                  <FilterGroup
+                    name={filterNames.CATEGORY}
+                    options={allCategories}
+                    currentFilters={filters[filterNames.CATEGORY]}
+                    onAddFilter={addFilter}
+                    onRemoveFilter={removeFilter}
+                  />
+                </div>
+              )}
+              {allRepos.length > 0 && (
+                <div className="filter-section">
+                  <label>Application Repository</label>
+                  <FilterGroup
+                    name={filterNames.REPO}
+                    options={allRepos}
+                    currentFilters={filters[filterNames.REPO]}
+                    onAddFilter={addFilter}
+                    onRemoveFilter={removeFilter}
+                  />
+                </div>
+              )}
+              {allProviders.length > 0 && (
+                <div className="filter-section">
+                  <label className="filter-label">Operator Provider</label>
+                  <FilterGroup
+                    name={filterNames.OPERATOR_PROVIDER}
+                    options={allProviders}
+                    currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
+                    onAddFilter={addFilter}
+                    onRemoveFilter={removeFilter}
+                  />
+                </div>
+              )}
+            </div>
+          </Column>
+          <Column span={10}>
+            <>
+              <div className="filter-summary">
+                {Object.keys(filters).map(filterName => {
+                  if (filters[filterName].length) {
+                    return filters[filterName].map((filterValue: string) =>
+                      filterValue.length ? (
+                        <span key={`${filterName}-${filterValue}`} className="label label-info">
+                          {filterName}: {filterValue}{" "}
+                          <CdsIcon
+                            shape="times"
+                            onClick={removeFilterFunc(filterName, filterValue)}
+                          />
+                        </span>
+                      ) : (
+                        ""
+                      ),
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+              <div className="catalogContainer">
+                <Row>
+                  <>
+                    <CatalogItems
+                      charts={filteredCharts}
+                      csvs={filteredCSVs}
+                      cluster={cluster}
+                      namespace={namespace}
+                    />
+                    {!hasFinishedFetching &&
+                      (!filters[filterNames.TYPE].length ||
+                        filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
+                        <div className="endPageMessage">
+                          <LoadingWrapper loaded={false} />
+                          <span>
+                            {!charts.length && !csvs.length
+                              ? "Loading catalog..."
+                              : "Scroll down to discover more applications"}
+                          </span>
+                        </div>
+                      )}
+                    {!searchFilter.length && hasFinishedFetching && (
+                      <div className="endPageMessage">
+                        <span>No remaining applications</span>
+                      </div>
+                    )}
+                    {!hasFinishedFetching && <div className="scrollHandler" ref={observeBorder} />}
+                  </>
                 </Row>
-              </>
-            </Column>
-          </Row>
-        )}
-      </LoadingWrapper>
+              </div>
+            </>
+          </Column>
+        </Row>
+      )}
     </section>
   );
 }
