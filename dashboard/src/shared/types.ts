@@ -122,9 +122,7 @@ export interface IChartState {
   };
   items: IChart[];
   categories: IChartCategory[];
-  page: number;
   size: number;
-  records: Map<number, boolean>;
 }
 
 export interface IChartUpdateInfo {

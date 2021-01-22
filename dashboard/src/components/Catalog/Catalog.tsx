@@ -5,9 +5,9 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
-import { debounce, flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
+import { flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { app } from "shared/url";
@@ -39,7 +39,6 @@ interface ICatalogProps {
     repos: string,
     page: number,
     size: number,
-    records: Map<number, boolean>,
     query?: string,
   ) => void;
   cluster: string;
@@ -85,9 +84,8 @@ function Catalog(props: ICatalogProps) {
       selected: { error },
       items: charts,
       categories,
-      page,
       size,
-      records,
+      isFetching,
     },
     fetchCharts,
     cluster,
@@ -107,6 +105,7 @@ function Catalog(props: ICatalogProps) {
 
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const newFilters = {};
@@ -118,6 +117,26 @@ function Catalog(props: ICatalogProps) {
       ...newFilters,
     });
   }, [propsFilter]);
+
+  // Only one search filter can be set
+  const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
+  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
+  useEffect(() => {
+    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
+  }, [fetchCharts, page, size, cluster, namespace, reposFilter, searchFilter]);
+
+  // hasLoadedFirstPage is used to not bump the current page until the first page is fully
+  // requested first
+  const [hasRequestedFirstPage, setHasRequestedFirstPage] = useState(false);
+  const [hasLoadedFirstPage, setHasLoadedFirstPage] = useState(false);
+  useEffect(() => {
+    if (isFetching) {
+      setHasRequestedFirstPage(true);
+    }
+    if (hasRequestedFirstPage && !isFetching) {
+      setHasLoadedFirstPage(true);
+    }
+  }, [hasRequestedFirstPage, isFetching]);
 
   const pushFilters = (newFilters: any) => {
     dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
@@ -169,23 +188,9 @@ function Catalog(props: ICatalogProps) {
     getCSVs(cluster, namespace);
   }, [getCSVs, fetchChartCategories, cluster, namespace]);
 
-  // Only one search filter can be set
-  const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
-  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
-
-  const clusterUpdate = useRef(cluster);
-  const namespaceUpdate = useRef(namespace);
-  const reposFilterUpdate = useRef(reposFilter);
-  const searchFilterUpdate = useRef(searchFilter);
-
-  // detect changes in cluster/ns/repos/search but do NOT update them
-  // until a resetRequestCharts has been called to avoid colissions
-  // fetchCharts is only called in observeBorder
+  // detect changes in cluster/ns/repos/search and reset the current chart list
   useEffect(() => {
-    clusterUpdate.current = cluster;
-    namespaceUpdate.current = namespace;
-    reposFilterUpdate.current = reposFilter;
-    searchFilterUpdate.current = searchFilter;
+    setPage(1);
     resetRequestCharts();
   }, [resetRequestCharts, cluster, namespace, reposFilter, searchFilter]);
 
@@ -237,65 +242,45 @@ function Catalog(props: ICatalogProps) {
         intersection(filters[filterNames.CATEGORY], getOperatorCategories(c)).length,
     );
 
-  // avoid repeating the same requests with the same params with useCallback
-  // avoid overloading the backend with a max rate of 2 reqs/second (= debounce 0.5s)
-  const debouncedFetchCharts = useCallback(
-    debounce(() => {
-      fetchCharts(cluster, namespace, reposFilter, page, size, records, searchFilter);
-    }, 500),
-    [fetchCharts, cluster, namespace, reposFilter, page, size, records, searchFilter],
-  );
-
-  const observeBorder = useCallback(
+  // Required to have the latest value of page
+  const setPageWithContext = () => {
+    setPage(page + 1);
+  };
+  const observeBorder = (node: any) => {
     // Check if the IntersectionAPI is enabled
-    node => {
-      if (
-        "IntersectionObserver" in window &&
-        "IntersectionObserverEntry" in window &&
-        "isIntersecting" in window.IntersectionObserverEntry.prototype
-      ) {
-        if (node !== null) {
-          // https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver
-          new IntersectionObserver(
-            entries => {
-              // https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserverEntry
-              entries.forEach(entry => {
-                if (
-                  entry.isIntersecting &&
-                  // Disable scrolling when only operators are selected
-                  (!filters[filterNames.TYPE].length ||
-                    filters[filterNames.TYPE].find((type: string) => type === "Charts")) &&
-                  // Disable scrolling if all the charts have been fetched
-                  // && !isFetching
-                  !hasFinishedFetching &&
-                  // Enable scrolling just if every parameter is already updated
-                  clusterUpdate.current === cluster &&
-                  namespaceUpdate.current === namespace &&
-                  reposFilterUpdate.current === reposFilter &&
-                  searchFilterUpdate.current === searchFilter
-                ) {
-                  debouncedFetchCharts();
-                }
-              });
-            },
-            {
-              threshold: 0,
-              rootMargin: "-50% 0px 0px 0px",
-            },
-          ).observe(node);
-        }
+    if (
+      "IntersectionObserver" in window &&
+      "IntersectionObserverEntry" in window &&
+      "isIntersecting" in window.IntersectionObserverEntry.prototype
+    ) {
+      if (node !== null) {
+        // https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver
+        new IntersectionObserver(
+          entries => {
+            // https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserverEntry
+            entries.forEach(entry => {
+              if (
+                entry.isIntersecting &&
+                // Disable scrolling when only operators are selected
+                (!filters[filterNames.TYPE].length ||
+                  filters[filterNames.TYPE].find((type: string) => type === "Charts")) &&
+                // Disable scrolling if all the charts have been fetched
+                !isFetching &&
+                !hasFinishedFetching &&
+                hasLoadedFirstPage
+              ) {
+                setPageWithContext();
+              }
+            });
+          },
+          {
+            threshold: 0,
+            rootMargin: "-50% 0px 0px 0px",
+          },
+        ).observe(node);
       }
-    },
-    [
-      debouncedFetchCharts,
-      filters,
-      hasFinishedFetching,
-      cluster,
-      namespace,
-      reposFilter,
-      searchFilter,
-    ],
-  );
+    }
+  };
 
   return (
     <section>
@@ -442,7 +427,9 @@ function Catalog(props: ICatalogProps) {
                         <span>No remaining applications</span>
                       </div>
                     )}
-                    {!hasFinishedFetching && <div className="scrollHandler" ref={observeBorder} />}
+                    {!hasFinishedFetching && !isFetching && (
+                      <div className="scrollHandler" ref={observeBorder} />
+                    )}
                   </>
                 </Row>
               </div>

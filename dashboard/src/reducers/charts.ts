@@ -15,9 +15,7 @@ export const initialState: IChartState = {
     versions: [],
   },
   deployed: {},
-  page: 1,
-  size: 100,
-  records: new Map<number, boolean>().set(1, false),
+  size: 20,
 };
 
 const chartsSelectedReducer = (
@@ -59,28 +57,17 @@ const chartsReducer = (
 ): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
-      const page = action?.payload ? action.payload : 1; // default page to 1 if not provided
-      return { ...state, isFetching: true, records: state.records.set(page, false) };
-    case getType(actions.charts.requestChartsCategories):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
-      // only update the records if the received page matches the requested one
-      if (action.payload.page === state.page) {
-        const isLastPage = action.payload.page >= action.payload.totalPages;
-        state.records.set(state.page, true); // set current page as fetched
-        return {
-          ...state,
-          isFetching: false,
-          hasFinishedFetching: isLastPage,
-          items: uniqBy([...state.items, ...action.payload.items], "id"),
-          page: isLastPage ? action.payload.page : action.payload.page + 1, // if it's the last page, don't increment page
-          records: isLastPage ? state.records : state.records.set(state.page + 1, false), // set next page as pending (false) if it isn't the last page
-        };
-      } else {
-        return state;
-      }
+      const isLastPage = action.payload.page >= action.payload.totalPages;
+      return {
+        ...state,
+        isFetching: false,
+        hasFinishedFetching: isLastPage,
+        items: uniqBy([...state.items, ...action.payload.items], "id"),
+      };
     case getType(actions.charts.receiveChartCategories):
-      return { ...state, isFetching: false, categories: action.payload };
+      return { ...state, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
@@ -107,11 +94,8 @@ const chartsReducer = (
     case getType(actions.charts.resetRequestCharts):
       return {
         ...state,
-        isFetching: false,
         hasFinishedFetching: false,
         items: [],
-        page: 1,
-        records: new Map<number, boolean>().set(1, false),
       };
     case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.selectReadme):
@@ -121,8 +105,6 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         hasFinishedFetching: false,
-        page: 1,
-        records: new Map<number, boolean>().set(1, false),
         items: [],
         selected: chartsSelectedReducer(state.selected, action),
       };
