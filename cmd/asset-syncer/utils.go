@@ -249,7 +249,6 @@ func doReq(url, authHeader string) ([]byte, error) {
 
 // Checksum returns the sha256 of the repo
 func (r *OCIRegistry) Checksum() (string, error) {
-	// repositoryAPIurl := fmt.Sprintf("%s://%s/v2%s", url.Scheme, url.Host, url.Path)
 	content := []byte{}
 	for _, appName := range r.repositories {
 		url, err := parseRepoURL(r.RepoInternal.URL)
