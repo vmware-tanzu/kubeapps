@@ -409,24 +409,16 @@ function Catalog(props: ICatalogProps) {
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}
+                      isFetching={isFetching}
+                      hasFinishedFetching={hasFinishedFetching}
                     />
                     {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||
                         filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
                         <div className="endPageMessage">
-                          <LoadingWrapper loaded={false} />
-                          <span>
-                            {!charts.length && !csvs.length
-                              ? "Loading catalog..."
-                              : "Scroll down to discover more applications"}
-                          </span>
+                          <LoadingWrapper medium={true} loaded={false} />
                         </div>
                       )}
-                    {!searchFilter.length && hasFinishedFetching && (
-                      <div className="endPageMessage">
-                        <span>No remaining applications</span>
-                      </div>
-                    )}
                     {!hasFinishedFetching && !isFetching && (
                       <div className="scrollHandler" ref={observeBorder} />
                     )}
