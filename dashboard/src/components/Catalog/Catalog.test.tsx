@@ -332,13 +332,13 @@ describe("pagination", () => {
     const resetRequestCharts = jest.fn();
     const setState = jest.fn();
     const mockUseEffect = jest.fn();
-    //  @ts-ignore
     spyOnUseState = jest
       .spyOn(React, "useState")
+      //  @ts-ignore
       .mockImplementation((init: any) => [init, setState]);
-    //  @ts-ignore
     spyOnUseEffect = jest
       .spyOn(React, "useEffect")
+      //  @ts-ignore
       .mockImplementation((f, n) => f(mockUseEffect(n)));
 
     const wrapper = mountWrapper(
@@ -371,13 +371,13 @@ describe("pagination", () => {
     const resetRequestCharts = jest.fn();
     const setState = jest.fn();
     const mockUseEffect = jest.fn();
-    //  @ts-ignore
     spyOnUseState = jest
       .spyOn(React, "useState")
+      //  @ts-ignore
       .mockImplementation((init: any) => [init, setState]);
-    //  @ts-ignore
     spyOnUseEffect = jest
       .spyOn(React, "useEffect")
+      //  @ts-ignore
       .mockImplementation((f, n) => f(mockUseEffect(n)));
 
     const wrapper = mountWrapper(
@@ -408,13 +408,13 @@ describe("pagination", () => {
     const resetRequestCharts = jest.fn();
     const setState = jest.fn();
     const mockUseEffect = jest.fn();
-    //  @ts-ignore
     spyOnUseState = jest
       .spyOn(React, "useState")
+      //  @ts-ignore
       .mockImplementation((init: any) => [init, setState]);
-    //  @ts-ignore
     spyOnUseEffect = jest
       .spyOn(React, "useEffect")
+      //  @ts-ignore
       .mockImplementation((f, n) => f(mockUseEffect(n)));
 
     const wrapper = mountWrapper(
