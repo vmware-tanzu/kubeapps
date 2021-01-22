@@ -171,24 +171,6 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 	return actionConfig, nil
 }
 
-// configForCluster implements the RESTClientGetter interface
-// and ensures that it returns the config it was given, rather
-// than re-creating a config as if the CLI options were passed in as the
-// genericclioptions.ConfigFlags implementation strips the bearer token
-// if the host is not https (helpful for the CLI).
-// TODO(mnelson) Update pinniped-proxy to support a TLS(-only) configuration
-// as even though its for internal traffic it will be required in many circumstances.
-// https://github.com/kubeapps/kubeapps/issues/2268
-type configForCluster struct {
-	config *rest.Config
-	*genericclioptions.ConfigFlags
-}
-
-// Override the default implementation to return the original config.
-func (c *configForCluster) ToRESTConfig() (*rest.Config, error) {
-	return c.config, nil
-}
-
 // NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster.
 func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) genericclioptions.RESTClientGetter {
 	impersonateGroup := []string{}
@@ -204,8 +186,9 @@ func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) gen
 		ImpersonateGroup: &impersonateGroup,
 	}
 	return &configForCluster{
-		config:      clusterConfig,
-		ConfigFlags: configFlags,
+		config:         clusterConfig,
+		discoveryBurst: 100,
+		ConfigFlags:    configFlags,
 	}
 }
 
