@@ -19,6 +19,8 @@ describe("kubeReducer", () => {
     receiveResourceKinds: getType(actions.kube.receiveResourceKinds),
     requestResourceKinds: getType(actions.kube.requestResourceKinds),
     receiveKindsError: getType(actions.kube.receiveKindsError),
+    addTimer: getType(actions.kube.addTimer),
+    removeTimer: getType(actions.kube.removeTimer),
   };
 
   const ref = new ResourceRef(
@@ -40,6 +42,7 @@ describe("kubeReducer", () => {
       items: {},
       sockets: {},
       kinds: initialKinds,
+      timers: {},
     };
   });
 
@@ -111,7 +114,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: jest.fn(),
-            onError: { onErrorHandler: jest.fn(), closeTimer: jest.fn() },
+            onError: jest.fn(),
           },
         });
         const socket = newState.sockets[ref.watchResourceURL()];
@@ -120,7 +123,7 @@ describe("kubeReducer", () => {
 
       it("does not open a new socket if one exists in the state", () => {
         const existingSocket = ref.watchResource();
-        const socket = { socket: existingSocket, closeTimer: jest.fn() };
+        const socket = { socket: existingSocket, onError: jest.fn() };
         const state = {
           ...initialState,
           sockets: {
@@ -132,7 +135,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: jest.fn(),
-            onError: { onErrorHandler: jest.fn(), closeTimer: jest.fn() },
+            onError: jest.fn(),
           },
         });
         expect(newState).toBe(state);
@@ -146,7 +149,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: mock,
-            onError: { onErrorHandler: jest.fn(), closeTimer: jest.fn() },
+            onError: jest.fn(),
           },
         });
         const socket = newState.sockets[ref.watchResourceURL()].socket;
@@ -165,7 +168,7 @@ describe("kubeReducer", () => {
           payload: {
             ref,
             handler: jest.fn(),
-            onError: { onErrorHandler: mock, closeTimer: jest.fn() },
+            onError: mock,
           },
         });
         const socket = newState.sockets[ref.watchResourceURL()].socket;
@@ -181,12 +184,15 @@ describe("kubeReducer", () => {
     describe("closeWatchResource", () => {
       it("closes the WebSocket and the timer for the requested resource and removes it from the state", () => {
         const socket = ref.watchResource();
-        const timerMock = jest.fn();
         const spy = jest.spyOn(socket, "close");
+        socket.removeEventListener = jest.fn();
         const state = {
           ...initialState,
           sockets: {
-            [ref.watchResourceURL()]: { socket, closeTimer: timerMock },
+            [ref.watchResourceURL()]: { socket, onError: jest.fn() },
+          },
+          timers: {
+            [ref.getResourceURL()]: {} as NodeJS.Timer,
           },
         };
         const newState = kubeReducer(state, {
@@ -195,22 +201,83 @@ describe("kubeReducer", () => {
         });
         expect(spy).toHaveBeenCalled();
         expect(newState.sockets).toEqual({});
-        expect(timerMock).toHaveBeenCalled();
+        expect(newState.timers).toEqual({ [ref.getResourceURL()]: undefined });
+      });
+
+      it("does nothing if the socket doesn't exist", () => {
+        const state = {
+          ...initialState,
+          sockets: { dontdeleteme: { socket: {} as WebSocket, onError: jest.fn() } },
+        };
+        const newState = kubeReducer(state, {
+          type: actionTypes.closeWatchResource,
+          payload: ref,
+        });
+        expect(newState).toEqual(state);
+        // check that dontdeleteme is not modified
+        expect(newState.sockets.dontdeleteme).toBe(state.sockets.dontdeleteme);
       });
     });
 
-    it("does nothing if the socket doesn't exist", () => {
-      const state = {
-        ...initialState,
-        sockets: { dontdeleteme: { socket: {} as WebSocket, closeTimer: jest.fn() } },
-      };
-      const newState = kubeReducer(state, {
-        type: actionTypes.closeWatchResource,
-        payload: ref,
+    describe("addTimer", () => {
+      it("should add a timer", () => {
+        const newState = kubeReducer(initialState, {
+          type: actionTypes.addTimer,
+          payload: { id: "foo", timer: jest.fn() },
+        });
+        expect(newState).toEqual({
+          ...initialState,
+          timers: { foo: expect.any(Number) },
+        });
       });
-      expect(newState).toEqual(state);
-      // check that dontdeleteme is not modified
-      expect(newState.sockets.dontdeleteme).toBe(state.sockets.dontdeleteme);
+
+      it("should not add a timer if there is already one", () => {
+        jest.useFakeTimers();
+        const f1 = jest.fn();
+        const f2 = jest.fn();
+        const timer = setTimeout(f1, 1);
+        const newState = kubeReducer(
+          {
+            ...initialState,
+            timers: { foo: timer },
+          },
+          {
+            type: actionTypes.addTimer,
+            payload: { id: "foo", timer: f2 },
+          },
+        );
+        expect(newState).toEqual({
+          ...initialState,
+          timers: { foo: timer },
+        });
+        jest.runAllTimers();
+        expect(f1).toHaveBeenCalled();
+        expect(f2).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("removeTimer", () => {
+      it("remove a timer", () => {
+        jest.useFakeTimers();
+        const f1 = jest.fn();
+        const timer = setTimeout(f1, 1);
+        const newState = kubeReducer(
+          {
+            ...initialState,
+            timers: { foo: timer },
+          },
+          {
+            type: actionTypes.removeTimer,
+            payload: "foo",
+          },
+        );
+        expect(newState).toEqual({
+          ...initialState,
+          timers: { foo: undefined },
+        });
+        jest.runAllTimers();
+        expect(f1).not.toHaveBeenCalled();
+      });
     });
 
     describe("receiveResourceKinds", () => {

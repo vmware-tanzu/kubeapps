@@ -34,15 +34,20 @@ export const receiveResourceError = createAction("RECEIVE_RESOURCE_ERROR", resol
 // Takes a ResourceRef to open a WebSocket for and a handler to process messages
 // from the socket.
 export const openWatchResource = createAction("OPEN_WATCH_RESOURCE", resolve => {
-  return (
-    ref: ResourceRef,
-    handler: (e: MessageEvent) => void,
-    onError: { closeTimer: () => void; onErrorHandler: () => void },
-  ) => resolve({ ref, handler, onError });
+  return (ref: ResourceRef, handler: (e: MessageEvent) => void, onError: (e: Event) => void) =>
+    resolve({ ref, handler, onError });
 });
 
 export const closeWatchResource = createAction("CLOSE_WATCH_RESOURCE", resolve => {
   return (ref: ResourceRef) => resolve(ref);
+});
+
+export const addTimer = createAction("ADD_TIMER", resolve => {
+  return (id: string, timer: () => void) => resolve({ id, timer });
+});
+
+export const removeTimer = createAction("REMOVE_TIMER", resolve => {
+  return (id: string) => resolve(id);
 });
 
 const allActions = [
@@ -55,6 +60,8 @@ const allActions = [
   requestResourceKinds,
   receiveResourceKinds,
   receiveKindsError,
+  addTimer,
+  removeTimer,
 ];
 
 export type KubeAction = ActionType<typeof allActions[number]>;
@@ -110,11 +117,13 @@ export function getAndWatchResource(
 ): ThunkAction<void, IStoreState, null, KubeAction> {
   return dispatch => {
     dispatch(getResource(ref));
-    let timer: NodeJS.Timeout;
     dispatch(
       openWatchResource(
         ref,
         (e: MessageEvent) => {
+          // If there is a timer set (fallback mechanism), remove it because
+          // we are receiving events from the websocket
+          dispatch(removeTimer(ref.getResourceURL()));
           const msg = JSON.parse(e.data);
           const resource: IResource = msg.object;
           const key = ref.getResourceURL();
@@ -125,17 +134,11 @@ export function getAndWatchResource(
             dispatch(receiveResource({ key, resource }));
           }
         },
-        {
-          onErrorHandler: () => {
-            // If the Socket fails, create an interval to re-request the resource
-            // every 5 seconds. This interval needs to be closed calling closeTimer
-            timer = setInterval(async () => {
-              dispatch(getResource(ref, true));
-            }, 5000);
-          },
-          closeTimer: () => {
-            clearInterval(timer);
-          },
+        () => {
+          // If the Socket fails, create an interval to re-request the resource
+          // every 5 seconds. This interval needs to be closed calling closeTimer
+          const timer = () => dispatch(getResource(ref, true));
+          dispatch(addTimer(ref.getResourceURL(), timer));
         },
       ),
     );
