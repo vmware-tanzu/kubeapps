@@ -15,6 +15,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
 
 	"github.com/google/go-cmp/cmp"
@@ -703,6 +704,45 @@ func TestUpgradeRelease(t *testing.T) {
 			//check original version is superseded
 			rel, err = cfg.Releases.Get(tc.release, revisionBeingUpdated)
 			if got, want := rel.Info.Status, release.StatusSuperseded; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
+
+func TestNewConfigFlagsFromCluster(t *testing.T) {
+	testCases := []struct {
+		name   string
+		config rest.Config
+	}{
+		{
+			name: "bearer token remains for an https host",
+			config: rest.Config{
+				Host:        "https://example.com/",
+				APIPath:     "",
+				BearerToken: "foo",
+			},
+		},
+		{
+			name: "bearer token remains for an http host",
+			config: rest.Config{
+				Host:        "http://example.com/",
+				APIPath:     "",
+				BearerToken: "foo",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			restClientGetter := NewConfigFlagsFromCluster("namespace-a", &tc.config)
+
+			config, err := restClientGetter.ToRESTConfig()
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := config.BearerToken, tc.config.BearerToken; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})

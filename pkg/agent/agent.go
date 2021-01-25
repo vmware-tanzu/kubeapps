@@ -176,7 +176,7 @@ func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) gen
 	impersonateGroup := []string{}
 
 	// CertFile and KeyFile must be nil for the BearerToken to be used for authentication and authorization instead of the pod's service account.
-	return &genericclioptions.ConfigFlags{
+	configFlags := &genericclioptions.ConfigFlags{
 		Insecure:         &clusterConfig.TLSClientConfig.Insecure,
 		Timeout:          stringptr("0"),
 		Namespace:        stringptr(namespace),
@@ -184,6 +184,11 @@ func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) gen
 		CAFile:           stringptr(clusterConfig.CAFile),
 		BearerToken:      stringptr(clusterConfig.BearerToken),
 		ImpersonateGroup: &impersonateGroup,
+	}
+	return &configForCluster{
+		config:         clusterConfig,
+		discoveryBurst: 100,
+		ConfigFlags:    configFlags,
 	}
 }
 
