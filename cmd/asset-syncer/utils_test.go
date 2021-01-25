@@ -707,3 +707,84 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		assert.NoErr(t, err)
 	})
 }
+
+type goodChecksumHTTPClient struct{}
+
+const tags = `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`
+
+func (h *goodChecksumHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	w := httptest.NewRecorder()
+	// Don't accept trailing slashes
+	if strings.HasPrefix(req.URL.Path, "//") {
+		w.WriteHeader(500)
+	}
+
+	w.Write([]byte(tags))
+	return w.Result(), nil
+}
+
+type authenticatedChecksumHTTPClient struct{}
+
+func (h *authenticatedChecksumHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	w := httptest.NewRecorder()
+
+	// Ensure we're sending the right Authorization header
+	if req.Header.Get("Authorization") != "Bearer ThisSecretAccessTokenAuthenticatesTheClient" {
+		w.WriteHeader(500)
+	}
+	w.Write([]byte(tags))
+	return w.Result(), nil
+}
+
+func Test_OCIRegistry(t *testing.T) {
+	repo := OCIRegistry{
+		repositories: []string{"apache", "jenkins"},
+		RepoInternal: &models.RepoInternal{
+			URL: "http://oci-test",
+		},
+	}
+
+	t.Run("Checksum - failed request", func(t *testing.T) {
+		netClient = &badHTTPClient{}
+		_, err := repo.Checksum()
+		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+	})
+
+	t.Run("Checksum - success", func(t *testing.T) {
+		netClient = &goodChecksumHTTPClient{}
+		checksum, err := repo.Checksum()
+		assert.NoErr(t, err)
+		expectedChecksum, _ := getSha256([]byte(fmt.Sprintf("%s%s", tags, tags)))
+		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
+	})
+
+	t.Run("Checksum with auth - success", func(t *testing.T) {
+		authRepo := OCIRegistry{
+			repositories: []string{"apache", "jenkins"},
+			RepoInternal: &models.RepoInternal{
+				URL:                 "http://oci-test",
+				AuthorizationHeader: "Bearer wrong",
+			},
+		}
+
+		netClient = &authenticatedChecksumHTTPClient{}
+		_, err := authRepo.Checksum()
+		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+	})
+
+	t.Run("Checksum with auth - success", func(t *testing.T) {
+		authRepo := OCIRegistry{
+			repositories: []string{"apache", "jenkins"},
+			RepoInternal: &models.RepoInternal{
+				URL:                 "http://oci-test",
+				AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient",
+			},
+		}
+
+		netClient = &authenticatedChecksumHTTPClient{}
+		checksum, err := authRepo.Checksum()
+		assert.NoErr(t, err)
+		expectedChecksum, _ := getSha256([]byte(fmt.Sprintf("%s%s", tags, tags)))
+		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
+	})
+}
