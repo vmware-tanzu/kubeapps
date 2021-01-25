@@ -58,7 +58,7 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: name
           in: query
@@ -146,7 +146,7 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: name
           in: query
@@ -218,13 +218,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: name
           in: query
@@ -296,13 +297,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: name
           in: query
@@ -367,7 +369,10 @@ paths:
                     items:
                       $ref: '#/components/schemas/Chart'
                   meta:
-                    $ref: '#/components/schemas/meta'
+                    type: object
+                    properties:
+                      totalPages:
+                        type: integer
         '401':
           description: Unauthorized
   '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}':
@@ -390,13 +395,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -436,13 +442,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -484,13 +491,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -536,13 +544,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -585,13 +594,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -634,13 +644,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -683,13 +694,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -704,6 +716,7 @@ paths:
             image/png:
               schema:
                 type: string
+                format: binary
             image/svg+xml:
               schema:
                 type: string
@@ -722,13 +735,14 @@ paths:
           required: true
           schema:
             type: string
-            default: kubeapps
+            default: default
           description: Namespace name
         - name: repo
           in: path
           required: true
           schema:
             type: string
+            default: bitnami
           description: Repository name
         - name: chartName
           in: path
@@ -743,6 +757,7 @@ paths:
             image/png:
               schema:
                 type: string
+                format: binary
             image/svg+xml:
               schema:
                 type: string
@@ -1298,7 +1313,14 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppOverview'
+        '401':
+          description: Unauthorized
   '/api/tiller-deploy/v1/clusters/{cluster}/namespaces/{namespace}/releases':
     get:
       tags:
@@ -1327,7 +1349,14 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppOverview'
+        '401':
+          description: Unauthorized
     post:
       tags:
         - kubeops
@@ -1355,7 +1384,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
   '/api/tiller-deploy/v1/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}':
     get:
       tags:
@@ -1391,7 +1425,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
     delete:
       tags:
         - kubeops
@@ -1427,6 +1466,8 @@ paths:
             application/json:
               schema:
                 type: string
+        '401':
+          description: Unauthorized
     put:
       tags:
         - kubeops
@@ -1455,13 +1496,25 @@ paths:
             type: string
             default: default
           description: Release name
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: ["upgrade","rollback"]
+            default: upgrade
+          description: Action to perform
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
 
   # cmd/kubeops/main.go (non-cluster aware)
   '/api/tiller-deploy/v1/releases':
@@ -1478,7 +1531,14 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppOverview'
+        '401':
+          description: Unauthorized
   '/api/tiller-deploy/v1/namespaces/{namespace}/releases':
     get:
       tags:
@@ -1501,7 +1561,14 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppOverview'
+        '401':
+          description: Unauthorized
     post:
       tags:
         - kubeops-deprecated
@@ -1523,7 +1590,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
   '/api/tiller-deploy/v1/namespaces/{namespace}/releases/{releaseName}':
     get:
       tags:
@@ -1553,7 +1625,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
     delete:
       tags:
         - kubeops-deprecated
@@ -1583,6 +1660,8 @@ paths:
             application/json:
               schema:
                 type: string
+        '401':
+          description: Unauthorized
     put:
       tags:
         - kubeops-deprecated
@@ -1605,13 +1684,25 @@ paths:
             type: string
             default: default
           description: Release name
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: ["upgrade","rollback"]
+            default: upgrade
+          description: Action to perform
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
   
 
 
@@ -1620,6 +1711,90 @@ externalDocs:
   url: 'https://github.com/kubeapps/kubeapps'
 components:
   schemas:
+    AppOverview:
+      type: object
+      properties:
+        nareleaseNameme:
+          type: string
+        version:
+          type: string
+        namespace:
+          type: string
+        icon:
+          type: string
+        status:
+          type: string
+        chart:
+          type: string
+        chartMetadata:
+          $ref: '#/components/schemas/ChartMetadata'
+    ChartMetadata:
+      type: object
+      properties:
+        annotations:
+          type: string
+        apiVersion:
+          type: string
+        appVersion:
+          type: string
+        condition:
+          type: string
+        deprecated:
+          type: boolean
+        description:
+          type: string
+        engine:
+          type: string
+        home:
+          type: string
+        icon:
+          type: array
+          items: 
+            type: string
+        kubeVersion:
+          type: string
+        maintainers:
+          type: array
+          items: 
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+              url:
+                type: string
+        name:
+          type: string
+        sources:
+          type: array
+          items: 
+            type: string
+        tags:
+          type: string
+        version:
+          type: string
+    Release:
+      type: object
+      properties:
+        name:
+          type: string
+        info:
+          type: string
+        chart:
+          type: object
+        config:
+          type: object
+        manifest:
+          type: string
+        hooks:
+          type: array
+          items:
+            type: object
+        version:
+          type: integer
+        namespace:
+          type: string
     ChartCategory:
       type: object
       properties:
@@ -1717,26 +1892,10 @@ components:
           type: string
         type:
           type: string
-    DataResponse:
-      type: object
-      properties:
-        '-':
-          type: integer
-        data:
-          type: object
-        meta:
-          type: object
-    meta:
-      type: object
-      properties:
-        totalPages:
-          type: integer
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  links: {}
-  callbacks: {}
 security:
   - bearerAuth: []
