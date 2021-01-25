@@ -247,7 +247,8 @@ func doReq(url, authHeader string) ([]byte, error) {
 	return ioutil.ReadAll(res.Body)
 }
 
-// Checksum returns the sha256 of the repo
+// Checksum returns the sha256 of the repo by concatenating tags for
+// all repositories within the registry and returning the sha256.
 func (r *OCIRegistry) Checksum() (string, error) {
 	content := []byte{}
 	for _, appName := range r.repositories {
@@ -257,7 +258,7 @@ func (r *OCIRegistry) Checksum() (string, error) {
 		}
 		// Retrieve the list of tags to add it to the list
 		// Caveat: Mutated image tags won't be detected as new
-		url.Path = path.Join("v2", url.Path, appName, "tags/list")
+		url.Path = path.Join("v2", url.Path, appName, "tags", "list")
 		data, err := doReq(url.String(), r.RepoInternal.AuthorizationHeader)
 		if err != nil {
 			return "", err

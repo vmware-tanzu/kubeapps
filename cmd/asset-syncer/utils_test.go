@@ -729,7 +729,7 @@ func (h *authenticatedChecksumHTTPClient) Do(req *http.Request) (*http.Response,
 	w := httptest.NewRecorder()
 
 	// Ensure we're sending the right Authorization header
-	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
+	if req.Header.Get("Authorization") != "Bearer ThisSecretAccessTokenAuthenticatesTheClient" {
 		w.WriteHeader(500)
 	}
 	w.Write([]byte(tags))
@@ -756,6 +756,20 @@ func Test_OCIRegistry(t *testing.T) {
 		assert.NoErr(t, err)
 		expectedChecksum, _ := getSha256([]byte(fmt.Sprintf("%s%s", tags, tags)))
 		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
+	})
+
+	t.Run("Checksum with auth - success", func(t *testing.T) {
+		authRepo := OCIRegistry{
+			repositories: []string{"apache", "jenkins"},
+			RepoInternal: &models.RepoInternal{
+				URL:                 "http://oci-test",
+				AuthorizationHeader: "Bearer wrong",
+			},
+		}
+
+		netClient = &authenticatedChecksumHTTPClient{}
+		_, err := authRepo.Checksum()
+		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
 	})
 
 	t.Run("Checksum with auth - success", func(t *testing.T) {
