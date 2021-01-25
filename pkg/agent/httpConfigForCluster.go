@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/common/log"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
@@ -36,7 +35,6 @@ type configForCluster struct {
 // ToRESTConfig has the main difference from the original implementation,
 // returning the config as is.
 func (f *configForCluster) ToRESTConfig() (*rest.Config, error) {
-	log.Debug("configForCluster.ToRESTConfig called")
 	return f.config, nil
 }
 
@@ -44,7 +42,6 @@ func (f *configForCluster) ToRESTConfig() (*rest.Config, error) {
 // the implementation calls ToRESTConfig(). Painfully, this then requires copying
 // the complete function.
 func (f *configForCluster) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
-	log.Debug("configForCluster.ToDiscoveryClient called")
 	config, err := f.ToRESTConfig()
 	if err != nil {
 		return nil, err
@@ -71,7 +68,6 @@ func (f *configForCluster) ToDiscoveryClient() (discovery.CachedDiscoveryInterfa
 // ToRESTMapper requires an implementation on the embedding struct because
 // it calls ToDiscoveryClient.
 func (f *configForCluster) ToRESTMapper() (meta.RESTMapper, error) {
-	log.Debug("configForCluster.ToRESTMapper called")
 	discoveryClient, err := f.ToDiscoveryClient()
 	if err != nil {
 		return nil, err
@@ -85,7 +81,6 @@ func (f *configForCluster) ToRESTMapper() (meta.RESTMapper, error) {
 // ToRawKubeConfigLoader may need to be replicated here, but from limited
 // testing it works just to call the embedded implementation.
 func (f *configForCluster) ToRawKubeConfigLoader() clientcmd.ClientConfig {
-	log.Debug("configForCluster.ToRawKubeConfigLoader called")
 	return f.ConfigFlags.ToRawKubeConfigLoader()
 }
 
