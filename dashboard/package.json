@@ -76,6 +76,7 @@
     "redux-thunk": "^2.2.0",
     "seamless-immutable": "^7.1.4",
     "semver": "^5.6.0",
+    "swagger-ui-react": "^3.40.0",
     "typesafe-actions": "^2.0.4",
     "yaml": "1.7.2"
   },
@@ -128,6 +129,7 @@
     "@types/react-router": "^5.1.5",
     "@types/react-test-renderer": "^16.0.0",
     "@types/redux-mock-store": "^1.0.0",
+    "@types/swagger-ui-react": "^3.35.0",
     "enzyme": "^3.11.0",
     "husky": "^1.1.0",
     "jest-enzyme": "^7.1.2",

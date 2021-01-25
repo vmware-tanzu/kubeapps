@@ -86,6 +86,10 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 .
                 <br />
                 {appVersion}
+                <br />
+                <Link to={"/docs"} key="deploy-button">
+                  API docs <CdsIcon size="sm" shape="file" inverse={true} solid={true} />
+                </Link>
               </div>
               <div className="dropdown-menu-padding logout-button">
                 <CdsButton status="primary" size="sm" action="outline" onClick={logout}>

@@ -1,0 +1,21 @@
+import React from "react";
+import { Auth } from "shared/Auth";
+import SwaggerUI from "swagger-ui-react";
+import "swagger-ui-react/swagger-ui.css";
+
+// Request interface needed for avoiding type error in the requestInterceptor
+interface Request {
+  // tslint:disable-line
+  [k: string]: any;
+}
+
+function authenticate(req: Request): Request {
+  const token = Auth.getAuthToken() || "";
+  req.headers.Authorization = `Bearer ${token}`;
+  req.url = req.url.replace("127.0.0.1:8080", `${window.location.host}`);
+  return req;
+}
+
+export default function ApiDocs() {
+  return <SwaggerUI url="/openapi.yaml" docExpansion="list" requestInterceptor={authenticate} />;
+}

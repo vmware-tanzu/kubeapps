@@ -1,0 +1,1742 @@
+openapi: 3.0.0
+servers:
+  - url: 'http://127.0.0.1:8080'
+    description: Development URL
+info:
+  description: |
+   [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
+    
+    [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.
+    #### Developer Documentation
+    - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).
+    - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
+    - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
+
+  version: 1.0.0
+  title: Kubeapps API
+  termsOfService: 'https://github.com/kubeapps/kubeapps/blob/master/LICENSE'
+  contact:
+    email: containers@bitnami.com
+    name: Bitnami
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: assetsvc
+    externalDocs:
+      url: 'https://github.com/kubeapps/kubeapps/tree/master/cmd/assetsvc'
+    description: 'The assetsvc component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that is populated in a Postgresql server.'
+  - name: kubeops
+    externalDocs:
+      url: 'https://github.com/kubeapps/kubeapps/tree/master/cmd/assetsvc'
+    description: 'The kubeops component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.'
+  - name: httphandler
+    externalDocs:
+      url: 'https://github.com/kubeapps/kubeapps/blob/master/pkg/http-handler/http-handler.go'
+    description: 'More endpoints'
+    
+    
+paths:
+  # cmd/assetsvc/main.go
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts':
+    get:
+      tags:
+        - assetsvc
+      summary: listChartsWithFilters
+      description: ''
+      operationId: listChartsWithFilters
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '1'
+          description: Number of the page to fetch (used with 'size' parameter)
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '0'
+          description: Number results to fetch (used with 'page' parameter)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Chart'
+                  meta:
+                    $ref: '#/components/schemas/meta'
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/categories':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartCategories
+      description: ''
+      operationId: getChartCategories
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartCategory'
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/categories':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartCategories
+      description: ''
+      operationId: getChartCategories_repo
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartCategory'
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}':
+    get:
+      tags:
+        - assetsvc
+      summary: listChartsWithFilters
+      description: ''
+      operationId: listChartsWithFilters_repo
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '1'
+          description: Number of the page to fetch (used with 'size' parameter)
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '0'
+          description: Number results to fetch (used with 'page' parameter)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Chart'
+                  meta:
+                    $ref: '#/components/schemas/meta'
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}':
+    get:
+      tags:
+        - assetsvc
+      summary: getChart
+      description: ''
+      operationId: getChart
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Chart'
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions':
+    get:
+      tags:
+        - assetsvc
+      summary: listChartVersions
+      description: ''
+      operationId: listChartVersions
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartVersion'
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions/{version}':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersion
+      description: ''
+      operationId: getChartVersion
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartVersion'
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/README.md':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersionReadme
+      description: ''
+      operationId: getChartVersionReadme
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.yaml':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersionValues
+      description: ''
+      operationId: getChartVersionValues
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.schema.json':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersionSchema
+      description: ''
+      operationId: getChartVersionSchema
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/logo':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartIcon
+      description: ''
+      operationId: getChartIcon
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            image/png:
+              schema:
+                type: string
+            image/svg+xml:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+  '/api/assetsvc/v1/ns/{namespace}/assets/{repo}/{chartName}/logo':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartIcon
+      description: ''
+      operationId: getChartIcon_noncluster
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: kubeapps
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            image/png:
+              schema:
+                type: string
+            image/svg+xml:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+  
+  # others
+  # See https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/templates/kubeapps-frontend-config.yaml
+  '/healthz':
+    get:
+      tags:
+        - others
+      summary: healthz
+      description: ''
+      operationId: healthz
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+  '/api/tiller-deploy/live':
+    get:
+      tags:
+        - others
+      summary: live
+      description: ''
+      operationId: live
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+  '/api/tiller-deploy/ready':
+    get:
+      tags:
+        - others
+      summary: ready
+      description: ''
+      operationId: ready
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+  '/api/kube':
+    get:
+      tags:
+        - others
+      summary: Proxied Kubernetes API
+      description: ''
+      deprecated: true
+      responses:
+        '200':
+          description: Successful response
+  
+  # pkg/http-handler/http-handler.go (non-cluster aware)
+  '/api/namespaces':
+    get:
+      tags:
+        - httphandler-deprecated
+      summary: 'GetNamespaces'
+      description: ''
+      operationId: 'GetNamespaces_ns_noncluster'
+      deprecated: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/namespaces/{namespace}/apprepositories':
+    get:
+      tags:
+        - httphandler-deprecated
+      summary: 'ListAppRepositories'
+      description: ''
+      operationId: 'ListAppRepositories_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    post:
+      tags:
+        - httphandler-deprecated
+      summary: 'CreateAppRepository'
+      description: ''
+      operationId: 'CreateAppRepository_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/namespaces/{namespace}/apprepositories/validate':
+    post:
+      tags:
+        - httphandler-deprecated
+      summary: 'ValidateAppRepository'
+      description: ''
+      operationId: 'ValidateAppRepository_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/namespaces/{namespace}/apprepositories/{name}':
+    put:
+      tags:
+        - httphandler-deprecated
+      summary: 'UpdateAppRepository'
+      description: ''
+      operationId: 'UpdateAppRepository_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    delete:
+      tags:
+        - httphandler-deprecated
+      summary: 'DeleteAppRepository'
+      description: ''
+      operationId: 'DeleteAppRepository_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/namespaces/{namespace}/operator/{name}/logo':
+    get:
+      tags:
+        - httphandler-deprecated
+      summary: 'GetOperatorLogo'
+      description: ''
+      operationId: 'GetOperatorLogo_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  
+  # pkg/http-handler/http-handler.go (cluster aware)
+  '/api/clusters/{cluster}/can-i':
+    post:
+      tags:
+        - httphandler
+      summary: 'CanI'
+      description: ''
+      operationId: 'CanI'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/clusters/{cluster}/namespaces':
+    get:
+      tags:
+        - httphandler
+      summary: 'GetNamespaces'
+      description: ''
+      operationId: 'GetNamespaces'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/clusters/{cluster}/apprepositories':
+    get:
+      tags:
+        - httphandler
+      summary: 'ListAppRepositories'
+      description: ''
+      operationId: 'ListAppRepositories_ns'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/clusters/{cluster}/namespaces/{namespace}/apprepositories':
+    get:
+      tags:
+        - httphandler
+      summary: 'ListAppRepositories'
+      description: ''
+      operationId: 'ListAppRepositories_'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    post:
+      tags:
+        - httphandler
+      summary: 'CreateAppRepository'
+      description: ''
+      operationId: 'CreateAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/clusters/{cluster}/namespaces/{namespace}/apprepositories/validate':
+    post:
+      tags:
+        - httphandler
+      summary: 'ValidateAppRepository'
+      description: ''
+      operationId: 'ValidateAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}':
+    put:
+      tags:
+        - httphandler
+      summary: 'UpdateAppRepository'
+      description: ''
+      operationId: 'UpdateAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    delete:
+      tags:
+        - httphandler
+      summary: 'DeleteAppRepository'
+      description: ''
+      operationId: 'DeleteAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}/refresh':
+    post:
+      tags:
+        - httphandler
+      summary: 'RefreshAppRepository'
+      description: ''
+      operationId: 'RefreshAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo':
+    get:
+      tags:
+        - httphandler
+      summary: 'GetOperatorLogo'
+      description: ''
+      operationId: 'GetOperatorLogo'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+
+
+  # cmd/kubeops/main.go (cluster aware)
+  '/api/tiller-deploy/v1/clusters/{cluster}/releases':
+    get:
+      tags:
+        - kubeops
+      summary: 'ListAllReleases'
+      description: ''
+      operationId: 'ListAllReleases'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/tiller-deploy/v1/clusters/{cluster}/namespaces/{namespace}/releases':
+    get:
+      tags:
+        - kubeops
+      summary: 'ListReleases'
+      description: ''
+      operationId: 'ListReleases'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    post:
+      tags:
+        - kubeops
+      summary: 'CreateRelease'
+      description: ''
+      operationId: 'CreateRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/tiller-deploy/v1/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}':
+    get:
+      tags:
+        - kubeops
+      summary: 'GetRelease'
+      description: ''
+      operationId: 'GetRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    delete:
+      tags:
+        - kubeops
+      summary: 'DeleteRelease'
+      description: ''
+      operationId: 'DeleteRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    put:
+      tags:
+        - kubeops
+      summary: 'OperateRelease'
+      description: ''
+      operationId: 'OperateRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+
+  # cmd/kubeops/main.go (non-cluster aware)
+  '/api/tiller-deploy/v1/releases':
+    get:
+      tags:
+        - kubeops-deprecated
+      summary: 'ListAllReleases'
+      description: ''
+      operationId: 'ListAllReleases_noncluster'
+      deprecated: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/tiller-deploy/v1/namespaces/{namespace}/releases':
+    get:
+      tags:
+        - kubeops-deprecated
+      summary: 'ListReleases'
+      description: ''
+      operationId: 'ListReleases_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    post:
+      tags:
+        - kubeops-deprecated
+      summary: 'CreateRelease'
+      description: ''
+      operationId: 'CreateRelease_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  '/api/tiller-deploy/v1/namespaces/{namespace}/releases/{releaseName}':
+    get:
+      tags:
+        - kubeops-deprecated
+      summary: 'GetRelease'
+      description: ''
+      operationId: 'GetRelease_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    delete:
+      tags:
+        - kubeops-deprecated
+      summary: 'DeleteRelease'
+      description: ''
+      operationId: 'DeleteRelease_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+    put:
+      tags:
+        - kubeops-deprecated
+      summary: 'OperateRelease'
+      description: ''
+      operationId: 'OperateRelease_noncluster'
+      deprecated: true
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  
+
+
+externalDocs:
+  description: ''
+  url: 'https://github.com/kubeapps/kubeapps'
+components:
+  schemas:
+    ChartCategory:
+      type: object
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+    Chart:
+      type: object
+      properties:
+        ID:
+          type: integer
+        name:
+          type: string
+        repo:
+          $ref: '#/components/schemas/Repo'
+        description:
+          type: string
+        home:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        maintainers:
+          type: array
+          items:
+            type: object
+        sources:
+          type: array
+          items:
+            type: string
+        icon:
+          type: string
+        raw_icon:
+          type: string
+          format: byte
+        icon_content_type:
+          type: string
+        category:
+          type: string
+        chartVersions:
+          type: object
+          items:
+            type: string
+    ChartVersion:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        attibutes:
+          type: object
+          properties:
+            version:
+              type: string
+            app_version:
+              type: string
+            created:
+              type: string
+              format: time
+            digest:
+              type: string
+            urls:
+              type: array
+              items:
+                type: string
+            readme:
+              type: string
+            values:
+              type: string
+            schema:
+              type: string
+        links:
+          type: object
+        relationships:
+          type: object
+          properties:
+            data:
+              type: object
+            links:
+              type: object
+              properties:
+                self:
+                  type: string
+    Repo:
+      type: object
+      properties:
+        namespace:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        type:
+          type: string
+    DataResponse:
+      type: object
+      properties:
+        '-':
+          type: integer
+        data:
+          type: object
+        meta:
+          type: object
+    meta:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  links: {}
+  callbacks: {}
+security:
+  - bearerAuth: []
