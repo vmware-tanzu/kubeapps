@@ -69,7 +69,7 @@ export function filtersToQuery(filters: any) {
   const activeFilters = Object.keys(filters).filter(f => filters[f].length);
   if (activeFilters.length) {
     const filterQueries = activeFilters.map(
-      filter => `${filter}=${filters[filter].map((f: string) => encodeURIComponent(f)).join(",")}`,
+      filter => `${filter}=${filters[filter].map((f: string) => encodeURIComponent(f)).join("|")}`,
     );
     query = "?" + filterQueries.join("&");
   }
@@ -107,7 +107,7 @@ function Catalog(props: ICatalogProps) {
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
-      newFilters[filter] = propsFilter[filter]?.toString().split(",");
+      newFilters[filter] = propsFilter[filter]?.toString().split("|");
     });
     setFilters({
       ...initialFilterState(),
@@ -167,7 +167,7 @@ function Catalog(props: ICatalogProps) {
 
   // Only one search filter can be set
   const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
-  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
+  const reposFilter = filters[filterNames.REPO]?.join("|") || "";
   useEffect(() => {
     fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
   }, [fetchCharts, cluster, namespace, reposFilter, page, size, searchFilter]);

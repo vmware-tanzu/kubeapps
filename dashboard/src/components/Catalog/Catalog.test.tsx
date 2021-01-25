@@ -424,7 +424,7 @@ describe("filters by category", () => {
       <Catalog
         {...defaultProps}
         csvs={[csv, csvWithCat]}
-        filter={{ [filterNames.CATEGORY]: "Developer Tools,Infrastructure" }}
+        filter={{ [filterNames.CATEGORY]: "Developer Tools|Infrastructure" }}
       />,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);

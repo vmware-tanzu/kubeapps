@@ -81,7 +81,7 @@ export default function OperatorList({
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
-      newFilters[filter] = propsFilter[filter]?.toString().split(",");
+      newFilters[filter] = propsFilter[filter]?.toString().split("|");
     });
     setFilters({
       ...initialFilterState(),
