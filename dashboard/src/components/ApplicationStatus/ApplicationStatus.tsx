@@ -74,6 +74,9 @@ export default function ApplicationStatus({
 
   useEffect(() => {
     watchWorkloads();
+    // TODO: Closing websockets before the connection is established
+    // causes a warning. More info at:
+    // https://github.com/kubeapps/kubeapps/issues/2276
     return function cleanup() {
       closeWatches();
     };
