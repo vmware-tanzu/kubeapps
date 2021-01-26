@@ -340,7 +340,7 @@ describe("pagination and chart fetching", () => {
     );
 
     expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(wrapper.find("CatalogItems>CatalogItem>ChartCatalogItem").length).toBe(0);
+    expect(wrapper.find("ChartCatalogItem").length).toBe(0);
     expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 1, 20, "");
     expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
@@ -366,7 +366,7 @@ describe("pagination and chart fetching", () => {
       />,
     );
     expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(wrapper.find("CatalogItems>CatalogItem>ChartCatalogItem").length).toBe(0);
+    expect(wrapper.find("ChartCatalogItem").length).toBe(0);
     expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
@@ -392,7 +392,7 @@ describe("pagination and chart fetching", () => {
       />,
     );
     expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(wrapper.find("CatalogItems>CatalogItem>ChartCatalogItem").length).toBe(2);
+    expect(wrapper.find("ChartCatalogItem").length).toBe(2);
     expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
@@ -434,6 +434,46 @@ describe("pagination and chart fetching", () => {
     mountWrapper(defaultStore, <Catalog {...populatedProps} charts={charts} />);
     spyOnUseState.mockRestore();
     expect(setPage).toHaveBeenCalledWith(2);
+  });
+
+  it("resets page (when one of the filters changes", () => {
+    const setState = jest.fn();
+    const setPage = jest.fn();
+    const resetRequestCharts = jest.fn();
+    const charts = {
+      ...defaultChartState,
+      hasFinishedFetching: false,
+      isFetching: false,
+      items: [],
+    } as any;
+    spyOnUseState = jest
+      .spyOn(React, "useState")
+      //  @ts-ignore
+      .mockImplementation((init: any) => {
+        if (init === false) {
+          // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
+          return [true, setState];
+        }
+        if (init === 1) {
+          // Mocking the result of setPage to ensure it's called
+          return [1, setPage];
+        }
+        return [init, setState];
+      });
+
+    const store = getStore({ repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] } });
+    const wrapper = mountWrapper(
+      store,
+      <Catalog {...populatedProps} resetRequestCharts={resetRequestCharts} charts={charts} />,
+    );
+
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+    input.simulate("change", { target: { value: "foo" } });
+
+    spyOnUseState.mockRestore();
+    expect(setPage).toHaveBeenCalledWith(2); // changes page to 2
+    expect(resetRequestCharts).toHaveBeenCalled(); // but receives a change in a filter
+    expect(wrapper.find("CatalogItems").prop("page")).toBe(1); // and page is again 1
   });
 });
 
