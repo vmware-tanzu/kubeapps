@@ -4,6 +4,7 @@ import SwaggerUI from "swagger-ui-react";
 import "swagger-ui-react/swagger-ui.css";
 
 // Request interface needed for avoiding type error in the requestInterceptor
+// it is being used, but it is not exported, so we define it here
 // tslint:disable-next-line
 interface Request {
   [k: string]: any;
@@ -11,7 +12,10 @@ interface Request {
 
 function authenticate(req: Request): Request {
   const token = Auth.getAuthToken() || "";
-  req.headers.Authorization = `Bearer ${token}`;
+  // Otherwise, OIDC login is being used and we cannot automatically set the token here
+  if (token) {
+    req.headers.Authorization = `Bearer ${token}`;
+  }
   req.url = req.url.replace("127.0.0.1:8080", `${window.location.host}`);
   return req;
 }
