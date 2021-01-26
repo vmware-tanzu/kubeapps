@@ -23,6 +23,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"image"
 	"io"
@@ -215,10 +216,18 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 	}, nil
 }
 
+// TagList represents a list of tags as specified at
+// https://github.com/opencontainers/distribution-spec/blob/master/spec.md#content-discovery
+type TagList struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
 // OCIRegistry implements the Repo interface for OCI repositories
 type OCIRegistry struct {
 	repositories []string
 	*models.RepoInternal
+	tags map[string]TagList
 }
 
 func doReq(url, authHeader string) ([]byte, error) {
@@ -251,6 +260,7 @@ func doReq(url, authHeader string) ([]byte, error) {
 // all repositories within the registry and returning the sha256.
 func (r *OCIRegistry) Checksum() (string, error) {
 	content := []byte{}
+	tags := map[string]TagList{}
 	for _, appName := range r.repositories {
 		url, err := parseRepoURL(r.RepoInternal.URL)
 		if err != nil {
@@ -263,16 +273,87 @@ func (r *OCIRegistry) Checksum() (string, error) {
 		if err != nil {
 			return "", err
 		}
+
+		var appTags TagList
+		err = json.Unmarshal(data, &appTags)
+		if err != nil {
+			return "", err
+		}
+		tags[appName] = appTags
 		content = append(content, data...)
 	}
+	r.tags = tags
 
 	return getSha256(content)
 }
 
 // Repo returns the repo information
 func (r *OCIRegistry) Repo() *models.RepoInternal {
-	// TBD
 	return r.RepoInternal
+}
+
+type artifactFiles struct {
+	Metadata string
+	Readme   string
+	Values   string
+	Schema   string
+}
+
+func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
+	result := &artifactFiles{}
+	gzf, err := gzip.NewReader(buf)
+	if err != nil {
+		return nil, err
+	}
+	tarReader := tar.NewReader(gzf)
+	importantFiles := map[string]bool{
+		"chart.yaml":         true,
+		"readme.md":          true,
+		"values.yaml":        true,
+		"values.schema.json": true,
+	}
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		compressedFileName := header.Name
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			// Ignore directories
+		case tar.TypeReg:
+			filename := strings.ToLower(path.Base(compressedFileName))
+			if importantFiles[filename] {
+				// Read content
+				data := make([]byte, header.Size)
+				_, err := tarReader.Read(data)
+				if err != nil && err != io.EOF {
+					return nil, fmt.Errorf("failed to read %s. Got: %v", compressedFileName, err)
+				}
+				for err != io.EOF {
+					_, err = tarReader.Read(data)
+				}
+				switch filename {
+				case "chart.yaml":
+					result.Metadata = string(data)
+				case "readme.md":
+					result.Readme = string(data)
+				case "values.yaml":
+					result.Values = string(data)
+				case "values.schema.json":
+					result.Schema = string(data)
+				}
+			}
+		default:
+			// Unkown type, ignore
+		}
+	}
+	return result, nil
 }
 
 // Charts retrieve the list of charts exposed in the repo
@@ -312,7 +393,10 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
 		return nil, err
 	}
-	return &OCIRegistry{repositories: ociRepos, RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader}}, nil
+	return &OCIRegistry{
+		repositories: ociRepos,
+		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
+	}, nil
 }
 
 func fetchRepoIndex(url, authHeader string) ([]byte, error) {

@@ -37,6 +37,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arschles/assert"
 	"github.com/disintegration/imaging"
+	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
@@ -758,6 +759,21 @@ func Test_OCIRegistry(t *testing.T) {
 		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
 	})
 
+	t.Run("Checksum - stores the list of tags", func(t *testing.T) {
+		emptyRepo := OCIRegistry{
+			repositories: []string{"apache"},
+			RepoInternal: &models.RepoInternal{
+				URL: "http://oci-test",
+			},
+		}
+		netClient = &goodChecksumHTTPClient{}
+		_, err := emptyRepo.Checksum()
+		assert.NoErr(t, err)
+		assert.Equal(t, emptyRepo.tags, map[string]TagList{
+			"apache": {Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}},
+		}, "expected tags")
+	})
+
 	t.Run("Checksum with auth - success", func(t *testing.T) {
 		authRepo := OCIRegistry{
 			repositories: []string{"apache", "jenkins"},
@@ -787,4 +803,71 @@ func Test_OCIRegistry(t *testing.T) {
 		expectedChecksum, _ := getSha256([]byte(fmt.Sprintf("%s%s", tags, tags)))
 		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
 	})
+}
+
+func Test_extractFilesFromBuffer(t *testing.T) {
+	tests := []struct {
+		description string
+		files       []tarballFile
+		expected    *artifactFiles
+	}{
+		{
+			"It should extract the important files",
+			[]tarballFile{
+				{Name: "Chart.yaml", Body: "chart yaml"},
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			&artifactFiles{
+				Metadata: "chart yaml",
+				Readme:   "chart readme",
+				Values:   "chart values",
+				Schema:   "chart schema",
+			},
+		},
+		{
+			"It should ignore letter case",
+			[]tarballFile{
+				{Name: "Readme.md", Body: "chart readme"},
+			},
+			&artifactFiles{
+				Readme: "chart readme",
+			},
+		},
+		{
+			"It should ignore other files",
+			[]tarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "other.yaml", Body: "other content"},
+			},
+			&artifactFiles{
+				Readme: "chart readme",
+			},
+		},
+		{
+			"It should handle large files",
+			[]tarballFile{
+				// 1MB file
+				{Name: "README.md", Body: string(make([]byte, 1048577))},
+			},
+			&artifactFiles{
+				Readme: string(make([]byte, 1048577)),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			gzw := gzip.NewWriter(w)
+			createTestTarball(gzw, tt.files)
+			gzw.Flush()
+
+			r, err := extractFilesFromBuffer(w.Body)
+			assert.NoErr(t, err)
+			if !cmp.Equal(r, tt.expected) {
+				t.Errorf("Unexpected result %v", cmp.Diff(r, tt.expected))
+			}
+		})
+	}
 }
