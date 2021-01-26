@@ -16,10 +16,7 @@ const defaultChartState = {
   deployed: {} as IChartState["deployed"],
   items: [],
   categories: [],
-  updatesInfo: {},
-  page: 1,
   size: 20,
-  records: new Map<number, boolean>().set(1, false),
 } as IChartState;
 const defaultProps = {
   charts: defaultChartState,

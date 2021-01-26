@@ -104,7 +104,7 @@ export function fetchCharts(
           items: response.data,
           page,
           totalPages: response.meta.totalPages,
-        } as IReceiveChartsActionPayload),
+        }),
       );
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));

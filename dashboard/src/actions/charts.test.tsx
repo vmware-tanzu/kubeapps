@@ -4,13 +4,7 @@ import { getType } from "typesafe-actions";
 import { axiosWithAuth } from "../shared/AxiosInstance";
 
 import actions from ".";
-import {
-  FetchError,
-  IChart,
-  IChartListMeta,
-  IReceiveChartsActionPayload,
-  NotFoundError,
-} from "../shared/types";
+import { FetchError, IChart, IChartListMeta, NotFoundError } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -56,11 +50,32 @@ interface IFetchChartsTestCase {
   responseMeta: IChartListMeta;
   requestedRepos: string;
   requestedPage: number;
+  requestedQuery?: string;
   expectedActions: any;
   expectedURL: string;
 }
 
 const fetchChartsTestCases: IFetchChartsTestCase[] = [
+  {
+    name: "fetches charts with query",
+    responseData: [chartItem],
+    responseMeta: { totalPages: 1 },
+    requestedRepos: "",
+    requestedPage: 1,
+    requestedQuery: "foo",
+    expectedActions: [
+      { type: getType(actions.charts.requestCharts), payload: 1 },
+      {
+        type: getType(actions.charts.receiveCharts),
+        payload: {
+          items: [chartItem],
+          page: 1,
+          totalPages: 1,
+        },
+      },
+    ],
+    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&q=foo`,
+  },
   {
     name: "fetches charts from a repo (first page)",
     responseData: [chartItem],
@@ -75,7 +90,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           items: [chartItem],
           page: 1,
           totalPages: 3,
-        } as IReceiveChartsActionPayload,
+        },
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${1}&size=${defaultSize}&repos=foo`,
@@ -94,7 +109,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           items: [chartItem],
           page: 2,
           totalPages: 3,
-        } as IReceiveChartsActionPayload,
+        },
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
@@ -113,7 +128,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           items: [chartItem],
           page: 3,
           totalPages: 3,
-        } as IReceiveChartsActionPayload,
+        },
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${3}&size=${defaultSize}&repos=${repos}`,
@@ -132,7 +147,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           items: [chartItem],
           page: 2,
           totalPages: 3,
-        } as IReceiveChartsActionPayload,
+        },
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
@@ -151,7 +166,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           items: [chartItem],
           page: 4,
           totalPages: 3,
-        } as IReceiveChartsActionPayload,
+        },
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${4}&size=${defaultSize}&repos=${repos}`,
@@ -170,6 +185,7 @@ describe("fetchCharts", () => {
           tc.requestedRepos,
           tc.requestedPage,
           defaultSize,
+          tc.requestedQuery,
         ),
       );
       expect(store.getActions()).toEqual(tc.expectedActions);

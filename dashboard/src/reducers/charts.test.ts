@@ -1,7 +1,7 @@
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 
-import { IChart, IChartCategory, IChartState, IReceiveChartsActionPayload } from "../shared/types";
+import { IChart, IChartCategory, IChartState } from "../shared/types";
 import chartsReducer from "./charts";
 
 describe("chartReducer", () => {
@@ -101,7 +101,7 @@ describe("chartReducer", () => {
     });
   });
 
-  it("requestCharts (without page) sets records", () => {
+  it("requestCharts (without page)", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.requestCharts) as any,
     });
@@ -111,7 +111,7 @@ describe("chartReducer", () => {
     });
   });
 
-  it("requestCharts (with page) sets records", () => {
+  it("requestCharts (with page)", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.requestCharts) as any,
       payload: 2,
@@ -125,7 +125,7 @@ describe("chartReducer", () => {
   it("single receiveCharts (first page) should be returned", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 3 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem], page: 1, totalPages: 3 },
     });
     expect(state).toEqual({
       ...initialState,
@@ -140,7 +140,7 @@ describe("chartReducer", () => {
       { ...initialState },
       {
         type: getType(actions.charts.receiveCharts) as any,
-        payload: { items: [chartItem], page: 2, totalPages: 3 } as IReceiveChartsActionPayload,
+        payload: { items: [chartItem], page: 2, totalPages: 3 },
       },
     );
     expect(state).toEqual({
@@ -148,7 +148,6 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: false,
       items: [chartItem],
-      // page: 3,
     });
   });
 
@@ -157,7 +156,7 @@ describe("chartReducer", () => {
       { ...initialState },
       {
         type: getType(actions.charts.receiveCharts) as any,
-        payload: { items: [chartItem], page: 2, totalPages: 3 } as IReceiveChartsActionPayload,
+        payload: { items: [chartItem], page: 2, totalPages: 3 },
       },
     );
     expect(state).toEqual({
@@ -165,7 +164,6 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: false,
       items: [chartItem],
-      // page: 3,
     });
   });
 
@@ -176,7 +174,7 @@ describe("chartReducer", () => {
       },
       {
         type: getType(actions.charts.receiveCharts) as any,
-        payload: { items: [chartItem], page: 3, totalPages: 3 } as IReceiveChartsActionPayload,
+        payload: { items: [chartItem], page: 3, totalPages: 3 },
       },
     );
     expect(state).toEqual({
@@ -190,11 +188,11 @@ describe("chartReducer", () => {
   it("two receiveCharts should add items (no dups)", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 2 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem], page: 1, totalPages: 2 },
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem2], page: 2, totalPages: 2 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem2], page: 2, totalPages: 2 },
     });
     expect(state2).toEqual({
       ...initialState,
@@ -208,11 +206,11 @@ describe("chartReducer", () => {
   it("two receiveCharts should add items (remove dups)", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 2 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem], page: 1, totalPages: 2 },
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 2, totalPages: 2 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem], page: 2, totalPages: 2 },
     });
     expect(state2).toEqual({
       ...initialState,
@@ -236,7 +234,7 @@ describe("chartReducer", () => {
     });
     const stateRec1 = chartsReducer(stateReq1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 3 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem], page: 1, totalPages: 3 },
     });
     expect(stateRec1).toEqual({
       ...initialState,
@@ -256,7 +254,7 @@ describe("chartReducer", () => {
     });
     const stateRec2 = chartsReducer(stateReq2, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem2], page: 2, totalPages: 3 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem2], page: 2, totalPages: 3 },
     });
     expect(stateRec2).toEqual({
       ...initialState,
@@ -276,7 +274,7 @@ describe("chartReducer", () => {
     });
     const stateRec3 = chartsReducer(stateReq3, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [], page: 3, totalPages: 3 } as IReceiveChartsActionPayload,
+      payload: { items: [], page: 3, totalPages: 3 },
     });
     expect(stateRec3).toEqual({
       ...initialState,
@@ -289,11 +287,11 @@ describe("chartReducer", () => {
   it("two receiveCharts and then errorChart", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 1 } as IReceiveChartsActionPayload,
+      payload: { items: [chartItem], page: 1, totalPages: 1 },
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [], page: 2, totalPages: 2 } as IReceiveChartsActionPayload,
+      payload: { items: [], page: 2, totalPages: 2 },
     });
     const state3 = chartsReducer(state2, {
       type: getType(actions.charts.errorChart) as any,
