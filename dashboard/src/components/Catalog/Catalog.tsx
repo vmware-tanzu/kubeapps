@@ -248,11 +248,7 @@ function Catalog(props: ICatalogProps) {
   };
   const observeBorder = (node: any) => {
     // Check if the IntersectionAPI is enabled
-    if (
-      "IntersectionObserver" in window &&
-      "IntersectionObserverEntry" in window &&
-      "isIntersecting" in window.IntersectionObserverEntry.prototype
-    ) {
+    if ("IntersectionObserver" in window && "IntersectionObserverEntry" in window) {
       if (node !== null) {
         // https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver
         new IntersectionObserver(

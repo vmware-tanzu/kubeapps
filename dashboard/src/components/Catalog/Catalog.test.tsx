@@ -315,28 +315,12 @@ describe("filters by application type", () => {
   });
 });
 
-describe("pagination", () => {
+describe("pagination and chart fetching", () => {
   let spyOnUseState: jest.SpyInstance;
-  let spyOnUseEffect: jest.SpyInstance;
 
-  afterEach(() => {
-    spyOnUseEffect.mockRestore();
-    spyOnUseState.mockRestore();
-  });
-
-  it("sets the initial state page to 1", () => {
+  it("sets the initial state page to 1 before fetching charts", () => {
     const fetchCharts = jest.fn();
     const resetRequestCharts = jest.fn();
-    const setState = jest.fn();
-    const mockUseEffect = jest.fn();
-    spyOnUseState = jest
-      .spyOn(React, "useState")
-      //  @ts-ignore
-      .mockImplementation((init: any) => [init, setState]);
-    spyOnUseEffect = jest
-      .spyOn(React, "useEffect")
-      //  @ts-ignore
-      .mockImplementation((f, n) => f(mockUseEffect(n)));
 
     const wrapper = mountWrapper(
       defaultStore,
@@ -356,26 +340,14 @@ describe("pagination", () => {
     );
 
     expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(setState).toHaveBeenCalledWith(1);
-    expect(mockUseEffect).toHaveBeenNthCalledWith(3, [false, false]); // [hasRequestedFirstPage, isFetching])
-    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 1, 20, ""); // [hasRequestedFirstPage, isFetching])
-    expect(mockUseEffect).toHaveBeenCalledTimes(7);
+    expect(wrapper.find("CatalogItems>CatalogItem>ChartCatalogItem").length).toBe(0);
+    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 1, 20, "");
     expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
 
-  it("sets state params when fetching charts", () => {
+  it("sets the state page when fetching charts", () => {
     const fetchCharts = jest.fn();
     const resetRequestCharts = jest.fn();
-    const setState = jest.fn();
-    const mockUseEffect = jest.fn();
-    spyOnUseState = jest
-      .spyOn(React, "useState")
-      //  @ts-ignore
-      .mockImplementation((init: any) => [init, setState]);
-    spyOnUseEffect = jest
-      .spyOn(React, "useEffect")
-      //  @ts-ignore
-      .mockImplementation((f, n) => f(mockUseEffect(n)));
 
     const wrapper = mountWrapper(
       defaultStore,
@@ -387,32 +359,21 @@ describe("pagination", () => {
           {
             ...defaultChartState,
             hasFinishedFetching: false,
-            isFetching: true, // true
-            items: [chartItem, chartItem2],
+            isFetching: true,
+            items: [chartItem],
           } as any
         }
       />,
     );
     expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(setState).toHaveBeenCalledWith(1);
+    expect(wrapper.find("CatalogItems>CatalogItem>ChartCatalogItem").length).toBe(0);
     expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
-    expect(mockUseEffect).toHaveBeenCalledTimes(6);
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
-  it("sets state params when charts have been fetched", () => {
+  it("items are translated to CatalogItems after fetching charts", () => {
     const fetchCharts = jest.fn();
     const resetRequestCharts = jest.fn();
-    const setState = jest.fn();
-    const mockUseEffect = jest.fn();
-    spyOnUseState = jest
-      .spyOn(React, "useState")
-      //  @ts-ignore
-      .mockImplementation((init: any) => [init, setState]);
-    spyOnUseEffect = jest
-      .spyOn(React, "useEffect")
-      //  @ts-ignore
-      .mockImplementation((f, n) => f(mockUseEffect(n)));
 
     const wrapper = mountWrapper(
       defaultStore,
@@ -431,9 +392,48 @@ describe("pagination", () => {
       />,
     );
     expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(setState).toHaveBeenCalledWith(1);
-    expect(mockUseEffect).toHaveBeenCalledTimes(9);
-    expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
+    expect(wrapper.find("CatalogItems>CatalogItem>ChartCatalogItem").length).toBe(2);
+    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
+    expect(resetRequestCharts).toHaveBeenCalledWith();
+  });
+
+  it("changes page", () => {
+    const setState = jest.fn();
+    const setPage = jest.fn();
+    const charts = {
+      ...defaultChartState,
+      hasFinishedFetching: false,
+      isFetching: false,
+      items: [],
+    } as any;
+    spyOnUseState = jest
+      .spyOn(React, "useState")
+      //  @ts-ignore
+      .mockImplementation((init: any) => {
+        if (init === false) {
+          // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
+          return [true, setState];
+        }
+        if (init === 1) {
+          // Mocking the result of setPage to ensure it's called
+          return [1, setPage];
+        }
+        return [init, setState];
+      });
+
+    // Mock intersection observer
+    const observe = jest.fn();
+    const unobserve = jest.fn();
+
+    window.IntersectionObserver = jest.fn(callback => {
+      (callback as (e: any) => void)([{ isIntersecting: true }]);
+      return { observe, unobserve } as any;
+    });
+    window.IntersectionObserverEntry = jest.fn();
+
+    mountWrapper(defaultStore, <Catalog {...populatedProps} charts={charts} />);
+    spyOnUseState.mockRestore();
+    expect(setPage).toHaveBeenCalledWith(2);
   });
 });
 
