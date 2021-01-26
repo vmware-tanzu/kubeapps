@@ -4,8 +4,8 @@ import SwaggerUI from "swagger-ui-react";
 import "swagger-ui-react/swagger-ui.css";
 
 // Request interface needed for avoiding type error in the requestInterceptor
+// tslint:disable-next-line
 interface Request {
-  // tslint:disable-line
   [k: string]: any;
 }
 

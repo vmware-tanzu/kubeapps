@@ -87,7 +87,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 <br />
                 {appVersion}
                 <br />
-                <Link to={"/docs"} key="deploy-button">
+                <Link to={"/docs"}>
                   API docs <CdsIcon size="sm" shape="file" inverse={true} solid={true} />
                 </Link>
               </div>
