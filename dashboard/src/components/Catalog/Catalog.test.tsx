@@ -1,6 +1,7 @@
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -8,6 +9,8 @@ import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs
 import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
+import CatalogItems from "./CatalogItems";
+import ChartCatalogItem from "./ChartCatalogItem";
 
 const defaultChartState = {
   isFetching: false,
@@ -216,7 +219,7 @@ it("behaves like a loading wrapper", () => {
       charts={{ isFetching: true, items: [], categories: [], selected: {} } as any}
     />,
   );
-  expect(wrapper.find("LoadingWrapper")).toExist();
+  expect(wrapper.find(LoadingWrapper)).toExist();
 });
 
 describe("filters by the searched item", () => {
@@ -339,8 +342,8 @@ describe("pagination and chart fetching", () => {
       />,
     );
 
-    expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(wrapper.find("ChartCatalogItem").length).toBe(0);
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
+    expect(wrapper.find(ChartCatalogItem).length).toBe(0);
     expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 1, 20, "");
     expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
@@ -365,8 +368,8 @@ describe("pagination and chart fetching", () => {
         }
       />,
     );
-    expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(wrapper.find("ChartCatalogItem").length).toBe(0);
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
+    expect(wrapper.find(ChartCatalogItem).length).toBe(0);
     expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
@@ -391,8 +394,8 @@ describe("pagination and chart fetching", () => {
         }
       />,
     );
-    expect(wrapper.find("CatalogItems").prop("page")).toBe(1);
-    expect(wrapper.find("ChartCatalogItem").length).toBe(2);
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
+    expect(wrapper.find(ChartCatalogItem).length).toBe(2);
     expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
@@ -436,45 +439,8 @@ describe("pagination and chart fetching", () => {
     expect(setPage).toHaveBeenCalledWith(2);
   });
 
-  it("resets page (when one of the filters changes", () => {
-    const setState = jest.fn();
-    const setPage = jest.fn();
-    const resetRequestCharts = jest.fn();
-    const charts = {
-      ...defaultChartState,
-      hasFinishedFetching: false,
-      isFetching: false,
-      items: [],
-    } as any;
-    spyOnUseState = jest
-      .spyOn(React, "useState")
-      //  @ts-ignore
-      .mockImplementation((init: any) => {
-        if (init === false) {
-          // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
-          return [true, setState];
-        }
-        if (init === 1) {
-          // Mocking the result of setPage to ensure it's called
-          return [1, setPage];
-        }
-        return [init, setState];
-      });
-
-    const store = getStore({ repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] } });
-    const wrapper = mountWrapper(
-      store,
-      <Catalog {...populatedProps} resetRequestCharts={resetRequestCharts} charts={charts} />,
-    );
-
-    const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
-    input.simulate("change", { target: { value: "foo" } });
-
-    spyOnUseState.mockRestore();
-    expect(setPage).toHaveBeenCalledWith(2); // changes page to 2
-    expect(resetRequestCharts).toHaveBeenCalled(); // but receives a change in a filter
-    expect(wrapper.find("CatalogItems").prop("page")).toBe(1); // and page is again 1
-  });
+  // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
+  // https://github.com/kubeapps/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
 });
 
 describe("filters by application repository", () => {
