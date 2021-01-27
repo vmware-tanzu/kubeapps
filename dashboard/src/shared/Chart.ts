@@ -1,6 +1,6 @@
 import { JSONSchema4 } from "json-schema";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IChart, IChartCategory, IChartVersion } from "./types";
+import { IChart, IChartCategory, IChartListMeta, IChartVersion } from "./types";
 import * as URL from "./url";
 
 export default class Chart {
@@ -12,10 +12,10 @@ export default class Chart {
     size: number,
     query?: string,
   ) {
-    const { data } = await axiosWithAuth.get<{ data: IChart[] }>(
+    const { data } = await axiosWithAuth.get<{ data: IChart[]; meta: IChartListMeta }>(
       URL.api.charts.list(cluster, namespace, repos, page, size, query),
     );
-    return data.data;
+    return data;
   }
 
   public static async fetchChartCategories(cluster: string, namespace: string) {
