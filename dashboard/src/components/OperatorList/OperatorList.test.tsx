@@ -202,6 +202,16 @@ describe("filter operators", () => {
     expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
   });
 
+  it("transforms the received '__' in query params into a ','", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+      }),
+      <OperatorList {...defaultProps} filter={{ [filterNames.PROVIDER]: "kubeapps__%20inc" }} />,
+    );
+    expect(wrapper.find(".label-info").text()).toBe("Provider: kubeapps,%20inc ");
+  });
+
   it("show a message if the filter doesn't match any operator", () => {
     const wrapper = mountWrapper(
       getStore({

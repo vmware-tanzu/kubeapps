@@ -79,9 +79,11 @@ export default function OperatorList({
   const [filters, setFilters] = useState(initialFilterState());
 
   useEffect(() => {
+    const tmpStrRegex = /__/g;
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
-      newFilters[filter] = propsFilter[filter]?.toString().split(",");
+      const filterValue = propsFilter[filter]?.toString() || "";
+      newFilters[filter] = filterValue.split(",").map(a => a.replace(tmpStrRegex, ","));
     });
     setFilters({
       ...initialFilterState(),
