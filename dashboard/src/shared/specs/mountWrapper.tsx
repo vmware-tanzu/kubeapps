@@ -38,6 +38,11 @@ export const initialState = {
         namespaces: ["default", "other"],
         canCreateNS: true,
       },
+      "second-cluster": {
+        currentNamespace: "default",
+        namespaces: ["default", "other"],
+        canCreateNS: true,
+      },
     },
   },
   repos: cloneDeep(reposInitialState),

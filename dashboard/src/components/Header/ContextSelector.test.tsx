@@ -170,7 +170,7 @@ it("changes the location with the new namespace", () => {
   const push = jest.fn();
   spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
   spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockReturnValue({
-    pathname: "/c/cluster-foo/ns/ns-bar/catalog",
+    pathname: "/c/default-cluster/ns/ns-bar/catalog",
     search: "",
     state: "",
   } as any);
@@ -185,7 +185,33 @@ it("changes the location with the new namespace", () => {
       .filterWhere(b => b.text() === "Change Context")
       .prop("onClick") as any)();
   });
-  expect(push).toHaveBeenCalledWith("/c/cluster-foo/ns/other/catalog");
+  expect(push).toHaveBeenCalledWith("/c/default-cluster/ns/other/catalog");
+});
+
+it("changes the location with the new cluster and namespace", () => {
+  const push = jest.fn();
+  spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
+  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockReturnValue({
+    pathname: "/c/default-cluster/ns/ns-bar/catalog",
+    search: "",
+    state: "",
+  } as any);
+  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
+  wrapper
+    .find("select")
+    .findWhere(s => s.prop("name") === "clusters")
+    .simulate("change", { target: { value: "second-cluster" } });
+  wrapper
+    .find("select")
+    .findWhere(s => s.prop("name") === "namespaces")
+    .simulate("change", { target: { value: "other" } });
+  act(() => {
+    (wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.text() === "Change Context")
+      .prop("onClick") as any)();
+  });
+  expect(push).toHaveBeenCalledWith("/c/second-cluster/ns/other/catalog");
 });
 
 it("don't call push if the pathname is not recognized", () => {
