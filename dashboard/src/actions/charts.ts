@@ -5,21 +5,21 @@ import { ActionType, createAction } from "typesafe-actions";
 import Chart from "../shared/Chart";
 import {
   FetchError,
-  IChart,
   IChartCategory,
   IChartVersion,
+  IReceiveChartsActionPayload,
   IStoreState,
   NotFoundError,
 } from "../shared/types";
 
 export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
-  return (query?: string) => resolve(query);
+  return (page?: number) => resolve(page);
 });
 
 export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
-  return (charts: IChart[]) => resolve(charts);
+  return (payload: IReceiveChartsActionPayload) => resolve(payload);
 });
 
 export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
@@ -57,6 +57,8 @@ export const receiveDeployedChartVersion = createAction(
 
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
 
+export const resetRequestCharts = createAction("RESET_REQUEST_CHARTS");
+
 export const selectReadme = createAction("SELECT_README", resolve => {
   return (readme: string) => resolve(readme);
 });
@@ -78,6 +80,7 @@ const allActions = [
   requestDeployedChartVersion,
   receiveDeployedChartVersion,
   resetChartVersion,
+  resetRequestCharts,
   selectReadme,
   errorReadme,
 ];
@@ -93,10 +96,16 @@ export function fetchCharts(
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestCharts(query));
+    dispatch(requestCharts(page));
     try {
-      const charts = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
-      dispatch(receiveCharts(charts));
+      const response = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
+      dispatch(
+        receiveCharts({
+          items: response.data,
+          page,
+          totalPages: response.meta.totalPages,
+        }),
+      );
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
     }

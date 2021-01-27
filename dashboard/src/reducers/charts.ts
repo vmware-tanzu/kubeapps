@@ -1,3 +1,4 @@
+import { uniqBy } from "lodash";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -7,14 +8,14 @@ import { IChartState } from "../shared/types";
 
 export const initialState: IChartState = {
   isFetching: false,
+  hasFinishedFetching: false,
   items: [],
   categories: [],
   selected: {
     versions: [],
   },
   deployed: {},
-  page: 1,
-  size: 0,
+  size: 20,
 };
 
 const chartsSelectedReducer = (
@@ -57,16 +58,16 @@ const chartsReducer = (
   switch (action.type) {
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };
-    case getType(actions.charts.requestChartsCategories):
-      return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
+      const isLastPage = action.payload.page >= action.payload.totalPages;
       return {
         ...state,
         isFetching: false,
-        items: action.payload,
+        hasFinishedFetching: isLastPage,
+        items: uniqBy([...state.items, ...action.payload.items], "id"),
       };
     case getType(actions.charts.receiveChartCategories):
-      return { ...state, isFetching: false, categories: action.payload };
+      return { ...state, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
@@ -90,6 +91,12 @@ const chartsReducer = (
         isFetching: false,
         deployed: { ...state.deployed, ...action.payload },
       };
+    case getType(actions.charts.resetRequestCharts):
+      return {
+        ...state,
+        hasFinishedFetching: false,
+        items: [],
+      };
     case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.selectReadme):
     case getType(actions.charts.errorReadme):
@@ -97,6 +104,7 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
+        hasFinishedFetching: false,
         items: [],
         selected: chartsSelectedReducer(state.selected, action),
       };
