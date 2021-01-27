@@ -64,6 +64,10 @@ export function initialFilterState() {
   return result;
 }
 
+const tmpStrRegex = /__/g;
+const tmpStr = "__";
+const commaRegex = /,/g;
+
 export function filtersToQuery(filters: any) {
   let query = "";
   const activeFilters = Object.keys(filters).filter(f => filters[f].length);
@@ -75,7 +79,7 @@ export function filtersToQuery(filters: any) {
     const filterQueries = activeFilters.map(
       filter =>
         `${filter}=${filters[filter]
-          .map((f: string) => encodeURIComponent(f.replace(/,/g, "__")))
+          .map((f: string) => encodeURIComponent(f.replace(commaRegex, tmpStr)))
           .join(",")}`,
     );
     query = "?" + filterQueries.join("&");
@@ -115,7 +119,7 @@ function Catalog(props: ICatalogProps) {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       const filterValue = propsFilter[filter]?.toString() || "";
-      newFilters[filter] = filterValue.split(",").map(a => a.replace(/__/g, ","));
+      newFilters[filter] = filterValue.split(",").map(a => a.replace(tmpStrRegex, ","));
     });
     setFilters({
       ...initialFilterState(),
@@ -174,7 +178,7 @@ function Catalog(props: ICatalogProps) {
   }, [getCSVs, fetchChartCategories, cluster, namespace]);
 
   // Only one search filter can be set
-  const searchFilter = propsFilter[filterNames.SEARCH]?.toString().replace(/__/g, ",") || "";
+  const searchFilter = propsFilter[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
     fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
