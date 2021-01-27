@@ -64,7 +64,9 @@ function ContextSelector() {
     if (nsRegex.test(location.pathname)) {
       // Change the namespace in the route
       history.push(
-        location.pathname.replace(nsRegex, `/c/${cluster}/ns/${namespace}/`).concat(location.search),
+        location.pathname
+          .replace(nsRegex, `/c/${cluster}/ns/${namespace}/`)
+          .concat(location.search),
       );
     }
     setOpen(false);
