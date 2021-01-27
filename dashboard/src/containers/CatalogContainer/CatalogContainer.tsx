@@ -39,6 +39,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       dispatch(actions.charts.fetchChartCategories(cluster, namespace)),
     fetchRepos: (namespace: string, listGlobal?: boolean) =>
       dispatch(actions.repos.fetchRepos(namespace, listGlobal)),
+    resetRequestCharts: () => dispatch(actions.charts.resetRequestCharts()),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
     getCSVs: (cluster: string, namespace: string) =>
       dispatch(actions.operators.getCSVs(cluster, namespace)),
