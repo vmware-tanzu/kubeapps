@@ -78,8 +78,8 @@ export default function OperatorList({
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
 
-  const tmpStrRegex = /__/g;
   useEffect(() => {
+    const tmpStrRegex = /__/g;
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       const filterValue = propsFilter[filter]?.toString() || "";
@@ -89,7 +89,7 @@ export default function OperatorList({
       ...initialFilterState(),
       ...newFilters,
     });
-  }, [propsFilter, tmpStrRegex]);
+  }, [propsFilter]);
 
   const pushFilters = (newFilters: any) => {
     dispatch(push(app.operators.list(cluster, namespace) + filtersToQuery(newFilters)));
