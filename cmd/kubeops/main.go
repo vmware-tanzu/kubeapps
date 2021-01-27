@@ -222,7 +222,7 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 			if err != nil {
 				return kube.ClustersConfig{}, deferFn, err
 			}
-			c.CertificateAuthorityData = string(decodedCAData)
+			c.CertificateAuthorityDataDecoded = string(decodedCAData)
 
 			// We also need a CAFile field because Helm uses the genericclioptions.ConfigFlags
 			// struct which does not support CAData.
