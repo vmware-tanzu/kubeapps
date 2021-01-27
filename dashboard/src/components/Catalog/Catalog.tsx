@@ -68,8 +68,15 @@ export function filtersToQuery(filters: any) {
   let query = "";
   const activeFilters = Object.keys(filters).filter(f => filters[f].length);
   if (activeFilters.length) {
+    // https://github.com/kubeapps/kubeapps/pull/2279
+    // get parameters from the parsed and decoded query params
+    // since some search filters could eventually have a ','
+    // we need to temporary replace it by other arbitrary string '__'.
     const filterQueries = activeFilters.map(
-      filter => `${filter}=${filters[filter].map((f: string) => encodeURIComponent(f)).join("|")}`,
+      filter =>
+        `${filter}=${filters[filter]
+          .map((f: string) => encodeURIComponent(f.replace(/,/g, "__")))
+          .join(",")}`,
     );
     query = "?" + filterQueries.join("&");
   }
@@ -107,7 +114,8 @@ function Catalog(props: ICatalogProps) {
   useEffect(() => {
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
-      newFilters[filter] = propsFilter[filter]?.toString().split("|");
+      const filterValue = propsFilter[filter]?.toString() || "";
+      newFilters[filter] = filterValue.split(",").map(a => a.replace(/__/g, ","));
     });
     setFilters({
       ...initialFilterState(),
@@ -166,8 +174,8 @@ function Catalog(props: ICatalogProps) {
   }, [getCSVs, fetchChartCategories, cluster, namespace]);
 
   // Only one search filter can be set
-  const searchFilter = propsFilter[filterNames.SEARCH]?.toString() || "";
-  const reposFilter = filters[filterNames.REPO]?.join("|") || "";
+  const searchFilter = propsFilter[filterNames.SEARCH]?.toString().replace(/__/g, ",") || "";
+  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
     fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
   }, [fetchCharts, cluster, namespace, reposFilter, page, size, searchFilter]);
