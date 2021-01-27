@@ -122,6 +122,17 @@ it("behaves like a loading wrapper", () => {
   expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
+it("transforms the received '__' in query params into a ','", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Catalog
+      {...populatedProps}
+      filter={{ [filterNames.OPERATOR_PROVIDER]: "Lightbend__%20Inc." }}
+    />,
+  );
+  expect(wrapper.find(".label-info").text()).toBe("Provider: Lightbend,%20Inc. ");
+});
+
 describe("filters by the searched item", () => {
   it("filters modifying the search box", () => {
     const fetchCharts = jest.fn();
@@ -311,6 +322,21 @@ describe("filters by operator provider", () => {
     });
   });
 
+  it("push filter for operator provider with comma", () => {
+    const store = getStore({});
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} csvs={[csv, csv2]} />);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
+    input.simulate("change", { target: { value: "you, inc" } });
+    // It should have pushed with the filter
+    const historyAction = store
+      .getActions()
+      .find(action => action.type === "@@router/CALL_HISTORY_METHOD");
+    expect(historyAction.payload).toEqual({
+      args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc"],
+      method: "push",
+    });
+  });
+
   it("filters by operator provider", () => {
     const wrapper = mountWrapper(
       defaultStore,
@@ -424,7 +450,7 @@ describe("filters by category", () => {
       <Catalog
         {...defaultProps}
         csvs={[csv, csvWithCat]}
-        filter={{ [filterNames.CATEGORY]: "Developer Tools|Infrastructure" }}
+        filter={{ [filterNames.CATEGORY]: "Developer Tools,Infrastructure" }}
       />,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
