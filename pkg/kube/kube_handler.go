@@ -46,6 +46,9 @@ type ClusterConfig struct {
 	Name                     string `json:"name"`
 	APIServiceURL            string `json:"apiServiceURL"`
 	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
+	// When parsing config we decode the cert auth data to ensure it is valid
+	// and store it since it's required when using the data.
+	CertificateAuthorityDataDecoded string
 	// The genericclioptions.ConfigFlags struct includes only a CAFile field, not
 	// a CAData field.
 	// https://github.com/kubernetes/cli-runtime/issues/8
@@ -134,8 +137,8 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	config.Host = clusterConfig.APIServiceURL
 	config.TLSClientConfig = rest.TLSClientConfig{}
 	config.TLSClientConfig.Insecure = clusterConfig.Insecure
-	if clusterConfig.CertificateAuthorityData != "" {
-		config.TLSClientConfig.CAData = []byte(clusterConfig.CertificateAuthorityData)
+	if clusterConfig.CertificateAuthorityDataDecoded != "" {
+		config.TLSClientConfig.CAData = []byte(clusterConfig.CertificateAuthorityDataDecoded)
 		config.CAFile = clusterConfig.CAFile
 	}
 	return config, nil

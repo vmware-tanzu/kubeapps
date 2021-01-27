@@ -23,10 +23,11 @@ func TestParseClusterConfig(t *testing.T) {
 			expectedConfig: kube.ClustersConfig{
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
-						Name:                     "cluster-2",
-						APIServiceURL:            "https://example.com",
-						CertificateAuthorityData: "ca-cert-data\n",
-						ServiceToken:             "abcd",
+						Name:                            "cluster-2",
+						APIServiceURL:                   "https://example.com",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-cert-data\n",
+						ServiceToken:                    "abcd",
 					},
 				},
 				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
@@ -41,14 +42,16 @@ func TestParseClusterConfig(t *testing.T) {
 			expectedConfig: kube.ClustersConfig{
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
-						Name:                     "cluster-2",
-						APIServiceURL:            "https://example.com/cluster-2",
-						CertificateAuthorityData: "ca-cert-data\n",
+						Name:                            "cluster-2",
+						APIServiceURL:                   "https://example.com/cluster-2",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-cert-data\n",
 					},
 					"cluster-3": {
-						Name:                     "cluster-3",
-						APIServiceURL:            "https://example.com/cluster-3",
-						CertificateAuthorityData: "ca-cert-data-additional\n",
+						Name:                            "cluster-3",
+						APIServiceURL:                   "https://example.com/cluster-3",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK",
+						CertificateAuthorityDataDecoded: "ca-cert-data-additional\n",
 					},
 				},
 				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
@@ -68,14 +71,16 @@ func TestParseClusterConfig(t *testing.T) {
 						Name: "cluster-1",
 					},
 					"cluster-2": {
-						Name:                     "cluster-2",
-						APIServiceURL:            "https://example.com/cluster-2",
-						CertificateAuthorityData: "ca-cert-data\n",
+						Name:                            "cluster-2",
+						APIServiceURL:                   "https://example.com/cluster-2",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-cert-data\n",
 					},
 					"cluster-3": {
-						Name:                     "cluster-3",
-						APIServiceURL:            "https://example.com/cluster-3",
-						CertificateAuthorityData: "ca-cert-data-additional\n",
+						Name:                            "cluster-3",
+						APIServiceURL:                   "https://example.com/cluster-3",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK",
+						CertificateAuthorityDataDecoded: "ca-cert-data-additional\n",
 					},
 				},
 				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
@@ -87,10 +92,11 @@ func TestParseClusterConfig(t *testing.T) {
 			expectedConfig: kube.ClustersConfig{
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
-						Name:                     "cluster-2",
-						APIServiceURL:            "https://example.com",
-						CertificateAuthorityData: "ca-cert-data\n",
-						ServiceToken:             "abcd",
+						Name:                            "cluster-2",
+						APIServiceURL:                   "https://example.com",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-cert-data\n",
+						ServiceToken:                    "abcd",
 						PinnipedConfig: kube.PinnipedConciergeConfig{
 							Enable: true,
 						},
@@ -139,12 +145,12 @@ func TestParseClusterConfig(t *testing.T) {
 			}
 
 			for clusterName, clusterConfig := range tc.expectedConfig.Clusters {
-				if clusterConfig.CertificateAuthorityData != "" {
+				if clusterConfig.CertificateAuthorityDataDecoded != "" {
 					fileCAData, err := ioutil.ReadFile(config.Clusters[clusterName].CAFile)
 					if err != nil {
 						t.Fatalf("error opening %s: %+v", config.Clusters[clusterName].CAFile, err)
 					}
-					if got, want := string(fileCAData), clusterConfig.CertificateAuthorityData; got != want {
+					if got, want := string(fileCAData), clusterConfig.CertificateAuthorityDataDecoded; got != want {
 						t.Errorf("got: %q, want: %q", got, want)
 					}
 				}

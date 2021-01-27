@@ -1094,9 +1094,10 @@ func TestNewClusterConfig(t *testing.T) {
 				Clusters: map[string]ClusterConfig{
 					"default": {},
 					"cluster-1": {
-						APIServiceURL:            "https://cluster-1.example.com:7890",
-						CertificateAuthorityData: "ca-file-data",
-						CAFile:                   "/tmp/ca-file-data",
+						APIServiceURL:                   "https://cluster-1.example.com:7890",
+						CertificateAuthorityData:        "Y2EtZmlsZS1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-file-data",
+						CAFile:                          "/tmp/ca-file-data",
 					},
 				},
 			},

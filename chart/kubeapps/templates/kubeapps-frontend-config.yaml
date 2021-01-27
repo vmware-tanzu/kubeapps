@@ -70,7 +70,7 @@ data:
         # If pinniped proxy is enabled *and* the current cluster is configured
         # to exchange credentials then we route via pinnipedProxy to exchange
         # credentials for client certificates.
-        {{- if .apiServiceUrl }}
+        {{- if .apiServiceURL }}
         proxy_set_header PINNIPED_PROXY_API_SERVER_URL {{ .apiServiceURL }};
         {{- end }}
         {{- if .certificateAuthorityData }}
