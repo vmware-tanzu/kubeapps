@@ -1,4 +1,5 @@
 use std::convert::Infallible;
+use std::env;
 
 use anyhow::Error;
 use hyper::{Body, Request, Response, StatusCode};
@@ -7,6 +8,7 @@ use native_tls::TlsConnector;
 
 use crate::logging;
 use crate::https;
+use crate::pinniped;
 
 /// The proxy service accepts a request and returns the proxied response from the api server.
 ///
@@ -62,7 +64,15 @@ pub async fn proxy(mut req: Request<Body>, default_ca_data: Vec<u8>) -> Result<R
     // Ensure the user is authenticated by exchanging the header authz token for a client identity X509 cert.
     tls_builder = match https::include_client_identity_for_headers(tls_builder, req.headers().clone(), &k8s_api_server_url, &cert_auth_data).await {
         Ok(b) => b,
-        Err(e) => return handle_error(e, StatusCode::INTERNAL_SERVER_ERROR, log_data),
+        Err(e) => {
+            if e.is::<url::ParseError>() || e.is::<env::VarError>() {
+                return handle_error(e, StatusCode::BAD_REQUEST, log_data);
+            }
+            if e.is::<pinniped::PinnipedError>() {
+                return handle_error(e, StatusCode::UNAUTHORIZED, log_data)
+            }
+            return handle_error(e, StatusCode::INTERNAL_SERVER_ERROR, log_data);
+        },
     };
 
     let client = match https::make_https_client(tls_builder) {

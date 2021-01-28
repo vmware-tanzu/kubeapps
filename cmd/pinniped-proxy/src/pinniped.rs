@@ -14,11 +14,19 @@ use openssl::{pkcs12::Pkcs12, pkey::PKey, x509::X509};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use thiserror::Error;
 use url::Url;
 
 const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
 const DEFAULT_PINNIPED_AUTHENTICATOR_NAME: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_NAME";
 const DEFAULT_PINNIPED_AUTHENTICATOR_TYPE: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_TYPE";
+
+#[derive(Error, Debug)]
+pub enum PinnipedError {
+    #[error("Unauthorized by pinniped: {0}")]
+    UnsuccessfulAuthentication(String),
+}
+
 /// exchange_token_for_identity accepts an authorization header and returns a client cert authentication Identity in exchange.
 ///
 /// The token is exchanged with pinniped concierge API running on the identified kubernetes api server.
@@ -29,8 +37,9 @@ pub async fn exchange_token_for_identity(authorization: &str, k8s_api_server_url
             match s.credential {
                 Some(c) => return identity_for_exchange(&c),
                 None => match s.message {
-                    // Handle getting a 403 back for "authentication failed" message.
-                    Some(m) => return Err(anyhow::anyhow!(m)),
+                    // A returned status without a credential is unsuccessful authentication so
+                    // add context to identify this.
+                    Some(m) => return Err(anyhow::anyhow!(m.clone()).context(PinnipedError::UnsuccessfulAuthentication(m))),
                     None => return Err(anyhow::anyhow!("response status neither an error msg or a credential: {:#?}", s)),
                 }
             }
@@ -138,5 +147,55 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
         Err(e) => {
             Err(anyhow::anyhow!("err creating token exchange: {:#?}\n{}", serde_json::to_string(&cred_request).unwrap(), e))
         },
+    }
+}
+
+#[macro_use]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+
+    const VALID_CERT_BASE64: &'static str = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJd01UQXlOakl6TXpBME5Wb1hEVE13TVRBeU5ESXpNekEwTlZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT1ZKCnFuOVBFZUp3UDRQYnI0cFo1ZjZKUmliOFZ5a2tOYjV2K1hzTVZER01aWGZLb293Y29IYjFwRWh5d0pzeDFiME4Kd2YvZ1JURi9maEgzT0drRnNQMlV2a0lHVytzNUlBd0sxMFRXYkN5VzAwT3lzVkdLcnl5bHNWcEhCWXBZRGJBcQpkdnQzc0FkcFJZaGlLZSs2NkVTL3dQNTdLV3g0SVdwZko0UGpyejh2NkJBWlptZ3o5ZzRCSFNMQkhpbTVFbTdYClBJTmpKL1RJTXFzVW1PR1ppUUNHR0ptRnQxZ21jQTd3eHZ0ZXg2ckkxSWdFNkh5NW10UzJ3NDZaMCtlVU1RSzgKSE9UdnI5aGFETnhJenVjbkduaFlCT2Z2U2VVaXNCR0pOUm5QbENydWx4b2NSZGI3N20rQUdzWW52QitNd2prVQpEbXNQTWZBelpSRHEwekhzcGEwQ0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFBWndybXJLa3FVaDJUYld2VHdwSWlOd0o1NzAKaU9lTVl2WWhNakZxTmt6Tk9OUW55c3lPd1laRGJFMDRrV3AxclRLNHVZaUh3NTJUc0cyelJsZ0QzMzNKaEtvUQpIVloyV1hUT3Z5U2RJaWl5bVpKM2N3d0p2T0lhMW5zZnhYY1NJakJnYnNzYXowMndpRCtlazRPdmlRZktjcXJpCnFQbWZabDZDSkk0NU1rd3JwTExFaTZkNVhGbkhDb3d4eklxQjBrUDhwOFlOaGJYWTNYY2JaNElvY2lMemRBamUKQ1l6NXFVSlBlSDJCcHNaM0JXNXRDbjcycGZYazVQUjlYOFRUTHh6aTA4SU9yYjgvRDB4Tnk3emQyMnVjNXM1bwoveXZIeEt6cXBiczVuRXJkT0JFVXNGWnBpUEhaVGc1dExmWlZ4TG00VjNTZzQwRWUyNFd6d09zaDNIOD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=";
+
+    // By default cargo will run rust unit tests in parallel. The serial macro ensures that a specific test
+    // (or group of tests) runs serially.
+    #[test]
+    #[serial(envtest)]
+    fn test_call_pinniped_exchange_no_env() -> Result<()> {
+        env::remove_var(DEFAULT_PINNIPED_NAMESPACE);
+        match tokio_test::block_on(call_pinniped_exchange("authorization", "https://example.com", VALID_CERT_BASE64.as_bytes())) {
+            Ok(_) => anyhow::bail!("expected error"),
+            Err(e) => {
+                assert!(e.is::<env::VarError>(), "got: {:#?}, want: {}", e, env::VarError::NotPresent);
+                Ok(())
+            },
+        }
+    }
+
+    #[test]
+    #[serial(envtest)]
+    fn test_call_pinniped_exchange_bad_url() -> Result<()> {
+        env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
+        match tokio_test::block_on(call_pinniped_exchange("authorization", "not a url", VALID_CERT_BASE64.as_bytes())) {
+            Ok(_) => anyhow::bail!("expected error"),
+            Err(e) => {
+                assert!(e.is::<url::ParseError>(), "got: {:#?}, want: {}", e, url::ParseError::InvalidDomainCharacter);
+                Ok(())
+            },
+        }
+    }
+
+    #[test]
+    #[serial(envtest)]
+    fn test_call_pinniped_exchange_bad_cert() -> Result<()> {
+        env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
+        match tokio_test::block_on(call_pinniped_exchange("authorization", "https://example.com", "not a cert".as_bytes())) {
+            Ok(_) => anyhow::bail!("expected error"),
+            Err(e) => {
+                assert!(e.is::<reqwest::Error>(), "got: {:#?}, want: request::Error", e);
+                Ok(())
+            },
+        }
     }
 }
