@@ -307,7 +307,6 @@ jobs:
   build_pinniped_proxy:
     docker:
       - image: circleci/rust
-    working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
