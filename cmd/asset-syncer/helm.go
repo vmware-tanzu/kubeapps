@@ -18,6 +18,7 @@ import (
 )
 
 // Code from Helm Registry Client. Copied here since it belongs to a internal package.
+// TODO: Use helm as a library instead once the code is moved from "internal/experimental".
 // More info at: https://github.com/helm/helm/issues/9275
 //
 // https://github.com/helm/helm/blob/6297c021cbda1483d8c08a8ec6f4a99e38be7302/internal/experimental/registry/util.go
