@@ -41,6 +41,7 @@ import (
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
@@ -737,6 +738,16 @@ func (h *authenticatedChecksumHTTPClient) Do(req *http.Request) (*http.Response,
 	return w.Result(), nil
 }
 
+type fakeOCIPuller struct {
+	content  *bytes.Buffer
+	checksum string
+	err      error
+}
+
+func (f *fakeOCIPuller) pullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
+	return f.content, f.checksum, f.err
+}
+
 func Test_OCIRegistry(t *testing.T) {
 	repo := OCIRegistry{
 		repositories: []string{"apache", "jenkins"},
@@ -802,6 +813,124 @@ func Test_OCIRegistry(t *testing.T) {
 		assert.NoErr(t, err)
 		expectedChecksum, _ := getSha256([]byte(fmt.Sprintf("%s%s", tags, tags)))
 		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
+	})
+
+	chartYAML := `
+annotations:
+  category: Infrastructure
+apiVersion: v2
+appVersion: 2.0.0
+description: chart description
+home: https://kubeapps.com
+icon: https://logo.png
+keywords:
+  - helm
+maintainers:
+  - email: containers@bitnami.com
+    name: Bitnami
+name: kubeapps
+sources:
+  - https://github.com/kubeapps/kubeapps
+version: 1.0.0
+`
+	tests := []struct {
+		description      string
+		ociArtifactFiles []tarballFile
+		expected         []models.Chart
+	}{
+		{
+			"Retrieve chart metadata",
+			[]tarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
+			},
+			[]models.Chart{
+				{
+					ID:          "test/kubeapps",
+					Name:        "kubeapps",
+					Repo:        &models.Repo{URL: "http://oci-test/test"},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/kubeapps/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
+					ChartVersions: []models.ChartVersion{
+						{
+							Version:    "1.0.0",
+							AppVersion: "2.0.0",
+							Digest:     "123",
+							URLs:       []string{"https://github.com/kubeapps/kubeapps"},
+						},
+					},
+				},
+			},
+		},
+		{
+			"Retrieve other files",
+			[]tarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			[]models.Chart{
+				{
+					ID:          "test/kubeapps",
+					Name:        "kubeapps",
+					Repo:        &models.Repo{URL: "http://oci-test/test"},
+					Maintainers: []chart.Maintainer{},
+					ChartVersions: []models.ChartVersion{
+						{
+							Digest: "123",
+							Readme: "chart readme",
+							Values: "chart values",
+							Schema: "chart schema",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			gzw := gzip.NewWriter(w)
+			createTestTarball(gzw, tt.ociArtifactFiles)
+			gzw.Flush()
+
+			chartsRepo := OCIRegistry{
+				repositories: []string{"kubeapps"},
+				RepoInternal: &models.RepoInternal{URL: "http://oci-test/test"},
+				tags: map[string]TagList{
+					"kubeapps": {Name: "test/kubeapps", Tags: []string{"1.0.0"}},
+				},
+				puller: &fakeOCIPuller{
+					content:  w.Body,
+					checksum: "123",
+				},
+			}
+			charts, err := chartsRepo.Charts()
+			assert.NoErr(t, err)
+			if !cmp.Equal(charts, tt.expected) {
+				t.Errorf("Unexpected result %v", cmp.Diff(charts, tt.expected))
+			}
+		})
+	}
+
+	t.Run("FetchFiles - It returns the stored files", func(t *testing.T) {
+		files := map[string]string{
+			values: "values text",
+			readme: "readme text",
+			schema: "schema text",
+		}
+		repo := OCIRegistry{}
+		result, err := repo.FetchFiles("", models.ChartVersion{
+			Values: files["values"],
+			Readme: files["readme"],
+			Schema: files["schema"],
+		})
+		assert.NoErr(t, err)
+		assert.Equal(t, result, files, "expected files")
 	})
 }
 
