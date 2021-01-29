@@ -19,6 +19,7 @@ import {
   heartIcon,
   helpIcon,
   infoCircleIcon,
+  networkGlobeIcon,
   plusCircleIcon,
   refreshIcon,
   rewindIcon,
@@ -64,6 +65,7 @@ Icons.addIcons(
   uploadCloudIcon,
   successStandardIcon,
   circleIcon,
+  networkGlobeIcon,
 );
 const CSSSelector: React.FC = () => null;
 
