@@ -31,6 +31,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -190,6 +191,19 @@ func Test_syncURLInvalidity(t *testing.T) {
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
+}
+
+func Test_getOCIRepo(t *testing.T) {
+	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
+		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{})
+		// The header property is private so we need to use reflect to get its value
+		resolver := repo.(*OCIRegistry).puller.(*ociPuller).resolver
+		resolverValue := reflect.ValueOf(resolver)
+		headerValue := reflect.Indirect(resolverValue).FieldByName("header")
+		if !strings.Contains(fmt.Sprintf("%v", headerValue), "Authorization:[Basic auth]") {
+			t.Error("Missing authorization header")
+		}
+	})
 }
 
 func Test_fetchRepoIndex(t *testing.T) {

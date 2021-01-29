@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/containerd/containerd/remotes/docker"
+	"github.com/containerd/containerd/remotes"
 	"github.com/deislabs/oras/pkg/content"
 	orascontext "github.com/deislabs/oras/pkg/context"
 	"github.com/deislabs/oras/pkg/oras"
@@ -53,15 +53,15 @@ type chartPuller interface {
 	pullOCIChart(ociFullName string) (*bytes.Buffer, string, error)
 }
 
-type ociPuller struct{}
+type ociPuller struct {
+	resolver remotes.Resolver
+}
 
 // Code from: https://github.com/helm/helm/blob/fee2257e3493e9d06ca6caa4be7ef7660842cbdb/internal/experimental/registry/client.go
 func (p *ociPuller) pullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
-	// TODO: Implement auth
-	resolver := docker.NewResolver(docker.ResolverOptions{})
 	store := content.NewMemoryStore()
 
-	desc, layerDescriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.DebugLevel), resolver, ociFullName, store,
+	desc, layerDescriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.DebugLevel), p.resolver, ociFullName, store,
 		oras.WithPullEmptyNameAllowed(),
 		oras.WithAllowedMediaTypes(KnownMediaTypes()))
 	if err != nil {
