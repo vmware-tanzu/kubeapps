@@ -231,17 +231,18 @@ type OCIRegistry struct {
 	*models.RepoInternal
 	tags   map[string]TagList
 	puller chartPuller
+	ociCli ociAPI
 }
 
-func doReq(url, authHeader string) ([]byte, error) {
+func doReq(url string, headers map[string]string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("User-Agent", userAgent())
-	if len(authHeader) > 0 {
-		req.Header.Set("Authorization", authHeader)
+	for header, content := range headers {
+		req.Header.Set(header, content)
 	}
 
 	res, err := netClient.Do(req)
@@ -259,33 +260,98 @@ func doReq(url, authHeader string) ([]byte, error) {
 	return ioutil.ReadAll(res.Body)
 }
 
+// OCILayer represents a single OCI layer
+type OCILayer struct {
+	MediaType string `json:"mediaType"`
+	Digest    string `json:"digest"`
+	Size      int    `json:"size"`
+}
+
+// OCIManifest representation
+type OCIManifest struct {
+	Schema int        `json:"schema"`
+	Config OCILayer   `json:"config"`
+	Layers []OCILayer `json:"layers"`
+}
+
+type ociAPI interface {
+	TagList(appName string) (*TagList, error)
+	FilterChartTags(tagList *TagList) error
+}
+
+type ociAPICli struct {
+	authHeader string
+	url        *url.URL
+}
+
+// TagList retrieves the list of tags for an asset
+func (o *ociAPICli) TagList(appName string) (*TagList, error) {
+	url := *o.url
+	url.Path = path.Join("v2", url.Path, appName, "tags", "list")
+	data, err := doReq(url.String(), map[string]string{"Authorization": o.authHeader})
+	if err != nil {
+		return nil, err
+	}
+
+	var appTags TagList
+	err = json.Unmarshal(data, &appTags)
+	if err != nil {
+		return nil, err
+	}
+	return &appTags, nil
+}
+
+// FilterChartTags modifies tagList and remove artifacts in other formats (e.g. Docker images)
+func (o *ociAPICli) FilterChartTags(tagList *TagList) error {
+	url := *o.url
+	chartTags := []string{}
+	for _, tag := range tagList.Tags {
+		url.Path = path.Join("v2", tagList.Name, "manifests", tag)
+		manifestData, err := doReq(
+			url.String(),
+			map[string]string{
+				"Authorization": o.authHeader,
+				"Accept":        "application/vnd.oci.image.manifest.v1+json",
+			})
+		if err != nil {
+			return err
+		}
+		var manifest OCIManifest
+		err = json.Unmarshal(manifestData, &manifest)
+		if err != nil {
+			return err
+		}
+		if manifest.Config.MediaType == HelmChartConfigMediaType {
+			chartTags = append(chartTags, tag)
+		}
+	}
+	tagList.Tags = chartTags
+	return nil
+}
+
 // Checksum returns the sha256 of the repo by concatenating tags for
 // all repositories within the registry and returning the sha256.
+// Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) Checksum() (string, error) {
-	content := []byte{}
-	tags := map[string]TagList{}
+	tagList := map[string]TagList{}
 	for _, appName := range r.repositories {
-		url, err := parseRepoURL(r.RepoInternal.URL)
+		tags, err := r.ociCli.TagList(appName)
 		if err != nil {
 			return "", err
 		}
-		// Retrieve the list of tags to add it to the list
-		// Caveat: Mutated image tags won't be detected as new
-		url.Path = path.Join("v2", url.Path, appName, "tags", "list")
-		data, err := doReq(url.String(), r.RepoInternal.AuthorizationHeader)
+		err = r.ociCli.FilterChartTags(tags)
 		if err != nil {
 			return "", err
 		}
 
-		var appTags TagList
-		err = json.Unmarshal(data, &appTags)
-		if err != nil {
-			return "", err
-		}
-		tags[appName] = appTags
-		content = append(content, data...)
+		tagList[appName] = *tags
 	}
-	r.tags = tags
+	r.tags = tagList
+
+	content, err := json.Marshal(tagList)
+	if err != nil {
+		return "", err
+	}
 
 	return getSha256(content)
 }
@@ -325,6 +391,10 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 		}
 
 		compressedFileName := header.Name
+		if len(strings.Split(compressedFileName, "/")) > 2 {
+			// We are only interested on files within the root directory
+			continue
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:
@@ -333,13 +403,9 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 			filename := strings.ToLower(path.Base(compressedFileName))
 			if importantFiles[filename] {
 				// Read content
-				data := make([]byte, header.Size)
-				_, err := tarReader.Read(data)
-				if err != nil && err != io.EOF {
-					return nil, fmt.Errorf("failed to read %s. Got: %v", compressedFileName, err)
-				}
-				for err != io.EOF {
-					_, err = tarReader.Read(data)
+				data, err := ioutil.ReadAll(tarReader)
+				if err != nil {
+					return nil, err
 				}
 				switch filename {
 				case "chart.yaml":
@@ -411,7 +477,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 					})
 				}
 				chartInfo = models.Chart{
-					ID:            path.Join(strings.TrimPrefix(url.Path, "/"), appName),
+					ID:            path.Join(r.Name, appName),
 					Name:          appName,
 					Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
 					Description:   chartMetadata.Description,
@@ -466,6 +532,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 		repositories: ociRepos,
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
 		puller:       &ociPuller{},
+		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url},
 	}, nil
 }
 
@@ -476,7 +543,7 @@ func fetchRepoIndex(url, authHeader string) ([]byte, error) {
 		return nil, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
-	return doReq(indexURL.String(), authHeader)
+	return doReq(indexURL.String(), map[string]string{"Authorization": authHeader})
 }
 
 func parseRepoIndex(body []byte) (*helmrepo.IndexFile, error) {

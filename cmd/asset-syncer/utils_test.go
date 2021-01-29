@@ -710,32 +710,113 @@ func Test_fetchAndImportFiles(t *testing.T) {
 	})
 }
 
-type goodChecksumHTTPClient struct{}
+type goodOCIAPIHTTPClient struct {
+	response       string
+	responseByPath map[string]string
+}
 
-const tags = `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`
-
-func (h *goodChecksumHTTPClient) Do(req *http.Request) (*http.Response, error) {
+func (h *goodOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 	// Don't accept trailing slashes
 	if strings.HasPrefix(req.URL.Path, "//") {
 		w.WriteHeader(500)
 	}
 
-	w.Write([]byte(tags))
+	if r, ok := h.responseByPath[req.URL.Path]; ok {
+		w.Write([]byte(r))
+	} else {
+		w.Write([]byte(h.response))
+	}
 	return w.Result(), nil
 }
 
-type authenticatedChecksumHTTPClient struct{}
+type authenticatedOCIAPIHTTPClient struct {
+	response string
+}
 
-func (h *authenticatedChecksumHTTPClient) Do(req *http.Request) (*http.Response, error) {
+func (h *authenticatedOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 
 	// Ensure we're sending the right Authorization header
 	if req.Header.Get("Authorization") != "Bearer ThisSecretAccessTokenAuthenticatesTheClient" {
 		w.WriteHeader(500)
 	}
-	w.Write([]byte(tags))
+	w.Write([]byte(h.response))
 	return w.Result(), nil
+}
+
+func Test_ociAPICli(t *testing.T) {
+	url, _ := parseRepoURL("http://oci-test")
+	apiCli := &ociAPICli{
+		url: url,
+	}
+
+	t.Run("TagList - failed request", func(t *testing.T) {
+		netClient = &badHTTPClient{}
+		_, err := apiCli.TagList("apache")
+		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+	})
+
+	t.Run("TagList - successful request", func(t *testing.T) {
+		netClient = &goodOCIAPIHTTPClient{
+			response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
+		}
+		result, err := apiCli.TagList("apache")
+		assert.NoErr(t, err)
+		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
+		if !cmp.Equal(result, expectedTagList) {
+			t.Errorf("Unexpected result %v", cmp.Diff(result, expectedTagList))
+		}
+	})
+
+	t.Run("TagList with auth - failure", func(t *testing.T) {
+		apiCli := &ociAPICli{
+			url:        url,
+			authHeader: "Bearer wrong",
+		}
+		netClient = &authenticatedOCIAPIHTTPClient{}
+		_, err := apiCli.TagList("apache")
+		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+	})
+
+	t.Run("TagList with auth - success", func(t *testing.T) {
+		apiCli := &ociAPICli{
+			url:        url,
+			authHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient",
+		}
+		netClient = &authenticatedOCIAPIHTTPClient{
+			response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
+		}
+		result, err := apiCli.TagList("apache")
+		assert.NoErr(t, err)
+		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
+		if !cmp.Equal(result, expectedTagList) {
+			t.Errorf("Unexpected result %v", cmp.Diff(result, expectedTagList))
+		}
+	})
+
+	t.Run("FilterChartTags - failed request", func(t *testing.T) {
+		netClient = &badHTTPClient{}
+		err := apiCli.FilterChartTags(&TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}})
+		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+	})
+
+	t.Run("FilterChartTags - successful request", func(t *testing.T) {
+		netClient = &goodOCIAPIHTTPClient{
+			responseByPath: map[string]string{
+				// 7.5.1 is not a chart
+				"/v2/test/apache/manifests/7.5.1": `{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`,
+				"/v2/test/apache/manifests/8.1.1": `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
+			},
+		}
+		tagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
+		err := apiCli.FilterChartTags(tagList)
+		assert.NoErr(t, err)
+		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"8.1.1"}}
+		if !cmp.Equal(tagList, expectedTagList) {
+			t.Errorf("Unexpected result %v", cmp.Diff(tagList, expectedTagList))
+		}
+	})
 }
 
 type fakeOCIPuller struct {
@@ -748,6 +829,20 @@ func (f *fakeOCIPuller) pullOCIChart(ociFullName string) (*bytes.Buffer, string,
 	return f.content, f.checksum, f.err
 }
 
+type fakeOCIAPICli struct {
+	tagList *TagList
+	err     error
+}
+
+func (o *fakeOCIAPICli) TagList(appName string) (*TagList, error) {
+	fmt.Printf("Returning ! %v", o.err)
+	return o.tagList, o.err
+}
+
+func (o *fakeOCIAPICli) FilterChartTags(tagList *TagList) error {
+	return o.err
+}
+
 func Test_OCIRegistry(t *testing.T) {
 	repo := OCIRegistry{
 		repositories: []string{"apache", "jenkins"},
@@ -757,17 +852,18 @@ func Test_OCIRegistry(t *testing.T) {
 	}
 
 	t.Run("Checksum - failed request", func(t *testing.T) {
-		netClient = &badHTTPClient{}
+		repo.ociCli = &fakeOCIAPICli{err: fmt.Errorf("request failed")}
 		_, err := repo.Checksum()
-		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+		assert.Err(t, fmt.Errorf("request failed"), err)
 	})
 
 	t.Run("Checksum - success", func(t *testing.T) {
-		netClient = &goodChecksumHTTPClient{}
+		repo.ociCli = &fakeOCIAPICli{
+			tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
+		}
 		checksum, err := repo.Checksum()
 		assert.NoErr(t, err)
-		expectedChecksum, _ := getSha256([]byte(fmt.Sprintf("%s%s", tags, tags)))
-		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
+		assert.Equal(t, checksum, "b1b1ae17ddc8f83606acb8a175025a264e8634bb174b6e6a5799bdb5d20eaa58", "checksum")
 	})
 
 	t.Run("Checksum - stores the list of tags", func(t *testing.T) {
@@ -776,43 +872,15 @@ func Test_OCIRegistry(t *testing.T) {
 			RepoInternal: &models.RepoInternal{
 				URL: "http://oci-test",
 			},
+			ociCli: &fakeOCIAPICli{
+				tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
+			},
 		}
-		netClient = &goodChecksumHTTPClient{}
 		_, err := emptyRepo.Checksum()
 		assert.NoErr(t, err)
 		assert.Equal(t, emptyRepo.tags, map[string]TagList{
-			"apache": {Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}},
+			"apache": {Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
 		}, "expected tags")
-	})
-
-	t.Run("Checksum with auth - success", func(t *testing.T) {
-		authRepo := OCIRegistry{
-			repositories: []string{"apache", "jenkins"},
-			RepoInternal: &models.RepoInternal{
-				URL:                 "http://oci-test",
-				AuthorizationHeader: "Bearer wrong",
-			},
-		}
-
-		netClient = &authenticatedChecksumHTTPClient{}
-		_, err := authRepo.Checksum()
-		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
-	})
-
-	t.Run("Checksum with auth - success", func(t *testing.T) {
-		authRepo := OCIRegistry{
-			repositories: []string{"apache", "jenkins"},
-			RepoInternal: &models.RepoInternal{
-				URL:                 "http://oci-test",
-				AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient",
-			},
-		}
-
-		netClient = &authenticatedChecksumHTTPClient{}
-		checksum, err := authRepo.Checksum()
-		assert.NoErr(t, err)
-		expectedChecksum, _ := getSha256([]byte(fmt.Sprintf("%s%s", tags, tags)))
-		assert.Equal(t, checksum, expectedChecksum, "expected checksum")
 	})
 
 	chartYAML := `
@@ -847,7 +915,7 @@ version: 1.0.0
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{URL: "http://oci-test/test"},
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -877,7 +945,7 @@ version: 1.0.0
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{URL: "http://oci-test/test"},
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
 					Maintainers: []chart.Maintainer{},
 					ChartVersions: []models.ChartVersion{
 						{
@@ -900,7 +968,7 @@ version: 1.0.0
 
 			chartsRepo := OCIRegistry{
 				repositories: []string{"kubeapps"},
-				RepoInternal: &models.RepoInternal{URL: "http://oci-test/test"},
+				RepoInternal: &models.RepoInternal{Name: "test", URL: "http://oci-test/test"},
 				tags: map[string]TagList{
 					"kubeapps": {Name: "test/kubeapps", Tags: []string{"1.0.0"}},
 				},
@@ -982,6 +1050,16 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 			},
 			&artifactFiles{
 				Readme: string(make([]byte, 1048577)),
+			},
+		},
+		{
+			"It should ignore nested files",
+			[]tarballFile{
+				{Name: "other/README.md", Body: "bad"},
+				{Name: "README.md", Body: "good"},
+			},
+			&artifactFiles{
+				Readme: "good",
 			},
 		},
 	}
