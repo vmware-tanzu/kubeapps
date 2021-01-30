@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -69,6 +70,8 @@ const (
 	// MessageResourceSynced is the message used for an Event fired when an
 	// AppRepsitory is synced successfully
 	MessageResourceSynced = "AppRepository synced successfully"
+	//DefaultLifeTimeTTL max sync lifetime job //https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
+	DefaultLifeTimeTTL = 3600
 )
 
 // Controller is the controller implementation for AppRepository resources
@@ -507,7 +510,8 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
 
 	return batchv1.JobSpec{
-		Template: podTemplateSpec,
+		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
+		Template:                podTemplateSpec,
 	}
 }
 
@@ -526,6 +530,7 @@ func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config)
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
 func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
 	return batchv1.JobSpec{
+		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				// If there's an issue, delay till the next cron
@@ -562,6 +567,24 @@ func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
 		LabelRepoName:      apprepo.GetName(),
 		LabelRepoNamespace: apprepo.GetNamespace(),
 	}
+}
+
+// ttlLifetimeJobs return time to live set by user if is nill return default
+func ttlLifetimeJobs(config Config) *int32 {
+	var result int32
+
+	if config.TTLSecondsAfterFinished == "" {
+		result = int32(DefaultLifeTimeTTL)
+		return &result
+	}
+	configTTL, err := strconv.ParseInt(config.TTLSecondsAfterFinished, 10, 32)
+	if err != nil {
+		//use the default
+		result = int32(DefaultLifeTimeTTL)
+	} else {
+		result = int32(configTTL)
+	}
+	return &result
 }
 
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
