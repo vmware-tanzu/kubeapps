@@ -37,6 +37,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
@@ -254,7 +255,11 @@ func doReq(url string, headers map[string]string) ([]byte, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request failed: %v", err)
+		errC, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read error content: %v", err)
+		}
+		return nil, fmt.Errorf("request failed: %v", string(errC))
 	}
 
 	return ioutil.ReadAll(res.Body)
@@ -528,10 +533,16 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
 		return nil, err
 	}
+	headers := http.Header{}
+	if authorizationHeader != "" {
+		headers["Authorization"] = []string{authorizationHeader}
+	}
+	ociResolver := docker.NewResolver(docker.ResolverOptions{Headers: headers})
+
 	return &OCIRegistry{
 		repositories: ociRepos,
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
-		puller:       &ociPuller{},
+		puller:       &ociPuller{resolver: ociResolver},
 		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url},
 	}, nil
 }

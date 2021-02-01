@@ -31,6 +31,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -49,11 +50,16 @@ var validRepoIndexYAML = string(validRepoIndexYAMLBytes)
 
 var invalidRepoIndexYAML = "invalid"
 
-type badHTTPClient struct{}
+type badHTTPClient struct {
+	errMsg string
+}
 
 func (h *badHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 	w.WriteHeader(500)
+	if len(h.errMsg) > 0 {
+		w.Write([]byte(h.errMsg))
+	}
 	return w.Result(), nil
 }
 
@@ -190,6 +196,19 @@ func Test_syncURLInvalidity(t *testing.T) {
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
+}
+
+func Test_getOCIRepo(t *testing.T) {
+	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
+		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{})
+		// The header property is private so we need to use reflect to get its value
+		resolver := repo.(*OCIRegistry).puller.(*ociPuller).resolver
+		resolverValue := reflect.ValueOf(resolver)
+		headerValue := reflect.Indirect(resolverValue).FieldByName("header")
+		if !strings.Contains(fmt.Sprintf("%v", headerValue), "Authorization:[Basic auth]") {
+			t.Error("Missing authorization header")
+		}
+	})
 }
 
 func Test_fetchRepoIndex(t *testing.T) {
@@ -752,9 +771,11 @@ func Test_ociAPICli(t *testing.T) {
 	}
 
 	t.Run("TagList - failed request", func(t *testing.T) {
-		netClient = &badHTTPClient{}
+		netClient = &badHTTPClient{
+			errMsg: "forbidden",
+		}
 		_, err := apiCli.TagList("apache")
-		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+		assert.Err(t, fmt.Errorf("request failed: forbidden"), err)
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
@@ -776,7 +797,7 @@ func Test_ociAPICli(t *testing.T) {
 		}
 		netClient = &authenticatedOCIAPIHTTPClient{}
 		_, err := apiCli.TagList("apache")
-		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+		assert.Err(t, fmt.Errorf("request failed: "), err)
 	})
 
 	t.Run("TagList with auth - success", func(t *testing.T) {
@@ -798,7 +819,7 @@ func Test_ociAPICli(t *testing.T) {
 	t.Run("FilterChartTags - failed request", func(t *testing.T) {
 		netClient = &badHTTPClient{}
 		err := apiCli.FilterChartTags(&TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}})
-		assert.Err(t, fmt.Errorf("request failed: %v", nil), err)
+		assert.Err(t, fmt.Errorf("request failed: "), err)
 	})
 
 	t.Run("FilterChartTags - successful request", func(t *testing.T) {
