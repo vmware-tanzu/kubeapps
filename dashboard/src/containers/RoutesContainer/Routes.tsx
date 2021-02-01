@@ -4,6 +4,7 @@ import AppRepoList from "components/Config/AppRepoList";
 import LoadingWrapper from "components/LoadingWrapper";
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
+import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
 import AppNewContainer from "../../containers/AppNewContainer";
@@ -41,6 +42,7 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
   "/c/:cluster/ns/:namespace/config/repos": AppRepoList,
+  "/docs": ApiDocs,
 } as const;
 
 // Public routes that don't require authentication

@@ -45,6 +45,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
+	h3chart "helm.sh/helm/v3/pkg/chart"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	helmrepo "k8s.io/helm/pkg/repo"
 )
 
@@ -227,7 +229,8 @@ type TagList struct {
 type OCIRegistry struct {
 	repositories []string
 	*models.RepoInternal
-	tags map[string]TagList
+	tags   map[string]TagList
+	puller chartPuller
 }
 
 func doReq(url, authHeader string) ([]byte, error) {
@@ -358,17 +361,83 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 
 // Charts retrieve the list of charts exposed in the repo
 func (r *OCIRegistry) Charts() ([]models.Chart, error) {
-	// TBD
-	return []models.Chart{}, nil
+	result := []models.Chart{}
+	url, err := parseRepoURL(r.RepoInternal.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, appName := range r.repositories {
+		chartInfo := models.Chart{}
+		firstTag := true
+		for _, tag := range r.tags[appName].Tags {
+			// Pull Chart
+			// TODO: Run in parallel
+			ref := path.Join(url.Host, url.Path, fmt.Sprintf("%s:%s", appName, tag))
+			chartBuffer, digest, err := r.puller.pullOCIChart(ref)
+			if err != nil {
+				return nil, err
+			}
+
+			// Extract
+			files, err := extractFilesFromBuffer(chartBuffer)
+			if err != nil {
+				return nil, err
+			}
+			chartMetadata := h3chart.Metadata{}
+			err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
+			if err != nil {
+				return nil, err
+			}
+
+			// Format Data
+			chartVersion := models.ChartVersion{
+				Version:    chartMetadata.Version,
+				AppVersion: chartMetadata.AppVersion,
+				Digest:     digest,
+				URLs:       chartMetadata.Sources,
+				Readme:     files.Readme,
+				Values:     files.Values,
+				Schema:     files.Schema,
+			}
+			if firstTag {
+				firstTag = false
+				maintainers := []chart.Maintainer{}
+				for _, m := range chartMetadata.Maintainers {
+					maintainers = append(maintainers, chart.Maintainer{
+						Name:  m.Name,
+						Email: m.Email,
+						Url:   m.URL,
+					})
+				}
+				chartInfo = models.Chart{
+					ID:            path.Join(strings.TrimPrefix(url.Path, "/"), appName),
+					Name:          appName,
+					Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
+					Description:   chartMetadata.Description,
+					Home:          chartMetadata.Home,
+					Keywords:      chartMetadata.Keywords,
+					Maintainers:   maintainers,
+					Sources:       chartMetadata.Sources,
+					Icon:          chartMetadata.Icon,
+					Category:      chartMetadata.Annotations["category"],
+					ChartVersions: []models.ChartVersion{chartVersion},
+				}
+			} else {
+				chartInfo.ChartVersions = append(chartInfo.ChartVersions, chartVersion)
+			}
+		}
+		result = append(result, chartInfo)
+	}
+	return result, nil
 }
 
-// FetchFiles retrieves the important files of a chart and version from the repo
+// FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
 func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
-	// TBD
 	return map[string]string{
-		values: "",
-		readme: "",
-		schema: "",
+		values: cv.Values,
+		readme: cv.Readme,
+		schema: cv.Schema,
 	}, nil
 }
 
@@ -396,6 +465,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 	return &OCIRegistry{
 		repositories: ociRepos,
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
+		puller:       &ociPuller{},
 	}, nil
 }
 

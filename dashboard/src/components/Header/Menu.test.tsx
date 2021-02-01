@@ -42,7 +42,7 @@ it("opens the dropdown menu", () => {
   wrapper.update();
   expect(wrapper.find(".dropdown")).toHaveClassName("open");
   // It render links for AppRepositories and operators
-  expect(wrapper.find(Link)).toHaveLength(2);
+  expect(wrapper.find(Link)).toHaveLength(3);
 });
 
 it("logs out", () => {

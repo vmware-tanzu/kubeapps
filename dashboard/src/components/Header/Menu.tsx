@@ -86,6 +86,11 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 .
                 <br />
                 {appVersion}
+                <br />
+                <Link to={"/docs"}>
+                  Kubeapps API docs{" "}
+                  <CdsIcon size="sm" shape="network-globe" inverse={true} solid={true} />
+                </Link>
               </div>
               <div className="dropdown-menu-padding logout-button">
                 <CdsButton status="primary" size="sm" action="outline" onClick={logout}>
