@@ -567,7 +567,7 @@ func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
 	}
 }
 
-// ttlLifetimeJobs return time to live set by user if is nill return default
+// ttlLifetimeJobs return time to live set by user otherwise return nil
 func ttlLifetimeJobs(config Config) *int32 {
 	if config.TTLSecondsAfterFinished != "" {
 		configTTL, err := strconv.ParseInt(config.TTLSecondsAfterFinished, 10, 32)
