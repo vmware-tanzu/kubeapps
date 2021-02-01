@@ -255,16 +255,11 @@ func doReq(url string, headers map[string]string) ([]byte, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		if err == nil {
-			errC, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read error content: %v", err)
-			}
-			if len(errC) > 0 {
-				return nil, fmt.Errorf("request failed: %v", string(errC))
-			}
+		errC, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read error content: %v", err)
 		}
-		return nil, fmt.Errorf("request failed: %v", err)
+		return nil, fmt.Errorf("request failed: %v", string(errC))
 	}
 
 	return ioutil.ReadAll(res.Body)
