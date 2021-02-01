@@ -1937,7 +1937,7 @@ components:
       type: object
       additionalProperties: false
       properties:
-        nareleaseNameme:
+        releaseName:
           type: string
         version:
           type: string
@@ -2124,7 +2124,7 @@ components:
       additionalProperties: false
       properties:
         annotations:
-          type: string
+          type: object
         apiVersion:
           type: string
         appVersion:
@@ -2140,9 +2140,7 @@ components:
         home:
           type: string
         icon:
-          type: array
-          items: 
-            type: string
+          type: string
         kubeVersion:
           type: string
         maintainers:
