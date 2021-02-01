@@ -88,17 +88,6 @@ data:
       }
       {{- end }}
 
-      # TODO: The following location is left for backwards compat but will no longer
-      # be needed once clients are sending the cluster name.
-      # Using regexp match instead of prefix one because the application can be
-      # deployed under a specific path i.e /kubeapps
-      location ~* /api/kube {
-        rewrite /api/kube/(.*) /$1 break;
-        rewrite /api/kube / break;
-        proxy_pass https://kubernetes.default;
-        include "./server_blocks/k8s-api-proxy.conf";
-      }
-
       # Forward '/api/assetsvc' to '/assetsvc'
       # but preserving the encoding (eg. '%2F' is not converted to '/')
       # see https://serverfault.com/a/906479
@@ -117,12 +106,12 @@ data:
         proxy_pass {{ include "kubeapps.frontend-config.proxy_pass" . -}};
       }
 
-      location ~* /api/tiller-deploy {
+      location ~* /api/kubeops {
         # Keep the connection open with the API server even if idle (the default is 60 seconds)
         # Setting it to 10 minutes which should be enough for our current use case of deploying/upgrading/deleting apps
         proxy_read_timeout 10m;
-        rewrite /api/tiller-deploy/(.*) /$1 break;
-        rewrite /api/tiller-deploy / break;
+        rewrite /api/kubeops/(.*) /$1 break;
+        rewrite /api/kubeops / break;
         proxy_pass {{ include "kubeapps.frontend-config.proxy_pass" . -}};
 
         {{- if .Values.frontend.proxypassAccessTokenAsBearer }}

@@ -3,7 +3,7 @@ import { axiosWithAuth } from "./AxiosInstance";
 import { hapi } from "./hapi/release";
 import { IAppOverview, IChartVersion } from "./types";
 
-export const KUBEOPS_ROOT_URL = "api/tiller-deploy/v1";
+export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
 
 export class App {
   public static async create(
