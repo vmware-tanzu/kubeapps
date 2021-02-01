@@ -1,4 +1,4 @@
-package main
+package helm
 
 import (
 	"bytes"
@@ -49,19 +49,21 @@ func KnownMediaTypes() []string {
 	}
 }
 
-type chartPuller interface {
-	pullOCIChart(ociFullName string) (*bytes.Buffer, string, error)
+// ChartPuller interface to pull a chart from an OCI registry
+type ChartPuller interface {
+	PullOCIChart(ociFullName string) (*bytes.Buffer, string, error)
 }
 
-type ociPuller struct {
-	resolver remotes.Resolver
+// OCIPuller implements ChartPuller
+type OCIPuller struct {
+	Resolver remotes.Resolver
 }
 
-// Code from: https://github.com/helm/helm/blob/fee2257e3493e9d06ca6caa4be7ef7660842cbdb/internal/experimental/registry/client.go
-func (p *ociPuller) pullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
+// PullOCIChart Code from: https://github.com/helm/helm/blob/fee2257e3493e9d06ca6caa4be7ef7660842cbdb/internal/experimental/registry/client.go
+func (p *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
 	store := content.NewMemoryStore()
 
-	desc, layerDescriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.DebugLevel), p.resolver, ociFullName, store,
+	desc, layerDescriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.DebugLevel), p.Resolver, ociFullName, store,
 		oras.WithPullEmptyNameAllowed(),
 		oras.WithAllowedMediaTypes(KnownMediaTypes()))
 	if err != nil {

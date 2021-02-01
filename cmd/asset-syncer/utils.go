@@ -43,6 +43,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
@@ -231,7 +232,7 @@ type OCIRegistry struct {
 	repositories []string
 	*models.RepoInternal
 	tags   map[string]TagList
-	puller chartPuller
+	puller helm.ChartPuller
 	ociCli ociAPI
 }
 
@@ -326,7 +327,7 @@ func (o *ociAPICli) FilterChartTags(tagList *TagList) error {
 		if err != nil {
 			return err
 		}
-		if manifest.Config.MediaType == HelmChartConfigMediaType {
+		if manifest.Config.MediaType == helm.HelmChartConfigMediaType {
 			chartTags = append(chartTags, tag)
 		}
 	}
@@ -445,7 +446,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 			// Pull Chart
 			// TODO: Run in parallel
 			ref := path.Join(url.Host, url.Path, fmt.Sprintf("%s:%s", appName, tag))
-			chartBuffer, digest, err := r.puller.pullOCIChart(ref)
+			chartBuffer, digest, err := r.puller.PullOCIChart(ref)
 			if err != nil {
 				return nil, err
 			}
@@ -542,7 +543,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 	return &OCIRegistry{
 		repositories: ociRepos,
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
-		puller:       &ociPuller{resolver: ociResolver},
+		puller:       &helm.OCIPuller{Resolver: ociResolver},
 		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url},
 	}, nil
 }
