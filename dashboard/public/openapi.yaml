@@ -1109,7 +1109,7 @@ paths:
         - kubeops
       summary: 'ListAppRepositories'
       description: ''
-      operationId: 'ListAppRepositories_ns'
+      operationId: 'ListAppRepositories'
       parameters:
         - name: cluster
           in: path
@@ -1143,7 +1143,7 @@ paths:
         - kubeops
       summary: 'ListAppRepositories'
       description: ''
-      operationId: 'ListAppRepositories_'
+      operationId: 'ListAppRepositories'
       parameters:
         - name: cluster
           in: path
