@@ -70,8 +70,6 @@ const (
 	// MessageResourceSynced is the message used for an Event fired when an
 	// AppRepsitory is synced successfully
 	MessageResourceSynced = "AppRepository synced successfully"
-	//DefaultLifeTimeTTL max sync lifetime job //https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
-	DefaultLifeTimeTTL = 3600
 )
 
 // Controller is the controller implementation for AppRepository resources
@@ -571,20 +569,14 @@ func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
 
 // ttlLifetimeJobs return time to live set by user if is nill return default
 func ttlLifetimeJobs(config Config) *int32 {
-	var result int32
-
-	if config.TTLSecondsAfterFinished == "" {
-		result = int32(DefaultLifeTimeTTL)
-		return &result
+	if config.TTLSecondsAfterFinished != "" {
+		configTTL, err := strconv.ParseInt(config.TTLSecondsAfterFinished, 10, 32)
+		if err == nil {
+			result := int32(configTTL)
+			return &result
+		}
 	}
-	configTTL, err := strconv.ParseInt(config.TTLSecondsAfterFinished, 10, 32)
-	if err != nil {
-		//use the default
-		result = int32(DefaultLifeTimeTTL)
-	} else {
-		result = int32(configTTL)
-	}
-	return &result
+	return nil
 }
 
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
