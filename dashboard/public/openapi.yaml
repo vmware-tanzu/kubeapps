@@ -1141,9 +1141,9 @@ paths:
     get:
       tags:
         - kubeops
-      summary: 'ListAppRepositories'
+      summary: 'ListAppRepositories_ns'
       description: ''
-      operationId: 'ListAppRepositories'
+      operationId: 'ListAppRepositories_ns'
       parameters:
         - name: cluster
           in: path
