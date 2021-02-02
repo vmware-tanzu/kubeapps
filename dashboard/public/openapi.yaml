@@ -1479,7 +1479,7 @@ paths:
                 type: string
 
   # Endpoints defined at cmd/kubeops/main.go
-  '/api/tiller-deploy/v1/clusters/{cluster}/releases':
+  '/api/kubeops/v1/clusters/{cluster}/releases':
     get:
       tags:
         - kubeops
@@ -1518,7 +1518,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/api/tiller-deploy/v1/clusters/{cluster}/namespaces/{namespace}/releases':
+  '/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases':
     get:
       tags:
         - kubeops
@@ -1620,7 +1620,7 @@ paths:
             text/plain:
               schema:
                 type: string
-  '/api/tiller-deploy/v1/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}':
+  '/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}':
     get:
       tags:
         - kubeops
