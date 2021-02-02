@@ -14,6 +14,8 @@ import (
 
 const repoSyncImage = "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
 
+var defaultTTL = int32(3600)
+
 func Test_newCronJob(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -66,6 +68,7 @@ func Test_newCronJob(t *testing.T) {
 					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
+							TTLSecondsAfterFinished: &defaultTTL,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -157,6 +160,7 @@ func Test_newCronJob(t *testing.T) {
 					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
+							TTLSecondsAfterFinished: &defaultTTL,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -245,6 +249,7 @@ func Test_newCronJob(t *testing.T) {
 					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
+							TTLSecondsAfterFinished: &defaultTTL,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -353,6 +358,7 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -420,6 +426,7 @@ func Test_newSyncJob(t *testing.T) {
 					GenerateName: "apprepo-my-other-namespace-sync-my-charts-",
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -501,6 +508,7 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -589,6 +597,7 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -688,6 +697,7 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -803,6 +813,7 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -884,6 +895,7 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -959,6 +971,7 @@ func Test_newCleanupJob(t *testing.T) {
 					Namespace:    "kubeapps",
 				},
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							RestartPolicy: "Never",
@@ -1075,5 +1088,6 @@ func makeDefaultConfig() Config {
 		DBSecretName:             "postgresql",
 		DBSecretKey:              "postgresql-root-password",
 		UserAgentComment:         "",
+		TTLSecondsAfterFinished:  "3600",
 		Crontab:                  "*/10 * * * *"}
 }
