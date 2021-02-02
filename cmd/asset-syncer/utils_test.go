@@ -41,6 +41,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/helm"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
@@ -202,7 +203,7 @@ func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
 		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{})
 		// The header property is private so we need to use reflect to get its value
-		resolver := repo.(*OCIRegistry).puller.(*ociPuller).resolver
+		resolver := repo.(*OCIRegistry).puller.(*helm.OCIPuller).Resolver
 		resolverValue := reflect.ValueOf(resolver)
 		headerValue := reflect.Indirect(resolverValue).FieldByName("header")
 		if !strings.Contains(fmt.Sprintf("%v", headerValue), "Authorization:[Basic auth]") {
@@ -846,7 +847,7 @@ type fakeOCIPuller struct {
 	err      error
 }
 
-func (f *fakeOCIPuller) pullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
+func (f *fakeOCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
 	return f.content, f.checksum, f.err
 }
 
