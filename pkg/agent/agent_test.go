@@ -192,7 +192,7 @@ func TestCreateReleases(t *testing.T) {
 			fakechart := chartFake.FakeChart{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
-			}, nil, false)
+			}, false)
 			// Perform test
 			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch.Helm3Chart, nil)
 			// Check result
@@ -681,7 +681,7 @@ func TestUpgradeRelease(t *testing.T) {
 			fakechart := chartFake.FakeChart{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
-			}, nil, false)
+			}, false)
 			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch.Helm3Chart, nil)
 			// Check for errors
 			if got, want := err != nil, tc.shouldFail; got != want {

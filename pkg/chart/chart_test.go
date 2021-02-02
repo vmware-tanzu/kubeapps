@@ -171,8 +171,7 @@ func TestParseDetails(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ch := Client{}
-			details, err := ch.ParseDetails([]byte(tc.data))
+			details, err := ParseDetails([]byte(tc.data))
 
 			if tc.err {
 				if err == nil {
@@ -237,9 +236,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{customCASecretName},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -256,9 +254,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"other-secret-name"},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -275,9 +272,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{authHeaderSecretName},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: authHeaderSecretName},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -294,9 +290,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"other-secret-name"},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -307,7 +302,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		// The fake k8s client will contain secret for the CA and header respectively.
-		secrets := []*corev1.Secret{&corev1.Secret{
+		secrets := []*corev1.Secret{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      customCASecretName,
 				Namespace: appRepoNamespace,
@@ -315,7 +310,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(customCASecretName),
 			},
-		}, &corev1.Secret{
+		}, {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      authHeaderSecretName,
 				Namespace: appRepoNamespace,
@@ -325,7 +320,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 		}}
 
-		apprepos := []*appRepov1.AppRepository{&appRepov1.AppRepository{
+		apprepos := []*appRepov1.AppRepository{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tc.details.AppRepositoryResourceName,
 				Namespace: appRepoNamespace,
@@ -333,13 +328,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			Spec: tc.appRepoSpec,
 		}}
 
-		chUtils := Client{
-			appRepoHandler:    &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos},
-			kubeappsNamespace: metav1.NamespaceSystem,
-		}
-
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, caCertSecret, authSecret, err := chUtils.parseDetailsForHTTPClient(tc.details, "dummy-user-token")
+			appRepo, caCertSecret, authSecret, err := parseDetailsForClient(tc.details, "dummy-user-token", "", metav1.NamespaceSystem, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos})
 
 			if err != nil {
 				if tc.errorExpected {
@@ -500,7 +490,8 @@ func TestGetChart(t *testing.T) {
 					},
 				},
 			}
-			ch, err := chUtils.GetChart(&target, httpClient, tc.requireV1Support)
+			chUtils.netClient = httpClient
+			ch, err := chUtils.GetChart(&target, tc.requireV1Support)
 
 			if err != nil {
 				if tc.errorExpected {
@@ -677,7 +668,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns an error if the secret is not a dockerConfigJSON type",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -694,7 +685,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns an error if the secret data does not have .dockerconfigjson key",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -711,7 +702,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns an error if the secret .dockerconfigjson value is not json decodable",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -728,7 +719,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns the registry secrets per domain",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -747,7 +738,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it includes secrets for multiple servers",
 			secretNames: []string{"bitnami-repo1", "bitnami-repo2"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo1",
 						Namespace: namespace,
@@ -757,7 +748,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 						dockerConfigJSONKey: []byte(indexDockerIOCred),
 					},
 				},
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo2",
 						Namespace: namespace,

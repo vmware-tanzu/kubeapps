@@ -74,22 +74,23 @@ func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver, requireV1Suppor
 	if err != nil {
 		return nil, nil, err
 	}
-	chartDetails, err := cu.ParseDetails(body)
+	chartDetails, err := chartUtils.ParseDetails(body)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	netClient, err := cu.InitNetClient(chartDetails, auth.ExtractToken(req.Header.Get("Authorization")))
+	err = cu.InitClient(chartDetails, auth.ExtractToken(req.Header.Get("Authorization")))
 	if err != nil {
 		return nil, nil, err
 	}
-	ch, err := cu.GetChart(chartDetails, netClient, requireV1Support)
+	ch, err := cu.GetChart(chartDetails, requireV1Support)
 	if err != nil {
 		return nil, nil, err
 	}
 	return chartDetails, ch, nil
 }
 
+// QueryParamIsTruthy returns true if the req param is "1" or "true"
 func QueryParamIsTruthy(param string, req *http.Request) bool {
 	value := req.URL.Query().Get(param)
 	return value == "1" || value == "true"

@@ -88,9 +88,8 @@ type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
 
 // Resolver for exposed funcs
 type Resolver interface {
-	ParseDetails(data []byte) (*Details, error)
-	GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
-	InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error)
+	InitClient(details *Details, userAuthToken string) error
+	GetChart(details *Details, requireV1Support bool) (*ChartMultiVersion, error)
 	RegistrySecretsPerDomain() map[string]string
 }
 
@@ -102,10 +101,11 @@ type Client struct {
 	kubeappsNamespace        string
 	appRepo                  *appRepov1.AppRepository
 	registrySecretsPerDomain map[string]string
+	netClient                kube.HTTPClient
 }
 
 // NewChartClient returns a new ChartClient
-func NewChartClient(appRepoHandler kube.AuthHandler, kubeappsCluster, kubeappsNamespace, userAgent string) *Client {
+func NewChartClient(appRepoHandler kube.AuthHandler, kubeappsCluster, kubeappsNamespace, userAgent string) Resolver {
 	return &Client{
 		appRepoHandler:    appRepoHandler,
 		userAgent:         userAgent,
@@ -261,7 +261,7 @@ func fetchChart(netClient *kube.HTTPClient, chartURL string, requireV1Support bo
 }
 
 // ParseDetails return Chart details
-func (c *Client) ParseDetails(data []byte) (*Details, error) {
+func ParseDetails(data []byte) (*Details, error) {
 	details := &Details{}
 	err := json.Unmarshal(data, details)
 	if err != nil {
@@ -279,17 +279,17 @@ func (c *Client) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
-func (c *Client) parseDetailsForHTTPClient(details *Details, userAuthToken string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
+func parseDetailsForClient(details *Details, userAuthToken, cluster, namespace string, handler kube.AuthHandler) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	client, err := c.appRepoHandler.AsUser(userAuthToken, c.kubeappsCluster)
+	client, err := handler.AsUser(userAuthToken, cluster)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
 	}
-	if details.AppRepositoryResourceNamespace == c.kubeappsNamespace {
+	if details.AppRepositoryResourceNamespace == namespace {
 		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
 		// AppRepositories are only allowed in the default cluster for the moment
-		client, err = c.appRepoHandler.AsSVC(c.kubeappsCluster)
+		client, err = handler.AsSVC(cluster)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
 		}
@@ -298,7 +298,6 @@ func (c *Client) parseDetailsForHTTPClient(details *Details, userAuthToken strin
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
-	c.appRepo = appRepo
 	auth := appRepo.Spec.Auth
 
 	var caCertSecret *corev1.Secret
@@ -322,28 +321,30 @@ func (c *Client) parseDetailsForHTTPClient(details *Details, userAuthToken strin
 	return appRepo, caCertSecret, authSecret, nil
 }
 
-// InitNetClient returns an HTTP client based on the chart details loading a
+// InitClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *Client) InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error) {
-	appRepo, caCertSecret, authSecret, err := c.parseDetailsForHTTPClient(details, userAuthToken)
+func (c *Client) InitClient(details *Details, userAuthToken string) error {
+	appRepo, caCertSecret, authSecret, err := parseDetailsForClient(details, userAuthToken, c.kubeappsCluster, c.kubeappsNamespace, c.appRepoHandler)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	c.appRepo = appRepo
 
 	c.registrySecretsPerDomain, err = getRegistrySecretsPerDomain(c.appRepo.Spec.DockerRegistrySecrets, c.kubeappsCluster, details.AppRepositoryResourceNamespace, userAuthToken, c.appRepoHandler)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return kube.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
+	c.netClient, err = kube.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
+	return err
 }
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *Client) GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error) {
+func (c *Client) GetChart(details *Details, requireV1Support bool) (*ChartMultiVersion, error) {
+	var chart *ChartMultiVersion
 	indexURL := strings.TrimSuffix(strings.TrimSpace(c.appRepo.Spec.URL), "/") + "/index.yaml"
-
-	repoIndex, err := fetchRepoIndex(&netClient, indexURL)
+	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +355,7 @@ func (c *Client) GetChart(details *Details, netClient kube.HTTPClient, requireV1
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chart, err := fetchChart(&netClient, chartURL, requireV1Support)
+	chart, err = fetchChart(&c.netClient, chartURL, requireV1Support)
 	if err != nil {
 		return nil, err
 	}
