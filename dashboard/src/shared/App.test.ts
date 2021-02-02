@@ -150,7 +150,7 @@ describe("App", () => {
       axiosWithAuth.put = jest.fn().mockReturnValue({ data: "ok" });
       expect(await App.rollback("default-c", "default-ns", "foo", 1)).toBe("ok");
       expect(axiosWithAuth.put).toBeCalledWith(
-        "api/tiller-deploy/v1/clusters/default-c/namespaces/default-ns/releases/foo",
+        "api/kubeops/v1/clusters/default-c/namespaces/default-ns/releases/foo",
         {},
         { params: { action: "rollback", revision: 1 } },
       );
