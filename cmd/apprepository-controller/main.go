@@ -51,6 +51,7 @@ type Config struct {
 	DBSecretKey              string
 	UserAgentComment         string
 	Crontab                  string
+	TTLSecondsAfterFinished  string
 	ReposPerNamespace        bool
 
 	// Args are the positional (non-flag) command-line arguments.
@@ -80,6 +81,8 @@ func parseFlags(progname string, args []string) (config *Config, output string, 
 	flagSet.StringVar(&conf.DBSecretKey, "database-secret-key", "postgresql-root-password", "Kubernetes secret key used for database credentials")
 	flagSet.StringVar(&conf.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	flagSet.StringVar(&conf.Crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
+	//DefaultLifeTimeTTL max sync lifetime job //https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
+	flagSet.StringVar(&conf.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
 
 	err = flagSet.Parse(args)
 	if err != nil {
@@ -99,20 +102,21 @@ func main() {
 	}
 
 	log.WithFields(log.Fields{
-		"kubeconfig":                  conf.Kubeconfig,
-		"master":                      conf.MasterURL,
-		"repo-sync-image":             conf.RepoSyncImage,
-		"repo-sync-image-pullsecrets": conf.RepoSyncImagePullSecrets,
-		"repo-sync-cmd":               conf.RepoSyncCommand,
-		"namespace":                   conf.KubeappsNamespace,
-		"repos-per-namespace":         conf.ReposPerNamespace,
-		"database-url":                conf.DBURL,
-		"database-user":               conf.DBUser,
-		"database-name":               conf.DBName,
-		"database-secret-name":        conf.DBSecretName,
-		"database-secret-key":         conf.DBSecretKey,
-		"user-agent-comment":          conf.UserAgentComment,
-		"crontab":                     conf.Crontab,
+		"kubeconfig":                     conf.Kubeconfig,
+		"master":                         conf.MasterURL,
+		"repo-sync-image":                conf.RepoSyncImage,
+		"repo-sync-image-pullsecrets":    conf.RepoSyncImagePullSecrets,
+		"repo-sync-cmd":                  conf.RepoSyncCommand,
+		"namespace":                      conf.KubeappsNamespace,
+		"repos-per-namespace":            conf.ReposPerNamespace,
+		"database-url":                   conf.DBURL,
+		"database-user":                  conf.DBUser,
+		"database-name":                  conf.DBName,
+		"database-secret-name":           conf.DBSecretName,
+		"database-secret-key":            conf.DBSecretKey,
+		"user-agent-comment":             conf.UserAgentComment,
+		"crontab":                        conf.Crontab,
+		"ttl-lifetime-afterfinished-job": conf.TTLSecondsAfterFinished,
 	}).Info("apprepository-controller configured with these args:")
 
 	// set up signals so we handle the first shutdown signal gracefully

@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -507,7 +508,8 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
 
 	return batchv1.JobSpec{
-		Template: podTemplateSpec,
+		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
+		Template:                podTemplateSpec,
 	}
 }
 
@@ -526,6 +528,7 @@ func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config)
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
 func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
 	return batchv1.JobSpec{
+		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				// If there's an issue, delay till the next cron
@@ -562,6 +565,18 @@ func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
 		LabelRepoName:      apprepo.GetName(),
 		LabelRepoNamespace: apprepo.GetNamespace(),
 	}
+}
+
+// ttlLifetimeJobs return time to live set by user otherwise return nil
+func ttlLifetimeJobs(config Config) *int32 {
+	if config.TTLSecondsAfterFinished != "" {
+		configTTL, err := strconv.ParseInt(config.TTLSecondsAfterFinished, 10, 32)
+		if err == nil {
+			result := int32(configTTL)
+			return &result
+		}
+	}
+	return nil
 }
 
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
