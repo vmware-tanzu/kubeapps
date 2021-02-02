@@ -140,7 +140,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Chart'
+                      $ref: '#/components/schemas/ChartResponse'
                   meta:
                     type: object
                     properties:
@@ -419,7 +419,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Chart'
+                      $ref: '#/components/schemas/ChartResponse'
                   meta:
                     type: object
                     properties:
@@ -481,7 +481,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/Chart'
+                    $ref: '#/components/schemas/ChartResponse'
         '404':
           description: Not found
           content:
@@ -826,7 +826,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/logo':
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/logo':
     get:
       tags:
         - assetsvc
@@ -1909,6 +1909,29 @@ components:
           type: string
         values:
           type: string
+    # cmd/assetsvc/handler.go
+    ChartResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        attributes:
+          $ref: '#/components/schemas/Chart'
+        links:
+          type: object
+        relationships:
+          type: object
+          properties:
+            data:
+              type: object
+            links:
+              type: object
+              properties:
+                self:
+                  type: string
     # cmd/assetsvc/handler.go
     ChartVersionResponse:
       type: object
