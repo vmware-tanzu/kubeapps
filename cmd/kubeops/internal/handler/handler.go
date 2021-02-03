@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -179,18 +180,18 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	}
 	kubeCli, err := chartUtils.GetClient(
 		cfg.Token,
-		cfg.Cluster,
 		cfg.Namespace,
-		cfg.Options.KubeappsNamespace,
 		cfg.KubeHandler,
+		cfg.Cluster,
+		cfg.Options.KubeappsNamespace,
 	)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	appRepo, err := chartUtils.GetAppRepo(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, kubeCli)
+	appRepo, err := kubeCli.GetAppRepository(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
-		returnErrMessage(err, w)
+		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
 	}
 	chartMulti, err := handlerutil.GetChart(
@@ -244,14 +245,20 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
-	kubeCli, err := chartUtils.GetClient(cfg.Token, cfg.Cluster, cfg.Namespace, cfg.Options.KubeappsNamespace, cfg.KubeHandler)
+	kubeCli, err := chartUtils.GetClient(
+		cfg.Token,
+		cfg.Namespace,
+		cfg.KubeHandler,
+		cfg.Cluster,
+		cfg.Options.KubeappsNamespace,
+	)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	appRepo, err := chartUtils.GetAppRepo(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, kubeCli)
+	appRepo, err := kubeCli.GetAppRepository(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
-		returnErrMessage(err, w)
+		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
 	}
 	chartMulti, err := handlerutil.GetChart(

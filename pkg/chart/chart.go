@@ -271,7 +271,7 @@ func ParseDetails(data []byte) (*Details, error) {
 }
 
 // GetClient returns a client handler based on the cluster and namespace
-func GetClient(userAuthToken, cluster, namespace, kubeappsNamespace string, handler kube.AuthHandler) (kube.AuthedHandler, error) {
+func GetClient(userAuthToken, namespace string, handler kube.AuthHandler, cluster, kubeappsNamespace string) (kube.AuthedHandler, error) {
 	client, err := handler.AsUser(userAuthToken, cluster)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create clientset: %v", err)
@@ -285,17 +285,6 @@ func GetClient(userAuthToken, cluster, namespace, kubeappsNamespace string, hand
 		}
 	}
 	return client, nil
-}
-
-// GetAppRepo returns application repository
-func GetAppRepo(name, namespace string, client kube.AuthedHandler) (*appRepov1.AppRepository, error) {
-	// We grab the specified app repository (for later access to the repo URL, as well as any specified
-	// auth).
-	appRepo, err := client.GetAppRepository(name, namespace)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get app repository %q: %v", name, err)
-	}
-	return appRepo, nil
 }
 
 func getRepoSecrets(appRepo *appRepov1.AppRepository, client kube.AuthedHandler) (*corev1.Secret, *corev1.Secret, error) {
@@ -360,9 +349,6 @@ func (c *Client) GetChart(details *Details, repoURL string, requireV1Support boo
 
 // RegistrySecretsPerDomain checks the app repo and available secrets
 // to return the secret names per registry domain.
-//
-// These are actually calculated during InitNetClient when we already have a
-// k8s client with the user token.
 func RegistrySecretsPerDomain(appRepo *appRepov1.AppRepository, cluster string, userAuthToken string, authHandler kube.AuthHandler) (map[string]string, error) {
 	registrySecretsPerDomain, err := getRegistrySecretsPerDomain(
 		appRepo.Spec.DockerRegistrySecrets,

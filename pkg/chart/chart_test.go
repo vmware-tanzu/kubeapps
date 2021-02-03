@@ -329,18 +329,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		}}
 
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, err := GetAppRepo(
-				tc.details.AppRepositoryResourceName,
-				tc.details.AppRepositoryResourceNamespace,
-				&kube.FakeHandler{Secrets: secrets, AppRepos: apprepos},
-			)
-			if err != nil {
-				if tc.errorExpected {
-					return
-				}
-				t.Fatalf("%+v", err)
-			}
-			caCertSecret, authSecret, err := getRepoSecrets(appRepo, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos})
+			caCertSecret, authSecret, err := getRepoSecrets(apprepos[0], &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos})
 			if err != nil {
 				if tc.errorExpected {
 					return
@@ -358,10 +347,6 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			}
 			if tc.appRepoSpec.Auth.CustomCA != nil && caCertSecret == nil {
 				t.Errorf("Expecting auth secret")
-			}
-			// The client holds a reference to the appRepo.
-			if got, want := appRepo, apprepos[0]; !cmp.Equal(got, want) {
-				t.Errorf(cmp.Diff(got, want))
 			}
 		})
 	}
