@@ -2210,7 +2210,7 @@ components:
         chart:
           type: object
         config:
-          type: object
+          type: string
         manifest:
           type: string
         hooks:
