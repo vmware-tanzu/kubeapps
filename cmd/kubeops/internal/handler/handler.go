@@ -50,7 +50,11 @@ type Options struct {
 type Config struct {
 	ActionConfig *action.Configuration
 	Options      Options
-	ChartClient  chartUtils.Resolver
+	KubeHandler  kube.AuthHandler
+	Resolver     handlerutil.ResolverFactory
+	Cluster      string
+	Namespace    string
+	Token        string
 }
 
 // WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
@@ -104,7 +108,11 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(kubeHandler, options.ClustersConfig.KubeappsClusterName, options.KubeappsNamespace, options.UserAgent),
+				KubeHandler:  kubeHandler,
+				Cluster:      cluster,
+				Namespace:    namespace,
+				Token:        token,
+				Resolver:     &handlerutil.ClientResolver{},
 			}
 			f(cfg, w, req, params)
 		}
@@ -164,7 +172,35 @@ func ListAllReleases(cfg Config, w http.ResponseWriter, req *http.Request, _ han
 
 // CreateRelease creates a release.
 func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
+	chartDetails, err := handlerutil.ParseRequest(req)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	kubeCli, err := chartUtils.GetClient(
+		cfg.Token,
+		cfg.Cluster,
+		cfg.Namespace,
+		cfg.Options.KubeappsNamespace,
+		cfg.KubeHandler,
+	)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	appRepo, err := chartUtils.GetAppRepo(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, kubeCli)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	chartMulti, err := handlerutil.GetChart(
+		chartDetails,
+		appRepo,
+		kubeCli,
+		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+		isV1SupportRequired,
+		cfg.KubeHandler,
+	)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -174,7 +210,12 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, cfg.ChartClient.RegistrySecretsPerDomain())
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo, cfg.Cluster, cfg.Token, cfg.KubeHandler)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -198,14 +239,37 @@ func OperateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 
 func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
-	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
+	chartDetails, err := handlerutil.ParseRequest(req)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	kubeCli, err := chartUtils.GetClient(cfg.Token, cfg.Cluster, cfg.Namespace, cfg.Options.KubeappsNamespace, cfg.KubeHandler)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	appRepo, err := chartUtils.GetAppRepo(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, kubeCli)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	chartMulti, err := handlerutil.GetChart(
+		chartDetails,
+		appRepo,
+		kubeCli,
+		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+		isV1SupportRequired,
+		cfg.KubeHandler,
+	)
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo, cfg.Cluster, cfg.Token, cfg.KubeHandler)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
 
 	ch := chartMulti.Helm3Chart
-	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, cfg.ChartClient.RegistrySecretsPerDomain())
+	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets)
 	if err != nil {
 		returnErrMessage(err, w)
 		return

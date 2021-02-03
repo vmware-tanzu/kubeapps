@@ -17,15 +17,19 @@ limitations under the License.
 package fake
 
 import (
+	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	chart3 "helm.sh/helm/v3/pkg/chart"
 	chart2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/yaml"
 )
 
-type FakeChart struct{}
+// Chart implements Resolver inteface
+type Chart struct{}
 
-func (f *FakeChart) GetChart(details *chartUtils.Details, requireV1Support bool) (*chartUtils.ChartMultiVersion, error) {
+// GetChart fake
+func (f *Chart) GetChart(details *chartUtils.Details, repoURL string, requireV1Support bool) (*chartUtils.ChartMultiVersion, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
@@ -58,11 +62,6 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 }
 
 // InitClient fake
-func (f *FakeChart) InitClient(details *chartUtils.Details, userAuthToken string) error {
-	return nil
-}
-
-// RegistrySecretsPerDomain fake
-func (f *FakeChart) RegistrySecretsPerDomain() map[string]string {
+func (f *Chart) InitClient(appRepo *appRepov1.AppRepository, client kube.AuthedHandler) error {
 	return nil
 }

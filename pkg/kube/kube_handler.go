@@ -208,13 +208,9 @@ type ValidationResponse struct {
 	Message string `json:"message"`
 }
 
-// This interface is explicitly private so that it cannot be used in function
-// args, so that call-sites cannot accidentally pass a service handler in place
-// of a user handler.
-// TODO(mnelson): We could instead just create a UserHandler interface which embeds
-// this one and adds one method, to force call-sites to explicitly use a UserHandler
-// or ServiceHandler.
-type handler interface {
+// AuthedHandler exposes Kubernetes resources as either a given user or as a service
+// Note: This should be retrieved as the result of AuthHandler
+type AuthedHandler interface {
 	ListAppRepositories(requestNamespace string) (*v1alpha1.AppRepositoryList, error)
 	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
@@ -230,8 +226,8 @@ type handler interface {
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
 type AuthHandler interface {
-	AsUser(token, cluster string) (handler, error)
-	AsSVC(cluster string) (handler, error)
+	AsUser(token, cluster string) (AuthedHandler, error)
+	AsSVC(cluster string) (AuthedHandler, error)
 }
 
 func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Config) (combinedClientsetInterface, error) {
@@ -262,7 +258,7 @@ func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Con
 	return svcClientset, nil
 }
 
-func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
+func (a *kubeHandler) AsUser(token, cluster string) (AuthedHandler, error) {
 	config, err := NewClusterConfig(&a.config, token, cluster, a.clustersConfig)
 	if err != nil {
 		log.Errorf("unable to create config: %v", err)
@@ -287,7 +283,7 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 	}, nil
 }
 
-func (a *kubeHandler) AsSVC(cluster string) (handler, error) {
+func (a *kubeHandler) AsSVC(cluster string) (AuthedHandler, error) {
 	config, err := NewClusterConfig(&a.config, "", cluster, a.clustersConfig)
 	if err != nil {
 		log.Errorf("unable to create svc clientset: %v", err)

@@ -348,7 +348,7 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 					},
 				},
 				"imagePullSecrets": []map[string]interface{}{
-					map[string]interface{}{
+					{
 						"name": "secret-1",
 					},
 				},
@@ -375,7 +375,7 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 					},
 				},
 				"imagePullSecrets": []map[string]interface{}{
-					map[string]interface{}{
+					{
 						"name": "secret-1",
 					},
 				},

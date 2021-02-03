@@ -329,8 +329,18 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		}}
 
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, caCertSecret, authSecret, err := parseDetailsForClient(tc.details, "dummy-user-token", "", metav1.NamespaceSystem, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos})
-
+			appRepo, err := GetAppRepo(
+				tc.details.AppRepositoryResourceName,
+				tc.details.AppRepositoryResourceNamespace,
+				&kube.FakeHandler{Secrets: secrets, AppRepos: apprepos},
+			)
+			if err != nil {
+				if tc.errorExpected {
+					return
+				}
+				t.Fatalf("%+v", err)
+			}
+			caCertSecret, authSecret, err := getRepoSecrets(appRepo, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos})
 			if err != nil {
 				if tc.errorExpected {
 					return
@@ -480,18 +490,9 @@ func TestGetChart(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
 			chUtils := Client{
 				userAgent: tc.userAgent,
-				appRepo: &appRepov1.AppRepository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      repoName,
-						Namespace: metav1.NamespaceSystem,
-					},
-					Spec: appRepov1.AppRepositorySpec{
-						URL: repoURL,
-					},
-				},
 			}
 			chUtils.netClient = httpClient
-			ch, err := chUtils.GetChart(&target, tc.requireV1Support)
+			ch, err := chUtils.GetChart(&target, repoURL, tc.requireV1Support)
 
 			if err != nil {
 				if tc.errorExpected {
@@ -522,8 +523,8 @@ func TestGetChart(t *testing.T) {
 			}
 
 			for i, url := range []string{
-				chUtils.appRepo.Spec.URL + "index.yaml",
-				fmt.Sprintf("%s%s-%s.tgz", chUtils.appRepo.Spec.URL, target.ChartName, target.Version),
+				repoURL + "index.yaml",
+				fmt.Sprintf("%s%s-%s.tgz", repoURL, target.ChartName, target.Version),
 			} {
 				if got, want := requests[i].URL.String(), url; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
