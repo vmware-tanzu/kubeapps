@@ -54,7 +54,6 @@ type Config struct {
 	KubeHandler  kube.AuthHandler
 	Resolver     handlerutil.ResolverFactory
 	Cluster      string
-	Namespace    string
 	Token        string
 }
 
@@ -111,7 +110,6 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				ActionConfig: actionConfig,
 				KubeHandler:  kubeHandler,
 				Cluster:      cluster,
-				Namespace:    namespace,
 				Token:        token,
 				Resolver:     &handlerutil.ClientResolver{},
 			}
@@ -180,7 +178,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	}
 	kubeCli, err := chartUtils.GetClient(
 		cfg.Token,
-		cfg.Namespace,
+		chartDetails.AppRepositoryResourceNamespace,
 		cfg.KubeHandler,
 		cfg.Cluster,
 		cfg.Options.KubeappsNamespace,
@@ -247,7 +245,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	}
 	kubeCli, err := chartUtils.GetClient(
 		cfg.Token,
-		cfg.Namespace,
+		chartDetails.AppRepositoryResourceNamespace,
 		cfg.KubeHandler,
 		cfg.Cluster,
 		cfg.Options.KubeappsNamespace,
