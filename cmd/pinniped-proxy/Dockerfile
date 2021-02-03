@@ -1,7 +1,8 @@
-FROM rust:1.47 as builder
+FROM rust:1.49 as builder
 
 # Create a new project and build pinniped-proxy dependencies only, so that they
-# are built as a layer on their own.
+# are built as a layer on their own, to reduce build times when only our code
+# changes.
 RUN USER=root cargo new --bin pinniped-proxy
 WORKDIR /pinniped-proxy
 COPY ./cmd/pinniped-proxy/Cargo.* ./
@@ -12,12 +13,7 @@ ADD ./cmd/pinniped-proxy ./
 RUN rm ./target/release/deps/pinniped_proxy*
 RUN cargo build --release
 
-# Put it all together on a scratch image.
-# TODO: Turns out we'll need to include libssl on the scratch image, perhaps compiling libssl or copying dyn libs listed by ldd.
-# FROM scratch
-# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-# FROM bitnami/minideb:buster-snapshot-20201121T213529Z
-FROM debian:10.6-slim
+FROM bitnami/minideb:buster-snapshot-20210126T024633Z
 RUN apt-get update && apt-get install -y ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /pinniped-proxy/target/release/pinniped-proxy /pinniped-proxy
 
