@@ -1820,8 +1820,7 @@ components:
       additionalProperties: false
       properties:
         ID:
-          type: integer
-          format: int64
+          type: string
         name:
           type: string
         repo:
@@ -1924,14 +1923,20 @@ components:
           type: object
         relationships:
           type: object
+          additionalProperties: false
           properties:
-            data:
-              type: object
-            links:
-              type: object
-              properties:
-                self:
-                  type: string
+            latestChartVersion:
+               type: object
+               additionalProperties: false
+               properties:
+                data:
+                  $ref: '#/components/schemas/ChartVersion'
+                links:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    self:
+                      type: string
     # cmd/assetsvc/handler.go
     ChartVersionResponse:
       type: object
@@ -1947,14 +1952,20 @@ components:
           type: object
         relationships:
           type: object
+          additionalProperties: false
           properties:
-            data:
-              type: object
-            links:
-              type: object
-              properties:
-                self:
-                  type: string
+            chart:
+               type: object
+               additionalProperties: false
+               properties:
+                data:
+                  $ref: '#/components/schemas/Chart'
+                links:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    self:
+                      type: string
     # pkg/proxy/proxy.go
     AppOverview:
       type: object
