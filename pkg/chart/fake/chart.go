@@ -21,7 +21,6 @@ import (
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	chart3 "helm.sh/helm/v3/pkg/chart"
-	chart2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/yaml"
 )
 
@@ -29,26 +28,16 @@ import (
 type Chart struct{}
 
 // GetChart fake
-func (f *Chart) GetChart(details *chartUtils.Details, repoURL string, requireV1Support bool) (*chartUtils.ChartMultiVersion, error) {
+func (f *Chart) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
 	}
-	return &chartUtils.ChartMultiVersion{
-		Helm2Chart: &chart2.Chart{
-			Metadata: &chart2.Metadata{
-				Name: details.ChartName,
-			},
-			Values: &chart2.Config{
-				Raw: details.Values,
-			},
+	return &chart3.Chart{
+		Metadata: &chart3.Metadata{
+			Name: details.ChartName,
 		},
-		Helm3Chart: &chart3.Chart{
-			Metadata: &chart3.Metadata{
-				Name: details.ChartName,
-			},
-			Values: vals,
-		},
+		Values: vals,
 	}, nil
 }
 

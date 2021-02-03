@@ -29,8 +29,6 @@ const (
 	authUserError  = "Unexpected error while configuring authentication"
 )
 
-const isV1SupportRequired = false
-
 // This type represents the fact that a regular handler cannot actually be created until we have access to the request,
 // because a valid action config (and hence handler config) cannot be created until then.
 // If the handler config were a "this" argument instead of an explicit argument, it would be easy to create a handler with a "zero" config.
@@ -192,12 +190,11 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
 	}
-	chartMulti, err := handlerutil.GetChart(
+	ch, err := handlerutil.GetChart(
 		chartDetails,
 		appRepo,
 		kubeCli,
 		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
-		isV1SupportRequired,
 		cfg.KubeHandler,
 	)
 	if err != nil {
@@ -205,7 +202,6 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		return
 	}
 
-	ch := chartMulti.Helm3Chart
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
@@ -259,12 +255,11 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
 	}
-	chartMulti, err := handlerutil.GetChart(
+	ch, err := handlerutil.GetChart(
 		chartDetails,
 		appRepo,
 		kubeCli,
 		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
-		isV1SupportRequired,
 		cfg.KubeHandler,
 	)
 	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo, cfg.Cluster, cfg.Token, cfg.KubeHandler)
@@ -273,7 +268,6 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		return
 	}
 
-	ch := chartMulti.Helm3Chart
 	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets)
 	if err != nil {
 		returnErrMessage(err, w)

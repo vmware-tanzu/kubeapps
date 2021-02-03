@@ -34,8 +34,6 @@ import (
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
 	corev1 "k8s.io/api/core/v1"
-	helm2loader "k8s.io/helm/pkg/chartutil"
-	helm2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
@@ -74,22 +72,13 @@ type Details struct {
 	Values string `json:"values,omitempty"`
 }
 
-// ChartMultiVersion includes both Helm2Chart and Helm3Chart
-type ChartMultiVersion struct {
-	Helm2Chart *helm2chart.Chart
-	Helm3Chart *helm3chart.Chart
-}
-
-// LoadHelm2Chart should return a helm2 Chart struct from an IOReader
-type LoadHelm2Chart func(in io.Reader) (*helm2chart.Chart, error)
-
-// LoadHelm3Chart returns a helm3 Chart struct from an IOReader
-type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
+// LoadHelmChart returns a helm3 Chart struct from an IOReader
+type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
 
 // Resolver for exposed funcs
 type Resolver interface {
 	InitClient(appRepo *appRepov1.AppRepository, client kube.AuthedHandler) error
-	GetChart(details *Details, repoURL string, requireV1Support bool) (*ChartMultiVersion, error)
+	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
 }
 
 // Client struct contains the clients required to retrieve charts info
@@ -223,7 +212,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *kube.HTTPClient, chartURL string, requireV1Support bool) (*ChartMultiVersion, error) {
+func fetchChart(netClient *kube.HTTPClient, chartURL string) (*helm3chart.Chart, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -237,18 +226,7 @@ func fetchChart(netClient *kube.HTTPClient, chartURL string, requireV1Support bo
 	if err != nil {
 		return nil, err
 	}
-	// We only return an error when loading using the helm2loader (ie. chart v1)
-	// if we require v1 support, otherwise we continue to load using the
-	// helm3 v2 loader.
-	helm2Chart, err := helm2loader.LoadArchive(bytes.NewReader(data))
-	if err != nil && requireV1Support {
-		return nil, err
-	}
-	helm3Chart, err := helm3loader.LoadArchive(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	return &ChartMultiVersion{Helm2Chart: helm2Chart, Helm3Chart: helm3Chart}, nil
+	return helm3loader.LoadArchive(bytes.NewReader(data))
 }
 
 // ParseDetails return Chart details
@@ -325,8 +303,8 @@ func (c *Client) InitClient(appRepo *appRepov1.AppRepository, client kube.Authed
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *Client) GetChart(details *Details, repoURL string, requireV1Support bool) (*ChartMultiVersion, error) {
-	var chart *ChartMultiVersion
+func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+	var chart *helm3chart.Chart
 	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
 	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
 	if err != nil {
@@ -339,7 +317,7 @@ func (c *Client) GetChart(details *Details, repoURL string, requireV1Support boo
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chart, err = fetchChart(&c.netClient, chartURL, requireV1Support)
+	chart, err = fetchChart(&c.netClient, chartURL)
 	if err != nil {
 		return nil, err
 	}
