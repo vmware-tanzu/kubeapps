@@ -9,12 +9,6 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 2
 
-  - package-ecosystem: "npm"
-    directory: "/integration"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 2
-
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
