@@ -38,12 +38,12 @@ type FakeHandler struct {
 }
 
 // AsUser fakes user auth
-func (c *FakeHandler) AsUser(token, cluster string) (AuthedHandler, error) {
+func (c *FakeHandler) AsUser(token, cluster string) (handler, error) {
 	return c, nil
 }
 
 // AsSVC fakes using current svcaccount
-func (c *FakeHandler) AsSVC(cluster string) (AuthedHandler, error) {
+func (c *FakeHandler) AsSVC(cluster string) (handler, error) {
 	return c, nil
 }
 

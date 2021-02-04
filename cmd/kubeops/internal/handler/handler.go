@@ -10,6 +10,7 @@ import (
 	"github.com/kubeapps/common/response"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
+	"github.com/kubeapps/kubeapps/pkg/chart"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
@@ -174,18 +175,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		returnErrMessage(err, w)
 		return
 	}
-	kubeCli, err := chartUtils.GetClient(
-		cfg.Token,
-		chartDetails.AppRepositoryResourceNamespace,
-		cfg.KubeHandler,
-		cfg.Cluster,
-		cfg.Options.KubeappsNamespace,
-	)
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	appRepo, err := kubeCli.GetAppRepository(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
+	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Cluster, cfg.Options.KubeappsNamespace)
 	if err != nil {
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
@@ -193,9 +183,8 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	ch, err := handlerutil.GetChart(
 		chartDetails,
 		appRepo,
-		kubeCli,
+		caCertSecret, authSecret,
 		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
-		cfg.KubeHandler,
 	)
 	if err != nil {
 		returnErrMessage(err, w)
@@ -239,18 +228,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
-	kubeCli, err := chartUtils.GetClient(
-		cfg.Token,
-		chartDetails.AppRepositoryResourceNamespace,
-		cfg.KubeHandler,
-		cfg.Cluster,
-		cfg.Options.KubeappsNamespace,
-	)
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	appRepo, err := kubeCli.GetAppRepository(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
+	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Cluster, cfg.Options.KubeappsNamespace)
 	if err != nil {
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
@@ -258,9 +236,8 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	ch, err := handlerutil.GetChart(
 		chartDetails,
 		appRepo,
-		kubeCli,
+		caCertSecret, authSecret,
 		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
-		cfg.KubeHandler,
 	)
 	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo, cfg.Cluster, cfg.Token, cfg.KubeHandler)
 	if err != nil {

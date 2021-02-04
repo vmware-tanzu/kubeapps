@@ -77,7 +77,7 @@ type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
 
 // Resolver for exposed funcs
 type Resolver interface {
-	InitClient(appRepo *appRepov1.AppRepository, client kube.AuthedHandler) error
+	InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
 	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
 }
 
@@ -248,32 +248,30 @@ func ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
-// GetClient returns a client handler based on the cluster and namespace
-func GetClient(userAuthToken, namespace string, handler kube.AuthHandler, cluster, kubeappsNamespace string) (kube.AuthedHandler, error) {
+// GetAppRepoAndRelatedSecrets retrieves the given repo from its namespace
+// Depending on the repo namespace and the
+func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler kube.AuthHandler, userAuthToken, cluster, kubeappsNamespace string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	client, err := handler.AsUser(userAuthToken, cluster)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create clientset: %v", err)
-	}
-	if kubeappsNamespace == namespace {
+	if kubeappsNamespace == appRepoNamespace {
 		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
 		// AppRepositories are only allowed in the default cluster for the moment
 		client, err = handler.AsSVC(cluster)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create clientset: %v", err)
-		}
 	}
-	return client, nil
-}
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
+	}
+	appRepo, err := client.GetAppRepository(appRepoName, appRepoNamespace)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", appRepoName, err)
+	}
 
-func getRepoSecrets(appRepo *appRepov1.AppRepository, client kube.AuthedHandler) (*corev1.Secret, *corev1.Secret, error) {
 	auth := appRepo.Spec.Auth
 	var caCertSecret *corev1.Secret
-	var err error
 	if auth.CustomCA != nil {
 		secretName := auth.CustomCA.SecretKeyRef.Name
 		caCertSecret, err = client.GetSecret(secretName, appRepo.Namespace)
 		if err != nil {
-			return nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
+			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
 	}
 
@@ -282,21 +280,17 @@ func getRepoSecrets(appRepo *appRepov1.AppRepository, client kube.AuthedHandler)
 		secretName := auth.Header.SecretKeyRef.Name
 		authSecret, err = client.GetSecret(secretName, appRepo.Namespace)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	return caCertSecret, authSecret, nil
+	return appRepo, caCertSecret, authSecret, nil
 }
 
 // InitClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *Client) InitClient(appRepo *appRepov1.AppRepository, client kube.AuthedHandler) error {
-	caCertSecret, authSecret, err := getRepoSecrets(appRepo, client)
-	if err != nil {
-		return err
-	}
-
+func (c *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+	var err error
 	c.netClient, err = kube.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
 	return err
 }
@@ -304,6 +298,9 @@ func (c *Client) InitClient(appRepo *appRepov1.AppRepository, client kube.Authed
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
 func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+	if c.netClient == nil {
+		return nil, fmt.Errorf("unable to retrieve chart, InitClient should be called first")
+	}
 	var chart *helm3chart.Chart
 	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
 	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
