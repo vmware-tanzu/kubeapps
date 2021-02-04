@@ -156,7 +156,13 @@ describe("Auth", () => {
     let mockedAssign: jest.Mocked<(url: string) => void>;
     beforeEach(() => {
       mockedAssign = jest.fn();
-      document.location.assign = mockedAssign;
+      // After the JSDOM upgrade, window.xxx are read-only properties
+      // https://github.com/facebook/jest/issues/9471
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        writable: true,
+        value: { assign: mockedAssign },
+      });
     });
 
     it("uses the config to redirect to a logout URL", () => {
