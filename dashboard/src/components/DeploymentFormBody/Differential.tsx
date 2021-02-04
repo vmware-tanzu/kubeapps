@@ -1,8 +1,8 @@
 import * as jsdiff from "diff";
-import { Diff2Html } from "diff2html";
+import * as Diff2Html from "diff2html";
 import * as React from "react";
 
-import "diff2html/dist/diff2html.css";
+import "diff2html/bundles/css/diff2html.min.css";
 import "./Differential.css";
 
 export interface IDifferentialProps {
@@ -16,12 +16,12 @@ class Differential extends React.Component<IDifferentialProps> {
   public render = () => {
     const { oldValues, newValues, title, emptyDiffText } = this.props;
     const sdiff = jsdiff.createPatch(title, oldValues, newValues);
-    const outputHtml = Diff2Html.getPrettyHtml(sdiff, {
+    const outputHtml = Diff2Html.html(sdiff, {
       inputFormat: "diff",
       showFiles: false,
       matching: "lines",
       maxLineSizeInBlockForComparison: 20,
-    });
+    } as Diff2Html.Diff2HtmlConfig);
     return (
       <div className="diff deployment-form-tabs-data">
         {oldValues === newValues ? (

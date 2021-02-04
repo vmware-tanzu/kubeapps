@@ -1,6 +1,6 @@
 import * as React from "react";
 
-const TableRenderer: React.SFC<{}> = (props: any) => {
+const TableRenderer: React.FunctionComponent<{}> = (props: any) => {
   return <table className="table">{props.children}</table>;
 };
 
