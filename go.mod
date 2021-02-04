@@ -55,7 +55,7 @@ require (
 	google.golang.org/grpc v1.27.1
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/square/go-jose.v1 v1.1.2 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.0
 	k8s.io/api v0.20.1
 	k8s.io/apimachinery v0.20.1
