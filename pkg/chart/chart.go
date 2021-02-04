@@ -411,8 +411,7 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 	return err
 }
 
-// GetChart retrieves and loads a Chart from a registry in both
-// v2 and v3 formats.
+// GetChart retrieves and loads a Chart from a OCI registry
 func (c *OCIClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, InitClient should be called first")
