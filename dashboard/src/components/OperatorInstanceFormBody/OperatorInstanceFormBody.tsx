@@ -58,7 +58,7 @@ function DeploymentFormBody({
     setParseError(undefined);
     let resource: any = {};
     try {
-      resource = yaml.safeLoad(values);
+      resource = yaml.load(values);
     } catch (e) {
       setParseError(new Error(`Unable to parse the given YAML. Got: ${e.message}`));
       return;

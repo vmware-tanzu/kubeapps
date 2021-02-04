@@ -81,7 +81,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setName(repo.metadata.name);
       setURL(repo.spec?.url || "");
       setSyncJobTemplate(
-        repo.spec?.syncJobPodTemplate ? yaml.safeDump(repo.spec?.syncJobPodTemplate) : "",
+        repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
       );
       if (secret) {
         if (secret.data["ca.crt"]) {

@@ -227,7 +227,7 @@ export const fetchRepos = (
 function parsePodTemplate(syncJobPodTemplate: string) {
   let syncJobPodTemplateObj: any = {};
   if (syncJobPodTemplate.length) {
-    syncJobPodTemplateObj = yaml.safeLoad(syncJobPodTemplate);
+    syncJobPodTemplateObj = yaml.load(syncJobPodTemplate);
   }
   return syncJobPodTemplateObj;
 }
