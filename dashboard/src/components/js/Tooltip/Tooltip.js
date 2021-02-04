@@ -41,6 +41,8 @@ const Tooltip = ({ children, position, icon, iconProps, id, label, extraSmall, s
     "tooltip-lg": large,
   });
 
+  // the 'tooltip' role does have the inherited props 'aria-haspopup' and 'aria-expanded'
+  /* eslint-disable jsx-a11y/role-supports-aria-props */
   return (
     <button
       className={css}
