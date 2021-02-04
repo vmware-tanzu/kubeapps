@@ -19,8 +19,8 @@ package fake
 import (
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	chart3 "helm.sh/helm/v3/pkg/chart"
+	corev1 "k8s.io/api/core/v1"
 	chart2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/yaml"
 )
@@ -62,6 +62,6 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 }
 
 // InitClient fake
-func (f *Chart) InitClient(appRepo *appRepov1.AppRepository, client kube.AuthedHandler) error {
+func (f *Chart) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	return nil
 }

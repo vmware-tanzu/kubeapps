@@ -329,7 +329,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		}}
 
 		t.Run(tc.name, func(t *testing.T) {
-			caCertSecret, authSecret, err := getRepoSecrets(apprepos[0], &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos})
+			appRepo, caCertSecret, authSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", "", "")
 			if err != nil {
 				if tc.errorExpected {
 					return
@@ -347,6 +347,10 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			}
 			if tc.appRepoSpec.Auth.CustomCA != nil && caCertSecret == nil {
 				t.Errorf("Expecting auth secret")
+			}
+			// The client holds a reference to the appRepo.
+			if got, want := appRepo, apprepos[0]; !cmp.Equal(got, want) {
+				t.Errorf(cmp.Diff(got, want))
 			}
 		})
 	}
@@ -521,6 +525,12 @@ func TestGetChart(t *testing.T) {
 
 		})
 	}
+
+	t.Run("it should fail if the netClient is not instantiated", func(t *testing.T) {
+		cli := NewChartClient("")
+		_, err := cli.GetChart(nil, "", false)
+		assert.Err(t, fmt.Errorf("unable to retrieve chart, InitClient should be called first"), err)
+	})
 }
 
 func TestGetIndexFromCache(t *testing.T) {
