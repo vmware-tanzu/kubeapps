@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import { CdsIcon } from "@clr/react/icon";
 
 interface IOperatorCapabilitiesProps {

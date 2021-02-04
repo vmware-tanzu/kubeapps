@@ -1,4 +1,3 @@
-import * as React from "react";
 import logo404 from "../../img/404.svg";
 
 function NotFound() {

@@ -1,5 +1,4 @@
 import { CdsButton } from "@clr/react/button";
-import * as React from "react";
 
 interface ILoginFormProps {
   authenticationError: string | undefined;

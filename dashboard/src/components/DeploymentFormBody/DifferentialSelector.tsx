@@ -1,4 +1,3 @@
-import React from "react";
 import { DeploymentEvent } from "shared/types";
 import Differential from "./Differential";
 

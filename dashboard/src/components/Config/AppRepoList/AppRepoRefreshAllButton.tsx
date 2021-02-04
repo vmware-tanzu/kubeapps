@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { CdsButton } from "@clr/react/button";
 import { CdsIcon } from "@clr/react/icon";

@@ -1,5 +1,3 @@
-import * as React from "react";
-
 interface IAppNotesProps {
   title?: string;
   notes?: string | null;

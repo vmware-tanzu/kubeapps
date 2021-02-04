@@ -1,4 +1,3 @@
-import * as React from "react";
 import * as ReactDOM from "react-dom";
 import Modal from "react-modal";
 import { addAuthHeaders, addErrorHandling, axios, axiosWithAuth } from "shared/AxiosInstance";

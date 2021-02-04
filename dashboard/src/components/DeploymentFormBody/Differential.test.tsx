@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import Differential from "./Differential";
 
 it("should render a diff between two strings", () => {

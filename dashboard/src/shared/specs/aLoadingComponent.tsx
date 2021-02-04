@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 
 // Shared jest examples that checks that the provided component is rendering the Loading Wrapper
 export default (args: any) => {
