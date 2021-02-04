@@ -61,7 +61,7 @@ function OperatorInstanceUpdateForm({
 
   useEffect(() => {
     if (resource) {
-      setCurrentValues(yaml.safeDump(resource));
+      setCurrentValues(yaml.dump(resource));
     }
   }, [resource]);
 

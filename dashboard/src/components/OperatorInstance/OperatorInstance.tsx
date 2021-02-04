@@ -228,7 +228,7 @@ function OperatorInstance({
                 </div>
                 {resource.status && (
                   <div className="appview-separator">
-                    <AppNotes title="Resource Status" notes={yaml.safeDump(resource.status)} />
+                    <AppNotes title="Resource Status" notes={yaml.dump(resource.status)} />
                   </div>
                 )}
                 <div className="appview-separator">
@@ -245,7 +245,7 @@ function OperatorInstance({
                 </div>
                 {resource.spec && (
                   <div className="appview-separator">
-                    <AppValues values={yaml.safeDump(resource.spec)} />
+                    <AppValues values={yaml.dump(resource.spec)} />
                   </div>
                 )}
               </Column>
