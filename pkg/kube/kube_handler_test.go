@@ -599,6 +599,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 			name: "it creates an app repo without auth",
 			request: appRepositoryRequestDetails{
 				Name:    "test-repo",
+				Type:    "helm",
 				RepoURL: "http://example.com/test-repo",
 			},
 			appRepo: v1alpha1.AppRepository{
@@ -615,6 +616,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 			name: "it creates an app repo with auth header",
 			request: appRepositoryRequestDetails{
 				Name:       "test-repo",
+				Type:       "helm",
 				RepoURL:    "http://example.com/test-repo",
 				AuthHeader: "testing",
 			},
@@ -642,6 +644,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 			name: "it creates an app repo with custom CA",
 			request: appRepositoryRequestDetails{
 				Name:     "test-repo",
+				Type:     "helm",
 				RepoURL:  "http://example.com/test-repo",
 				CustomCA: "test-me",
 			},
@@ -669,6 +672,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 			name: "it creates an app repo with a sync job",
 			request: appRepositoryRequestDetails{
 				Name:    "test-repo",
+				Type:    "helm",
 				RepoURL: "http://example.com/test-repo",
 				SyncJobPodTemplate: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -695,6 +699,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 			name: "it creates an app repo with a resync requests",
 			request: appRepositoryRequestDetails{
 				Name:           "test-repo",
+				Type:           "helm",
 				RepoURL:        "http://example.com/test-repo",
 				ResyncRequests: 99,
 			},
@@ -706,6 +711,25 @@ func TestAppRepositoryForRequest(t *testing.T) {
 					URL:            "http://example.com/test-repo",
 					Type:           "helm",
 					ResyncRequests: 99,
+				},
+			},
+		},
+		{
+			name: "it creates an OCI app repo",
+			request: appRepositoryRequestDetails{
+				Name:            "test-repo",
+				Type:            "oci",
+				RepoURL:         "http://example.com/test-repo",
+				OCIRepositories: []string{"apache", "jenkins"},
+			},
+			appRepo: v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: v1alpha1.AppRepositorySpec{
+					URL:             "http://example.com/test-repo",
+					Type:            "oci",
+					OCIRepositories: []string{"apache", "jenkins"},
 				},
 			},
 		},
