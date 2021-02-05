@@ -6,9 +6,9 @@
   "dependencies": {
     "@clr/city": "^1.1.0",
     "@clr/core": "^4.0.6",
-    "@clr/icons": "^4.0.6",
+    "@clr/icons": "^5.0.1",
     "@clr/react": "^4.0.6",
-    "@clr/ui": "^4.0.6",
+    "@clr/ui": "^5.0.1",
     "@types/diff": "^4.0.2",
     "@types/js-yaml": "^3.10.1",
     "@types/json-schema": "^7.0.3",
