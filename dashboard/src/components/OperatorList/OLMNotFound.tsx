@@ -1,5 +1,4 @@
 import olmLogo from "icons/olm-big.svg";
-import * as React from "react";
 
 export default function OLMNotFound() {
   return (

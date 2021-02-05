@@ -133,7 +133,13 @@ describe("OIDC authentication", () => {
 
   it("expires the session and logs out ", () => {
     Auth.usingOIDCToken = jest.fn(() => true);
-    document.location.assign = jest.fn();
+    // After the JSDOM upgrade, window.xxx are read-only properties
+    // https://github.com/facebook/jest/issues/9471
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: { assign: jest.fn() },
+    });
     const expectedActions = [
       {
         payload: { sessionExpired: true },
@@ -144,7 +150,7 @@ describe("OIDC authentication", () => {
     return store.dispatch(actions.auth.expireSession()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(localStorage.removeItem).toBeCalled();
-      expect(document.location.assign).toBeCalledWith("/log/out");
+      expect(window.location.assign).toBeCalledWith("/log/out");
     });
   });
 });

@@ -1,5 +1,3 @@
-import * as React from "react";
-
 const Check = (props: any) => (
   <svg viewBox="0 0 8 8" width="1em" height="1em" {...props}>
     <path
