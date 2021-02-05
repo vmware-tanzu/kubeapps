@@ -236,10 +236,12 @@ export const installRepo = (
   name: string,
   namespace: string,
   repoURL: string,
+  type: string,
   authHeader: string,
   customCA: string,
   syncJobPodTemplate: string,
   registrySecrets: string[],
+  ociRepositories: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -253,10 +255,12 @@ export const installRepo = (
         name,
         namespace,
         repoURL,
+        type,
         authHeader,
         customCA,
         syncJobPodTemplateObj,
         registrySecrets,
+        ociRepositories,
       );
       dispatch(addedRepo(data.appRepository));
 
@@ -272,10 +276,12 @@ export const updateRepo = (
   name: string,
   namespace: string,
   repoURL: string,
+  type: string,
   authHeader: string,
   customCA: string,
   syncJobPodTemplate: string,
   registrySecrets: string[],
+  ociRepositories: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -289,10 +295,12 @@ export const updateRepo = (
         name,
         namespace,
         repoURL,
+        type,
         authHeader,
         customCA,
         syncJobPodTemplateObj,
         registrySecrets,
+        ociRepositories,
       );
       dispatch(repoUpdated(data.appRepository));
       // Re-fetch the helm repo secret that could have been modified with the updated headers
@@ -321,8 +329,10 @@ export const updateRepo = (
 
 export const validateRepo = (
   repoURL: string,
+  type: string,
   authHeader: string,
   customCA: string,
+  ociRepositories: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -330,7 +340,14 @@ export const validateRepo = (
     } = getState();
     try {
       dispatch(repoValidating());
-      const data = await AppRepository.validate(currentCluster, repoURL, authHeader, customCA);
+      const data = await AppRepository.validate(
+        currentCluster,
+        repoURL,
+        type,
+        authHeader,
+        customCA,
+        ociRepositories,
+      );
       if (data.code === 200) {
         dispatch(repoValidated(data));
         return true;

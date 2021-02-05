@@ -152,7 +152,7 @@ it("should call the install method with the selected docker credentials", async 
       preventDefault: jest.fn(),
     });
   });
-  expect(install).toHaveBeenCalledWith("", "", "", "", "", ["repo-1"]);
+  expect(install).toHaveBeenCalledWith("", "", "helm", "", "", "", ["repo-1"], []);
 });
 
 describe("when the repository info is already populated", () => {

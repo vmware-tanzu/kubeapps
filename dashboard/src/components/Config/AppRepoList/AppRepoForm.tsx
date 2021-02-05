@@ -16,10 +16,12 @@ interface IAppRepoFormProps {
   onSubmit: (
     name: string,
     url: string,
+    type: string,
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
     registrySecrets: string[],
+    ociRepositories: string[],
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
@@ -32,6 +34,9 @@ const AUTH_METHOD_NONE = "none";
 const AUTH_METHOD_BASIC = "basic";
 const AUTH_METHOD_BEARER = "bearer";
 const AUTH_METHOD_CUSTOM = "custom";
+
+const TYPE_HELM = "helm";
+const TYPE_OCI = "oci";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
   const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo, secret } = props;
@@ -46,6 +51,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [url, setURL] = useState("");
   const [customCA, setCustomCA] = useState("");
   const [syncJobPodTemplate, setSyncJobTemplate] = useState("");
+  const [type, setType] = useState(TYPE_HELM);
+  const [ociRepositories, setOCIRepositories] = useState("");
+
   const [selectedImagePullSecrets, setSelectedImagePullSecrets] = useState(
     {} as { [key: string]: boolean },
   );
@@ -80,9 +88,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     if (repo) {
       setName(repo.metadata.name);
       setURL(repo.spec?.url || "");
+      setType(repo.spec?.type || "");
       setSyncJobTemplate(
         repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
       );
+      setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
       if (secret) {
         if (secret.data["ca.crt"]) {
           setCustomCA(atob(secret.data["ca.crt"]));
@@ -123,12 +133,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         finalHeader = `Bearer ${token}`;
         break;
     }
+    const ociRepoList = ociRepositories.length ? ociRepositories.split(",").map(r => r.trim()) : [];
     // If the validation already failed and we try to reinstall,
     // skip validation and force install
     const force = validated === false;
     let currentlyValidated = validated;
     if (!validated && !force) {
-      currentlyValidated = await dispatch(actions.repos.validateRepo(url, finalHeader, customCA));
+      currentlyValidated = await dispatch(
+        actions.repos.validateRepo(url, type, finalHeader, customCA, ociRepoList),
+      );
       setValidated(currentlyValidated);
     }
     if (currentlyValidated || force) {
@@ -138,10 +151,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       const success = await onSubmit(
         name,
         url,
+        type,
         finalHeader,
         customCA,
         syncJobPodTemplate,
         imagePullSecretsNames,
+        ociRepoList,
       );
       if (success && onAfterInstall) {
         onAfterInstall();
@@ -170,6 +185,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     setAuthMethod(e.target.value);
     setValidated(undefined);
   };
+  const handleTypeRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setType(e.target.value);
+    setValidated(undefined);
+  };
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser(e.target.value);
     setValidated(undefined);
@@ -180,6 +199,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handleSyncJobPodTemplateChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSyncJobTemplate(e.target.value);
+    setValidated(undefined);
+  };
+  const handleOCIRepositoriesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setOCIRepositories(e.target.value);
     setValidated(undefined);
   };
 
@@ -366,6 +389,68 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     value={authHeader}
                     onChange={handleAuthHeaderChange}
                   />
+                </div>
+              </div>
+            </Column>
+          </Row>
+        </div>
+      </div>
+      <div className="clr-form-control">
+        <label className="clr-control-label">Repository Type</label>
+        <span className="clr-form-description">
+          Charts can be stored either in a Helm repository (e.g. ChartMuseum) or in a OCI Registry.
+          Select the one that applies.
+        </span>
+        <div className="clr-form-columns">
+          <Row>
+            <Column span={3}>
+              <label
+                htmlFor="kubeapps-repo-type-helm"
+                className="clr-control-label clr-control-label-radio"
+              >
+                <input
+                  type="radio"
+                  id="kubeapps-repo-type-helm"
+                  name="type"
+                  value={TYPE_HELM}
+                  checked={type === TYPE_HELM}
+                  onChange={handleTypeRadioButtonChange}
+                />
+                Helm Repository
+                <br />
+              </label>
+              <label
+                htmlFor="kubeapps-repo-type-oci"
+                className="clr-control-label clr-control-label-radio"
+              >
+                <input
+                  type="radio"
+                  id="kubeapps-repo-type-oci"
+                  name="type"
+                  value={TYPE_OCI}
+                  checked={type === TYPE_OCI}
+                  onChange={handleTypeRadioButtonChange}
+                />
+                OCI Registry
+                <br />
+              </label>
+            </Column>
+            <Column span={9}>
+              <div className="column-valing-center clr-control-container">
+                <div hidden={type !== TYPE_OCI}>
+                  <label className="clr-control-label" htmlFor="kubeapps-repo-username">
+                    List of Repositories
+                  </label>
+                  <div className="clr-textarea-wrapper">
+                    <textarea
+                      id="kubeapps-oci-repositories"
+                      rows={4}
+                      className="clr-textarea"
+                      placeholder={"nginx, jenkins"}
+                      value={ociRepositories}
+                      onChange={handleOCIRepositoriesChange}
+                    />
+                  </div>
                 </div>
               </div>
             </Column>

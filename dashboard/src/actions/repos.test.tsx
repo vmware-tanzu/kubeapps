@@ -480,9 +480,11 @@ describe("installRepo", () => {
     "my-repo",
     "my-namespace",
     "http://foo.bar",
+    "helm",
     "",
     "",
     "",
+    [],
     [],
   );
 
@@ -491,9 +493,11 @@ describe("installRepo", () => {
       "my-repo",
       "my-namespace",
       "http://foo.bar",
+      "helm",
       "Bearer: abc",
       "",
       "",
+      [],
       [],
     );
 
@@ -504,9 +508,11 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "helm",
         "Bearer: abc",
         "",
         {},
+        [],
         [],
       );
     });
@@ -522,9 +528,11 @@ describe("installRepo", () => {
       "my-repo",
       "my-namespace",
       "http://foo.bar",
+      "helm",
       "",
       "This is a cert!",
       "",
+      [],
       [],
     );
 
@@ -535,9 +543,11 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "helm",
         "",
         "This is a cert!",
         {},
+        [],
         [],
       );
     });
@@ -554,9 +564,11 @@ describe("installRepo", () => {
             "my-repo",
             "my-namespace",
             "http://foo.bar",
+            "helm",
             "",
             "",
             safeYAMLTemplate,
+            [],
             [],
           ),
         );
@@ -566,11 +578,13 @@ describe("installRepo", () => {
           "my-repo",
           "my-namespace",
           "http://foo.bar",
+          "helm",
           "",
           "",
           {
             spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
           },
+          [],
           [],
         );
       });
@@ -585,9 +599,11 @@ describe("installRepo", () => {
             "my-repo",
             "my-namespace",
             "http://foo.bar",
+            "helm",
             "",
             "",
             unsafeYAMLTemplate,
+            [],
             [],
           ),
         );
@@ -604,9 +620,11 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "helm",
         "",
         "",
         {},
+        [],
         [],
       );
     });
@@ -662,7 +680,17 @@ describe("installRepo", () => {
 
   it("includes registry secrets if given", async () => {
     await store.dispatch(
-      repoActions.installRepo("my-repo", "foo", "http://foo.bar", "", "", "", ["repo-1"]),
+      repoActions.installRepo(
+        "my-repo",
+        "foo",
+        "http://foo.bar",
+        "helm",
+        "",
+        "",
+        "",
+        ["repo-1"],
+        [],
+      ),
     );
 
     expect(AppRepository.create).toHaveBeenCalledWith(
@@ -670,10 +698,12 @@ describe("installRepo", () => {
       "my-repo",
       "foo",
       "http://foo.bar",
+      "helm",
       "",
       "",
       {},
       ["repo-1"],
+      [],
     );
   });
 });
@@ -708,10 +738,12 @@ describe("updateRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "helm",
         "foo",
         "bar",
         safeYAMLTemplate,
         ["repo-1"],
+        [],
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
@@ -720,10 +752,12 @@ describe("updateRepo", () => {
       "my-repo",
       "my-namespace",
       "http://foo.bar",
+      "helm",
       "foo",
       "bar",
       { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
       ["repo-1"],
+      [],
     );
   });
 
@@ -756,10 +790,12 @@ describe("updateRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "helm",
         "foo",
         "bar",
         safeYAMLTemplate,
         ["repo-1"],
+        [],
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
@@ -768,10 +804,12 @@ describe("updateRepo", () => {
       "my-repo",
       "my-namespace",
       "http://foo.bar",
+      "helm",
       "foo",
       "bar",
       { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
       ["repo-1"],
+      [],
     );
   });
 
@@ -794,9 +832,11 @@ describe("updateRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "helm",
         "foo",
         "bar",
         safeYAMLTemplate,
+        [],
         [],
       ),
     );
@@ -871,7 +911,7 @@ describe("validateRepo", () => {
       },
     ];
 
-    const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
+    const res = await store.dispatch(repoActions.validateRepo("url", "helm", "auth", "cert", []));
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(true);
   });
@@ -890,7 +930,7 @@ describe("validateRepo", () => {
         payload: { err: error, op: "validate" },
       },
     ];
-    const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
+    const res = await store.dispatch(repoActions.validateRepo("url", "helm", "auth", "cert", []));
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
   });
@@ -912,7 +952,7 @@ describe("validateRepo", () => {
         },
       },
     ];
-    const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
+    const res = await store.dispatch(repoActions.validateRepo("url", "helm", "auth", "cert", []));
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
   });
