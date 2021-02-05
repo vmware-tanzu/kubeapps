@@ -13,7 +13,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 base64 = "0.13"
-hyper = "0.13"
+hyper = "0.14"
 hyper-tls = "0.4"
 kube = { version = "0.43.0", features = ["derive"] }
 kube-runtime = "0.45.0"
