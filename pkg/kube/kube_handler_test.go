@@ -968,24 +968,25 @@ func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err
 func TestValidateAppRepository(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
 	getValidationCliAndReqTests := []struct {
-		name             string
-		requestData      string
-		requestNamespace string
-		expectedURL      string
-		expectedHeaders  http.Header
-		expectedError    error
+		name                       string
+		requestData                string
+		requestNamespace           string
+		expectedURLs               []string
+		expectedHeaders            http.Header
+		expectedError              error
+		expectedReqResolutionError error
 	}{
 		{
 			name:             "it parses the repo URL",
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo"}}`,
-			expectedURL:      "http://example.com/test-repo/index.yaml",
+			expectedURLs:     []string{"http://example.com/test-repo/index.yaml"},
 		},
 		{
 			name:             "it includes the auth creds",
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "authHeader": "test-me"}}`,
-			expectedURL:      "http://example.com/test-repo/index.yaml",
+			expectedURLs:     []string{"http://example.com/test-repo/index.yaml"},
 			expectedHeaders:  http.Header{"Authorization": []string{"test-me"}},
 		},
 		{
@@ -994,19 +995,42 @@ func TestValidateAppRepository(t *testing.T) {
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "registrySecrets": ["secret-1"]}}`,
 			expectedError:    ErrGlobalRepositoryWithSecrets,
 		},
+		{
+			name:             "validates OCI repositories",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "type":"oci", "ociRepositories": ["apache", "jenkins"]}}`,
+			expectedURLs:     []string{"http://example.com/v2/test-repo/apache/tags/list?n=1", "http://example.com/v2/test-repo/jenkins/tags/list?n=1"},
+		},
+		{
+			name:                       "validation fails for an OCI repo if no repositories are given",
+			requestNamespace:           kubeappsNamespace,
+			requestData:                `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "type":"oci"}}`,
+			expectedReqResolutionError: ErrEmptyOCIRegistry,
+		},
 	}
 
 	for _, tc := range getValidationCliAndReqTests {
 		t.Run(tc.name, func(t *testing.T) {
-			cli, req, err := getValidationCliAndReq(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
+			appRepo, cli, err := getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
 			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
 				t.Fatalf("got: %+v, want: %+v", err, tc.expectedError)
 			}
 			if tc.expectedError != nil {
 				return
 			}
-			if tc.expectedURL != req.URL.String() {
-				t.Errorf("Expected %v got %v", tc.expectedURL, req.URL.String())
+			reqs, err := getRequests(appRepo, cli)
+			if (err != nil || tc.expectedReqResolutionError != nil) && !errors.Is(err, tc.expectedReqResolutionError) {
+				t.Fatalf("got: %+v, want: %+v", err, tc.expectedReqResolutionError)
+			}
+			if tc.expectedReqResolutionError != nil {
+				return
+			}
+			reqURLs := []string{}
+			for _, req := range reqs {
+				reqURLs = append(reqURLs, req.URL.String())
+			}
+			if !cmp.Equal(tc.expectedURLs, reqURLs) {
+				t.Errorf("Unexpected URLS: %v", cmp.Diff(tc.expectedURLs, reqURLs))
 			}
 			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders))
