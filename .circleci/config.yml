@@ -272,7 +272,7 @@ jobs:
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
   test_chart_render:
     environment:
-      HELM_VERSION: "v3.0.2"
+      HELM_VERSION: "v3.1.0"
     docker:
       - image: circleci/golang:1.13
     steps:
@@ -303,7 +303,7 @@ jobs:
   local_e2e_tests:
     machine: true
     environment:
-      HELM_VERSION: "v3.0.2"
+      HELM_VERSION: "v3.1.0"
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
     parameters:
@@ -313,26 +313,26 @@ jobs:
   GKE_1_15_MASTER:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.0.2"
+      HELM_VERSION: "v3.1.0"
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
   GKE_1_15_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.0.2"
+      HELM_VERSION: "v3.1.0"
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
   GKE_1_16_MASTER:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.0.2"
+      HELM_VERSION: "v3.1.0"
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
   GKE_1_16_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.0.2"
+      HELM_VERSION: "v3.1.0"
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
