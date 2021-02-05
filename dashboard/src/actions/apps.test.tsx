@@ -44,6 +44,17 @@ describe("fetches applications", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default"]);
   });
+  it("fetches applications, ignore when no data", async () => {
+    App.listApps = jest.fn();
+    const expectedActions = [
+      { type: getType(actions.apps.listApps) },
+      { type: getType(actions.apps.receiveAppList), payload: undefined },
+    ];
+    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default"));
+    App.listApps = listAppsMock;
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(listAppsMock.mock.calls[0]).toBeUndefined();
+  });
 
   describe("fetches chart updates", () => {
     it("gets a chart latest version", async () => {

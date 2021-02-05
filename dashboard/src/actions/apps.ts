@@ -232,19 +232,23 @@ export function fetchAppsWithUpdateInfo(
   namespaceOrAll: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    const apps = await dispatch(fetchApps(cluster, namespaceOrAll));
-    apps.forEach(app =>
-      dispatch(
-        getAppUpdateInfo(
-          cluster,
-          app.namespace,
-          app.releaseName,
-          app.chartMetadata.name,
-          app.chartMetadata.version,
-          app.chartMetadata.appVersion,
+    try {
+      const apps = await dispatch(fetchApps(cluster, namespaceOrAll));
+      apps?.forEach(app =>
+        dispatch(
+          getAppUpdateInfo(
+            cluster,
+            app.namespace,
+            app.releaseName,
+            app.chartMetadata.name,
+            app.chartMetadata.version,
+            app.chartMetadata.appVersion,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      dispatch(errorApp(new FetchError(e.message)));
+    }
   };
 }
 
