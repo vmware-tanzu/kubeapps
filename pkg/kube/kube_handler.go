@@ -682,7 +682,10 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 			}
 		}
 	}
-
+	if appRepo.Type == "" {
+		// Use helm type by default
+		appRepo.Type = "helm"
+	}
 	return &v1alpha1.AppRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: appRepo.Name,

@@ -715,6 +715,22 @@ func TestAppRepositoryForRequest(t *testing.T) {
 			},
 		},
 		{
+			name: "it defaults type to helm",
+			request: appRepositoryRequestDetails{
+				Name:    "test-repo",
+				RepoURL: "http://example.com/test-repo",
+			},
+			appRepo: v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: v1alpha1.AppRepositorySpec{
+					URL:  "http://example.com/test-repo",
+					Type: "helm",
+				},
+			},
+		},
+		{
 			name: "it creates an OCI app repo",
 			request: appRepositoryRequestDetails{
 				Name:            "test-repo",
