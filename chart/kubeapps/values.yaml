@@ -198,6 +198,10 @@ frontend:
   ## Some K8s distributions such as GKE requires it
   ##
   proxypassAccessTokenAsBearer: false
+
+  ## Set an additional proxy header for or all requests proxied via NGINX to the kubeops backend.
+  # proxypassExtraSetHeader: Authorization "Bearer $cookie_sessionid";
+
   ## Set large_client_header_buffers in nginx config
   ## Can be required when using OIDC or LDAP due to large cookies
   #
