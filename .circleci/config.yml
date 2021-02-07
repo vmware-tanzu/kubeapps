@@ -306,7 +306,8 @@ jobs:
     <<: *build_images
   build_pinniped_proxy:
     docker:
-      - image: circleci/rust
+      # We're building the image in a docker container anyway so just re-use the golang image already in use.
+      - image: circleci/golang:1.13
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
