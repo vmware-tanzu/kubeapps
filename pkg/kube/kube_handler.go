@@ -616,7 +616,12 @@ func getRequests(appRepo *v1alpha1.AppRepository, cli HTTPClient) ([]*http.Reque
 		}
 		break
 	default:
-		req, err := http.NewRequest("GET", repoURL+"/index.yaml", nil)
+		parsedURL, err := url.ParseRequestURI(repoURL)
+		if err != nil {
+			return nil, err
+		}
+		parsedURL.Path = path.Join(parsedURL.Path, "index.yaml")
+		req, err := http.NewRequest("GET", parsedURL.String(), nil)
 		if err != nil {
 			return nil, err
 		}
