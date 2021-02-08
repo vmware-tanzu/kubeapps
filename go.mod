@@ -43,7 +43,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/srwiley/oksvg v0.0.0-20200311192757-870daf9aa564
 	github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/unrolled/render v1.0.1 // indirect
 	github.com/urfave/negroni v1.0.0
 	github.com/xenolf/lego v0.3.2-0.20160613233155-a9d8cec0e656 // indirect
@@ -58,7 +58,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.0
 	k8s.io/api v0.20.1
-	k8s.io/apimachinery v0.20.1
+	k8s.io/apimachinery v0.20.2
 	k8s.io/cli-runtime v0.20.1
 	k8s.io/client-go v0.20.1
 	k8s.io/helm v2.17.0+incompatible
