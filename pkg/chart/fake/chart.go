@@ -24,11 +24,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// Chart implements Resolver inteface
-type Chart struct{}
+// Client implements Resolver inteface
+type Client struct{}
 
 // GetChart fake
-func (f *Chart) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
+func (f *Client) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
@@ -51,6 +51,6 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 }
 
 // InitClient fake
-func (f *Chart) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+func (f *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	return nil
 }

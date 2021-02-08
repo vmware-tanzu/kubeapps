@@ -753,7 +753,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &kube.FakeHandler{Secrets: tc.existingSecrets}
 
-			secretsPerDomain, err := getRegistrySecretsPerDomain(tc.secretNames, "default", namespace, "token", client)
+			secretsPerDomain, err := RegistrySecretsPerDomain(tc.secretNames, "default", namespace, "token", client)
 			if got, want := err != nil, tc.expectError; !cmp.Equal(got, want) {
 				t.Fatalf("got: %t, want: %t, err was: %+v", got, want, err)
 			}

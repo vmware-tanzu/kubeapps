@@ -324,22 +324,7 @@ func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, 
 
 // RegistrySecretsPerDomain checks the app repo and available secrets
 // to return the secret names per registry domain.
-func RegistrySecretsPerDomain(appRepo *appRepov1.AppRepository, cluster string, userAuthToken string, authHandler kube.AuthHandler) (map[string]string, error) {
-	registrySecretsPerDomain, err := getRegistrySecretsPerDomain(
-		appRepo.Spec.DockerRegistrySecrets,
-		cluster,
-		appRepo.Namespace,
-		userAuthToken,
-		authHandler,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return registrySecretsPerDomain, nil
-}
-
-func getRegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
+func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
 	secretsPerDomain := map[string]string{}
 	client, err := authHandler.AsUser(token, cluster)
 	if err != nil {
