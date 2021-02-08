@@ -32,6 +32,8 @@ import (
 
 	"github.com/arschles/assert"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
+	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -766,4 +768,62 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOCIClient(t *testing.T) {
+	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		cli.InitClient(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "User-Agent", "foo")
+	})
+
+	t.Run("InitClient - Creates puller with Authorization", func(t *testing.T) {
+		cli := NewOCIClient("")
+		appRepo := &appRepov1.AppRepository{
+			Spec: appRepov1.AppRepositorySpec{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{},
+							Key:                  "custom-secret-key",
+						},
+					},
+				},
+			},
+		}
+		authSecret := &corev1.Secret{
+			Data: map[string][]byte{
+				"custom-secret-key": []byte("Basic Auth"),
+			},
+		}
+		cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
+		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "Authorization", "Basic Auth")
+	})
+
+	t.Run("GetChart - Fails if the puller has not been instantiated", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		_, err := cli.GetChart(nil, "")
+		assert.Err(t, fmt.Errorf("unable to retrieve chart, InitClient should be called first"), err)
+	})
+
+	t.Run("GetChart - Fails if the URL is not valid", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		cli.(*OCIClient).puller = &helmfake.OCIPuller{}
+		_, err := cli.GetChart(nil, "foo")
+		assert.Equal(t, "parse foo: invalid URI for request", err.Error(), "error")
+	})
+
+	t.Run("GetChart - Returns a chart", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
+		assert.NoErr(t, err)
+		cli.(*OCIClient).puller = &helmfake.OCIPuller{
+			ExpectedName: "foo/bar/nginx:5.1.1",
+			Content:      bytes.NewBuffer(data),
+		}
+		ch, err := cli.GetChart(&Details{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar")
+		if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
+			t.Errorf("Unexpected chart %s:%s", ch.Name(), ch.Metadata.Version)
+		}
+	})
 }

@@ -26,10 +26,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/helm"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
@@ -90,6 +93,19 @@ type Client struct {
 // NewChartClient returns a new ChartClient
 func NewChartClient(userAgent string) Resolver {
 	return &Client{
+		userAgent: userAgent,
+	}
+}
+
+// OCIClient struct contains the clients required to retrieve charts info from an OCI registry
+type OCIClient struct {
+	userAgent string
+	puller    helm.ChartPuller
+}
+
+// NewOCIClient returns a new OCIClient
+func NewOCIClient(userAgent string) Resolver {
+	return &OCIClient{
 		userAgent: userAgent,
 	}
 }
@@ -357,4 +373,44 @@ func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token
 
 	}
 	return secretsPerDomain, nil
+}
+
+// InitClient returns an HTTP client based on the chart details loading a
+// custom CA if provided (as a secret)
+// TODO(andresmgot): Using a custom CA cert is not supported by ORAS (neither helm), only using the insecure flag
+func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+	var err error
+	headers := http.Header{
+		"User-Agent": []string{c.userAgent},
+	}
+	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
+		var auth string
+		auth, err = kube.GetData(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
+		if err != nil {
+			return err
+		}
+		headers.Set("Authorization", string(auth))
+	}
+
+	c.puller = &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers})}
+	return err
+}
+
+// GetChart retrieves and loads a Chart from a OCI registry
+func (c *OCIClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+	if c.puller == nil {
+		return nil, fmt.Errorf("unable to retrieve chart, InitClient should be called first")
+	}
+	url, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
+	if err != nil {
+		return nil, err
+	}
+
+	ref := path.Join(url.Host, url.Path, fmt.Sprintf("%s:%s", details.ChartName, details.Version))
+	chartBuffer, _, err := c.puller.PullOCIChart(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	return helm3loader.LoadArchive(chartBuffer)
 }

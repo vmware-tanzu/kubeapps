@@ -96,8 +96,7 @@ func (c *ClientResolver) New(repoType, userAgent string) chartUtils.Resolver {
 	var cu chartUtils.Resolver
 	switch repoType {
 	case "oci":
-		// TBD
-		// cu = chartUtils.NewOCIClient(userAgent)
+		cu = chartUtils.NewOCIClient(userAgent)
 		break
 	default:
 		cu = chartUtils.NewChartClient(userAgent)
