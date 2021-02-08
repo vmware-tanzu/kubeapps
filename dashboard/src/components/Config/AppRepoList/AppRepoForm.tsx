@@ -436,21 +436,25 @@ export function AppRepoForm(props: IAppRepoFormProps) {
               </label>
             </Column>
             <Column span={9}>
-              <div className="column-valing-center clr-control-container">
-                <div hidden={type !== TYPE_OCI}>
-                  <label className="clr-control-label" htmlFor="kubeapps-repo-username">
-                    List of Repositories
-                  </label>
-                  <div className="clr-textarea-wrapper">
-                    <textarea
-                      id="kubeapps-oci-repositories"
-                      rows={4}
-                      className="clr-textarea"
-                      placeholder={"nginx, jenkins"}
-                      value={ociRepositories}
-                      onChange={handleOCIRepositoriesChange}
-                    />
-                  </div>
+              <div
+                className="column-valing-center clr-control-container"
+                hidden={type !== TYPE_OCI}
+              >
+                <label className="clr-control-label" htmlFor="kubeapps-repo-username">
+                  List of Repositories
+                </label>
+                <span className="clr-form-description">
+                  Include a list of comma-separated repositories that will be available in Kubeapps.
+                </span>
+                <div className="clr-textarea-wrapper">
+                  <textarea
+                    id="kubeapps-oci-repositories"
+                    rows={4}
+                    className="clr-textarea"
+                    placeholder={"nginx, jenkins"}
+                    value={ociRepositories}
+                    onChange={handleOCIRepositoriesChange}
+                  />
                 </div>
               </div>
             </Column>
@@ -467,7 +471,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </label>
           <span className="clr-form-description">
             Select existing secret(s) to access a private Docker registry and pull images from it.
-            Note that this functionality is supported for Kubeapps with Helm3 only, more info{" "}
+            More info{" "}
             <a
               href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md`}
               target="_blank"
@@ -487,7 +491,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </div>
         </div>
       )}
-      <div className="clr-form-control">
+      <div className="clr-form-control" hidden={type === TYPE_OCI}>
+        {/* hidden for OCI registries since it's not possible to use a Custom CA Certificate for that */}
         <label className="clr-control-label" htmlFor="kubeapps-repo-custom-ca">
           Custom CA Certificate (optional)
         </label>

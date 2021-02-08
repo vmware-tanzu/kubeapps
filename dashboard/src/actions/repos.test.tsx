@@ -517,6 +517,34 @@ describe("installRepo", () => {
       );
     });
 
+    it("calls AppRepository create including ociRepositories", async () => {
+      await store.dispatch(
+        repoActions.installRepo(
+          "my-repo",
+          "my-namespace",
+          "http://foo.bar",
+          "oci",
+          "",
+          "",
+          "",
+          [],
+          ["apache", "jenkins"],
+        ),
+      );
+      expect(AppRepository.create).toHaveBeenCalledWith(
+        "default",
+        "my-repo",
+        "my-namespace",
+        "http://foo.bar",
+        "oci",
+        "",
+        "",
+        {},
+        [],
+        ["apache", "jenkins"],
+      );
+    });
+
     it("returns true", async () => {
       const res = await store.dispatch(installRepoCMDAuth);
       expect(res).toBe(true);
@@ -842,6 +870,37 @@ describe("updateRepo", () => {
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("updates a repo with ociRepositories", async () => {
+    AppRepository.update = jest.fn().mockReturnValue({
+      appRepository: {},
+    });
+    await store.dispatch(
+      repoActions.updateRepo(
+        "my-repo",
+        "my-namespace",
+        "http://foo.bar",
+        "oci",
+        "",
+        "",
+        "",
+        [],
+        ["apache", "jenkins"],
+      ),
+    );
+    expect(AppRepository.update).toHaveBeenCalledWith(
+      "default",
+      "my-repo",
+      "my-namespace",
+      "http://foo.bar",
+      "oci",
+      "",
+      "",
+      {},
+      [],
+      ["apache", "jenkins"],
+    );
+  });
 });
 
 describe("checkChart", () => {
@@ -955,6 +1014,20 @@ describe("validateRepo", () => {
     const res = await store.dispatch(repoActions.validateRepo("url", "helm", "auth", "cert", []));
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
+  });
+
+  it("validates repo with ociRepositories", async () => {
+    AppRepository.validate = jest.fn().mockReturnValue({
+      code: 200,
+    });
+    const res = await store.dispatch(
+      repoActions.validateRepo("url", "oci", "", "", ["apache", "jenkins"]),
+    );
+    expect(res).toBe(true);
+    expect(AppRepository.validate).toHaveBeenCalledWith("default", "url", "oci", "", "", [
+      "apache",
+      "jenkins",
+    ]);
   });
 });
 
