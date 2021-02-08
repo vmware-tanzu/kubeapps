@@ -438,11 +438,10 @@ func getFakeClientRequests(t *testing.T, c kube.HTTPClient) []*http.Request {
 func TestGetChart(t *testing.T) {
 	const repoName = "foo-repo"
 	testCases := []struct {
-		name             string
-		chartVersion     string
-		userAgent        string
-		requireV1Support bool
-		errorExpected    bool
+		name          string
+		chartVersion  string
+		userAgent     string
+		errorExpected bool
 	}{
 		{
 			name:         "gets the chart without a user agent",
@@ -455,15 +454,8 @@ func TestGetChart(t *testing.T) {
 			userAgent:    "tiller-proxy/devel",
 		},
 		{
-			name:             "gets a v2 chart without error when v1 support not required",
-			chartVersion:     "5.1.1-apiVersionV2",
-			requireV1Support: false,
-		},
-		{
-			name:             "returns an error for a v2 chart if v1 support required",
-			chartVersion:     "5.1.1-apiVersionV2",
-			requireV1Support: true,
-			errorExpected:    true,
+			name:         "gets a v2 chart without error when v1 support not required",
+			chartVersion: "5.1.1-apiVersionV2",
 		},
 	}
 
@@ -481,7 +473,7 @@ func TestGetChart(t *testing.T) {
 				userAgent: tc.userAgent,
 			}
 			chUtils.netClient = httpClient
-			ch, err := chUtils.GetChart(&target, repoURL, tc.requireV1Support)
+			ch, err := chUtils.GetChart(&target, repoURL)
 
 			if err != nil {
 				if tc.errorExpected {
@@ -494,14 +486,9 @@ func TestGetChart(t *testing.T) {
 				}
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			// Currently tests return an nginx chart from ./testdata
-			// We need to ensure it got loaded in both version formats.
-			if got, want := ch.Helm2Chart.GetMetadata().GetName(), "nginx"; got != want {
-				t.Errorf("got: %q, want: %q", got, want)
-			}
-			if ch.Helm3Chart == nil {
+			if ch == nil {
 				t.Errorf("got: nil, want: non-nil")
-			} else if got, want := ch.Helm3Chart.Name(), "nginx"; got != want {
+			} else if got, want := ch.Name(), "nginx"; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 
@@ -528,7 +515,7 @@ func TestGetChart(t *testing.T) {
 
 	t.Run("it should fail if the netClient is not instantiated", func(t *testing.T) {
 		cli := NewChartClient("")
-		_, err := cli.GetChart(nil, "", false)
+		_, err := cli.GetChart(nil, "")
 		assert.Err(t, fmt.Errorf("unable to retrieve chart, InitClient should be called first"), err)
 	})
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"github.com/kubeapps/kubeapps/pkg/kube"
+	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -106,12 +106,12 @@ func (c *ClientResolver) New(repoType, userAgent string) chartUtils.Resolver {
 }
 
 // GetChart retrieves a chart
-func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, resolver chartUtils.Resolver, requireV1Support bool, handler kube.AuthHandler) (*chartUtils.ChartMultiVersion, error) {
+func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, resolver chartUtils.Resolver) (*chart.Chart, error) {
 	err := resolver.InitClient(appRepo, caCertSecret, authSecret)
 	if err != nil {
 		return nil, err
 	}
-	ch, err := resolver.GetChart(chartDetails, appRepo.Spec.URL, requireV1Support)
+	ch, err := resolver.GetChart(chartDetails, appRepo.Spec.URL)
 	if err != nil {
 		return nil, err
 	}
