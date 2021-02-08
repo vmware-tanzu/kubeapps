@@ -12,7 +12,7 @@ require (
 	github.com/arschles/assert v1.0.0
 	github.com/bugsnag/bugsnag-go v1.5.0 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
-	github.com/containerd/containerd v1.3.4
+	github.com/containerd/containerd v1.4.3
 	github.com/deislabs/oras v0.8.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/docker/distribution v2.7.1+incompatible
@@ -43,7 +43,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/srwiley/oksvg v0.0.0-20200311192757-870daf9aa564
 	github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/unrolled/render v1.0.1 // indirect
 	github.com/urfave/negroni v1.0.0
 	github.com/xenolf/lego v0.3.2-0.20160613233155-a9d8cec0e656 // indirect
@@ -52,16 +52,16 @@ require (
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6 // indirect
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
 	golang.org/x/text v0.3.5 // indirect
-	google.golang.org/grpc v1.27.1
+	google.golang.org/grpc v1.35.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/square/go-jose.v1 v1.1.2 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.0
 	k8s.io/api v0.20.1
-	k8s.io/apimachinery v0.20.1
+	k8s.io/apimachinery v0.20.2
 	k8s.io/cli-runtime v0.20.1
 	k8s.io/client-go v0.20.1
-	k8s.io/helm v2.16.0+incompatible
+	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kubernetes v1.13.0
 	rsc.io/letsencrypt v0.0.1 // indirect

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { useDispatch } from "react-redux";
+import remarkGfm from "remark-gfm";
 
 import { CdsIcon } from "@clr/react/icon";
 import actions from "actions";
@@ -44,6 +45,7 @@ function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IC
         <div className="application-readme">
           <ReactMarkdown
             source={readme}
+            plugins={[remarkGfm]}
             renderers={{
               heading: HeadingRenderer,
               link: LinkRenderer,

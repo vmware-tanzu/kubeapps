@@ -1,5 +1,4 @@
 import ChartMaintainers from "components/ChartView/ChartMaintainers";
-import React from "react";
 import { IChartAttributes, IChartVersion } from "shared/types";
 
 interface IChartSummaryProps {

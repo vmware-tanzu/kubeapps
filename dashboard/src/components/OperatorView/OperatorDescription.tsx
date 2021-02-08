@@ -1,5 +1,5 @@
-import * as React from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import HeadingRenderer from "../ChartView/HeadingRenderer";
 import LinkRenderer from "../ChartView/LinkRenderer";
@@ -13,6 +13,7 @@ export default function OperatorDescription(props: IOperatorDescriptionProps) {
     <div className="application-readme">
       <ReactMarkdown
         source={props.description}
+        plugins={[remarkGfm]}
         renderers={{
           heading: HeadingRenderer,
           link: LinkRenderer,

@@ -1,0 +1,22 @@
+# Basic dependabot.yml file
+# https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates#package-ecosystem
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/dashboard"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: "cargo"
+    directory: "/cmd/pinniped-proxy"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 2

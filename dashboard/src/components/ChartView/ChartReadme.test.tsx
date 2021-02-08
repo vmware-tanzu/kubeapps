@@ -62,6 +62,40 @@ it("renders the ReactMarkdown content is readme is present", () => {
   expect(component.props()).toMatchObject({ source: "# Markdown Readme" });
 });
 
+it("renders the ReactMarkdown content with github flavored markdown (table)", () => {
+  const props = {
+    ...defaultProps,
+    readme: "|h1|h2|\n|-|-|\n|foo|bar|",
+  };
+  const wrapper = mountWrapper(defaultStore, <ChartReadme {...props} />);
+  const component = wrapper.find(ReactMarkdown);
+  expect(component.props()).toMatchObject({ source: props.readme });
+  expect(
+    component
+      .find("table th")
+      .first()
+      .text(),
+  ).toBe("h1");
+  expect(
+    component
+      .find("table th")
+      .last()
+      .text(),
+  ).toBe("h2");
+  expect(
+    component
+      .find("table td")
+      .first()
+      .text(),
+  ).toBe("foo");
+  expect(
+    component
+      .find("table td")
+      .last()
+      .text(),
+  ).toBe("bar");
+});
+
 it("renders a not found error when error is set", () => {
   const wrapper = mountWrapper(defaultStore, <ChartReadme {...defaultProps} error={"not found"} />);
   expect(wrapper.text()).toContain("No README found");

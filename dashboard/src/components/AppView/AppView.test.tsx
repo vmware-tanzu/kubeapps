@@ -1,4 +1,4 @@
-import { safeDump as yamlSafeDump } from "js-yaml";
+import * as yaml from "js-yaml";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
@@ -47,7 +47,7 @@ describe("AppViewComponent", () => {
   const generateYamlManifest = (items: any[]): string => {
     let yamlManifest = "";
     items.forEach(i => {
-      yamlManifest += "---\n" + yamlSafeDump(i);
+      yamlManifest += "---\n" + yaml.dump(i);
     });
     return yamlManifest;
   };

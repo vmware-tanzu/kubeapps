@@ -1,5 +1,4 @@
 import { push } from "connected-react-router";
-import * as React from "react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { IChartVersion, IStoreState } from "../../shared/types";

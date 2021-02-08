@@ -7,7 +7,7 @@ function flatten(text: string, child: any): any {
     : React.Children.toArray(child.props.children).reduce(flatten, text);
 }
 
-const HeadingRenderer: React.SFC<{}> = (props: any) => {
+const HeadingRenderer: React.FunctionComponent<{}> = (props: any) => {
   const children = React.Children.toArray(props.children);
   const text = children.reduce(flatten, "");
   const slug = text

@@ -632,6 +632,7 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
                       }
                     />
                     <input
+                      aria-checked={true}
                       checked={true}
                       disabled={false}
                       id="enableMetrics-0"

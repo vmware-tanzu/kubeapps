@@ -1,5 +1,5 @@
 import { CdsIcon } from "@clr/react/icon";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { DeploymentEvent } from "shared/types";
 
 interface IDifferentialSelectorProps {

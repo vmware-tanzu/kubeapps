@@ -1,7 +1,6 @@
 import LoadingWrapper from "components/LoadingWrapper";
 import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
-import * as React from "react";
 import { StaticRouter } from "react-router";
 import { Redirect, RouteComponentProps } from "react-router-dom";
 import NotFound from "../../components/NotFound";

@@ -153,7 +153,13 @@ describe("oauth login form", () => {
   });
 
   it("changes window location when skipping oauth login page", () => {
-    window.location.replace = jest.fn();
+    // After the JSDOM upgrade, window.xxx are read-only properties
+    // https://github.com/facebook/jest/issues/9471
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: { replace: jest.fn() },
+    });
     mount(<LoginForm {...props} authProxySkipLoginPage={true} />);
     expect(window.location.replace).toHaveBeenCalledWith(props.oauthLoginURI);
   });

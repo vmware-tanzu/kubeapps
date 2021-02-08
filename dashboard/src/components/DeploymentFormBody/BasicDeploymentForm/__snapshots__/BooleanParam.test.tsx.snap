@@ -104,6 +104,7 @@ exports[`should render a boolean param with title and description 1`] = `
             }
           />
           <input
+            aria-checked={true}
             checked={true}
             disabled={false}
             id="foo"

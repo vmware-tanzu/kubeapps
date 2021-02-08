@@ -27,7 +27,7 @@ export class Auth {
     // JS, so force browser to load the sign-out URI (which expires the
     // session cookie).
     localStorage.removeItem(AuthTokenOIDCKey);
-    document.location.assign(config.oauthLogoutURI || "/oauth2/sign_out");
+    window.location.assign(config.oauthLogoutURI || "/oauth2/sign_out");
   }
 
   public static usingOIDCToken() {

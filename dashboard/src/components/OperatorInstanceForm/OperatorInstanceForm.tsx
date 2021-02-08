@@ -61,7 +61,7 @@ export function parseCSV(
         examples.forEach(example => {
           if (example.kind === kind) {
             // Found the example, set the default values
-            setDefaultValues(yaml.safeDump(example));
+            setDefaultValues(yaml.dump(example));
           }
         });
       }
