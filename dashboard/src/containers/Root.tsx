@@ -20,7 +20,7 @@ function Root() {
   const [i18nConfig, setI18nConfig] = useState(getDefaulI18nConfig());
   useEffect(() => {
     initLocale().then(customI18nConfig => setI18nConfig(customI18nConfig));
-  }, [i18nConfig]);
+  }, []);
 
   return (
     <Provider store={store}>
