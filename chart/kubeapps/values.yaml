@@ -496,6 +496,13 @@ dashboard:
   ##      background-color: #991700;
   ##    }
   customStyle: ""
+  ## Custom translations injected to the Dashboard to customize the str
+  ## e.g:
+  ## customLocale: |-
+  ##   {
+  ##     "Kubeapps": "My dashboard",
+  ##   }
+  customLocale: ""
 
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml

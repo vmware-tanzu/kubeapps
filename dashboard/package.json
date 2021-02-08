@@ -57,6 +57,7 @@
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "^16.13.0",
     "react-feather": "^1.0.8",
+    "react-intl": "^5.12.1",
     "react-jsonschema-form": "^1.0.3",
     "react-markdown": "^5.0.0",
     "react-minimal-pie-chart": "^6.0.1",
@@ -100,7 +101,9 @@
     "eslint": "eslint '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --max-warnings=0",
     "eslint-fix": "eslint '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --fix --max-warnings=0",
     "lint": "npm-run-all lint-js lint-css eslint",
-    "ts-compile-check": "tsc -p tsconfig.json --noEmit"
+    "ts-compile-check": "tsc -p tsconfig.json --noEmit",
+    "extract-lang": "formatjs extract 'src/**/*.ts*' --out-file lang/en.json --id-interpolation-pattern '[sha512:contenthash:base64:6]' --format simple",
+    "compile-lang": "formatjs compile-folder lang src/locales/ --ast --format simple"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -120,6 +123,7 @@
     ]
   },
   "devDependencies": {
+    "@formatjs/cli": "^3.0.5",
     "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.1",
     "@types/jest": "^26.0.3",
@@ -160,7 +164,8 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@clr|lit-element|lit-html|ramda|lodash-es|.*css)"
+      "node_modules/(?!@clr|lit-element|lit-html|ramda|lodash-es|.*css)",
+      "node_modules/(?!intl-messageformat|intl-messageformat-parser).+\\.js$"
     ]
   },
   "eslintConfig": {
