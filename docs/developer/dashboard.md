@@ -51,11 +51,10 @@ telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps
 Finally, launch the dashboard within the telepresence shell:
 
 ```bash
-export TELEPRESENCE_CONTAINER_NAMESPACE=kubeapps
 yarn run start
 ```
 
-> **NOTE**: The commands above assume you install Kubeapps in the `kubeapps` namespace. Please update the environment variable `TELEPRESENCE_CONTAINER_NAMESPACE` if you are using a different namespace.
+> **NOTE**: The commands above assume you install Kubeapps in the `kubeapps` namespace. Please update the file `dashboard/public/config.json` if you are using a different namespace.
 
 #### Telepresence alternative
 

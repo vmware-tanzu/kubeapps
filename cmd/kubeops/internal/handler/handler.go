@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/kubeapps/common/response"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
+	"github.com/kubeapps/kubeapps/pkg/chart"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
@@ -27,8 +29,6 @@ const (
 	nameParam      = "releaseName"
 	authUserError  = "Unexpected error while configuring authentication"
 )
-
-const isV1SupportRequired = false
 
 // This type represents the fact that a regular handler cannot actually be created until we have access to the request,
 // because a valid action config (and hence handler config) cannot be created until then.
@@ -50,7 +50,10 @@ type Options struct {
 type Config struct {
 	ActionConfig *action.Configuration
 	Options      Options
-	ChartClient  chartUtils.Resolver
+	KubeHandler  kube.AuthHandler
+	Resolver     handlerutil.ResolverFactory
+	Cluster      string
+	Token        string
 }
 
 // WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
@@ -104,7 +107,10 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(kubeHandler, options.ClustersConfig.KubeappsClusterName, options.KubeappsNamespace, options.UserAgent),
+				KubeHandler:  kubeHandler,
+				Cluster:      cluster,
+				Token:        token,
+				Resolver:     &handlerutil.ClientResolver{},
 			}
 			f(cfg, w, req, params)
 		}
@@ -164,17 +170,36 @@ func ListAllReleases(cfg Config, w http.ResponseWriter, req *http.Request, _ han
 
 // CreateRelease creates a release.
 func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
+	chartDetails, err := handlerutil.ParseRequest(req)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Cluster, cfg.Options.KubeappsNamespace)
+	if err != nil {
+		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
+		return
+	}
+	ch, err := handlerutil.GetChart(
+		chartDetails,
+		appRepo,
+		caCertSecret, authSecret,
+		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+	)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
 
-	ch := chartMulti.Helm3Chart
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, cfg.ChartClient.RegistrySecretsPerDomain())
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo.Spec.DockerRegistrySecrets, cfg.Cluster, appRepo.Namespace, cfg.Token, cfg.KubeHandler)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -198,14 +223,29 @@ func OperateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 
 func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
-	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
+	chartDetails, err := handlerutil.ParseRequest(req)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Cluster, cfg.Options.KubeappsNamespace)
+	if err != nil {
+		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
+		return
+	}
+	ch, err := handlerutil.GetChart(
+		chartDetails,
+		appRepo,
+		caCertSecret, authSecret,
+		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+	)
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo.Spec.DockerRegistrySecrets, cfg.Cluster, appRepo.Namespace, cfg.Token, cfg.KubeHandler)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
 
-	ch := chartMulti.Helm3Chart
-	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, cfg.ChartClient.RegistrySecretsPerDomain())
+	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets)
 	if err != nil {
 		returnErrMessage(err, w)
 		return

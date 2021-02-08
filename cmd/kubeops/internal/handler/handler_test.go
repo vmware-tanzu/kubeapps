@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	fakeHandlerUtils "github.com/kubeapps/kubeapps/pkg/handlerutil/fake"
+	kubeappsKube "github.com/kubeapps/kubeapps/pkg/kube"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -20,6 +22,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	helmTime "helm.sh/helm/v3/pkg/time"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"helm.sh/helm/v3/pkg/release"
 )
@@ -47,7 +50,14 @@ func newConfigFixture(t *testing.T, k *kubefake.FailingKubeClient) *Config {
 				t.Logf(format, v...)
 			},
 		},
-		ChartClient: &chartFake.FakeChart{},
+		KubeHandler: &kubeappsKube.FakeHandler{
+			AppRepos: []*v1alpha1.AppRepository{
+				{ObjectMeta: v1.ObjectMeta{Name: "bitnami", Namespace: "default"},
+					Spec: v1alpha1.AppRepositorySpec{Type: "helm", URL: "http://foo.bar"},
+				},
+			},
+		},
+		Resolver: &fakeHandlerUtils.ClientResolver{},
 		Options: Options{
 			ListLimit: defaultListLimit,
 		},
@@ -102,7 +112,7 @@ func TestActions(t *testing.T) {
 			Description:      "Create a simple release",
 			ExistingReleases: []*release.Release{},
 			// Request params
-			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			RequestQuery: "",
 			Action:       "create",
 			Params:       map[string]string{"namespace": "default"},
@@ -120,7 +130,7 @@ func TestActions(t *testing.T) {
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 			},
 			// Request params
-			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			RequestQuery: "",
 			Action:       "create",
 			Params:       map[string]string{"namespace": "default"},
@@ -252,7 +262,7 @@ func TestActions(t *testing.T) {
 			ExistingReleases: []*release.Release{},
 			KubeError:        errors.New(`Failed to create: secrets is forbidden: User "foo" cannot create resource "secrets" in API group "" in the namespace "default"`),
 			// Request params
-			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			RequestQuery: "",
 			Action:       "create",
 			Params:       map[string]string{"namespace": "default"},
@@ -473,7 +483,7 @@ func TestUpgradeAction(t *testing.T) {
 				createRelease("apache", releaseName, "default", 1, release.StatusDeployed),
 			},
 			queryString: "action=upgrade",
-			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0"}`,
+			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			params:     map[string]string{nameParam: releaseName},
 			statusCode: http.StatusOK,
 			expectedReleases: []*release.Release{
@@ -486,7 +496,7 @@ func TestUpgradeAction(t *testing.T) {
 			name:             "upgrade a missing release",
 			existingReleases: []*release.Release{},
 			queryString:      "action=upgrade",
-			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0"}`,
+			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			params:     map[string]string{nameParam: releaseName},
 			statusCode: http.StatusNotFound,
 			// expectedReleases is `nil` because nil slice != empty slice

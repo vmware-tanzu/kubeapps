@@ -31,7 +31,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -41,7 +40,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/helm"
+	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
+	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
@@ -202,13 +202,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
 		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{})
-		// The header property is private so we need to use reflect to get its value
-		resolver := repo.(*OCIRegistry).puller.(*helm.OCIPuller).Resolver
-		resolverValue := reflect.ValueOf(resolver)
-		headerValue := reflect.Indirect(resolverValue).FieldByName("header")
-		if !strings.Contains(fmt.Sprintf("%v", headerValue), "Authorization:[Basic auth]") {
-			t.Error("Missing authorization header")
-		}
+		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
 	})
 }
 
@@ -841,16 +835,6 @@ func Test_ociAPICli(t *testing.T) {
 	})
 }
 
-type fakeOCIPuller struct {
-	content  *bytes.Buffer
-	checksum string
-	err      error
-}
-
-func (f *fakeOCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
-	return f.content, f.checksum, f.err
-}
-
 type fakeOCIAPICli struct {
 	tagList *TagList
 	err     error
@@ -994,9 +978,9 @@ version: 1.0.0
 				tags: map[string]TagList{
 					"kubeapps": {Name: "test/kubeapps", Tags: []string{"1.0.0"}},
 				},
-				puller: &fakeOCIPuller{
-					content:  w.Body,
-					checksum: "123",
+				puller: &helmfake.OCIPuller{
+					Content:  w.Body,
+					Checksum: "123",
 				},
 			}
 			charts, err := chartsRepo.Charts()

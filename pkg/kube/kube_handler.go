@@ -23,6 +23,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -314,17 +316,23 @@ type appRepositoryRequest struct {
 
 type appRepositoryRequestDetails struct {
 	Name               string                 `json:"name"`
+	Type               string                 `json:"type"`
 	RepoURL            string                 `json:"repoURL"`
 	AuthHeader         string                 `json:"authHeader"`
 	CustomCA           string                 `json:"customCA"`
 	RegistrySecrets    []string               `json:"registrySecrets"`
 	SyncJobPodTemplate corev1.PodTemplateSpec `json:"syncJobPodTemplate"`
 	ResyncRequests     uint                   `json:"resyncRequests"`
+	OCIRepositories    []string               `json:"ociRepositories"`
 }
 
 // ErrGlobalRepositoryWithSecrets defines the error returned when an attempt is
 // made to create registry secrets for a global repo.
 var ErrGlobalRepositoryWithSecrets = fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces")
+
+// ErrEmptyOCIRegistry defines the error returned when an attempt is
+// made to create an OCI registry with no repositories
+var ErrEmptyOCIRegistry = fmt.Errorf("You need to specify at least one repository for an OCI registry")
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
@@ -544,7 +552,7 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	return err
 }
 
-func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (HTTPClient, *http.Request, error) {
+func getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (*v1alpha1.AppRepository, HTTPClient, error) {
 	appRepoRequest, err := parseRepoRequest(appRepoBody)
 	if err != nil {
 		return nil, nil, err
@@ -565,12 +573,7 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeapp
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
 	}
-	indexURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/") + "/index.yaml"
-	req, err := http.NewRequest("GET", indexURL, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-	return cli, req, nil
+	return appRepo, cli, nil
 }
 
 func doValidationRequest(cli HTTPClient, req *http.Request) (*ValidationResponse, error) {
@@ -586,13 +589,68 @@ func doValidationRequest(cli HTTPClient, req *http.Request) (*ValidationResponse
 	return &ValidationResponse{Code: res.StatusCode, Message: string(body)}, nil
 }
 
+func getRequests(appRepo *v1alpha1.AppRepository, cli HTTPClient) ([]*http.Request, error) {
+	result := []*http.Request{}
+	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
+
+	switch appRepo.Spec.Type {
+	case "oci":
+		// For the OCI case, we want to validate that all the given repositories are valid
+		if len(appRepo.Spec.OCIRepositories) == 0 {
+			return nil, ErrEmptyOCIRegistry
+		}
+		for _, repoName := range appRepo.Spec.OCIRepositories {
+			parsedURL, err := url.ParseRequestURI(repoURL)
+			if err != nil {
+				return nil, err
+			}
+			parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "tags", "list")
+			q := parsedURL.Query()
+			q.Add("n", "1")
+			parsedURL.RawQuery = q.Encode()
+			req, err := http.NewRequest("GET", parsedURL.String(), nil)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, req)
+		}
+		break
+	default:
+		parsedURL, err := url.ParseRequestURI(repoURL)
+		if err != nil {
+			return nil, err
+		}
+		parsedURL.Path = path.Join(parsedURL.Path, "index.yaml")
+		req, err := http.NewRequest("GET", parsedURL.String(), nil)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, req)
+	}
+	return result, nil
+}
+
 func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	// Split body parsing to a different function for ease testing
-	cli, req, err := getValidationCliAndReq(appRepoBody, requestNamespace, a.kubeappsNamespace)
+	appRepo, cli, err := getValidationCli(appRepoBody, requestNamespace, a.kubeappsNamespace)
 	if err != nil {
 		return nil, err
 	}
-	return doValidationRequest(cli, req)
+	reqs, err := getRequests(appRepo, cli)
+	if err != nil {
+		return nil, err
+	}
+	response := &ValidationResponse{}
+	for _, req := range reqs {
+		response, err = doValidationRequest(cli, req)
+		if err != nil {
+			return nil, err
+		}
+		if response.Code != 200 {
+			return response, nil
+		}
+	}
+	return response, nil
 }
 
 // GetAppRepository returns an AppRepository resource from a namespace.
@@ -629,18 +687,22 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 			}
 		}
 	}
-
+	if appRepo.Type == "" {
+		// Use helm type by default
+		appRepo.Type = "helm"
+	}
 	return &v1alpha1.AppRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: appRepo.Name,
 		},
 		Spec: v1alpha1.AppRepositorySpec{
 			URL:                   appRepo.RepoURL,
-			Type:                  "helm",
+			Type:                  appRepo.Type,
 			Auth:                  auth,
 			DockerRegistrySecrets: appRepo.RegistrySecrets,
 			SyncJobPodTemplate:    appRepo.SyncJobPodTemplate,
 			ResyncRequests:        appRepo.ResyncRequests,
+			OCIRepositories:       appRepo.OCIRepositories,
 		},
 	}
 }

@@ -24,23 +24,4 @@ describe("Config", () => {
   it("returns default namespace if no override provided", async () => {
     expect(await Config.getConfig()).toEqual(defaultJSON);
   });
-
-  it("returns the overriden namespace if env variable provided", async () => {
-    process.env.REACT_APP_KUBEAPPS_NS = "magic-playground";
-    expect(await Config.getConfig()).toEqual({
-      ...defaultJSON,
-      kubeappsNamespace: "magic-playground",
-    });
-  });
-
-  it("does not returns the overriden namespace if NODE_ENV=production", async () => {
-    const prodEnv = {
-      ...initialEnv,
-      NODE_ENV: "production",
-      REACT_APP_KUBEAPPS_NS: "magic-playground",
-    };
-    process.env = prodEnv;
-
-    expect(await Config.getConfig()).toEqual(defaultJSON);
-  });
 });

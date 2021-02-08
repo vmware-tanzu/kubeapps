@@ -17,44 +17,27 @@ limitations under the License.
 package fake
 
 import (
-	"encoding/json"
-	"net/http"
-
+	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	chart3 "helm.sh/helm/v3/pkg/chart"
-	chart2 "k8s.io/helm/pkg/proto/hapi/chart"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
 
-type FakeChart struct{}
+// Client implements Resolver inteface
+type Client struct{}
 
-func (f *FakeChart) ParseDetails(data []byte) (*chartUtils.Details, error) {
-	details := &chartUtils.Details{}
-	err := json.Unmarshal(data, details)
-	return details, err
-}
-
-func (f *FakeChart) GetChart(details *chartUtils.Details, netClient kube.HTTPClient, requireV1Support bool) (*chartUtils.ChartMultiVersion, error) {
+// GetChart fake
+func (f *Client) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
 	}
-	return &chartUtils.ChartMultiVersion{
-		Helm2Chart: &chart2.Chart{
-			Metadata: &chart2.Metadata{
-				Name: details.ChartName,
-			},
-			Values: &chart2.Config{
-				Raw: details.Values,
-			},
+	return &chart3.Chart{
+		Metadata: &chart3.Metadata{
+			Name: details.ChartName,
 		},
-		Helm3Chart: &chart3.Chart{
-			Metadata: &chart3.Metadata{
-				Name: details.ChartName,
-			},
-			Values: vals,
-		},
+		Values: vals,
 	}, nil
 }
 
@@ -67,10 +50,7 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 	return values, nil
 }
 
-func (f *FakeChart) InitNetClient(details *chartUtils.Details, userAuthToken string) (kube.HTTPClient, error) {
-	return &http.Client{}, nil
-}
-
-func (f *FakeChart) RegistrySecretsPerDomain() map[string]string {
+// InitClient fake
+func (f *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	return nil
 }
