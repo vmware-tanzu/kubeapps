@@ -8,7 +8,7 @@ import (
 // ClientResolver implements ResolverFactory
 type ClientResolver struct{}
 
-// Get for ClientResolver
+// New for ClientResolver
 func (c *ClientResolver) New(repoType, userAgent string) chartUtils.Resolver {
-	return &fakeChart.Chart{}
+	return &fakeChart.Client{}
 }

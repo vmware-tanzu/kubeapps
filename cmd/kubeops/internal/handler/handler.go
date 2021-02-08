@@ -199,7 +199,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo, cfg.Cluster, cfg.Token, cfg.KubeHandler)
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo.Spec.DockerRegistrySecrets, cfg.Cluster, appRepo.Namespace, cfg.Token, cfg.KubeHandler)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -246,7 +246,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		isV1SupportRequired,
 		cfg.KubeHandler,
 	)
-	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo, cfg.Cluster, cfg.Token, cfg.KubeHandler)
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo.Spec.DockerRegistrySecrets, cfg.Cluster, appRepo.Namespace, cfg.Token, cfg.KubeHandler)
 	if err != nil {
 		returnErrMessage(err, w)
 		return

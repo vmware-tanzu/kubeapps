@@ -189,7 +189,7 @@ func TestCreateReleases(t *testing.T) {
 			// Initialize environment for test
 			actionConfig := newActionConfigFixture(t)
 			makeReleases(t, actionConfig, tc.existingReleases)
-			fakechart := chartFake.Chart{}
+			fakechart := chartFake.Client{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
 			}, "", false)
@@ -678,7 +678,7 @@ func TestUpgradeRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
-			fakechart := chartFake.Chart{}
+			fakechart := chartFake.Client{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
 			}, "", false)
