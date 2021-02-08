@@ -116,6 +116,7 @@ it("should call the install method with OCI information", async () => {
     validateRepo,
   };
   const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "oci.repo" } });
   wrapper.find("#kubeapps-repo-type-oci").simulate("change");
   wrapper
     .find("#kubeapps-oci-repositories")
@@ -125,7 +126,16 @@ it("should call the install method with OCI information", async () => {
     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
   });
   wrapper.update();
-  expect(install).toHaveBeenCalledWith("", "", "oci", "", "", "", [], ["apache", "jenkins"]);
+  expect(install).toHaveBeenCalledWith(
+    "",
+    "https://oci.repo",
+    "oci",
+    "",
+    "",
+    "",
+    [],
+    ["apache", "jenkins"],
+  );
 });
 
 it("should not show the docker registry credentials section if the namespace is the global one", () => {
@@ -165,6 +175,7 @@ it("should call the install method with the selected docker credentials", async 
   act(() => {
     label.simulate("change");
   });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
   wrapper.update();
 
   await act(async () => {
@@ -172,7 +183,7 @@ it("should call the install method with the selected docker credentials", async 
       preventDefault: jest.fn(),
     });
   });
-  expect(install).toHaveBeenCalledWith("", "", "helm", "", "", "", ["repo-1"], []);
+  expect(install).toHaveBeenCalledWith("", "http://test", "helm", "", "", "", ["repo-1"], []);
 });
 
 it("should not show the custom CA field if using an OCI registry", () => {
