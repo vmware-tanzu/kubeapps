@@ -30,10 +30,12 @@ it("gets default of requesting non existing i18n config", () => {
 });
 
 it("gets custom i18n config", async () => {
-  const data: Record<string, string> = { messageId: "translation" };
-  axiosWithAuth.get = jest.fn().mockReturnValue({ data: data });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: { messageId: "translation" } });
   const config: II18nConfig = await getCustomI18nConfig(ISupportedLangs.en);
-  const expected: II18nConfig = { locale: ISupportedLangs.en, messages: data };
+  const expected: II18nConfig = {
+    locale: ISupportedLangs.en,
+    messages: { messageId: "translation" },
+  };
   expect(config).toStrictEqual(expected);
 });
 
