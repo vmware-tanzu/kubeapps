@@ -164,8 +164,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@clr|lit-element|lit-html|ramda|lodash-es|.*css)",
-      "node_modules/(?!intl-messageformat|intl-messageformat-parser).+\\.js$"
+      "node_modules/(?!@clr|lit-element|lit-html|ramda|lodash-es|.*css)"
     ]
   },
   "eslintConfig": {
