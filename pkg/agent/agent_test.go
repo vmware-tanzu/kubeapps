@@ -153,7 +153,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "default",
 			version:   1,
 			existingReleases: []releaseStub{
-				releaseStub{"otherchart", "default", 1, "1.0.0", release.StatusDeployed},
+				{"otherchart", "default", 1, "1.0.0", release.StatusDeployed},
 			},
 			remainingReleases: 2,
 			shouldFail:        false,
@@ -165,7 +165,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "default",
 			version:   1,
 			existingReleases: []releaseStub{
-				releaseStub{"mychart", "default", 1, "1.0.0", release.StatusDeployed},
+				{"mychart", "default", 1, "1.0.0", release.StatusDeployed},
 			},
 			remainingReleases: 1,
 			shouldFail:        true,
@@ -177,7 +177,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "dev",
 			version:   1,
 			existingReleases: []releaseStub{
-				releaseStub{"mychart", "dev", 2, "1.0.0", release.StatusDeployed},
+				{"mychart", "dev", 2, "1.0.0", release.StatusDeployed},
 			},
 			remainingReleases: 1,
 			shouldFail:        true,
@@ -189,12 +189,12 @@ func TestCreateReleases(t *testing.T) {
 			// Initialize environment for test
 			actionConfig := newActionConfigFixture(t)
 			makeReleases(t, actionConfig, tc.existingReleases)
-			fakechart := chartFake.FakeChart{}
+			fakechart := chartFake.Client{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
-			}, nil, false)
+			}, "")
 			// Perform test
-			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch.Helm3Chart, nil)
+			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch, nil)
 			// Check result
 			if tc.shouldFail && err == nil {
 				t.Errorf("Should fail with %v; instead got %s in %s", tc.desc, tc.releaseName, tc.namespace)
@@ -227,12 +227,12 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-				releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+				{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
-				proxy.AppOverview{
+				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
@@ -244,7 +244,7 @@ func TestListReleases(t *testing.T) {
 						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
-				proxy.AppOverview{
+				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.1",
@@ -256,7 +256,7 @@ func TestListReleases(t *testing.T) {
 						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
-				proxy.AppOverview{
+				{
 					ReleaseName: "not-in-default-namespace",
 					Namespace:   "other",
 					Version:     "1.0.2",
@@ -275,12 +275,12 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-				releaseStub{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
-				proxy.AppOverview{
+				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
@@ -292,7 +292,7 @@ func TestListReleases(t *testing.T) {
 						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
-				proxy.AppOverview{
+				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.1",
@@ -311,12 +311,12 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: 1,
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-				releaseStub{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
-				proxy.AppOverview{
+				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
@@ -335,11 +335,11 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "dev", 2, "2.0.0", release.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
+				{"wordpress", "dev", 2, "2.0.0", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
-				proxy.AppOverview{
+				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
@@ -351,7 +351,7 @@ func TestListReleases(t *testing.T) {
 						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
-				proxy.AppOverview{
+				{
 					ReleaseName: "wordpress",
 					Namespace:   "dev",
 					Version:     "2.0.0",
@@ -370,11 +370,11 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "dev", 2, "1.0.0", release.StatusUninstalled},
+				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
+				{"wordpress", "dev", 2, "1.0.0", release.StatusUninstalled},
 			},
 			expectedApps: []proxy.AppOverview{
-				proxy.AppOverview{
+				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
@@ -394,11 +394,11 @@ func TestListReleases(t *testing.T) {
 			status:    "all",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "dev", 2, "1.0.1", release.StatusUninstalled},
+				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
+				{"wordpress", "dev", 2, "1.0.1", release.StatusUninstalled},
 			},
 			expectedApps: []proxy.AppOverview{
-				proxy.AppOverview{
+				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
@@ -410,7 +410,7 @@ func TestListReleases(t *testing.T) {
 						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
-				proxy.AppOverview{
+				{
 					ReleaseName: "wordpress",
 					Namespace:   "dev",
 					Version:     "1.0.1",
@@ -466,14 +466,14 @@ func TestDeleteRelease(t *testing.T) {
 		{
 			description: "Delete a release",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
 			},
 			releaseToDelete: "airwatch",
 		},
 		{
 			description: "Delete a non-existing release",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
 			},
 			releaseToDelete: "apache",
 			shouldFail:      true,
@@ -481,8 +481,8 @@ func TestDeleteRelease(t *testing.T) {
 		{
 			description: "Delete a release in different namespace",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"apache", "dev", 1, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"apache", "dev", 1, "1.0.0", release.StatusDeployed},
 			},
 			releaseToDelete: "apache",
 		},
@@ -570,8 +570,8 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "rolls back a release",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", targetRevision, "1.0.0", release.StatusSuperseded},
-				releaseStub{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", targetRevision, "1.0.0", release.StatusSuperseded},
+				{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
@@ -579,7 +579,7 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "errors when rolling back to a release revision which does not exist",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
@@ -588,9 +588,9 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "rolls back a release in non-default namespace",
 			releases: []releaseStub{
-				releaseStub{"otherrelease", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"airwatch", "othernamespace", targetRevision, "1.0.0", release.StatusSuperseded},
-				releaseStub{"airwatch", "othernamespace", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
+				{"otherrelease", "default", 1, "1.0.0", release.StatusDeployed},
+				{"airwatch", "othernamespace", targetRevision, "1.0.0", release.StatusSuperseded},
+				{"airwatch", "othernamespace", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
@@ -647,7 +647,7 @@ func TestUpgradeRelease(t *testing.T) {
 		{
 			description: "upgrade a release with chart",
 			releases: []releaseStub{
-				releaseStub{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
+				{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
 			},
 			valuesYaml: "IsValidYaml: true",
 			release:    "myrls",
@@ -656,7 +656,7 @@ func TestUpgradeRelease(t *testing.T) {
 		{
 			description: "upgrade a release with invalid values",
 			releases: []releaseStub{
-				releaseStub{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
+				{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
 			},
 			valuesYaml: "\\-xx-@myval:\"test value\"\\\n", // ← invalid yaml
 			release:    "myrls",
@@ -666,7 +666,7 @@ func TestUpgradeRelease(t *testing.T) {
 		{
 			description: "upgrade a deleted release",
 			releases: []releaseStub{
-				releaseStub{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusUninstalled},
+				{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusUninstalled},
 			},
 			release:    "myrls",
 			chartName:  "mynewchart",
@@ -678,11 +678,11 @@ func TestUpgradeRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
-			fakechart := chartFake.FakeChart{}
+			fakechart := chartFake.Client{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
-			}, nil, false)
-			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch.Helm3Chart, nil)
+			}, "")
+			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch, nil)
 			// Check for errors
 			if got, want := err != nil, tc.shouldFail; got != want {
 				t.Errorf("Failure: got: %v, want: %v", got, want)

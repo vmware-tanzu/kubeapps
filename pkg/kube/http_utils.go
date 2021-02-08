@@ -58,6 +58,19 @@ func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error)
 	return c.client.Do(req)
 }
 
+// GetData retrieves the given key from the secret as a string
+func GetData(key string, s *corev1.Secret) (string, error) {
+	auth, ok := s.StringData[key]
+	if !ok {
+		authBytes, ok := s.Data[key]
+		if !ok {
+			return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
+		}
+		auth = string(authBytes)
+	}
+	return auth, nil
+}
+
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
 func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *corev1.Secret, defaultHeaders http.Header) (HTTPClient, error) {
@@ -90,14 +103,9 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *co
 		defaultHeaders = http.Header{}
 	}
 	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
-		key := appRepo.Spec.Auth.Header.SecretKeyRef.Key
-		auth, ok := authSecret.StringData[key]
-		if !ok {
-			authBytes, ok := authSecret.Data[key]
-			if !ok {
-				return nil, fmt.Errorf("secret %q did not contain key %q", appRepo.Spec.Auth.Header.SecretKeyRef.Name, key)
-			}
-			auth = string(authBytes)
+		auth, err := GetData(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
+		if err != nil {
+			return nil, err
 		}
 		defaultHeaders.Set("Authorization", string(auth))
 	}

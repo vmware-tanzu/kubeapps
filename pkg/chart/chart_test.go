@@ -32,6 +32,8 @@ import (
 
 	"github.com/arschles/assert"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
+	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -171,8 +173,7 @@ func TestParseDetails(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ch := Client{}
-			details, err := ch.ParseDetails([]byte(tc.data))
+			details, err := ParseDetails([]byte(tc.data))
 
 			if tc.err {
 				if err == nil {
@@ -237,9 +238,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{customCASecretName},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -256,9 +256,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"other-secret-name"},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -275,9 +274,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{authHeaderSecretName},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: authHeaderSecretName},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -294,9 +292,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"other-secret-name"},
-							"custom-secret-key",
-							nil,
+							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
+							Key:                  "custom-secret-key",
 						},
 					},
 				},
@@ -307,7 +304,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		// The fake k8s client will contain secret for the CA and header respectively.
-		secrets := []*corev1.Secret{&corev1.Secret{
+		secrets := []*corev1.Secret{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      customCASecretName,
 				Namespace: appRepoNamespace,
@@ -315,7 +312,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(customCASecretName),
 			},
-		}, &corev1.Secret{
+		}, {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      authHeaderSecretName,
 				Namespace: appRepoNamespace,
@@ -325,7 +322,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 		}}
 
-		apprepos := []*appRepov1.AppRepository{&appRepov1.AppRepository{
+		apprepos := []*appRepov1.AppRepository{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tc.details.AppRepositoryResourceName,
 				Namespace: appRepoNamespace,
@@ -333,14 +330,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			Spec: tc.appRepoSpec,
 		}}
 
-		chUtils := Client{
-			appRepoHandler:    &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos},
-			kubeappsNamespace: metav1.NamespaceSystem,
-		}
-
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, caCertSecret, authSecret, err := chUtils.parseDetailsForHTTPClient(tc.details, "dummy-user-token")
-
+			appRepo, caCertSecret, authSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", "", "")
 			if err != nil {
 				if tc.errorExpected {
 					return
@@ -449,11 +440,10 @@ func getFakeClientRequests(t *testing.T, c kube.HTTPClient) []*http.Request {
 func TestGetChart(t *testing.T) {
 	const repoName = "foo-repo"
 	testCases := []struct {
-		name             string
-		chartVersion     string
-		userAgent        string
-		requireV1Support bool
-		errorExpected    bool
+		name          string
+		chartVersion  string
+		userAgent     string
+		errorExpected bool
 	}{
 		{
 			name:         "gets the chart without a user agent",
@@ -466,15 +456,8 @@ func TestGetChart(t *testing.T) {
 			userAgent:    "tiller-proxy/devel",
 		},
 		{
-			name:             "gets a v2 chart without error when v1 support not required",
-			chartVersion:     "5.1.1-apiVersionV2",
-			requireV1Support: false,
-		},
-		{
-			name:             "returns an error for a v2 chart if v1 support required",
-			chartVersion:     "5.1.1-apiVersionV2",
-			requireV1Support: true,
-			errorExpected:    true,
+			name:         "gets a v2 chart without error when v1 support not required",
+			chartVersion: "5.1.1-apiVersionV2",
 		},
 	}
 
@@ -490,17 +473,9 @@ func TestGetChart(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
 			chUtils := Client{
 				userAgent: tc.userAgent,
-				appRepo: &appRepov1.AppRepository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      repoName,
-						Namespace: metav1.NamespaceSystem,
-					},
-					Spec: appRepov1.AppRepositorySpec{
-						URL: repoURL,
-					},
-				},
 			}
-			ch, err := chUtils.GetChart(&target, httpClient, tc.requireV1Support)
+			chUtils.netClient = httpClient
+			ch, err := chUtils.GetChart(&target, repoURL)
 
 			if err != nil {
 				if tc.errorExpected {
@@ -513,14 +488,9 @@ func TestGetChart(t *testing.T) {
 				}
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			// Currently tests return an nginx chart from ./testdata
-			// We need to ensure it got loaded in both version formats.
-			if got, want := ch.Helm2Chart.GetMetadata().GetName(), "nginx"; got != want {
-				t.Errorf("got: %q, want: %q", got, want)
-			}
-			if ch.Helm3Chart == nil {
+			if ch == nil {
 				t.Errorf("got: nil, want: non-nil")
-			} else if got, want := ch.Helm3Chart.Name(), "nginx"; got != want {
+			} else if got, want := ch.Name(), "nginx"; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 
@@ -531,8 +501,8 @@ func TestGetChart(t *testing.T) {
 			}
 
 			for i, url := range []string{
-				chUtils.appRepo.Spec.URL + "index.yaml",
-				fmt.Sprintf("%s%s-%s.tgz", chUtils.appRepo.Spec.URL, target.ChartName, target.Version),
+				repoURL + "index.yaml",
+				fmt.Sprintf("%s%s-%s.tgz", repoURL, target.ChartName, target.Version),
 			} {
 				if got, want := requests[i].URL.String(), url; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
@@ -544,6 +514,12 @@ func TestGetChart(t *testing.T) {
 
 		})
 	}
+
+	t.Run("it should fail if the netClient is not instantiated", func(t *testing.T) {
+		cli := NewChartClient("")
+		_, err := cli.GetChart(nil, "")
+		assert.Err(t, fmt.Errorf("unable to retrieve chart, InitClient should be called first"), err)
+	})
 }
 
 func TestGetIndexFromCache(t *testing.T) {
@@ -677,7 +653,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns an error if the secret is not a dockerConfigJSON type",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -694,7 +670,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns an error if the secret data does not have .dockerconfigjson key",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -711,7 +687,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns an error if the secret .dockerconfigjson value is not json decodable",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -728,7 +704,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it returns the registry secrets per domain",
 			secretNames: []string{"bitnami-repo"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -747,7 +723,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			name:        "it includes secrets for multiple servers",
 			secretNames: []string{"bitnami-repo1", "bitnami-repo2"},
 			existingSecrets: []*corev1.Secret{
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo1",
 						Namespace: namespace,
@@ -757,7 +733,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 						dockerConfigJSONKey: []byte(indexDockerIOCred),
 					},
 				},
-				&corev1.Secret{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo2",
 						Namespace: namespace,
@@ -779,7 +755,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &kube.FakeHandler{Secrets: tc.existingSecrets}
 
-			secretsPerDomain, err := getRegistrySecretsPerDomain(tc.secretNames, "default", namespace, "token", client)
+			secretsPerDomain, err := RegistrySecretsPerDomain(tc.secretNames, "default", namespace, "token", client)
 			if got, want := err != nil, tc.expectError; !cmp.Equal(got, want) {
 				t.Fatalf("got: %t, want: %t, err was: %+v", got, want, err)
 			}
@@ -792,4 +768,62 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOCIClient(t *testing.T) {
+	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		cli.InitClient(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "User-Agent", "foo")
+	})
+
+	t.Run("InitClient - Creates puller with Authorization", func(t *testing.T) {
+		cli := NewOCIClient("")
+		appRepo := &appRepov1.AppRepository{
+			Spec: appRepov1.AppRepositorySpec{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{},
+							Key:                  "custom-secret-key",
+						},
+					},
+				},
+			},
+		}
+		authSecret := &corev1.Secret{
+			Data: map[string][]byte{
+				"custom-secret-key": []byte("Basic Auth"),
+			},
+		}
+		cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
+		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "Authorization", "Basic Auth")
+	})
+
+	t.Run("GetChart - Fails if the puller has not been instantiated", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		_, err := cli.GetChart(nil, "")
+		assert.Err(t, fmt.Errorf("unable to retrieve chart, InitClient should be called first"), err)
+	})
+
+	t.Run("GetChart - Fails if the URL is not valid", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		cli.(*OCIClient).puller = &helmfake.OCIPuller{}
+		_, err := cli.GetChart(nil, "foo")
+		assert.Equal(t, "parse foo: invalid URI for request", err.Error(), "error")
+	})
+
+	t.Run("GetChart - Returns a chart", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
+		assert.NoErr(t, err)
+		cli.(*OCIClient).puller = &helmfake.OCIPuller{
+			ExpectedName: "foo/bar/nginx:5.1.1",
+			Content:      bytes.NewBuffer(data),
+		}
+		ch, err := cli.GetChart(&Details{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar")
+		if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
+			t.Errorf("Unexpected chart %s:%s", ch.Name(), ch.Metadata.Version)
+		}
+	})
 }

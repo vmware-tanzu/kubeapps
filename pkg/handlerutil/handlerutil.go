@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/pkg/auth"
+	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Params a key-value map of path params
@@ -67,29 +69,55 @@ func ErrorCodeWithDefault(err error, defaultCode int) int {
 	return defaultCode
 }
 
-// ParseAndGetChart request and parse a chart.
-func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver, requireV1Support bool) (*chartUtils.Details, *chartUtils.ChartMultiVersion, error) {
+// ParseRequest extract chart info from the request
+func ParseRequest(req *http.Request) (*chartUtils.Details, error) {
 	defer req.Body.Close()
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	chartDetails, err := cu.ParseDetails(body)
+	chartDetails, err := chartUtils.ParseDetails(body)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	netClient, err := cu.InitNetClient(chartDetails, auth.ExtractToken(req.Header.Get("Authorization")))
-	if err != nil {
-		return nil, nil, err
-	}
-	ch, err := cu.GetChart(chartDetails, netClient, requireV1Support)
-	if err != nil {
-		return nil, nil, err
-	}
-	return chartDetails, ch, nil
+	return chartDetails, nil
 }
 
+// ResolverFactory interface to return a resolver
+type ResolverFactory interface {
+	New(repoType, userAgent string) chartUtils.Resolver
+}
+
+// ClientResolver implements ResolverFactory
+type ClientResolver struct{}
+
+// New for ClientResolver
+func (c *ClientResolver) New(repoType, userAgent string) chartUtils.Resolver {
+	var cu chartUtils.Resolver
+	switch repoType {
+	case "oci":
+		cu = chartUtils.NewOCIClient(userAgent)
+		break
+	default:
+		cu = chartUtils.NewChartClient(userAgent)
+	}
+	return cu
+}
+
+// GetChart retrieves a chart
+func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, resolver chartUtils.Resolver) (*chart.Chart, error) {
+	err := resolver.InitClient(appRepo, caCertSecret, authSecret)
+	if err != nil {
+		return nil, err
+	}
+	ch, err := resolver.GetChart(chartDetails, appRepo.Spec.URL)
+	if err != nil {
+		return nil, err
+	}
+	return ch, nil
+}
+
+// QueryParamIsTruthy returns true if the req param is "1" or "true"
 func QueryParamIsTruthy(param string, req *http.Request) bool {
 	value := req.URL.Query().Get(param)
 	return value == "1" || value == "true"
