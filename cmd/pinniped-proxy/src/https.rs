@@ -130,7 +130,7 @@ pub fn rewrite_request(mut req: Request<hyper::Body>, k8s_api_server_url: String
 /// make_https_connector returns the tls-configured http connector.
 pub fn make_https_client(tls_builder: &mut TlsConnectorBuilder) -> Result<Client<HttpsConnector<HttpConnector>>> {
     let tls = tls_builder.build()?;
-    let tokio_tls = tokio_tls::TlsConnector::from(tls);
+    let tokio_tls = tokio_native_tls::TlsConnector::from(tls);
     let mut http = HttpConnector::new();
     http.enforce_http(false);
     let mut https = HttpsConnector::<HttpConnector>::from((http, tokio_tls));
