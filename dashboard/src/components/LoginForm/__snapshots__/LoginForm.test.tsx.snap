@@ -1,127 +1,200 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`token login form displays an error if the authentication error is passed 1`] = `
-<LoginForm
-  appVersion="devel"
-  authProxySkipLoginPage={false}
-  authenticate={[MockFunction]}
-  authenticated={false}
-  authenticating={false}
-  authenticationError="it's a trap"
-  checkCookieAuthentication={[MockFunction]}
-  cluster="default"
-  location={
+<IntlProvider
+  defaultFormats={Object {}}
+  defaultLocale="en"
+  formats={Object {}}
+  locale="en"
+  messages={
     Object {
-      "hash": "",
-      "pathname": "",
-      "search": "",
-      "state": "",
+      "Kubeapps": Array [
+        Object {
+          "type": 0,
+          "value": "Kubeapps",
+        },
+      ],
+      "Submit": Array [
+        Object {
+          "type": 0,
+          "value": "Submit",
+        },
+      ],
+      "Token": Array [
+        Object {
+          "type": 0,
+          "value": "Token",
+        },
+      ],
+      "error-login-token": Array [
+        Object {
+          "type": 0,
+          "value": "There was an error connecting to the Kubernetes API. Please check that your token is valid.",
+        },
+      ],
+      "login-desc-oidc": Array [
+        Object {
+          "type": 0,
+          "value": "Your cluster operator has enabled login via an authentication provider.",
+        },
+      ],
+      "login-desc-token": Array [
+        Object {
+          "type": 0,
+          "value": "Your cluster operator should provide you with a Kubernetes API token.",
+        },
+      ],
+      "login-oidc": Array [
+        Object {
+          "type": 0,
+          "value": "Login via OIDC Provider",
+        },
+      ],
+      "login-title-welcome": Array [
+        Object {
+          "type": 0,
+          "value": "Welcome to",
+        },
+      ],
+      "more-info": Array [
+        Object {
+          "type": 0,
+          "value": "More Info",
+        },
+      ],
+      "paste-token-here": Array [
+        Object {
+          "type": 0,
+          "value": "Paste token here",
+        },
+      ],
     }
   }
-  oauthLoginURI=""
+  onError={[Function]}
+  textComponent={Symbol(react.fragment)}
 >
-  <div
-    className="login-wrapper"
+  <LoginForm
+    appVersion="devel"
+    authProxySkipLoginPage={false}
+    authenticate={[MockFunction]}
+    authenticated={false}
+    authenticating={false}
+    authenticationError="it's a trap"
+    checkCookieAuthentication={[MockFunction]}
+    cluster="default"
+    location={
+      Object {
+        "hash": "",
+        "pathname": "",
+        "search": "",
+        "state": "",
+      }
+    }
+    oauthLoginURI=""
   >
-    <form
-      className="login clr-form"
-      onSubmit={[Function]}
+    <div
+      className="login-wrapper"
     >
-      <TokenLogin
-        authenticationError="it's a trap"
-        handleTokenChange={[Function]}
-        token=""
+      <form
+        className="login clr-form"
+        onSubmit={[Function]}
       >
-        <section
-          aria-describedby="login-desc"
-          aria-labelledby="login-title"
-          className="title"
+        <TokenLogin
+          authenticationError="it's a trap"
+          handleTokenChange={[Function]}
+          token=""
         >
-          <h3
-            className="welcome"
-            id="login-title"
+          <section
+            aria-describedby="login-desc"
+            aria-labelledby="login-title"
+            className="title"
           >
-            Welcome to 
-            <span>
-              Kubeapps
-            </span>
-          </h3>
-          <p
-            className="hint"
-            id="login-desc"
-          >
-            Your cluster operator should provide you with a Kubernetes API token.
-          </p>
-          <div
-            className="login-group"
-          >
-            <div
-              className="clr-form-control"
+            <h3
+              className="welcome"
+              id="login-title"
             >
-              <label
-                className="clr-control-label"
-                htmlFor="token"
-              >
-                Token
-              </label>
+              Welcome to
+              <span>
+                Kubeapps
+              </span>
+            </h3>
+            <p
+              className="hint"
+              id="login-desc"
+            >
+              Your cluster operator should provide you with a Kubernetes API token.
+            </p>
+            <div
+              className="login-group"
+            >
               <div
-                className="clr-control-container"
+                className="clr-form-control"
               >
-                <div
-                  className="clr-input-wrapper"
+                <label
+                  className="clr-control-label"
+                  htmlFor="token"
                 >
-                  <input
-                    className="clr-input"
-                    id="token"
-                    name="token"
-                    onChange={[Function]}
-                    placeholder="Paste token here"
-                    required={true}
-                    type="password"
-                    value=""
-                  />
+                  Token
+                </label>
+                <div
+                  className="clr-control-container"
+                >
+                  <div
+                    className="clr-input-wrapper"
+                  >
+                    <input
+                      className="clr-input"
+                      id="token"
+                      name="token"
+                      onChange={[Function]}
+                      placeholder="Paste token here"
+                      required={true}
+                      type="password"
+                      value=""
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div
-              className="error active "
-            >
-              There was an error connecting to the Kubernetes API. Please check that your token is valid.
-            </div>
-            <div
-              className="login-submit-button"
-            >
-              <CdsButton
-                id="login-submit-button"
-                status="primary"
+              <div
+                className="error active "
               >
-                <cds-button>
-                  Submit
-                </cds-button>
-              </CdsButton>
+                There was an error connecting to the Kubernetes API. Please check that your token is valid.
+              </div>
+              <div
+                className="login-submit-button"
+              >
+                <CdsButton
+                  id="login-submit-button"
+                  status="primary"
+                >
+                  <cds-button>
+                    Submit
+                  </cds-button>
+                </CdsButton>
+              </div>
             </div>
-          </div>
-        </section>
-      </TokenLogin>
-      <div
-        className="login-moreinfo"
-      >
-        <a
-          href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
-          rel="noopener noreferrer"
-          target="_blank"
+          </section>
+        </TokenLogin>
+        <div
+          className="login-moreinfo"
         >
-          <CdsIcon
-            shape="info-circle"
+          <a
+            href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            <cds-icon />
-          </CdsIcon>
-          More Info
-        </a>
-      </div>
-    </form>
-  </div>
-</LoginForm>
+            <CdsIcon
+              shape="info-circle"
+            >
+              <cds-icon />
+            </CdsIcon>
+            More Info
+          </a>
+        </div>
+      </form>
+    </div>
+  </LoginForm>
+</IntlProvider>
 `;
 
 exports[`while authenticating loading spinner matches the snapshot 1`] = `
