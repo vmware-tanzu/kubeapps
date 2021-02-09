@@ -14,8 +14,8 @@ import { MockStore } from "redux-mock-store";
 import I18n from "../I18n";
 
 // Default to english 1i8nconfiguration
-const messages = I18n.getDefaulI18nConfig().messages;
-const locale = I18n.getDefaulI18nConfig().locale;
+const messages = I18n.getDefaultConfig().messages;
+const locale = I18n.getDefaultConfig().locale;
 
 export const mountIntl = (node: React.ReactElement) =>
   mount(

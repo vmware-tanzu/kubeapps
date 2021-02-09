@@ -13,11 +13,11 @@ import Routes from "./RoutesContainer";
 async function initLocale() {
   const fullLang = (navigator.languages && navigator.languages[0]) || navigator.language;
   const lang = fullLang.toLowerCase().split(/[_-]+/)[0];
-  return await I18n.getCustomI18nConfig(ISupportedLangs[lang]);
+  return await I18n.getCustomConfig(ISupportedLangs[lang]);
 }
 
 function Root() {
-  const [i18nConfig, setI18nConfig] = useState(I18n.getDefaulI18nConfig());
+  const [i18nConfig, setI18nConfig] = useState(I18n.getDefaultConfig());
   useEffect(() => {
     initLocale().then(customI18nConfig => setI18nConfig(customI18nConfig));
   }, []);

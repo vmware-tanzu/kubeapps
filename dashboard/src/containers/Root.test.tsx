@@ -11,16 +11,16 @@ it("renders the root componet", () => {
 
 it("loads the initial i18n config from getDefaulI18nConfig", async () => {
   const config: II18nConfig = { locale: "custom", messages: { messageId: "translation" } };
-  const getDefaulI18nConfig = jest.spyOn(I18n, "getDefaulI18nConfig").mockReturnValue(config);
+  const getDefaultConfig = jest.spyOn(I18n, "getDefaultConfig").mockReturnValue(config);
   act(() => {
     shallow(<Root />);
   });
-  expect(getDefaulI18nConfig).toHaveBeenCalled();
+  expect(getDefaultConfig).toHaveBeenCalled();
 });
 
 it("loads the async i18n config from getCustomI18nConfig", async () => {
   const config: II18nConfig = { locale: "custom", messages: { messageId: "translation" } };
-  I18n.getCustomI18nConfig = jest.fn().mockReturnValue({ then: jest.fn((f: any) => f(config)) });
+  I18n.getCustomConfig = jest.fn().mockReturnValue({ then: jest.fn((f: any) => f(config)) });
   act(() => {
     const wrapper = shallow(<Root />);
     expect(wrapper.find(IntlProvider).prop("locale")).toBe("custom");
