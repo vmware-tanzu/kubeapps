@@ -62,11 +62,11 @@ data:
         rewrite /api/clusters/{{ .name }}/(.*) /$1 break;
         rewrite /api/clusters/{{ .name }} / break;
 
-      # Helm returns a nil pointer error when accessing foo.bar if foo doesn't
-      # exist, even with the `default` function.
-      # See https://github.com/helm/helm/issues/8026#issuecomment-756538254
+      {{/* Helm returns a nil pointer error when accessing foo.bar if foo doesn't
+           exist, even with the `default` function.
+           See https://github.com/helm/helm/issues/8026#issuecomment-756538254 */}}
       {{- $pinnipedConfig := .pinnipedConfig | default dict }}
-      {{- if and $.Values.pinnipedProxy.enabled $pinnipedConfig.exchangeCredentials }}
+      {{- if and $.Values.pinnipedProxy.enabled $pinnipedConfig.enable }}
         # If pinniped proxy is enabled *and* the current cluster is configured
         # to exchange credentials then we route via pinnipedProxy to exchange
         # credentials for client certificates.
