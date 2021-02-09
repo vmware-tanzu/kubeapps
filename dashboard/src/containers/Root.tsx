@@ -4,7 +4,7 @@ import { ConnectedRouter } from "connected-react-router";
 import React, { Suspense, useEffect, useState } from "react";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
-import { getCustomI18nConfig, getDefaulI18nConfig, ISupportedLangs } from "shared/I18n";
+import I18n, { ISupportedLangs } from "shared/I18n";
 import store, { history } from "../store";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
 import ConfigLoaderContainer from "./ConfigLoaderContainer";
@@ -13,11 +13,11 @@ import Routes from "./RoutesContainer";
 async function initLocale() {
   const fullLang = (navigator.languages && navigator.languages[0]) || navigator.language;
   const lang = fullLang.toLowerCase().split(/[_-]+/)[0];
-  return await getCustomI18nConfig(ISupportedLangs[lang]);
+  return await I18n.getCustomI18nConfig(ISupportedLangs[lang]);
 }
 
 function Root() {
-  const [i18nConfig, setI18nConfig] = useState(getDefaulI18nConfig());
+  const [i18nConfig, setI18nConfig] = useState(I18n.getDefaulI18nConfig());
   useEffect(() => {
     initLocale().then(customI18nConfig => setI18nConfig(customI18nConfig));
   }, []);
