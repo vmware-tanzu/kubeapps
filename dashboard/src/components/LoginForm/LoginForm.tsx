@@ -2,6 +2,7 @@ import { CdsIcon } from "@clr/react/icon";
 import { Location } from "history";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { useIntl } from "react-intl";
 import { Redirect } from "react-router";
 
 import LoadingWrapper from "../../components/LoadingWrapper";
@@ -23,6 +24,7 @@ export interface ILoginFormProps {
 }
 
 function LoginForm(props: ILoginFormProps) {
+  const intl = useIntl();
   const [token, setToken] = useState("");
   const [cookieChecked, setCookieChecked] = useState(false);
   const { oauthLoginURI, checkCookieAuthentication } = props;
@@ -78,7 +80,7 @@ function LoginForm(props: ILoginFormProps) {
             rel="noopener noreferrer"
           >
             <CdsIcon shape="info-circle" />
-            More Info
+            {intl.formatMessage({ id: "more-info", defaultMessage: "More Info" })}
           </a>
         </div>
       </form>
