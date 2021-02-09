@@ -499,10 +499,9 @@ dashboard:
   ## Custom translations injected to the Dashboard to customize the strings used in Kubeapps
   ## Ref: https://github.com/kubeapps/kubeapps/blob/master/docs/developer/translate-kubeapps.md
   ## e.g:
-  ## customLocale: |-
-  ##   {
-  ##     "Kubeapps": "My dashboard",
-  ##   }
+  ## customLocale:
+  ##   "Kubeapps": "My Dashboard"
+  ##   "login-oidc": "Login with my company SSO"
   customLocale: ""
 
 ## PostgreSQL chart configuration
