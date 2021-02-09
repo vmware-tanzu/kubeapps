@@ -111,22 +111,15 @@ exports[`renders a basic deployment with a disk size 1`] = `
                       values={10}
                     >
                       <Slider
-                        component="div"
-                        disabled={false}
                         domain={
                           Array [
                             1,
                             1000,
                           ]
                         }
-                        flatten={false}
                         mode={1}
                         onChange={[Function]}
-                        onSlideEnd={[Function]}
-                        onSlideStart={[Function]}
                         onUpdate={[Function]}
-                        reversed={false}
-                        rootProps={Object {}}
                         rootStyle={
                           Object {
                             "margin": "1.2em 0 1.2em 0",
@@ -140,8 +133,6 @@ exports[`renders a basic deployment with a disk size 1`] = `
                             10,
                           ]
                         }
-                        vertical={false}
-                        warnOnChanges={false}
                       >
                         <div
                           style={
@@ -153,7 +144,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                           }
                         >
                           <Rail
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -198,7 +189,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                             />
                           </Rail>
                           <Handles
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -275,7 +266,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                             </div>
                           </Handles>
                           <Tracks
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -290,7 +281,6 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               ]
                             }
                             key=".2"
-                            left={true}
                             right={false}
                             scale={
                               LinearScale {
@@ -982,22 +972,15 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                       values={10}
                     >
                       <Slider
-                        component="div"
-                        disabled={false}
                         domain={
                           Array [
                             1,
                             1000,
                           ]
                         }
-                        flatten={false}
                         mode={1}
                         onChange={[Function]}
-                        onSlideEnd={[Function]}
-                        onSlideStart={[Function]}
                         onUpdate={[Function]}
-                        reversed={false}
-                        rootProps={Object {}}
                         rootStyle={
                           Object {
                             "margin": "1.2em 0 1.2em 0",
@@ -1011,8 +994,6 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                             10,
                           ]
                         }
-                        vertical={false}
-                        warnOnChanges={false}
                       >
                         <div
                           style={
@@ -1024,7 +1005,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                           }
                         >
                           <Rail
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -1069,7 +1050,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                             />
                           </Rail>
                           <Handles
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -1146,7 +1127,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                             </div>
                           </Handles>
                           <Tracks
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -1161,7 +1142,6 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                               ]
                             }
                             key=".2"
-                            left={true}
                             right={false}
                             scale={
                               LinearScale {
@@ -1359,22 +1339,15 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                       values={10}
                     >
                       <Slider
-                        component="div"
-                        disabled={false}
                         domain={
                           Array [
                             1,
                             1000,
                           ]
                         }
-                        flatten={false}
                         mode={1}
                         onChange={[Function]}
-                        onSlideEnd={[Function]}
-                        onSlideStart={[Function]}
                         onUpdate={[Function]}
-                        reversed={false}
-                        rootProps={Object {}}
                         rootStyle={
                           Object {
                             "margin": "1.2em 0 1.2em 0",
@@ -1388,8 +1361,6 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                             10,
                           ]
                         }
-                        vertical={false}
-                        warnOnChanges={false}
                       >
                         <div
                           style={
@@ -1401,7 +1372,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                           }
                         >
                           <Rail
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -1446,7 +1417,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                             />
                           </Rail>
                           <Handles
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -1523,7 +1494,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                             </div>
                           </Handles>
                           <Tracks
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -1538,7 +1509,6 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                               ]
                             }
                             key=".2"
-                            left={true}
                             right={false}
                             scale={
                               LinearScale {
@@ -2049,22 +2019,15 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                       values={10}
                     >
                       <Slider
-                        component="div"
-                        disabled={false}
                         domain={
                           Array [
                             1,
                             100,
                           ]
                         }
-                        flatten={false}
                         mode={1}
                         onChange={[Function]}
-                        onSlideEnd={[Function]}
-                        onSlideStart={[Function]}
                         onUpdate={[Function]}
-                        reversed={false}
-                        rootProps={Object {}}
                         rootStyle={
                           Object {
                             "margin": "1.2em 0 1.2em 0",
@@ -2078,8 +2041,6 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                             10,
                           ]
                         }
-                        vertical={false}
-                        warnOnChanges={false}
                       >
                         <div
                           style={
@@ -2091,7 +2052,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                           }
                         >
                           <Rail
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -2136,7 +2097,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                             />
                           </Rail>
                           <Handles
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -2213,7 +2174,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                             </div>
                           </Handles>
                           <Tracks
-                            activeHandleID={null}
+                            activeHandleID=""
                             emitKeyboard={[Function]}
                             emitMouse={[Function]}
                             emitTouch={[Function]}
@@ -2228,7 +2189,6 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                               ]
                             }
                             key=".2"
-                            left={true}
                             right={false}
                             scale={
                               LinearScale {
