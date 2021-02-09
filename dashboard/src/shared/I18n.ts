@@ -17,19 +17,19 @@ const messages = {};
 messages[ISupportedLangs.en] = messages_en;
 
 export default class I18n {
-  public static getDefaulI18nConfig(): II18nConfig {
+  public static getDefaultConfig(): II18nConfig {
     return { locale: ISupportedLangs.en, messages: messages[ISupportedLangs.en] };
   }
 
-  public static getI18nConfig(lang: ISupportedLangs): II18nConfig {
+  public static getConfig(lang: ISupportedLangs): II18nConfig {
     if (lang && ISupportedLangs[lang]) {
       return { locale: lang, messages: messages[lang] };
     } else {
-      return this.getDefaulI18nConfig();
+      return this.getDefaultConfig();
     }
   }
 
-  public static async getCustomI18nConfig(lang: ISupportedLangs) {
+  public static async getCustomConfig(lang: ISupportedLangs) {
     try {
       const customMessages = (await axiosWithAuth.get<Record<string, string>>("custom_locale.json"))
         .data;
@@ -39,9 +39,9 @@ export default class I18n {
       return { locale: lang, messages: customMessages };
     } catch (err) {
       if (lang && ISupportedLangs[lang]) {
-        return this.getI18nConfig(lang);
+        return this.getConfig(lang);
       } else {
-        return this.getDefaulI18nConfig();
+        return this.getDefaultConfig();
       }
     }
   }
