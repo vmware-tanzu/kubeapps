@@ -2039,10 +2039,10 @@
     jest-diff "^26.0.0"
     pretty-format "^26.0.0"
 
-"@types/js-yaml@^3.10.1":
-  version "3.12.6"
-  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.12.6.tgz#7f10c926aa41e189a2755c4c7fcf8e4573bd7ac1"
-  integrity sha512-cK4XqrLvP17X6c0C8n4iTbT59EixqyXL3Fk8/Rsk4dF3oX4dg70gYUXrXVUUHpnsGMPNlTQMqf+TVmNPX6FmSQ==
+"@types/js-yaml@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-4.0.0.tgz#d1a11688112091f2c711674df3a65ea2f47b5dfb"
+  integrity sha512-4vlpCM5KPCL5CfGmTbpjwVKbISRYhduEJvvUWsH5EB7QInhEj94XPZ3ts/9FPiLZFqYO0xoW4ZL8z2AabTGgJA==
 
 "@types/json-schema@*", "@types/json-schema@^7.0.3", "@types/json-schema@^7.0.5", "@types/json-schema@^7.0.6":
   version "7.0.7"
@@ -7341,6 +7341,11 @@ internal-slot@^1.0.2:
     has "^1.0.3"
     side-channel "^1.0.4"
 
+internmap@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/internmap/-/internmap-1.0.0.tgz#3c6bf0944b0eae457698000412108752bbfddb56"
+  integrity sha512-SdoDWwNOTE2n4JWUsLn4KXZGuZPjPF9yyOGc8bnfWnBQh7BD/l80rzSznKc/r4Y0aQ7z3RTk9X+tV4tHBpu+dA==
+
 intl-messageformat-parser@6.3.1:
   version "6.3.1"
   resolved "https://registry.yarnpkg.com/intl-messageformat-parser/-/intl-messageformat-parser-6.3.1.tgz#da343ea34ed061db1597e46885d6f5a8febb68e4"
@@ -7357,11 +7362,6 @@ intl-messageformat@9.4.6:
     fast-memoize "^2.5.2"
     intl-messageformat-parser "6.3.1"
     tslib "^2.0.1"
-
-internmap@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/internmap/-/internmap-1.0.0.tgz#3c6bf0944b0eae457698000412108752bbfddb56"
-  integrity sha512-SdoDWwNOTE2n4JWUsLn4KXZGuZPjPF9yyOGc8bnfWnBQh7BD/l80rzSznKc/r4Y0aQ7z3RTk9X+tV4tHBpu+dA==
 
 invariant@^2.0.0, invariant@^2.2.2, invariant@^2.2.4:
   version "2.2.4"
