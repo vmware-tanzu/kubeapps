@@ -74,6 +74,17 @@ type pullChartResult struct {
 	Error error
 }
 
+type checkTagJob struct {
+	AppName string
+	Tag     string
+}
+
+type checkTagResult struct {
+	checkTagJob
+	isHelmChart bool
+	Error       error
+}
+
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -293,7 +304,7 @@ type OCIManifest struct {
 
 type ociAPI interface {
 	TagList(appName string) (*TagList, error)
-	FilterChartTags(tagList *TagList) error
+	IsHelmChart(appName, tag string) (bool, error)
 }
 
 type ociAPICli struct {
@@ -318,57 +329,89 @@ func (o *ociAPICli) TagList(appName string) (*TagList, error) {
 	return &appTags, nil
 }
 
-// FilterChartTags modifies tagList and remove artifacts in other formats (e.g. Docker images)
-func (o *ociAPICli) FilterChartTags(tagList *TagList) error {
-	url := *o.url
-	chartTags := []string{}
-	for _, tag := range tagList.Tags {
-		url.Path = path.Join("v2", tagList.Name, "manifests", tag)
-		log.Debugf("getting tag %s", url.String())
-		manifestData, err := doReq(
-			url.String(),
-			map[string]string{
-				"Authorization": o.authHeader,
-				"Accept":        "application/vnd.oci.image.manifest.v1+json",
-			})
-		if err != nil {
-			return err
-		}
-		var manifest OCIManifest
-		err = json.Unmarshal(manifestData, &manifest)
-		if err != nil {
-			return err
-		}
-		if manifest.Config.MediaType == helm.HelmChartConfigMediaType {
-			chartTags = append(chartTags, tag)
-		}
+func (o *ociAPICli) IsHelmChart(appName, tag string) (bool, error) {
+	repoURL := *o.url
+	repoURL.Path = path.Join("v2", repoURL.Path, appName, "manifests", tag)
+	log.Debugf("getting tag %s", repoURL.String())
+	manifestData, err := doReq(
+		repoURL.String(),
+		map[string]string{
+			"Authorization": o.authHeader,
+			"Accept":        "application/vnd.oci.image.manifest.v1+json",
+		})
+	if err != nil {
+		return false, err
 	}
-	tagList.Tags = chartTags
-	return nil
+	var manifest OCIManifest
+	err = json.Unmarshal(manifestData, &manifest)
+	if err != nil {
+		return false, err
+	}
+	return manifest.Config.MediaType == helm.HelmChartConfigMediaType, nil
+}
+
+func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
+	for j := range tagJobs {
+		isHelmChart, err := o.IsHelmChart(j.AppName, j.Tag)
+		resultChan <- checkTagResult{j, isHelmChart, err}
+	}
 }
 
 // Checksum returns the sha256 of the repo by concatenating tags for
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) Checksum() (string, error) {
-	tagList := map[string]TagList{}
+	r.tags = map[string]TagList{}
+	checktagJobs := make(chan checkTagJob, numWorkers)
+	tagcheckRes := make(chan checkTagResult)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	totalTags := 0
+
+	// Process 10 tags at a time
+	for i := 0; i < numWorkers; i++ {
+		go tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
+	}
+
+	// Start receiving charts
+	processedTags := 0
+	go func() {
+		for res := range tagcheckRes {
+			if res.Error == nil {
+				if res.isHelmChart {
+					r.tags[res.AppName] = TagList{
+						Name: r.tags[res.AppName].Name,
+						Tags: append(r.tags[res.AppName].Tags, res.Tag),
+					}
+				}
+			} else {
+				log.Errorf("failed to pull chart. Got %v", res.Error)
+			}
+			processedTags++
+			if processedTags == totalTags {
+				wg.Done()
+			}
+		}
+	}()
+
 	for _, appName := range r.repositories {
 		log.Debugf("Getting tags from %s", appName)
 		tags, err := r.ociCli.TagList(appName)
 		if err != nil {
 			return "", err
 		}
-		log.Debugf("Filtering tags from %s", appName)
-		err = r.ociCli.FilterChartTags(tags)
-		if err != nil {
-			return "", err
+		totalTags += len(tags.Tags)
+		r.tags[appName] = TagList{Name: tags.Name, Tags: []string{}}
+		for _, tag := range tags.Tags {
+			checktagJobs <- checkTagJob{AppName: appName, Tag: tag}
 		}
-
-		tagList[appName] = *tags
 	}
-	r.tags = tagList
+	close(checktagJobs)
+	// Wait for the worker pools to finish processing
+	wg.Wait()
 
-	content, err := json.Marshal(tagList)
+	log.Debugf("Final list of tags: %v", r.tags)
+	content, err := json.Marshal(r.tags)
 	if err != nil {
 		return "", err
 	}
