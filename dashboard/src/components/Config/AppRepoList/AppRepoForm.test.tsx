@@ -108,6 +108,36 @@ it("should not call the install method when the validation fails unless forced",
   expect(install).toHaveBeenCalled();
 });
 
+it("should call the install method with OCI information", async () => {
+  const validateRepo = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+    validateRepo,
+  };
+  const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "oci.repo" } });
+  wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+  wrapper
+    .find("#kubeapps-oci-repositories")
+    .simulate("change", { target: { value: "apache, jenkins" } });
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith(
+    "",
+    "https://oci.repo",
+    "oci",
+    "",
+    "",
+    "",
+    [],
+    ["apache", "jenkins"],
+  );
+});
+
 it("should not show the docker registry credentials section if the namespace is the global one", () => {
   const wrapper = mountWrapper(
     defaultStore,
@@ -145,6 +175,7 @@ it("should call the install method with the selected docker credentials", async 
   act(() => {
     label.simulate("change");
   });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
   wrapper.update();
 
   await act(async () => {
@@ -152,7 +183,24 @@ it("should call the install method with the selected docker credentials", async 
       preventDefault: jest.fn(),
     });
   });
-  expect(install).toHaveBeenCalledWith("", "", "", "", "", ["repo-1"]);
+  expect(install).toHaveBeenCalledWith("", "http://test", "helm", "", "", "", ["repo-1"], []);
+});
+
+it("should not show the custom CA field if using an OCI registry", () => {
+  const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
+  wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+  const section = wrapper
+    .find(".clr-form-control")
+    .filterWhere(c => c.text().includes("Custom CA Certificate"));
+  expect(section.prop("hidden")).toBeTruthy();
+});
+
+it("should not show the list of OCI repositories if using a Helm repo (default)", () => {
+  const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
+  const section = wrapper
+    .find(".clr-control-container")
+    .filterWhere(c => c.text().includes("List of Repositories"));
+  expect(section.prop("hidden")).toBeTruthy();
 });
 
 describe("when the repository info is already populated", () => {
@@ -206,6 +254,12 @@ describe("when the repository info is already populated", () => {
       );
       expect(wrapper.find("#kubeapps-repo-username").prop("value")).toBe("foo");
       expect(wrapper.find("#kubeapps-repo-password").prop("value")).toBe("bar");
+    });
+
+    it("should parse the existing type", () => {
+      const repo = { metadata: { name: "foo" }, spec: { type: "oci" } } as any;
+      const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+      expect(wrapper.find("#kubeapps-repo-type-oci")).toBeChecked();
     });
 
     it("should parse a bearer token", () => {

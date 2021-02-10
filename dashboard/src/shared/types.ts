@@ -453,6 +453,7 @@ export interface IAppRepository
       resyncRequests: number;
       syncJobPodTemplate?: object;
       dockerRegistrySecrets?: string[];
+      ociRepositories?: string[];
     },
     undefined
   > {}

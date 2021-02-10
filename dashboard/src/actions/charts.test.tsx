@@ -463,6 +463,30 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
     );
   });
+
+  it("selects the latest version by default", async () => {
+    response = {
+      data: [
+        { id: "foo", attributes: { version: "1.0.0" } },
+        { id: "foo", attributes: { version: "1.0.0" } },
+      ],
+    };
+    const expectedActions = [
+      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.receiveChartVersions), payload: response.data },
+      {
+        type: getType(actions.charts.selectChartVersion),
+        payload: { chartVersion: response.data[1] },
+      },
+    ];
+    await store.dispatch(
+      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", ""),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
+    );
+  });
 });
 
 describe("getDeployedChartVersion", () => {
