@@ -1,5 +1,6 @@
 import { JSONSchema4 } from "json-schema";
 import { ThunkAction } from "redux-thunk";
+import * as semver from "semver";
 import { ActionType, createAction } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
@@ -215,7 +216,9 @@ export function fetchChartVersionsAndSelectVersion(
       fetchChartVersions(cluster, namespace, id),
     )) as IChartVersion[];
     if (versions.length > 0) {
-      let cv: IChartVersion = versions[0];
+      let cv: IChartVersion = versions.sort((a, b) =>
+        semver.compare(b.attributes.version, a.attributes.version),
+      )[0];
       if (version) {
         const found = versions.find(v => v.attributes.version === version);
         if (!found) {

@@ -134,13 +134,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         break;
     }
     const ociRepoList = ociRepositories.length ? ociRepositories.split(",").map(r => r.trim()) : [];
+    // If the scheme is not specified, assume HTTPS. This is common for OCI registries
+    const finalURL = url.startsWith("http") ? url : `https://${url}`;
     // If the validation already failed and we try to reinstall,
     // skip validation and force install
     const force = validated === false;
     let currentlyValidated = validated;
     if (!validated && !force) {
       currentlyValidated = await dispatch(
-        actions.repos.validateRepo(url, type, finalHeader, customCA, ociRepoList),
+        actions.repos.validateRepo(finalURL, type, finalHeader, customCA, ociRepoList),
       );
       setValidated(currentlyValidated);
     }
@@ -150,7 +152,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       );
       const success = await onSubmit(
         name,
-        url,
+        finalURL,
         type,
         finalHeader,
         customCA,
