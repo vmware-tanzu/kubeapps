@@ -1,7 +1,20 @@
 openapi: 3.0.3
 servers:
-  - url: 'http://127.0.0.1:8080'
+  - url: '{schema}://{url}:{port}'
     description: Development URL
+    variables:
+      schema:
+        enum:
+          - http
+          - https
+        default: http
+        description: URL schema
+      url:
+        default: '127.0.0.1'
+        description: Kubeapps URL
+      port:
+        default: '8080'
+        description: Kubeapps port
 info:
   description: |
    [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
@@ -11,9 +24,6 @@ info:
     - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).
     - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
     - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
-    
-    ### Note: 
-    We are currently working on documenting our APIs, in the meanwhile, have a look at the [GitHub Kubernetes Repository](https://github.com/kubeapps/kubeapps).
   version: 1.0.0
   title: Kubeapps API
   termsOfService: 'https://github.com/kubeapps/kubeapps/blob/master/LICENSE'
@@ -23,10 +33,2204 @@ info:
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: assetsvc
+    externalDocs:
+      url: 'https://github.com/kubeapps/kubeapps/tree/master/cmd/assetsvc'
+    description: 'The assetsvc component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that is populated in a Postgresql server.'
+  - name: kubeops
+    externalDocs:
+      url: 'https://github.com/kubeapps/kubeapps/tree/master/cmd/kubeops'
+    description: 'The kubeops component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.'
+  - name: kubernetes
+    externalDocs:
+      url: 'https://kubernetes.io/docs/concepts/overview/kubernetes-api/'
+    description: 'Kubernetes API'
 externalDocs:
   description: ''
   url: 'https://github.com/kubeapps/kubeapps'
+paths:
+  # Endpoints defined at cmd/assetsvc/main.go
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts':
+    get:
+      tags:
+        - assetsvc
+      summary: listChartsWithFilters
+      description: ''
+      operationId: listChartsWithFilters
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '1'
+          description: Number of the page to fetch (used with 'size' parameter)
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '0'
+          description: Number results to fetch (used with 'page' parameter)
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartResponse'
+                  meta:
+                    type: object
+                    properties:
+                      totalPages:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/categories':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartCategories
+      description: ''
+      operationId: getChartCategories
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartCategory'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/categories':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartCategories
+      description: ''
+      operationId: getChartCategories_repo
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartCategory'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}':
+    get:
+      tags:
+        - assetsvc
+      summary: listChartsWithFilters
+      description: ''
+      operationId: listChartsWithFilters_repo
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart version
+        - name: appversion
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Chart app version
+        - name: repos
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart repositories
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of chart cateogries
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Text query  to search for specific charts
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '1'
+          description: Number of the page to fetch (used with 'size' parameter)
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '0'
+          description: Number results to fetch (used with 'page' parameter)
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartResponse'
+                  meta:
+                    type: object
+                    properties:
+                      totalPages:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}':
+    get:
+      tags:
+        - assetsvc
+      summary: getChart
+      description: ''
+      operationId: getChart
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions':
+    get:
+      tags:
+        - assetsvc
+      summary: listChartVersions
+      description: ''
+      operationId: listChartVersions
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartVersionResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions/{version}':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersion
+      description: ''
+      operationId: getChartVersion
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartVersionResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/README.md':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersionReadme
+      description: ''
+      operationId: getChartVersionReadme
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.yaml':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersionValues
+      description: ''
+      operationId: getChartVersionValues
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.schema.json':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartVersionSchema
+      description: ''
+      operationId: getChartVersionSchema
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart version
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/logo':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartIcon
+      description: ''
+      operationId: getChartIcon
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/assetsvc/v1/ns/{namespace}/assets/{repo}/{chartName}/logo':
+    get:
+      tags:
+        - assetsvc
+      summary: getChartIcon
+      description: ''
+      operationId: getChartIcon_noncluster
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+            default: bitnami
+          description: Repository name
+        - name: chartName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chart name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  # Proxied Kubernetes API
+  '/api/clusters/{cluster}/apis':
+    get:
+      tags:
+        - kubernetes
+      summary: Proxied Kubernetes API
+      description: 'The whole Kubernetes API is exposed through this endpoint'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful Kubernetes response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/clusters/{cluster}/openapi/v2':
+    get:
+      tags:
+        - kubernetes
+      summary: Kubernetes OpenAPI documentation
+      description: 'Current documentation for the Kubernetes API'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  # Endpoints defined at pkg/http-handler/http-handler.go
+  '/api/v1/clusters/{cluster}/can-i':
+    post:
+      tags:
+        - kubeops
+      summary: 'CanI'
+      description: ''
+      operationId: 'CanI'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      requestBody:
+        description: ''
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceAttributes'
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AllowedResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string     
+  '/api/v1/clusters/{cluster}/namespaces':
+    get:
+      tags:
+        - kubeops
+      summary: 'GetNamespaces'
+      description: ''
+      operationId: 'GetNamespaces'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: object
+                properties:
+                  namespaces:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Namespace'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/v1/clusters/{cluster}/apprepositories':
+    get:
+      tags:
+        - kubeops
+      summary: 'ListAppRepositories'
+      description: ''
+      operationId: 'ListAppRepositories'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AppRepositoryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories':
+    get:
+      tags:
+        - kubeops
+      summary: 'ListAppRepositories_ns'
+      description: ''
+      operationId: 'ListAppRepositories_ns'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AppRepositoryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - kubeops
+      summary: 'CreateAppRepository'
+      description: ''
+      operationId: 'CreateAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      requestBody:
+        description: ''
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppRepositoryRequest'
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AppRepositoryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity
+  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/validate':
+    post:
+      tags:
+        - kubeops
+      summary: 'ValidateAppRepository'
+      description: ''
+      operationId: 'ValidateAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      requestBody:
+        description: ''
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppRepository'
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}':
+    put:
+      tags:
+        - kubeops
+      summary: 'UpdateAppRepository'
+      description: ''
+      operationId: 'UpdateAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      requestBody:
+        description: ''
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppRepositoryRequest'
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AppRepositoryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - kubeops
+      summary: 'DeleteAppRepository'
+      description: ''
+      operationId: 'DeleteAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}/refresh':
+    post:
+      tags:
+        - kubeops
+      summary: 'RefreshAppRepository'
+      description: ''
+      operationId: 'RefreshAppRepository'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AppRepositoryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/v1/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo':
+    get:
+      tags:
+        - kubeops
+      summary: 'GetOperatorLogo'
+      description: ''
+      operationId: 'GetOperatorLogo'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Apprepository name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  # Endpoints defined at cmd/kubeops/main.go
+  '/api/kubeops/v1/clusters/{cluster}/releases':
+    get:
+      tags:
+        - kubeops
+      summary: 'ListAllReleases'
+      description: ''
+      operationId: 'ListAllReleases'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppOverview'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases':
+    get:
+      tags:
+        - kubeops
+      summary: 'ListReleases'
+      description: ''
+      operationId: 'ListReleases'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppOverview'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - kubeops
+      summary: 'CreateRelease'
+      description: ''
+      operationId: 'CreateRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+      requestBody:
+        description: ''
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Details'
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+  '/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}':
+    get:
+      tags:
+        - kubeops
+      summary: 'GetRelease'
+      description: ''
+      operationId: 'GetRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - kubeops
+      summary: 'DeleteRelease'
+      description: ''
+      operationId: 'DeleteRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+    put:
+      tags:
+        - kubeops
+      summary: 'OperateRelease'
+      description: ''
+      operationId: 'OperateRelease'
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Cluster name
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Namespace name
+        - name: releaseName
+          in: path
+          required: true
+          schema:
+            type: string
+            default: default
+          description: Release name
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: ["upgrade","rollback"]
+            default: upgrade
+          description: Action to perform
+        - name: revision
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+            default: 1
+          description: Revision to rollback to (only if ?action=rollback)
+      requestBody:
+        description: ''
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Details'
+      responses:
+        default:
+          description: Default code/message response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Release'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
+  schemas:
+    # pkg/chart/models/chart.go
+    ChartCategory:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+          format: int64
+    # pkg/chart/models/chart.go
+    Chart:
+      type: object
+      additionalProperties: false
+      properties:
+        ID:
+          type: string
+        name:
+          type: string
+        repo:
+          $ref: '#/components/schemas/Repo'
+        description:
+          type: string
+        home:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        maintainers:
+          type: array
+          items:
+            type: object
+        sources:
+          type: array
+          items:
+            type: string
+        icon:
+          type: string
+        raw_icon:
+          type: string
+          format: byte
+        icon_content_type:
+          type: string
+        category:
+          type: string
+        chartVersions:
+          type: object
+          items:
+            $ref: '#/components/schemas/ChartVersion'
+    # pkg/chart/models/chart.go
+    ChartVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        version:
+          type: string
+        app_version:
+          type: string
+        created:
+          type: string
+          format: time
+        digest:
+          type: string
+        urls:
+          type: array
+          items:
+            type: string
+        readme:
+          type: string
+        values:
+          type: string
+        schema:
+          type: string
+    # pkg/chart/models/chart.go
+    Repo:
+      type: object
+      additionalProperties: false
+      properties:
+        namespace:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        type:
+          type: string
+    # pkg/chart/chart.go
+    Details:
+      type: object
+      additionalProperties: false
+      properties:
+        appRepositoryResourceName:
+          type: string
+        appRepositoryResourceNamespace:
+          type: string
+        chartName:
+          type: string
+        releaseName:
+          type: string
+        version:
+          type: string
+        values:
+          type: string
+    # cmd/assetsvc/handler.go
+    ChartResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        attributes:
+          $ref: '#/components/schemas/Chart'
+        links:
+          type: object
+        relationships:
+          type: object
+          additionalProperties: false
+          properties:
+            latestChartVersion:
+               type: object
+               additionalProperties: false
+               properties:
+                data:
+                  $ref: '#/components/schemas/ChartVersion'
+                links:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    self:
+                      type: string
+    # cmd/assetsvc/handler.go
+    ChartVersionResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        attributes:
+          $ref: '#/components/schemas/ChartVersion'
+        links:
+          type: object
+        relationships:
+          type: object
+          additionalProperties: false
+          properties:
+            chart:
+               type: object
+               additionalProperties: false
+               properties:
+                data:
+                  $ref: '#/components/schemas/Chart'
+                links:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    self:
+                      type: string
+    # pkg/proxy/proxy.go
+    AppOverview:
+      type: object
+      additionalProperties: false
+      properties:
+        releaseName:
+          type: string
+        version:
+          type: string
+        namespace:
+          type: string
+        icon:
+          type: string
+        status:
+          type: string
+        chart:
+          type: string
+        chartMetadata:
+          $ref: '#/components/schemas/ChartMetadata'
+    # pkg/kube/kube_handler.go
+    AppRepositoryRequestDetails:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        repoURL:
+          type: string
+        authHeader:
+          type: string
+        customCA:
+          type: string
+        registrySecrets:
+          type: array
+          items: 
+            type: string
+        syncJobPodTemplate:
+          $ref: '#/components/schemas/PodTemplateSpec'
+        resyncRequests:
+          type: integer
+          format: int64
+    # pkg/kube/kube_handler.go
+    ValidationResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: integer
+          format: int64
+        message:
+          type: string
+    # pkg/http-handler/http-handler.go
+    AllowedResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        allowed:
+          type: string
+    # pkg/http-handler/http-handler.go
+    AppRepositoryResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        appRepository:
+          $ref: '#/components/schemas/AppRepositoryList'
+    # pkg/http-handler/http-handler.go
+    AppRepositoryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        appRepository:
+          $ref: '#/components/schemas/AppRepositoryRequestDetails'
+    # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
+    AppRepositoryList:
+      type: object
+      additionalProperties: false
+      properties:
+        metadata:
+          type: object
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppRepository'
+    # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
+    AppRepository:
+      type: object
+      additionalProperties: false
+      properties:
+        metadata:
+          type: object
+        spec: 
+          $ref: '#/components/schemas/AppRepositorySpec'
+        status:
+          $ref: '#/components/schemas/AppRepositoryStatus'
+    # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
+    AppRepositorySpec:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+        url: 
+          type: string
+        auth:
+          $ref: '#/components/schemas/AppRepositoryAuth'
+        resyncRequests: 
+          type: integer
+          format: int64
+        syncJobPodTemplate: 
+          type: object
+        dockerRegistrySecrets: 
+          type: array
+          items: 
+            type: string
+        ociRepositories: 
+          type: array
+          items: 
+            type: string
+    # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
+    AppRepositoryStatus:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+    # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
+    AppRepositoryAuth:
+      type: object
+      additionalProperties: false
+      properties:
+        header:
+          $ref: '#/components/schemas/AppRepositoryAuthHeader'
+        customCA:
+          $ref: '#/components/schemas/AppRepositoryCustomCA'
+    # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
+    AppRepositoryAuthHeader:
+      type: object
+      additionalProperties: false
+      properties:
+        secretKeyRef:
+          type: object
+    # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
+    AppRepositoryCustomCA:
+      type: object
+      additionalProperties: false
+      properties:
+        secretKeyRef:
+          type: object
+    # pkg/mod/k8s.io/api/core/v1/types.go
+    PodTemplateSpec:
+      type: object
+      additionalProperties: false
+      properties:
+        metadata:
+          type: object
+        spec:
+          type: object
+    # pkg/mod/k8s.io/api/core/v1/types.go
+    Namespace: 
+      type: object
+      properties:
+        metadata:
+          type: object
+        spec:
+          type: object
+        status:
+          type: object
+    # pkg/mod/k8s.io/api/authorization/v1/types.go
+    ResourceAttributes:
+      type: object
+      additionalProperties: false
+      properties:
+        namespace:
+          type: string
+        verb:
+          type: string
+        group:
+          type: string
+        version:
+          type: string
+        resource:
+          type: string
+        subresource:
+          type: string
+        name:
+          type: string
+   # pkg/mod/k8s.io/helm@v2.16.0+incompatible/pkg/proto/hapi/chart/metadata.pb.go
+    ChartMetadata:
+      type: object
+      additionalProperties: false
+      properties:
+        annotations:
+          type: object
+        apiVersion:
+          type: string
+        appVersion:
+          type: string
+        condition:
+          type: string
+        deprecated:
+          type: boolean
+        description:
+          type: string
+        engine:
+          type: string
+        home:
+          type: string
+        icon:
+          type: string
+        kubeVersion:
+          type: string
+        maintainers:
+          type: array
+          items: 
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+              url:
+                type: string
+        name:
+          type: string
+        sources:
+          type: array
+          items: 
+            type: string
+        tags:
+          type: string
+        version:
+          type: string
+    # pkg/mod/helm.sh/helm/v3@v3.5.0/pkg/release/release.go
+    Release:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        info:
+          type: string
+        chart:
+          type: object
+        config:
+          type: string
+        manifest:
+          type: string
+        hooks:
+          type: array
+          items:
+            type: object
+        version:
+          type: integer
+          format: int64
+        namespace:
+          type: string
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: integer
+          format: int64
+        message:
+          type: string
   securitySchemes:
     bearerAuth:
       type: http
