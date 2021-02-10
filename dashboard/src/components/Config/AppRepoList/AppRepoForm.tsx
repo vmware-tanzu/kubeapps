@@ -397,10 +397,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       </div>
       <div className="clr-form-control">
         <label className="clr-control-label">Repository Type</label>
-        <span className="clr-form-description">
-          Charts can be stored either in a Helm repository (e.g. ChartMuseum) or in a OCI Registry.
-          Select the one that applies.
-        </span>
+        <span className="clr-form-description">Select the chart storage type.</span>
         <div className="clr-form-columns">
           <Row>
             <Column span={3}>
