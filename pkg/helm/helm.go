@@ -63,7 +63,7 @@ type OCIPuller struct {
 func (p *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
 	store := content.NewMemoryStore()
 
-	desc, layerDescriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.DebugLevel), p.Resolver, ociFullName, store,
+	desc, layerDescriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.TraceLevel), p.Resolver, ociFullName, store,
 		oras.WithPullEmptyNameAllowed(),
 		oras.WithAllowedMediaTypes(KnownMediaTypes()))
 	if err != nil {

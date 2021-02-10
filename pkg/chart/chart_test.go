@@ -810,7 +810,7 @@ func TestOCIClient(t *testing.T) {
 		cli := NewOCIClient("foo")
 		cli.(*OCIClient).puller = &helmfake.OCIPuller{}
 		_, err := cli.GetChart(nil, "foo")
-		assert.Equal(t, "parse foo: invalid URI for request", err.Error(), "error")
+		assert.Equal(t, "parse \"foo\": invalid URI for request", err.Error(), "error")
 	})
 
 	t.Run("GetChart - Returns a chart", func(t *testing.T) {

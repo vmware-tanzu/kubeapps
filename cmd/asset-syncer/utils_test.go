@@ -841,7 +841,6 @@ type fakeOCIAPICli struct {
 }
 
 func (o *fakeOCIAPICli) TagList(appName string) (*TagList, error) {
-	fmt.Printf("Returning ! %v", o.err)
 	return o.tagList, o.err
 }
 
@@ -967,6 +966,7 @@ version: 1.0.0
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
+			log.SetLevel(log.DebugLevel)
 			w := httptest.NewRecorder()
 			gzw := gzip.NewWriter(w)
 			createTestTarball(gzw, tt.ociArtifactFiles)
