@@ -1,12 +1,9 @@
 import LoadingWrapper from "components/LoadingWrapper";
 import { Location } from "history";
-import context from "jest-plugin-context";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import { Redirect } from "react-router";
-import { defaultStore } from "shared/specs/mountWrapper";
-import { mountIntl, mountWrapperIntl, shallowIntl } from "shared/specs/mountWrapperIntl";
-import itBehavesLike from "../../shared/specs";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
@@ -37,22 +34,15 @@ const defaultProps = {
 
 const authenticationError = "it's a trap";
 
-context("while authenticating", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: LoginForm,
-    props: { ...defaultProps, authenticating: true },
-  });
-});
-
 describe("token login form", () => {
   it("renders a token login form", () => {
-    const wrapper = mountIntl(<LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
     expect(wrapper.find(TokenLogin)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
   });
 
   it("renders a link to the access control documentation", () => {
-    const wrapper = mountIntl(<LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
     expect(wrapper.find("a").props()).toMatchObject({
       href: "https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md",
       target: "_blank",
@@ -60,7 +50,7 @@ describe("token login form", () => {
   });
 
   it("updates the token in the state when the input is changed", () => {
-    const wrapper = mountIntl(<LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
     let input = wrapper.find("input#token");
     act(() => {
       input.simulate("change", {
@@ -75,7 +65,7 @@ describe("token login form", () => {
 
   describe("redirect if authenticated", () => {
     it("redirects to / if no current location", () => {
-      const wrapper = mountWrapperIntl(
+      const wrapper = mountWrapper(
         defaultStore,
         <LoginForm {...defaultProps} authenticated={true} />,
       );
@@ -86,7 +76,7 @@ describe("token login form", () => {
     it("redirects to previous location", () => {
       const location = Object.assign({}, emptyLocation);
       location.state = { from: "/test" };
-      const wrapper = mountWrapperIntl(
+      const wrapper = mountWrapper(
         defaultStore,
         <LoginForm {...defaultProps} authenticated={true} location={location} />,
       );
@@ -97,7 +87,10 @@ describe("token login form", () => {
 
   it("calls the authenticate handler when the form is submitted", () => {
     const authenticate = jest.fn();
-    const wrapper = mountIntl(<LoginForm {...defaultProps} authenticate={authenticate} />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <LoginForm {...defaultProps} authenticate={authenticate} />,
+    );
     act(() => {
       wrapper.find("input#token").simulate("change", { target: { value: "f00b4r" } });
     });
@@ -108,12 +101,12 @@ describe("token login form", () => {
   });
 
   it("displays an error if the authentication error is passed", () => {
-    const wrapper = mountIntl(
+    const wrapper = mountWrapper(
+      defaultStore,
       <LoginForm {...defaultProps} authenticationError={authenticationError} />,
     );
 
     expect(wrapper.find(".error").exists()).toBe(true);
-    expect(wrapper).toMatchSnapshot();
   });
 
   it("does not display the oauth login if oauthLoginURI provided", () => {
@@ -122,7 +115,7 @@ describe("token login form", () => {
       oauthLoginURI: "",
     };
 
-    const wrapper = shallowIntl(<LoginForm {...props} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...props} />);
 
     expect(wrapper.find("a.button").exists()).toBe(false);
   });
@@ -134,20 +127,26 @@ describe("oauth login form", () => {
     oauthLoginURI: "/sign/in",
   };
   it("does not display the token login if oauthLoginURI provided", () => {
-    const wrapper = mountIntl(<LoginForm {...props} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...props} />);
 
     expect(wrapper.find("input#token").exists()).toBe(false);
   });
 
   it("displays the oauth login if oauthLoginURI provided", () => {
-    const wrapper = mountIntl(<LoginForm {...props} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...props} />);
     expect(props.checkCookieAuthentication).toHaveBeenCalled();
     expect(wrapper.find(OAuthLogin)).toExist();
     expect(wrapper.find("a").findWhere(a => a.prop("href") === props.oauthLoginURI)).toExist();
   });
 
   it("doesn't render the login form if the cookie has not been checked yet", () => {
-    const wrapper = shallowIntl(<LoginForm {...props} />);
+    const props2 = {
+      ...props,
+      checkCookieAuthentication: jest.fn().mockReturnValue({
+        then: jest.fn(f => false),
+      }),
+    };
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...props2} />);
     expect(wrapper.find(LoadingWrapper)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
   });
@@ -160,7 +159,7 @@ describe("oauth login form", () => {
       writable: true,
       value: { replace: jest.fn() },
     });
-    mountIntl(<LoginForm {...props} authProxySkipLoginPage={true} />);
+    mountWrapper(defaultStore, <LoginForm {...props} authProxySkipLoginPage={true} />);
     expect(window.location.replace).toHaveBeenCalledWith(props.oauthLoginURI);
   });
 });
