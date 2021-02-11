@@ -28,7 +28,7 @@ helm dependency update ./chart/kubeapps
 
 to update the requirements.lock file.
 
-Lastly, running
+Next, run
 
 ```bash
 yarn upgrade
@@ -36,9 +36,11 @@ yarn upgrade
 
 in the dashboard directory will update the frontend packages to the latest compatible versions.
 
+Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk fixing a security issue.  If so, discuss it with a peer and come to a decision on it, trying not to release with a high/medium severity issue.
+
 ## 1 - Create a new git tag
 
-The first step is to tag the repository master branch tip and push it upstream. It is important to note that the tag name will be used as release name.
+The first step is to tag the repository master branch tip and push it upstream. It is important to note that the tag name will be used as the release name.
 
 ```bash
 export VERSION_NAME="v1.0.0-beta.1"
