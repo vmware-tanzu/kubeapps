@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeops /kubeops
 EXPOSE 8080
 USER 1001
