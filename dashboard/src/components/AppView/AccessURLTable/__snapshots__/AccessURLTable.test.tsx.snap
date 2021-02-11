@@ -13,234 +13,193 @@ exports[`when the app contains ingresses should show the table with available in
     }
   }
 >
-  <BrowserRouter>
-    <Router
-      history={
-        Object {
-          "action": "POP",
-          "block": [Function],
-          "createHref": [Function],
-          "go": [Function],
-          "goBack": [Function],
-          "goForward": [Function],
-          "length": 1,
-          "listen": [Function],
-          "location": Object {
-            "hash": "",
-            "pathname": "/",
-            "search": "",
-            "state": undefined,
+  <IntlProvider
+    defaultFormats={Object {}}
+    defaultLocale="en"
+    formats={Object {}}
+    key="en"
+    locale="en"
+    messages={
+      Object {
+        "Kubeapps": Array [
+          Object {
+            "type": 0,
+            "value": "Kubeapps",
           },
-          "push": [Function],
-          "replace": [Function],
-        }
+        ],
+        "Submit": Array [
+          Object {
+            "type": 0,
+            "value": "Submit",
+          },
+        ],
+        "Token": Array [
+          Object {
+            "type": 0,
+            "value": "Token",
+          },
+        ],
+        "error-login-token": Array [
+          Object {
+            "type": 0,
+            "value": "There was an error connecting to the Kubernetes API. Please check that your token is valid.",
+          },
+        ],
+        "login-desc-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator has enabled login via an authentication provider.",
+          },
+        ],
+        "login-desc-token": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator should provide you with a Kubernetes API token.",
+          },
+        ],
+        "login-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Login via OIDC Provider",
+          },
+        ],
+        "login-title-welcome": Array [
+          Object {
+            "type": 0,
+            "value": "Welcome to",
+          },
+        ],
+        "more-info": Array [
+          Object {
+            "type": 0,
+            "value": "More Info",
+          },
+        ],
+        "paste-token-here": Array [
+          Object {
+            "type": 0,
+            "value": "Paste token here",
+          },
+        ],
       }
-    >
-      <AccessURLTable
-        ingressRefs={
-          Array [
-            Object {
-              "getResourceURL": [MockFunction] {
-                "calls": Array [
-                  Array [],
-                  Array [],
-                  Array [],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": "/ingresses/foo",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "/ingresses/foo",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "/ingresses/foo",
-                  },
-                ],
-              },
-              "name": "svc",
+    }
+    onError={[Function]}
+    textComponent={Symbol(react.fragment)}
+  >
+    <BrowserRouter>
+      <Router
+        history={
+          Object {
+            "action": "POP",
+            "block": [Function],
+            "createHref": [Function],
+            "go": [Function],
+            "goBack": [Function],
+            "goForward": [Function],
+            "length": 1,
+            "listen": [Function],
+            "location": Object {
+              "hash": "",
+              "pathname": "/",
+              "search": "",
+              "state": undefined,
             },
-          ]
+            "push": [Function],
+            "replace": [Function],
+          }
         }
-        serviceRefs={Array []}
       >
-        <section
-          aria-labelledby="access-urls-title"
-        >
-          <h5
-            className="section-title"
-            id="access-urls-title"
-          >
-            Access URLs
-          </h5>
-          <Table
-            className=""
-            columns={
-              Array [
-                Object {
-                  "Header": "URL",
-                  "accessor": "url",
-                },
-                Object {
-                  "Header": "Type",
-                  "accessor": "type",
-                },
-                Object {
-                  "Header": "Notes",
-                  "accessor": "notes",
-                },
-              ]
-            }
-            compact={false}
-            data={
-              Array [
-                Object {
-                  "notes": <span>
-                    Not associated with any IP.
-                     
-                    <Tooltip
-                      extraSmall={false}
-                      icon="help"
-                      iconProps={
-                        Object {
-                          "size": "sm",
-                          "solid": true,
-                        }
-                      }
-                      id="foo-pending-tooltip"
-                      label="pending-tooltip"
-                      large={true}
-                      position="bottom-left"
-                      small={false}
-                    >
-                      Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
-                      <code>
-                        minikube tunnel
-                      </code>
-                       in your terminal in order for an IP address to be assigned to your application.
-                    </Tooltip>
-                  </span>,
-                  "type": "Ingress",
-                  "url": Array [
-                    <div
-                      className="margin-b-sm"
-                    >
-                      <a
-                        href="http://foo.bar/ready"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        http://foo.bar/ready
-                      </a>
-                    </div>,
+        <AccessURLTable
+          ingressRefs={
+            Array [
+              Object {
+                "getResourceURL": [MockFunction] {
+                  "calls": Array [
+                    Array [],
+                    Array [],
+                    Array [],
+                  ],
+                  "results": Array [
+                    Object {
+                      "type": "return",
+                      "value": "/ingresses/foo",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "/ingresses/foo",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "/ingresses/foo",
+                    },
                   ],
                 },
-              ]
-            }
-            noBorder={false}
-            valign=""
-            vertical={false}
+                "name": "svc",
+              },
+            ]
+          }
+          serviceRefs={Array []}
+        >
+          <section
+            aria-labelledby="access-urls-title"
           >
-            <table
-              className="table"
+            <h5
+              className="section-title"
+              id="access-urls-title"
             >
-              <thead>
-                <tr>
-                  <th
-                    className=""
-                    key="url"
-                  >
-                    URL
-                  </th>
-                  <th
-                    className=""
-                    key="type"
-                  >
-                    Type
-                  </th>
-                  <th
-                    className=""
-                    key="notes"
-                  >
-                    Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <TableRow
-                  columns={
-                    Array [
-                      Object {
-                        "Header": "URL",
-                        "accessor": "url",
-                      },
-                      Object {
-                        "Header": "Type",
-                        "accessor": "type",
-                      },
-                      Object {
-                        "Header": "Notes",
-                        "accessor": "notes",
-                      },
-                    ]
-                  }
-                  index={0}
-                  key="0"
-                  row={
-                    Object {
-                      "notes": <span>
-                        Not associated with any IP.
-                         
-                        <Tooltip
-                          extraSmall={false}
-                          icon="help"
-                          iconProps={
-                            Object {
-                              "size": "sm",
-                              "solid": true,
-                            }
+              Access URLs
+            </h5>
+            <Table
+              className=""
+              columns={
+                Array [
+                  Object {
+                    "Header": "URL",
+                    "accessor": "url",
+                  },
+                  Object {
+                    "Header": "Type",
+                    "accessor": "type",
+                  },
+                  Object {
+                    "Header": "Notes",
+                    "accessor": "notes",
+                  },
+                ]
+              }
+              compact={false}
+              data={
+                Array [
+                  Object {
+                    "notes": <span>
+                      Not associated with any IP.
+                       
+                      <Tooltip
+                        extraSmall={false}
+                        icon="help"
+                        iconProps={
+                          Object {
+                            "size": "sm",
+                            "solid": true,
                           }
-                          id="foo-pending-tooltip"
-                          label="pending-tooltip"
-                          large={true}
-                          position="bottom-left"
-                          small={false}
-                        >
-                          Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
-                          <code>
-                            minikube tunnel
-                          </code>
-                           in your terminal in order for an IP address to be assigned to your application.
-                        </Tooltip>
-                      </span>,
-                      "type": "Ingress",
-                      "url": Array [
-                        <div
-                          className="margin-b-sm"
-                        >
-                          <a
-                            href="http://foo.bar/ready"
-                            rel="noopener noreferrer"
-                            target="_blank"
-                          >
-                            http://foo.bar/ready
-                          </a>
-                        </div>,
-                      ],
-                    }
-                  }
-                >
-                  <tr>
-                    <td
-                      className=""
-                      key="0-url"
-                    >
+                        }
+                        id="foo-pending-tooltip"
+                        label="pending-tooltip"
+                        large={true}
+                        position="bottom-left"
+                        small={false}
+                      >
+                        Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
+                        <code>
+                          minikube tunnel
+                        </code>
+                         in your terminal in order for an IP address to be assigned to your application.
+                      </Tooltip>
+                    </span>,
+                    "type": "Ingress",
+                    "url": Array [
                       <div
                         className="margin-b-sm"
-                        key="http://foo.bar/ready"
                       >
                         <a
                           href="http://foo.bar/ready"
@@ -249,81 +208,197 @@ exports[`when the app contains ingresses should show the table with available in
                         >
                           http://foo.bar/ready
                         </a>
-                      </div>
-                    </td>
-                    <td
+                      </div>,
+                    ],
+                  },
+                ]
+              }
+              noBorder={false}
+              valign=""
+              vertical={false}
+            >
+              <table
+                className="table"
+              >
+                <thead>
+                  <tr>
+                    <th
                       className=""
-                      key="0-type"
+                      key="url"
                     >
-                      Ingress
-                    </td>
-                    <td
+                      URL
+                    </th>
+                    <th
                       className=""
-                      key="0-notes"
+                      key="type"
                     >
-                      <span>
-                        Not associated with any IP.
-                         
-                        <Tooltip
-                          extraSmall={false}
-                          icon="help"
-                          iconProps={
-                            Object {
-                              "size": "sm",
-                              "solid": true,
-                            }
-                          }
-                          id="foo-pending-tooltip"
-                          label="pending-tooltip"
-                          large={true}
-                          position="bottom-left"
-                          small={false}
-                        >
-                          <button
-                            aria-describedby="foo-pending-tooltip"
-                            aria-expanded={false}
-                            aria-haspopup="true"
-                            aria-label="pending-tooltip"
-                            className="tooltip tooltip-bottom-left tooltip-lg"
-                            onBlur={[Function]}
-                            onFocus={[Function]}
-                            onKeyUp={[Function]}
-                            onMouseEnter={[Function]}
-                            onMouseLeave={[Function]}
-                            role="tooltip"
-                          >
-                            <CdsIcon
-                              role="none"
-                              shape="help"
-                              size="sm"
-                              solid={true}
-                            >
-                              <cds-icon />
-                            </CdsIcon>
-                            <span
-                              aria-hidden={true}
-                              className="tooltip-content"
-                              id="foo-pending-tooltip"
-                            >
-                              Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
-                              <code>
-                                minikube tunnel
-                              </code>
-                               in your terminal in order for an IP address to be assigned to your application.
-                            </span>
-                          </button>
-                        </Tooltip>
-                      </span>
-                    </td>
+                      Type
+                    </th>
+                    <th
+                      className=""
+                      key="notes"
+                    >
+                      Notes
+                    </th>
                   </tr>
-                </TableRow>
-              </tbody>
-            </table>
-          </Table>
-        </section>
-      </AccessURLTable>
-    </Router>
-  </BrowserRouter>
+                </thead>
+                <tbody>
+                  <TableRow
+                    columns={
+                      Array [
+                        Object {
+                          "Header": "URL",
+                          "accessor": "url",
+                        },
+                        Object {
+                          "Header": "Type",
+                          "accessor": "type",
+                        },
+                        Object {
+                          "Header": "Notes",
+                          "accessor": "notes",
+                        },
+                      ]
+                    }
+                    index={0}
+                    key="0"
+                    row={
+                      Object {
+                        "notes": <span>
+                          Not associated with any IP.
+                           
+                          <Tooltip
+                            extraSmall={false}
+                            icon="help"
+                            iconProps={
+                              Object {
+                                "size": "sm",
+                                "solid": true,
+                              }
+                            }
+                            id="foo-pending-tooltip"
+                            label="pending-tooltip"
+                            large={true}
+                            position="bottom-left"
+                            small={false}
+                          >
+                            Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
+                            <code>
+                              minikube tunnel
+                            </code>
+                             in your terminal in order for an IP address to be assigned to your application.
+                          </Tooltip>
+                        </span>,
+                        "type": "Ingress",
+                        "url": Array [
+                          <div
+                            className="margin-b-sm"
+                          >
+                            <a
+                              href="http://foo.bar/ready"
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                              http://foo.bar/ready
+                            </a>
+                          </div>,
+                        ],
+                      }
+                    }
+                  >
+                    <tr>
+                      <td
+                        className=""
+                        key="0-url"
+                      >
+                        <div
+                          className="margin-b-sm"
+                          key="http://foo.bar/ready"
+                        >
+                          <a
+                            href="http://foo.bar/ready"
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            http://foo.bar/ready
+                          </a>
+                        </div>
+                      </td>
+                      <td
+                        className=""
+                        key="0-type"
+                      >
+                        Ingress
+                      </td>
+                      <td
+                        className=""
+                        key="0-notes"
+                      >
+                        <span>
+                          Not associated with any IP.
+                           
+                          <Tooltip
+                            extraSmall={false}
+                            icon="help"
+                            iconProps={
+                              Object {
+                                "size": "sm",
+                                "solid": true,
+                              }
+                            }
+                            id="foo-pending-tooltip"
+                            label="pending-tooltip"
+                            large={true}
+                            position="bottom-left"
+                            small={false}
+                          >
+                            <button
+                              aria-describedby="foo-pending-tooltip"
+                              aria-expanded={false}
+                              aria-haspopup="true"
+                              aria-label="pending-tooltip"
+                              className="tooltip tooltip-bottom-left tooltip-lg"
+                              onBlur={[Function]}
+                              onFocus={[Function]}
+                              onKeyUp={[Function]}
+                              onMouseEnter={[Function]}
+                              onMouseLeave={[Function]}
+                              role="tooltip"
+                            >
+                              <CdsIcon
+                                role="none"
+                                shape="help"
+                                size="sm"
+                                solid={true}
+                              >
+                                <cds-icon />
+                              </CdsIcon>
+                              <span
+                                aria-hidden={true}
+                                className="tooltip-content"
+                                id="foo-pending-tooltip"
+                              >
+                                Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
+                                <code>
+                                  minikube tunnel
+                                </code>
+                                 in your terminal in order for an IP address to be assigned to your application.
+                              </span>
+                            </button>
+                          </Tooltip>
+                        </span>
+                      </td>
+                    </tr>
+                  </TableRow>
+                </tbody>
+              </table>
+            </Table>
+          </section>
+        </AccessURLTable>
+      </Router>
+    </BrowserRouter>
+  </IntlProvider>
+  ,
 </Provider>
 `;
 
@@ -340,241 +415,316 @@ exports[`when the app contains resources with errors displays the error 1`] = `
     }
   }
 >
-  <BrowserRouter>
-    <Router
-      history={
-        Object {
-          "action": "POP",
-          "block": [Function],
-          "createHref": [Function],
-          "go": [Function],
-          "goBack": [Function],
-          "goForward": [Function],
-          "length": 1,
-          "listen": [Function],
-          "location": Object {
-            "hash": "",
-            "pathname": "/",
-            "search": "",
-            "state": undefined,
+  <IntlProvider
+    defaultFormats={Object {}}
+    defaultLocale="en"
+    formats={Object {}}
+    key="en"
+    locale="en"
+    messages={
+      Object {
+        "Kubeapps": Array [
+          Object {
+            "type": 0,
+            "value": "Kubeapps",
           },
-          "push": [Function],
-          "replace": [Function],
-        }
+        ],
+        "Submit": Array [
+          Object {
+            "type": 0,
+            "value": "Submit",
+          },
+        ],
+        "Token": Array [
+          Object {
+            "type": 0,
+            "value": "Token",
+          },
+        ],
+        "error-login-token": Array [
+          Object {
+            "type": 0,
+            "value": "There was an error connecting to the Kubernetes API. Please check that your token is valid.",
+          },
+        ],
+        "login-desc-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator has enabled login via an authentication provider.",
+          },
+        ],
+        "login-desc-token": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator should provide you with a Kubernetes API token.",
+          },
+        ],
+        "login-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Login via OIDC Provider",
+          },
+        ],
+        "login-title-welcome": Array [
+          Object {
+            "type": 0,
+            "value": "Welcome to",
+          },
+        ],
+        "more-info": Array [
+          Object {
+            "type": 0,
+            "value": "More Info",
+          },
+        ],
+        "paste-token-here": Array [
+          Object {
+            "type": 0,
+            "value": "Paste token here",
+          },
+        ],
       }
-    >
-      <AccessURLTable
-        ingressRefs={
-          Array [
-            Object {
-              "getResourceURL": [MockFunction] {
-                "calls": Array [
-                  Array [],
-                  Array [],
-                  Array [],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": "ingress",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "ingress",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "ingress",
-                  },
-                ],
-              },
-              "name": "svc",
+    }
+    onError={[Function]}
+    textComponent={Symbol(react.fragment)}
+  >
+    <BrowserRouter>
+      <Router
+        history={
+          Object {
+            "action": "POP",
+            "block": [Function],
+            "createHref": [Function],
+            "go": [Function],
+            "goBack": [Function],
+            "goForward": [Function],
+            "length": 1,
+            "listen": [Function],
+            "location": Object {
+              "hash": "",
+              "pathname": "/",
+              "search": "",
+              "state": undefined,
             },
-          ]
-        }
-        serviceRefs={
-          Array [
-            Object {
-              "getResourceURL": [MockFunction] {
-                "calls": Array [
-                  Array [],
-                  Array [],
-                  Array [],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": "svc",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "svc",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "svc",
-                  },
-                ],
-              },
-              "name": "svc",
-            },
-          ]
+            "push": [Function],
+            "replace": [Function],
+          }
         }
       >
-        <section
-          aria-labelledby="access-urls-title"
-        >
-          <h5
-            className="section-title"
-            id="access-urls-title"
-          >
-            Access URLs
-          </h5>
-          <Table
-            className=""
-            columns={
-              Array [
-                Object {
-                  "Header": "URL",
-                  "accessor": "url",
-                },
-                Object {
-                  "Header": "Type",
-                  "accessor": "type",
-                },
-                Object {
-                  "Header": "Notes",
-                  "accessor": "notes",
-                },
-              ]
-            }
-            compact={false}
-            data={
-              Array [
-                Object {
-                  "notes": <span>
-                    Error: 
-                    could not find Ingress
-                  </span>,
-                  "type": "Ingress",
-                  "url": Array [
-                    <div
-                      className="margin-b-sm"
-                    >
-                      <span>
-                        Unknown
-                      </span>
-                    </div>,
+        <AccessURLTable
+          ingressRefs={
+            Array [
+              Object {
+                "getResourceURL": [MockFunction] {
+                  "calls": Array [
+                    Array [],
+                    Array [],
+                    Array [],
+                  ],
+                  "results": Array [
+                    Object {
+                      "type": "return",
+                      "value": "ingress",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "ingress",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "ingress",
+                    },
                   ],
                 },
-              ]
-            }
-            noBorder={false}
-            valign=""
-            vertical={false}
-          >
-            <table
-              className="table"
-            >
-              <thead>
-                <tr>
-                  <th
-                    className=""
-                    key="url"
-                  >
-                    URL
-                  </th>
-                  <th
-                    className=""
-                    key="type"
-                  >
-                    Type
-                  </th>
-                  <th
-                    className=""
-                    key="notes"
-                  >
-                    Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <TableRow
-                  columns={
-                    Array [
-                      Object {
-                        "Header": "URL",
-                        "accessor": "url",
-                      },
-                      Object {
-                        "Header": "Type",
-                        "accessor": "type",
-                      },
-                      Object {
-                        "Header": "Notes",
-                        "accessor": "notes",
-                      },
-                    ]
-                  }
-                  index={0}
-                  key="0"
-                  row={
+                "name": "svc",
+              },
+            ]
+          }
+          serviceRefs={
+            Array [
+              Object {
+                "getResourceURL": [MockFunction] {
+                  "calls": Array [
+                    Array [],
+                    Array [],
+                    Array [],
+                  ],
+                  "results": Array [
                     Object {
-                      "notes": <span>
-                        Error: 
-                        could not find Ingress
-                      </span>,
-                      "type": "Ingress",
-                      "url": Array [
-                        <div
-                          className="margin-b-sm"
-                        >
-                          <span>
-                            Unknown
-                          </span>
-                        </div>,
-                      ],
-                    }
-                  }
-                >
-                  <tr>
-                    <td
-                      className=""
-                      key="0-url"
-                    >
+                      "type": "return",
+                      "value": "svc",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "svc",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "svc",
+                    },
+                  ],
+                },
+                "name": "svc",
+              },
+            ]
+          }
+        >
+          <section
+            aria-labelledby="access-urls-title"
+          >
+            <h5
+              className="section-title"
+              id="access-urls-title"
+            >
+              Access URLs
+            </h5>
+            <Table
+              className=""
+              columns={
+                Array [
+                  Object {
+                    "Header": "URL",
+                    "accessor": "url",
+                  },
+                  Object {
+                    "Header": "Type",
+                    "accessor": "type",
+                  },
+                  Object {
+                    "Header": "Notes",
+                    "accessor": "notes",
+                  },
+                ]
+              }
+              compact={false}
+              data={
+                Array [
+                  Object {
+                    "notes": <span>
+                      Error: 
+                      could not find Ingress
+                    </span>,
+                    "type": "Ingress",
+                    "url": Array [
                       <div
                         className="margin-b-sm"
-                        key="0"
                       >
                         <span>
                           Unknown
                         </span>
-                      </div>
-                    </td>
-                    <td
+                      </div>,
+                    ],
+                  },
+                ]
+              }
+              noBorder={false}
+              valign=""
+              vertical={false}
+            >
+              <table
+                className="table"
+              >
+                <thead>
+                  <tr>
+                    <th
                       className=""
-                      key="0-type"
+                      key="url"
                     >
-                      Ingress
-                    </td>
-                    <td
+                      URL
+                    </th>
+                    <th
                       className=""
-                      key="0-notes"
+                      key="type"
                     >
-                      <span>
-                        Error: 
-                        could not find Ingress
-                      </span>
-                    </td>
+                      Type
+                    </th>
+                    <th
+                      className=""
+                      key="notes"
+                    >
+                      Notes
+                    </th>
                   </tr>
-                </TableRow>
-              </tbody>
-            </table>
-          </Table>
-        </section>
-      </AccessURLTable>
-    </Router>
-  </BrowserRouter>
+                </thead>
+                <tbody>
+                  <TableRow
+                    columns={
+                      Array [
+                        Object {
+                          "Header": "URL",
+                          "accessor": "url",
+                        },
+                        Object {
+                          "Header": "Type",
+                          "accessor": "type",
+                        },
+                        Object {
+                          "Header": "Notes",
+                          "accessor": "notes",
+                        },
+                      ]
+                    }
+                    index={0}
+                    key="0"
+                    row={
+                      Object {
+                        "notes": <span>
+                          Error: 
+                          could not find Ingress
+                        </span>,
+                        "type": "Ingress",
+                        "url": Array [
+                          <div
+                            className="margin-b-sm"
+                          >
+                            <span>
+                              Unknown
+                            </span>
+                          </div>,
+                        ],
+                      }
+                    }
+                  >
+                    <tr>
+                      <td
+                        className=""
+                        key="0-url"
+                      >
+                        <div
+                          className="margin-b-sm"
+                          key="0"
+                        >
+                          <span>
+                            Unknown
+                          </span>
+                        </div>
+                      </td>
+                      <td
+                        className=""
+                        key="0-type"
+                      >
+                        Ingress
+                      </td>
+                      <td
+                        className=""
+                        key="0-notes"
+                      >
+                        <span>
+                          Error: 
+                          could not find Ingress
+                        </span>
+                      </td>
+                    </tr>
+                  </TableRow>
+                </tbody>
+              </table>
+            </Table>
+          </section>
+        </AccessURLTable>
+      </Router>
+    </BrowserRouter>
+  </IntlProvider>
+  ,
 </Provider>
 `;
 
@@ -591,260 +741,199 @@ exports[`when the app contains services and ingresses should show the table with
     }
   }
 >
-  <BrowserRouter>
-    <Router
-      history={
-        Object {
-          "action": "POP",
-          "block": [Function],
-          "createHref": [Function],
-          "go": [Function],
-          "goBack": [Function],
-          "goForward": [Function],
-          "length": 1,
-          "listen": [Function],
-          "location": Object {
-            "hash": "",
-            "pathname": "/",
-            "search": "",
-            "state": undefined,
+  <IntlProvider
+    defaultFormats={Object {}}
+    defaultLocale="en"
+    formats={Object {}}
+    key="en"
+    locale="en"
+    messages={
+      Object {
+        "Kubeapps": Array [
+          Object {
+            "type": 0,
+            "value": "Kubeapps",
           },
-          "push": [Function],
-          "replace": [Function],
-        }
+        ],
+        "Submit": Array [
+          Object {
+            "type": 0,
+            "value": "Submit",
+          },
+        ],
+        "Token": Array [
+          Object {
+            "type": 0,
+            "value": "Token",
+          },
+        ],
+        "error-login-token": Array [
+          Object {
+            "type": 0,
+            "value": "There was an error connecting to the Kubernetes API. Please check that your token is valid.",
+          },
+        ],
+        "login-desc-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator has enabled login via an authentication provider.",
+          },
+        ],
+        "login-desc-token": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator should provide you with a Kubernetes API token.",
+          },
+        ],
+        "login-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Login via OIDC Provider",
+          },
+        ],
+        "login-title-welcome": Array [
+          Object {
+            "type": 0,
+            "value": "Welcome to",
+          },
+        ],
+        "more-info": Array [
+          Object {
+            "type": 0,
+            "value": "More Info",
+          },
+        ],
+        "paste-token-here": Array [
+          Object {
+            "type": 0,
+            "value": "Paste token here",
+          },
+        ],
       }
-    >
-      <AccessURLTable
-        ingressRefs={
-          Array [
-            Object {
-              "getResourceURL": [MockFunction] {
-                "calls": Array [
-                  Array [],
-                  Array [],
-                  Array [],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": "/ingresses/foo",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "/ingresses/foo",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "/ingresses/foo",
-                  },
-                ],
-              },
-              "name": "svc",
+    }
+    onError={[Function]}
+    textComponent={Symbol(react.fragment)}
+  >
+    <BrowserRouter>
+      <Router
+        history={
+          Object {
+            "action": "POP",
+            "block": [Function],
+            "createHref": [Function],
+            "go": [Function],
+            "goBack": [Function],
+            "goForward": [Function],
+            "length": 1,
+            "listen": [Function],
+            "location": Object {
+              "hash": "",
+              "pathname": "/",
+              "search": "",
+              "state": undefined,
             },
-          ]
-        }
-        serviceRefs={
-          Array [
-            Object {
-              "getResourceURL": [MockFunction] {
-                "calls": Array [
-                  Array [],
-                  Array [],
-                  Array [],
-                ],
-                "results": Array [
-                  Object {
-                    "type": "return",
-                    "value": "/services/foo",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "/services/foo",
-                  },
-                  Object {
-                    "type": "return",
-                    "value": "/services/foo",
-                  },
-                ],
-              },
-              "name": "svc",
-            },
-          ]
+            "push": [Function],
+            "replace": [Function],
+          }
         }
       >
-        <section
-          aria-labelledby="access-urls-title"
-        >
-          <h5
-            className="section-title"
-            id="access-urls-title"
-          >
-            Access URLs
-          </h5>
-          <Table
-            className=""
-            columns={
-              Array [
-                Object {
-                  "Header": "URL",
-                  "accessor": "url",
-                },
-                Object {
-                  "Header": "Type",
-                  "accessor": "type",
-                },
-                Object {
-                  "Header": "Notes",
-                  "accessor": "notes",
-                },
-              ]
-            }
-            compact={false}
-            data={
-              Array [
-                Object {
-                  "notes": <span>
-                    IP(s): 
-                    1.2.3.4
-                  </span>,
-                  "type": "Service LoadBalancer",
-                  "url": Array [
-                    <div
-                      className="margin-b-sm"
-                    >
-                      <a
-                        href="http://1.2.3.4:8080"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        http://1.2.3.4:8080
-                      </a>
-                    </div>,
+        <AccessURLTable
+          ingressRefs={
+            Array [
+              Object {
+                "getResourceURL": [MockFunction] {
+                  "calls": Array [
+                    Array [],
+                    Array [],
+                    Array [],
                   ],
-                },
-                Object {
-                  "notes": <span>
-                    Not associated with any IP.
-                     
-                    <Tooltip
-                      extraSmall={false}
-                      icon="help"
-                      iconProps={
-                        Object {
-                          "size": "sm",
-                          "solid": true,
-                        }
-                      }
-                      id="foo-pending-tooltip"
-                      label="pending-tooltip"
-                      large={true}
-                      position="bottom-left"
-                      small={false}
-                    >
-                      Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
-                      <code>
-                        minikube tunnel
-                      </code>
-                       in your terminal in order for an IP address to be assigned to your application.
-                    </Tooltip>
-                  </span>,
-                  "type": "Ingress",
-                  "url": Array [
-                    <div
-                      className="margin-b-sm"
-                    >
-                      <a
-                        href="http://foo.bar/ready"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        http://foo.bar/ready
-                      </a>
-                    </div>,
-                  ],
-                },
-              ]
-            }
-            noBorder={false}
-            valign=""
-            vertical={false}
-          >
-            <table
-              className="table"
-            >
-              <thead>
-                <tr>
-                  <th
-                    className=""
-                    key="url"
-                  >
-                    URL
-                  </th>
-                  <th
-                    className=""
-                    key="type"
-                  >
-                    Type
-                  </th>
-                  <th
-                    className=""
-                    key="notes"
-                  >
-                    Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <TableRow
-                  columns={
-                    Array [
-                      Object {
-                        "Header": "URL",
-                        "accessor": "url",
-                      },
-                      Object {
-                        "Header": "Type",
-                        "accessor": "type",
-                      },
-                      Object {
-                        "Header": "Notes",
-                        "accessor": "notes",
-                      },
-                    ]
-                  }
-                  index={0}
-                  key="0"
-                  row={
+                  "results": Array [
                     Object {
-                      "notes": <span>
-                        IP(s): 
-                        1.2.3.4
-                      </span>,
-                      "type": "Service LoadBalancer",
-                      "url": Array [
-                        <div
-                          className="margin-b-sm"
-                        >
-                          <a
-                            href="http://1.2.3.4:8080"
-                            rel="noopener noreferrer"
-                            target="_blank"
-                          >
-                            http://1.2.3.4:8080
-                          </a>
-                        </div>,
-                      ],
-                    }
-                  }
-                >
-                  <tr>
-                    <td
-                      className=""
-                      key="0-url"
-                    >
+                      "type": "return",
+                      "value": "/ingresses/foo",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "/ingresses/foo",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "/ingresses/foo",
+                    },
+                  ],
+                },
+                "name": "svc",
+              },
+            ]
+          }
+          serviceRefs={
+            Array [
+              Object {
+                "getResourceURL": [MockFunction] {
+                  "calls": Array [
+                    Array [],
+                    Array [],
+                    Array [],
+                  ],
+                  "results": Array [
+                    Object {
+                      "type": "return",
+                      "value": "/services/foo",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "/services/foo",
+                    },
+                    Object {
+                      "type": "return",
+                      "value": "/services/foo",
+                    },
+                  ],
+                },
+                "name": "svc",
+              },
+            ]
+          }
+        >
+          <section
+            aria-labelledby="access-urls-title"
+          >
+            <h5
+              className="section-title"
+              id="access-urls-title"
+            >
+              Access URLs
+            </h5>
+            <Table
+              className=""
+              columns={
+                Array [
+                  Object {
+                    "Header": "URL",
+                    "accessor": "url",
+                  },
+                  Object {
+                    "Header": "Type",
+                    "accessor": "type",
+                  },
+                  Object {
+                    "Header": "Notes",
+                    "accessor": "notes",
+                  },
+                ]
+              }
+              compact={false}
+              data={
+                Array [
+                  Object {
+                    "notes": <span>
+                      IP(s): 
+                      1.2.3.4
+                    </span>,
+                    "type": "Service LoadBalancer",
+                    "url": Array [
                       <div
                         className="margin-b-sm"
-                        key="http://1.2.3.4:8080"
                       >
                         <a
                           href="http://1.2.3.4:8080"
@@ -853,96 +942,39 @@ exports[`when the app contains services and ingresses should show the table with
                         >
                           http://1.2.3.4:8080
                         </a>
-                      </div>
-                    </td>
-                    <td
-                      className=""
-                      key="0-type"
-                    >
-                      Service LoadBalancer
-                    </td>
-                    <td
-                      className=""
-                      key="0-notes"
-                    >
-                      <span>
-                        IP(s): 
-                        1.2.3.4
-                      </span>
-                    </td>
-                  </tr>
-                </TableRow>
-                <TableRow
-                  columns={
-                    Array [
-                      Object {
-                        "Header": "URL",
-                        "accessor": "url",
-                      },
-                      Object {
-                        "Header": "Type",
-                        "accessor": "type",
-                      },
-                      Object {
-                        "Header": "Notes",
-                        "accessor": "notes",
-                      },
-                    ]
-                  }
-                  index={1}
-                  key="1"
-                  row={
-                    Object {
-                      "notes": <span>
-                        Not associated with any IP.
-                         
-                        <Tooltip
-                          extraSmall={false}
-                          icon="help"
-                          iconProps={
-                            Object {
-                              "size": "sm",
-                              "solid": true,
-                            }
+                      </div>,
+                    ],
+                  },
+                  Object {
+                    "notes": <span>
+                      Not associated with any IP.
+                       
+                      <Tooltip
+                        extraSmall={false}
+                        icon="help"
+                        iconProps={
+                          Object {
+                            "size": "sm",
+                            "solid": true,
                           }
-                          id="foo-pending-tooltip"
-                          label="pending-tooltip"
-                          large={true}
-                          position="bottom-left"
-                          small={false}
-                        >
-                          Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
-                          <code>
-                            minikube tunnel
-                          </code>
-                           in your terminal in order for an IP address to be assigned to your application.
-                        </Tooltip>
-                      </span>,
-                      "type": "Ingress",
-                      "url": Array [
-                        <div
-                          className="margin-b-sm"
-                        >
-                          <a
-                            href="http://foo.bar/ready"
-                            rel="noopener noreferrer"
-                            target="_blank"
-                          >
-                            http://foo.bar/ready
-                          </a>
-                        </div>,
-                      ],
-                    }
-                  }
-                >
-                  <tr>
-                    <td
-                      className=""
-                      key="1-url"
-                    >
+                        }
+                        id="foo-pending-tooltip"
+                        label="pending-tooltip"
+                        large={true}
+                        position="bottom-left"
+                        small={false}
+                      >
+                        Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
+                        <code>
+                          minikube tunnel
+                        </code>
+                         in your terminal in order for an IP address to be assigned to your application.
+                      </Tooltip>
+                    </span>,
+                    "type": "Ingress",
+                    "url": Array [
                       <div
                         className="margin-b-sm"
-                        key="http://foo.bar/ready"
                       >
                         <a
                           href="http://foo.bar/ready"
@@ -951,80 +983,273 @@ exports[`when the app contains services and ingresses should show the table with
                         >
                           http://foo.bar/ready
                         </a>
-                      </div>
-                    </td>
-                    <td
+                      </div>,
+                    ],
+                  },
+                ]
+              }
+              noBorder={false}
+              valign=""
+              vertical={false}
+            >
+              <table
+                className="table"
+              >
+                <thead>
+                  <tr>
+                    <th
                       className=""
-                      key="1-type"
+                      key="url"
                     >
-                      Ingress
-                    </td>
-                    <td
+                      URL
+                    </th>
+                    <th
                       className=""
-                      key="1-notes"
+                      key="type"
                     >
-                      <span>
-                        Not associated with any IP.
-                         
-                        <Tooltip
-                          extraSmall={false}
-                          icon="help"
-                          iconProps={
-                            Object {
-                              "size": "sm",
-                              "solid": true,
-                            }
-                          }
-                          id="foo-pending-tooltip"
-                          label="pending-tooltip"
-                          large={true}
-                          position="bottom-left"
-                          small={false}
-                        >
-                          <button
-                            aria-describedby="foo-pending-tooltip"
-                            aria-expanded={false}
-                            aria-haspopup="true"
-                            aria-label="pending-tooltip"
-                            className="tooltip tooltip-bottom-left tooltip-lg"
-                            onBlur={[Function]}
-                            onFocus={[Function]}
-                            onKeyUp={[Function]}
-                            onMouseEnter={[Function]}
-                            onMouseLeave={[Function]}
-                            role="tooltip"
-                          >
-                            <CdsIcon
-                              role="none"
-                              shape="help"
-                              size="sm"
-                              solid={true}
-                            >
-                              <cds-icon />
-                            </CdsIcon>
-                            <span
-                              aria-hidden={true}
-                              className="tooltip-content"
-                              id="foo-pending-tooltip"
-                            >
-                              Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
-                              <code>
-                                minikube tunnel
-                              </code>
-                               in your terminal in order for an IP address to be assigned to your application.
-                            </span>
-                          </button>
-                        </Tooltip>
-                      </span>
-                    </td>
+                      Type
+                    </th>
+                    <th
+                      className=""
+                      key="notes"
+                    >
+                      Notes
+                    </th>
                   </tr>
-                </TableRow>
-              </tbody>
-            </table>
-          </Table>
-        </section>
-      </AccessURLTable>
-    </Router>
-  </BrowserRouter>
+                </thead>
+                <tbody>
+                  <TableRow
+                    columns={
+                      Array [
+                        Object {
+                          "Header": "URL",
+                          "accessor": "url",
+                        },
+                        Object {
+                          "Header": "Type",
+                          "accessor": "type",
+                        },
+                        Object {
+                          "Header": "Notes",
+                          "accessor": "notes",
+                        },
+                      ]
+                    }
+                    index={0}
+                    key="0"
+                    row={
+                      Object {
+                        "notes": <span>
+                          IP(s): 
+                          1.2.3.4
+                        </span>,
+                        "type": "Service LoadBalancer",
+                        "url": Array [
+                          <div
+                            className="margin-b-sm"
+                          >
+                            <a
+                              href="http://1.2.3.4:8080"
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                              http://1.2.3.4:8080
+                            </a>
+                          </div>,
+                        ],
+                      }
+                    }
+                  >
+                    <tr>
+                      <td
+                        className=""
+                        key="0-url"
+                      >
+                        <div
+                          className="margin-b-sm"
+                          key="http://1.2.3.4:8080"
+                        >
+                          <a
+                            href="http://1.2.3.4:8080"
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            http://1.2.3.4:8080
+                          </a>
+                        </div>
+                      </td>
+                      <td
+                        className=""
+                        key="0-type"
+                      >
+                        Service LoadBalancer
+                      </td>
+                      <td
+                        className=""
+                        key="0-notes"
+                      >
+                        <span>
+                          IP(s): 
+                          1.2.3.4
+                        </span>
+                      </td>
+                    </tr>
+                  </TableRow>
+                  <TableRow
+                    columns={
+                      Array [
+                        Object {
+                          "Header": "URL",
+                          "accessor": "url",
+                        },
+                        Object {
+                          "Header": "Type",
+                          "accessor": "type",
+                        },
+                        Object {
+                          "Header": "Notes",
+                          "accessor": "notes",
+                        },
+                      ]
+                    }
+                    index={1}
+                    key="1"
+                    row={
+                      Object {
+                        "notes": <span>
+                          Not associated with any IP.
+                           
+                          <Tooltip
+                            extraSmall={false}
+                            icon="help"
+                            iconProps={
+                              Object {
+                                "size": "sm",
+                                "solid": true,
+                              }
+                            }
+                            id="foo-pending-tooltip"
+                            label="pending-tooltip"
+                            large={true}
+                            position="bottom-left"
+                            small={false}
+                          >
+                            Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
+                            <code>
+                              minikube tunnel
+                            </code>
+                             in your terminal in order for an IP address to be assigned to your application.
+                          </Tooltip>
+                        </span>,
+                        "type": "Ingress",
+                        "url": Array [
+                          <div
+                            className="margin-b-sm"
+                          >
+                            <a
+                              href="http://foo.bar/ready"
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                              http://foo.bar/ready
+                            </a>
+                          </div>,
+                        ],
+                      }
+                    }
+                  >
+                    <tr>
+                      <td
+                        className=""
+                        key="1-url"
+                      >
+                        <div
+                          className="margin-b-sm"
+                          key="http://foo.bar/ready"
+                        >
+                          <a
+                            href="http://foo.bar/ready"
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            http://foo.bar/ready
+                          </a>
+                        </div>
+                      </td>
+                      <td
+                        className=""
+                        key="1-type"
+                      >
+                        Ingress
+                      </td>
+                      <td
+                        className=""
+                        key="1-notes"
+                      >
+                        <span>
+                          Not associated with any IP.
+                           
+                          <Tooltip
+                            extraSmall={false}
+                            icon="help"
+                            iconProps={
+                              Object {
+                                "size": "sm",
+                                "solid": true,
+                              }
+                            }
+                            id="foo-pending-tooltip"
+                            label="pending-tooltip"
+                            large={true}
+                            position="bottom-left"
+                            small={false}
+                          >
+                            <button
+                              aria-describedby="foo-pending-tooltip"
+                              aria-expanded={false}
+                              aria-haspopup="true"
+                              aria-label="pending-tooltip"
+                              className="tooltip tooltip-bottom-left tooltip-lg"
+                              onBlur={[Function]}
+                              onFocus={[Function]}
+                              onKeyUp={[Function]}
+                              onMouseEnter={[Function]}
+                              onMouseLeave={[Function]}
+                              role="tooltip"
+                            >
+                              <CdsIcon
+                                role="none"
+                                shape="help"
+                                size="sm"
+                                solid={true}
+                              >
+                                <cds-icon />
+                              </CdsIcon>
+                              <span
+                                aria-hidden={true}
+                                className="tooltip-content"
+                                id="foo-pending-tooltip"
+                              >
+                                Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run 
+                                <code>
+                                  minikube tunnel
+                                </code>
+                                 in your terminal in order for an IP address to be assigned to your application.
+                              </span>
+                            </button>
+                          </Tooltip>
+                        </span>
+                      </td>
+                    </tr>
+                  </TableRow>
+                </tbody>
+              </table>
+            </Table>
+          </section>
+        </AccessURLTable>
+      </Router>
+    </BrowserRouter>
+  </IntlProvider>
+  ,
 </Provider>
 `;
