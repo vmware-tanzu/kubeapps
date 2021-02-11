@@ -8,6 +8,7 @@ import LoadingWrapper from "components/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
 import * as qs from "qs";
 import { act } from "react-dom/test-utils";
+import * as ReactRouter from "react-router";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IAppOverview, IStoreState } from "../../shared/types";
@@ -87,6 +88,36 @@ context("when changing props", () => {
     });
     const wrapper = mountWrapper(defaultStore, <AppList />);
     expect(wrapper.find("input[type='checkbox']")).not.toExist();
+  });
+
+  describe("when store changes", () => {
+    let spyOnUseState: jest.SpyInstance;
+    let spyOnUseLocation: jest.SpyInstance;
+    afterEach(() => {
+      spyOnUseState.mockRestore();
+      spyOnUseLocation.mockRestore();
+    });
+
+    it("should not set all-ns prop when getting changes in the namespace", async () => {
+      const setAllNS = jest.fn();
+      const useState = jest.fn();
+      spyOnUseState = jest
+        .spyOn(React, "useState")
+        //  @ts-ignore
+        .mockImplementation((init: any) => {
+          if (init === false) {
+            // Mocking the result of setAllNS
+            return [false, setAllNS];
+          }
+          return [init, useState];
+        });
+      spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockImplementation(() => {
+        return { pathname: "/foo", search: "allns=yes", state: undefined, hash: "" };
+      });
+
+      mountWrapper(defaultStore, <AppList />);
+      expect(setAllNS).not.toHaveBeenCalledWith(false);
+    });
   });
 });
 

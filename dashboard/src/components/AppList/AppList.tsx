@@ -9,7 +9,7 @@ import * as qs from "qs";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router";
+import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { IStoreState } from "../../shared/types";
@@ -20,7 +20,7 @@ import "./AppList.css";
 import AppListGrid from "./AppListGrid";
 
 function AppList() {
-  const location = useLocation();
+  const location = ReactRouter.useLocation();
   const searchQuery = qs.parse(location.search, { ignoreQueryPrefix: true }).q?.toString() || "";
   const allNSQuery = qs.parse(location.search, { ignoreQueryPrefix: true }).allns || "";
   const dispatch = useDispatch();
@@ -59,7 +59,6 @@ function AppList() {
 
   useEffect(() => {
     setNamespace(currentNamespace);
-    setAllNS(false);
   }, [currentNamespace]);
 
   useEffect(() => {
