@@ -30,7 +30,7 @@
     "@types/vfile": "^4.0.0",
     "@types/vfile-message": "^2.0.0",
     "@types/ws": "^7.4.0",
-    "ajv": "^6.10.2",
+    "ajv": "^7.0.4",
     "axios": "^0.21.1",
     "connected-react-router": "^6.8.0",
     "diff": "^4.0.1",
