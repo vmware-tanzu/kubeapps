@@ -13,106 +13,181 @@ exports[`renders a multicheckbox 1`] = `
     }
   }
 >
-  <BrowserRouter>
-    <Router
-      history={
-        Object {
-          "action": "POP",
-          "block": [Function],
-          "createHref": [Function],
-          "go": [Function],
-          "goBack": [Function],
-          "goForward": [Function],
-          "length": 1,
-          "listen": [Function],
-          "location": Object {
-            "hash": "",
-            "pathname": "/",
-            "search": "",
-            "state": undefined,
+  <IntlProvider
+    defaultFormats={Object {}}
+    defaultLocale="en"
+    formats={Object {}}
+    key="en"
+    locale="en"
+    messages={
+      Object {
+        "Kubeapps": Array [
+          Object {
+            "type": 0,
+            "value": "Kubeapps",
           },
-          "push": [Function],
-          "replace": [Function],
-        }
+        ],
+        "Submit": Array [
+          Object {
+            "type": 0,
+            "value": "Submit",
+          },
+        ],
+        "Token": Array [
+          Object {
+            "type": 0,
+            "value": "Token",
+          },
+        ],
+        "error-login-token": Array [
+          Object {
+            "type": 0,
+            "value": "There was an error connecting to the Kubernetes API. Please check that your token is valid.",
+          },
+        ],
+        "login-desc-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator has enabled login via an authentication provider.",
+          },
+        ],
+        "login-desc-token": Array [
+          Object {
+            "type": 0,
+            "value": "Your cluster operator should provide you with a Kubernetes API token.",
+          },
+        ],
+        "login-oidc": Array [
+          Object {
+            "type": 0,
+            "value": "Login via OIDC Provider",
+          },
+        ],
+        "login-title-welcome": Array [
+          Object {
+            "type": 0,
+            "value": "Welcome to",
+          },
+        ],
+        "more-info": Array [
+          Object {
+            "type": 0,
+            "value": "More Info",
+          },
+        ],
+        "paste-token-here": Array [
+          Object {
+            "type": 0,
+            "value": "Paste token here",
+          },
+        ],
       }
-    >
-      <FilterGroup
-        currentFilters={Array []}
-        name="test"
-        onAddFilter={[MockFunction]}
-        onRemoveFilter={[MockFunction]}
-        options={
-          Array [
-            "foo",
-            "bar",
-          ]
+    }
+    onError={[Function]}
+    textComponent={Symbol(react.fragment)}
+  >
+    <BrowserRouter>
+      <Router
+        history={
+          Object {
+            "action": "POP",
+            "block": [Function],
+            "createHref": [Function],
+            "go": [Function],
+            "goBack": [Function],
+            "goForward": [Function],
+            "length": 1,
+            "listen": [Function],
+            "location": Object {
+              "hash": "",
+              "pathname": "/",
+              "search": "",
+              "state": undefined,
+            },
+            "push": [Function],
+            "replace": [Function],
+          }
         }
       >
-        <MultiCheckbox
+        <FilterGroup
+          currentFilters={Array []}
           name="test"
-          onChange={[Function]}
+          onAddFilter={[MockFunction]}
+          onRemoveFilter={[MockFunction]}
           options={
             Array [
               "foo",
               "bar",
             ]
           }
-          span={1}
-          value={Array []}
         >
-          <div
-            className="multicheckbox-wrapper"
-            style={
-              Object {
-                "--col-lg-num": 1,
-                "--col-md-num": 1,
-                "--col-sm-num": 1,
-                "--col-xl-num": 1,
-              }
+          <MultiCheckbox
+            name="test"
+            onChange={[Function]}
+            options={
+              Array [
+                "foo",
+                "bar",
+              ]
             }
+            span={1}
+            value={Array []}
           >
             <div
-              className="clr-checkbox-wrapper"
-              key="0"
+              className="multicheckbox-wrapper"
+              style={
+                Object {
+                  "--col-lg-num": 1,
+                  "--col-md-num": 1,
+                  "--col-sm-num": 1,
+                  "--col-xl-num": 1,
+                }
+              }
             >
-              <input
-                checked={false}
-                id="test-0"
-                name="test"
-                onChange={[Function]}
-                type="checkbox"
-                value="foo"
-              />
-              <label
-                className="clr-control-label"
-                htmlFor="test-0"
+              <div
+                className="clr-checkbox-wrapper"
+                key="0"
               >
-                foo
-              </label>
-            </div>
-            <div
-              className="clr-checkbox-wrapper"
-              key="1"
-            >
-              <input
-                checked={false}
-                id="test-1"
-                name="test"
-                onChange={[Function]}
-                type="checkbox"
-                value="bar"
-              />
-              <label
-                className="clr-control-label"
-                htmlFor="test-1"
+                <input
+                  checked={false}
+                  id="test-0"
+                  name="test"
+                  onChange={[Function]}
+                  type="checkbox"
+                  value="foo"
+                />
+                <label
+                  className="clr-control-label"
+                  htmlFor="test-0"
+                >
+                  foo
+                </label>
+              </div>
+              <div
+                className="clr-checkbox-wrapper"
+                key="1"
               >
-                bar
-              </label>
+                <input
+                  checked={false}
+                  id="test-1"
+                  name="test"
+                  onChange={[Function]}
+                  type="checkbox"
+                  value="bar"
+                />
+                <label
+                  className="clr-control-label"
+                  htmlFor="test-1"
+                >
+                  bar
+                </label>
+              </div>
             </div>
-          </div>
-        </MultiCheckbox>
-      </FilterGroup>
-    </Router>
-  </BrowserRouter>
+          </MultiCheckbox>
+        </FilterGroup>
+      </Router>
+    </BrowserRouter>
+  </IntlProvider>
+  ,
 </Provider>
 `;

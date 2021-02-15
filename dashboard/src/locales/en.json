@@ -1,1 +1,62 @@
-{}
+{
+  "Kubeapps": [
+    {
+      "type": 0,
+      "value": "Kubeapps"
+    }
+  ],
+  "Submit": [
+    {
+      "type": 0,
+      "value": "Submit"
+    }
+  ],
+  "Token": [
+    {
+      "type": 0,
+      "value": "Token"
+    }
+  ],
+  "error-login-token": [
+    {
+      "type": 0,
+      "value": "There was an error connecting to the Kubernetes API. Please check that your token is valid."
+    }
+  ],
+  "login-desc-oidc": [
+    {
+      "type": 0,
+      "value": "Your cluster operator has enabled login via an authentication provider."
+    }
+  ],
+  "login-desc-token": [
+    {
+      "type": 0,
+      "value": "Your cluster operator should provide you with a Kubernetes API token."
+    }
+  ],
+  "login-oidc": [
+    {
+      "type": 0,
+      "value": "Login via OIDC Provider"
+    }
+  ],
+  "login-title-welcome": [
+    {
+      "type": 0,
+      "value": "Welcome to"
+    }
+  ],
+  "more-info": [
+    {
+      "type": 0,
+      "value": "More Info"
+    }
+  ],
+  "paste-token-here": [
+    {
+      "type": 0,
+      "value": "Paste token here"
+    }
+  ]
+}

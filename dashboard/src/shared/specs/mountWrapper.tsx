@@ -3,6 +3,7 @@ import { mount } from "enzyme";
 import { merge } from "lodash";
 import { cloneDeep } from "lodash";
 import * as React from "react";
+import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
 import { initialState as appsInitialState } from "reducers/apps";
@@ -15,6 +16,7 @@ import { operatorsInitialState } from "reducers/operators";
 import { initialState as reposInitialState } from "reducers/repos";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
+import I18n from "shared/I18n";
 import { IStoreState } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
@@ -52,6 +54,10 @@ export const initialState = {
 
 export const defaultStore = mockStore(initialState);
 
+// Default to english 1i8nconfiguration
+const messages = I18n.getDefaultConfig().messages;
+const locale = I18n.getDefaultConfig().locale;
+
 // getStore returns a store initialised with a merge of
 // the initial state with any passed extra state.
 export const getStore = (extraState: object) => {
@@ -62,6 +68,9 @@ export const getStore = (extraState: object) => {
 export const mountWrapper = (store: MockStore, children: React.ReactElement) =>
   mount(
     <Provider store={store}>
-      <Router>{children}</Router>
+      <IntlProvider locale={locale} key={locale} messages={messages} defaultLocale={locale}>
+        <Router>{children}</Router>
+      </IntlProvider>
+      ,
     </Provider>,
   );

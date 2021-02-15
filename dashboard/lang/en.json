@@ -1,1 +1,12 @@
-{}
+{
+  "Kubeapps": "Kubeapps",
+  "Submit": "Submit",
+  "Token": "Token",
+  "error-login-token": "There was an error connecting to the Kubernetes API. Please check that your token is valid.",
+  "login-desc-oidc": "Your cluster operator has enabled login via an authentication provider.",
+  "login-desc-token": "Your cluster operator should provide you with a Kubernetes API token.",
+  "login-oidc": "Login via OIDC Provider",
+  "login-title-welcome": "Welcome to",
+  "more-info": "More Info",
+  "paste-token-here": "Paste token here"
+}
