@@ -516,39 +516,20 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	}
 
 	chartJobs := make(chan pullChartJob, numWorkers)
-	chartChan := make(chan pullChartResult)
+	chartResults := make(chan pullChartResult, numWorkers)
 	var wg sync.WaitGroup
-	wg.Add(1)
-	totalCharts := 0
-	for _, appName := range r.repositories {
-		totalCharts += len(r.tags[appName].Tags)
-	}
 	// Process 10 charts at a time
 	for i := 0; i < numWorkers; i++ {
-		go chartImportWorker(url, r, chartJobs, chartChan)
+		wg.Add(1)
+		go func() {
+			chartImportWorker(url, r, chartJobs, chartResults)
+			wg.Done()
+		}()
 	}
-
-	// Start receiving charts
-	processedCharts := 0
+	// When we know all workers have sent their data in chartChan, close it.
 	go func() {
-		for res := range chartChan {
-			if res.Error == nil {
-				ch := res.Chart
-				log.Debugf("received chart %s from channel", ch.ID)
-				if r, ok := result[ch.ID]; ok {
-					// Chart already exists, append version
-					r.ChartVersions = append(result[ch.ID].ChartVersions, ch.ChartVersions...)
-				} else {
-					result[ch.ID] = *ch
-				}
-			} else {
-				log.Errorf("failed to pull chart. Got %v", res.Error)
-			}
-			processedCharts++
-			if processedCharts == totalCharts {
-				wg.Done()
-			}
-		}
+		wg.Wait()
+		close(chartResults)
 	}()
 
 	log.Debugf("starting %d workers", numWorkers)
@@ -558,8 +539,22 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 		}
 	}
 	close(chartJobs)
-	// Wait for the worker pools to finish processing
-	wg.Wait()
+
+	// Start receiving charts
+	for res := range chartResults {
+		if res.Error == nil {
+			ch := res.Chart
+			log.Debugf("received chart %s from channel", ch.ID)
+			if r, ok := result[ch.ID]; ok {
+				// Chart already exists, append version
+				r.ChartVersions = append(result[ch.ID].ChartVersions, ch.ChartVersions...)
+			} else {
+				result[ch.ID] = *ch
+			}
+		} else {
+			log.Errorf("failed to pull chart. Got %v", res.Error)
+		}
+	}
 
 	charts := []models.Chart{}
 	for _, c := range result {
