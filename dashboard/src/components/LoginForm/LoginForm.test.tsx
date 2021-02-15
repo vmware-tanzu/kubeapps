@@ -34,6 +34,19 @@ const defaultProps = {
 
 const authenticationError = "it's a trap";
 
+describe("while authenticating", () => {
+  it("behaves like a loading component", () => {
+    const props = {
+      ...defaultProps,
+      authenticating: true,
+    };
+    const wrapper = mountWrapper(defaultStore, <LoginForm {...props} />);
+    expect(wrapper.find(LoadingWrapper)).toExist();
+    expect(wrapper.find(TokenLogin)).not.toExist();
+    expect(wrapper.find(OAuthLogin)).not.toExist();
+  });
+});
+
 describe("token login form", () => {
   it("renders a token login form", () => {
     const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
