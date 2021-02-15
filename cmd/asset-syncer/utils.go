@@ -576,12 +576,14 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	}()
 
 	log.Debugf("starting %d workers", numWorkers)
-	for _, appName := range r.repositories {
-		for _, tag := range r.tags[appName].Tags {
-			chartJobs <- pullChartJob{AppName: appName, Tag: tag}
+	go func() {
+		for _, appName := range r.repositories {
+			for _, tag := range r.tags[appName].Tags {
+				chartJobs <- pullChartJob{AppName: appName, Tag: tag}
+			}
 		}
-	}
-	close(chartJobs)
+		close(chartJobs)
+	}()
 
 	// Start receiving charts
 	for res := range chartResults {
