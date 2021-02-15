@@ -57,7 +57,7 @@
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "^16.13.0",
     "react-feather": "^1.0.8",
-    "react-intl": "^5.12.1",
+    "react-intl": "^5.12.3",
     "react-jsonschema-form": "^1.0.3",
     "react-markdown": "^5.0.0",
     "react-minimal-pie-chart": "^6.0.1",
