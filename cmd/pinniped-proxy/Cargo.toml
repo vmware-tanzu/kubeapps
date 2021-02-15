@@ -15,7 +15,7 @@ anyhow = "1.0"
 base64 = "0.13"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
-kube = { version = "0.48.0" }
+kube = { version = "0.50.0" }
 # We explicitly import kube-derive without the schema option to avoid
 # requiring the jsonschema for CRDs until
 # https://github.com/Arnavion/k8s-openapi/issues/86
