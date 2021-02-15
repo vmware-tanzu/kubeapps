@@ -4,3 +4,5 @@ devel/*
 
 # OSX
 .DS_Store
+
+dashboard/src/locales/
