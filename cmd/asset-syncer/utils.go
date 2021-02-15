@@ -363,52 +363,53 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 func (r *OCIRegistry) Checksum() (string, error) {
 	r.tags = map[string]TagList{}
 	checktagJobs := make(chan checkTagJob, numWorkers)
-	tagcheckRes := make(chan checkTagResult)
+	tagcheckRes := make(chan checkTagResult, numWorkers)
 	var wg sync.WaitGroup
-	wg.Add(1)
-	totalTags := 0
 
 	// Process 10 tags at a time
 	for i := 0; i < numWorkers; i++ {
-		go tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
+		wg.Add(1)
+		go func() {
+			tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
+			wg.Done()
+		}()
 	}
-
-	// Start receiving charts
-	processedTags := 0
 	go func() {
-		for res := range tagcheckRes {
-			if res.Error == nil {
-				if res.isHelmChart {
-					r.tags[res.AppName] = TagList{
-						Name: r.tags[res.AppName].Name,
-						Tags: append(r.tags[res.AppName].Tags, res.Tag),
-					}
-				}
-			} else {
-				log.Errorf("failed to pull chart. Got %v", res.Error)
-			}
-			processedTags++
-			if processedTags == totalTags {
-				wg.Done()
-			}
-		}
+		wg.Wait()
+		close(tagcheckRes)
 	}()
 
+	unfilteredTags := map[string]TagList{}
 	for _, appName := range r.repositories {
-		log.Debugf("Getting tags from %s", appName)
 		tags, err := r.ociCli.TagList(appName)
 		if err != nil {
 			return "", err
 		}
-		totalTags += len(tags.Tags)
-		r.tags[appName] = TagList{Name: tags.Name, Tags: []string{}}
-		for _, tag := range tags.Tags {
-			checktagJobs <- checkTagJob{AppName: appName, Tag: tag}
+		unfilteredTags[appName] = *tags
+	}
+
+	go func() {
+		for _, appName := range r.repositories {
+			for _, tag := range unfilteredTags[appName].Tags {
+				checktagJobs <- checkTagJob{AppName: appName, Tag: tag}
+			}
+		}
+		close(checktagJobs)
+	}()
+
+	// Start receiving tags
+	for res := range tagcheckRes {
+		if res.Error == nil {
+			if res.isHelmChart {
+				r.tags[res.AppName] = TagList{
+					Name: unfilteredTags[res.AppName].Name,
+					Tags: append(r.tags[res.AppName].Tags, res.Tag),
+				}
+			}
+		} else {
+			log.Errorf("failed to pull chart. Got %v", res.Error)
 		}
 	}
-	close(checktagJobs)
-	// Wait for the worker pools to finish processing
-	wg.Wait()
 
 	log.Debugf("Final list of tags: %v", r.tags)
 	content, err := json.Marshal(r.tags)
