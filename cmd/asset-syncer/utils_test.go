@@ -193,7 +193,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "")
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", &goodHTTPClient{})
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -201,7 +201,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 
 func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
-		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{})
+		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{}, &goodHTTPClient{})
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
 	})
 }
@@ -220,21 +220,21 @@ func Test_fetchRepoIndex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			netClient = &goodHTTPClient{}
-			_, err := fetchRepoIndex(tt.url, "")
+			netClient := &goodHTTPClient{}
+			_, err := fetchRepoIndex(tt.url, "", netClient)
 			assert.NoErr(t, err)
 		})
 	}
 
 	t.Run("authenticated request", func(t *testing.T) {
-		netClient = &authenticatedHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient")
+		netClient := &authenticatedHTTPClient{}
+		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient", netClient)
 		assert.NoErr(t, err)
 	})
 
 	t.Run("failed request", func(t *testing.T) {
-		netClient = &badHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "")
+		netClient := &badHTTPClient{}
+		_, err := fetchRepoIndex("https://my.examplerepo.com", "", netClient)
 		assert.ExistsErr(t, err, "failed request")
 	})
 }
@@ -269,9 +269,9 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 			// Close the server when test finishes
 			defer server.Close()
 
-			netClient = server.Client()
+			netClient := server.Client()
 
-			_, err := fetchRepoIndex(server.URL, "")
+			_, err := fetchRepoIndex(server.URL, "", netClient)
 			assert.NoErr(t, err)
 		})
 	}
@@ -516,7 +516,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
 		c := models.Chart{ID: "test/acs-engine-autoscaler"}
-		fImporter := fileImporter{pgManager}
+		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
 		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
 	})
 
@@ -526,37 +526,37 @@ func Test_fetchAndImportIcon(t *testing.T) {
 	t.Run("failed download", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient = &badHTTPClient{}
-		fImporter := fileImporter{pgManager}
+		netClient := &badHTTPClient{}
+		fImporter := fileImporter{pgManager, netClient}
 		assert.Err(t, fmt.Errorf("500 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient = &badIconClient{}
+		netClient := &badIconClient{}
 		c := charts[0]
-		fImporter := fileImporter{pgManager}
+		fImporter := fileImporter{pgManager, netClient}
 		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient = &goodIconClient{}
+		netClient := &goodIconClient{}
 
 		mock.ExpectQuery("UPDATE charts SET info *").
 			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager}
+		fImporter := fileImporter{pgManager, netClient}
 		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
 	t.Run("valid SVG icon", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient = &svgIconClient{}
+		netClient := &svgIconClient{}
 		c := models.Chart{
 			ID:   "foo",
 			Icon: "https://foo/bar/logo.svg",
@@ -567,7 +567,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WithArgs("foo", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager}
+		fImporter := fileImporter{pgManager, netClient}
 		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
 	})
 }
@@ -626,11 +626,12 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		mock.ExpectQuery("SELECT EXISTS*").
 			WithArgs(chartFilesID, repo.Name, repo.Namespace).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
-		netClient = &badHTTPClient{}
-		fImporter := fileImporter{pgManager}
+		netClient := &badHTTPClient{}
+		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
 			content:      []byte{},
 			RepoInternal: repo,
+			netClient:    netClient,
 		}
 		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion))
 	})
@@ -656,12 +657,13 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, files).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
 
-		netClient = &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
+		netClient := &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
 
-		fImporter := fileImporter{pgManager}
+		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
 			content:      []byte{},
 			RepoInternal: repo,
+			netClient:    netClient,
 		}
 		err := fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion)
 		assert.NoErr(t, err)
@@ -679,14 +681,15 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
 
-		netClient = &authenticatedTarballClient{c: charts[0]}
+		netClient := &authenticatedTarballClient{c: charts[0]}
 
-		fImporter := fileImporter{pgManager}
+		fImporter := fileImporter{pgManager, netClient}
 
 		r := &models.RepoInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
 		repo := &HelmRepo{
 			RepoInternal: r,
 			content:      []byte{},
+			netClient:    netClient,
 		}
 		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
 		assert.NoErr(t, err)
@@ -703,8 +706,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
 
-		netClient = &goodTarballClient{c: charts[0]}
-		fImporter := fileImporter{pgManager}
+		netClient := &goodTarballClient{c: charts[0]}
+		fImporter := fileImporter{pgManager, netClient}
 
 		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion)
 		assert.NoErr(t, err)
@@ -718,7 +721,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
 			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(`true`))
 
-		fImporter := fileImporter{pgManager}
+		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
 		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion)
 		assert.NoErr(t, err)
 	})
@@ -761,21 +764,24 @@ func (h *authenticatedOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, e
 
 func Test_ociAPICli(t *testing.T) {
 	url, _ := parseRepoURL("http://oci-test")
-	apiCli := &ociAPICli{
-		url: url,
-	}
 
 	t.Run("TagList - failed request", func(t *testing.T) {
-		netClient = &badHTTPClient{
-			errMsg: "forbidden",
+		apiCli := &ociAPICli{
+			url: url,
+			netClient: &badHTTPClient{
+				errMsg: "forbidden",
+			},
 		}
 		_, err := apiCli.TagList("apache")
 		assert.Err(t, fmt.Errorf("request failed: forbidden"), err)
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
-		netClient = &goodOCIAPIHTTPClient{
-			response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
+		apiCli := &ociAPICli{
+			url: url,
+			netClient: &goodOCIAPIHTTPClient{
+				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
+			},
 		}
 		result, err := apiCli.TagList("apache")
 		assert.NoErr(t, err)
@@ -789,8 +795,8 @@ func Test_ociAPICli(t *testing.T) {
 		apiCli := &ociAPICli{
 			url:        url,
 			authHeader: "Bearer wrong",
+			netClient:  &authenticatedOCIAPIHTTPClient{},
 		}
-		netClient = &authenticatedOCIAPIHTTPClient{}
 		_, err := apiCli.TagList("apache")
 		assert.Err(t, fmt.Errorf("request failed: "), err)
 	})
@@ -799,9 +805,9 @@ func Test_ociAPICli(t *testing.T) {
 		apiCli := &ociAPICli{
 			url:        url,
 			authHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient",
-		}
-		netClient = &authenticatedOCIAPIHTTPClient{
-			response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
+			netClient: &authenticatedOCIAPIHTTPClient{
+				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
+			},
 		}
 		result, err := apiCli.TagList("apache")
 		assert.NoErr(t, err)
@@ -812,17 +818,23 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("IsHelmChart - failed request", func(t *testing.T) {
-		netClient = &badHTTPClient{}
+		apiCli := &ociAPICli{
+			url:       url,
+			netClient: &badHTTPClient{},
+		}
 		_, err := apiCli.IsHelmChart("apache", "7.5.1")
 		assert.Err(t, fmt.Errorf("request failed: "), err)
 	})
 
 	t.Run("IsHelmChart - successful request", func(t *testing.T) {
-		netClient = &goodOCIAPIHTTPClient{
-			responseByPath: map[string]string{
-				// 7.5.1 is not a chart
-				"/v2/test/apache/manifests/7.5.1": `{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`,
-				"/v2/test/apache/manifests/8.1.1": `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
+		apiCli := &ociAPICli{
+			url: url,
+			netClient: &goodOCIAPIHTTPClient{
+				responseByPath: map[string]string{
+					// 7.5.1 is not a chart
+					"/v2/test/apache/manifests/7.5.1": `{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`,
+					"/v2/test/apache/manifests/8.1.1": `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
+				},
 			},
 		}
 		is751, err := apiCli.IsHelmChart("test/apache", "7.5.1")

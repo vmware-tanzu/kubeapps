@@ -89,20 +89,20 @@ type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-var netClient httpClient = &http.Client{}
+// var netClient httpClient = &http.Client{}
 
 func parseRepoURL(repoURL string) (*url.URL, error) {
 	repoURL = strings.TrimSpace(repoURL)
 	return url.ParseRequestURI(repoURL)
 }
 
-func init() {
-	var err error
-	netClient, err = initNetClient(additionalCAFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+// func init() {
+// 	var err error
+// 	netClient, err = initNetClient(additionalCAFile)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
 
 type assetManager interface {
 	Delete(repo models.Repo) error
@@ -142,6 +142,7 @@ type Repo interface {
 type HelmRepo struct {
 	content []byte
 	*models.RepoInternal
+	netClient httpClient
 }
 
 // Checksum returns the sha256 of the repo
@@ -193,7 +194,7 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 		req.Header.Set("Authorization", r.AuthorizationHeader)
 	}
 
-	res, err := netClient.Do(req)
+	res, err := r.netClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +259,7 @@ type OCIRegistry struct {
 	ociCli ociAPI
 }
 
-func doReq(url string, headers map[string]string) ([]byte, error) {
+func doReq(url string, cli httpClient, headers map[string]string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -269,7 +270,7 @@ func doReq(url string, headers map[string]string) ([]byte, error) {
 		req.Header.Set(header, content)
 	}
 
-	res, err := netClient.Do(req)
+	res, err := cli.Do(req)
 	if res != nil {
 		defer res.Body.Close()
 	}
@@ -310,13 +311,14 @@ type ociAPI interface {
 type ociAPICli struct {
 	authHeader string
 	url        *url.URL
+	netClient  httpClient
 }
 
 // TagList retrieves the list of tags for an asset
 func (o *ociAPICli) TagList(appName string) (*TagList, error) {
 	url := *o.url
 	url.Path = path.Join("v2", url.Path, appName, "tags", "list")
-	data, err := doReq(url.String(), map[string]string{"Authorization": o.authHeader})
+	data, err := doReq(url.String(), o.netClient, map[string]string{"Authorization": o.authHeader})
 	if err != nil {
 		return nil, err
 	}
@@ -335,6 +337,7 @@ func (o *ociAPICli) IsHelmChart(appName, tag string) (bool, error) {
 	log.Debugf("getting tag %s", repoURL.String())
 	manifestData, err := doReq(
 		repoURL.String(),
+		o.netClient,
 		map[string]string{
 			"Authorization": o.authHeader,
 			"Accept":        "application/vnd.oci.image.manifest.v1+json",
@@ -618,22 +621,31 @@ func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion) (map[strin
 	}, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string) (Repo, error) {
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, netClient httpClient) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
 		return nil, err
 	}
 
-	repoBytes, err := fetchRepoIndex(url.String(), authorizationHeader)
+	repoBytes, err := fetchRepoIndex(url.String(), authorizationHeader, netClient)
 	if err != nil {
 		return nil, err
 	}
 
-	return &HelmRepo{content: repoBytes, RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader}}, nil
+	return &HelmRepo{
+		content: repoBytes,
+		RepoInternal: &models.RepoInternal{
+			Namespace:           namespace,
+			Name:                name,
+			URL:                 url.String(),
+			AuthorizationHeader: authorizationHeader,
+		},
+		netClient: netClient,
+	}, nil
 }
 
-func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos []string) (Repo, error) {
+func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos []string, netClient httpClient) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -649,18 +661,18 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 		repositories: ociRepos,
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
 		puller:       &helm.OCIPuller{Resolver: ociResolver},
-		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url},
+		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url, netClient: netClient},
 	}, nil
 }
 
-func fetchRepoIndex(url, authHeader string) ([]byte, error) {
+func fetchRepoIndex(url, authHeader string, cli httpClient) ([]byte, error) {
 	indexURL, err := parseRepoURL(url)
 	if err != nil {
 		log.WithFields(log.Fields{"url": url}).WithError(err).Error("failed to parse URL")
 		return nil, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
-	return doReq(indexURL.String(), map[string]string{"Authorization": authHeader})
+	return doReq(indexURL.String(), cli, map[string]string{"Authorization": authHeader})
 }
 
 func parseRepoIndex(body []byte) (*helmrepo.IndexFile, error) {
@@ -768,7 +780,8 @@ func initNetClient(additionalCA string) (*http.Client, error) {
 }
 
 type fileImporter struct {
-	manager assetManager
+	manager   assetManager
+	netClient httpClient
 }
 
 func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo) {
@@ -844,7 +857,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 		req.Header.Set("Authorization", r.AuthorizationHeader)
 	}
 
-	res, err := netClient.Do(req)
+	res, err := f.netClient.Do(req)
 	if res != nil {
 		defer res.Body.Close()
 	}
