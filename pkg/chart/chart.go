@@ -19,7 +19,6 @@ package chart
 import (
 	"bytes"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -384,14 +383,9 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
 	}
-	// TODO: Use a CA certificate when https://github.com/deislabs/oras/issues/217 is fixed
-	netClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: appRepo.Spec.TLSInsecureSkipVerify,
-			},
-			Proxy: http.ProxyFromEnvironment,
-		},
+	netClient, err := kube.InitHTTPClient(appRepo, caCertSecret)
+	if err != nil {
+		return err
 	}
 	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
 		var auth string
