@@ -26,7 +26,7 @@
     "@types/react-tabs": "^2.3.1",
     "@types/react-tooltip": "^3.9.3",
     "@types/react-transition-group": "^4.4.0",
-    "@types/semver": "^5.5.0",
+    "@types/semver": "^7.3.4",
     "@types/vfile": "^4.0.0",
     "@types/vfile-message": "^2.0.0",
     "@types/ws": "^7.4.0",
