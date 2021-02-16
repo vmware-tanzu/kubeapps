@@ -119,7 +119,8 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *co
 			Transport: &http.Transport{
 				Proxy: proxyFunc,
 				TLSClientConfig: &tls.Config{
-					RootCAs: caCertPool,
+					RootCAs:            caCertPool,
+					InsecureSkipVerify: appRepo.Spec.TLSInsecureSkipVerify,
 				},
 			},
 		},

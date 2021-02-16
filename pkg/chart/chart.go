@@ -19,6 +19,7 @@ package chart
 import (
 	"bytes"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -383,6 +384,15 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
 	}
+	// TODO: Use a CA certificate when https://github.com/deislabs/oras/issues/217 is fixed
+	netClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: appRepo.Spec.TLSInsecureSkipVerify,
+			},
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
 	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
 		var auth string
 		auth, err = kube.GetData(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
@@ -392,7 +402,7 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 		headers.Set("Authorization", string(auth))
 	}
 
-	c.puller = &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers})}
+	c.puller = &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})}
 	return err
 }
 
