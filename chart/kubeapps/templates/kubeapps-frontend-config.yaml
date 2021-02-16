@@ -59,8 +59,12 @@ data:
       # the cluster). See clusters option.
       {{- range .Values.clusters }}
       location ~* /api/clusters/{{ .name }} {
-        rewrite /api/clusters/{{ .name }}/(.*) /$1 break;
-        rewrite /api/clusters/{{ .name }} / break;
+        {{- $apiServiceURL := default "https://kubernetes.default" .apiServiceURL }}
+        {{- $parsed := urlParse $apiServiceURL }}
+        {{- $baseURL := (printf "%s://%s" (get $parsed "scheme") (get $parsed "host")) }}
+        {{- $path := get $parsed "path" }}
+        rewrite /api/clusters/{{ .name }}/(.*) {{ $path }}/$1 break;
+        rewrite /api/clusters/{{ .name }} {{ $path }}/ break;
 
       {{/* Helm returns a nil pointer error when accessing foo.bar if foo doesn't
            exist, even with the `default` function.
@@ -79,7 +83,7 @@ data:
         proxy_pass http://kubeapps-internal-pinniped-proxy.{{ $.Release.Namespace }}:{{ $.Values.pinnipedProxy.service.port }};
       {{- else }}
         # Otherwise we route directly through to the clusters with existing credentials.
-        proxy_pass {{ default "https://kubernetes.default" .apiServiceURL }};
+        proxy_pass {{ $baseURL }};
         {{- if .certificateAuthorityData }}
         proxy_ssl_trusted_certificate "./server_blocks/{{ .name }}-ca.pem";
         {{- end }}
