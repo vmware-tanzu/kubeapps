@@ -6,13 +6,6 @@ Expand the name of the chart.
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "kubeapps.parseAPIServiceURL" -}}
-{{- $parsed := urlParse . }}
-{{- $baseURL := (printf "%s://%s" (get $parsed "scheme") (get $parsed "host")) }}
-{{- $path := get $parsed "path" }}
-{{ dict "baseURL" $baseURL "path" $path | toYaml }}
-{{- end -}}
-
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
