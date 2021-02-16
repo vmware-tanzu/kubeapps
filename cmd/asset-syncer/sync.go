@@ -52,7 +52,7 @@ var syncCmd = &cobra.Command{
 		}
 		defer manager.Close()
 
-		netClient, err := initNetClient(additionalCAFile)
+		netClient, err := initNetClient(additionalCAFile, tlsInsecureSkipVerify)
 		if err != nil {
 			logrus.Fatal(err)
 		}

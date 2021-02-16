@@ -201,7 +201,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 
 func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
-		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{}, &goodHTTPClient{})
+		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{}, &http.Client{})
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
 	})
 }
@@ -466,7 +466,7 @@ h251U/Daz6NiQBM9AxyAw6EHm8XAZBvCuebfzyrT
 		t.Error(err)
 	}
 
-	_, err = initNetClient(otherCA)
+	_, err = initNetClient(otherCA, false)
 	if err != nil {
 		t.Error(err)
 	}

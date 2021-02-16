@@ -48,6 +48,8 @@ type AppRepositorySpec struct {
 	// In case of an OCI type, the list of repositories is needed
 	// as there is no API for the index
 	OCIRepositories []string `json:"ociRepositories,omitempty"`
+	// TLSInsecureSkipVerify skips TLS verification
+	TLSInsecureSkipVerify bool `json:"tlsInsecureSkipVerify,omitempty"`
 }
 
 // AppRepositoryAuth is the auth for an AppRepository resource

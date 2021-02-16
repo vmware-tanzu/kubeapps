@@ -89,20 +89,10 @@ type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// var netClient httpClient = &http.Client{}
-
 func parseRepoURL(repoURL string) (*url.URL, error) {
 	repoURL = strings.TrimSpace(repoURL)
 	return url.ParseRequestURI(repoURL)
 }
-
-// func init() {
-// 	var err error
-// 	netClient, err = initNetClient(additionalCAFile)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
 
 type assetManager interface {
 	Delete(repo models.Repo) error
@@ -645,7 +635,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, netClient
 	}, nil
 }
 
-func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos []string, netClient httpClient) (Repo, error) {
+func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos []string, netClient *http.Client) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -655,7 +645,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 	if authorizationHeader != "" {
 		headers["Authorization"] = []string{authorizationHeader}
 	}
-	ociResolver := docker.NewResolver(docker.ResolverOptions{Headers: headers})
+	ociResolver := docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})
 
 	return &OCIRegistry{
 		repositories: ociRepos,
@@ -747,7 +737,7 @@ func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
 	return source
 }
 
-func initNetClient(additionalCA string) (*http.Client, error) {
+func initNetClient(additionalCA string, skipTLS bool) (*http.Client, error) {
 	// Get the SystemCertPool, continue with an empty pool on error
 	caCertPool, _ := x509.SystemCertPool()
 	if caCertPool == nil {
@@ -772,7 +762,8 @@ func initNetClient(additionalCA string) (*http.Client, error) {
 		Timeout: time.Second * defaultTimeoutSeconds,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
+				InsecureSkipVerify: skipTLS,
+				RootCAs:            caCertPool,
 			},
 			Proxy: http.ProxyFromEnvironment,
 		},

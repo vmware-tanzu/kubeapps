@@ -23,13 +23,14 @@ import (
 )
 
 var (
-	databaseURL      string
-	databaseName     string
-	databaseUser     string
-	databasePassword string
-	debug            bool
-	namespace        string
-	ociRepositories  []string
+	databaseURL           string
+	databaseName          string
+	databaseUser          string
+	databasePassword      string
+	debug                 bool
+	namespace             string
+	ociRepositories       []string
+	tlsInsecureSkipVerify bool
 )
 
 var rootCmd = &cobra.Command{
@@ -55,6 +56,7 @@ func init() {
 	// User agent configuration can be found in version.go. Check that file for more details
 	rootCmd.PersistentFlags().StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
+	rootCmd.PersistentFlags().BoolVar(&tlsInsecureSkipVerify, "tls-insecure-skip-verify", false, "Skip TLS verification")
 
 	databasePassword = os.Getenv("DB_PASSWORD")
 
