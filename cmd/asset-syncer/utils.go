@@ -55,12 +55,34 @@ import (
 const (
 	defaultTimeoutSeconds = 10
 	additionalCAFile      = "/usr/local/share/ca-certificates/ca.crt"
+	numWorkers            = 10
 )
 
 type importChartFilesJob struct {
 	Name         string
 	Repo         *models.Repo
 	ChartVersion models.ChartVersion
+}
+
+type pullChartJob struct {
+	AppName string
+	Tag     string
+}
+
+type pullChartResult struct {
+	Chart *models.Chart
+	Error error
+}
+
+type checkTagJob struct {
+	AppName string
+	Tag     string
+}
+
+type checkTagResult struct {
+	checkTagJob
+	isHelmChart bool
+	Error       error
 }
 
 type httpClient interface {
@@ -282,7 +304,7 @@ type OCIManifest struct {
 
 type ociAPI interface {
 	TagList(appName string) (*TagList, error)
-	FilterChartTags(tagList *TagList) error
+	IsHelmChart(appName, tag string) (bool, error)
 }
 
 type ociAPICli struct {
@@ -307,54 +329,90 @@ func (o *ociAPICli) TagList(appName string) (*TagList, error) {
 	return &appTags, nil
 }
 
-// FilterChartTags modifies tagList and remove artifacts in other formats (e.g. Docker images)
-func (o *ociAPICli) FilterChartTags(tagList *TagList) error {
-	url := *o.url
-	chartTags := []string{}
-	for _, tag := range tagList.Tags {
-		url.Path = path.Join("v2", tagList.Name, "manifests", tag)
-		manifestData, err := doReq(
-			url.String(),
-			map[string]string{
-				"Authorization": o.authHeader,
-				"Accept":        "application/vnd.oci.image.manifest.v1+json",
-			})
-		if err != nil {
-			return err
-		}
-		var manifest OCIManifest
-		err = json.Unmarshal(manifestData, &manifest)
-		if err != nil {
-			return err
-		}
-		if manifest.Config.MediaType == helm.HelmChartConfigMediaType {
-			chartTags = append(chartTags, tag)
-		}
+func (o *ociAPICli) IsHelmChart(appName, tag string) (bool, error) {
+	repoURL := *o.url
+	repoURL.Path = path.Join("v2", repoURL.Path, appName, "manifests", tag)
+	log.Debugf("getting tag %s", repoURL.String())
+	manifestData, err := doReq(
+		repoURL.String(),
+		map[string]string{
+			"Authorization": o.authHeader,
+			"Accept":        "application/vnd.oci.image.manifest.v1+json",
+		})
+	if err != nil {
+		return false, err
 	}
-	tagList.Tags = chartTags
-	return nil
+	var manifest OCIManifest
+	err = json.Unmarshal(manifestData, &manifest)
+	if err != nil {
+		return false, err
+	}
+	return manifest.Config.MediaType == helm.HelmChartConfigMediaType, nil
+}
+
+func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
+	for j := range tagJobs {
+		isHelmChart, err := o.IsHelmChart(j.AppName, j.Tag)
+		resultChan <- checkTagResult{j, isHelmChart, err}
+	}
 }
 
 // Checksum returns the sha256 of the repo by concatenating tags for
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) Checksum() (string, error) {
-	tagList := map[string]TagList{}
+	r.tags = map[string]TagList{}
+	checktagJobs := make(chan checkTagJob, numWorkers)
+	tagcheckRes := make(chan checkTagResult, numWorkers)
+	var wg sync.WaitGroup
+
+	// Process 10 tags at a time
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
+			wg.Done()
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(tagcheckRes)
+	}()
+
+	unfilteredTags := map[string]TagList{}
 	for _, appName := range r.repositories {
 		tags, err := r.ociCli.TagList(appName)
 		if err != nil {
 			return "", err
 		}
-		err = r.ociCli.FilterChartTags(tags)
-		if err != nil {
-			return "", err
-		}
-
-		tagList[appName] = *tags
+		unfilteredTags[appName] = *tags
 	}
-	r.tags = tagList
 
-	content, err := json.Marshal(tagList)
+	go func() {
+		for _, appName := range r.repositories {
+			for _, tag := range unfilteredTags[appName].Tags {
+				checktagJobs <- checkTagJob{AppName: appName, Tag: tag}
+			}
+		}
+		close(checktagJobs)
+	}()
+
+	// Start receiving tags
+	for res := range tagcheckRes {
+		if res.Error == nil {
+			if res.isHelmChart {
+				r.tags[res.AppName] = TagList{
+					Name: unfilteredTags[res.AppName].Name,
+					Tags: append(r.tags[res.AppName].Tags, res.Tag),
+				}
+			}
+		} else {
+			log.Errorf("failed to pull chart. Got %v", res.Error)
+		}
+	}
+
+	log.Debugf("Final list of tags: %v", r.tags)
+	content, err := json.Marshal(r.tags)
 	if err != nil {
 		return "", err
 	}
@@ -431,77 +489,124 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 	return result, nil
 }
 
+func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPuller, r *OCIRegistry) (*models.Chart, error) {
+	ref := path.Join(repoURL.Host, repoURL.Path, fmt.Sprintf("%s:%s", appName, tag))
+
+	chartBuffer, digest, err := puller.PullOCIChart(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract
+	files, err := extractFilesFromBuffer(chartBuffer)
+	if err != nil {
+		return nil, err
+	}
+	chartMetadata := h3chart.Metadata{}
+	err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	// Format Data
+	chartVersion := models.ChartVersion{
+		Version:    chartMetadata.Version,
+		AppVersion: chartMetadata.AppVersion,
+		Digest:     digest,
+		URLs:       chartMetadata.Sources,
+		Readme:     files.Readme,
+		Values:     files.Values,
+		Schema:     files.Schema,
+	}
+
+	maintainers := []chart.Maintainer{}
+	for _, m := range chartMetadata.Maintainers {
+		maintainers = append(maintainers, chart.Maintainer{
+			Name:  m.Name,
+			Email: m.Email,
+			Url:   m.URL,
+		})
+	}
+
+	return &models.Chart{
+		ID:            path.Join(r.Name, appName),
+		Name:          appName,
+		Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
+		Description:   chartMetadata.Description,
+		Home:          chartMetadata.Home,
+		Keywords:      chartMetadata.Keywords,
+		Maintainers:   maintainers,
+		Sources:       chartMetadata.Sources,
+		Icon:          chartMetadata.Icon,
+		Category:      chartMetadata.Annotations["category"],
+		ChartVersions: []models.ChartVersion{chartVersion},
+	}, nil
+}
+
+func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullChartJob, resultChan chan pullChartResult) {
+	for j := range chartJobs {
+		log.WithFields(log.Fields{"name": j.AppName, "tag": j.Tag}).Debug("pulling chart")
+		chart, err := pullAndExtract(repoURL, j.AppName, j.Tag, r.puller, r)
+		resultChan <- pullChartResult{chart, err}
+	}
+}
+
 // Charts retrieve the list of charts exposed in the repo
 func (r *OCIRegistry) Charts() ([]models.Chart, error) {
-	result := []models.Chart{}
+	result := map[string]models.Chart{}
 	url, err := parseRepoURL(r.RepoInternal.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, appName := range r.repositories {
-		chartInfo := models.Chart{}
-		firstTag := true
-		for _, tag := range r.tags[appName].Tags {
-			// Pull Chart
-			// TODO: Run in parallel
-			ref := path.Join(url.Host, url.Path, fmt.Sprintf("%s:%s", appName, tag))
-			chartBuffer, digest, err := r.puller.PullOCIChart(ref)
-			if err != nil {
-				return nil, err
-			}
+	chartJobs := make(chan pullChartJob, numWorkers)
+	chartResults := make(chan pullChartResult, numWorkers)
+	var wg sync.WaitGroup
+	// Process 10 charts at a time
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			chartImportWorker(url, r, chartJobs, chartResults)
+			wg.Done()
+		}()
+	}
+	// When we know all workers have sent their data in chartChan, close it.
+	go func() {
+		wg.Wait()
+		close(chartResults)
+	}()
 
-			// Extract
-			files, err := extractFilesFromBuffer(chartBuffer)
-			if err != nil {
-				return nil, err
-			}
-			chartMetadata := h3chart.Metadata{}
-			err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
-			if err != nil {
-				return nil, err
-			}
-
-			// Format Data
-			chartVersion := models.ChartVersion{
-				Version:    chartMetadata.Version,
-				AppVersion: chartMetadata.AppVersion,
-				Digest:     digest,
-				URLs:       chartMetadata.Sources,
-				Readme:     files.Readme,
-				Values:     files.Values,
-				Schema:     files.Schema,
-			}
-			if firstTag {
-				firstTag = false
-				maintainers := []chart.Maintainer{}
-				for _, m := range chartMetadata.Maintainers {
-					maintainers = append(maintainers, chart.Maintainer{
-						Name:  m.Name,
-						Email: m.Email,
-						Url:   m.URL,
-					})
-				}
-				chartInfo = models.Chart{
-					ID:            path.Join(r.Name, appName),
-					Name:          appName,
-					Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
-					Description:   chartMetadata.Description,
-					Home:          chartMetadata.Home,
-					Keywords:      chartMetadata.Keywords,
-					Maintainers:   maintainers,
-					Sources:       chartMetadata.Sources,
-					Icon:          chartMetadata.Icon,
-					Category:      chartMetadata.Annotations["category"],
-					ChartVersions: []models.ChartVersion{chartVersion},
-				}
-			} else {
-				chartInfo.ChartVersions = append(chartInfo.ChartVersions, chartVersion)
+	log.Debugf("starting %d workers", numWorkers)
+	go func() {
+		for _, appName := range r.repositories {
+			for _, tag := range r.tags[appName].Tags {
+				chartJobs <- pullChartJob{AppName: appName, Tag: tag}
 			}
 		}
-		result = append(result, chartInfo)
+		close(chartJobs)
+	}()
+
+	// Start receiving charts
+	for res := range chartResults {
+		if res.Error == nil {
+			ch := res.Chart
+			log.Debugf("received chart %s from channel", ch.ID)
+			if r, ok := result[ch.ID]; ok {
+				// Chart already exists, append version
+				r.ChartVersions = append(result[ch.ID].ChartVersions, ch.ChartVersions...)
+			} else {
+				result[ch.ID] = *ch
+			}
+		} else {
+			log.Errorf("failed to pull chart. Got %v", res.Error)
+		}
 	}
-	return result, nil
+
+	charts := []models.Chart{}
+	for _, c := range result {
+		charts = append(charts, c)
+	}
+	return charts, nil
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
@@ -667,8 +772,6 @@ type fileImporter struct {
 }
 
 func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo) {
-	// Process 10 charts at a time
-	numWorkers := 10
 	iconJobs := make(chan models.Chart, numWorkers)
 	chartFilesJobs := make(chan importChartFilesJob, numWorkers)
 	var wg sync.WaitGroup

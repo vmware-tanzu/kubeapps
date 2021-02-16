@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -810,7 +811,9 @@ func TestOCIClient(t *testing.T) {
 		cli := NewOCIClient("foo")
 		cli.(*OCIClient).puller = &helmfake.OCIPuller{}
 		_, err := cli.GetChart(nil, "foo")
-		assert.Equal(t, "parse foo: invalid URI for request", err.Error(), "error")
+		if !strings.Contains(err.Error(), "invalid URI for request") {
+			t.Errorf("Unexpected error %v", err)
+		}
 	})
 
 	t.Run("GetChart - Returns a chart", func(t *testing.T) {

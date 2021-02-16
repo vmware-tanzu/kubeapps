@@ -811,13 +811,13 @@ func Test_ociAPICli(t *testing.T) {
 		}
 	})
 
-	t.Run("FilterChartTags - failed request", func(t *testing.T) {
+	t.Run("IsHelmChart - failed request", func(t *testing.T) {
 		netClient = &badHTTPClient{}
-		err := apiCli.FilterChartTags(&TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}})
+		_, err := apiCli.IsHelmChart("apache", "7.5.1")
 		assert.Err(t, fmt.Errorf("request failed: "), err)
 	})
 
-	t.Run("FilterChartTags - successful request", func(t *testing.T) {
+	t.Run("IsHelmChart - successful request", func(t *testing.T) {
 		netClient = &goodOCIAPIHTTPClient{
 			responseByPath: map[string]string{
 				// 7.5.1 is not a chart
@@ -825,12 +825,15 @@ func Test_ociAPICli(t *testing.T) {
 				"/v2/test/apache/manifests/8.1.1": `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
 			},
 		}
-		tagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
-		err := apiCli.FilterChartTags(tagList)
+		is751, err := apiCli.IsHelmChart("test/apache", "7.5.1")
 		assert.NoErr(t, err)
-		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"8.1.1"}}
-		if !cmp.Equal(tagList, expectedTagList) {
-			t.Errorf("Unexpected result %v", cmp.Diff(tagList, expectedTagList))
+		if is751 {
+			t.Errorf("Tag 7.5.1 should not be a helm chart")
+		}
+		is811, err := apiCli.IsHelmChart("test/apache", "8.1.1")
+		assert.NoErr(t, err)
+		if !is811 {
+			t.Errorf("Tag 8.1.1 should be a helm chart")
 		}
 	})
 }
@@ -841,12 +844,11 @@ type fakeOCIAPICli struct {
 }
 
 func (o *fakeOCIAPICli) TagList(appName string) (*TagList, error) {
-	fmt.Printf("Returning ! %v", o.err)
 	return o.tagList, o.err
 }
 
-func (o *fakeOCIAPICli) FilterChartTags(tagList *TagList) error {
-	return o.err
+func (o *fakeOCIAPICli) IsHelmChart(appName, tag string) (bool, error) {
+	return true, o.err
 }
 
 func Test_OCIRegistry(t *testing.T) {
@@ -967,6 +969,7 @@ version: 1.0.0
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
+			log.SetLevel(log.DebugLevel)
 			w := httptest.NewRecorder()
 			gzw := gzip.NewWriter(w)
 			createTestTarball(gzw, tt.ociArtifactFiles)
