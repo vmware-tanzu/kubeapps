@@ -59,12 +59,12 @@ data:
       # the cluster). See clusters option.
     {{- range .Values.clusters }}
       location ~* /api/clusters/{{ .name }} {
-    {{- $apiServiceURL := default "https://kubernetes.default" .apiServiceURL }}
-    {{- $parsed := urlParse $apiServiceURL }}
-    {{- $baseURL := (printf "%s://%s" (get $parsed "scheme") (get $parsed "host")) }}
-    {{- $path := get $parsed "path" }}
-        rewrite /api/clusters/{{ .name }}/(.*) {{ $path }}/$1 break;
-        rewrite /api/clusters/{{ .name }} {{ $path }}/ break;
+    {{/* We need to split the API service URL(s) into the base url and the path segment so
+           those configurations using a path can be appropriately rewritten below while
+           ensuring the proxy_pass statement is given the base URL only. */}}
+    {{- $apiServiceURLMap := include "kubeapps.parseAPIServiceURL" .apiServiceURL | fromYaml }}
+        rewrite /api/clusters/{{ .name }}/(.*) {{ $apiServiceURLMap.path }}/$1 break;
+        rewrite /api/clusters/{{ .name }} {{ $apiServiceURLMap.path }}/ break;
 
     {{/* Helm returns a nil pointer error when accessing foo.bar if foo doesn't
            exist, even with the `default` function.
@@ -83,7 +83,7 @@ data:
         proxy_pass http://kubeapps-internal-pinniped-proxy.{{ $.Release.Namespace }}:{{ $.Values.pinnipedProxy.service.port }};
     {{- else }}
         # Otherwise we route directly through to the clusters with existing credentials.
-        proxy_pass {{ $baseURL }};
+        proxy_pass {{ $apiServiceURLMap.baseURL }};
     {{- if .certificateAuthorityData }}
         proxy_ssl_trusted_certificate "./server_blocks/{{ .name }}-ca.pem";
     {{- end }}

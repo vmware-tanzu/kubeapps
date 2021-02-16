@@ -199,7 +199,10 @@ frontend:
   ##
   proxypassAccessTokenAsBearer: false
 
-  ## Set an additional proxy header for or all requests proxied via NGINX to the kubeops backend.
+  ## Set an additional proxy header for all requests proxied via NGINX to the kubeops backend.
+  ## Authorization header(s) set in this way will be included with the request from kubeops to the
+  ## k8s service API URL.
+  ## Ref: https://github.com/kubeapps/kubeapps/blob/7e31d0e7241f826aa365856c134cf901d40890e7/pkg/http-handler/http-handler.go#L247
   # proxypassExtraSetHeader: Authorization "Bearer $cookie_sessionid";
 
   ## Set large_client_header_buffers in nginx config
