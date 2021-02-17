@@ -75,6 +75,7 @@ func TestInitNetClient(t *testing.T) {
 		numCertsExpected int
 		expectedHeaders  http.Header
 		expectProxied    bool
+		expectSkipTLS    bool
 	}{
 		{
 			name:             "default cert pool without auth",
@@ -161,6 +162,14 @@ func TestInitNetClient(t *testing.T) {
 			expectProxied:    true,
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
+		{
+			name: "skip tls config",
+			appRepoSpec: v1alpha1.AppRepositorySpec{
+				TLSInsecureSkipVerify: true,
+			},
+			expectSkipTLS:    true,
+			numCertsExpected: len(systemCertPool.Subjects()),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -224,6 +233,9 @@ func TestInitNetClient(t *testing.T) {
 			transport, ok := client.Transport.(*http.Transport)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
+			}
+			if tc.expectSkipTLS && !transport.TLSClientConfig.InsecureSkipVerify {
+				t.Error("expecting to skip TLS verification")
 			}
 			certPool := transport.TLSClientConfig.RootCAs
 

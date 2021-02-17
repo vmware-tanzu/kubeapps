@@ -383,6 +383,10 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
 	}
+	netClient, err := kube.InitHTTPClient(appRepo, caCertSecret)
+	if err != nil {
+		return err
+	}
 	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
 		var auth string
 		auth, err = kube.GetData(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
@@ -392,7 +396,7 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 		headers.Set("Authorization", string(auth))
 	}
 
-	c.puller = &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers})}
+	c.puller = &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})}
 	return err
 }
 
