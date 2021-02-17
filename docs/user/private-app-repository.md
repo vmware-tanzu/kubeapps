@@ -104,7 +104,7 @@ Deploy the chart and wait for it te be ready.
 
 <img src="../img/harbor-ready.png" alt="Harbor Chart Ready" width="600px">
 
-**Note**: By default, Harbor deploys ChartMuseum to store charts. If you disable it, you can still use the Harbor OCI registry to upload charts. Checkout the [OCI](??) section for more information.
+**Note**: By default, Harbor deploys ChartMuseum to store charts. If you disable it, you can still use the Harbor OCI registry to upload charts. Checkout the [OCI](#oci-registry) section for more information.
 
 ### Harbor: Upload a Chart
 
