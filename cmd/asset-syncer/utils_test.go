@@ -923,11 +923,13 @@ version: 1.0.0
 `
 	tests := []struct {
 		description      string
+		chartName        string
 		ociArtifactFiles []tarballFile
 		expected         []models.Chart
 	}{
 		{
 			"Retrieve chart metadata",
+			"kubeapps",
 			[]tarballFile{
 				{Name: "Chart.yaml", Body: chartYAML},
 			},
@@ -956,6 +958,7 @@ version: 1.0.0
 		},
 		{
 			"Retrieve other files",
+			"kubeapps",
 			[]tarballFile{
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
@@ -978,6 +981,31 @@ version: 1.0.0
 				},
 			},
 		},
+		{
+			"A chart with a /",
+			"repo/kubeapps",
+			[]tarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			[]models.Chart{
+				{
+					ID:          "test/repo%2Fkubeapps",
+					Name:        "repo%2Fkubeapps",
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
+					Maintainers: []chart.Maintainer{},
+					ChartVersions: []models.ChartVersion{
+						{
+							Digest: "123",
+							Readme: "chart readme",
+							Values: "chart values",
+							Schema: "chart schema",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
@@ -988,10 +1016,10 @@ version: 1.0.0
 			gzw.Flush()
 
 			chartsRepo := OCIRegistry{
-				repositories: []string{"kubeapps"},
-				RepoInternal: &models.RepoInternal{Name: "test", URL: "http://oci-test/test"},
+				repositories: []string{tt.chartName},
+				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
 				tags: map[string]TagList{
-					"kubeapps": {Name: "test/kubeapps", Tags: []string{"1.0.0"}},
+					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: []string{"1.0.0"}},
 				},
 				puller: &helmfake.OCIPuller{
 					Content:  w.Body,
