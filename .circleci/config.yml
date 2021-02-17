@@ -54,13 +54,14 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_15_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
+      # TODO(andresmgot): Re-enable when releasing 2.2
+      # - GKE_1_15_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
       - GKE_1_16_MASTER:
           <<: *build_on_master
           requires:
@@ -68,37 +69,37 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_16_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
+      # - GKE_1_16_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
       - sync_chart:
           <<: *build_on_master
           requires:
             - local_e2e_tests
             - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
+            # - GKE_1_15_LATEST_RELEASE
             - GKE_1_16_MASTER
-            - GKE_1_16_LATEST_RELEASE
+            # - GKE_1_16_LATEST_RELEASE
       - push_images:
           <<: *build_on_master
           requires:
             - local_e2e_tests
             - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
+            # - GKE_1_15_LATEST_RELEASE
             - GKE_1_16_MASTER
-            - GKE_1_16_LATEST_RELEASE
+            # - GKE_1_16_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
             - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
+            # - GKE_1_15_LATEST_RELEASE
             - GKE_1_16_MASTER
-            - GKE_1_16_LATEST_RELEASE
+            # - GKE_1_16_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
