@@ -62,9 +62,9 @@ data:
     {{/* We need to split the API service URL(s) into the base url and the path segment so
            those configurations using a path can be appropriately rewritten below while
            ensuring the proxy_pass statement is given the base URL only. */}}
-    {{- $parsed := urlParse (default "" .apiServiceURL) }}
-    {{- $apiServiceBaseURL := ternary "" (printf "%s://%s" (get $parsed "scheme") (get $parsed "host")) (empty .apiServiceURL)}}
-    {{- $apiServiceURLPath := get $parsed "path" }}
+    {{- $parsed := urlParse (default "https://kubernetes.default" .apiServiceURL) }}
+    {{- $apiServiceBaseURL := urlJoin (pick $parsed "scheme" "host") }}
+    {{- $apiServiceURLPath := $parsed.path }}
         rewrite /api/clusters/{{ .name }}/(.*) {{ $apiServiceURLPath }}/$1 break;
         rewrite /api/clusters/{{ .name }} {{ $apiServiceURLPath }}/ break;
 
@@ -85,7 +85,7 @@ data:
         proxy_pass http://kubeapps-internal-pinniped-proxy.{{ $.Release.Namespace }}:{{ $.Values.pinnipedProxy.service.port }};
     {{- else }}
         # Otherwise we route directly through to the clusters with existing credentials.
-        proxy_pass {{ default "https://kubernetes.default" $apiServiceBaseURL }};
+        proxy_pass {{ $apiServiceBaseURL }};
     {{- if .certificateAuthorityData }}
         proxy_ssl_trusted_certificate "./server_blocks/{{ .name }}-ca.pem";
     {{- end }}
