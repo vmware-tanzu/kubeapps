@@ -521,9 +521,12 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 		})
 	}
 
+	// Encode repository names to store them in the database.
+	encodedAppName := url.QueryEscape(appName)
+
 	return &models.Chart{
-		ID:            path.Join(r.Name, appName),
-		Name:          appName,
+		ID:            path.Join(r.Name, encodedAppName),
+		Name:          encodedAppName,
 		Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
 		Description:   chartMetadata.Description,
 		Home:          chartMetadata.Home,
