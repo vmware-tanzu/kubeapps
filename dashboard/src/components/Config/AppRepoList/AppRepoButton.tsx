@@ -45,6 +45,7 @@ export function AppRepoAddButton({
     syncJobPodTemplate: string,
     registrySecrets: string[],
     ociRepositories: string[],
+    skipTLS: boolean,
   ) => {
     if (repo) {
       return dispatch(
@@ -58,6 +59,7 @@ export function AppRepoAddButton({
           syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
+          skipTLS,
         ),
       );
     } else {
@@ -72,6 +74,7 @@ export function AppRepoAddButton({
           syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
+          skipTLS,
         ),
       );
     }

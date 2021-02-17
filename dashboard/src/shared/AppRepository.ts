@@ -35,6 +35,7 @@ export class AppRepository {
     syncJobPodTemplate: any,
     registrySecrets: string[],
     ociRepositories: string[],
+    skipTLS: boolean,
   ) {
     const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.update(cluster, namespace, name),
@@ -48,6 +49,7 @@ export class AppRepository {
           syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
+          tlsInsecureSkipVerify: skipTLS,
         },
       },
     );
@@ -75,6 +77,7 @@ export class AppRepository {
     syncJobPodTemplate: any,
     registrySecrets: string[],
     ociRepositories: string[],
+    skipTLS: boolean,
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(cluster, namespace),
@@ -88,6 +91,7 @@ export class AppRepository {
           syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
+          tlsInsecureSkipVerify: skipTLS,
         },
       },
     );
@@ -101,9 +105,17 @@ export class AppRepository {
     authHeader: string,
     customCA: string,
     ociRepositories: string[],
+    skipTLS: boolean,
   ) {
     const { data } = await axiosWithAuth.post<any>(url.backend.apprepositories.validate(cluster), {
-      appRepository: { repoURL, type, authHeader, customCA, ociRepositories },
+      appRepository: {
+        repoURL,
+        type,
+        authHeader,
+        customCA,
+        ociRepositories,
+        tlsInsecureSkipVerify: skipTLS,
+      },
     });
     return data;
   }
