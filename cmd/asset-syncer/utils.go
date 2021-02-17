@@ -398,6 +398,7 @@ func (r *OCIRegistry) Checksum() (string, error) {
 					Name: unfilteredTags[res.AppName].Name,
 					Tags: append(r.tags[res.AppName].Tags, res.Tag),
 				}
+				sort.Strings(r.tags[res.AppName].Tags)
 			}
 		} else {
 			log.Errorf("failed to pull chart. Got %v", res.Error)
