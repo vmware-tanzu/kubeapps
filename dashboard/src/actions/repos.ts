@@ -242,6 +242,7 @@ export const installRepo = (
   syncJobPodTemplate: string,
   registrySecrets: string[],
   ociRepositories: string[],
+  skipTLS: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -261,6 +262,7 @@ export const installRepo = (
         syncJobPodTemplateObj,
         registrySecrets,
         ociRepositories,
+        skipTLS,
       );
       dispatch(addedRepo(data.appRepository));
 
@@ -282,6 +284,7 @@ export const updateRepo = (
   syncJobPodTemplate: string,
   registrySecrets: string[],
   ociRepositories: string[],
+  skipTLS: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -301,6 +304,7 @@ export const updateRepo = (
         syncJobPodTemplateObj,
         registrySecrets,
         ociRepositories,
+        skipTLS,
       );
       dispatch(repoUpdated(data.appRepository));
       // Re-fetch the helm repo secret that could have been modified with the updated headers
@@ -333,6 +337,7 @@ export const validateRepo = (
   authHeader: string,
   customCA: string,
   ociRepositories: string[],
+  skipTLS: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -347,6 +352,7 @@ export const validateRepo = (
         authHeader,
         customCA,
         ociRepositories,
+        skipTLS,
       );
       if (data.code === 200) {
         dispatch(repoValidated(data));

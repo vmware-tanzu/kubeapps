@@ -454,6 +454,7 @@ export interface IAppRepository
       syncJobPodTemplate?: object;
       dockerRegistrySecrets?: string[];
       ociRepositories?: string[];
+      tlsInsecureSkipVerify?: boolean;
     },
     undefined
   > {}
