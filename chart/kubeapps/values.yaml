@@ -269,7 +269,12 @@ apprepository:
   #   caCert:
   #   # Create this apprepository in a custom namespace
   #   namespace:
-  # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+  #   # In case of an OCI registry, specify the type
+  #   type: oci
+  #   # And specify the list of repositories
+  #   ociRepositories:
+  #   - nginx
+  #   - jenkins
   ## AppRepository Controller containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
