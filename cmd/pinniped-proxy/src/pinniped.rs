@@ -1,4 +1,5 @@
 use std::env;
+use std::convert::TryFrom;
 
 use anyhow::{Context, Result};
 use k8s_openapi::api::core::v1 as corev1;
@@ -7,6 +8,7 @@ use k8s_openapi::Metadata;
 use kube::{
     api::{Api, PostParams},
     Client, Config,
+    Service,
 };
 use kube_derive::CustomResource;
 use log::debug;
@@ -122,8 +124,8 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
     config.default_ns = pinniped_namespace.clone();
     let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
     let der = x509.to_der().context("error creating der from x509")?;
-    config.root_cert = Some(vec!(kube::config::Der(der)));
-    let client = Client::new(config);
+    config.root_cert = Some(vec!(der));
+    let client = Client::new(Service::try_from(config)?);
 
     let auth_token = match authorization.to_string().strip_prefix("Bearer ") {
         Some(a) => a.to_string(),
