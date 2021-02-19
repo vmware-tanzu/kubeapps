@@ -105,7 +105,7 @@ spec:
         {{- if and .Values.pinnipedProxy.enabled }}
         - name: pinniped-proxy
           command:
-            - /pinniped-proxy
+            - pinniped-proxy
           env:
             - name: DEFAULT_PINNIPED_NAMESPACE
               value: {{ .Values.pinnipedProxy.defaultPinnipedNamespace }}
