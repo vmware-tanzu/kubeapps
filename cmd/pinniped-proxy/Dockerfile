@@ -16,6 +16,7 @@ RUN cargo build --release
 FROM bitnami/minideb:buster
 RUN apt-get update && apt-get install -y ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /pinniped-proxy/target/release/pinniped-proxy /pinniped-proxy
+ENV PATH="/:$PATH"
 
 EXPOSE 3333
 USER 1001
