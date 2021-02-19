@@ -2,14 +2,14 @@
 
 OpenID Connect (OIDC) is a simple identity layer on top of the OAuth 2.0 protocol which allows clients to verify the identity of a user based on the authentication performed by an authorization server, as well as to obtain basic profile information about the user.
 
-It is possible to configure your Kubernetes cluster to use an OIDC provider in order to manage accounts, groups and roles with a single application. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2 (GKE).
+A Kubernetes cluster can be configured to trust an external OIDC provider so that authenticated requests can be matched with defined RBAC. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2 (GKE).
 This guide will explain how you can use an existing OAuth2 provider, including OIDC, to authenticate users within Kubeapps.
 
 For a complete worked example of this process on a specific Kubernetes environment, one of the Kubeapps developers has written a series detailing the installation of [Kubeapps on a set of VMware TKG clusters with OpenID Connect](https://liveandletlearn.net/post/kubeapps-on-tkg-management-cluster/).
 
 ## Pre-requisites
 
-For this guide we assume that you have a Kubernetes cluster that is properly configured to use an Identity Provider (IdP) to handle the authentication to your cluster. You can find more information about how Kubernetes uses OIDC tokens [here](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This means that the Kubernetes API server should be configured to use that OIDC provider or accepts access_tokens from the same provider as bearer tokens (see GKE below).
+For this guide we assume that you have a Kubernetes cluster that is properly configured to use an OIDC Identity Provider (IdP) to handle the authentication to your cluster. You can read [more information about the Kubernetes API server's configuration options for OIDC](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This allows that the Kubernetes API server itself to trust tokens from the identity provider. Some hosted Kubernetes services are already configured to accept accept access_tokens from their identity provider as bearer tokens (see GKE below). Alternatively, if you do not have access to configure your cluster's API server, you can [install and configure Pinniped in your cluster to trust your identity provider and configure Kubeapps to proxy requests via Pinniped](./using-an-OIDC-provider-with-pinniped.md).
 
 There are several Identity Providers (IdP) that can be used in a Kubernetes cluster. The steps of this guide have been validated using the following providers:
 
@@ -80,7 +80,7 @@ Login to VMware Cloud Services and select the organization which you want to use
 
 You will now see a dialog with the app id and secret. Click on the Download JSON option as there is other useful info in the JSON.
 
-Your Kubernetes cluster's API server will need to be configured with the following options (the staging VMware cloud services issuer URL is used in the example below):
+Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](./using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the staging VMware cloud services issuer URL is used in the example below):
 
 ```json
     kind: ClusterConfiguration
@@ -112,7 +112,8 @@ authProxy:
 Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration`](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://gaz-preview.csp-vidm-prod.com`. It is for this reason that the `--insecure-oidc-skip-issuer-verification` option is required above. For the same reason, the OIDC `id_token`s that are minted specify the parent issuer as well, which is why the Kubernetes API server config above uses that.
 
 Once deployed, if you experience issues logging in, please refer to the [Debugging auth failures when using OIDC](#debugging-auth-failures-when-using-oidc) section below.
-## Deploying a proxy to access Kubeapps
+
+## Deploying an auth proxy to access Kubeapps
 
 The main difference in the authentication is that instead of accessing the Kubeapps service, we will be accessing an oauth2 proxy service that is in charge of authenticating users with the identity provider and injecting the required credentials in the requests to Kubeapps. There are a number of available solutions for this use-case, like [keycloak-gatekeeper](https://github.com/keycloak/keycloak-gatekeeper) and [oauth2_proxy](https://github.com/oauth2-proxy/oauth2-proxy). For this guide we will use `oauth2_proxy` since it supports both OIDC and plain OAuth2 for many providers.
 
