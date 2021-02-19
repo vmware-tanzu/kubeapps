@@ -54,6 +54,6 @@ clusters:
     enable: true
 ```
 
-The [Kubeapps auth-proxy configuration](./docs/using-an-OIDC-provider.md#deploying-an-auth-proxy-to-access-kubeapps) remains the same as for the standard OIDC setup so that Kubeapps knows to deploy the auth-proxy service configured to redirect to your OIDC provider.
+The [Kubeapps auth-proxy configuration](./using-an-OIDC-provider.md#deploying-an-auth-proxy-to-access-kubeapps) remains the same as for the standard OIDC setup so that Kubeapps knows to deploy the auth-proxy service configured to redirect to your OIDC provider.
 
 With those changes, Kubeapps is ready to send any request for a specific cluster via Pinniped so that the OIDC `id_token` can be exchanged for client certificates accepted by the Kubernetes API server.
