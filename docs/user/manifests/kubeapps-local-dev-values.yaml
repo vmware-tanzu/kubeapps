@@ -20,6 +20,3 @@ ingress:
   tls: true
 pinnipedProxy:
   enabled: true
-  image:
-    tag: test-pinniped
-    pullPolicy: Never
