@@ -20,4 +20,5 @@ ENV PATH="/:$PATH"
 
 EXPOSE 3333
 USER 1001
-CMD ["/pinniped-proxy"]
+ENTRYPOINT [ "pinniped-proxy" ]
+CMD [ "--help" ]
