@@ -33,7 +33,7 @@
     "ajv": "^6.10.2",
     "axios": "^0.21.1",
     "connected-react-router": "^6.8.0",
-    "diff": "^4.0.1",
+    "diff": "^5.0.0",
     "diff2html": "^3.0.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "fast-json-patch": "^3.0.0-1",
