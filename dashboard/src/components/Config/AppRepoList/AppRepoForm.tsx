@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsCheckbox } from "@clr/react/checkbox";
+import { CdsButton } from "@cds/react/button";
+import { CdsCheckbox } from "@cds/react/checkbox";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import cs from "classnames";
 import PropTypes from "prop-types";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 
 import "./Tooltip.scss";
 

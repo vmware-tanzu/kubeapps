@@ -1,4 +1,4 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Modal from "components/js/Modal/Modal";

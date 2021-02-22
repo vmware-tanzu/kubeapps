@@ -1,4 +1,4 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import Alert from "components/js/Alert";
 import Modal from "components/js/Modal/Modal";
 import React from "react";

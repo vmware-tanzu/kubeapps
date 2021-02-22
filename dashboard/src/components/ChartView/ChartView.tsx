@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { Dispatch } from "redux";
 
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ChartSummary from "components/Catalog/ChartSummary";
 import Alert from "components/js/Alert";

@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsModal } from "@clr/react/modal";
+import { CdsButton } from "@cds/react/button";
+import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { cloneDeep } from "lodash";

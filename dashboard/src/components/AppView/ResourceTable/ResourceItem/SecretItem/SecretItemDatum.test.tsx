@@ -1,7 +1,7 @@
 import { mount } from "enzyme";
 import * as React from "react";
 
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 import SecretItemDatum from "./SecretItemDatum";
 
 const testProps = {

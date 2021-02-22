@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import { assignWith } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
