@@ -46,7 +46,7 @@ const Modal = ({
                 type="button"
                 onClick={onClose}
               >
-                <clr-icon aria-hidden="true" shape="close" />
+                <cds-icon aria-hidden="true" shape="window-close" />
               </button>
             )}
             <h3 className="modal-title">{title}</h3>

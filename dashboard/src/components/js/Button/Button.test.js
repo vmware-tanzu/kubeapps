@@ -100,7 +100,7 @@ describe(Button, () => {
   it("display an icon button based on the icon prop", () => {
     const wrapper = shallow(
       <Button onClick={() => {}} icon>
-        <clr-icon shape="home"></clr-icon>
+        <cds-icon shape="home"></cds-icon>
       </Button>,
     );
     expect(wrapper).toHaveClassName("btn-icon");

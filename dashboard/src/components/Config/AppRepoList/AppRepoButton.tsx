@@ -97,9 +97,6 @@ export function AppRepoAddButton({
         onModalClose={closeModal}
         modalSize="lg"
       >
-        <div className="modal-close" onClick={closeModal}>
-          <CdsIcon shape="times-circle" size="md" solid={true} />
-        </div>
         <AppRepoForm
           onSubmit={onSubmit}
           onAfterInstall={closeModal}
