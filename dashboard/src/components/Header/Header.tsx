@@ -42,40 +42,33 @@ function Header() {
     },
   ];
   return (
-    <section>
-      <div className="container">
-        <header className="header header-7">
-          <NavLink to="/">
-            <div className="kubeapps__logo">
-              <span className="sr-only">Homepage</span>
-            </div>
-          </NavLink>
-          {showNav && (
-            <nav className="header-nav">
-              {routesToRender.map(route => {
-                const { path, title } = route;
-                return (
-                  <NavLink
-                    key={path}
-                    to={path}
-                    activeClassName="active"
-                    className="nav-link nav-text"
-                  >
-                    {title}
-                  </NavLink>
-                );
-              })}
-            </nav>
-          )}
-          {showNav && (
-            <section className="header-actions">
-              <ContextSelector />
-              <Menu clusters={clusters} appVersion={appVersion} logout={logout} />
-            </section>
-          )}
-        </header>
+    <header className="header header-7">
+      <div className="branding">
+        <NavLink to="/">
+          <div className="kubeapps__logo">
+            <span className="sr-only">Homepage</span>
+          </div>
+        </NavLink>
       </div>
-    </section>
+      {showNav && (
+        <div className="header-nav">
+          {routesToRender.map(route => {
+            const { path, title } = route;
+            return (
+              <NavLink key={path} to={path} activeClassName="active" className="nav-link nav-text">
+                {title}
+              </NavLink>
+            );
+          })}
+        </div>
+      )}
+      {showNav && (
+        <div className="header-actions">
+          <ContextSelector />
+          <Menu clusters={clusters} appVersion={appVersion} logout={logout} />
+        </div>
+      )}
+    </header>
   );
 }
 

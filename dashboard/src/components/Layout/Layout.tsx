@@ -28,11 +28,11 @@ function Layout({ children }: any) {
   }, [dispatch, authenticated, clusters.currentCluster]);
 
   return (
-    <section className="layout">
+    <>
       <Clarity />
-      <Header />
-      <main>
-        <div className="container kubeapps-main-container">
+      <div className="main-container">
+        <Header />
+        <div className="content-container">
           <div className="content-area">
             <ErrorBoundaryContainer logout={logout}>
               {kindsError && (
@@ -46,8 +46,8 @@ function Layout({ children }: any) {
             </ErrorBoundaryContainer>
           </div>
         </div>
-      </main>
-    </section>
+      </div>
+    </>
   );
 }
 
