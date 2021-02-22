@@ -371,7 +371,20 @@ exports[`when the app contains ingresses should show the table with available in
                                 size="sm"
                                 solid={true}
                               >
-                                <cds-icon />
+                                <cds-icon(CustomElement)
+                                  __forwardedRef={null}
+                                  role="none"
+                                  shape="help"
+                                  size="sm"
+                                  solid={true}
+                                >
+                                  <cds-icon
+                                    __forwardedRef={null}
+                                    role="none"
+                                    shape="help"
+                                    size="sm"
+                                  />
+                                </cds-icon(CustomElement)>
                               </CdsIcon>
                               <span
                                 aria-hidden={true}
@@ -1223,7 +1236,20 @@ exports[`when the app contains services and ingresses should show the table with
                                 size="sm"
                                 solid={true}
                               >
-                                <cds-icon />
+                                <cds-icon(CustomElement)
+                                  __forwardedRef={null}
+                                  role="none"
+                                  shape="help"
+                                  size="sm"
+                                  solid={true}
+                                >
+                                  <cds-icon
+                                    __forwardedRef={null}
+                                    role="none"
+                                    shape="help"
+                                    size="sm"
+                                  />
+                                </cds-icon(CustomElement)>
                               </CdsIcon>
                               <span
                                 aria-hidden={true}
