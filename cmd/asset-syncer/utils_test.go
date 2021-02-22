@@ -925,6 +925,7 @@ version: 1.0.0
 		description      string
 		chartName        string
 		ociArtifactFiles []tarballFile
+		tags             []string
 		expected         []models.Chart
 	}{
 		{
@@ -933,6 +934,7 @@ version: 1.0.0
 			[]tarballFile{
 				{Name: "Chart.yaml", Body: chartYAML},
 			},
+			[]string{"1.0.0"},
 			[]models.Chart{
 				{
 					ID:          "test/kubeapps",
@@ -964,6 +966,7 @@ version: 1.0.0
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
+			[]string{"1.0.0"},
 			[]models.Chart{
 				{
 					ID:          "test/kubeapps",
@@ -989,6 +992,7 @@ version: 1.0.0
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
+			[]string{"1.0.0"},
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
@@ -1006,23 +1010,61 @@ version: 1.0.0
 				},
 			},
 		},
+		{
+			"Multiple chart versions",
+			"repo/kubeapps",
+			[]tarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			[]string{"1.0.0", "1.1.0"},
+			[]models.Chart{
+				{
+					ID:          "test/repo%2Fkubeapps",
+					Name:        "repo%2Fkubeapps",
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
+					Maintainers: []chart.Maintainer{},
+					ChartVersions: []models.ChartVersion{
+						{
+							Digest: "123",
+							Readme: "chart readme",
+							Values: "chart values",
+							Schema: "chart schema",
+						},
+						{
+							Digest: "123",
+							Readme: "chart readme",
+							Values: "chart values",
+							Schema: "chart schema",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			log.SetLevel(log.DebugLevel)
-			w := httptest.NewRecorder()
-			gzw := gzip.NewWriter(w)
-			createTestTarball(gzw, tt.ociArtifactFiles)
-			gzw.Flush()
+			w := map[string]*httptest.ResponseRecorder{}
+			content := map[string]*bytes.Buffer{}
+			for _, tag := range tt.tags {
+				recorder := httptest.NewRecorder()
+				gzw := gzip.NewWriter(recorder)
+				createTestTarball(gzw, tt.ociArtifactFiles)
+				gzw.Flush()
+				w[tag] = recorder
+				content[tag] = recorder.Body
+			}
 
 			chartsRepo := OCIRegistry{
 				repositories: []string{tt.chartName},
 				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
 				tags: map[string]TagList{
-					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: []string{"1.0.0"}},
+					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
 				},
 				puller: &helmfake.OCIPuller{
-					Content:  w.Body,
+					Content:  content,
 					Checksum: "123",
 				},
 			}
