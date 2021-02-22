@@ -1,12 +1,8 @@
 {{- if .Values.ingress.enabled -}}
-{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" }}
-apiVersion: networking.k8s.io/v1beta1
-{{ else }}
-apiVersion: extensions/v1beta1
-{{ end -}}
+apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
 kind: Ingress
 metadata:
-  name: {{ template "kubeapps.fullname" . }}
+  name: {{ template "common.names.fullname" . }}
   labels: {{ include "kubeapps.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.ingress.certManager }}
@@ -23,7 +19,7 @@ spec:
         paths:
         - path: /
           backend:
-            serviceName: {{ template "kubeapps.fullname" . }}
+            serviceName: {{ template "common.names.fullname" . }}
             servicePort: http
     {{- end }}
     {{- range .Values.ingress.extraHosts }}
@@ -32,7 +28,7 @@ spec:
         paths:
         - path: {{ default "/" .path }}
           backend:
-            serviceName: {{ template "kubeapps.fullname" $ }}
+            serviceName: {{ template "common.names.fullname" $ }}
             servicePort: http
     {{- end }}
     ## The block below is deprecated and must removed on 3.0.0
@@ -42,7 +38,7 @@ spec:
         paths:
         - path: {{ default "/" .path }}
           backend:
-            serviceName: {{ template "kubeapps.fullname" $ }}
+            serviceName: {{ template "common.names.fullname" $ }}
             servicePort: http
     {{- end }}
     ## end of block

@@ -1,4 +1,4 @@
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: {{ include "common.capabilities.crd.apiVersion" . }}
 kind: CustomResourceDefinition
 metadata:
   name: apprepositories.kubeapps.com
@@ -10,4 +10,9 @@ spec:
     plural: apprepositories
     shortNames:
       - apprepos
+  {{- if semverCompare "<1.19-0" (include "common.capabilities.kubeVersion" .) -}}
   version: v1alpha1
+  {{- else }}
+  versions:
+    - name: v1alpha1
+  {{- end }}
