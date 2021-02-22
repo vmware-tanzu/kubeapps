@@ -1,11 +1,11 @@
 .description {
-  color: #5f6369;
+  color: var(--cds-global-typography-color-300, #5f6369);
   font-size: 0.9em;
   display: block;
 }
 
 .subsection {
-  border: 2px solid #f1f1f1;
+  border: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
   border-radius: 5px;
   padding: 10px;
 }
@@ -43,7 +43,7 @@
 }
 
 .param-separator {
-  border: 1px solid #f1f1f1;
+  border: 1px solid var(#f1f1f1);
 }
 
 .slider-block {

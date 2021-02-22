@@ -1,5 +1,5 @@
 .app-repo-form {
-  color: var(--clr-table-font-color, #666666);
+  color: var(--cds-global-typography-color-300, #666);
   white-space: normal;
   text-align: left;
   width: 97%;
@@ -10,7 +10,7 @@
     font-size: smaller;
     strong {
       font-weight: var(--clr-forms-label-font-weight, 600);
-      color: var(--clr-forms-label-color, #454545);
+      color: var(--cds-global-typography-color-300, #454545);
     }
   }
   .clr-form-columns {
@@ -30,7 +30,7 @@
     }
     .clr-control-label-checkbox {
       font-weight: normal;
-      color: var(--clr-forms-label-color, #454545);
+      color: var(--cds-global-typography-color-300, #454545);
       font-size: 0.65rem;
     }
   }
@@ -48,6 +48,6 @@
   .secondary-input {
     margin-top: 0.3rem;
     padding: 0.6rem;
-    background-color: var(--clr-color-neutral-100);
+    background-color: var(--cds-global-typography-color-100, #ffffff);
   }
 }
