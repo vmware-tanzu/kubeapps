@@ -162,7 +162,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@clr|lit-element|lit-html|ramda|lodash-es|.*css)"
+      "node_modules/(?!@clr|@cds|lit-element|lit-html|ramda|lodash-es|.*css)"
     ]
   },
   "eslintConfig": {
