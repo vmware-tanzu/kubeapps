@@ -76,7 +76,7 @@ function ChartView({
 
   return (
     <section>
-      <div className="header-button">
+      <div>
         <ChartHeader
           chartAttrs={chartAttrs}
           versions={versions}
