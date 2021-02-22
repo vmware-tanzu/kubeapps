@@ -5,19 +5,19 @@
   margin-bottom: -50px;
   &-title {
     margin-top: 1.2rem;
-    margin-bottom: 0.6rem;
-    font-weight: 600;
+    margin-bottom: 0.6rem !important;
+    font-weight: 600 !important;
   }
   &-label {
     position: relative;
     bottom: 3.6rem;
   }
   &-number {
-    margin: 0;
-    font-size: 1.5em;
+    margin: 0 !important;
+    font-size: 1.5em !important;
   }
   &-text {
-    margin: -5px 0 0 0;
+    margin: -5px 0 0 0 !important;
   }
 }
 
