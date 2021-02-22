@@ -1,11 +1,9 @@
 import { CdsButton } from "@cds/react/button";
-import { CdsFormGroup } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
-import { CdsInput } from "@cds/react/input";
-import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
+import Modal from "components/js/Modal/Modal";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -167,23 +165,43 @@ function ContextSelector() {
               </select>
             </div>
             <div className="kubeapps-create-new-ns">
-              <CdsModal hidden={!newNSModalIsOpen} closable={true} onCloseChange={closeNewNSModal}>
-                <CdsModalHeader>Create a New Namespace</CdsModalHeader>
-                {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
-                <form onSubmit={createNewNS}>
-                  <CdsModalContent>
-                    <CdsFormGroup>
-                      <CdsInput>
-                        <label>Name:</label>
-                        <input type="text" required={true} onChange={onChangeNewNS} />
-                      </CdsInput>
-                    </CdsFormGroup>
-                  </CdsModalContent>
-                  <CdsModalActions>
-                    <CdsButton type="submit">Submit</CdsButton>
-                  </CdsModalActions>
-                </form>
-              </CdsModal>
+              <Modal
+                showModal={newNSModalIsOpen}
+                onModalClose={closeNewNSModal}
+                title="Create a New Namespace"
+              >
+                <div className="newns-modal">
+                  {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
+                  <form onSubmit={createNewNS}>
+                    <div className="clr-form-control">
+                      <label htmlFor="namespace-name" className="clr-control-label">
+                        Namespace name
+                      </label>
+                      <div className="clr-control-container">
+                        <div className="clr-input-wrapper">
+                          <input
+                            type="text"
+                            className="clr-input"
+                            placeholder="my-namespace"
+                            onChange={onChangeNewNS}
+                            required={true}
+                            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                            title="Use lower case alphanumeric characters, '-' or '.'"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="confirmation-modal-buttons">
+                      <CdsButton type="button" onClick={closeNewNSModal}>
+                        Cancel
+                      </CdsButton>
+                      <CdsButton status="primary" type="submit">
+                        Submit
+                      </CdsButton>
+                    </div>
+                  </form>
+                </div>
+              </Modal>
               <CdsButton
                 disabled={!canCreateNS}
                 title={
