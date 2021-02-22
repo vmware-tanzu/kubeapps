@@ -18,9 +18,16 @@ async function initLocale() {
 
 function Root() {
   const [i18nConfig, setI18nConfig] = useState(I18n.getDefaultConfig());
+  // Currently we just support 'dark' and 'light' themes
+  // TODO(agamez): add manual override for this setting
+  const theme =
+    window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   useEffect(() => {
+    document.body.setAttribute("cds-theme", theme);
     initLocale().then(customI18nConfig => setI18nConfig(customI18nConfig));
-  }, []);
+  }, [theme]);
 
   return (
     <Provider store={store}>
