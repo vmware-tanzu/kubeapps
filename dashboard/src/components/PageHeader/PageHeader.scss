@@ -42,7 +42,7 @@
             max-width: 30px;
           }
           span {
-            color: var(--cds-global-typography-color-400, #666666);
+            color: var(--cds-global-typography-color-400, #333);
             padding-top: 0.1rem;
           }
         }
@@ -62,7 +62,7 @@
 
 .header-version {
   &-label {
-    color: var(--cds-global-typography-color-400, #000);
+    color: var(--cds-global-typography-color-400, #333);
     font-weight: 500;
     margin-right: 0.2rem;
     margin-right: 0.6rem;

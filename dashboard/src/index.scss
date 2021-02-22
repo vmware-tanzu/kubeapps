@@ -38,7 +38,7 @@ svg.icon {
     padding: 0 0.5rem;
     border-color: var(--cds-alias-status-info);
     background-color: var(--cds-alias-status-info);
-    color: var(--cds-global-typography-color-100);
+    color: var(--cds-global-typography-color-100, #fff);
     margin: 0.5rem 0 0 0.5rem;
   }
 }

@@ -124,7 +124,7 @@
 
 .terminal-wrapper {
   background-color: var(--cds-alias-object-container-background, #21333b);
-  color: var(--clr-color-on-neutral-100);
+  color: var(--cds-global-typography-color-100, #fff);
   .terminal-code {
     padding: 0.6rem;
     white-space: pre-wrap;
@@ -138,8 +138,8 @@
     border-radius: 5px;
     overflow: auto;
     padding: 0.6rem;
-    background-color: var(--cds-global-typography-color-400, #21333b);
-    color: var(--cds-global-typography-color-100, #21333b);
+    background-color: var(--cds-global-typography-color-400, #333);
+    color: var(--cds-global-typography-color-100, #fff);
   }
 
   ul {
@@ -154,8 +154,8 @@
   blockquote {
     margin: 1em 0 1em 0;
     border-radius: 5px;
-    border: 1px solid var(--cds-global-typography-color-200, #ddd);
-    background-color: var(--cds-global-typography-color-100, #f1f1f1);
+    border: 1px solid var(--cds-global-typography-color-200, #e8e8e8);
+    background-color: var(--cds-global-typography-color-100, #fff);
     padding: 0.1em 1em;
     max-width: 100%;
     p:first-child {

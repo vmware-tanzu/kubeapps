@@ -1,11 +1,11 @@
 .rollback-menu {
   overflow-y: hidden;
   &-text {
-    color: var(--cds-global-typography-color-400, #000);
+    color: var(--cds-global-typography-color-400, #333);
     text-align: center;
   }
   &-label {
-    color: var(--cds-global-typography-color-400, #000);
+    color: var(--cds-global-typography-color-400, #333);
     display: inline-block;
     margin-top: 0.6rem;
   }
