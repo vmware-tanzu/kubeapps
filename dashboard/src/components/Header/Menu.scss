@@ -105,8 +105,14 @@
   margin-bottom: 0.5rem;
   text-align: end;
   font-size: smaller;
-  a:hover {
-    color: #fff;
+  a {
+    color: var(--cds-global-color-blue-400, #2ec0ff) !important;
+  }
+  &:visited {
+    color: var(--cds-global-color-lavender-300 #8b8dda) !important;
+  }
+  &:hover {
+    color: var(--cds-global-color-blue-500, #fff) !important;
   }
 }
 
