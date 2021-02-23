@@ -40,7 +40,7 @@ test("Creates a private registry", async () => {
   await page.type("#kubeapps-docker-cred-username", "user");
   await page.type("#kubeapps-docker-cred-password", "password");
   await page.type("#kubeapps-docker-cred-email", "user@example.com");
-  await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
+  await expect(page).toClick(".btn-info-outline", { text: "Submit" });
 
   // Select the new secret
   await expect(page).toClick("label", { text: secret });

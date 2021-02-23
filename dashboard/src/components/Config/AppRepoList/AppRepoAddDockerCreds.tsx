@@ -190,7 +190,7 @@ export function AppRepoAddDockerCreds({
               disabled={creating}
               onClick={handleInstallClick}
             >
-              {creating ? "Creating..." : "Add"}
+              {creating ? "Creating..." : "Submit"}
             </button>
             <button
               className="btn btn-info-outline"
