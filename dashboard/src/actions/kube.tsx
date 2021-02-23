@@ -1,8 +1,10 @@
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 import ResourceRef from "../shared/ResourceRef";
 import { IK8sList, IResource, IStoreState } from "../shared/types";
+
+const { createAction } = deprecated;
 
 export const requestResource = createAction("REQUEST_RESOURCE", resolve => {
   return (resourceID: string) => resolve(resourceID);

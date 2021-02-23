@@ -1,7 +1,7 @@
 import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
 import Chart from "../shared/Chart";
 import Secret from "../shared/Secret";
@@ -13,6 +13,8 @@ import {
   NotFoundError,
 } from "../shared/types";
 import { errorChart } from "./charts";
+
+const { createAction } = deprecated;
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
