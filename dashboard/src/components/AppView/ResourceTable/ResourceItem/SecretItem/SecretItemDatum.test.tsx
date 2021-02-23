@@ -13,7 +13,6 @@ it("renders the secret datum (hidden by default)", () => {
   const wrapper = mount(<SecretItemDatum {...testProps} />);
   expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "eye")).toExist();
   expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "copy-to-clipboard")).toExist();
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("displays the secret datum value when clicking on the icon", () => {
