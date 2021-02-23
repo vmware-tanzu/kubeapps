@@ -1,49 +1,12 @@
-@import "~@cds/core/global.min.css"; // clarity core global styles
-@import "~@cds/core/styles/theme.dark.min.css"; // clarity core dark theme
-@import "~@cds/core/styles/module.shims.min.css"; // non-evergreen browser shims
-@import "~@cds/city/css/bundles/default.min.css"; // load base font
+@import "~normalize.css/normalize.css";
+@import "~@cds/core/global.css"; // clarity core global styles
+@import "~@cds/core/styles/theme.dark.css"; // clarity core dark theme
+@import "~@cds/core/styles/module.shims.css"; // non-evergreen browser shims
+@import "~@cds/city/css/bundles/default.css"; // load base font
 // clarity UI light/dark themes should be conditionalled loaded since they don't support dynamic theming
-body {
-  margin: 0;
-  padding: 0;
-}
 
 svg.icon {
   /* Fix positioning */
   position: relative;
   bottom: -0.125em;
-}
-
-.centered-modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  border: 1px solid var(--cds-alias-object-border-color, #ccc);
-  background-color: var(--cds-alias-object-interaction-background), #fff;
-  overflow: auto;
-  border-radius: 4px;
-  outline: none;
-  padding: 20px;
-  margin-right: -50%;
-  transform: translate(-50%, -50%);
-
-  // Copied from the CdsButton style
-  .button {
-    border-radius: 0.125rem;
-    cursor: pointer;
-    border: 1px solid;
-    text-transform: uppercase;
-    line-height: 1.5rem;
-    letter-spacing: 0.12em;
-    font-size: 0.5rem;
-    font-weight: 500;
-    height: 1.5rem;
-    padding: 0 0.5rem;
-    border-color: var(--cds-alias-status-info);
-    background-color: var(--cds-alias-status-info);
-    color: var(--cds-global-typography-color-100, #fff);
-    margin: 0.5rem 0 0 0.5rem;
-  }
 }

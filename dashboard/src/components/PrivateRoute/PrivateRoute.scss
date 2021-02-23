@@ -1,0 +1,29 @@
+.centered-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  border: 1px solid var(--cds-alias-object-border-color, #ccc);
+  background-color: var(--cds-alias-object-interaction-background), #fff;
+  overflow: auto;
+  border-radius: 4px;
+  outline: none;
+  padding: 20px;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
+}
+
+.reload-modal {
+  span {
+    color: var(--cds-global-typography-color-400, #333);
+  }
+
+  &-buttons {
+    margin-top: 0.6rem;
+
+    cds-button {
+      margin: 0 0.6rem 0 0.6rem;
+    }
+  }
+}
