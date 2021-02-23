@@ -348,7 +348,7 @@ export function getResource(
     dispatch(requestCustomResource());
     const csv = await dispatch(getCSV(cluster, namespace, csvName));
     if (csv) {
-      const crd = csv.spec.customresourcedefinitions.owned.find(c => c.name === crdName);
+      const crd = csv.spec.customresourcedefinitions.owned?.find(c => c.name === crdName);
       if (crd) {
         const { plural, group } = parseCRD(crd.name);
         try {
