@@ -240,7 +240,7 @@ function Catalog(props: ICatalogProps) {
       const regex = new RegExp(escapeRegExp(searchFilter), "i");
       return (
         regex.test(c.metadata.name) ||
-        c?.spec?.customresourcedefinitions?.owned.find(crd => regex.test(crd.displayName))
+        c?.spec?.customresourcedefinitions?.owned?.find(crd => regex.test(crd.displayName))
       );
     })
     .filter(

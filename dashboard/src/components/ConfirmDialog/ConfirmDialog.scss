@@ -2,7 +2,7 @@
   text-align: center;
   overflow-y: hidden;
   span {
-    color: var(--clr-p-color, black);
+    color: var(--cds-global-typography-color-400, #333);
   }
   &-buttons {
     margin-top: 0.6rem;

@@ -70,7 +70,7 @@
 
 .card.clickable a {
   text-decoration: none;
-  color: black;
+  color: var(--cds-global-typography-color-400, #333);
 }
 
 .footer-tags {

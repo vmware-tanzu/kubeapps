@@ -822,7 +822,7 @@ func TestOCIClient(t *testing.T) {
 		assert.NoErr(t, err)
 		cli.(*OCIClient).puller = &helmfake.OCIPuller{
 			ExpectedName: "foo/bar/nginx:5.1.1",
-			Content:      bytes.NewBuffer(data),
+			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
 		}
 		ch, err := cli.GetChart(&Details{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar")
 		if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {

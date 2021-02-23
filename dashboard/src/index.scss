@@ -1,38 +1,7 @@
-@import url("https://fonts.googleapis.com/css?family=Fira+Sans:300,400,700|Hind:300,400,700");
-
-body {
-  margin: 0;
-  padding: 0;
-}
-
-.container-fluid > .row > div {
-  min-width: 0;
-}
+@import "~normalize.css/normalize.css";
 
 svg.icon {
   /* Fix positioning */
   position: relative;
   bottom: -0.125em;
-}
-
-/* Override Hex underline text-decoration in buttons in alerts
-see: https://github.com/bitnami/hex/issues/216 */
-.alert .button {
-  text-decoration: none;
-}
-
-.centered-modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  border: 1px solid rgb(204, 204, 204);
-  background: rgb(255, 255, 255);
-  overflow: auto;
-  border-radius: 4px;
-  outline: none;
-  padding: 20px;
-  margin-right: -50%;
-  transform: translate(-50%, -50%);
 }
