@@ -31,7 +31,7 @@ test("Creates a private registry", async () => {
 
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
-  await expect(page).toClick("cds-button", { text: "Add new credentials" });
+  await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
   await page.type("#kubeapps-docker-cred-secret-name", secret);
   await page.type(
     "#kubeapps-docker-cred-server",
