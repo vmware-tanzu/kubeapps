@@ -3,8 +3,7 @@ import { CdsIcon } from "@clr/react/icon";
 import { assignWith } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
-// @ts-ignore
-import * as yaml from "yaml";
+import YAML from "yaml";
 import placeholder from "../../placeholder.png";
 
 import actions from "actions";
@@ -153,9 +152,9 @@ export default function AppView() {
       return;
     }
 
-    let parsedManifest: IResource[] = yaml
-      .parseAllDocuments(app.manifest)
-      .map((doc: yaml.ast.Document) => doc.toJSON());
+    let parsedManifest: IResource[] = YAML.parseAllDocuments(
+      app.manifest,
+    ).map((doc: YAML.Document) => doc.toJSON());
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
