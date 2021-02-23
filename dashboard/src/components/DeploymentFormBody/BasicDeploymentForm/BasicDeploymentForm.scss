@@ -43,7 +43,7 @@
 }
 
 .param-separator {
-  border: 1px solid var(#f1f1f1);
+  border: 1px solid var(--cds-alias-object-border-color, #f1f1f1);
 }
 
 .slider-block {

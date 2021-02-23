@@ -105,14 +105,11 @@
   margin-bottom: 0.5rem;
   text-align: end;
   font-size: smaller;
-  a {
-    color: var(--cds-global-color-blue-400, #2ec0ff) !important;
+  & a:link {
+    color: var(--cds-global-color-blue-400, #2ec0ff);
   }
-  &:visited {
-    color: var(--cds-global-color-lavender-300 #8b8dda) !important;
-  }
-  &:hover {
-    color: var(--cds-global-color-blue-500, #fff) !important;
+  & a:visited {
+    color: var(--cds-global-color-blue-400, #2ec0ff);
   }
 }
 

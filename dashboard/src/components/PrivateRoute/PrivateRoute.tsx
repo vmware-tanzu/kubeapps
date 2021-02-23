@@ -1,6 +1,9 @@
+import { CdsButton } from "@cds/react/button";
 import * as React from "react";
 import Modal from "react-modal";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
+
+import "./PrivateRoute.css";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -17,20 +20,24 @@ class PrivateRoute extends React.Component<IPrivateRouteProps> {
 
   public renderRouteIfAuthenticated = (props: RouteComponentProps<any>) => {
     const { sessionExpired, authenticated, component: Component } = this.props;
+    const refreshPage = () => {
+      window.location.reload();
+    };
     if (authenticated && Component) {
       return <Component {...props} />;
     }
     if (sessionExpired) {
       return (
         <Modal className="centered-modal" isOpen={true}>
-          <div>
-            <div className="margin-b-normal">
+          <div className="reload-modal">
+            <span>
+              {" "}
               Your session has expired or the connection has been lost, please reload the page.
-            </div>
-            <div className="flex text-c">
-              <button className="button" onClick={this.reload}>
+            </span>
+            <div className="reload-modal-buttons">
+              <CdsButton onClick={refreshPage} type="button">
                 Reload
-              </button>
+              </CdsButton>
             </div>
           </div>
         </Modal>
@@ -38,10 +45,6 @@ class PrivateRoute extends React.Component<IPrivateRouteProps> {
     }
     return <Redirect to={{ pathname: "/login", state: { from: props.location } }} />;
   };
-
-  private reload() {
-    window.location.reload();
-  }
 }
 
 export default PrivateRoute;

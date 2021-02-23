@@ -333,7 +333,7 @@ export interface IClusterServiceVersionCRD {
 export interface IClusterServiceVersionSpec {
   apiservicedefinitions: any;
   customresourcedefinitions: {
-    owned: IClusterServiceVersionCRD[];
+    owned?: IClusterServiceVersionCRD[];
   };
   description: string;
   displayName: string;
