@@ -1,5 +1,5 @@
 .disabled {
-  color: var(--clr-color-neutral-400);
+  color: var(--cds-global-typography-color-400, #333);
   cursor: not-allowed;
   &-description {
     margin-left: 1rem;
