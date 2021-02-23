@@ -1,13 +1,9 @@
 @import "~normalize.css/normalize.css";
-@import "~@cds/core/global.min.css"; // clarity core global styles
-@import "~@cds/core/styles/theme.dark.min.css"; // clarity core dark theme
-@import "~@cds/core/styles/module.shims.min.css"; // non-evergreen browser shims
-@import "~@cds/city/css/bundles/default.min.css"; // load base font
+@import "~@cds/core/global.css"; // clarity core global styles
+@import "~@cds/core/styles/theme.dark.css"; // clarity core dark theme
+@import "~@cds/core/styles/module.shims.css"; // non-evergreen browser shims
+@import "~@cds/city/css/bundles/default.css"; // load base font
 // clarity UI light/dark themes should be conditionalled loaded since they don't support dynamic theming
-body {
-  margin: 0;
-  padding: 0;
-}
 
 svg.icon {
   /* Fix positioning */
