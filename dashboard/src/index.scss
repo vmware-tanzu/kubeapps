@@ -1,9 +1,4 @@
-@import url("https://fonts.googleapis.com/css?family=Fira+Sans:300,400,700|Hind:300,400,700");
-
-body {
-  margin: 0;
-  padding: 0;
-}
+@import "~normalize.css/normalize.css";
 
 .container-fluid > .row > div {
   min-width: 0;
