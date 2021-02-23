@@ -123,12 +123,13 @@
 }
 
 .terminal-wrapper {
-  background-color: var(--cds-alias-object-container-background, #21333b);
+  background-color: var(--cds-global-typography-color-400, #333);
   color: var(--cds-global-typography-color-100, #fff);
   .terminal-code {
     padding: 0.6rem;
     white-space: pre-wrap;
     text-align: left;
+    overflow-x: scroll;
   }
 }
 

@@ -550,7 +550,7 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 
 // Charts retrieve the list of charts exposed in the repo
 func (r *OCIRegistry) Charts() ([]models.Chart, error) {
-	result := map[string]models.Chart{}
+	result := map[string]*models.Chart{}
 	url, err := parseRepoURL(r.RepoInternal.URL)
 	if err != nil {
 		return nil, err
@@ -592,7 +592,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 				// Chart already exists, append version
 				r.ChartVersions = append(result[ch.ID].ChartVersions, ch.ChartVersions...)
 			} else {
-				result[ch.ID] = *ch
+				result[ch.ID] = ch
 			}
 		} else {
 			log.Errorf("failed to pull chart. Got %v", res.Error)
@@ -601,7 +601,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 
 	charts := []models.Chart{}
 	for _, c := range result {
-		charts = append(charts, c)
+		charts = append(charts, *c)
 	}
 	return charts, nil
 }

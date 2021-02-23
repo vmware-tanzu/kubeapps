@@ -102,7 +102,7 @@ function ContextSelector() {
             <Column span={10}>
               <div className="kubeapps-dropdown-section">
                 <span className="kubeapps-dropdown-header">Current Context</span>
-                <div>
+                <div className="kubeapps-dropdown-items">
                   <CdsIcon size="sm" shape="cluster" inverse={true} />
                   <label htmlFor="clusters" className="kubeapps-dropdown-text">
                     {clusters.currentCluster}
