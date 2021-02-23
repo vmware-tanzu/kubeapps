@@ -92,6 +92,7 @@ rules:
 # AppRepository resources cluster-wide. The read and write cluster-roles can
 # also be bound to users in specific namespaces as required.
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+kind: ClusterRole
 metadata:
   name: "kubeapps:{{ .Release.Namespace }}:apprepositories-read"
   labels:{{ include "kubeapps.extraAppLabels" . | nindent 4 }}
