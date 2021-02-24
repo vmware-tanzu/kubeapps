@@ -5,7 +5,7 @@
   "homepage": "./",
   "dependencies": {
     "@clr/city": "^1.1.0",
-    "@clr/core": "^4.0.6",
+    "@clr/core": "^4.0.12",
     "@clr/icons": "^4.0.6",
     "@clr/react": "^4.0.6",
     "@clr/ui": "^4.0.6",
@@ -79,7 +79,7 @@
     "semver": "^5.6.0",
     "swagger-ui-react": "^3.40.0",
     "typesafe-actions": "^2.0.4",
-    "yaml": "1.7.2"
+    "yaml": "1.10.0"
   },
   "scripts": {
     "build-css": "sass src/ --no-source-map",
