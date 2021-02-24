@@ -175,7 +175,7 @@ function ContextSelector() {
                   <form onSubmit={createNewNS}>
                     <div className="clr-form-control">
                       <label htmlFor="namespace-name" className="clr-control-label">
-                        Namespace name
+                        Name
                       </label>
                       <div className="clr-control-container">
                         <div className="clr-input-wrapper">
@@ -192,9 +192,6 @@ function ContextSelector() {
                       </div>
                     </div>
                     <div className="confirmation-modal-buttons">
-                      <CdsButton type="button" onClick={closeNewNSModal}>
-                        Cancel
-                      </CdsButton>
                       <CdsButton status="primary" type="submit">
                         Submit
                       </CdsButton>
