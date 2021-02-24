@@ -1,6 +1,6 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
-import { CdsToggle, CdsToggleGroup } from "@clr/react/toggle";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
+import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";

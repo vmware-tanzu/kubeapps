@@ -1,8 +1,8 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsFormGroup } from "@clr/react/forms";
-import { CdsIcon } from "@clr/react/icon";
-import { CdsInput } from "@clr/react/input";
-import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@clr/react/modal";
+import { CdsButton } from "@cds/react/button";
+import { CdsFormGroup } from "@cds/react/forms";
+import { CdsIcon } from "@cds/react/icon";
+import { CdsInput } from "@cds/react/input";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";

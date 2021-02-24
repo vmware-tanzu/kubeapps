@@ -1,4 +1,4 @@
-.application-status-pie-chart {
+:not([cds-text]).application-status-pie-chart {
   display: flex;
   justify-content: center;
   text-align: center;

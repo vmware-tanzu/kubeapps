@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import DifferentialTab from "components/DeploymentFormBody/DifferentialTab";
 import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
