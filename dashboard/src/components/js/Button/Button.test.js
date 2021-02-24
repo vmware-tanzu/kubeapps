@@ -104,7 +104,7 @@ describe(Button, () => {
       </Button>,
     );
     expect(wrapper).toHaveClassName("btn-icon");
-    expect(wrapper.find("clr-icon")).toExist();
+    expect(wrapper.find("cds-icon")).toExist();
   });
 
   it("add the title to the button", () => {
