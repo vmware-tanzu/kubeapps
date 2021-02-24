@@ -1,4 +1,4 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import * as React from "react";
 import Modal from "react-modal";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";

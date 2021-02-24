@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import { BrowserRouter, Link } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import Menu from "./Menu";

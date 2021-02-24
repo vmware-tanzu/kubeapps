@@ -1,4 +1,4 @@
-import { CdsInlineButton } from "@clr/react/button";
+import { CdsInlineButton } from "@cds/react/button";
 import Alert from "components/js/Alert";
 import { mount } from "enzyme";
 import * as React from "react";

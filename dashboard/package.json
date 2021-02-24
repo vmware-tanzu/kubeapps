@@ -4,11 +4,10 @@
   "private": true,
   "homepage": "./",
   "dependencies": {
-    "@clr/city": "^1.1.0",
-    "@clr/core": "^4.0.6",
-    "@clr/icons": "^4.0.6",
-    "@clr/react": "^4.0.6",
-    "@clr/ui": "^4.0.6",
+    "@cds/city": "^1.1.0",
+    "@cds/core": "^5.0.2",
+    "@cds/react": "^5.0.2",
+    "@clr/ui": "^5.0.2",
     "@types/diff": "^4.0.2",
     "@types/js-yaml": "^4.0.0",
     "@types/json-schema": "^7.0.3",
@@ -163,7 +162,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@clr|lit-element|lit-html|ramda|lodash-es|.*css)"
+      "node_modules/(?!@clr|@cds|lit-element|lit-html|ramda|lodash-es|.*css)"
     ]
   },
   "eslintConfig": {

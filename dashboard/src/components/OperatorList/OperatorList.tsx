@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import { filtersToQuery } from "components/Catalog/Catalog";
 import FilterGroup from "components/FilterGroup/FilterGroup";
