@@ -69,7 +69,7 @@
     "react-switch": "^6.0.0",
     "react-tabs": "^3.2.0",
     "react-test-renderer": "^16.2.0",
-    "react-tooltip": "3.11.1",
+    "react-tooltip": "4.2.14",
     "react-transition-group": "^4.4.1",
     "redux": "^4.0.0",
     "redux-devtools-extension": "^2.13.5",
@@ -79,7 +79,7 @@
     "semver": "^5.6.0",
     "swagger-ui-react": "^3.40.0",
     "typesafe-actions": "^2.0.4",
-    "yaml": "1.7.2"
+    "yaml": "1.10.0"
   },
   "scripts": {
     "build-css": "sass src/ --no-source-map",
