@@ -52,7 +52,7 @@ const Modal = ({
             <h3 className="modal-title">{title}</h3>
           </div>
           <div className="modal-body">{children}</div>
-          <div className="modal-footer">{footer}</div>
+          {footer && <div className="modal-footer">{footer}</div>}
         </div>
       </div>
       <div onClick={closeOnBackdrop} className="modal-backdrop" aria-hidden="true" />
