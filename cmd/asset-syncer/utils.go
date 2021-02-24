@@ -32,6 +32,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -42,12 +43,14 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/common/datastore"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
 	h3chart "helm.sh/helm/v3/pkg/chart"
+	"k8s.io/client-go/util/jsonpath"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	helmrepo "k8s.io/helm/pkg/repo"
 )
@@ -133,6 +136,7 @@ type HelmRepo struct {
 	content []byte
 	*models.RepoInternal
 	netClient httpClient
+	filters   *apprepov1alpha1.FilterRulesSpec
 }
 
 // Checksum returns the sha256 of the repo
@@ -143,6 +147,64 @@ func (r *HelmRepo) Checksum() (string, error) {
 // Repo returns the repo information
 func (r *HelmRepo) Repo() *models.RepoInternal {
 	return r.RepoInternal
+}
+
+func satisfy(chart models.Chart, rule apprepov1alpha1.FilterRule) bool {
+	jpath := jsonpath.New(fmt.Sprintf("filter-%s", chart.Name))
+	err := jpath.Parse(rule.JSONPath)
+	if err != nil {
+		log.Errorf("Unable to parse rule %s: %v", rule.JSONPath, err)
+		return false
+	}
+	buf := new(bytes.Buffer)
+	err = jpath.Execute(buf, chart)
+	if err != nil {
+		log.Errorf("Unable to execute filter %s: %v", rule.JSONPath, err)
+		return false
+	}
+	value := buf.String()
+
+	match := value == rule.Value
+	if rule.Regex {
+		// If the value is a regex, evaluate it
+		match, err = regexp.Match(rule.Value, []byte(value))
+		if err != nil {
+			log.Errorf("Unable to parse regex filter %s: %v", rule.Value, err)
+			return false
+		}
+	}
+
+	if rule.Exclude {
+		return !match
+	}
+	return match
+}
+
+func filterCharts(charts []models.Chart, filterRules *apprepov1alpha1.FilterRulesSpec) []models.Chart {
+	if filterRules == nil {
+		// No filters, return
+		return charts
+	}
+	result := []models.Chart{}
+	for _, chart := range charts {
+		for index, rule := range filterRules.Rules {
+			satisfied := satisfy(chart, rule)
+			if satisfied && !filterRules.SatisfyAll {
+				// One rule matching is enough, continue
+				result = append(result, chart)
+				break
+			}
+			if !satisfied && filterRules.SatisfyAll {
+				// All rules are required, skip this chart
+				break
+			}
+			if satisfied && filterRules.SatisfyAll && index == len(filterRules.Rules)-1 {
+				// All rules have been checked and matched
+				result = append(result, chart)
+			}
+		}
+	}
+	return result
 }
 
 // Charts retrieve the list of charts exposed in the repo
@@ -163,7 +225,7 @@ func (r *HelmRepo) Charts() ([]models.Chart, error) {
 		return []models.Chart{}, fmt.Errorf("no charts in repository index")
 	}
 
-	return charts, nil
+	return filterCharts(charts, r.filters), nil
 }
 
 const (
@@ -244,9 +306,10 @@ type TagList struct {
 type OCIRegistry struct {
 	repositories []string
 	*models.RepoInternal
-	tags   map[string]TagList
-	puller helm.ChartPuller
-	ociCli ociAPI
+	tags    map[string]TagList
+	puller  helm.ChartPuller
+	ociCli  ociAPI
+	filters *apprepov1alpha1.FilterRulesSpec
 }
 
 func doReq(url string, cli httpClient, headers map[string]string) ([]byte, error) {
@@ -603,7 +666,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	for _, c := range result {
 		charts = append(charts, *c)
 	}
-	return charts, nil
+	return filterCharts(charts, r.filters), nil
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
@@ -615,7 +678,18 @@ func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion) (map[strin
 	}, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string, netClient httpClient) (Repo, error) {
+func parseFilters(filters string) (*apprepov1alpha1.FilterRulesSpec, error) {
+	filterSpec := &apprepov1alpha1.FilterRulesSpec{}
+	if len(filters) > 0 {
+		err := json.Unmarshal([]byte(filters), filterSpec)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return filterSpec, nil
+}
+
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filters *apprepov1alpha1.FilterRulesSpec, netClient httpClient) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -636,10 +710,11 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, netClient
 			AuthorizationHeader: authorizationHeader,
 		},
 		netClient: netClient,
+		filters:   filters,
 	}, nil
 }
 
-func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos []string, netClient *http.Client) (Repo, error) {
+func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filters *apprepov1alpha1.FilterRulesSpec, ociRepos []string, netClient *http.Client) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -656,6 +731,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, ociRepos [
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
 		puller:       &helm.OCIPuller{Resolver: ociResolver},
 		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url, netClient: netClient},
+		filters:      filters,
 	}, nil
 }
 

@@ -39,6 +39,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/common/datastore"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
@@ -193,7 +194,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", &goodHTTPClient{})
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, &goodHTTPClient{})
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -201,8 +202,17 @@ func Test_syncURLInvalidity(t *testing.T) {
 
 func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
-		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{}, &http.Client{})
+		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{})
+		assert.NoErr(t, err)
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
+	})
+}
+
+func Test_parseFilters(t *testing.T) {
+	t.Run("return rules spec", func(t *testing.T) {
+		filters, err := parseFilters(`{"rules":[{"jsonpath":"name","value":"wordpress"}]}`)
+		assert.NoErr(t, err)
+		assert.Equal(t, filters, &apprepov1alpha1.FilterRulesSpec{Rules: []apprepov1alpha1.FilterRule{{JSONPath: "name", Value: "wordpress"}}}, "filters")
 	})
 }
 
@@ -1165,6 +1175,129 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 			assert.NoErr(t, err)
 			if !cmp.Equal(r, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(r, tt.expected))
+			}
+		})
+	}
+}
+
+func Test_filterCharts(t *testing.T) {
+	tests := []struct {
+		description string
+		input       []models.Chart
+		rules       apprepov1alpha1.FilterRulesSpec
+		expected    []models.Chart
+	}{
+		{
+			"should filter a chart",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRulesSpec{
+				Rules: []apprepov1alpha1.FilterRule{
+					{JSONPath: "{.name}", Value: "foo"},
+				},
+			},
+			[]models.Chart{
+				{Name: "foo"},
+			},
+		},
+		{
+			"should satisfy all the rules to pass - negative",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRulesSpec{
+				SatisfyAll: true,
+				Rules: []apprepov1alpha1.FilterRule{
+					{JSONPath: "{.name}", Value: "foo"},
+					{JSONPath: "{.name}", Value: "bar"},
+				},
+			},
+			[]models.Chart{},
+		},
+		{
+			"should satisfy all the rules to pass - positive",
+			[]models.Chart{
+				{Name: "foo", Description: "foobar"},
+				{Name: "bar", Description: "barfoo"},
+			},
+			apprepov1alpha1.FilterRulesSpec{
+				SatisfyAll: true,
+				Rules: []apprepov1alpha1.FilterRule{
+					{JSONPath: "{.name}", Value: "foo"},
+					{JSONPath: "{.description}", Value: "foobar"},
+				},
+			},
+			[]models.Chart{
+				{Name: "foo", Description: "foobar"},
+			},
+		},
+		{
+			"an invalid rule cause to return an empty set",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRulesSpec{
+				Rules: []apprepov1alpha1.FilterRule{
+					{JSONPath: "{wrong", Value: "foo"},
+				},
+			},
+			[]models.Chart{},
+		},
+		{
+			"filters a maintainer name",
+			[]models.Chart{
+				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
+				{Name: "bar", Maintainers: []chart.Maintainer{{Name: "Hackers"}}},
+			},
+			apprepov1alpha1.FilterRulesSpec{
+				Rules: []apprepov1alpha1.FilterRule{
+					{JSONPath: "{.maintainers[:].name}", Value: "Bitnami"},
+				},
+			},
+			[]models.Chart{
+				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
+			},
+		},
+		{
+			"excludes a value",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRulesSpec{
+				Rules: []apprepov1alpha1.FilterRule{
+					{JSONPath: "{.name}", Value: "foo", Exclude: true},
+				},
+			},
+			[]models.Chart{
+				{Name: "bar"},
+			},
+		},
+		{
+			"matches against a regex",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRulesSpec{
+				Rules: []apprepov1alpha1.FilterRule{
+					{JSONPath: "{.name}", Value: ".*oo.*", Regex: true},
+				},
+			},
+			[]models.Chart{
+				{Name: "foo"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			res := filterCharts(tt.input, &tt.rules)
+			if !cmp.Equal(res, tt.expected) {
+				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
 			}
 		})
 	}
