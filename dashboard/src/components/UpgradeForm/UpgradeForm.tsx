@@ -2,8 +2,7 @@ import { RouterAction } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
 import { JSONSchema4 } from "json-schema";
 import React, { useEffect, useState } from "react";
-// @ts-ignore
-import * as YAML from "yaml";
+import YAML from "yaml";
 
 import ChartSummary from "components/Catalog/ChartSummary";
 import ChartHeader from "components/ChartView/ChartHeader";

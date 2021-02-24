@@ -5,8 +5,7 @@ import AJV from "ajv";
 import * as jsonpatch from "fast-json-patch";
 import * as jsonSchema from "json-schema";
 import { isEmpty, set } from "lodash";
-// @ts-ignore
-import * as YAML from "yaml";
+import YAML from "yaml";
 import { IBasicFormParam } from "./types";
 
 // Avoid to explicitly add "null" when an element is not defined
@@ -58,7 +57,7 @@ export function retrieveBasicFormParams(
   return params;
 }
 
-function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document) {
+function getDefinedPath(allElementsButTheLast: string[], doc: YAML.Document) {
   let currentPath: string[] = [];
   let foundUndefined = false;
   allElementsButTheLast.forEach(p => {
@@ -95,7 +94,7 @@ function parsePath(path: string): string[] {
   return unescapePath(splitPath(path));
 }
 
-function parsePathAndValue(doc: YAML.ast.Document, path: string, value?: any) {
+function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
   if (isEmpty(doc.contents)) {
     // If the doc is empty we have an special case
     return { value: set({}, path.replace(/^\//, ""), value), splittedPath: [] };
