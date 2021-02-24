@@ -1,6 +1,8 @@
 import { Auth } from "shared/Auth";
 import SwaggerUI from "swagger-ui-react";
+
 import "swagger-ui-react/swagger-ui.css";
+import "./ApiDocs.css";
 
 // Request interface needed for avoiding type error in the requestInterceptor
 // it is being used, but it is not exported, so we define it here

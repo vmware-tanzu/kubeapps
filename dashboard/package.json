@@ -56,7 +56,6 @@
     "react-compound-slider": "^3.3.1",
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "^16.13.0",
-    "react-feather": "^1.0.8",
     "react-intl": "^5.12.3",
     "react-jsonschema-form": "^1.0.3",
     "react-markdown": "^5.0.0",
@@ -79,7 +78,7 @@
     "semver": "^5.6.0",
     "swagger-ui-react": "^3.40.0",
     "typesafe-actions": "^2.0.4",
-    "yaml": "1.7.2"
+    "yaml": "1.10.0"
   },
   "scripts": {
     "build-css": "sass src/ --no-source-map",
