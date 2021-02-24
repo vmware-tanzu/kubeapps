@@ -1,6 +1,6 @@
 import { get } from "lodash";
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 
 import { Operators } from "../shared/Operators";
 import {
@@ -10,6 +10,8 @@ import {
   IResource,
   IStoreState,
 } from "../shared/types";
+
+const { createAction } = deprecated;
 
 export const checkingOLM = createAction("CHECKING_OLM");
 export const OLMInstalled = createAction("OLM_INSTALLED");

@@ -77,8 +77,8 @@
     "seamless-immutable": "^7.1.4",
     "semver": "^5.6.0",
     "swagger-ui-react": "^3.40.0",
-    "typesafe-actions": "^2.0.4",
-    "yaml": "1.10.0"
+    "yaml": "1.10.0",
+    "typesafe-actions": "^5.1.0"
   },
   "scripts": {
     "build-css": "sass src/ --no-source-map",
