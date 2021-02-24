@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsModal } from "@clr/react/modal";
+import { CdsButton } from "@cds/react/button";
+import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { cloneDeep } from "lodash";
@@ -122,7 +122,7 @@ it("submits the form to create a new namespace", () => {
   actions.namespace.createNamespace = createNamespace;
   const wrapper = mountWrapper(defaultStore, <ContextSelector />);
 
-  const modalButton = wrapper.find(".flat-btn");
+  const modalButton = wrapper.find(".flat-btn").first();
   act(() => {
     (modalButton.prop("onClick") as any)();
   });
@@ -163,7 +163,7 @@ it("disables the create button if not allowed", () => {
     },
   } as IClustersState;
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(wrapper.find(".flat-btn")).toBeDisabled();
+  expect(wrapper.find(".flat-btn").first()).toBeDisabled();
 });
 
 it("changes the location with the new namespace", () => {

@@ -1,4 +1,5 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
+import { CdsCheckbox } from "@cds/react/checkbox";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -22,6 +23,7 @@ interface IAppRepoFormProps {
     syncJobPodTemplate: string,
     registrySecrets: string[],
     ociRepositories: string[],
+    skipTLS: boolean,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
@@ -53,6 +55,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [syncJobPodTemplate, setSyncJobTemplate] = useState("");
   const [type, setType] = useState(TYPE_HELM);
   const [ociRepositories, setOCIRepositories] = useState("");
+  const [skipTLS, setSkipTLS] = useState(!!repo?.spec?.tlsInsecureSkipVerify);
 
   const [selectedImagePullSecrets, setSelectedImagePullSecrets] = useState(
     {} as { [key: string]: boolean },
@@ -93,6 +96,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
       );
       setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
+      setSkipTLS(!!repo.spec?.tlsInsecureSkipVerify);
       if (secret) {
         if (secret.data["ca.crt"]) {
           setCustomCA(atob(secret.data["ca.crt"]));
@@ -142,7 +146,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     let currentlyValidated = validated;
     if (!validated && !force) {
       currentlyValidated = await dispatch(
-        actions.repos.validateRepo(finalURL, type, finalHeader, customCA, ociRepoList),
+        actions.repos.validateRepo(finalURL, type, finalHeader, customCA, ociRepoList, skipTLS),
       );
       setValidated(currentlyValidated);
     }
@@ -159,6 +163,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         syncJobPodTemplate,
         imagePullSecretsNames,
         ociRepoList,
+        skipTLS,
       );
       if (success && onAfterInstall) {
         onAfterInstall();
@@ -205,6 +210,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handleOCIRepositoriesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setOCIRepositories(e.target.value);
+    setValidated(undefined);
+  };
+  const handleSkipTLSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSkipTLS(!skipTLS);
     setValidated(undefined);
   };
 
@@ -490,8 +499,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </div>
         </div>
       )}
-      <div className="clr-form-control" hidden={type === TYPE_OCI}>
-        {/* hidden for OCI registries since it's not possible to use a Custom CA Certificate for that */}
+      <div className="clr-form-control">
         <label className="clr-control-label" htmlFor="kubeapps-repo-custom-ca">
           Custom CA Certificate (optional)
         </label>
@@ -503,9 +511,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
               className="clr-textarea"
               placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
               value={customCA}
+              disabled={skipTLS}
               onChange={handleCustomCAChange}
             />
           </div>
+        </div>
+        <div className="clr-form-control">
+          <CdsCheckbox>
+            <label className="clr-control-label">Skip TLS Verification</label>
+            <input
+              id="kubeapps-repo-skip-tls"
+              type="checkbox"
+              checked={skipTLS}
+              onChange={handleSkipTLSChange}
+            />
+          </CdsCheckbox>
         </div>
       </div>
       <div className="clr-form-control">

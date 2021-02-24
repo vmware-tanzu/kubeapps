@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import { useDispatch } from "react-redux";
 import remarkGfm from "remark-gfm";
 
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";

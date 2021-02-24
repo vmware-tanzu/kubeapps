@@ -1,8 +1,8 @@
 import Tabs from "components/Tabs";
 import React, { useEffect, useState } from "react";
 
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
 import { isEqual } from "lodash";
 import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";

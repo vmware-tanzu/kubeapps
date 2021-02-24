@@ -12,8 +12,7 @@
   display: inline-block;
   position: absolute;
   content: "";
-  background: #fafafa;
-  background: var(--clr-header-font-color, #fafafa);
+  background-color: var(--cds-global-color-gray-500, #fafafa);
   opacity: var(--clr-header-divider-opacity, 0.15);
   opacity: 0.15;
   height: 2rem;
@@ -62,7 +61,7 @@
   margin-top: 1.2rem;
   overflow-x: auto;
   &-subsection {
-    border-bottom: 2px solid #f1f1f1;
+    border-bottom: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
     margin: 0.6rem;
     padding-bottom: 0.6rem;
     &-title {

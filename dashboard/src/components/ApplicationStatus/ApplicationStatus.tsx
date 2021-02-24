@@ -1,4 +1,4 @@
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 import { flatten } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";

@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -240,7 +240,7 @@ function Catalog(props: ICatalogProps) {
       const regex = new RegExp(escapeRegExp(searchFilter), "i");
       return (
         regex.test(c.metadata.name) ||
-        c?.spec?.customresourcedefinitions?.owned.find(crd => regex.test(crd.displayName))
+        c?.spec?.customresourcedefinitions?.owned?.find(crd => regex.test(crd.displayName))
       );
     })
     .filter(

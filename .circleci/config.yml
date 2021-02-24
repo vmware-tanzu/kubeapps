@@ -29,11 +29,15 @@ workflows:
           <<: *build_always
       - test_dashboard:
           <<: *build_always
+      - test_pinniped_proxy:
+          <<: *build_always
       - test_chart_render:
           <<: *build_always
       - build_go_images:
           <<: *build_always
       - build_dashboard:
+          <<: *build_always
+      - build_pinniped_proxy:
           <<: *build_always
       - local_e2e_tests:
           <<: *build_always
@@ -270,6 +274,12 @@ jobs:
       - run: yarn install --cwd=dashboard --frozen-lockfile
       - run: yarn --cwd=dashboard run lint
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
+  test_pinniped_proxy:
+    docker:
+      - image: circleci/rust
+    steps:
+      - checkout
+      - run: cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
   test_chart_render:
     environment:
       HELM_VERSION: "v3.1.0"
@@ -293,6 +303,13 @@ jobs:
       - image: circleci/golang:1.13
     environment:
       IMAGES: "dashboard"
+    <<: *build_images
+  build_pinniped_proxy:
+    docker:
+      # We're building the image in a docker container anyway so just re-use the golang image already in use.
+      - image: circleci/golang:1.13
+    environment:
+      IMAGES: "pinniped-proxy"
     <<: *build_images
   release:
     docker:
@@ -360,7 +377,7 @@ jobs:
       - run: |
           if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-            for IMAGE in kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops; do
+            for IMAGE in kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy; do
               docker pull ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
               docker tag ${IMAGE}${IMG_MODIFIER}:${DEV_TAG} ${IMAGE}:${PROD_TAG}
               docker push ${IMAGE}:${PROD_TAG}

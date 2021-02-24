@@ -1992,6 +1992,8 @@ components:
       properties:
         name:
           type: string
+        type:
+          type: string
         repoURL:
           type: string
         authHeader:
@@ -2007,6 +2009,12 @@ components:
         resyncRequests:
           type: integer
           format: int64
+        ociRepositories:
+          type: array
+          items: 
+            type: string
+        tlsInsecureSkipVerify:
+          type: boolean
     # pkg/kube/kube_handler.go
     ValidationResponse:
       type: object
@@ -2084,6 +2092,8 @@ components:
           type: array
           items: 
             type: string
+        tlsInsecureSkipVerify: 
+          type: boolean
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepositoryStatus:
       type: object

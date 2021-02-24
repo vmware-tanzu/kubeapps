@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import Modal from "components/js/Modal/Modal";
 import { useDispatch } from "react-redux";
@@ -45,6 +45,7 @@ export function AppRepoAddButton({
     syncJobPodTemplate: string,
     registrySecrets: string[],
     ociRepositories: string[],
+    skipTLS: boolean,
   ) => {
     if (repo) {
       return dispatch(
@@ -58,6 +59,7 @@ export function AppRepoAddButton({
           syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
+          skipTLS,
         ),
       );
     } else {
@@ -72,6 +74,7 @@ export function AppRepoAddButton({
           syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
+          skipTLS,
         ),
       );
     }

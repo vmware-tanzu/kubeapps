@@ -1,5 +1,5 @@
 .chartinfo-subsection {
-  border-bottom: 2px solid #f1f1f1;
+  border-bottom: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
   padding: 1.2rem;
   &-title {
     font-weight: 600;

@@ -603,6 +603,10 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 		args = append(args, "--oci-repositories", strings.Join(apprepo.Spec.OCIRepositories, ","))
 	}
 
+	if apprepo.Spec.TLSInsecureSkipVerify {
+		args = append(args, "--tls-insecure-skip-verify")
+	}
+
 	return args
 }
 
