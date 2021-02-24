@@ -1,14 +1,16 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
+import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 
 import { IClustersState } from "../../reducers/cluster";
 import Row from "../js/Row";
 
+import { SupportedThemes } from "components/ThemeSelector/ThemeSelector";
 import { app } from "shared/url";
 import helmIcon from "../../icons/helm-white.svg";
 import operatorIcon from "../../icons/operator-framework-white.svg";
@@ -27,8 +29,26 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   // Control when users click outside
   const ref = useRef(null);
   useOutsideClick(setOpen, [ref], open);
+  const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(
+    localStorage.getItem("theme") === SupportedThemes.dark ? true : false,
+  );
 
   const toggleOpen = () => setOpen(!open);
+  const toggleDarkMode = () => {
+    localStorage.setItem(
+      "theme",
+      !isDarkModeEnabled ? SupportedThemes.dark : SupportedThemes.light,
+    );
+    setIsDarkModeEnabled(!isDarkModeEnabled);
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    document.body.setAttribute(
+      "cds-theme",
+      isDarkModeEnabled ? SupportedThemes.dark : SupportedThemes.light,
+    ); // cds theme
+  }, [isDarkModeEnabled]);
 
   return (
     <>
@@ -91,6 +111,21 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                   Kubeapps API docs{" "}
                   <CdsIcon size="sm" shape="network-globe" inverse={true} solid={true} />
                 </Link>
+              </div>
+              <div className="dropdown-menu-padding theme-button">
+                <CdsToggleGroup layout="compact">
+                  <label>
+                    <span className="toggle-label-text">Theme:</span>
+                  </label>
+                  <CdsToggle>
+                    <label>
+                      <span className="toggle-label-text">
+                        {isDarkModeEnabled ? "Dark" : "Light"} mode
+                      </span>
+                    </label>
+                    <input type="checkbox" onChange={toggleDarkMode} checked={isDarkModeEnabled} />
+                  </CdsToggle>
+                </CdsToggleGroup>
               </div>
               <div className="dropdown-menu-padding logout-button">
                 <CdsButton status="primary" size="sm" action="outline" onClick={logout}>
