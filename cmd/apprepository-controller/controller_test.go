@@ -1088,7 +1088,8 @@ func Test_newSyncJob(t *testing.T) {
 										"my-charts",
 										"https://charts.acme.com/my-charts",
 										"helm",
-										`--filter-rules='{"rules":[{"jsonpath":"name","value":"wordpress"}]}'`,
+										"--filter-rules",
+										`{"rules":[{"jsonpath":"name","value":"wordpress"}]}`,
 									},
 									Env: []corev1.EnvVar{
 										{

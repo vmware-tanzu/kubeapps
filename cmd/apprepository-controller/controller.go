@@ -613,7 +613,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 		if err != nil {
 			log.Errorf("Unable to parse filter rules for %s: %v", apprepo.Name, err)
 		} else {
-			args = append(args, fmt.Sprintf("--filter-rules='%s'", string(rulesJSON)))
+			args = append(args, "--filter-rules", string(rulesJSON))
 		}
 	}
 
