@@ -66,4 +66,7 @@
     font-weight: 500;
     margin-right: 0.6rem;
   }
+  & button {
+    color: var(--cds-global-typography-color-400, #333);
+  }
 }
