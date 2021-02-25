@@ -6,7 +6,6 @@ import thunk from "redux-thunk";
 
 import { CdsButton } from "@cds/react/button";
 import { SupportedThemes } from "components/HeadManager/HeadManager";
-import { act } from "react-dom/test-utils";
 import { BrowserRouter, Link } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import Menu from "./Menu";
@@ -86,29 +85,5 @@ describe("theme switcher toggle", () => {
     );
     const toggle = wrapper.find("cds-toggle input");
     expect(toggle.prop("checked")).toBe(true);
-  });
-
-  it("toggle reloads page after changing theme", () => {
-    localStorage.setItem("theme", SupportedThemes.dark);
-    const wrapper = mount(
-      <Provider store={defaultStore}>
-        <BrowserRouter>
-          <Menu {...defaultProps} />
-        </BrowserRouter>
-      </Provider>,
-    );
-    // After the JSDOM upgrade, window.xxx are read-only properties
-    // https://github.com/facebook/jest/issues/9471
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      writable: true,
-      value: { reload: jest.fn() },
-    });
-    const toggle = wrapper.find("cds-toggle input");
-    act(() => {
-      (toggle.prop("onChange") as any)();
-    });
-    wrapper.update();
-    expect(window.location.reload).toHaveBeenCalled();
   });
 });
