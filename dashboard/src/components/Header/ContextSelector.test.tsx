@@ -97,24 +97,14 @@ it("shows the current cluster", () => {
     },
   } as IClustersState;
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(
-    wrapper
-      .find("select")
-      .at(0)
-      .prop("value"),
-  ).toBe("bar");
+  expect(wrapper.find("select").at(0).prop("value")).toBe("bar");
 });
 
 it("shows the current namespace", () => {
   const clusters = cloneDeep(initialState.clusters);
   clusters.clusters[clusters.currentCluster].currentNamespace = "other";
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(
-    wrapper
-      .find("select")
-      .at(1)
-      .prop("value"),
-  ).toBe("other");
+  expect(wrapper.find("select").at(1).prop("value")).toBe("other");
 });
 
 it("submits the form to create a new namespace", () => {

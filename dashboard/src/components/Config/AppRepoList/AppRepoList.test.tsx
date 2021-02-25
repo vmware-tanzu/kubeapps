@@ -248,12 +248,7 @@ describe("global and namespaced repositories", () => {
       }),
       <AppRepoList />,
     );
-    expect(
-      wrapper
-        .find(Table)
-        .find(Link)
-        .prop("to"),
-    ).toEqual(
+    expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
       `/c/${currentCluster}/ns/${namespacedRepo.metadata.namespace}/catalog?Repository=my-repo`,
     );
   });
@@ -270,12 +265,7 @@ describe("global and namespaced repositories", () => {
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });
-    expect(
-      wrapper
-        .find(Table)
-        .find(Link)
-        .prop("to"),
-    ).toEqual(
+    expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
       `/c/${currentCluster}/ns/${namespacedRepo.metadata.namespace}/catalog?Repository=my-repo`,
     );
   });

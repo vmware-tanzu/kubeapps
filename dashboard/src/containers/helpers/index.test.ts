@@ -22,9 +22,9 @@ describe("filterByResourceRefs", () => {
   } as IResource;
 
   const items: IKubeState["items"] = {
-    [`api/clusters/${clusterName}/api/v1/namespaces/foo/services/bar`]: { item: svc1 } as IKubeItem<
-      IResource
-    >,
+    [`api/clusters/${clusterName}/api/v1/namespaces/foo/services/bar`]: {
+      item: svc1,
+    } as IKubeItem<IResource>,
     [`api/clusters/${clusterName}/api/v1/namespaces/foo1/services/bar`]: {
       item: svc2,
     } as IKubeItem<IResource>,
