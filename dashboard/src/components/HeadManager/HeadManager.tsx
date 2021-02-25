@@ -1,11 +1,35 @@
 import React from "react";
 import { Helmet } from "react-helmet";
+import { useIntl } from "react-intl";
 
 interface IHeadManagerProps {
+  theme: SupportedThemes;
   children: React.ReactNode;
 }
 
-export default function HeadManager({ children }: IHeadManagerProps) {
+export enum SupportedThemes {
+  dark = "dark",
+  light = "light",
+}
+
+export function getThemeFile(theme: SupportedThemes) {
+  const lightThemeFile = "./clr-ui.min.css";
+  const darkThemeFile = "./clr-ui-dark.min.css";
+  switch (theme) {
+    case SupportedThemes.light:
+      return lightThemeFile;
+    case SupportedThemes.dark:
+      return darkThemeFile;
+    default:
+      return lightThemeFile;
+  }
+}
+export default function HeadManager({ theme, children }: IHeadManagerProps) {
+  const intl = useIntl();
+
+  document.body.setAttribute("cds-theme", theme); // sets the initial cds theme
+  localStorage.setItem("theme", theme); // persist the initial theme decision
+
   return (
     <>
       <Helmet>
@@ -19,12 +43,20 @@ export default function HeadManager({ children }: IHeadManagerProps) {
         <link rel="apple-touch-icon" href="./favicon-196x196.png" />
         <link rel="manifest" href="./manifest.json" />
 
+        {/*  Allow to load custom styling different. The dashboard webserver will return this style file.  */}
+        <link rel="stylesheet" type="text/css" href="./custom_style.css" />
+
+        {/*  Set the clarity-ui css style */}
+        <link rel="stylesheet" type="text/css" href={getThemeFile(theme)} />
+
         <meta name="theme-color" content="#304250" />
         <meta
-          name="Kubeapps"
+          name={intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" })}
           content="A web-based UI for deploying and managing applications in Kubernetes clusters"
         />
-        <title>Kubeapps Dashboard</title>
+        <title>
+          {intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" })} Dashboard
+        </title>
       </Helmet>
       {children}
     </>

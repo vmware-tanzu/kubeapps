@@ -1,4 +1,4 @@
-import ThemeSelector, { SupportedThemes } from "components/ThemeSelector/ThemeSelector";
+import HeadManager, { SupportedThemes } from "components/HeadManager/HeadManager";
 import { shallow } from "enzyme";
 import { act } from "react-dom/test-utils";
 import { IntlProvider } from "react-intl";
@@ -36,12 +36,12 @@ describe("118n configuration", () => {
 describe("css initial configuration", () => {
   it("load the default 'light' theme", () => {
     const wrapper = shallow(<Root />);
-    expect(wrapper.find(ThemeSelector).prop("theme")).toBe(SupportedThemes.light);
+    expect(wrapper.find(HeadManager).prop("theme")).toBe(SupportedThemes.light);
   });
 
   it("load the stored theme", () => {
     localStorage.setItem("theme", SupportedThemes.dark);
     const wrapper = shallow(<Root />);
-    expect(wrapper.find(ThemeSelector).prop("theme")).toBe(SupportedThemes.dark);
+    expect(wrapper.find(HeadManager).prop("theme")).toBe(SupportedThemes.dark);
   });
 });

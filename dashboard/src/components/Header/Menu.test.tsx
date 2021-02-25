@@ -5,7 +5,7 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
 import { CdsButton } from "@cds/react/button";
-import { SupportedThemes } from "components/ThemeSelector/ThemeSelector";
+import { SupportedThemes } from "components/HeadManager/HeadManager";
 import { act } from "react-dom/test-utils";
 import { BrowserRouter, Link } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";

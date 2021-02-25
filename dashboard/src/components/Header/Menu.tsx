@@ -10,7 +10,8 @@ import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import { IClustersState } from "../../reducers/cluster";
 import Row from "../js/Row";
 
-import { SupportedThemes } from "components/ThemeSelector/ThemeSelector";
+import { getThemeFile, SupportedThemes } from "components/HeadManager/HeadManager";
+import { Helmet } from "react-helmet";
 import { app } from "shared/url";
 import helmIcon from "../../icons/helm-white.svg";
 import operatorIcon from "../../icons/operator-framework-white.svg";
@@ -29,29 +30,31 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   // Control when users click outside
   const ref = useRef(null);
   useOutsideClick(setOpen, [ref], open);
+
+  const getTheme = (isDark: boolean): SupportedThemes =>
+    isDark ? SupportedThemes.dark : SupportedThemes.light;
+
   const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(
     localStorage.getItem("theme") === SupportedThemes.dark ? true : false,
   );
 
   const toggleOpen = () => setOpen(!open);
   const toggleDarkMode = () => {
-    localStorage.setItem(
-      "theme",
-      !isDarkModeEnabled ? SupportedThemes.dark : SupportedThemes.light,
-    );
+    localStorage.setItem("theme", getTheme(!isDarkModeEnabled));
     setIsDarkModeEnabled(!isDarkModeEnabled);
-    window.location.reload();
   };
 
   useEffect(() => {
-    document.body.setAttribute(
-      "cds-theme",
-      isDarkModeEnabled ? SupportedThemes.dark : SupportedThemes.light,
-    ); // cds theme
+    document.body.setAttribute("cds-theme", getTheme(isDarkModeEnabled)); // cds theme
   }, [isDarkModeEnabled]);
 
   return (
     <>
+      <Helmet>
+        {/*  Override the clarity-ui css style */}
+        <link rel="stylesheet" type="text/css" href={getThemeFile(getTheme(isDarkModeEnabled))} />
+      </Helmet>
+
       <div className={open ? "drawer-backdrop" : ""} />
       <div className={`dropdown kubeapps-menu ${open ? "open" : ""}`} ref={ref}>
         <button
