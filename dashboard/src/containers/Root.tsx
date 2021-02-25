@@ -1,4 +1,5 @@
 import Header from "components/Header";
+import HeadManager from "components/HeadManager/HeadManager";
 import Layout from "components/Layout";
 import LoadingWrapper from "components/LoadingWrapper";
 import ThemeSelector, { SupportedThemes } from "components/ThemeSelector/ThemeSelector";
@@ -39,26 +40,28 @@ function Root() {
   }, []);
 
   return (
-    <Provider store={store}>
-      <ConfigLoaderContainer>
-        <ConnectedRouter history={history}>
-          <Suspense fallback={LoadingWrapper}>
-            <ThemeSelector theme={theme}>
-              <IntlProvider
-                locale={i18nConfig.locale}
-                key={i18nConfig.locale}
-                messages={i18nConfig.messages}
-                defaultLocale="en"
-              >
-                <Layout headerComponent={Header}>
-                  <Routes />
-                </Layout>
-              </IntlProvider>
-            </ThemeSelector>
-          </Suspense>
-        </ConnectedRouter>
-      </ConfigLoaderContainer>
-    </Provider>
+    <HeadManager>
+      <Provider store={store}>
+        <ConfigLoaderContainer>
+          <ConnectedRouter history={history}>
+            <Suspense fallback={LoadingWrapper}>
+              <ThemeSelector theme={theme}>
+                <IntlProvider
+                  locale={i18nConfig.locale}
+                  key={i18nConfig.locale}
+                  messages={i18nConfig.messages}
+                  defaultLocale="en"
+                >
+                  <Layout headerComponent={Header}>
+                    <Routes />
+                  </Layout>
+                </IntlProvider>
+              </ThemeSelector>
+            </Suspense>
+          </ConnectedRouter>
+        </ConfigLoaderContainer>
+      </Provider>
+    </HeadManager>
   );
 }
 
