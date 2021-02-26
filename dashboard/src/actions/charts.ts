@@ -1,7 +1,7 @@
 import { JSONSchema4 } from "json-schema";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
 import {
@@ -12,6 +12,8 @@ import {
   IStoreState,
   NotFoundError,
 } from "../shared/types";
+
+const { createAction } = deprecated;
 
 export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
   return (page?: number) => resolve(page);

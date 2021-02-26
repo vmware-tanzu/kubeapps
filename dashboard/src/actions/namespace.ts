@@ -1,10 +1,12 @@
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
 
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 
 import Namespace, { setStoredNamespace } from "../shared/Namespace";
 import { IResource, IStoreState } from "../shared/types";
+
+const { createAction } = deprecated;
 
 export const requestNamespace = createAction("REQUEST_NAMESPACE", resolve => {
   return (cluster: string, namespace: string) => resolve({ cluster, namespace });
