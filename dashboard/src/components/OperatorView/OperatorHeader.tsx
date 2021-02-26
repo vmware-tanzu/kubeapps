@@ -22,9 +22,7 @@ export default function OperatorHeader(props: IOperatorHeaderProps) {
           <div className="header-version">
             <label className="header-version-label">Operator Version: {version}</label>
           </div>
-        ) : (
-          undefined
-        )
+        ) : undefined
       }
       buttons={buttons}
     />

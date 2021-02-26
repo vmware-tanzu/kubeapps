@@ -1,5 +1,5 @@
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
 import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBinding";
@@ -7,6 +7,8 @@ import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceC
 import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
 import helpers from "./helpers";
+
+const { createAction } = deprecated;
 
 export const checkCatalogInstall = createAction("CHECK_INSTALL");
 export const installed = createAction("INSTALLED");
