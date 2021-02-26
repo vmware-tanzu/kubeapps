@@ -8,7 +8,7 @@
     "@cds/core": "^5.0.2",
     "@cds/react": "^5.0.2",
     "@clr/ui": "^5.0.2",
-    "@types/diff": "^4.0.2",
+    "@types/diff": "^5.0.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json-schema": "^7.0.3",
     "@types/jsonwebtoken": "^8.3.4",
