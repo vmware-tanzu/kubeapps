@@ -2235,12 +2235,12 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-tooltip@^3.9.3":
-  version "3.11.0"
-  resolved "https://registry.yarnpkg.com/@types/react-tooltip/-/react-tooltip-3.11.0.tgz#e7e7e9c67629f2b6f75ea67752922c9de0b64468"
-  integrity sha512-TkXMgkZ5aAKkFE9Wvt8OlOiPtF9ufgBOL9xWlRSzLBaoL12qSOBiyMcU4/8TyED1fuWkm5VTVarScwOPLSArYw==
+"@types/react-tooltip@^4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@types/react-tooltip/-/react-tooltip-4.2.4.tgz#d0acad2a3061806e10aab91dd26a95a77fd35125"
+  integrity sha512-UzjzmgY/VH3Str6DcAGTLMA1mVVhGOyARNTANExrirtp+JgxhaIOVDxq4TIRmpSi4voLv+w4HA9CC5GvhhCA0A==
   dependencies:
-    "@types/react" "*"
+    react-tooltip "*"
 
 "@types/react-transition-group@^4.4.0":
   version "4.4.0"
@@ -11822,10 +11822,10 @@ react-test-renderer@^16.0.0-0, react-test-renderer@^16.2.0:
     react-is "^16.8.6"
     scheduler "^0.19.1"
 
-react-tooltip@^4.2.14:
-  version "4.2.14"
-  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-4.2.14.tgz#8e06b5926fdf6672e78d8ccadaa16bef40d131d7"
-  integrity sha512-hS2kAlpjyH5MXL9DaGKsdmEFCIEuMD2RZXkEJeNjmDe05dHpqj93o5JgpmczAgQFk099+JSsnHUDo7pIOuyMDQ==
+react-tooltip@*, react-tooltip@^4.2.14:
+  version "4.2.15"
+  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-4.2.15.tgz#ae278931a222434ae597c57aab07be215a2aa5f9"
+  integrity sha512-xmVWi6N1qsrACiAquv28jhQ10igFbQX0Xk5rjSjgUPi9BAf8lCFhYpdFXe6NrEeuPrM7hdZkePa3eS2SrIRxIw==
   dependencies:
     prop-types "^15.7.2"
     uuid "^7.0.3"
