@@ -23,7 +23,7 @@
     "@types/react-router-hash-link": "^1.2.1",
     "@types/react-select": "^1.2.6",
     "@types/react-tabs": "^2.3.1",
-    "@types/react-tooltip": "^3.9.3",
+    "@types/react-tooltip": "^4.2.4",
     "@types/react-transition-group": "^4.4.0",
     "@types/semver": "^7.3.4",
     "@types/vfile": "^4.0.0",
