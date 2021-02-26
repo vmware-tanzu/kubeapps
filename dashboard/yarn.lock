@@ -1216,12 +1216,12 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@formatjs/cli@^3.0.5":
-  version "3.0.5"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-3.0.5.tgz#816203a7918bc2757e9f43ce38fde11095f1f237"
-  integrity sha512-q5C/rqjglGxpb3Emn+0E0H/P/qRRbDgQfjPJ9MC13eMKJmDSOdIySeLOmo/8ch33hUTeTZvkSNJ7jHInvcRLpA==
+"@formatjs/cli@^3.1.5":
+  version "3.1.5"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-3.1.5.tgz#21a11b749a7a9b0c15fb14a7c248e7755f60872a"
+  integrity sha512-vmM98CdywzOTz8VA6i/Lh9oJLAsLAw2l0jh+Uogls4pUhbiFWMYtxF/j03Vd69TP13p3kPx4fWkx8RD7VRZCMw==
   dependencies:
-    "@formatjs/ts-transformer" "3.0.4"
+    "@formatjs/ts-transformer" "3.1.5"
     "@types/json-stable-stringify" "^1.0.32"
     "@types/lodash" "^4.14.150"
     "@types/loud-rejection" "^2.0.0"
@@ -1232,11 +1232,11 @@
     commander "7"
     fast-glob "^3.2.4"
     fs-extra "^9.0.0"
-    intl-messageformat-parser "6.3.1"
+    intl-messageformat-parser "6.4.1"
     json-stable-stringify "^1.0.1"
     lodash "^4.17.15"
     loud-rejection "^2.2.0"
-    tslib "^2.0.1"
+    tslib "^2.1.0"
     typescript "^4.0"
 
 "@formatjs/ecma402-abstract@1.5.2":
@@ -1245,6 +1245,13 @@
   integrity sha512-rscxoLyIwH2x+l15Z4eD580ioO3CkFVoWDLgDtgiOnWzDzpL5EigDRg9V4mINb8W6bQRT1xnCxiRwvw3bgvqrA==
   dependencies:
     tslib "^2.0.1"
+
+"@formatjs/ecma402-abstract@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@formatjs/ecma402-abstract/-/ecma402-abstract-1.6.1.tgz#05eb0d879a00509525818e89ef2a0a833aa52b27"
+  integrity sha512-GQJ+mK4rrbpdXjFzwK/5NIalxBOjCLI4ZuCCvReLQGwq1ICViIIgLQw1wP95doZFjH5Y9WaQ8Zzl8+A9IkxAsQ==
+  dependencies:
+    tslib "^2.1.0"
 
 "@formatjs/intl-datetimeformat@3.2.7":
   version "3.2.7"
@@ -1293,13 +1300,13 @@
     intl-messageformat-parser "6.3.2"
     tslib "^2.0.1"
 
-"@formatjs/ts-transformer@3.0.4":
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.0.4.tgz#82979813749ddfdeb87fdc73c25ff18bb53b9d2e"
-  integrity sha512-x+0KRnA4ptfkM2W60tT5UaVOL39YEhVtvZc/FvysYDm6J76d/ucRd2qNJq6Iz+L0tygmCXURPttRQ1t3r5o79g==
+"@formatjs/ts-transformer@3.1.5":
+  version "3.1.5"
+  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.1.5.tgz#e4c63acc469c206fbf90e30f0dc941673f0e058d"
+  integrity sha512-GL26pXkczsKReSPN4VlM878wMb1tOEY/wqXblBrBDwNkWvwUBDPELdOiaizXF/GvdP4tWvOi8uZ4hjddfgPkQQ==
   dependencies:
-    intl-messageformat-parser "6.3.1"
-    tslib "^2.0.1"
+    intl-messageformat-parser "6.4.1"
+    tslib "^2.1.0"
     typescript "^4.0"
 
 "@hapi/address@2.x.x":
@@ -7154,14 +7161,6 @@ internmap@^1.0.0:
   resolved "https://registry.yarnpkg.com/internmap/-/internmap-1.0.0.tgz#3c6bf0944b0eae457698000412108752bbfddb56"
   integrity sha512-SdoDWwNOTE2n4JWUsLn4KXZGuZPjPF9yyOGc8bnfWnBQh7BD/l80rzSznKc/r4Y0aQ7z3RTk9X+tV4tHBpu+dA==
 
-intl-messageformat-parser@6.3.1:
-  version "6.3.1"
-  resolved "https://registry.yarnpkg.com/intl-messageformat-parser/-/intl-messageformat-parser-6.3.1.tgz#da343ea34ed061db1597e46885d6f5a8febb68e4"
-  integrity sha512-/aK5zKeNfVO9OEGji6X8y11J0Xse7cQFVJo4YPJwQ/ts85O2J4QQsxXZBh5mMVHvHuKDDdsX+FY4/YTD9bwoNQ==
-  dependencies:
-    "@formatjs/ecma402-abstract" "1.5.2"
-    tslib "^2.0.1"
-
 intl-messageformat-parser@6.3.2:
   version "6.3.2"
   resolved "https://registry.yarnpkg.com/intl-messageformat-parser/-/intl-messageformat-parser-6.3.2.tgz#5104d23b175f1c9aaccacdc98d558930b6890d00"
@@ -7169,6 +7168,14 @@ intl-messageformat-parser@6.3.2:
   dependencies:
     "@formatjs/ecma402-abstract" "1.5.2"
     tslib "^2.0.1"
+
+intl-messageformat-parser@6.4.1:
+  version "6.4.1"
+  resolved "https://registry.yarnpkg.com/intl-messageformat-parser/-/intl-messageformat-parser-6.4.1.tgz#5573b2655a67240564338c3e0956b94d2640f5b4"
+  integrity sha512-plJDJXkcZiDGJ5iYae4mjELeTFvWeJhl9dXzFeizc5TBqLc/VtNDvV9JBJmXY4XLOViH0lwOhS5+iBdQ4w0ufg==
+  dependencies:
+    "@formatjs/ecma402-abstract" "1.6.1"
+    tslib "^2.1.0"
 
 intl-messageformat@9.4.7:
   version "9.4.7"
@@ -8855,12 +8862,7 @@ lodash.uniq@^4.5.0:
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
   integrity sha1-0CJTc662Uq3BvILklFM5qEJ1R3M=
 
-lodash@4.x, "lodash@>=3.5 <5", lodash@^4.17.11, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.5, lodash@^4.2.1:
-  version "4.17.20"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
-  integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
-
-lodash@^4.17.21:
+lodash@4.x, "lodash@>=3.5 <5", lodash@^4.17.11, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.5, lodash@^4.2.1:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
@@ -13849,7 +13851,7 @@ tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
-tslib@^2.0.0, tslib@^2.0.1, tslib@^2.0.3:
+tslib@^2.0.0, tslib@^2.0.1, tslib@^2.0.3, tslib@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.1.0.tgz#da60860f1c2ecaa5703ab7d39bc05b6bf988b97a"
   integrity sha512-hcVC3wYEziELGGmEEXue7D75zbwIIVUMWAVbHItGPx0ziyXxrOMQx4rQEVEV45Ut/1IotuEvwqPopzIOkDMf0A==
