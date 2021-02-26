@@ -185,7 +185,6 @@ function ContextSelector() {
                             placeholder="my-namespace"
                             onChange={onChangeNewNS}
                             required={true}
-                            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                             title="Use lower case alphanumeric characters, '-' or '.'"
                           />
                         </div>
