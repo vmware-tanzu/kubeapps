@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
+import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
-import Alert from "components/js/Alert/Alert";
-import Modal from "components/js/Modal/Modal";
+import Alert from "components/js/Alert";
 import { cloneDeep } from "lodash";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
@@ -117,7 +117,7 @@ it("submits the form to create a new namespace", () => {
     (modalButton.prop("onClick") as any)();
   });
   wrapper.update();
-  expect(wrapper.find(Modal)).toHaveProp("showModal", true);
+  expect(wrapper.find(CdsModal)).toExist();
 
   act(() => {
     wrapper.find("input").simulate("change", { target: { value: "new-ns" } });
@@ -137,6 +137,7 @@ it("shows an error creating a namespace", () => {
   clusters.clusters[clusters.currentCluster].error = { error: new Error("Boom"), action: "create" };
 
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+
   const modalButton = wrapper.find(".flat-btn").first();
   act(() => {
     (modalButton.prop("onClick") as any)();
@@ -144,7 +145,7 @@ it("shows an error creating a namespace", () => {
   wrapper.update();
 
   // The error will be within the modal
-  expect(wrapper.find(Modal).find(Alert)).toExist();
+  expect(wrapper.find(CdsModal).find(Alert)).toExist();
 });
 
 it("disables the create button if not allowed", () => {
