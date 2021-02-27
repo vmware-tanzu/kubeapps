@@ -52,7 +52,7 @@
     "qs": "^6.9.5",
     "raf": "^3.4.0",
     "react": "^16.13.0",
-    "react-ace": "^8.0.0",
+    "react-ace": "^9.3.0",
     "react-compound-slider": "^3.3.1",
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "^16.13.0",
