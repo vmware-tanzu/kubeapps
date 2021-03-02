@@ -67,6 +67,7 @@
 
 .dropdown-divider {
   opacity: 0.2;
+  border-bottom-color: var(--cds-global-color-gray-50, #fafafa) !important;
 }
 
 .dropdown-menu-item {
