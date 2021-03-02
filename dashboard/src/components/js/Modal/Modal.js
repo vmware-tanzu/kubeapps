@@ -46,13 +46,13 @@ const Modal = ({
                 type="button"
                 onClick={onClose}
               >
-                <clr-icon aria-hidden="true" shape="close" />
+                <cds-icon aria-hidden="true" shape="window-close" />
               </button>
             )}
             <h3 className="modal-title">{title}</h3>
           </div>
           <div className="modal-body">{children}</div>
-          <div className="modal-footer">{footer}</div>
+          {footer && <div className="modal-footer">{footer}</div>}
         </div>
       </div>
       <div onClick={closeOnBackdrop} className="modal-backdrop" aria-hidden="true" />

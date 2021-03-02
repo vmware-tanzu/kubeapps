@@ -8,7 +8,6 @@ import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IAppRepository, ISecret, IStoreState } from "../../../shared/types";
-import "./AppRepoButton.css";
 import { AppRepoForm } from "./AppRepoForm";
 
 interface IAppRepoAddButtonProps {
@@ -97,9 +96,6 @@ export function AppRepoAddButton({
         onModalClose={closeModal}
         modalSize="lg"
       >
-        <div className="modal-close" onClick={closeModal}>
-          <CdsIcon shape="times-circle" size="md" solid={true} />
-        </div>
         <AppRepoForm
           onSubmit={onSubmit}
           onAfterInstall={closeModal}
