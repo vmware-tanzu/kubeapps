@@ -2,8 +2,8 @@ import React, { useState } from "react";
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
-import Modal from "components/Modal/Modal";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -90,16 +90,22 @@ export function AppRepoAddButton({
         {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
         {text || "Add App Repository"}
       </CdsButton>
-      <Modal showModal={modalIsOpen} onModalClose={closeModal} modalSize="lg">
-        <AppRepoForm
-          onSubmit={onSubmit}
-          onAfterInstall={closeModal}
-          repo={repo}
-          secret={secret}
-          namespace={namespace}
-          kubeappsNamespace={kubeappsNamespace}
-        />
-      </Modal>
+      {modalIsOpen && (
+        <CdsModal size={"lg"} onCloseChange={closeModal}>
+          <CdsModalHeader>{title}</CdsModalHeader>
+          <CdsModalContent>
+            <AppRepoForm
+              onSubmit={onSubmit}
+              onAfterInstall={closeModal}
+              repo={repo}
+              secret={secret}
+              namespace={namespace}
+              kubeappsNamespace={kubeappsNamespace}
+            />
+          </CdsModalContent>
+          <CdsModalActions />
+        </CdsModal>
+      )}
     </>
   );
 }
