@@ -22,7 +22,6 @@
     "@types/react-router-dom": "^5.1.7",
     "@types/react-router-hash-link": "^1.2.1",
     "@types/react-tabs": "^2.3.2",
-    "@types/react-tooltip": "^4.2.4",
     "@types/react-transition-group": "^4.4.1",
     "@types/semver": "^7.3.4",
     "@types/ws": "^7.4.0",
