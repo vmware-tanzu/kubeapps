@@ -31,28 +31,29 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   const ref = useRef(null);
   useOutsideClick(setOpen, [ref], open);
 
-  const getTheme = (isDark: boolean): SupportedThemes =>
-    isDark ? SupportedThemes.dark : SupportedThemes.light;
-
-  const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(
-    localStorage.getItem("theme") === SupportedThemes.dark ? true : false,
+  const [theme, setTheme] = useState<string>(
+    localStorage.getItem("theme") !== undefined
+      ? localStorage.getItem("theme") || SupportedThemes.light
+      : SupportedThemes.light,
   );
 
   const toggleOpen = () => setOpen(!open);
-  const toggleDarkMode = () => {
-    localStorage.setItem("theme", getTheme(!isDarkModeEnabled));
-    setIsDarkModeEnabled(!isDarkModeEnabled);
+
+  const toggleTheme = () => {
+    const newTheme = theme === SupportedThemes.dark ? SupportedThemes.light : SupportedThemes.dark;
+    localStorage.setItem("theme", newTheme);
+    setTheme(newTheme);
   };
 
   useEffect(() => {
-    document.body.setAttribute("cds-theme", getTheme(isDarkModeEnabled));
-  }, [isDarkModeEnabled]);
+    document.body.setAttribute("cds-theme", theme);
+  }, [theme]);
 
   return (
     <>
       <Helmet>
         {/*  Override the clarity-ui css style */}
-        <link rel="stylesheet" type="text/css" href={getThemeFile(getTheme(isDarkModeEnabled))} />
+        <link rel="stylesheet" type="text/css" href={getThemeFile(SupportedThemes[theme])} />
       </Helmet>
 
       <div className={open ? "drawer-backdrop" : ""} />
@@ -119,13 +120,17 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                     <span className="toggle-label-text">
                       <CdsIcon
                         size="sm"
-                        shape={isDarkModeEnabled ? "moon" : "sun"}
+                        shape={theme === SupportedThemes.dark ? "moon" : "sun"}
                         inverse={true}
                         solid={true}
                       />
                     </span>
                   </label>
-                  <input type="checkbox" onChange={toggleDarkMode} checked={isDarkModeEnabled} />
+                  <input
+                    type="checkbox"
+                    onChange={toggleTheme}
+                    checked={theme === SupportedThemes.dark}
+                  />
                 </CdsToggle>
               </div>
               <div className="dropdown-menu-padding logout-button">
