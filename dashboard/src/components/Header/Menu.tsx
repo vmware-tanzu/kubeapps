@@ -32,9 +32,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   useOutsideClick(setOpen, [ref], open);
 
   const [theme, setTheme] = useState<string>(
-    localStorage.getItem("theme") !== undefined
-      ? localStorage.getItem("theme") || SupportedThemes.light
-      : SupportedThemes.light,
+    localStorage.getItem("theme") || SupportedThemes.light,
   );
 
   const toggleOpen = () => setOpen(!open);
