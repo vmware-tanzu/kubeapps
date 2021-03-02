@@ -4,7 +4,7 @@ import { CSSTransition } from "react-transition-group";
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
-import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
+import { CdsToggle } from "@cds/react/toggle";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 
 import { IClustersState } from "../../reducers/cluster";
@@ -45,7 +45,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   };
 
   useEffect(() => {
-    document.body.setAttribute("cds-theme", getTheme(isDarkModeEnabled)); // cds theme
+    document.body.setAttribute("cds-theme", getTheme(isDarkModeEnabled));
   }, [isDarkModeEnabled]);
 
   return (
@@ -114,21 +114,19 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                   Kubeapps API docs{" "}
                   <CdsIcon size="sm" shape="network-globe" inverse={true} solid={true} />
                 </Link>
-              </div>
-              <div className="dropdown-menu-padding theme-button">
-                <CdsToggleGroup layout="compact">
+                <CdsToggle control-align="right">
                   <label>
-                    <span className="toggle-label-text">Theme:</span>
+                    <span className="toggle-label-text">
+                      <CdsIcon
+                        size="sm"
+                        shape={isDarkModeEnabled ? "moon" : "sun"}
+                        inverse={true}
+                        solid={true}
+                      />
+                    </span>
                   </label>
-                  <CdsToggle>
-                    <label>
-                      <span className="toggle-label-text">
-                        {isDarkModeEnabled ? "Dark" : "Light"} mode
-                      </span>
-                    </label>
-                    <input type="checkbox" onChange={toggleDarkMode} checked={isDarkModeEnabled} />
-                  </CdsToggle>
-                </CdsToggleGroup>
+                  <input type="checkbox" onChange={toggleDarkMode} checked={isDarkModeEnabled} />
+                </CdsToggle>
               </div>
               <div className="dropdown-menu-padding logout-button">
                 <CdsButton status="primary" size="sm" action="outline" onClick={logout}>
