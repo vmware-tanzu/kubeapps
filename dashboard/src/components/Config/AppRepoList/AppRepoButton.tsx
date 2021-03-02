@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
-import Modal from "components/js/Modal/Modal";
+import Modal from "components/Modal/Modal";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -90,12 +90,7 @@ export function AppRepoAddButton({
         {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
         {text || "Add App Repository"}
       </CdsButton>
-      <Modal
-        staticBackdrop={false}
-        showModal={modalIsOpen}
-        onModalClose={closeModal}
-        modalSize="lg"
-      >
+      <Modal showModal={modalIsOpen} onModalClose={closeModal} modalSize="lg">
         <AppRepoForm
           onSubmit={onSubmit}
           onAfterInstall={closeModal}
