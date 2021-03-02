@@ -29,7 +29,6 @@ import {
   timesIcon,
   trashIcon,
   uploadCloudIcon,
-  windowCloseIcon,
 } from "@cds/core/icon";
 import "@cds/core/icon/register.js";
 import * as React from "react";
@@ -67,7 +66,6 @@ Icons.addIcons(
   successStandardIcon,
   circleIcon,
   networkGlobeIcon,
-  windowCloseIcon,
 );
 const CSSSelector: React.FC = () => null;
 
