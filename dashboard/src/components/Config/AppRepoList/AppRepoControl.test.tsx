@@ -1,7 +1,6 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
-import Modal from "components/js/Modal/Modal";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -54,12 +53,11 @@ it("deletes the repo and refreshes list", async () => {
     (deleteButton.prop("onClick") as any)();
   });
   wrapper.update();
-  expect(wrapper.find(ConfirmDialog).find(Modal)).toIncludeText(
+  expect(wrapper.find(ConfirmDialog)).toIncludeText(
     "Are you sure you want to delete the repository",
   );
   const confirmButton = wrapper
     .find(ConfirmDialog)
-    .find(Modal)
     .find(CdsButton)
     .filterWhere(b => b.text() === "Delete");
   await act(async () => {

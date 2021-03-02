@@ -1,22 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`when loading is true loading spinner matches the snapshot 1`] = `
-<Modal
-  hideCloseButton={false}
-  modalSize="md"
-  onModalClose={[MockFunction]}
-  showModal={true}
-  staticBackdrop={true}
->
-  <div
-    className="confirmation-modal"
+<Fragment>
+  <CdsModal
+    closable={true}
+    onCloseChange={[MockFunction]}
   >
-    <span>
-      Loading, please wait
-    </span>
-    <LoadingWrapper
-      loaded={false}
-    />
-  </div>
-</Modal>
+    <CdsModalHeader />
+    <CdsModalContent>
+      <span>
+        Loading, please wait
+      </span>
+      <LoadingWrapper
+        loaded={false}
+      />
+    </CdsModalContent>
+  </CdsModal>
+</Fragment>
 `;

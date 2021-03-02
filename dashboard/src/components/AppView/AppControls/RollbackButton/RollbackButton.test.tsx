@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
-import Modal from "components/js/Modal/Modal";
+import Modal from "components/Modal/Modal";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";

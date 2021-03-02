@@ -1,3 +1,4 @@
+import Modal from "components/Modal/Modal";
 import { shallow } from "enzyme";
 import { createMemoryHistory } from "history";
 import * as React from "react";
@@ -61,6 +62,6 @@ it("renders modal to reload the page if the session is expired", () => {
     <PrivateRoute sessionExpired={true} authenticated={false} {...emptyRouteComponentProps} />,
   );
   const renderization: JSX.Element = wrapper.prop("render")();
-  expect(renderization.type.toString()).toContain("Modal");
-  expect(renderization.props.isOpen).toBe(true);
+  expect(renderization.type.toString()).toContain(Modal);
+  expect(renderization.props.showModal).toBe(true);
 });
