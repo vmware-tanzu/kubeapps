@@ -82,12 +82,12 @@
     "typesafe-actions": "^5.1.0"
   },
   "scripts": {
-    "build-css": "sass src/ --no-source-map",
+    "build-css": "sass src/ --no-source-map && yarn run copy-clr",
     "watch-css": "yarn run build-css && yarn run compile-lang && sass src/ --watch --no-source-map",
     "start-js": "BROWSER=none react-scripts start",
     "build-js": "react-scripts build",
-    "start": "npm-run-all -p watch-css compile-lang start-js copy-clr",
-    "build": "npm-run-all build-css compile-lang build-js copy-clr",
+    "start": "npm-run-all -p watch-css compile-lang start-js",
+    "build": "npm-run-all build-css compile-lang build-js",
     "test": "yarn run build-css && yarn run compile-lang && react-scripts test",
     "eject": "react-scripts eject",
     "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css",
