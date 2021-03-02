@@ -115,7 +115,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                   Kubeapps API docs{" "}
                   <CdsIcon size="sm" shape="network-globe" inverse={true} solid={true} />
                 </Link>
-                <CdsToggle control-align="right">
+                <CdsToggle className="dropdown-theme-toggle" control-align="right">
                   <label>
                     <span className="toggle-label-text">
                       <CdsIcon
