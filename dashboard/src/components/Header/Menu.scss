@@ -65,8 +65,9 @@
   }
 }
 
-.dropdown-divider {
+div .dropdown-menu .dropdown-divider {
   opacity: 0.2;
+  border-bottom-color: var(--cds-global-color-gray-50, #fafafa);
 }
 
 .dropdown-menu-item {

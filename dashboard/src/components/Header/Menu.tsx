@@ -110,7 +110,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 {appVersion}
                 <br />
                 <Link to={"/docs"}>
-                  Kubeapps API docs{" "}
+                  API documentation portal{" "}
                   <CdsIcon size="sm" shape="network-globe" inverse={true} solid={true} />
                 </Link>
                 <CdsToggle className="dropdown-theme-toggle" control-align="right">
