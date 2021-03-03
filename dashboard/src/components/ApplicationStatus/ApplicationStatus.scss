@@ -1,4 +1,4 @@
-.application-status-pie-chart {
+:not([cds-text]).application-status-pie-chart {
   display: flex;
   justify-content: center;
   text-align: center;
@@ -10,7 +10,7 @@
   }
   &-label {
     position: relative;
-    bottom: 3.6rem;
+    bottom: 3.9rem;
   }
   &-number {
     margin: 0;

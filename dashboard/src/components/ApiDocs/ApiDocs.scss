@@ -1,0 +1,155 @@
+.swagger-ui .info .title small pre {
+  border: 0;
+}
+
+.swagger-ui .info {
+  margin: 0.5em 0;
+}
+
+.swagger-ui .info .title {
+  font-family: var(
+    --cds-global-typography-header-font-family,
+    "Clarity City",
+    "Avenir Next",
+    "sans-serif"
+  );
+  font-size: var(--cds-global-typography-font-size-6, 0.55rem);
+  color: var(--cds-global-typography-color-400, #333);
+}
+
+.swagger-ui a.nostyle,
+.swagger-ui .info h1,
+.swagger-ui .info h2,
+.swagger-ui .info h3,
+.swagger-ui .info h4,
+.swagger-ui .info h5 {
+  font-family: var(
+    --cds-global-typography-header-font-family,
+    "Clarity City",
+    "Avenir Next",
+    "sans-serif"
+  );
+  font-size: var(--cds-global-typography-font-size-5, 0.55rem);
+  color: var(--cds-global-typography-color-400, #333);
+}
+
+.swagger-ui,
+.swagger-ui .info li,
+.swagger-ui .info p,
+.swagger-ui .info table,
+.swagger-ui .opblock .opblock-summary-description,
+.swagger-ui .btn,
+.swagger-ui table thead tr td,
+.swagger-ui table thead tr th,
+.swagger-ui .parameter__name,
+.swagger-ui .parameter__type,
+.swagger-ui .response-col_status,
+.swagger-ui .response-col_links,
+.swagger-ui .tab li,
+.swagger-ui .opblock-description-wrapper p,
+.swagger-ui .opblock-external-docs-wrapper p,
+.swagger-ui .opblock-title_normal p,
+.swagger-ui label,
+.swagger-ui .responses-inner h4,
+.swagger-ui .opblock .opblock-section-header h4,
+.swagger-ui .responses-inner h5,
+.swagger-ui .model-title,
+.swagger-ui section.models h4 span,
+.swagger-ui .model {
+  font-family: var(
+    --cds-global-typography-header-font-family,
+    "Clarity City",
+    "Avenir Next",
+    "sans-serif"
+  );
+  font-size: var(--cds-global-typography-font-size-4, 0.55rem);
+  color: var(--cds-global-typography-color-400, #333);
+}
+
+.swagger-ui select {
+  font-family: var(
+    --cds-global-typography-header-font-family,
+    "Clarity City",
+    "Avenir Next",
+    "sans-serif"
+  );
+  font-size: var(--cds-global-typography-font-size-4, 0.55rem);
+}
+
+.swagger-ui .info a {
+  font-family: var(
+    --cds-global-typography-header-font-family,
+    "Clarity City",
+    "Avenir Next",
+    "sans-serif"
+  );
+  font-size: var(--cds-global-typography-font-size-4, 0.55rem);
+  color: var(--cds-global-typography-link-color, #0072a3);
+}
+
+.swagger-ui .scheme-container {
+  background-color: var(--cds-alias-object-overlay-background, #fff);
+}
+
+.swagger-ui .btn {
+  border-color: var(--cds-alias-object-app-border-color, #fff);
+  color: var(--cds-global-typography-color-400, #000);
+  background-color: var(--cds-alias-object-overlay-background, #fff);
+}
+
+.swagger-ui input,
+.swagger-ui textarea {
+  color: var(--cds-global-typography-color-100, #000);
+}
+
+.swagger-ui input[disabled],
+.swagger-ui select[disabled],
+.swagger-ui textarea[disabled] {
+  color: var(--cds-global-typography-color-200, #454545);
+}
+
+.swagger-ui input[disabled]::placeholder,
+.swagger-ui select[disabled]::placeholder,
+.swagger-ui textarea[disabled]::placeholder {
+  color: var(--cds-global-typography-color-200, #454545);
+}
+
+.swagger-ui .response-control-media-type__accept-message {
+  color: var(--cds-alias-status-success, green);
+}
+
+.swagger-ui .opblock .opblock-section-header {
+  background: none;
+}
+
+.modal-ux-inner {
+  background-color: var(--cds-alias-object-app-background);
+  color: var(--cds-global-typography-color-200, #454545);
+}
+
+.swagger-ui .code,
+.swagger-ui code,
+.swagger-ui .dialog-ux .modal-ux-header h3,
+.swagger-ui .dialog-ux .modal-ux-content h4 {
+  color: var(--cds-global-typography-color-400, #333);
+}
+
+.swagger-ui .authorization__btn.unlocked,
+.swagger-ui .dialog-ux .modal-ux-header .close-modal,
+.swagger-ui .expand-methods svg,
+.swagger-ui .expand-operation svg,
+.swagger-ui .models svg,
+.swagger-ui .model-toggle:after,
+.swagger-ui .loading-container {
+  filter: invert(1) brightness(80%) saturate(0%);
+}
+
+.swagger-ui .opblock-body pre.microlight {
+  background-color: var(--cds-global-typography-color-100, #333) !important;
+  color: var(--cds-global-typography-color-400, #fff) !important;
+}
+
+.swagger-ui .opblock-tag,
+.swagger-ui section.models {
+  border-color: var(--cds-alias-object-interaction-border-color);
+}

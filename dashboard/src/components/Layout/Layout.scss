@@ -115,10 +115,6 @@
   }
   img {
     max-width: 400px;
-    // Invert colors of the logo for the dark mode
-    @media (prefers-color-scheme: dark) {
-      filter: invert(1);
-    }
   }
 }
 
@@ -129,6 +125,7 @@
     padding: 0.6rem;
     white-space: pre-wrap;
     text-align: left;
+    overflow-x: scroll;
   }
 }
 

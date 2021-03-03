@@ -1,7 +1,7 @@
 import { JSONSchema4 } from "json-schema";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 import { App } from "../shared/App";
 import Chart from "../shared/Chart";
 import { hapi } from "../shared/hapi/release";
@@ -19,6 +19,8 @@ import {
   UnprocessableEntity,
   UpgradeError,
 } from "../shared/types";
+
+const { createAction } = deprecated;
 
 export const requestApps = createAction("REQUEST_APPS");
 

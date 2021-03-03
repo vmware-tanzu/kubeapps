@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
