@@ -39,6 +39,8 @@ export const errorChart = createAction("ERROR_CHART", resolve => {
   return (err: Error) => resolve(err);
 });
 
+export const clearErrorChart = createAction("CLEAR_ERROR_CHART");
+
 export const errorChartCatetories = createAction("ERROR_CHART_CATEGORIES", resolve => {
   return (err: Error) => resolve(err);
 });
@@ -74,6 +76,7 @@ const allActions = [
   requestCharts,
   requestChart,
   errorChart,
+  clearErrorChart,
   errorChartCatetories,
   requestChartsCategories,
   receiveCharts,

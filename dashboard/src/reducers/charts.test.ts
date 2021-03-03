@@ -299,7 +299,26 @@ describe("chartReducer", () => {
     expect(state3).toEqual({
       ...initialState,
       isFetching: false,
-      items: [],
+      items: [chartItem],
+    });
+  });
+
+  it("clears errors after clearErrorChart", () => {
+    const state1 = chartsReducer(undefined, {
+      type: getType(actions.charts.receiveCharts) as any,
+      payload: { items: [chartItem], page: 1, totalPages: 5 },
+    });
+    const state2 = chartsReducer(state1, {
+      type: getType(actions.charts.errorChart) as any,
+    });
+    const state3 = chartsReducer(state2, {
+      type: getType(actions.charts.clearErrorChart) as any,
+    });
+    expect(state3).toEqual({
+      ...initialState,
+      isFetching: false,
+      items: [chartItem],
+      selected: initialState.selected,
     });
   });
 
