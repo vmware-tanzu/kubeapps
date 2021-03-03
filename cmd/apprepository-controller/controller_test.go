@@ -1042,8 +1042,8 @@ func Test_newSyncJob(t *testing.T) {
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 					FilterRules: apprepov1alpha1.FilterRulesSpec{
-						Rules: []apprepov1alpha1.FilterRule{
-							{JSONPath: "name", Value: "wordpress"},
+						AnyOf: []apprepov1alpha1.FilterRule{
+							{JQ: ".name == $var1", Variables: map[string]string{"var1": "wordpress"}},
 						},
 					},
 				},
@@ -1089,7 +1089,7 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 										"--filter-rules",
-										`{"rules":[{"jsonpath":"name","value":"wordpress"}]}`,
+										`{"anyOf":[{"jq":".name == $var1","variables":{"var1":"wordpress"}}]}`,
 									},
 									Env: []corev1.EnvVar{
 										{

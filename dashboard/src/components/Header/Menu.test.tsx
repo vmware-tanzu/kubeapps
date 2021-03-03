@@ -4,7 +4,8 @@ import { Provider } from "react-redux";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
+import { SupportedThemes } from "components/HeadManager/HeadManager";
 import { BrowserRouter, Link } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import Menu from "./Menu";
@@ -58,4 +59,31 @@ it("logs out", () => {
   // Simulate doesn't work with CdsButtons
   (logoutButton.prop("onClick") as any)();
   expect(logout).toHaveBeenCalled();
+});
+
+describe("theme switcher toggle", () => {
+  it("toggle not checked by default", () => {
+    const wrapper = mount(
+      <Provider store={defaultStore}>
+        <BrowserRouter>
+          <Menu {...defaultProps} />
+        </BrowserRouter>
+      </Provider>,
+    );
+    const toggle = wrapper.find("cds-toggle input");
+    expect(toggle.prop("checked")).toBe(false);
+  });
+
+  it("toggle checked if dark theme is configured", () => {
+    localStorage.setItem("theme", SupportedThemes.dark);
+    const wrapper = mount(
+      <Provider store={defaultStore}>
+        <BrowserRouter>
+          <Menu {...defaultProps} />
+        </BrowserRouter>
+      </Provider>,
+    );
+    const toggle = wrapper.find("cds-toggle input");
+    expect(toggle.prop("checked")).toBe(true);
+  });
 });

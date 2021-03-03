@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 
-import { CdsButton } from "@clr/react/button";
 import actions from "actions";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
@@ -182,20 +181,38 @@ export function AppRepoAddDockerCreds({
             </div>
           </div>
           <div className="clr-form-separator">
-            <CdsButton type="button" disabled={creating} onClick={handleInstallClick}>
+            {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
+            https://github.com/vmware/clarity/issues/5038
+            */}
+            <button
+              className="btn btn-info-outline"
+              type="button"
+              disabled={creating}
+              onClick={handleInstallClick}
+            >
               {creating ? "Creating..." : "Submit"}
-            </CdsButton>
-            <CdsButton onClick={toggleCredSubForm} type="button" action="outline">
+            </button>
+            <button
+              className="btn btn-info-outline"
+              type="button"
+              disabled={creating}
+              onClick={toggleCredSubForm}
+            >
               Cancel
-            </CdsButton>
+            </button>
           </div>
         </div>
       )}
       {!showSecretSubForm && (
         <div className="clr-form-separator-sm">
-          <CdsButton onClick={toggleCredSubForm} type="button" size="sm">
+          <button
+            className="btn btn-info-outline"
+            type="button"
+            disabled={creating}
+            onClick={toggleCredSubForm}
+          >
             Add new credentials
-          </CdsButton>
+          </button>
         </div>
       )}
     </div>

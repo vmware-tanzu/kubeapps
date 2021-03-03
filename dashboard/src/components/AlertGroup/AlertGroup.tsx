@@ -1,5 +1,5 @@
-import { AlertGroupTypes, AlertSizes, AlertStatusTypes } from "@clr/core/alert";
-import { CdsAlert, CdsAlertActions, CdsAlertGroup } from "@clr/react/alert";
+import { AlertGroupTypes, AlertSizes, AlertStatusTypes } from "@cds/core/alert";
+import { CdsAlert, CdsAlertActions, CdsAlertGroup } from "@cds/react/alert";
 import * as React from "react";
 
 export interface IAlertGroupProps {

@@ -608,7 +608,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 		args = append(args, "--tls-insecure-skip-verify")
 	}
 
-	if len(apprepo.Spec.FilterRules.Rules) > 0 {
+	if len(apprepo.Spec.FilterRules.AllOf) > 0 || len(apprepo.Spec.FilterRules.AnyOf) > 0 {
 		rulesJSON, err := json.Marshal(apprepo.Spec.FilterRules)
 		if err != nil {
 			log.Errorf("Unable to parse filter rules for %s: %v", apprepo.Name, err)

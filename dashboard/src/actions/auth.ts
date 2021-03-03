@@ -1,10 +1,12 @@
 import { ThunkAction } from "redux-thunk";
 import * as Namespace from "shared/Namespace";
-import { ActionType, createAction } from "typesafe-actions";
+import { ActionType, deprecated } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
 import { clearClusters, NamespaceAction } from "./namespace";
+
+const { createAction } = deprecated;
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
   return (authenticated: boolean, oidc: boolean) => resolve({ authenticated, oidc });

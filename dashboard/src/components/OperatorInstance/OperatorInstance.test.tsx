@@ -1,4 +1,4 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import AccessURLTable from "components/AppView/AccessURLTable/AccessURLTable";
 import AppNotes from "components/AppView/AppNotes";

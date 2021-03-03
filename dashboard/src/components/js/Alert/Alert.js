@@ -3,7 +3,7 @@ import AlerTypes from "./Alert.types";
 import PropTypes from "prop-types";
 import Button from "../Button";
 import cs from "classnames";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 
 import "./Alert.scss";
 

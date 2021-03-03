@@ -1,8 +1,8 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsFormGroup } from "@clr/react/forms";
-import { CdsIcon } from "@clr/react/icon";
-import { CdsInput } from "@clr/react/input";
-import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@clr/react/modal";
+import { CdsButton } from "@cds/react/button";
+import { CdsFormGroup } from "@cds/react/forms";
+import { CdsIcon } from "@cds/react/icon";
+import { CdsInput } from "@cds/react/input";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -102,7 +102,7 @@ function ContextSelector() {
             <Column span={10}>
               <div className="kubeapps-dropdown-section">
                 <span className="kubeapps-dropdown-header">Current Context</span>
-                <div>
+                <div className="kubeapps-dropdown-items">
                   <CdsIcon size="sm" shape="cluster" inverse={true} />
                   <label htmlFor="clusters" className="kubeapps-dropdown-text">
                     {clusters.currentCluster}
@@ -167,23 +167,25 @@ function ContextSelector() {
               </select>
             </div>
             <div className="kubeapps-create-new-ns">
-              <CdsModal hidden={!newNSModalIsOpen} closable={true} onCloseChange={closeNewNSModal}>
-                <CdsModalHeader>Create a New Namespace</CdsModalHeader>
-                {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
-                <form onSubmit={createNewNS}>
-                  <CdsModalContent>
-                    <CdsFormGroup>
-                      <CdsInput>
-                        <label>Name:</label>
-                        <input type="text" required={true} onChange={onChangeNewNS} />
-                      </CdsInput>
-                    </CdsFormGroup>
-                  </CdsModalContent>
-                  <CdsModalActions>
-                    <CdsButton type="submit">Submit</CdsButton>
-                  </CdsModalActions>
-                </form>
-              </CdsModal>
+              {newNSModalIsOpen && (
+                <CdsModal closable={true} onCloseChange={closeNewNSModal}>
+                  <CdsModalHeader>Create a New Namespace</CdsModalHeader>
+                  {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
+                  <form onSubmit={createNewNS}>
+                    <CdsModalContent>
+                      <CdsFormGroup>
+                        <CdsInput>
+                          <label>Name:</label>
+                          <input type="text" required={true} onChange={onChangeNewNS} />
+                        </CdsInput>
+                      </CdsFormGroup>
+                    </CdsModalContent>
+                    <CdsModalActions>
+                      <CdsButton type="submit">Submit</CdsButton>
+                    </CdsModalActions>
+                  </form>
+                </CdsModal>
+              )}
               <CdsButton
                 disabled={!canCreateNS}
                 title={

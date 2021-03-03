@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsCheckbox } from "@clr/react/checkbox";
+import { CdsButton } from "@cds/react/button";
+import { CdsCheckbox } from "@cds/react/checkbox";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -469,36 +469,38 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </Row>
         </div>
       </div>
-      {/* Only when using a namespace different than the Kubeapps namespace (Global)
+      {
+        /* Only when using a namespace different than the Kubeapps namespace (Global)
               the repository can be associated with Docker Registry Credentials since
               the pull secret won't be available in all namespaces */
-      namespace !== kubeappsNamespace && (
-        <div className="clr-form-control">
-          <label className="clr-control-label">
-            Associate Docker Registry Credentials (optional)
-          </label>
-          <span className="clr-form-description">
-            Select existing secret(s) to access a private Docker registry and pull images from it.
-            More info{" "}
-            <a
-              href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              here
-            </a>
-            .
-          </span>
-          <div className="clr-form-separator-sm">
-            <AppRepoAddDockerCreds
-              imagePullSecrets={imagePullSecrets}
-              togglePullSecret={togglePullSecret}
-              selectedImagePullSecrets={selectedImagePullSecrets}
-              namespace={namespace}
-            />
+        namespace !== kubeappsNamespace && (
+          <div className="clr-form-control">
+            <label className="clr-control-label">
+              Associate Docker Registry Credentials (optional)
+            </label>
+            <span className="clr-form-description">
+              Select existing secret(s) to access a private Docker registry and pull images from it.
+              More info{" "}
+              <a
+                href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                here
+              </a>
+              .
+            </span>
+            <div className="clr-form-separator-sm">
+              <AppRepoAddDockerCreds
+                imagePullSecrets={imagePullSecrets}
+                togglePullSecret={togglePullSecret}
+                selectedImagePullSecrets={selectedImagePullSecrets}
+                namespace={namespace}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
       <div className="clr-form-control">
         <label className="clr-control-label" htmlFor="kubeapps-repo-custom-ca">
           Custom CA Certificate (optional)
