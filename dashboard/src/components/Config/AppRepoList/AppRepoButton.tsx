@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
-import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
+import { CdsModal, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
@@ -103,7 +103,6 @@ export function AppRepoAddButton({
               kubeappsNamespace={kubeappsNamespace}
             />
           </CdsModalContent>
-          <CdsModalActions />
         </CdsModal>
       )}
     </>

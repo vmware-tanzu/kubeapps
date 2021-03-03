@@ -58,7 +58,7 @@ it("deletes the repo and refreshes list", async () => {
   );
   const confirmButton = wrapper
     .find(ConfirmDialog)
-    .find(CdsButton)
+    .find(".btn")
     .filterWhere(b => b.text() === "Delete");
   await act(async () => {
     await (confirmButton.prop("onClick") as any)();
