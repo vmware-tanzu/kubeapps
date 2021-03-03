@@ -32,7 +32,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -41,6 +40,7 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
+	"github.com/itchyny/gojq"
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/common/datastore"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -50,7 +50,6 @@ import (
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
 	h3chart "helm.sh/helm/v3/pkg/chart"
-	"k8s.io/client-go/util/jsonpath"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	helmrepo "k8s.io/helm/pkg/repo"
 )
@@ -149,62 +148,88 @@ func (r *HelmRepo) Repo() *models.RepoInternal {
 	return r.RepoInternal
 }
 
-func satisfy(chart models.Chart, rule apprepov1alpha1.FilterRule) bool {
-	jpath := jsonpath.New(fmt.Sprintf("filter-%s", chart.Name))
-	err := jpath.Parse(rule.JSONPath)
+func satisfy(chartInput map[string]interface{}, rule apprepov1alpha1.FilterRule) (bool, error) {
+	query, err := gojq.Parse(rule.JQ)
 	if err != nil {
-		log.Errorf("Unable to parse rule %s: %v", rule.JSONPath, err)
-		return false
-	}
-	buf := new(bytes.Buffer)
-	err = jpath.Execute(buf, chart)
-	if err != nil {
-		log.Errorf("Unable to execute filter %s: %v", rule.JSONPath, err)
-		return false
-	}
-	value := buf.String()
+		return false, fmt.Errorf("Unable to parse JQuery: %v", err)
 
-	match := value == rule.Value
-	if rule.Regex {
-		// If the value is a regex, evaluate it
-		match, err = regexp.Match(rule.Value, []byte(value))
-		if err != nil {
-			log.Errorf("Unable to parse regex filter %s: %v", rule.Value, err)
-			return false
-		}
+	}
+	varNames := []string{}
+	varValues := []interface{}{}
+	for name, val := range rule.Variables {
+		varNames = append(varNames, name)
+		varValues = append(varValues, val)
+	}
+	code, err := gojq.Compile(
+		query,
+		gojq.WithVariables(varNames),
+	)
+	if err != nil {
+		return false, fmt.Errorf("Unable to compile JQuery: %v", err)
 	}
 
-	if rule.Exclude {
-		return !match
+	res, _ := code.Run(chartInput, varValues...).Next()
+	if err, ok := res.(error); ok {
+		return false, fmt.Errorf("Unable to compile JQuery: %v", err)
 	}
-	return match
+
+	satisfied, ok := res.(bool)
+	if !ok {
+		return false, fmt.Errorf("Unable to convert JQuery result to boolean. Got: %v", res)
+	}
+	return satisfied, nil
 }
 
-func filterCharts(charts []models.Chart, filterRules *apprepov1alpha1.FilterRulesSpec) []models.Chart {
+func filterCharts(charts []models.Chart, filterRules *apprepov1alpha1.FilterRulesSpec) ([]models.Chart, error) {
 	if filterRules == nil {
 		// No filters, return
-		return charts
+		return charts, nil
 	}
+	rules := filterRules.AnyOf
+	satisfyAll := false
+	if len(filterRules.AllOf) > 0 {
+		rules = filterRules.AllOf
+		satisfyAll = true
+	}
+	if len(rules) == 0 {
+		// No rules, return
+		return charts, nil
+	}
+
 	result := []models.Chart{}
 	for _, chart := range charts {
-		for index, rule := range filterRules.Rules {
-			satisfied := satisfy(chart, rule)
-			if satisfied && !filterRules.SatisfyAll {
+		// Convert the chart to a map[interface]{}
+		chartBytes, err := json.Marshal(chart)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse chart: %v", err)
+		}
+		chartInput := map[string]interface{}{}
+		err = json.Unmarshal(chartBytes, &chartInput)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse chart: %v", err)
+		}
+
+		for index, rule := range rules {
+			satisfied, err := satisfy(chartInput, rule)
+			if err != nil {
+				return nil, err
+			}
+			if satisfied && !satisfyAll {
 				// One rule matching is enough, continue
 				result = append(result, chart)
 				break
 			}
-			if !satisfied && filterRules.SatisfyAll {
+			if !satisfied && satisfyAll {
 				// All rules are required, skip this chart
 				break
 			}
-			if satisfied && filterRules.SatisfyAll && index == len(filterRules.Rules)-1 {
+			if satisfied && satisfyAll && index == len(rules)-1 {
 				// All rules have been checked and matched
 				result = append(result, chart)
 			}
 		}
 	}
-	return result
+	return result, nil
 }
 
 // Charts retrieve the list of charts exposed in the repo
@@ -225,7 +250,7 @@ func (r *HelmRepo) Charts() ([]models.Chart, error) {
 		return []models.Chart{}, fmt.Errorf("no charts in repository index")
 	}
 
-	return filterCharts(charts, r.filters), nil
+	return filterCharts(charts, r.filters)
 }
 
 const (
@@ -666,7 +691,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	for _, c := range result {
 		charts = append(charts, *c)
 	}
-	return filterCharts(charts, r.filters), nil
+	return filterCharts(charts, r.filters)
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
