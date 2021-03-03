@@ -2,7 +2,7 @@ import { CdsIcon } from "@cds/react/icon";
 import { flatten } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
-import PieChart from "react-minimal-pie-chart";
+import { PieChart } from "react-minimal-pie-chart";
 
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import ReactTooltip from "react-tooltip";
