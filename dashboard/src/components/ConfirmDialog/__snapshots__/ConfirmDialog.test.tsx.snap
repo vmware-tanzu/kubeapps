@@ -5,6 +5,7 @@ exports[`when loading is true loading spinner matches the snapshot 1`] = `
   <CdsModal
     closable={true}
     onCloseChange={[MockFunction]}
+    size="default"
   >
     <CdsModalHeader />
     <CdsModalContent>

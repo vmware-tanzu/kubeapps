@@ -1,4 +1,3 @@
-import { CdsButton } from "@cds/react/button";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import Alert from "components/js/Alert";
 import React from "react";
@@ -13,6 +12,7 @@ interface IConfirmDialogProps {
   confirmationText: string;
   confirmationButtonText?: string;
   error?: Error;
+  size?: "sm" | "default" | "lg" | "xl";
   onConfirm: () => any;
   closeModal: () => any;
 }
@@ -27,11 +27,12 @@ function ConfirmDialog({
   onConfirm,
   closeModal,
   error,
+  size,
 }: IConfirmDialogProps) {
   return (
     <>
       {modalIsOpen && (
-        <CdsModal closable={true} onCloseChange={closeModal}>
+        <CdsModal size={size || "default"} closable={true} onCloseChange={closeModal}>
           <CdsModalHeader>{headerText}</CdsModalHeader>
           {error && <Alert theme="danger">An error ocurred: {error.message}</Alert>}
           {loading === true ? (
@@ -48,12 +49,15 @@ function ConfirmDialog({
                 <p>{extraElem}</p>
               </CdsModalContent>
               <CdsModalActions>
-                <CdsButton action="outline" type="button" onClick={closeModal}>
+                {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
+                  https://github.com/vmware/clarity/issues/5038
+                  */}
+                <button className="btn btn-info-outline" type="button" onClick={closeModal}>
                   Cancel
-                </CdsButton>
-                <CdsButton status="danger" type="submit" onClick={onConfirm}>
+                </button>
+                <button className="btn btn-danger" type="submit" onClick={onConfirm}>
                   {confirmationButtonText || "Delete"}
-                </CdsButton>
+                </button>
               </CdsModalActions>
             </>
           )}
