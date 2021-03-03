@@ -74,16 +74,14 @@ type AppRepositoryCustomCA struct {
 
 // FilterRulesSpec defines a set of rules and aggreagation logic
 type FilterRulesSpec struct {
-	SatisfyAll bool         `json:"satisfyAll,omitempty"`
-	Rules      []FilterRule `json:"rules"`
+	AnyOf []FilterRule `json:"anyOf,omitempty"`
+	AllOf []FilterRule `json:"allOf,omitempty"`
 }
 
 // FilterRule defines a rule
 type FilterRule struct {
-	JSONPath string `json:"jsonpath"`
-	Value    string `json:"value"`
-	Exclude  bool   `json:"exclude,omitempty"`
-	Regex    bool   `json:"regex,omitempty"`
+	JQ        string            `json:"jq"`
+	Variables map[string]string `json:"variables,omitempty"`
 }
 
 // AppRepositoryStatus is the status for an AppRepository resource
