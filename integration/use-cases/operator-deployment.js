@@ -79,7 +79,7 @@ test("Deploys an Operator", async () => {
   await expect(page).toMatch("Are you sure you want to delete the resource?");
 
   await expect(page).toClick(
-    "#root > section > main > div > div > section > cds-modal > cds-modal-actions > cds-button:nth-child(2) > span",
+    "#root > section > main > div > div > section > cds-modal > cds-modal-actions > button.btn.btn-danger",
     {
       text: "Delete",
     }
