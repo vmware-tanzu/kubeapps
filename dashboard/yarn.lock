@@ -11232,7 +11232,7 @@ prop-types-exact@^1.2.0:
     object.assign "^4.1.0"
     reflect.ownkeys "^0.2.0"
 
-prop-types@15.7.2, prop-types@^15.5.0, prop-types@^15.5.10, prop-types@^15.5.7, prop-types@^15.5.8, prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@15.7.2, prop-types@^15.5.0, prop-types@^15.5.10, prop-types@^15.5.8, prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -11636,12 +11636,10 @@ react-markdown@^5.0.0:
     unist-util-visit "^2.0.0"
     xtend "^4.0.1"
 
-react-minimal-pie-chart@^6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/react-minimal-pie-chart/-/react-minimal-pie-chart-6.0.1.tgz#4baa3d62afaac4ea63edeb68425ec7b781ff841d"
-  integrity sha512-AlnZn2TjgX7Rm9E4SlV4iZphJVx8r3cojhm/VAzxuJMOevizCAxbSKhBlYjmmRtCNAWBX6JlALaPkOpEaPBFMQ==
-  dependencies:
-    prop-types "^15.5.7"
+react-minimal-pie-chart@^8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/react-minimal-pie-chart/-/react-minimal-pie-chart-8.1.0.tgz#2b5a239ca2ab8d88f8915abf4f602cff3e0c72eb"
+  integrity sha512-eoorRrGySbkkzpG1vX0/p18xxhSA/6OqIlMnlAlMez+cjfLnsX/u8+PFaOsWltQwhiwtA4DaO8VriWKryIluyg==
 
 react-modal@^3.1.11:
   version "3.12.1"
