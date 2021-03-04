@@ -55,10 +55,12 @@ export function AppRepoControl({
         modalIsOpen={modalIsOpen}
         loading={false}
         closeModal={closeModal}
+        headerText={"Delete repository"}
         confirmationText={`Are you sure you want to delete the repository ${repo.metadata.name}?`}
       />
 
       <AppRepoAddButton
+        title={`Edit repository '${repo.metadata.name}'`}
         namespace={repo.metadata.namespace}
         kubeappsNamespace={kubeappsNamespace}
         text="Edit"

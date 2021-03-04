@@ -11,6 +11,11 @@ svg.icon {
   bottom: -0.125em;
 }
 
+[slot~="modal-header"] {
+  color: var(--cds-global-typography-color-400, #21333b);
+  font-size: var(--cds-global-typography-font-size-6, 0.55rem);
+}
+
 // CSS tweaks the dark mode theme theme
 [cds-theme~="dark"] {
   %convert-to-white {

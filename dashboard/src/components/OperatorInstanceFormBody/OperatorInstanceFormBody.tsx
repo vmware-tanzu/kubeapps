@@ -82,6 +82,7 @@ function DeploymentFormBody({
         <ConfirmDialog
           modalIsOpen={modalIsOpen}
           loading={false}
+          headerText={"Restore defaults"}
           confirmationText={"Are you sure you want to restore the default instance values?"}
           confirmationButtonText={"Restore"}
           onConfirm={restoreDefaultValues}

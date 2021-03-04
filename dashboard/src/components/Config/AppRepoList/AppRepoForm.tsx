@@ -241,7 +241,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   return (
     <form onSubmit={handleInstallClick} className="app-repo-form">
-      <h2>Add an App Repository</h2>
       <div className="clr-form-control">
         <label htmlFor="kubeapps-repo-name" className="clr-control-label">
           Name
