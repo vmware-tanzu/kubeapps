@@ -50,8 +50,9 @@ type AppRepositorySpec struct {
 	// DEPRECATED: Use FilterRules instead
 	OCIRepositories []string `json:"ociRepositories,omitempty"`
 	// TLSInsecureSkipVerify skips TLS verification
-	TLSInsecureSkipVerify bool            `json:"tlsInsecureSkipVerify,omitempty"`
-	FilterRules           FilterRulesSpec `json:"filterRules,omitempty"`
+	TLSInsecureSkipVerify bool `json:"tlsInsecureSkipVerify,omitempty"`
+	// FilterRule allows to filter packages based on a JQuery
+	FilterRule FilterRuleSpec `json:"filterRules,omitempty"`
 }
 
 // AppRepositoryAuth is the auth for an AppRepository resource
@@ -72,14 +73,8 @@ type AppRepositoryCustomCA struct {
 	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
-// FilterRulesSpec defines a set of rules and aggreagation logic
-type FilterRulesSpec struct {
-	AnyOf []FilterRule `json:"anyOf,omitempty"`
-	AllOf []FilterRule `json:"allOf,omitempty"`
-}
-
-// FilterRule defines a rule
-type FilterRule struct {
+// FilterRuleSpec defines a set of rules and aggreagation logic
+type FilterRuleSpec struct {
 	JQ        string            `json:"jq"`
 	Variables map[string]string `json:"variables,omitempty"`
 }
