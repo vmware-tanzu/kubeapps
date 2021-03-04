@@ -39,7 +39,7 @@
     "json-schema": "^0.3.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
-    "lodash-es": "^4.17.15",
+    "lodash-es": "^4.17.21",
     "moniker-native": "^0.1.6",
     "normalize.css": "^8.0.1",
     "prop-types": "15.7.2",
