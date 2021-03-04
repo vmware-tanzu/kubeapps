@@ -155,6 +155,7 @@ function DeploymentFormBody({
       <ConfirmDialog
         modalIsOpen={restoreModalIsOpen}
         loading={false}
+        headerText={"Restore defaults"}
         confirmationText={"Are you sure you want to restore the default chart values?"}
         confirmationButtonText={"Restore"}
         onConfirm={restoreDefaultValues}

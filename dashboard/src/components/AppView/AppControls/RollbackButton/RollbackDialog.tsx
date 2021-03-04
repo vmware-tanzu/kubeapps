@@ -1,6 +1,6 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
-import { CdsModal, CdsModalActions, CdsModalContent } from "@cds/react/modal";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import { CdsSelect } from "@cds/react/select";
 import Alert from "components/js/Alert";
 import React, { useState } from "react";
@@ -42,6 +42,7 @@ function RollbackDialog({
     <>
       {modalIsOpen && (
         <CdsModal closable={false} onCloseChange={closeModal}>
+          <CdsModalHeader>Rollback application</CdsModalHeader>
           <CdsModalContent>
             {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
             {loading && <p>Loading, please wait.</p>}
