@@ -154,6 +154,7 @@ function AppRepoList() {
         title="Application Repositories"
         buttons={[
           <AppRepoAddButton
+            title="Add an App Repository"
             key="add-repo-button"
             namespace={currentNamespace}
             kubeappsNamespace={kubeappsNamespace}
