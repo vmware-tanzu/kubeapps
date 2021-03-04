@@ -264,7 +264,7 @@ function Catalog(props: ICatalogProps) {
 
   const forceRetry = () => {
     dispatch(actions.charts.clearErrorChart());
-    increaseRequestedPage();
+    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
   };
 
   const increaseRequestedPage = () => {
