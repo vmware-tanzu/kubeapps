@@ -7,7 +7,6 @@ exports[`when loading is true loading spinner matches the snapshot 1`] = `
     onCloseChange={[MockFunction]}
     size="default"
   >
-    <CdsModalHeader />
     <CdsModalContent>
       <span>
         Loading, please wait
