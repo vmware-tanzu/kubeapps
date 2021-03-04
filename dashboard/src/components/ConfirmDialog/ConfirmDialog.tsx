@@ -33,7 +33,7 @@ function ConfirmDialog({
     <>
       {modalIsOpen && (
         <CdsModal size={size || "default"} closable={true} onCloseChange={closeModal}>
-          <CdsModalHeader>{headerText}</CdsModalHeader>
+          {headerText && <CdsModalHeader>{headerText}</CdsModalHeader>}
           {error && <Alert theme="danger">An error ocurred: {error.message}</Alert>}
           {loading === true ? (
             <>
@@ -46,7 +46,7 @@ function ConfirmDialog({
             <>
               <CdsModalContent>
                 <p>{confirmationText}</p>
-                <p>{extraElem}</p>
+                {extraElem && <p>{extraElem}</p>}
               </CdsModalContent>
               <CdsModalActions>
                 {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
