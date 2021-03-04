@@ -210,12 +210,10 @@ func Test_getOCIRepo(t *testing.T) {
 
 func Test_parseFilters(t *testing.T) {
 	t.Run("return rules spec", func(t *testing.T) {
-		filters, err := parseFilters(`{"anyOf":[{"jq":".name == $var1","variables":{"var1":"wordpress"}}]}`)
+		filters, err := parseFilters(`{"jq":".name == $var1","variables":{"$var1":"wordpress"}}`)
 		assert.NoErr(t, err)
-		assert.Equal(t, filters, &apprepov1alpha1.FilterRulesSpec{
-			AnyOf: []apprepov1alpha1.FilterRule{
-				{JQ: ".name == $var1", Variables: map[string]string{"var1": "wordpress"}},
-			},
+		assert.Equal(t, filters, &apprepov1alpha1.FilterRuleSpec{
+			JQ: ".name == $var1", Variables: map[string]string{"$var1": "wordpress"},
 		}, "filters")
 	})
 }
@@ -1188,7 +1186,7 @@ func Test_filterCharts(t *testing.T) {
 	tests := []struct {
 		description string
 		input       []models.Chart
-		rules       apprepov1alpha1.FilterRulesSpec
+		rule        apprepov1alpha1.FilterRuleSpec
 		expected    []models.Chart
 		expectedErr error
 	}{
@@ -1198,45 +1196,11 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"}},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"},
 			},
 			[]models.Chart{
 				{Name: "foo"},
-			},
-			nil,
-		},
-		{
-			"should satisfy all the rules to pass - negative",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
-			},
-			apprepov1alpha1.FilterRulesSpec{
-				AllOf: []apprepov1alpha1.FilterRule{
-					{JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"}},
-					{JQ: ".name == $var1", Variables: map[string]string{"$var1": "bar"}},
-				},
-			},
-			[]models.Chart{},
-			nil,
-		},
-		{
-			"should satisfy all the rules to pass - positive",
-			[]models.Chart{
-				{Name: "foo", Description: "foobar"},
-				{Name: "bar", Description: "barfoo"},
-			},
-			apprepov1alpha1.FilterRulesSpec{
-				AllOf: []apprepov1alpha1.FilterRule{
-					{JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"}},
-					{JQ: ".description == $var1", Variables: map[string]string{"$var1": "foobar"}},
-				},
-			},
-			[]models.Chart{
-				{Name: "foo", Description: "foobar"},
 			},
 			nil,
 		},
@@ -1246,10 +1210,8 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: "not a rule"},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: "not a rule",
 			},
 			nil,
 			fmt.Errorf(`Unable to parse JQuery: unexpected token "a"`),
@@ -1260,10 +1222,8 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: ".name == $var1"},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".name == $var1",
 			},
 			nil,
 			fmt.Errorf(`Unable to compile JQuery: variable not defined: $var1`),
@@ -1274,10 +1234,8 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: `.name`},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: `.name`,
 			},
 			nil,
 			fmt.Errorf(`Unable to convert JQuery result to boolean. Got: foo`),
@@ -1288,10 +1246,8 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: `.name == "foo"`},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: `.name == "foo"`,
 			},
 			[]models.Chart{
 				{Name: "foo"},
@@ -1304,10 +1260,8 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
 				{Name: "bar", Maintainers: []chart.Maintainer{{Name: "Hackers"}}},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: ".maintainers | any(.name == $var1)", Variables: map[string]string{"$var1": "Bitnami"}},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".maintainers | any(.name == $var1)", Variables: map[string]string{"$var1": "Bitnami"},
 			},
 			[]models.Chart{
 				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
@@ -1320,10 +1274,8 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: ".name == $var1 | not", Variables: map[string]string{"$var1": "foo"}},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".name == $var1 | not", Variables: map[string]string{"$var1": "foo"},
 			},
 			[]models.Chart{
 				{Name: "bar"},
@@ -1336,10 +1288,8 @@ func Test_filterCharts(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			},
-			apprepov1alpha1.FilterRulesSpec{
-				AnyOf: []apprepov1alpha1.FilterRule{
-					{JQ: `.name | test($var1)`, Variables: map[string]string{"$var1": ".*oo.*"}},
-				},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: `.name | test($var1)`, Variables: map[string]string{"$var1": ".*oo.*"},
 			},
 			[]models.Chart{
 				{Name: "foo"},
@@ -1349,7 +1299,7 @@ func Test_filterCharts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			res, err := filterCharts(tt.input, &tt.rules)
+			res, err := filterCharts(tt.input, &tt.rule)
 			if err != nil {
 				if tt.expectedErr == nil || err.Error() != tt.expectedErr.Error() {
 					t.Fatalf("Unexpected error %v", err)
