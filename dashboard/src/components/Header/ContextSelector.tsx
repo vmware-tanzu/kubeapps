@@ -167,23 +167,25 @@ function ContextSelector() {
               </select>
             </div>
             <div className="kubeapps-create-new-ns">
-              <CdsModal hidden={!newNSModalIsOpen} closable={true} onCloseChange={closeNewNSModal}>
-                <CdsModalHeader>Create a New Namespace</CdsModalHeader>
-                {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
-                <form onSubmit={createNewNS}>
-                  <CdsModalContent>
-                    <CdsFormGroup>
-                      <CdsInput>
-                        <label>Name:</label>
-                        <input type="text" required={true} onChange={onChangeNewNS} />
-                      </CdsInput>
-                    </CdsFormGroup>
-                  </CdsModalContent>
-                  <CdsModalActions>
-                    <CdsButton type="submit">Submit</CdsButton>
-                  </CdsModalActions>
-                </form>
-              </CdsModal>
+              {newNSModalIsOpen && (
+                <CdsModal closable={true} onCloseChange={closeNewNSModal}>
+                  <CdsModalHeader>Create a New Namespace</CdsModalHeader>
+                  {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
+                  <form onSubmit={createNewNS}>
+                    <CdsModalContent>
+                      <CdsFormGroup>
+                        <CdsInput>
+                          <label>Name:</label>
+                          <input type="text" required={true} onChange={onChangeNewNS} />
+                        </CdsInput>
+                      </CdsFormGroup>
+                    </CdsModalContent>
+                    <CdsModalActions>
+                      <CdsButton type="submit">Submit</CdsButton>
+                    </CdsModalActions>
+                  </form>
+                </CdsModal>
+              )}
               <CdsButton
                 disabled={!canCreateNS}
                 title={

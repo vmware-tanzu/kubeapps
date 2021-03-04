@@ -1,4 +1,4 @@
-import { CdsButton } from "@cds/react/button";
+import { CdsModalContent } from "@cds/react/modal";
 import { mount } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
@@ -23,6 +23,6 @@ it("should modify the default confirmation text", () => {
   const wrapper = mount(
     <ConfirmDialog {...defaultProps} confirmationText="Sure?" confirmationButtonText="Sure!" />,
   );
-  expect(wrapper.find(".confirmation-modal")).toIncludeText("Sure?");
-  expect(wrapper.find(CdsButton).filterWhere(d => d.text() === "Sure!")).toExist();
+  expect(wrapper.find(CdsModalContent)).toIncludeText("Sure?");
+  expect(wrapper.find(".btn").filterWhere(d => d.text() === "Sure!")).toExist();
 });

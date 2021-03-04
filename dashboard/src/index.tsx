@@ -1,5 +1,4 @@
 import * as ReactDOM from "react-dom";
-import Modal from "react-modal";
 import { addAuthHeaders, addErrorHandling, axios, axiosWithAuth } from "shared/AxiosInstance";
 
 import Root from "./containers/Root";
@@ -18,6 +17,3 @@ ReactDOM.render(<Root />, document.getElementById("root") as HTMLElement);
 
 // TODO: Look into re-enabling service worker
 // registerServiceWorker();
-
-// Set App Element for accessibilty
-Modal.setAppElement("#root");

@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
+import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
-import Modal from "components/js/Modal/Modal";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -44,7 +44,7 @@ it("should open a modal with the repository form", () => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
   });
   wrapper.update();
-  expect(wrapper.find(Modal).prop("showModal")).toBe(true);
+  expect(wrapper.find(CdsModal)).toExist();
 });
 
 it("should render a custom text", () => {

@@ -8,6 +8,7 @@ import RollbackDialog from "./RollbackDialog";
 const defaultProps = {
   loading: false,
   currentRevision: 2,
+  modalIsOpen: true,
   onConfirm: jest.fn(),
   closeModal: jest.fn(),
 };

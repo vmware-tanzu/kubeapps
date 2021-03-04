@@ -117,7 +117,7 @@ it("submits the form to create a new namespace", () => {
     (modalButton.prop("onClick") as any)();
   });
   wrapper.update();
-  expect(wrapper.find(CdsModal)).toHaveProp("hidden", false);
+  expect(wrapper.find(CdsModal)).toExist();
 
   act(() => {
     wrapper.find("input").simulate("change", { target: { value: "new-ns" } });
@@ -137,6 +137,13 @@ it("shows an error creating a namespace", () => {
   clusters.clusters[clusters.currentCluster].error = { error: new Error("Boom"), action: "create" };
 
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+
+  const modalButton = wrapper.find(".flat-btn").first();
+  act(() => {
+    (modalButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+
   // The error will be within the modal
   expect(wrapper.find(CdsModal).find(Alert)).toExist();
 });

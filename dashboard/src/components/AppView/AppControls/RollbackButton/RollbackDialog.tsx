@@ -1,4 +1,7 @@
 import { CdsButton } from "@cds/react/button";
+import { CdsControlMessage } from "@cds/react/forms";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
+import { CdsSelect } from "@cds/react/select";
 import Alert from "components/js/Alert";
 import React, { useState } from "react";
 import LoadingWrapper from "../../../LoadingWrapper/LoadingWrapper";
@@ -10,12 +13,14 @@ interface IRollbackDialogProps {
   onConfirm: (revision: number) => Promise<any>;
   closeModal: () => void;
   error?: Error;
+  modalIsOpen: boolean;
 }
 
 function RollbackDialog({
   loading,
   currentRevision,
   error,
+  modalIsOpen,
   onConfirm,
   closeModal,
 }: IRollbackDialogProps) {
@@ -34,44 +39,45 @@ function RollbackDialog({
     options.push(i);
   }
   return (
-    <div className="rollback-menu">
-      {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
-      {loading && <p className="rollback-menu-text">Loading, please wait.</p>}
-      <LoadingWrapper loaded={!loading}>
-        {disableRollback ? (
-          <span className="rollback-menu-text">
-            The application has not been upgraded, it's not possible to rollback.
-          </span>
-        ) : (
-          <>
-            <label htmlFor="revision-selector" className="rollback-menu-label">
-              Select the revision to which you want to rollback (current: {currentRevision})
-            </label>
-            <div className="clr-select-wrapper">
-              <select
-                id="revision-selector"
-                onChange={selectRevision}
-                className="clr-page-size-select"
-              >
-                {options.map(o => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
-        )}
-        <div className="rollback-menu-buttons">
-          <CdsButton action="outline" type="button" onClick={closeModal}>
-            Cancel
-          </CdsButton>
-          <CdsButton status="danger" type="submit" onClick={onClick} disabled={disableRollback}>
-            Rollback
-          </CdsButton>
-        </div>
-      </LoadingWrapper>
-    </div>
+    <>
+      {modalIsOpen && (
+        <CdsModal closable={false} onCloseChange={closeModal}>
+          <CdsModalHeader>Rollback application</CdsModalHeader>
+          <CdsModalContent>
+            {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+            {loading && <p>Loading, please wait.</p>}
+            <LoadingWrapper loaded={!loading}>
+              {disableRollback ? (
+                <p>The application has not been upgraded, it's not possible to rollback.</p>
+              ) : (
+                <>
+                  <CdsSelect layout="horizontal" id="revision-selector" onChange={selectRevision}>
+                    <label>Select the revision to which you want to rollback</label>
+                    <select>
+                      {options.map(o => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                    <CdsControlMessage>(current: {currentRevision})</CdsControlMessage>
+                  </CdsSelect>
+                </>
+              )}
+            </LoadingWrapper>
+          </CdsModalContent>
+          <CdsModalActions>
+            <CdsButton action="outline" type="button" onClick={closeModal}>
+              {" "}
+              Cancel{" "}
+            </CdsButton>
+            <CdsButton status="danger" type="submit" onClick={onClick} disabled={disableRollback}>
+              Rollback
+            </CdsButton>
+          </CdsModalActions>
+        </CdsModal>
+      )}
+    </>
   );
 }
 

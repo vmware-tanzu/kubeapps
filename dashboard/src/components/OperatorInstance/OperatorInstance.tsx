@@ -190,6 +190,7 @@ function OperatorInstance({
         onConfirm={handleDeleteClick}
         modalIsOpen={modalIsOpen}
         loading={deleting}
+        headerText={"Delete resource"}
         confirmationText="Are you sure you want to delete the resource?"
         closeModal={closeModal}
       />

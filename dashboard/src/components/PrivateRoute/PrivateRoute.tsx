@@ -1,6 +1,6 @@
 import { CdsButton } from "@cds/react/button";
+import { CdsModal, CdsModalActions, CdsModalContent } from "@cds/react/modal";
 import * as React from "react";
-import Modal from "react-modal";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
 
 import "./PrivateRoute.css";
@@ -25,25 +25,30 @@ class PrivateRoute extends React.Component<IPrivateRouteProps> {
     };
     if (authenticated && Component) {
       return <Component {...props} />;
-    }
-    if (sessionExpired) {
+    } else {
       return (
-        <Modal className="centered-modal" isOpen={true}>
-          <div className="reload-modal">
-            <span>
-              {" "}
-              Your session has expired or the connection has been lost, please reload the page.
-            </span>
-            <div className="reload-modal-buttons">
-              <CdsButton onClick={refreshPage} type="button">
-                Reload
-              </CdsButton>
-            </div>
-          </div>
-        </Modal>
+        <>
+          {" "}
+          {sessionExpired ? (
+            <CdsModal closable={false} onCloseChange={refreshPage}>
+              <CdsModalContent>
+                {" "}
+                <p>
+                  Your session has expired or the connection has been lost, please reload the page.
+                </p>
+              </CdsModalContent>
+              <CdsModalActions>
+                <CdsButton onClick={refreshPage} type="button">
+                  Reload
+                </CdsButton>
+              </CdsModalActions>
+            </CdsModal>
+          ) : (
+            <Redirect to={{ pathname: "/login", state: { from: props.location } }} />
+          )}
+        </>
       );
     }
-    return <Redirect to={{ pathname: "/login", state: { from: props.location } }} />;
   };
 }
 
