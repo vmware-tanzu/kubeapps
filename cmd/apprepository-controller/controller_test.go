@@ -1041,10 +1041,8 @@ func Test_newSyncJob(t *testing.T) {
 				Spec: apprepov1alpha1.AppRepositorySpec{
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
-					FilterRules: apprepov1alpha1.FilterRulesSpec{
-						AnyOf: []apprepov1alpha1.FilterRule{
-							{JQ: ".name == $var1", Variables: map[string]string{"var1": "wordpress"}},
-						},
+					FilterRule: apprepov1alpha1.FilterRuleSpec{
+						JQ: ".name == $var1", Variables: map[string]string{"$var1": "wordpress"},
 					},
 				},
 			},
@@ -1089,7 +1087,7 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 										"--filter-rules",
-										`{"anyOf":[{"jq":".name == $var1","variables":{"var1":"wordpress"}}]}`,
+										`{"jq":".name == $var1","variables":{"$var1":"wordpress"}}`,
 									},
 									Env: []corev1.EnvVar{
 										{
