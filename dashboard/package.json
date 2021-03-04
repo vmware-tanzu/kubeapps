@@ -7,7 +7,7 @@
     "@cds/city": "^1.1.0",
     "@cds/core": "^5.0.3",
     "@cds/react": "^5.0.3",
-    "@clr/ui": "^5.0.2",
+    "@clr/ui": "^5.0.3",
     "@types/diff": "^5.0.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json-schema": "^7.0.7",
