@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "start": "jest --runInBand --ci --colors",
-    "start:window": "INTEGRATION_HEADLESS=false jest --runInBand"
+    "start:window": "INTEGRATION_HEADLESS=false jest --runInBand",
+    "snyk-protect": "snyk protect",
+    "prepare": "yarn run snyk-protect"
   },
   "dependencies": {
     "axios": "^0.21.1",
@@ -15,6 +17,8 @@
     "jest-circus": "^24.9.0",
     "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
-    "wait-on": "^3.3.0"
-  }
+    "wait-on": "^3.3.0",
+    "snyk": "^1.467.0"
+  },
+  "snyk": true
 }
