@@ -1,4 +1,4 @@
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import React, { useEffect, useRef } from "react";

@@ -29,11 +29,11 @@ import {
   timesIcon,
   trashIcon,
   uploadCloudIcon,
-} from "@clr/core/icon";
-import "@clr/core/icon/register.js";
+} from "@cds/core/icon";
+import "@cds/core/icon/register.js";
 import * as React from "react";
 
-import "@clr/ui/clr-ui.min.css";
+import "@clr/ui/clr-ui.min.css"; // light clarity UI theme
 
 Icons.addIcons(
   angleIcon,

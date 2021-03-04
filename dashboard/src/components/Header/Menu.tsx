@@ -2,8 +2,8 @@ import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 
 import { IClustersState } from "../../reducers/cluster";

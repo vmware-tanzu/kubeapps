@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";

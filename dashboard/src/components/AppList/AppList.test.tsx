@@ -2,7 +2,7 @@ import context from "jest-plugin-context";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
 
-import { deepClone } from "@clr/core/internal";
+import { deepClone } from "@cds/core/internal";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
