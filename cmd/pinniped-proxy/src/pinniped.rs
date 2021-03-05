@@ -14,13 +14,11 @@ use kube_derive::CustomResource;
 use log::debug;
 use native_tls::Identity;
 use openssl::{pkcs12::Pkcs12, pkey::PKey, x509::X509};
-use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use thiserror::Error;
 use url::Url;
 
-const PINNIPED_VERSION: &str = "PINNIPED_VERSION";
 const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
 const DEFAULT_PINNIPED_AUTHENTICATOR_NAME: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_NAME";
 const DEFAULT_PINNIPED_AUTHENTICATOR_TYPE: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_TYPE";
@@ -81,7 +79,7 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
 /// The rust derive macro together with the kube macro creates serializable and deserializable
 /// resources based on the struct. See https://docs.rs/kube/0.43.0/kube/ for more details.
 #[derive(CustomResource, Deserialize, Serialize, Clone, Debug)]
-#[kube(group = "login.concierge.pinniped.dev", version = "v1alpha1", kind = "TokenCredentialRequest")]
+#[kube(group = "login.concierge.pinniped.dev", version = "v1alpha1", kind = "TokenCredentialRequest", namespaced)]
 #[kube(status = "TokenCredentialRequestStatus")]
 pub struct TokenCredentialRequestSpec {
     // Bearer token supplied with the credential request.
@@ -133,17 +131,7 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
         Some(a) => a.to_string(),
         None => authorization.to_string(),
     };
-    
-    let pinniped_version = env::var(PINNIPED_VERSION)?;
-    let token_creds: Api<TokenCredentialRequest>;
-    
-    // Pinniped >= 0.6.0 changed the APIs to be global instead of namespaced
-    if Version::parse(&pinniped_version) >  Version::parse("0.5.0") {
-        token_creds = Api::all(client.clone());
-    }else{
-        token_creds = Api::namespaced(client.clone(), &pinniped_namespace);
-    }
-
+    let token_creds: Api<TokenCredentialRequest> = Api::namespaced(client.clone(), &pinniped_namespace);
     let mut cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
         token: Some(auth_token),
         authenticator: corev1::TypedLocalObjectReference {

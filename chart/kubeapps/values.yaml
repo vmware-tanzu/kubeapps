@@ -679,7 +679,6 @@ pinnipedProxy:
   defaultPinnipedNamespace: pinniped-concierge
   defaultAuthenticatorType: JWTAuthenticator
   defaultAuthenticatorName: jwt-authenticator
-  pinnipedVersion: 0.6.0
 
   ## OAuth2 Proxy containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
