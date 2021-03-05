@@ -1,5 +1,8 @@
 openapi: 3.0.3
 servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/kubeapps/Kubeapps/1.0.0
   - url: '{schema}://{url}:{port}'
     description: Development URL
     variables:
@@ -27,9 +30,6 @@ info:
   version: 1.0.0
   title: Kubeapps API
   termsOfService: 'https://github.com/kubeapps/kubeapps/blob/master/LICENSE'
-  contact:
-    email: containers@bitnami.com
-    name: Bitnami
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -47,7 +47,7 @@ tags:
       url: 'https://kubernetes.io/docs/concepts/overview/kubernetes-api/'
     description: 'Kubernetes API'
 externalDocs:
-  description: ''
+  description: Kuebapps GitHub repository
   url: 'https://github.com/kubeapps/kubeapps'
 paths:
   # Endpoints defined at cmd/assetsvc/main.go
