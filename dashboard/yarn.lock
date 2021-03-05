@@ -2022,7 +2022,7 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@26.x", "@types/jest@^26.0.3":
+"@types/jest@^26.0.3":
   version "26.0.20"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.20.tgz#cd2f2702ecf69e86b586e1f5223a60e454056307"
   integrity sha512-9zi2Y+5USJRxd0FsahERhBwlcvFh6D2GLQnY2FH2BzK8J9s9omvNHIbvABwIluXa0fD8XVKMLTO0aOEuUfACAA==
@@ -4918,10 +4918,10 @@ diff-sequences@^26.6.2:
   resolved "https://registry.yarnpkg.com/diff-sequences/-/diff-sequences-26.6.2.tgz#48ba99157de1923412eed41db6b6d4aa9ca7c0b1"
   integrity sha512-Mv/TDa3nZ9sbc5soK+OoA74BsS3mL37yixCvUAQkiuA4Wz6YtwP/K47n2rv2ovzHZvoiQeA5FTQOschKkEwB0Q==
 
-diff2html@^3.0.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/diff2html/-/diff2html-3.2.0.tgz#93fda2cd06ae2c7847e1380d6f0afb1cb9fea30e"
-  integrity sha512-XbiY9AuQNuGKq107b4PlimQJsC8f1qomPqRbvuZ/ShCJaPVkn5rvE2I62ZwQSJotoGmqQ0pdvMhQx5Fd76IrCg==
+diff2html@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/diff2html/-/diff2html-3.3.0.tgz#b9965b36a2fbb35f362cbc4076741e0fbf905758"
+  integrity sha512-gkMggUi5U/QOhPuIi7d7mugP1tFyZucvvbJNX4R2v0K1EQHpwRe/EWM2YUpU2icgX5VPFcG+5Yq0maN3ILnq0w==
   dependencies:
     diff "4.0.2"
     hogan.js "3.0.2"
@@ -13805,12 +13805,11 @@ tryer@^1.0.1:
   resolved "https://registry.yarnpkg.com/tryer/-/tryer-1.0.1.tgz#f2c85406800b9b0f74c9f7465b81eaad241252f8"
   integrity sha512-c3zayb8/kWWpycWYg87P71E1S1ZL6b6IJxfb5fvsUgsf0S2MVGaDhDXXjDMpdCpfWXqptc+4mXwmiy1ypXqRAA==
 
-ts-jest@^26.5.2:
-  version "26.5.2"
-  resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-26.5.2.tgz#5281d6b44c2f94f71205728a389edc3d7995b0c4"
-  integrity sha512-bwyJ2zJieSugf7RB+o8fgkMeoMVMM2KPDE0UklRLuACxjwJsOrZNo6chrcScmK33YavPSwhARffy8dZx5LJdUQ==
+ts-jest@^26.5.3:
+  version "26.5.3"
+  resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-26.5.3.tgz#a6ee00ba547be3b09877550df40a1465d0295554"
+  integrity sha512-nBiiFGNvtujdLryU7MiMQh1iPmnZ/QvOskBbD2kURiI1MwqvxlxNnaAB/z9TbslMqCsSbu5BXvSSQPc5tvHGeA==
   dependencies:
-    "@types/jest" "26.x"
     bs-logger "0.x"
     buffer-from "1.x"
     fast-json-stable-stringify "2.x"
