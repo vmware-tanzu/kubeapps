@@ -148,11 +148,10 @@ func (r *HelmRepo) Repo() *models.RepoInternal {
 	return r.RepoInternal
 }
 
-func satisfy(chartInput map[string]interface{}, rule *apprepov1alpha1.FilterRuleSpec) (bool, error) {
+func compileJQ(rule *apprepov1alpha1.FilterRuleSpec) (*gojq.Code, []interface{}, error) {
 	query, err := gojq.Parse(rule.JQ)
 	if err != nil {
-		return false, fmt.Errorf("Unable to parse JQuery: %v", err)
-
+		return nil, nil, fmt.Errorf("Unable to parse jq query: %v", err)
 	}
 	varNames := []string{}
 	varValues := []interface{}{}
@@ -165,17 +164,20 @@ func satisfy(chartInput map[string]interface{}, rule *apprepov1alpha1.FilterRule
 		gojq.WithVariables(varNames),
 	)
 	if err != nil {
-		return false, fmt.Errorf("Unable to compile JQuery: %v", err)
+		return nil, nil, fmt.Errorf("Unable to compile jq: %v", err)
 	}
+	return code, varValues, nil
+}
 
-	res, _ := code.Run(chartInput, varValues...).Next()
+func satisfy(chartInput map[string]interface{}, code *gojq.Code, vars []interface{}) (bool, error) {
+	res, _ := code.Run(chartInput, vars...).Next()
 	if err, ok := res.(error); ok {
-		return false, fmt.Errorf("Unable to compile JQuery: %v", err)
+		return false, fmt.Errorf("Unable to run jq: %v", err)
 	}
 
 	satisfied, ok := res.(bool)
 	if !ok {
-		return false, fmt.Errorf("Unable to convert JQuery result to boolean. Got: %v", res)
+		return false, fmt.Errorf("Unable to convert jq result to boolean. Got: %v", res)
 	}
 	return satisfied, nil
 }
@@ -184,6 +186,10 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 	if filterRule == nil {
 		// No filter
 		return charts, nil
+	}
+	jqCode, vars, err := compileJQ(filterRule)
+	if err != nil {
+		return nil, err
 	}
 	result := []models.Chart{}
 	for _, chart := range charts {
@@ -198,7 +204,7 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 			return nil, fmt.Errorf("Unable to parse chart: %v", err)
 		}
 
-		satisfied, err := satisfy(chartInput, filterRule)
+		satisfied, err := satisfy(chartInput, jqCode, vars)
 		if err != nil {
 			return nil, err
 		}
