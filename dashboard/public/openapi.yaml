@@ -1,8 +1,5 @@
 openapi: 3.0.3
 servers:
-  # Added by API Auto Mocking Plugin
-  - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/kubeapps/Kubeapps/1.0.0
   - url: '{schema}://{url}:{port}'
     description: Development URL
     variables:
