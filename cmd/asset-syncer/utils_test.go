@@ -1296,6 +1296,19 @@ func Test_filterCharts(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"ignores an empty rule",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{},
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {

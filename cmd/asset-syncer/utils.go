@@ -183,7 +183,7 @@ func satisfy(chartInput map[string]interface{}, code *gojq.Code, vars []interfac
 }
 
 func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleSpec) ([]models.Chart, error) {
-	if filterRule == nil {
+	if filterRule == nil || filterRule.JQ == "" {
 		// No filter
 		return charts, nil
 	}
