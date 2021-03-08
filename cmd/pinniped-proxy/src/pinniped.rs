@@ -14,13 +14,12 @@ use kube_derive::CustomResource;
 use log::debug;
 use native_tls::Identity;
 use openssl::{pkcs12::Pkcs12, pkey::PKey, x509::X509};
-use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use thiserror::Error;
 use url::Url;
 
-const PINNIPED_VERSION: &str = "PINNIPED_VERSION";
+const NAMESPACED_TOKEN_CREDENTIAL_REQUESTS: &str = "NAMESPACED_TOKEN_CREDENTIAL_REQUESTS";
 const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
 const DEFAULT_PINNIPED_AUTHENTICATOR_NAME: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_NAME";
 const DEFAULT_PINNIPED_AUTHENTICATOR_TYPE: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_TYPE";
@@ -134,14 +133,14 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
         None => authorization.to_string(),
     };
     
-    let pinniped_version = env::var(PINNIPED_VERSION)?;
+    let ns_token_cred_req: bool = env::var(NAMESPACED_TOKEN_CREDENTIAL_REQUESTS).unwrap_or("false".into()).parse().unwrap();
     let token_creds: Api<TokenCredentialRequest>;
     
-    // Pinniped >= 0.6.0 changed the APIs to be global instead of namespaced
-    if Version::parse(&pinniped_version) >  Version::parse("0.5.0") {
-        token_creds = Api::all(client.clone());
-    }else{
+    // If ns_token_cred_req is set (for pinniped < 0.6) the API calls are namespaced instead of globals.
+    if ns_token_cred_req {
         token_creds = Api::namespaced(client.clone(), &pinniped_namespace);
+    }else{
+        token_creds = Api::all(client.clone());
     }
 
     let mut cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
