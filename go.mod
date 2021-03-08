@@ -12,7 +12,7 @@ require (
 	github.com/arschles/assert v1.0.0
 	github.com/bugsnag/bugsnag-go v1.5.0 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
-	github.com/containerd/containerd v1.4.3
+	github.com/containerd/containerd v1.4.4
 	github.com/deislabs/oras v0.8.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/docker/distribution v2.7.1+incompatible
@@ -26,7 +26,7 @@ require (
 	github.com/go-openapi/spec v0.19.4 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.5
 	github.com/gorilla/handlers v1.4.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gregjones/httpcache v0.0.0-20181110185634-c63ab54fda8f // indirect
@@ -35,7 +35,7 @@ require (
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47
-	github.com/lib/pq v1.9.0
+	github.com/lib/pq v1.10.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.0
