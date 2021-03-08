@@ -669,9 +669,9 @@ pinnipedProxy:
   defaultAuthenticatorType: JWTAuthenticator
   defaultAuthenticatorName: jwt-authenticator
 
-  # If the Pinniped version is less 0.6, API requests are namespaced, set
+  # If the Pinniped version is less than 0.6, API requests are namespaced, set
   # the namespacedTokenCredentialRequests variable to true:
-  namespacedTokenCredentialRequests: false
+  # namespacedTokenCredentialRequests: true
 
   ## OAuth2 Proxy containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
