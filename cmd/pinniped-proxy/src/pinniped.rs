@@ -19,6 +19,7 @@ use serde_json;
 use thiserror::Error;
 use url::Url;
 
+const DEFAULT_PINNIPED_API_SUFFIX: &str = "DEFAULT_PINNIPED_API_SUFFIX";
 const NAMESPACED_TOKEN_CREDENTIAL_REQUESTS: &str = "NAMESPACED_TOKEN_CREDENTIAL_REQUESTS";
 const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
 const DEFAULT_PINNIPED_AUTHENTICATOR_NAME: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_NAME";
@@ -79,6 +80,8 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
 ///
 /// The rust derive macro together with the kube macro creates serializable and deserializable
 /// resources based on the struct. See https://docs.rs/kube/0.43.0/kube/ for more details.
+
+// TODO(agamez): API group should be configurable, otherwise it won't work with --api-group-suffix
 #[derive(CustomResource, Deserialize, Serialize, Clone, Debug)]
 #[kube(group = "login.concierge.pinniped.dev", version = "v1alpha1", kind = "TokenCredentialRequest")]
 #[kube(status = "TokenCredentialRequestStatus")]
@@ -133,22 +136,14 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
         None => authorization.to_string(),
     };
     
-    let ns_token_cred_req: bool = env::var(NAMESPACED_TOKEN_CREDENTIAL_REQUESTS).unwrap_or("false".into()).parse().unwrap();
-    let token_creds: Api<TokenCredentialRequest>;
+    let token_creds = get_token_credential_request(client, &pinniped_namespace);
     
-    // If ns_token_cred_req is set (for pinniped < 0.6) the API calls are namespaced instead of globals.
-    if ns_token_cred_req {
-        token_creds = Api::namespaced(client.clone(), &pinniped_namespace);
-    }else{
-        token_creds = Api::all(client.clone());
-    }
-
     let mut cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
         token: Some(auth_token),
         authenticator: corev1::TypedLocalObjectReference {
             name: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME).with_context(|| format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_NAME))?,
             kind: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE).with_context(|| format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_TYPE))?,
-            api_group: Some("authentication.concierge.pinniped.dev".into()),
+            api_group: Some(get_pinniped_authenticator_api_group().into()),
         },
     });
     // The pinniped authenticator cache requires the namespace of the request to be included
@@ -162,6 +157,25 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
             Err(anyhow::anyhow!("err creating token exchange: {:#?}\n{}", serde_json::to_string(&cred_request).unwrap(), e))
         },
     }
+}
+    
+fn get_token_credential_request(client: Client, pinniped_namespace: &str) -> Api<TokenCredentialRequest> {
+    let ns_token_cred_req: bool = env::var(NAMESPACED_TOKEN_CREDENTIAL_REQUESTS).unwrap_or("false".into()).parse().unwrap();
+    if ns_token_cred_req {
+        return Api::namespaced(client.clone(), &pinniped_namespace);
+    } else {
+        return Api::all(client.clone());
+    }
+}
+
+fn get_pinniped_authenticator_api_group() ->  String  {
+    let api_suffix = env::var(DEFAULT_PINNIPED_API_SUFFIX).unwrap_or("pinniped.dev".into());
+    return format!("{}{}", "authentication.concierge.", &api_suffix).to_string();
+}
+
+fn get_pinniped_login_api_group() ->  String  {
+    let api_suffix = env::var(DEFAULT_PINNIPED_API_SUFFIX).unwrap_or("pinniped.dev".into());
+    return format!("{}{}", "login.concierge.", &api_suffix).to_string();
 }
 
 #[macro_use]
@@ -212,4 +226,43 @@ mod tests {
             },
         }
     }
+
+    #[test]
+    #[serial(envtest)]
+    // https://github.com/tokio-rs/tokio/issues/1837
+    #[cfg(feature = "rt-threaded")]
+    fn test_get_token_credential_request() -> Result<()> {
+        env::set_var(NAMESPACED_TOKEN_CREDENTIAL_REQUESTS, "false");
+        let k8s_api_server_url = "https://example.com";
+        let pinniped_namespace = "pinniped-concierge";
+        let client = Client::try_default().await?;
+
+        let actual_tcr = get_token_credential_request(client, pinniped_namespace);
+        let expected_tcr: Api<TokenCredentialRequest> = Api::all(client.clone());
+
+        assert_eq!(actual_tcr, expected_tcr);
+        Ok(())
+    }
+
+    #[test]
+    #[serial(envtest)]
+    fn test_get_api_group_getters() -> Result<()> {
+        let authenticator_api_group =  get_pinniped_authenticator_api_group();
+        assert_eq!(authenticator_api_group, "authentication.concierge.pinniped.dev");
+
+        let login_api_group = get_pinniped_login_api_group();
+        assert_eq!(login_api_group, "login.concierge.pinniped.dev");
+
+        env::set_var(DEFAULT_PINNIPED_API_SUFFIX, "foo.bar");
+        let authenticator_api_group =  get_pinniped_authenticator_api_group();
+        assert_eq!(authenticator_api_group, "authentication.concierge.foo.bar");
+
+        let login_api_group = get_pinniped_login_api_group();
+        assert_eq!(login_api_group, "login.concierge.foo.bar");
+        Ok(())
+}
+    
+
+
+
 }
