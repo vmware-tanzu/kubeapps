@@ -668,6 +668,7 @@ pinnipedProxy:
   defaultPinnipedNamespace: pinniped-concierge
   defaultAuthenticatorType: JWTAuthenticator
   defaultAuthenticatorName: jwt-authenticator
+  defaultPinnipedAPISuffix: pinniped.dev
 
   # If the Pinniped version is less than 0.6, API requests are namespaced, set
   # the namespacedTokenCredentialRequests variable to true:

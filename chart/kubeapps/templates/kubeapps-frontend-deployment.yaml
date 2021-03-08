@@ -113,7 +113,9 @@ spec:
               value: {{ .Values.pinnipedProxy.defaultAuthenticatorType }}
             - name: DEFAULT_PINNIPED_AUTHENTICATOR_NAME
               value: {{ .Values.pinnipedProxy.defaultAuthenticatorName }}
-          {{- if and .Values.pinnipedProxy.namespacedTokenCredentialRequests }}
+            - name: DEFAULT_PINNIPED_API_SUFFIX
+              value: {{ .Values.pinnipedProxy.defaultAuthenticatorName }}
+          {{- if and .Values.pinnipedProxy.defaultPinnipedAPISuffix }}
             - name: NAMESPACED_TOKEN_CREDENTIAL_REQUESTS
               value: "true"
           {{- end }}
