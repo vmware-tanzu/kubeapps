@@ -127,7 +127,7 @@ function DeploymentFormBody({
         </div>
         <div className="deployment-form-control-buttons">
           <CdsButton status="primary" type="submit">
-            <CdsIcon shape="deploy" inverse={true} /> Deploy
+            <CdsIcon shape="deploy" /> Deploy
           </CdsButton>
           {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
             https://github.com/vmware/clarity/issues/5038

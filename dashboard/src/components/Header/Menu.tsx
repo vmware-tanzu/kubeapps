@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 
@@ -62,9 +62,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
           aria-expanded={open}
           aria-haspopup="menu"
         >
-          <Row>
-            <CdsIcon size="md" shape="applications" solid={true} inverse={true} />
-          </Row>
+          <Row>{<CdsIcon size="md" shape="applications" solid={true} />}</Row>
         </button>
         <CSSTransition in={open} timeout={200} classNames="transition-drawer">
           <div className="dropdown-menu dropdown-configuration-menu" role="menu" hidden={!open}>
@@ -95,8 +93,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
             </div>
             <div>
               <div className="dropdown-menu-subtext">
-                Made with <CdsIcon size="sm" shape="heart" inverse={true} solid={true} /> by Bitnami
-                and{" "}
+                Made with <CdsIcon size="sm" shape="heart" solid={true} /> by Bitnami and{" "}
                 <a
                   href="https://github.com/kubeapps/kubeapps/graphs/contributors"
                   className="type-color-white"
@@ -110,8 +107,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 {appVersion}
                 <br />
                 <Link to={"/docs"}>
-                  API documentation portal{" "}
-                  <CdsIcon size="sm" shape="network-globe" inverse={true} solid={true} />
+                  API documentation portal <CdsIcon size="sm" shape="network-globe" solid={true} />
                 </Link>
                 <CdsToggle className="dropdown-theme-toggle" control-align="right">
                   <label>
@@ -119,7 +115,6 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                       <CdsIcon
                         size="sm"
                         shape={theme === SupportedThemes.dark ? "moon" : "sun"}
-                        inverse={true}
                         solid={true}
                       />
                     </span>

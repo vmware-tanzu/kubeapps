@@ -103,11 +103,11 @@ function ContextSelector() {
               <div className="kubeapps-dropdown-section">
                 <span className="kubeapps-dropdown-header">Current Context</span>
                 <div className="kubeapps-dropdown-items">
-                  <CdsIcon size="sm" shape="cluster" inverse={true} />
+                  <CdsIcon size="sm" shape="cluster" />
                   <label htmlFor="clusters" className="kubeapps-dropdown-text">
                     {clusters.currentCluster}
                   </label>
-                  <CdsIcon size="sm" shape="file-group" inverse={true} />
+                  <CdsIcon size="sm" shape="file-group" />
                   <label htmlFor="namespaces" className="kubeapps-dropdown-text">
                     {namespaceSelected}
                   </label>
@@ -118,7 +118,7 @@ function ContextSelector() {
               <div
                 className={`kubeapps-align-center angle ${open ? "angle-opened" : "angle-closed"}`}
               >
-                <CdsIcon shape="angle" inverse={true} direction={open ? "up" : "down"} />
+                <CdsIcon shape="angle" direction={open ? "up" : "down"} />
               </div>
             </Column>
           </Row>
@@ -128,7 +128,7 @@ function ContextSelector() {
             Select a cluster and a namespace to manage applications
           </span>
           <div className="dropdown-menu-padding" role="menuitem">
-            <CdsIcon size="sm" shape="cluster" inverse={true} />
+            <CdsIcon size="sm" shape="cluster" />
             <span className="kubeapps-dropdown-text">Cluster</span>
             <div className="clr-select-wrapper">
               <select
@@ -148,7 +148,7 @@ function ContextSelector() {
             </div>
           </div>
           <div className="dropdown-menu-padding" role="menuitem">
-            <CdsIcon size="sm" shape="file-group" inverse={true} />
+            <CdsIcon size="sm" shape="file-group" />
             <span className="kubeapps-dropdown-text">Namespace</span>
             <div className="clr-select-wrapper">
               <select
@@ -193,7 +193,6 @@ function ContextSelector() {
                     ? "Create a new namespace in the current cluster"
                     : "You don't have permission to create namespaces on the cluster"
                 }
-                status="inverse"
                 size="sm"
                 action="flat"
                 className="flat-btn"
