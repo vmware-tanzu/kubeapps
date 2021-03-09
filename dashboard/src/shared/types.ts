@@ -370,6 +370,11 @@ export interface IClusterServiceVersion extends IResource {
   spec: IClusterServiceVersionSpec;
 }
 
+export interface IAppRepositoryFilter {
+  jq: string;
+  variables?: { [key: string]: string };
+}
+
 export interface IAppState {
   isFetching: boolean;
   error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
@@ -455,6 +460,7 @@ export interface IAppRepository
       dockerRegistrySecrets?: string[];
       ociRepositories?: string[];
       tlsInsecureSkipVerify?: boolean;
+      filterRule?: IAppRepositoryFilter;
     },
     undefined
   > {}

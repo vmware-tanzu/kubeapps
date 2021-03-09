@@ -1,6 +1,6 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
-import { ICreateAppRepositoryResponse } from "./types";
+import { IAppRepositoryFilter, ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
 export class AppRepository {
@@ -36,6 +36,7 @@ export class AppRepository {
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
+    filter?: IAppRepositoryFilter,
   ) {
     const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.update(cluster, namespace, name),
@@ -50,6 +51,7 @@ export class AppRepository {
           registrySecrets,
           ociRepositories,
           tlsInsecureSkipVerify: skipTLS,
+          filter,
         },
       },
     );
@@ -78,6 +80,7 @@ export class AppRepository {
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
+    filter?: IAppRepositoryFilter,
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(cluster, namespace),
@@ -92,6 +95,7 @@ export class AppRepository {
           registrySecrets,
           ociRepositories,
           tlsInsecureSkipVerify: skipTLS,
+          filterRule: filter,
         },
       },
     );
