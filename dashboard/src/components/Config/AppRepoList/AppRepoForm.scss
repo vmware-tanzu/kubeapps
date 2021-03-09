@@ -1,4 +1,6 @@
 .cds-textarea-fix {
+  // Need to re-set the font property to avoid
+  // https://github.com/vmware/clarity/issues/5687
   font: caption;
 }
 
