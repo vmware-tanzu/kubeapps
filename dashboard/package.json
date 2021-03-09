@@ -66,7 +66,7 @@
     "react-tooltip": "^4.2.14",
     "react-transition-group": "^4.4.1",
     "redux": "^4.0.0",
-    "redux-devtools-extension": "^2.13.5",
+    "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.2.0",
     "remark-gfm": "^1.0.0",
     "seamless-immutable": "^7.1.4",
