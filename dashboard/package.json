@@ -84,7 +84,7 @@
     "build": "npm-run-all build-css compile-lang build-js",
     "test": "yarn run build-css && yarn run compile-lang && react-scripts test",
     "eject": "react-scripts eject",
-    "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css",
+    "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
     "tslint-check": "tslint-config-prettier-check ./tslint.ci.json",
     "prettier": "prettier --write 'src/**/*.{ts,tsx,scss}'",
     "prettier-check": "prettier --check 'src/**/*.{ts,tsx,scss}'",

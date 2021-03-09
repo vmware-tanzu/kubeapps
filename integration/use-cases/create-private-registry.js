@@ -16,30 +16,30 @@ test("Creates a private registry", async () => {
 
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
   const repoName = "my-repo-" + randomNumber;
-  await page.type("#kubeapps-repo-name", repoName);
+  await page.type("cds-form-group > cds-input:nth-child(1) > input", repoName);
 
   await page.type(
-    "#kubeapps-repo-url",
+    "cds-form-group > cds-input:nth-child(2) > input",
     "http://chartmuseum-chartmuseum.kubeapps:8080"
   );
 
   await expect(page).toClick("label", { text: "Basic Auth" });
 
   // Credentials from e2e-test.sh
-  await page.type("#kubeapps-repo-username", "admin");
-  await page.type("#kubeapps-repo-password", "password");
+  await page.type("cds-form-group > div:nth-child(3) > div > div:nth-child(1) > cds-input:nth-child(1) > input", "admin");
+  await page.type("cds-form-group > div:nth-child(3) > div > div:nth-child(1) > cds-input:nth-child(3) > input", "password");
 
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
   await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
-  await page.type("#kubeapps-docker-cred-secret-name", secret);
+  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(2) > input", secret);
   await page.type(
-    "#kubeapps-docker-cred-server",
+    "cds-form-group > div.docker-creds-subform > cds-input:nth-child(3) > input",
     "https://index.docker.io/v1/"
   );
-  await page.type("#kubeapps-docker-cred-username", "user");
-  await page.type("#kubeapps-docker-cred-password", "password");
-  await page.type("#kubeapps-docker-cred-email", "user@example.com");
+  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(4) > input", "user");
+  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(5) > input", "password");
+  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(6) > input", "user@example.com");
   await expect(page).toClick(".btn-info-outline", { text: "Submit" });
 
   // Select the new secret

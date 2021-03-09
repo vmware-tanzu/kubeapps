@@ -1,6 +1,5 @@
 import actions from "actions";
 import { shallow } from "enzyme";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { ISecret } from "shared/types";
@@ -21,6 +20,7 @@ const defaultProps = {
   togglePullSecret: jest.fn(),
   selectedImagePullSecrets: {},
   namespace: "default",
+  appVersion: "1.0.0",
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
