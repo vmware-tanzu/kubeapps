@@ -61,7 +61,7 @@
     "react-router-dom": "^5.2.0",
     "react-router-hash-link": "^2.4.0",
     "react-switch": "^6.0.0",
-    "react-tabs": "^3.2.0",
+    "react-tabs": "^3.2.1",
     "react-test-renderer": "^16.2.0",
     "react-tooltip": "^4.2.14",
     "react-transition-group": "^4.4.1",
