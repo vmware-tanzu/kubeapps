@@ -61,7 +61,7 @@ test("Creates a private registry", async () => {
   const appName = "my-app" + randomNumber;
   await page.type("#releaseName", appName);
 
-  await expect(page).toMatch("Deploy v7.3.15", { timeout: 10000 });
+  await expect(page).toMatch("Deploy 7.3.15", { timeout: 10000 });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
