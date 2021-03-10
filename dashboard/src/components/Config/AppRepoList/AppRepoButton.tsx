@@ -87,8 +87,7 @@ export function AppRepoAddButton({
         disabled={disabled}
         title={title}
       >
-        {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
-        {text || "Add App Repository"}
+        {primary ? <CdsIcon shape="plus-circle" /> : <></>} {text || "Add App Repository"}
       </CdsButton>
       {modalIsOpen && (
         <CdsModal size={"lg"} onCloseChange={closeModal}>

@@ -1022,6 +1022,89 @@ func Test_newSyncJob(t *testing.T) {
 				},
 			},
 		},
+		{
+			"Repository with filters",
+			"",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+					FilterRule: apprepov1alpha1.FilterRuleSpec{
+						JQ: ".name == $var1", Variables: map[string]string{"$var1": "wordpress"},
+					},
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							},
+						),
+					},
+				},
+				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
+						},
+						Spec: corev1.PodSpec{
+							RestartPolicy: "OnFailure",
+							Containers: []corev1.Container{
+								{
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
+									Args: []string{
+										"sync",
+										"--database-url=postgresql.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
+										"--namespace=kubeapps",
+										"my-charts",
+										"https://charts.acme.com/my-charts",
+										"helm",
+										"--filter-rules",
+										`{"jq":".name == $var1","variables":{"$var1":"wordpress"}}`,
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "DB_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+										},
+									},
+									VolumeMounts: nil,
+								},
+							},
+							Volumes: nil,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

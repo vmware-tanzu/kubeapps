@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
@@ -85,7 +85,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
             disabled={alreadyInstalled}
             onClick={redirect}
           >
-            <CdsIcon shape="deploy" inverse={true} /> Deploy
+            <CdsIcon shape="deploy" /> Deploy
           </CdsButton>,
         ]}
       />
@@ -98,7 +98,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
             <OperatorDescription description={currentCSVDesc.description} />
             <div className="after-readme-button">
               <CdsButton status="primary" disabled={alreadyInstalled} onClick={redirect}>
-                <CdsIcon shape="deploy" inverse={true} /> Deploy
+                <CdsIcon shape="deploy" /> Deploy
               </CdsButton>
             </div>
           </Column>
