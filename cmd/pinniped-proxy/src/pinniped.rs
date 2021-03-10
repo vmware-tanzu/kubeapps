@@ -120,16 +120,21 @@ pub struct ClusterCredential {
     client_key_data: String,
 }
 
+fn get_client_config(k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8], pinniped_namespace: String) -> Result<kube::Client> {
+        let mut config = Config::new(Url::parse(k8s_api_server_url).context("Failed parsing url for exchange")?);
+        config.default_ns = pinniped_namespace.clone();
+        let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
+        let der = x509.to_der().context("error creating der from x509")?;
+        config.root_cert = Some(vec!(der));
+
+        Ok(Client::new(Service::try_from(config)?))
+}
+    
 /// call_pinniped_exchange returns the resulting TokenCredentialRequest with Status after requesting a token credential exchange.
 async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8]) -> Result<TokenCredentialRequest> {
     let pinniped_namespace = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
 
-    let mut config = Config::new(Url::parse(k8s_api_server_url).context("Failed parsing url for exchange")?);
-    config.default_ns = pinniped_namespace.clone();
-    let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
-    let der = x509.to_der().context("error creating der from x509")?;
-    config.root_cert = Some(vec!(der));
-    let client = Client::new(Service::try_from(config)?);
+    let client = get_client_config(k8s_api_server_url, k8s_api_ca_cert_data, pinniped_namespace.clone())?;
 
     let auth_token = match authorization.to_string().strip_prefix("Bearer ") {
         Some(a) => a.to_string(),
@@ -227,22 +232,8 @@ mod tests {
         }
     }
 
-    #[test]
-    #[serial(envtest)]
-    // https://github.com/tokio-rs/tokio/issues/1837
-    #[cfg(feature = "rt-threaded")]
-    fn test_get_token_credential_request() -> Result<()> {
-        env::set_var(NAMESPACED_TOKEN_CREDENTIAL_REQUESTS, "false");
-        let k8s_api_server_url = "https://example.com";
-        let pinniped_namespace = "pinniped-concierge";
-        let client = Client::try_default().await?;
-
-        let actual_tcr = get_token_credential_request(client, pinniped_namespace);
-        let expected_tcr: Api<TokenCredentialRequest> = Api::all(client.clone());
-
-        assert_eq!(actual_tcr, expected_tcr);
-        Ok(())
-    }
+    // TODO(agamez): create a test_get_token_credential_request with a fake API server and record 
+    // whether the URLs are namespaced or not.
 
     #[test]
     #[serial(envtest)]
@@ -261,8 +252,5 @@ mod tests {
         assert_eq!(login_api_group, "login.concierge.foo.bar");
         Ok(())
 }
-    
-
-
 
 }
