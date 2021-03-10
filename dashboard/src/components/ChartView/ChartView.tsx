@@ -92,7 +92,7 @@ function ChartView({
               )}
             >
               <CdsButton status="primary">
-                <CdsIcon shape="deploy" inverse={true} /> Deploy
+                <CdsIcon shape="deploy" /> Deploy
               </CdsButton>
             </Link>
           }
@@ -125,7 +125,7 @@ function ChartView({
                 )}
               >
                 <CdsButton status="primary">
-                  <CdsIcon shape="deploy" inverse={true} /> Deploy
+                  <CdsIcon shape="deploy" /> Deploy
                 </CdsButton>
               </Link>
             </div>

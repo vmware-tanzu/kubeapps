@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -41,7 +41,7 @@ function RollbackButton({ cluster, namespace, releaseName, revision }: IRollback
         error={error}
       />
       <CdsButton status="primary" onClick={openModal}>
-        <CdsIcon shape="rewind" inverse={true} /> Rollback
+        <CdsIcon shape="rewind" /> Rollback
       </CdsButton>
     </>
   );

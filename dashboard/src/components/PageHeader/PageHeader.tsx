@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import Icon from "components/Icon/Icon";
 import Column from "components/js/Column";
 import Row from "components/js/Row";

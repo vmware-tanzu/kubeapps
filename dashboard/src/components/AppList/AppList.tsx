@@ -6,7 +6,6 @@ import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { push } from "connected-react-router";
 import * as qs from "qs";
-import * as React from "react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -118,7 +117,7 @@ function AppList() {
         buttons={[
           <Link to={url.app.catalog(cluster, namespace)} key="deploy-button">
             <CdsButton status="primary">
-              <CdsIcon shape="deploy" inverse={true} /> Deploy
+              <CdsIcon shape="deploy" /> Deploy
             </CdsButton>
           </Link>,
         ]}

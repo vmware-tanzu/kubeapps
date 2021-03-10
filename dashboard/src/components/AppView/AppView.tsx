@@ -2,7 +2,7 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { assignWith } from "lodash";
 import { get } from "lodash";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import YAML from "yaml";
 import placeholder from "../../placeholder.png";
 
@@ -184,7 +184,7 @@ export default function AppView() {
         buttons={[
           <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)} key="upgrade-button">
             <CdsButton status="primary">
-              <CdsIcon shape="upload-cloud" inverse={true} /> Upgrade
+              <CdsIcon shape="upload-cloud" /> Upgrade
             </CdsButton>
           </Link>,
           <RollbackButton
