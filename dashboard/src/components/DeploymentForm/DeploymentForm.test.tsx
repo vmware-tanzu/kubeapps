@@ -1,11 +1,11 @@
-import { mount, shallow } from "enzyme";
+import { shallow } from "enzyme";
 import * as Moniker from "moniker-native";
-import * as React from "react";
 import * as ReactRedux from "react-redux";
 
 import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IChartState, IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
@@ -47,7 +47,10 @@ afterEach(() => {
 
 it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
-  mount(<DeploymentForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
+  mountWrapper(
+    defaultStore,
+    <DeploymentForm {...defaultProps} fetchChartVersions={fetchChartVersions} />,
+  );
   expect(fetchChartVersions).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.chartNamespace,
@@ -94,14 +97,16 @@ describe("renders an error", () => {
 it("renders a release name by default, relying in Monickers output", () => {
   monikerChooseMock.mockReturnValueOnce("foo").mockReturnValueOnce("bar");
 
-  let wrapper = mount(
+  let wrapper = mountWrapper(
+    defaultStore,
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
   const name1 = wrapper.find("#releaseName").prop("value");
   expect(name1).toBe("foo");
 
   // When reloading the name should change
-  wrapper = mount(
+  wrapper = mountWrapper(
+    defaultStore,
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
   const name2 = wrapper.find("#releaseName").prop("value");
@@ -109,7 +114,8 @@ it("renders a release name by default, relying in Monickers output", () => {
 });
 
 it("forwards the appValues when modified", () => {
-  const wrapper = mount(
+  const wrapper = mountWrapper(
+    defaultStore,
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
   const handleValuesChange: (v: string) => void = wrapper
@@ -126,13 +132,12 @@ it("changes values if the version changes and it has not been modified", () => {
   const selected = {
     versions: [versions[0], { ...versions[0], attributes: { version: "1.2.4" } } as IChartVersion],
     version: versions[0],
+    values: "bar: foo",
   };
-  const wrapper = mount(<DeploymentForm {...defaultProps} selected={selected} />);
-  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("");
-
-  wrapper.find("select").simulate("change", { target: { value: "1.2.4" } });
-  wrapper.setProps({ selected: { ...selected, values: "bar: foo" } });
-  wrapper.update();
+  const wrapper = mountWrapper(
+    defaultStore,
+    <DeploymentForm {...defaultProps} selected={selected} />,
+  );
   expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("bar: foo");
 });
 
@@ -141,7 +146,10 @@ it("keep values if the version changes", () => {
     versions: [versions[0], { ...versions[0], attributes: { version: "1.2.4" } } as IChartVersion],
     version: versions[0],
   };
-  const wrapper = mount(<DeploymentForm {...defaultProps} selected={selected} />);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <DeploymentForm {...defaultProps} selected={selected} />,
+  );
 
   const handleValuesChange: (v: string) => void = wrapper
     .find(DeploymentFormBody)
@@ -166,7 +174,8 @@ it("triggers a deployment when submitting the form", async () => {
   const schema = { properties: { foo: { type: "string", form: true } } };
   const deployChart = jest.fn().mockReturnValue(true);
   const push = jest.fn();
-  const wrapper = mount(
+  const wrapper = mountWrapper(
+    defaultStore,
     <DeploymentForm
       {...defaultProps}
       selected={{ versions, version: versions[0], schema }}

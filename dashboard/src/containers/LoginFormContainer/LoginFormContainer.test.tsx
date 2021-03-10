@@ -1,11 +1,11 @@
 import { shallow } from "enzyme";
 import { Location } from "history";
-import * as React from "react";
 import { IAuthState } from "reducers/auth";
 import { IClustersState } from "reducers/cluster";
 import { IConfigState } from "reducers/config";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { SupportedThemes } from "shared/Config";
 import LoginForm from "./LoginFormContainer";
 
 const mockStore = configureMockStore([thunk]);
@@ -37,6 +37,7 @@ const makeStore = (
     oauthLogoutURI: "",
     clusters: [],
     authProxySkipLoginPage: false,
+    theme: SupportedThemes.light,
   };
   const clusters: IClustersState = {
     currentCluster: "default",

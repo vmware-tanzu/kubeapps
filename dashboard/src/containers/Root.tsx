@@ -1,9 +1,9 @@
 import Header from "components/Header";
-import HeadManager, { SupportedThemes } from "components/HeadManager/HeadManager";
+import HeadManager from "components/HeadManager/HeadManager";
 import Layout from "components/Layout";
 import LoadingWrapper from "components/LoadingWrapper";
 import { ConnectedRouter } from "connected-react-router";
-import React, { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import I18n, { ISupportedLangs } from "shared/I18n";
@@ -18,18 +18,8 @@ async function initLocale() {
   return await I18n.getCustomConfig(ISupportedLangs[lang]);
 }
 
-function getInitialTheme() {
-  const userPreferredTheme = localStorage.getItem("theme");
-  const browserPreferredTheme =
-    window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? SupportedThemes.dark
-      : SupportedThemes.light;
-  return (userPreferredTheme as SupportedThemes) || browserPreferredTheme || SupportedThemes.light;
-}
-
 function Root() {
   const [i18nConfig, setI18nConfig] = useState(I18n.getDefaultConfig());
-  const theme = getInitialTheme();
 
   useEffect(() => {
     initLocale().then(customI18nConfig => setI18nConfig(customI18nConfig));
@@ -46,7 +36,7 @@ function Root() {
               messages={i18nConfig.messages}
               defaultLocale="en"
             >
-              <HeadManager theme={theme}>
+              <HeadManager>
                 <Layout headerComponent={Header}>
                   <Routes />
                 </Layout>
