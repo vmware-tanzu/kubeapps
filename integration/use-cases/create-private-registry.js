@@ -16,31 +16,41 @@ test("Creates a private registry", async () => {
 
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
   const repoName = "my-repo-" + randomNumber;
-  await page.type("cds-form-group > cds-input:nth-child(1) > input", repoName);
+  await page.type("input[placeholder=\"example\"]", repoName);
 
   await page.type(
-    "cds-form-group > cds-input:nth-child(2) > input",
+    "input[placeholder=\"https://charts.example.com/stable\"]",
     "http://chartmuseum-chartmuseum.kubeapps:8080"
   );
 
   await expect(page).toClick("label", { text: "Basic Auth" });
 
   // Credentials from e2e-test.sh
-  await page.type("cds-form-group > div:nth-child(3) > div > div:nth-child(1) > cds-input:nth-child(1) > input", "admin");
-  await page.type("cds-form-group > div:nth-child(3) > div > div:nth-child(1) > cds-input:nth-child(3) > input", "password");
+  await page.type("input[placeholder=\"Username\"]", "admin");
+  await page.type("input[placeholder=\"Password\"]", "password");
 
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
-  await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
-  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(2) > input", secret);
+  try {
+    // TODO(andresmgot): Remove this line once 2.3 is released
+    await expect(page).toClick("cds-button", { text: "Add new credentials" });
+  } catch(e) {
+    await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
+  }
+  await page.type("input[placeholder=\"Secret\"]", secret);
   await page.type(
-    "cds-form-group > div.docker-creds-subform > cds-input:nth-child(3) > input",
+    "input[placeholder=\"https://index.docker.io/v1/\"]",
     "https://index.docker.io/v1/"
   );
-  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(4) > input", "user");
-  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(5) > input", "password");
-  await page.type("cds-form-group > div.docker-creds-subform > cds-input:nth-child(6) > input", "user@example.com");
-  await expect(page).toClick(".btn-info-outline", { text: "Submit" });
+  await page.type("input[placeholder=\"Username\"][value=\"\"]", "user");
+  await page.type("input[placeholder=\"Password\"][value=\"\"]", "password");
+  await page.type("input[placeholder=\"user@example.com\"]", "user@example.com");
+  try {
+    // TODO(andresmgot): Remove this line once 2.3 is released
+    await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
+  } catch(e) {
+    await expect(page).toClick(".btn-info-outline", { text: "Submit" });
+  }
 
   // Select the new secret
   await expect(page).toClick("label", { text: secret });
