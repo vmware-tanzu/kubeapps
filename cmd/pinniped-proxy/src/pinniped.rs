@@ -4,18 +4,15 @@ use std::convert::TryFrom;
 use anyhow::{Context, Result};
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
-use k8s_openapi::Metadata;
 use kube::{
-    api::{Api, PostParams},
+    api::{Api, PostParams, Resource},
     Client, Config,
     Service,
 };
-use kube_derive::CustomResource;
 use log::debug;
 use native_tls::Identity;
 use openssl::{pkcs12::Pkcs12, pkey::PKey, x509::X509};
 use serde::{Deserialize, Serialize};
-use serde_json;
 use thiserror::Error;
 use url::Url;
 
@@ -81,26 +78,197 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
 /// The rust derive macro together with the kube macro creates serializable and deserializable
 /// resources based on the struct. See https://docs.rs/kube/0.43.0/kube/ for more details.
 
-// TODO(agamez): API group should be configurable, otherwise it won't work with --api-group-suffix
-#[derive(CustomResource, Deserialize, Serialize, Clone, Debug)]
-#[kube(group = "login.concierge.pinniped.dev", version = "v1alpha1", kind = "TokenCredentialRequest")]
-#[kube(status = "TokenCredentialRequestStatus")]
-pub struct TokenCredentialRequestSpec {
-    // Bearer token supplied with the credential request.
-    token: Option<String>,
 
-    // Reference to an authenticator which can verify this credential request.
+// From https://github.com/clux/kube-rs/blob/master/kube-derive/src/lib.rs
+
+///////////////// BEGIN MODELS //////////////////////
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TokenCredentialRequestSpec {
+    token: Option<String>,
     authenticator: corev1::TypedLocalObjectReference,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct TokenCredentialRequestStatus {
-    // A ClusterCredential will be returned for a successful credential request.
-    credential: Option<ClusterCredential>,
+#[serde(rename_all = "camelCase")]
+pub struct TokenCredentialRequest {
+    pub api_version: String,
+    pub kind: String,
+    pub metadata: k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta,
+    pub spec: TokenCredentialRequestSpec,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<TokenCredentialRequestStatus>,
+}
 
-    // An error message will be returned for an unsuccessful credential request.
+impl TokenCredentialRequest {
+    pub fn new(name: &str, spec: TokenCredentialRequestSpec) -> Self {
+        Self {
+            api_version: get_pinniped_authenticator_api_group_with_version().to_string(),
+            kind: "TokenCredentialRequest".to_string(),
+            metadata: k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta {
+                name: Some(name.to_string()),
+                ..Default::default()
+            },
+            spec: spec,
+            status: None,
+        }
+    }
+}
+
+impl k8s_openapi::Resource for TokenCredentialRequest {
+    const API_VERSION: &'static str = "";
+    const GROUP: &'static str = "";
+    const KIND: &'static str = "TokenCredentialRequest";
+    const VERSION: &'static str = "v1alpha1";
+}
+impl k8s_openapi::Metadata for TokenCredentialRequest {
+    type Ty = k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
+    fn metadata(&self) -> &Self::Ty {
+        &self.metadata
+    }
+    fn metadata_mut(&mut self) -> &mut Self::Ty {
+        &mut self.metadata
+    }
+}
+
+impl TokenCredentialRequest {
+    // pub fn crd () -> k8s_openapi :: apiextensions_apiserver :: pkg :: apis :: apiextensions :: v1 :: CustomResourceDefinition{
+    //     let columns : Vec < k8s_openapi :: apiextensions_apiserver :: pkg :: apis :: apiextensions :: v1 :: CustomResourceColumnDefinition > = serde_json :: from_str ("[  ]") . expect ("valid printer column json") ;
+    //     let scale : Option < k8s_openapi :: apiextensions_apiserver :: pkg :: apis :: apiextensions :: v1 :: CustomResourceSubresourceScale > = if "" . is_empty () { None } else { serde_json :: from_str ("") . expect ("valid scale subresource json") } ;
+    //     let shorts: Vec<String> = serde_json::from_str("[]").expect("valid shortnames");
+    //     let subres = if true {
+    //         if let Some(s) = &scale {
+    //             ::serde_json::Value::Object({
+    //                 let mut object = ::serde_json::Map::new();
+    //                 let _ = object.insert(
+    //                     ("status").into(),
+    //                     ::serde_json::Value::Object(::serde_json::Map::new()),
+    //                 );
+    //                 let _ = object
+    //                     .insert(("scale").into(), ::serde_json::to_value(&scale).unwrap());
+    //                 object
+    //             })
+    //         } else {
+    //             ::serde_json::Value::Object({
+    //                 let mut object = ::serde_json::Map::new();
+    //                 let _ = object.insert(
+    //                     ("status").into(),
+    //                     ::serde_json::Value::Object(::serde_json::Map::new()),
+    //                 );
+    //                 object
+    //             })
+    //         }
+    //     } else {
+    //         ::serde_json::Value::Object(::serde_json::Map::new())
+    //     };
+    //     let schema: Option<
+    //         k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::JSONSchemaProps,
+    //     > = None;
+    //     let jsondata = ::serde_json::Value::Object({
+    //         let mut object = ::serde_json::Map::new();
+    //         let _ = object.insert(
+    //             ("metadata").into(),
+    //             ::serde_json::Value::Object({
+    //                 let mut object = ::serde_json::Map::new();
+    //                 let _ = object.insert(
+    //                     ("name").into(),
+    //                     ::serde_json::to_value(
+    //                         &"tokencredentialrequests.login.concierge.pinniped.dev",
+    //                     )
+    //                     .unwrap(),
+    //                 );
+    //                 object
+    //             }),
+    //         );
+    //         let _ = object.insert(
+    //             ("spec").into(),
+    //             ::serde_json::Value::Object({
+    //                 let mut object = ::serde_json::Map::new();
+    //                 let _ = object.insert(
+    //                     ("group").into(),
+    //                     ::serde_json::to_value(&"login.concierge.pinniped.dev").unwrap(),
+    //                 );
+    //                 let _ = object.insert(
+    //                     ("scope").into(),
+    //                     ::serde_json::to_value(&"Cluster").unwrap(),
+    //                 );
+    //                 let _ = object.insert(
+    //                     ("names").into(),
+    //                     ::serde_json::Value::Object({
+    //                         let mut object = ::serde_json::Map::new();
+    //                         let _ = object.insert(
+    //                             ("plural").into(),
+    //                             ::serde_json::to_value(&"tokencredentialrequests").unwrap(),
+    //                         );
+    //                         let _ = object.insert(
+    //                             ("singular").into(),
+    //                             ::serde_json::to_value(&"tokencredentialrequest").unwrap(),
+    //                         );
+    //                         let _ = object.insert(
+    //                             ("kind").into(),
+    //                             ::serde_json::to_value(&"TokenCredentialRequest").unwrap(),
+    //                         );
+    //                         let _ = object.insert(
+    //                             ("shortNames").into(),
+    //                             ::serde_json::to_value(&shorts).unwrap(),
+    //                         );
+    //                         object
+    //                     }),
+    //                 );
+    //                 let _ = object.insert(
+    //                     ("versions").into(),
+    //                     ::serde_json::Value::Array(<[_]>::into_vec(Box::new([
+    //                         ::serde_json::Value::Object({
+    //                             let mut object = ::serde_json::Map::new();
+    //                             let _ = object.insert(
+    //                                 ("name").into(),
+    //                                 ::serde_json::to_value(&"v1alpha1").unwrap(),
+    //                             );
+    //                             let _ = object
+    //                                 .insert(("served").into(), ::serde_json::Value::Bool(true));
+    //                             let _ = object.insert(
+    //                                 ("storage").into(),
+    //                                 ::serde_json::Value::Bool(true),
+    //                             );
+    //                             let _ = object.insert(
+    //                                 ("schema").into(),
+    //                                 ::serde_json::Value::Object({
+    //                                     let mut object = ::serde_json::Map::new();
+    //                                     let _ = object.insert(
+    //                                         ("openAPIV3Schema").into(),
+    //                                         ::serde_json::to_value(&schema).unwrap(),
+    //                                     );
+    //                                     object
+    //                                 }),
+    //                             );
+    //                             let _ = object.insert(
+    //                                 ("additionalPrinterColumns").into(),
+    //                                 ::serde_json::to_value(&columns).unwrap(),
+    //                             );
+    //                             let _ = object.insert(
+    //                                 ("subresources").into(),
+    //                                 ::serde_json::to_value(&subres).unwrap(),
+    //                             );
+    //                             object
+    //                         }),
+    //                     ]))),
+    //                 );
+    //                 object
+    //             }),
+    //         );
+    //         object
+    //     });
+    //     serde_json::from_value(jsondata).expect("valid custom resource from #[kube(attrs..)]")
+    // }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TokenCredentialRequestStatus {
+    credential: Option<ClusterCredential>,
     message: Option<String>,
 }
+
+/////////////////// END MODELS ////////////////////
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 /// ClusterCredential is the cluster-specific credential returned on a successful credential request. It
@@ -121,16 +289,29 @@ pub struct ClusterCredential {
 }
 
 fn get_client_config(k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8], pinniped_namespace: String) -> Result<kube::Client> {
-        let mut config = Config::new(Url::parse(k8s_api_server_url).context("Failed parsing url for exchange")?);
-        config.default_ns = pinniped_namespace.clone();
-        let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
-        let der = x509.to_der().context("error creating der from x509")?;
-        config.root_cert = Some(vec!(der));
+    let mut config = Config::new(Url::parse(k8s_api_server_url).context("Failed parsing url for exchange")?);
+    config.default_ns = pinniped_namespace.clone();
+    let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
+    let der = x509.to_der().context("error creating der from x509")?;
+    config.root_cert = Some(vec!(der));
 
-        Ok(Client::new(Service::try_from(config)?))
+    Ok(Client::new(Service::try_from(config)?))
 }
-    
-/// call_pinniped_exchange returns the resulting TokenCredentialRequest with Status after requesting a token credential exchange.
+
+
+fn get_token_credential_request_dr() -> kube::DynamicResource {
+    let ns_token_cred_req: bool = env::var(NAMESPACED_TOKEN_CREDENTIAL_REQUESTS).unwrap_or("false".into()).parse().unwrap();
+    let dr;
+    if ns_token_cred_req {
+        let pinniped_namespace = env::var(DEFAULT_PINNIPED_NAMESPACE).unwrap_or("pinniped-concierge".into());
+        dr =  Resource::dynamic("TokenCredentialRequest").group(&get_pinniped_login_api_group()).version("v1alpha1").within(&pinniped_namespace);
+    } else {
+        dr =  Resource::dynamic("TokenCredentialRequest").group(&get_pinniped_login_api_group()).version("v1alpha1");
+    }
+
+    return dr;
+}
+
 async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8]) -> Result<TokenCredentialRequest> {
     let pinniped_namespace = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
 
@@ -141,9 +322,9 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
         None => authorization.to_string(),
     };
     
-    let token_creds = get_token_credential_request(client, &pinniped_namespace);
-    
-    let mut cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
+    let token_creds: Api<TokenCredentialRequest> = get_token_credential_request_dr().into_api(client.clone());
+
+    let cred_request = TokenCredentialRequest::new("", TokenCredentialRequestSpec {
         token: Some(auth_token),
         authenticator: corev1::TypedLocalObjectReference {
             name: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME).with_context(|| format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_NAME))?,
@@ -151,9 +332,6 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
             api_group: Some(get_pinniped_authenticator_api_group().into()),
         },
     });
-    // The pinniped authenticator cache requires the namespace of the request to be included
-    // explicitly, even if the client is limited to a specific namespace.
-    cred_request.metadata_mut().namespace = Some(pinniped_namespace);
 
     debug!("{}", serde_json::to_string(&cred_request).unwrap());
     match token_creds.create(&PostParams::default(), &cred_request).await {
@@ -163,17 +341,13 @@ async fn call_pinniped_exchange(authorization: &str, k8s_api_server_url: &str, k
         },
     }
 }
-    
-fn get_token_credential_request(client: Client, pinniped_namespace: &str) -> Api<TokenCredentialRequest> {
-    let ns_token_cred_req: bool = env::var(NAMESPACED_TOKEN_CREDENTIAL_REQUESTS).unwrap_or("false".into()).parse().unwrap();
-    if ns_token_cred_req {
-        return Api::namespaced(client.clone(), &pinniped_namespace);
-    } else {
-        return Api::all(client.clone());
-    }
-}
 
 fn get_pinniped_authenticator_api_group() ->  String  {
+    let api_suffix = env::var(DEFAULT_PINNIPED_API_SUFFIX).unwrap_or("pinniped.dev".into());
+    return format!("{}{}", "authentication.concierge.", &api_suffix).to_string();
+}
+
+fn get_pinniped_authenticator_api_group_with_version() ->  String  {
     let api_suffix = env::var(DEFAULT_PINNIPED_API_SUFFIX).unwrap_or("pinniped.dev".into());
     return format!("{}{}", "authentication.concierge.", &api_suffix).to_string();
 }
