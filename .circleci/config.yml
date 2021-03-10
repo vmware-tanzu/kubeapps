@@ -323,6 +323,8 @@ jobs:
       HELM_VERSION: "v3.1.0"
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
+      # TODO: Revert this once the latest version is fixed
+      TEST_LATEST_RELEASE: 1
     parameters:
       number:
         type: string
