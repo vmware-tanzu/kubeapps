@@ -1,4 +1,3 @@
-import * as React from "react";
 import Switch from "react-switch";
 import { IBasicFormParam } from "shared/types";
 

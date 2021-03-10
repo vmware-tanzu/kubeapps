@@ -1,5 +1,5 @@
 import Alert from "components/js/Alert";
-import * as React from "react";
+import React from "react";
 
 import LoadingWrapper, {
   ILoadingWrapperProps,

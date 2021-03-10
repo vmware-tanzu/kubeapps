@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import MultiCheckbox from "components/js/MultiCheckbox";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";

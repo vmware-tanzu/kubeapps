@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { CdsCheckbox, CdsCheckboxGroup } from "@cds/react/checkbox";
 import { CdsControlMessage } from "@cds/react/forms";

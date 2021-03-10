@@ -1,7 +1,6 @@
 import { CdsModalContent } from "@cds/react/modal";
 import { mount } from "enzyme";
 import context from "jest-plugin-context";
-import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import ConfirmDialog from "./ConfirmDialog";
 

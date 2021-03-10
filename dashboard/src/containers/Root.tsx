@@ -3,7 +3,7 @@ import HeadManager, { SupportedThemes } from "components/HeadManager/HeadManager
 import Layout from "components/Layout";
 import LoadingWrapper from "components/LoadingWrapper";
 import { ConnectedRouter } from "connected-react-router";
-import React, { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import I18n, { ISupportedLangs } from "shared/I18n";

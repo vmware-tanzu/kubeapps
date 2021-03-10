@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import cs from "classnames";
 import PropTypes from "prop-types";
 import { CdsIcon } from "@cds/react/icon";

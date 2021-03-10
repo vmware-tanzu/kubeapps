@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import Differential from "./Differential";
 import DifferentialSelector from "./DifferentialSelector";
 

@@ -2,7 +2,6 @@ import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
 import Alert from "components/js/Alert";
 import { mount } from "enzyme";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import itBehavesLike from "../../shared/specs";
 import OperatorInstanceFormBody from "./OperatorInstanceFormBody";

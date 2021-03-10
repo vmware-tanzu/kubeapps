@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import Spinner from "../js/Spinner";
 
 export interface ILoadingWrapperProps {

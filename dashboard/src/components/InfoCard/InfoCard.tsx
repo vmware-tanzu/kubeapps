@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Link } from "react-router-dom";
 import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
 import Column from "../js/Column";

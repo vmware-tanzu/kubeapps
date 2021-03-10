@@ -1,4 +1,3 @@
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import Icon from "./Icon";

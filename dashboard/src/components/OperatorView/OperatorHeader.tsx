@@ -1,5 +1,4 @@
 import PageHeader from "components/PageHeader/PageHeader";
-import * as React from "react";
 import placeholder from "../../placeholder.png";
 
 interface IOperatorHeaderProps {

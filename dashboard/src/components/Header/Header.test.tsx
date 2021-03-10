@@ -1,5 +1,5 @@
 import actions from "actions";
-import * as React from "react";
+
 import * as ReactRedux from "react-redux";
 import { NavLink } from "react-router-dom";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";

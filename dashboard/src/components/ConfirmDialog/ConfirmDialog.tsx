@@ -1,6 +1,5 @@
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import Alert from "components/js/Alert";
-import React from "react";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./ConfirmDialog.css";
 

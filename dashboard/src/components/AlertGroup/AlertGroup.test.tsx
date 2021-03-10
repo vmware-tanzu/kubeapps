@@ -1,6 +1,5 @@
 import { CdsAlert, CdsAlertGroup } from "@cds/react/alert";
 import { mount } from "enzyme";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import AlertGroup from "./AlertGroup";
 

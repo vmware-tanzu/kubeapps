@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { act } from "react-dom/test-utils";

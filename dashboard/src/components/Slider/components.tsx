@@ -1,5 +1,4 @@
 // CODE FROM: https://sghall.github.io/react-compound-slider/#/slider-demos/horizontal
-import * as React from "react";
 import { GetHandleProps, GetTrackProps, SliderItem } from "react-compound-slider";
 
 // *******************************************************

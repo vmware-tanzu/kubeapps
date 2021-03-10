@@ -1,6 +1,5 @@
 import Tooltip from "components/js/Tooltip";
 import { shallow } from "enzyme";
-import * as React from "react";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
 import InfoCard from "../InfoCard/InfoCard";

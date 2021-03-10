@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import AppUpgrade from "../../components/AppUpgrade";

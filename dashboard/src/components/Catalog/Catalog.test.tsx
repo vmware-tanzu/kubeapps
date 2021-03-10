@@ -2,7 +2,7 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
-import * as React from "react";
+import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";

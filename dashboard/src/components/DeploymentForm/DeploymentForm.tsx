@@ -1,6 +1,6 @@
 import { RouterAction } from "connected-react-router";
 import * as Moniker from "moniker-native";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { JSONSchema4 } from "json-schema";
 import { CreateError, FetchError, IChartState, IChartVersion } from "../../shared/types";

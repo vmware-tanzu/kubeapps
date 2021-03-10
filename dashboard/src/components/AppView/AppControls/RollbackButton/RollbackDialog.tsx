@@ -3,7 +3,7 @@ import { CdsControlMessage } from "@cds/react/forms";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import { CdsSelect } from "@cds/react/select";
 import Alert from "components/js/Alert";
-import React, { useState } from "react";
+import { useState } from "react";
 import LoadingWrapper from "../../../LoadingWrapper/LoadingWrapper";
 import "./RollbackDialog.css";
 

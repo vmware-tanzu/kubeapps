@@ -33,7 +33,6 @@ import {
   uploadCloudIcon,
 } from "@cds/core/icon";
 import "@cds/core/icon/register.js";
-import * as React from "react";
 
 import "@clr/ui/clr-ui.min.css"; // light clarity UI theme
 

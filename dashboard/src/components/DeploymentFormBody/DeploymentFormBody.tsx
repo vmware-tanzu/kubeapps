@@ -1,5 +1,5 @@
 import Tabs from "components/Tabs";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";

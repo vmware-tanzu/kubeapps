@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import AppValues from "./AppValues";
 
 it("match snapshot with values", () => {

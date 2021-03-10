@@ -2,7 +2,6 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";

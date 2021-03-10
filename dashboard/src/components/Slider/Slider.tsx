@@ -1,5 +1,5 @@
 // CODE ADAPTED FROM: https://sghall.github.io/react-compound-slider/#/slider-demos/horizontal
-import * as React from "react";
+import React from "react";
 import { Handles, Rail, Slider as ReactSlider, Tracks } from "react-compound-slider";
 import { Handle, Track } from "./components"; // example render components
 

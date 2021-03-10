@@ -1,4 +1,4 @@
-import * as qs from "qs";
+import qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Action } from "redux";

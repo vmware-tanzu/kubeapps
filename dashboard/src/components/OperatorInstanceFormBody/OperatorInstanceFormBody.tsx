@@ -4,7 +4,7 @@ import DifferentialTab from "components/DeploymentFormBody/DifferentialTab";
 import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
 import * as yaml from "js-yaml";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { IResource } from "../../shared/types";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import AdvancedDeploymentForm from "../DeploymentFormBody/AdvancedDeploymentForm";

@@ -1,6 +1,5 @@
 import { mount, shallow } from "enzyme";
 import { has } from "lodash";
-import * as React from "react";
 
 import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";

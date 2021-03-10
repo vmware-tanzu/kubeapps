@@ -1,5 +1,5 @@
 import { shallow } from "enzyme";
-import * as React from "react";
+
 import ResourceRef from "shared/ResourceRef";
 
 import Tabs from "components/Tabs";

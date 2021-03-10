@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 
 import { IBasicFormParam } from "shared/types";
 import Subsection, { ISubsectionProps } from "./Subsection";

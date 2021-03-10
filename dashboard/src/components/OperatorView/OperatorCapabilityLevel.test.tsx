@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import CapabiliyLevel, { AUTO_PILOT, BASIC_INSTALL } from "./OperatorCapabilityLevel";
 
 [

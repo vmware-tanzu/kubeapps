@@ -3,7 +3,6 @@ import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploy
 import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";

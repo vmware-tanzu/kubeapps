@@ -1,4 +1,3 @@
-import React from "react";
 import { IRepo } from "../../shared/types";
 import ChartCatalogItem from "./ChartCatalogItem";
 import OperatorCatalogItem from "./OperatorCatalogItem";

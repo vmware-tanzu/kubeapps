@@ -1,7 +1,7 @@
 import { CdsInlineButton } from "@cds/react/button";
 import Alert from "components/js/Alert";
 import { mount } from "enzyme";
-import * as React from "react";
+import React from "react";
 import ErrorBoundary from "./ErrorBoundary";
 
 // tslint:disable:no-console

@@ -1,7 +1,7 @@
 import { push } from "connected-react-router";
 import * as yaml from "js-yaml";
 import { get } from "lodash";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import actions from "actions";
 import Alert from "components/js/Alert";

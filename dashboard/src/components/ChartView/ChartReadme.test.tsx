@@ -1,4 +1,3 @@
-import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import * as ReactRedux from "react-redux";
 import { HashLink as Link } from "react-router-hash-link";

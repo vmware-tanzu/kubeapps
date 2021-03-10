@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { IBasicFormParam } from "shared/types";
 import Slider from "../../Slider";
 

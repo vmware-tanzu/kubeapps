@@ -1,6 +1,5 @@
 import { CdsIcon } from "@cds/react/icon";
 import { Location } from "history";
-import * as React from "react";
 import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 import { Redirect } from "react-router";
