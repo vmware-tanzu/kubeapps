@@ -13,9 +13,9 @@ test("Creates a registry", async () => {
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
 
-  await page.type("cds-form-group > cds-input:nth-child(1) > input", "my-repo");
+  await page.type("input[placeholder=\"example\"]", "my-repo");
 
-  await page.type("cds-form-group > cds-input:nth-child(2) > input", "https://charts.gitlab.io/");
+  await page.type("input[placeholder=\"https://charts.example.com/stable\"]", "https://charts.gitlab.io/");
 
   // Similar to the above click for an App Repository, the click on
   // the Install Repo doesn't always register (in fact, from the
