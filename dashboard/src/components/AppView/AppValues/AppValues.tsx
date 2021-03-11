@@ -1,7 +1,10 @@
 import AceEditor from "react-ace";
+import { useSelector } from "react-redux";
+import { IStoreState } from "shared/types";
 
 import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/theme-solarized_dark";
 import "ace-builds/src-noconflict/theme-xcode";
 import "./AppValues.css";
 
@@ -10,12 +13,16 @@ interface IAppValuesProps {
 }
 
 function AppValues(props: IAppValuesProps) {
+  const {
+    config: { theme },
+  } = useSelector((state: IStoreState) => state);
+
   let values = <p>The current application was installed without specifying any values</p>;
   if (props.values !== "") {
     values = (
       <AceEditor
         mode="yaml"
-        theme="xcode"
+        theme={theme === "dark" ? "solarized_dark" : "xcode"}
         name="values"
         className="installation-values"
         width="100%"

@@ -1,7 +1,10 @@
 import AceEditor from "react-ace";
+import { useSelector } from "react-redux";
+import { IStoreState } from "shared/types";
 
 import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/theme-solarized_dark";
 import "ace-builds/src-noconflict/theme-xcode";
 
 export interface IAdvancedDeploymentForm {
@@ -17,11 +20,15 @@ function AdvancedDeploymentForm(props: IAdvancedDeploymentForm) {
     clearTimeout(timeout);
     timeout = setTimeout(() => props.handleValuesChange(value), 500);
   };
+  const {
+    config: { theme },
+  } = useSelector((state: IStoreState) => state);
+
   return (
     <div className="deployment-form-tabs-data">
       <AceEditor
         mode="yaml"
-        theme="xcode"
+        theme={theme === "dark" ? "solarized_dark" : "xcode"}
         width="100%"
         onChange={onChange}
         setOptions={{ showPrintMargin: false }}

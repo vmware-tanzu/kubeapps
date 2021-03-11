@@ -1,6 +1,7 @@
 import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
+import { SupportedThemes } from "./Config";
 
 describe("Auth", () => {
   beforeEach(() => {
@@ -177,6 +178,7 @@ describe("Auth", () => {
         appVersion: "2",
         clusters: [],
         authProxySkipLoginPage: false,
+        theme: SupportedThemes.light,
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -193,6 +195,7 @@ describe("Auth", () => {
         appVersion: "2",
         clusters: [],
         authProxySkipLoginPage: false,
+        theme: SupportedThemes.light,
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

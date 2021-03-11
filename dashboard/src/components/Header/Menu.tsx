@@ -10,8 +10,14 @@ import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import { IClustersState } from "../../reducers/cluster";
 import Row from "../js/Row";
 
-import { getThemeFile, SupportedThemes } from "components/HeadManager/HeadManager";
+import actions from "actions";
+import { getThemeFile } from "components/HeadManager/HeadManager";
 import { Helmet } from "react-helmet";
+import { useDispatch, useSelector } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { SupportedThemes } from "shared/Config";
+import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import helmIcon from "../../icons/helm-white.svg";
 import operatorIcon from "../../icons/operator-framework-white.svg";
@@ -24,6 +30,7 @@ export interface IContextSelectorProps {
 }
 
 function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [open, setOpen] = useState(false);
   const currentCluster = clusters.clusters[clusters.currentCluster];
   const namespaceSelected = currentCluster.currentNamespace;
@@ -31,16 +38,15 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   const ref = useRef(null);
   useOutsideClick(setOpen, [ref], open);
 
-  const [theme, setTheme] = useState<string>(
-    localStorage.getItem("theme") || SupportedThemes.light,
-  );
+  const {
+    config: { theme },
+  } = useSelector((state: IStoreState) => state);
 
   const toggleOpen = () => setOpen(!open);
 
   const toggleTheme = () => {
     const newTheme = theme === SupportedThemes.dark ? SupportedThemes.light : SupportedThemes.dark;
-    localStorage.setItem("theme", newTheme);
-    setTheme(newTheme);
+    dispatch(actions.config.setTheme(newTheme));
   };
 
   useEffect(() => {

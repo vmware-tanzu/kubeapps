@@ -1,15 +1,15 @@
+import actions from "actions";
 import React from "react";
 import { Helmet } from "react-helmet";
 import { useIntl } from "react-intl";
+import { useDispatch, useSelector } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { SupportedThemes } from "shared/Config";
+import { IStoreState } from "shared/types";
 
 interface IHeadManagerProps {
-  theme: SupportedThemes;
   children: React.ReactNode;
-}
-
-export enum SupportedThemes {
-  dark = "dark",
-  light = "light",
 }
 
 export function getThemeFile(theme: SupportedThemes) {
@@ -24,11 +24,17 @@ export function getThemeFile(theme: SupportedThemes) {
       return lightThemeFile;
   }
 }
-export default function HeadManager({ theme, children }: IHeadManagerProps) {
+export default function HeadManager({ children }: IHeadManagerProps) {
   const intl = useIntl();
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
-  document.body.setAttribute("cds-theme", theme); // sets the initial cds theme
-  localStorage.setItem("theme", theme); // persist the initial theme decision
+  const {
+    config: { theme },
+  } = useSelector((state: IStoreState) => state);
+
+  React.useEffect(() => {
+    dispatch(actions.config.getTheme());
+  }, [dispatch]);
 
   return (
     <>
