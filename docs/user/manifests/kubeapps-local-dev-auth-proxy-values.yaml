@@ -8,12 +8,12 @@ authProxy:
   # oauthLoginURI: /subpath/oauth2/login
   # oauthLogoutURI: /subpath/oauth2/logout
   additionalFlags:
-    - --oidc-issuer-url=https://172.19.0.2:32000
+    - --oidc-issuer-url=https://172.18.0.2:32000
     # Overwrite the scope option to include the other cluster's clientids in the audience.
     - --scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster
     # TODO: Update to provide the dex ca via --provider-ca-file and mounting etc.
     - --ssl-insecure-skip-verify=true
     # If you need to access the actual token in the frontend for testing, uncomment the following.
-    - --set-authorization-header=true
+    # - --set-authorization-header=true
     # If you are serving Kubeapps under a subpath "example.com/subpath" it would be "proxy-prefix=/subpath/oauth2"
     # - --proxy-prefix=/subpath/oauth2
