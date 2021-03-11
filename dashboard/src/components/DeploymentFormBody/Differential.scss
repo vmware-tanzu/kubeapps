@@ -1,24 +1,11 @@
 .diff {
   height: 500px;
   overflow: auto;
+  margin-bottom: 0.6rem;
 }
 
 .diff pre {
-  background-color: inherit;
-  padding: 0;
-  font: 12px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
-  line-height: 12px;
-}
-
-.diff table td {
-  padding: 0;
-}
-
-.diff table td[class*="linenumber"] {
-  position: inherit;
-}
-
-.diff table td div[class*="code-line"] {
-  padding: 0 0.3em;
-  min-width: calc(72vw - 7.5em);
+  font: 15px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
+  line-height: 12px !important;
+  border: none;
 }
