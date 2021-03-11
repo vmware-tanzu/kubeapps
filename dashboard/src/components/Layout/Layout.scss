@@ -1,24 +1,24 @@
 .color-icon-info {
   cds-icon {
-    --color: var(--clr-alert-info-icon-color, #0072a3);
+    --color: var(--cds-alias-status-info, #0072a3);
   }
 }
 
 .color-icon-success {
   cds-icon {
-    --color: var(--clr-alert-success-icon-color, #3c8500);
+    --color: var(--cds-alias-status-success, #3c8500);
   }
 }
 
 .color-icon-warning {
   cds-icon {
-    --color: var(--clr-alert-warning-icon-color, #666666);
+    --color: var(--cds-alias-status-warning, #666666);
   }
 }
 
 .color-icon-danger {
   cds-icon {
-    --color: var(--clr-alert-danger-icon-color, #c21d00);
+    --color: var(--cds-alias-status-danger, #c21d00);
   }
 }
 
@@ -37,7 +37,7 @@
 
 .notification-icon {
   cds-icon {
-    --color: hsl(48, 95%, 48%);
+    --color: var(--cds-alias-status-warning, #efc006);
     width: 7px;
     margin-left: 3px;
   }
@@ -108,7 +108,6 @@
   display: grid;
   justify-content: center;
   margin-top: 1.8rem;
-  // align-items: center;
   height: calc(100vh - 12rem);
   text-align: center;
   .section-description {
@@ -120,12 +119,13 @@
 }
 
 .terminal-wrapper {
-  background: var(--clr-color-neutral-100);
-  color: var(--clr-color-on-neutral-100);
+  background-color: var(--cds-global-typography-color-400, #333);
+  color: var(--cds-global-typography-color-100, #fff);
   .terminal-code {
     padding: 0.6rem;
     white-space: pre-wrap;
     text-align: left;
+    overflow-x: scroll;
   }
 }
 
@@ -135,8 +135,8 @@
     border-radius: 5px;
     overflow: auto;
     padding: 0.6rem;
-    background: var(--clr-color-neutral-1000);
-    color: var(--clr-color-on-neutral-1000);
+    background-color: var(--cds-global-typography-color-400, #333);
+    color: var(--cds-global-typography-color-100, #fff);
   }
 
   ul {
@@ -151,8 +151,8 @@
   blockquote {
     margin: 1em 0 1em 0;
     border-radius: 5px;
-    border: 1px solid #ddd;
-    background-color: #f1f1f1;
+    border: 1px solid var(--cds-global-typography-color-200, #e8e8e8);
+    background-color: var(--cds-global-typography-color-100, #fff);
     padding: 0.1em 1em;
     max-width: 100%;
     p:first-child {
@@ -181,7 +181,7 @@
 }
 
 .appview-separator {
-  border-bottom: 2px solid #f1f1f1;
+  border-bottom: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
   padding-bottom: 1.2rem;
 }
 

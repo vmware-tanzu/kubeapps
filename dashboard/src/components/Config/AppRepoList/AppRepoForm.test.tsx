@@ -1,7 +1,6 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -217,10 +216,7 @@ it("should call the install method with the selected docker credentials", async 
 
 it("should not show the list of OCI repositories if using a Helm repo (default)", () => {
   const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
-  const section = wrapper
-    .find(".clr-control-container")
-    .filterWhere(c => c.text().includes("List of Repositories"));
-  expect(section.prop("hidden")).toBeTruthy();
+  expect(wrapper.find("#kubeapps-oci-repositories")).not.toExist();
 });
 
 describe("when the repository info is already populated", () => {
@@ -280,6 +276,7 @@ describe("when the repository info is already populated", () => {
       const repo = { metadata: { name: "foo" }, spec: { type: "oci" } } as any;
       const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
       expect(wrapper.find("#kubeapps-repo-type-oci")).toBeChecked();
+      expect(wrapper.find("#kubeapps-oci-repositories")).toExist();
     });
 
     it("should parse the existing skip tls config", () => {

@@ -225,6 +225,23 @@ describe("fetchCharts", () => {
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("returns a generic error and it is cleared later", async () => {
+    const expectedActions = [
+      { type: getType(actions.charts.requestCharts), payload: 1 },
+      { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
+      { type: getType(actions.charts.clearErrorChart) },
+    ];
+    axiosGetMock = jest.fn(() => {
+      throw new Error("something went wrong");
+    });
+    axiosWithAuth.get = axiosGetMock;
+    await store.dispatch(
+      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+    );
+    await store.dispatch(actions.charts.clearErrorChart());
+    expect(store.getActions()).toEqual(expectedActions);
+  });
 });
 
 describe("fetchChartCategories", () => {

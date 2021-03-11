@@ -1,10 +1,5 @@
 frontend:
   replicaCount: 1
-  service:
-    type: NodePort
-    nodePort: 30000
-tillerProxy:
-  replicaCount: 1
 assetsvc:
   replicaCount: 1
 dashboard:
@@ -20,3 +15,8 @@ ingress:
   tls: true
 pinnipedProxy:
   enabled: true
+  image:
+    registry: docker.io
+    repository: kubeapps/pinniped-proxy
+    tag: latest
+    pullPolicy: IfNotPresent

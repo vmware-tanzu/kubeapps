@@ -1,8 +1,7 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
-import Modal from "components/js/Modal/Modal";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -33,17 +32,16 @@ function RollbackButton({ cluster, namespace, releaseName, revision }: IRollback
   };
   return (
     <>
-      <Modal showModal={modalIsOpen} onModalClose={closeModal}>
-        <RollbackDialog
-          onConfirm={handleRollback}
-          loading={loading}
-          closeModal={closeModal}
-          currentRevision={revision}
-          error={error}
-        />
-      </Modal>
+      <RollbackDialog
+        modalIsOpen={modalIsOpen}
+        onConfirm={handleRollback}
+        loading={loading}
+        closeModal={closeModal}
+        currentRevision={revision}
+        error={error}
+      />
       <CdsButton status="primary" onClick={openModal}>
-        <CdsIcon shape="rewind" inverse={true} /> Rollback
+        <CdsIcon shape="rewind" /> Rollback
       </CdsButton>
     </>
   );

@@ -1,9 +1,12 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsCheckbox } from "@clr/react/checkbox";
+import { CdsButton } from "@cds/react/button";
+import { CdsCheckbox } from "@cds/react/checkbox";
+import { CdsControlMessage } from "@cds/react/forms";
+import { CdsFormGroup } from "@cds/react/forms";
+import { CdsInput } from "@cds/react/input";
+import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
+import { CdsTextarea } from "@cds/react/textarea";
 import actions from "actions";
 import Alert from "components/js/Alert";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
 import * as yaml from "js-yaml";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -240,333 +243,248 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
 
   return (
-    <form onSubmit={handleInstallClick} className="app-repo-form">
-      <h2>Add an App Repository</h2>
-      <div className="clr-form-control">
-        <label htmlFor="kubeapps-repo-name" className="clr-control-label">
-          Name
-        </label>
-        <div className="clr-control-container">
-          <div className="clr-input-wrapper">
-            <input
-              type="text"
-              id="kubeapps-repo-name"
-              className="clr-input"
-              placeholder="example"
-              value={name}
-              onChange={handleNameChange}
-              required={true}
-              pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-              title="Use lower case alphanumeric characters, '-' or '.'"
-              disabled={repo?.metadata.name ? true : false}
-            />
+    <form onSubmit={handleInstallClick}>
+      <CdsFormGroup layout="vertical">
+        <CdsInput>
+          <label>Name</label>
+          <input
+            id="kubeapps-repo-name"
+            type="text"
+            placeholder="example"
+            value={name}
+            onChange={handleNameChange}
+            required={true}
+            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+            title="Use lower case alphanumeric characters, '-' or '.'"
+            disabled={repo?.metadata.name ? true : false}
+          />
+        </CdsInput>
+        <CdsInput>
+          <label> URL </label>
+          <input
+            id="kubeapps-repo-url"
+            type="url"
+            placeholder="https://charts.example.com/stable"
+            value={url}
+            onChange={handleURLChange}
+            required={true}
+          />
+        </CdsInput>
+
+        <div cds-layout="grid gap:lg">
+          <CdsRadioGroup cds-layout="col@xs:4">
+            <label>Repository Authorization</label>
+            <CdsRadio>
+              <label>None (Public)</label>
+              <input
+                id="kubeapps-repo-auth-method-none"
+                type="radio"
+                name="auth"
+                value={AUTH_METHOD_NONE}
+                checked={authMethod === AUTH_METHOD_NONE}
+                onChange={handleAuthRadioButtonChange}
+              />
+            </CdsRadio>
+            <CdsRadio>
+              <label>Basic Auth</label>
+              <input
+                id="kubeapps-repo-auth-method-basic"
+                type="radio"
+                name="auth"
+                checked={authMethod === AUTH_METHOD_BASIC}
+                value={AUTH_METHOD_BASIC}
+                onChange={handleAuthRadioButtonChange}
+              />
+            </CdsRadio>
+            <CdsRadio>
+              <label>Bearer Token</label>
+              <input
+                id="kubeapps-repo-auth-method-bearer"
+                type="radio"
+                name="auth"
+                value={AUTH_METHOD_BEARER}
+                checked={authMethod === AUTH_METHOD_BEARER}
+                onChange={handleAuthRadioButtonChange}
+              />
+            </CdsRadio>
+            <CdsRadio>
+              <label>Custom</label>
+              <input
+                id="kubeapps-repo-auth-method-custom"
+                type="radio"
+                name="auth"
+                value={AUTH_METHOD_CUSTOM}
+                checked={authMethod === AUTH_METHOD_CUSTOM}
+                onChange={handleAuthRadioButtonChange}
+              />
+            </CdsRadio>
+          </CdsRadioGroup>
+          <div cds-layout="col@xs:8">
+            <div hidden={authMethod !== AUTH_METHOD_BASIC}>
+              <CdsInput>
+                <label>Username</label>
+                <input
+                  id="kubeapps-repo-username"
+                  type="text"
+                  value={user}
+                  onChange={handleUserChange}
+                  placeholder="Username"
+                />
+              </CdsInput>
+              <br />
+              <CdsInput>
+                <label>Password</label>
+                <input
+                  id="kubeapps-repo-password"
+                  type="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  placeholder="Password"
+                />
+              </CdsInput>
+            </div>
+            <div hidden={authMethod !== AUTH_METHOD_BEARER}>
+              <CdsInput>
+                <label>Token</label>
+                <input
+                  type="text"
+                  value={token}
+                  onChange={handleAuthTokenChange}
+                  id="kubeapps-repo-token"
+                />
+              </CdsInput>
+            </div>
+            <div hidden={authMethod !== AUTH_METHOD_CUSTOM}>
+              <CdsInput>
+                <label>Complete Authorization Header</label>
+                <input
+                  id="kubeapps-repo-custom-header"
+                  type="text"
+                  placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                  value={authHeader}
+                  onChange={handleAuthHeaderChange}
+                />
+              </CdsInput>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="clr-form-control">
-        <label htmlFor="kubeapps-repo-url" className="clr-control-label">
-          URL
-        </label>
-        <div className="clr-control-container">
-          <div className="clr-input-wrapper">
-            <input
-              type="url"
-              id="kubeapps-repo-url"
-              placeholder="https://charts.example.com/stable"
-              value={url}
-              className="clr-input"
-              onChange={handleURLChange}
-              required={true}
-            />
-          </div>
+
+        <div cds-layout="grid gap:lg">
+          <CdsRadioGroup cds-layout="col@xs:4" layout="vertical">
+            <label>Repository Type</label>
+            <CdsControlMessage>Select the chart storage type.</CdsControlMessage>
+            <CdsRadio>
+              <label>Helm Repository</label>
+              <input
+                id="kubeapps-repo-type-helm"
+                type="radio"
+                name="type"
+                value={TYPE_HELM}
+                checked={type === TYPE_HELM}
+                onChange={handleTypeRadioButtonChange}
+              />
+            </CdsRadio>
+            <CdsRadio>
+              <label>OCI Registry</label>
+              <input
+                id="kubeapps-repo-type-oci"
+                type="radio"
+                name="type"
+                value={TYPE_OCI}
+                checked={type === TYPE_OCI}
+                onChange={handleTypeRadioButtonChange}
+              />
+            </CdsRadio>
+          </CdsRadioGroup>
+          {type === TYPE_OCI && (
+            <CdsTextarea cds-layout="col@xs:8">
+              <label htmlFor="kubeapps-oci-repositories">List of Repositories</label>
+              <CdsControlMessage>
+                Include a list of comma-separated repositories that will be available in Kubeapps.
+              </CdsControlMessage>
+              <textarea
+                id="kubeapps-oci-repositories"
+                className="cds-textarea-fix"
+                placeholder={"nginx, jenkins"}
+                value={ociRepositories}
+                onChange={handleOCIRepositoriesChange}
+              />
+            </CdsTextarea>
+          )}
         </div>
-      </div>
-      <div className="clr-form-control">
-        <label className="clr-control-label">Repository Authorization (optional)</label>
-        <span className="clr-form-description">
-          Introduce the credentials to access the Chart repository if authentication is enabled.
-        </span>
-        <div className="clr-form-columns">
-          <Row>
-            <Column span={3}>
-              <label
-                htmlFor="kubeapps-repo-auth-method-none"
-                className="clr-control-label clr-control-label-radio"
-              >
-                <input
-                  type="radio"
-                  id="kubeapps-repo-auth-method-none"
-                  name="auth"
-                  value={AUTH_METHOD_NONE}
-                  checked={authMethod === AUTH_METHOD_NONE}
-                  onChange={handleAuthRadioButtonChange}
-                />
-                None
-                <br />
-              </label>
-              <label
-                htmlFor="kubeapps-repo-auth-method-basic"
-                className="clr-control-label clr-control-label-radio"
-              >
-                <input
-                  type="radio"
-                  id="kubeapps-repo-auth-method-basic"
-                  name="auth"
-                  checked={authMethod === AUTH_METHOD_BASIC}
-                  value={AUTH_METHOD_BASIC}
-                  onChange={handleAuthRadioButtonChange}
-                />
-                Basic Auth
-                <br />
-              </label>
-              <label
-                htmlFor="kubeapps-repo-auth-method-bearer"
-                className="clr-control-label clr-control-label-radio"
-              >
-                <input
-                  type="radio"
-                  id="kubeapps-repo-auth-method-bearer"
-                  name="auth"
-                  value={AUTH_METHOD_BEARER}
-                  checked={authMethod === AUTH_METHOD_BEARER}
-                  onChange={handleAuthRadioButtonChange}
-                />
-                Bearer Token
-                <br />
-              </label>
-              <label
-                htmlFor="kubeapps-repo-auth-method-custom"
-                className="clr-control-label clr-control-label-radio"
-              >
-                <input
-                  type="radio"
-                  id="kubeapps-repo-auth-method-custom"
-                  name="auth"
-                  value={AUTH_METHOD_CUSTOM}
-                  checked={authMethod === AUTH_METHOD_CUSTOM}
-                  onChange={handleAuthRadioButtonChange}
-                />
-                Custom
-                <br />
-              </label>
-            </Column>
-            <Column span={9}>
-              <div className="column-valing-center clr-control-container">
-                <div hidden={authMethod !== AUTH_METHOD_BASIC}>
-                  <label className="clr-control-label" htmlFor="kubeapps-repo-username">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    id="kubeapps-repo-username"
-                    className="clr-input"
-                    value={user}
-                    onChange={handleUserChange}
-                    placeholder="Username"
-                  />
-                  <label className="clr-control-label" htmlFor="kubeapps-repo-password">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    id="kubeapps-repo-password"
-                    className="clr-input"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    placeholder="Password"
-                  />
-                </div>
-                <div hidden={authMethod !== AUTH_METHOD_BEARER}>
-                  <label className="clr-control-label" htmlFor="kubeapps-repo-token">
-                    Token
-                  </label>
-                  <input
-                    id="kubeapps-repo-token"
-                    className="clr-input"
-                    type="text"
-                    value={token}
-                    onChange={handleAuthTokenChange}
-                  />
-                </div>
-                <div hidden={authMethod !== AUTH_METHOD_CUSTOM}>
-                  <label className="clr-control-label" htmlFor="kubeapps-repo-custom-header">
-                    Complete Authorization Header
-                  </label>
-                  <input
-                    type="text"
-                    className="clr-input"
-                    id="kubeapps-repo-custom-header"
-                    placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                    value={authHeader}
-                    onChange={handleAuthHeaderChange}
-                  />
-                </div>
-              </div>
-            </Column>
-          </Row>
-        </div>
-      </div>
-      <div className="clr-form-control">
-        <label className="clr-control-label">Repository Type</label>
-        <span className="clr-form-description">Select the chart storage type.</span>
-        <div className="clr-form-columns">
-          <Row>
-            <Column span={3}>
-              <label
-                htmlFor="kubeapps-repo-type-helm"
-                className="clr-control-label clr-control-label-radio"
-              >
-                <input
-                  type="radio"
-                  id="kubeapps-repo-type-helm"
-                  name="type"
-                  value={TYPE_HELM}
-                  checked={type === TYPE_HELM}
-                  onChange={handleTypeRadioButtonChange}
-                />
-                Helm Repository
-                <br />
-              </label>
-              <label
-                htmlFor="kubeapps-repo-type-oci"
-                className="clr-control-label clr-control-label-radio"
-              >
-                <input
-                  type="radio"
-                  id="kubeapps-repo-type-oci"
-                  name="type"
-                  value={TYPE_OCI}
-                  checked={type === TYPE_OCI}
-                  onChange={handleTypeRadioButtonChange}
-                />
-                OCI Registry
-                <br />
-              </label>
-            </Column>
-            <Column span={9}>
-              <div
-                className="column-valing-center clr-control-container"
-                hidden={type !== TYPE_OCI}
-              >
-                <label className="clr-control-label" htmlFor="kubeapps-repo-username">
-                  List of Repositories
-                </label>
-                <span className="clr-form-description">
-                  Include a list of comma-separated repositories that will be available in Kubeapps.
-                </span>
-                <div className="clr-textarea-wrapper">
-                  <textarea
-                    id="kubeapps-oci-repositories"
-                    rows={4}
-                    className="clr-textarea"
-                    placeholder={"nginx, jenkins"}
-                    value={ociRepositories}
-                    onChange={handleOCIRepositoriesChange}
-                  />
-                </div>
-              </div>
-            </Column>
-          </Row>
-        </div>
-      </div>
-      {/* Only when using a namespace different than the Kubeapps namespace (Global)
+
+        {
+          /* Only when using a namespace different than the Kubeapps namespace (Global)
               the repository can be associated with Docker Registry Credentials since
               the pull secret won't be available in all namespaces */
-      namespace !== kubeappsNamespace && (
-        <div className="clr-form-control">
-          <label className="clr-control-label">
-            Associate Docker Registry Credentials (optional)
-          </label>
-          <span className="clr-form-description">
-            Select existing secret(s) to access a private Docker registry and pull images from it.
-            More info{" "}
-            <a
-              href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              here
-            </a>
-            .
-          </span>
-          <div className="clr-form-separator-sm">
+          namespace !== kubeappsNamespace && (
             <AppRepoAddDockerCreds
               imagePullSecrets={imagePullSecrets}
               togglePullSecret={togglePullSecret}
               selectedImagePullSecrets={selectedImagePullSecrets}
               namespace={namespace}
+              appVersion={appVersion}
             />
-          </div>
-        </div>
-      )}
-      <div className="clr-form-control">
-        <label className="clr-control-label" htmlFor="kubeapps-repo-custom-ca">
-          Custom CA Certificate (optional)
-        </label>
-        <div className="clr-control-container">
-          <div className="clr-textarea-wrapper">
-            <textarea
-              id="kubeapps-repo-custom-ca"
-              rows={4}
-              className="clr-textarea"
-              placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
-              value={customCA}
-              disabled={skipTLS}
-              onChange={handleCustomCAChange}
-            />
-          </div>
-        </div>
-        <div className="clr-form-control">
-          <CdsCheckbox>
-            <label className="clr-control-label">Skip TLS Verification</label>
-            <input
-              id="kubeapps-repo-skip-tls"
-              type="checkbox"
-              checked={skipTLS}
-              onChange={handleSkipTLSChange}
-            />
-          </CdsCheckbox>
-        </div>
-      </div>
-      <div className="clr-form-control">
-        <label className="clr-control-label" htmlFor="kubeapps-repo-sync-job-tpl">
-          Custom Sync Job Template (optional)
-        </label>
-        <span className="clr-form-description">
-          It's possible to modify the default sync job. More info{" "}
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md#modifying-the-synchronization-job`}
-          >
-            here
-          </a>
-          . When modifying the default sync job, the pre-validation is not supported.
-        </span>
-        <div className="clr-control-container">
-          <div className="clr-textarea-wrapper">
-            <textarea
-              id="kubeapps-repo-sync-job-tpl"
-              rows={5}
-              className="clr-textarea"
-              placeholder={
-                "spec:\n" +
-                "  containers:\n" +
-                "  - env:\n" +
-                "    - name: FOO\n" +
-                "      value: BAR\n"
-              }
-              value={syncJobPodTemplate}
-              onChange={handleSyncJobPodTemplateChange}
-            />
-          </div>
-        </div>
-      </div>
+          )
+        }
+
+        <CdsTextarea layout="vertical">
+          <label>Custom CA Certificate (optional)</label>
+          <textarea
+            id="kubeapps-repo-custom-ca"
+            placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+            className="cds-textarea-fix"
+            value={customCA}
+            disabled={skipTLS}
+            onChange={handleCustomCAChange}
+          />
+        </CdsTextarea>
+        <CdsCheckbox className="ca-skip-tls">
+          <label className="clr-control-label">Skip TLS Verification</label>
+          <input
+            id="kubeapps-repo-skip-tls"
+            type="checkbox"
+            checked={skipTLS}
+            onChange={handleSkipTLSChange}
+          />
+        </CdsCheckbox>
+
+        <CdsTextarea layout="vertical">
+          <label>Custom Sync Job Template (optional)</label>
+          <CdsControlMessage>
+            It's possible to modify the default sync job. When doing this, the pre-validation is not
+            supported. More info{" "}
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/private-app-repository.md#modifying-the-synchronization-job`}
+            >
+              here
+            </a>
+            .
+          </CdsControlMessage>
+          <textarea
+            id="kubeapps-repo-sync-job-tpl"
+            rows={5}
+            className="cds-textarea-fix"
+            placeholder={
+              "spec:\n" +
+              "  containers:\n" +
+              "  - env:\n" +
+              "    - name: FOO\n" +
+              "      value: BAR\n"
+            }
+            value={syncJobPodTemplate}
+            onChange={handleSyncJobPodTemplateChange}
+          />
+        </CdsTextarea>
+      </CdsFormGroup>
+
       {namespace === kubeappsNamespace && (
-        <div className="clr-form-description clr-form-separator">
+        <p>
           <strong>NOTE:</strong> This App Repository will be created in the "{kubeappsNamespace}"
           namespace and charts will be available in all namespaces for installation.
-        </div>
+        </p>
       )}
       {validationError && (
         <Alert theme="danger">

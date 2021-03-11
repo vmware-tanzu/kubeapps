@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import { useDispatch, useSelector } from "react-redux";
 import { IStoreState } from "shared/types";
@@ -30,7 +30,7 @@ export function AppRepoRefreshAllButton() {
   return (
     <div className="refresh-all-button">
       <CdsButton action="outline" onClick={handleResyncAllClick} disabled={refreshing}>
-        <CdsIcon shape="refresh" inverse={true} /> {refreshing ? "Refreshing" : "Refresh All"}
+        <CdsIcon shape="refresh" /> {refreshing ? "Refreshing" : "Refresh All"}
       </CdsButton>
     </div>
   );

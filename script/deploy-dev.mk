@@ -20,7 +20,7 @@ deploy-openldap:
 
 # Get mkcert from https://github.com/FiloSottile/mkcert/releases
 devel/localhost-cert.pem:
-	mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost 172.18.0.2
+	mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost 172.19.0.2
 
 deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem deploy-pinniped
 	kubectl --kubeconfig=${CLUSTER_CONFIG} create namespace kubeapps

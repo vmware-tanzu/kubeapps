@@ -1,7 +1,9 @@
+import { CdsModal } from "@cds/react/modal";
 import { shallow } from "enzyme";
 import { createMemoryHistory } from "history";
 import * as React from "react";
 import { Redirect, RouteComponentProps } from "react-router";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 
 import PrivateRoute from "./PrivateRoute";
 
@@ -57,10 +59,17 @@ it("renders the given component when authenticated", () => {
 });
 
 it("renders modal to reload the page if the session is expired", () => {
-  const wrapper = shallow(
+  const wrapper = mountWrapper(
+    defaultStore,
     <PrivateRoute sessionExpired={true} authenticated={false} {...emptyRouteComponentProps} />,
   );
-  const renderization: JSX.Element = wrapper.prop("render")();
-  expect(renderization.type.toString()).toContain("Modal");
-  expect(renderization.props.isOpen).toBe(true);
+  expect(wrapper.find(CdsModal)).toExist();
+});
+
+it("does not render modal to reload the page if the session isn't expired", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <PrivateRoute sessionExpired={false} authenticated={false} {...emptyRouteComponentProps} />,
+  );
+  expect(wrapper.find(CdsModal)).not.toExist();
 });

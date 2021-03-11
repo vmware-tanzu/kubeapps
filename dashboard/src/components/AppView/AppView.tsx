@@ -1,10 +1,9 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import { assignWith } from "lodash";
 import { get } from "lodash";
-import React, { useEffect, useState } from "react";
-// @ts-ignore
-import * as yaml from "yaml";
+import { useEffect, useState } from "react";
+import YAML from "yaml";
 import placeholder from "../../placeholder.png";
 
 import actions from "actions";
@@ -153,9 +152,9 @@ export default function AppView() {
       return;
     }
 
-    let parsedManifest: IResource[] = yaml
-      .parseAllDocuments(app.manifest)
-      .map((doc: yaml.ast.Document) => doc.toJSON());
+    let parsedManifest: IResource[] = YAML.parseAllDocuments(
+      app.manifest,
+    ).map((doc: YAML.Document) => doc.toJSON());
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
@@ -185,7 +184,7 @@ export default function AppView() {
         buttons={[
           <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)} key="upgrade-button">
             <CdsButton status="primary">
-              <CdsIcon shape="upload-cloud" inverse={true} /> Upgrade
+              <CdsIcon shape="upload-cloud" /> Upgrade
             </CdsButton>
           </Link>,
           <RollbackButton

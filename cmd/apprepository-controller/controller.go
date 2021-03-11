@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -605,6 +606,15 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 
 	if apprepo.Spec.TLSInsecureSkipVerify {
 		args = append(args, "--tls-insecure-skip-verify")
+	}
+
+	if apprepo.Spec.FilterRule.JQ != "" {
+		rulesJSON, err := json.Marshal(apprepo.Spec.FilterRule)
+		if err != nil {
+			log.Errorf("Unable to parse filter rules for %s: %v", apprepo.Name, err)
+		} else {
+			args = append(args, "--filter-rules", string(rulesJSON))
+		}
 	}
 
 	return args

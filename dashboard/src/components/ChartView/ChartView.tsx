@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { Dispatch } from "redux";
 
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ChartSummary from "components/Catalog/ChartSummary";
 import Alert from "components/js/Alert";
@@ -76,7 +76,7 @@ function ChartView({
 
   return (
     <section>
-      <div className="header-button">
+      <div>
         <ChartHeader
           chartAttrs={chartAttrs}
           versions={versions}
@@ -92,7 +92,7 @@ function ChartView({
               )}
             >
               <CdsButton status="primary">
-                <CdsIcon shape="deploy" inverse={true} /> Deploy
+                <CdsIcon shape="deploy" /> Deploy
               </CdsButton>
             </Link>
           }
@@ -125,7 +125,7 @@ function ChartView({
                 )}
               >
                 <CdsButton status="primary">
-                  <CdsIcon shape="deploy" inverse={true} /> Deploy
+                  <CdsIcon shape="deploy" /> Deploy
                 </CdsButton>
               </Link>
             </div>

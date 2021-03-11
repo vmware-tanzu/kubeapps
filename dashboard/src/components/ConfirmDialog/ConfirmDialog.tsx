@@ -1,6 +1,5 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import Alert from "components/js/Alert";
-import Modal from "components/js/Modal/Modal";
 import React from "react";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./ConfirmDialog.css";
@@ -9,9 +8,11 @@ interface IConfirmDialogProps {
   modalIsOpen: boolean;
   loading: boolean;
   extraElem?: JSX.Element;
+  headerText?: string;
   confirmationText: string;
   confirmationButtonText?: string;
   error?: Error;
+  size?: "sm" | "default" | "lg" | "xl";
   onConfirm: () => any;
   closeModal: () => any;
 }
@@ -20,35 +21,49 @@ function ConfirmDialog({
   modalIsOpen,
   loading,
   extraElem,
+  headerText,
   confirmationButtonText,
   confirmationText,
   onConfirm,
   closeModal,
   error,
+  size,
 }: IConfirmDialogProps) {
   return (
-    <Modal showModal={modalIsOpen} onModalClose={closeModal}>
-      {error && <Alert theme="danger">An error ocurred: {error.message}</Alert>}
-      {loading === true ? (
-        <div className="confirmation-modal">
-          <span>Loading, please wait</span>
-          <LoadingWrapper loaded={false} />
-        </div>
-      ) : (
-        <div className="confirmation-modal">
-          <span>{confirmationText}</span>
-          {extraElem}
-          <div className="confirmation-modal-buttons">
-            <CdsButton action="outline" type="button" onClick={closeModal}>
-              Cancel
-            </CdsButton>
-            <CdsButton status="danger" type="submit" onClick={onConfirm}>
-              {confirmationButtonText || "Delete"}
-            </CdsButton>
-          </div>
-        </div>
+    <>
+      {modalIsOpen && (
+        <CdsModal size={size || "default"} closable={true} onCloseChange={closeModal}>
+          {headerText && <CdsModalHeader>{headerText}</CdsModalHeader>}
+          {error && <Alert theme="danger">An error ocurred: {error.message}</Alert>}
+          {loading === true ? (
+            <>
+              <CdsModalContent>
+                <span>Loading, please wait</span>
+                <LoadingWrapper loaded={false} />
+              </CdsModalContent>
+            </>
+          ) : (
+            <>
+              <CdsModalContent>
+                <p>{confirmationText}</p>
+                {extraElem && <p>{extraElem}</p>}
+              </CdsModalContent>
+              <CdsModalActions>
+                {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
+                  https://github.com/vmware/clarity/issues/5038
+                  */}
+                <button className="btn btn-info-outline" type="button" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button className="btn btn-danger" type="submit" onClick={onConfirm}>
+                  {confirmationButtonText || "Delete"}
+                </button>
+              </CdsModalActions>
+            </>
+          )}
+        </CdsModal>
       )}
-    </Modal>
+    </>
   );
 }
 

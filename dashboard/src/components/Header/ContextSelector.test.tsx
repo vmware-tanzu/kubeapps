@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsModal } from "@clr/react/modal";
+import { CdsButton } from "@cds/react/button";
+import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { cloneDeep } from "lodash";
@@ -97,24 +97,14 @@ it("shows the current cluster", () => {
     },
   } as IClustersState;
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(
-    wrapper
-      .find("select")
-      .at(0)
-      .prop("value"),
-  ).toBe("bar");
+  expect(wrapper.find("select").at(0).prop("value")).toBe("bar");
 });
 
 it("shows the current namespace", () => {
   const clusters = cloneDeep(initialState.clusters);
   clusters.clusters[clusters.currentCluster].currentNamespace = "other";
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(
-    wrapper
-      .find("select")
-      .at(1)
-      .prop("value"),
-  ).toBe("other");
+  expect(wrapper.find("select").at(1).prop("value")).toBe("other");
 });
 
 it("submits the form to create a new namespace", () => {
@@ -122,12 +112,12 @@ it("submits the form to create a new namespace", () => {
   actions.namespace.createNamespace = createNamespace;
   const wrapper = mountWrapper(defaultStore, <ContextSelector />);
 
-  const modalButton = wrapper.find(".flat-btn");
+  const modalButton = wrapper.find(".flat-btn").first();
   act(() => {
     (modalButton.prop("onClick") as any)();
   });
   wrapper.update();
-  expect(wrapper.find(CdsModal)).toHaveProp("hidden", false);
+  expect(wrapper.find(CdsModal)).toExist();
 
   act(() => {
     wrapper.find("input").simulate("change", { target: { value: "new-ns" } });
@@ -147,6 +137,13 @@ it("shows an error creating a namespace", () => {
   clusters.clusters[clusters.currentCluster].error = { error: new Error("Boom"), action: "create" };
 
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+
+  const modalButton = wrapper.find(".flat-btn").first();
+  act(() => {
+    (modalButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+
   // The error will be within the modal
   expect(wrapper.find(CdsModal).find(Alert)).toExist();
 });
@@ -163,7 +160,7 @@ it("disables the create button if not allowed", () => {
     },
   } as IClustersState;
   const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
-  expect(wrapper.find(".flat-btn")).toBeDisabled();
+  expect(wrapper.find(".flat-btn").first()).toBeDisabled();
 });
 
 it("changes the location with the new namespace", () => {

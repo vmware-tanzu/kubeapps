@@ -2,7 +2,7 @@ import React from "react";
 import { shallow } from "enzyme";
 import Alert, { AlertThemes, AlertIcons } from "./Alert";
 import Button from "../Button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 
 describe(Alert, () => {
   it("renders the required HTML structure", () => {

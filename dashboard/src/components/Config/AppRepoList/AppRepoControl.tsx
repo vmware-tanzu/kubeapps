@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -55,10 +55,12 @@ export function AppRepoControl({
         modalIsOpen={modalIsOpen}
         loading={false}
         closeModal={closeModal}
+        headerText={"Delete repository"}
         confirmationText={`Are you sure you want to delete the repository ${repo.metadata.name}?`}
       />
 
       <AppRepoAddButton
+        title={`Edit repository '${repo.metadata.name}'`}
         namespace={repo.metadata.namespace}
         kubeappsNamespace={kubeappsNamespace}
         text="Edit"

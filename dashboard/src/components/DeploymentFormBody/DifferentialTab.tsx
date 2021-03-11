@@ -1,4 +1,4 @@
-import { CdsIcon } from "@clr/react/icon";
+import { CdsIcon } from "@cds/react/icon";
 import { useEffect, useState } from "react";
 import { DeploymentEvent } from "shared/types";
 

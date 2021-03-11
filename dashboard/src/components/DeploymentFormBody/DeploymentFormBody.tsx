@@ -1,8 +1,8 @@
 import Tabs from "components/Tabs";
 import React, { useEffect, useState } from "react";
 
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
 import { isEqual } from "lodash";
 import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";
@@ -155,6 +155,7 @@ function DeploymentFormBody({
       <ConfirmDialog
         modalIsOpen={restoreModalIsOpen}
         loading={false}
+        headerText={"Restore defaults"}
         confirmationText={"Are you sure you want to restore the default chart values?"}
         confirmationButtonText={"Restore"}
         onConfirm={restoreDefaultValues}
@@ -165,7 +166,7 @@ function DeploymentFormBody({
       </div>
       <div className="deployment-form-control-buttons">
         <CdsButton status="primary" type="submit">
-          <CdsIcon shape="deploy" inverse={true} /> Deploy v{version.attributes.version}
+          <CdsIcon shape="deploy" /> Deploy {version.attributes.version}
         </CdsButton>
         {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
             https://github.com/vmware/clarity/issues/5038

@@ -1,4 +1,4 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import { mount, shallow } from "enzyme";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
@@ -8,6 +8,7 @@ import RollbackDialog from "./RollbackDialog";
 const defaultProps = {
   loading: false,
   currentRevision: 2,
+  modalIsOpen: true,
   onConfirm: jest.fn(),
   closeModal: jest.fn(),
 };

@@ -39,6 +39,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/common/datastore"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
@@ -193,7 +194,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", &goodHTTPClient{})
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, &goodHTTPClient{})
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -201,8 +202,19 @@ func Test_syncURLInvalidity(t *testing.T) {
 
 func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
-		repo, _ := getOCIRepo("namespace", "test", "https://test", "Basic auth", []string{}, &http.Client{})
+		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{})
+		assert.NoErr(t, err)
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
+	})
+}
+
+func Test_parseFilters(t *testing.T) {
+	t.Run("return rules spec", func(t *testing.T) {
+		filters, err := parseFilters(`{"jq":".name == $var1","variables":{"$var1":"wordpress"}}`)
+		assert.NoErr(t, err)
+		assert.Equal(t, filters, &apprepov1alpha1.FilterRuleSpec{
+			JQ: ".name == $var1", Variables: map[string]string{"$var1": "wordpress"},
+		}, "filters")
 	})
 }
 
@@ -925,6 +937,7 @@ version: 1.0.0
 		description      string
 		chartName        string
 		ociArtifactFiles []tarballFile
+		tags             []string
 		expected         []models.Chart
 	}{
 		{
@@ -933,6 +946,7 @@ version: 1.0.0
 			[]tarballFile{
 				{Name: "Chart.yaml", Body: chartYAML},
 			},
+			[]string{"1.0.0"},
 			[]models.Chart{
 				{
 					ID:          "test/kubeapps",
@@ -964,6 +978,7 @@ version: 1.0.0
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
+			[]string{"1.0.0"},
 			[]models.Chart{
 				{
 					ID:          "test/kubeapps",
@@ -989,6 +1004,7 @@ version: 1.0.0
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
+			[]string{"1.0.0"},
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
@@ -1006,23 +1022,61 @@ version: 1.0.0
 				},
 			},
 		},
+		{
+			"Multiple chart versions",
+			"repo/kubeapps",
+			[]tarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			[]string{"1.0.0", "1.1.0"},
+			[]models.Chart{
+				{
+					ID:          "test/repo%2Fkubeapps",
+					Name:        "repo%2Fkubeapps",
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
+					Maintainers: []chart.Maintainer{},
+					ChartVersions: []models.ChartVersion{
+						{
+							Digest: "123",
+							Readme: "chart readme",
+							Values: "chart values",
+							Schema: "chart schema",
+						},
+						{
+							Digest: "123",
+							Readme: "chart readme",
+							Values: "chart values",
+							Schema: "chart schema",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			log.SetLevel(log.DebugLevel)
-			w := httptest.NewRecorder()
-			gzw := gzip.NewWriter(w)
-			createTestTarball(gzw, tt.ociArtifactFiles)
-			gzw.Flush()
+			w := map[string]*httptest.ResponseRecorder{}
+			content := map[string]*bytes.Buffer{}
+			for _, tag := range tt.tags {
+				recorder := httptest.NewRecorder()
+				gzw := gzip.NewWriter(recorder)
+				createTestTarball(gzw, tt.ociArtifactFiles)
+				gzw.Flush()
+				w[tag] = recorder
+				content[tag] = recorder.Body
+			}
 
 			chartsRepo := OCIRegistry{
 				repositories: []string{tt.chartName},
 				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
 				tags: map[string]TagList{
-					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: []string{"1.0.0"}},
+					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
 				},
 				puller: &helmfake.OCIPuller{
-					Content:  w.Body,
+					Content:  content,
 					Checksum: "123",
 				},
 			}
@@ -1123,6 +1177,149 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 			assert.NoErr(t, err)
 			if !cmp.Equal(r, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(r, tt.expected))
+			}
+		})
+	}
+}
+
+func Test_filterCharts(t *testing.T) {
+	tests := []struct {
+		description string
+		input       []models.Chart
+		rule        apprepov1alpha1.FilterRuleSpec
+		expected    []models.Chart
+		expectedErr error
+	}{
+		{
+			"should filter a chart",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"},
+			},
+			[]models.Chart{
+				{Name: "foo"},
+			},
+			nil,
+		},
+		{
+			"an invalid rule cause to return an empty set",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: "not a rule",
+			},
+			nil,
+			fmt.Errorf(`Unable to parse jq query: unexpected token "a"`),
+		},
+		{
+			"an invalid number of vars cause to return an empty set",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".name == $var1",
+			},
+			nil,
+			fmt.Errorf(`Unable to compile jq: variable not defined: $var1`),
+		},
+		{
+			"the query doesn't return a boolean",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: `.name`,
+			},
+			nil,
+			fmt.Errorf(`Unable to convert jq result to boolean. Got: foo`),
+		},
+		{
+			"matches without vars",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: `.name == "foo"`,
+			},
+			[]models.Chart{
+				{Name: "foo"},
+			},
+			nil,
+		},
+		{
+			"filters a maintainer name",
+			[]models.Chart{
+				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
+				{Name: "bar", Maintainers: []chart.Maintainer{{Name: "Hackers"}}},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".maintainers | any(.name == $var1)", Variables: map[string]string{"$var1": "Bitnami"},
+			},
+			[]models.Chart{
+				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
+			},
+			nil,
+		},
+		{
+			"excludes a value",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".name == $var1 | not", Variables: map[string]string{"$var1": "foo"},
+			},
+			[]models.Chart{
+				{Name: "bar"},
+			},
+			nil,
+		},
+		{
+			"matches against a regex",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: `.name | test($var1)`, Variables: map[string]string{"$var1": ".*oo.*"},
+			},
+			[]models.Chart{
+				{Name: "foo"},
+			},
+			nil,
+		},
+		{
+			"ignores an empty rule",
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			apprepov1alpha1.FilterRuleSpec{},
+			[]models.Chart{
+				{Name: "foo"},
+				{Name: "bar"},
+			},
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			res, err := filterCharts(tt.input, &tt.rule)
+			if err != nil {
+				if tt.expectedErr == nil || err.Error() != tt.expectedErr.Error() {
+					t.Fatalf("Unexpected error %v", err)
+				}
+			}
+			if !cmp.Equal(res, tt.expected) {
+				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
 			}
 		})
 	}

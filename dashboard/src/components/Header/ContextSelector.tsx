@@ -1,8 +1,8 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsFormGroup } from "@clr/react/forms";
-import { CdsIcon } from "@clr/react/icon";
-import { CdsInput } from "@clr/react/input";
-import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@clr/react/modal";
+import { CdsButton } from "@cds/react/button";
+import { CdsFormGroup } from "@cds/react/forms";
+import { CdsIcon } from "@cds/react/icon";
+import { CdsInput } from "@cds/react/input";
+import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -102,12 +102,12 @@ function ContextSelector() {
             <Column span={10}>
               <div className="kubeapps-dropdown-section">
                 <span className="kubeapps-dropdown-header">Current Context</span>
-                <div>
-                  <CdsIcon size="sm" shape="cluster" inverse={true} />
+                <div className="kubeapps-dropdown-items">
+                  <CdsIcon size="sm" shape="cluster" />
                   <label htmlFor="clusters" className="kubeapps-dropdown-text">
                     {clusters.currentCluster}
                   </label>
-                  <CdsIcon size="sm" shape="file-group" inverse={true} />
+                  <CdsIcon size="sm" shape="file-group" />
                   <label htmlFor="namespaces" className="kubeapps-dropdown-text">
                     {namespaceSelected}
                   </label>
@@ -118,7 +118,7 @@ function ContextSelector() {
               <div
                 className={`kubeapps-align-center angle ${open ? "angle-opened" : "angle-closed"}`}
               >
-                <CdsIcon shape="angle" inverse={true} direction={open ? "up" : "down"} />
+                <CdsIcon shape="angle" direction={open ? "up" : "down"} />
               </div>
             </Column>
           </Row>
@@ -128,7 +128,7 @@ function ContextSelector() {
             Select a cluster and a namespace to manage applications
           </span>
           <div className="dropdown-menu-padding" role="menuitem">
-            <CdsIcon size="sm" shape="cluster" inverse={true} />
+            <CdsIcon size="sm" shape="cluster" />
             <span className="kubeapps-dropdown-text">Cluster</span>
             <div className="clr-select-wrapper">
               <select
@@ -148,7 +148,7 @@ function ContextSelector() {
             </div>
           </div>
           <div className="dropdown-menu-padding" role="menuitem">
-            <CdsIcon size="sm" shape="file-group" inverse={true} />
+            <CdsIcon size="sm" shape="file-group" />
             <span className="kubeapps-dropdown-text">Namespace</span>
             <div className="clr-select-wrapper">
               <select
@@ -167,23 +167,25 @@ function ContextSelector() {
               </select>
             </div>
             <div className="kubeapps-create-new-ns">
-              <CdsModal hidden={!newNSModalIsOpen} closable={true} onCloseChange={closeNewNSModal}>
-                <CdsModalHeader>Create a New Namespace</CdsModalHeader>
-                {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
-                <form onSubmit={createNewNS}>
-                  <CdsModalContent>
-                    <CdsFormGroup>
-                      <CdsInput>
-                        <label>Name:</label>
-                        <input type="text" required={true} onChange={onChangeNewNS} />
-                      </CdsInput>
-                    </CdsFormGroup>
-                  </CdsModalContent>
-                  <CdsModalActions>
-                    <CdsButton type="submit">Submit</CdsButton>
-                  </CdsModalActions>
-                </form>
-              </CdsModal>
+              {newNSModalIsOpen && (
+                <CdsModal closable={true} onCloseChange={closeNewNSModal}>
+                  <CdsModalHeader>Create a New Namespace</CdsModalHeader>
+                  {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
+                  <form onSubmit={createNewNS}>
+                    <CdsModalContent>
+                      <CdsFormGroup>
+                        <CdsInput>
+                          <label>Name:</label>
+                          <input type="text" required={true} onChange={onChangeNewNS} />
+                        </CdsInput>
+                      </CdsFormGroup>
+                    </CdsModalContent>
+                    <CdsModalActions>
+                      <CdsButton type="submit">Submit</CdsButton>
+                    </CdsModalActions>
+                  </form>
+                </CdsModal>
+              )}
               <CdsButton
                 disabled={!canCreateNS}
                 title={
@@ -191,7 +193,6 @@ function ContextSelector() {
                     ? "Create a new namespace in the current cluster"
                     : "You don't have permission to create namespaces on the cluster"
                 }
-                status="inverse"
                 size="sm"
                 action="flat"
                 className="flat-btn"

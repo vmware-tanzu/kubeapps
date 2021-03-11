@@ -1,13 +1,9 @@
-@import url("https://fonts.googleapis.com/css?family=Fira+Sans:300,400,700|Hind:300,400,700");
-
-body {
-  margin: 0;
-  padding: 0;
-}
-
-.container-fluid > .row > div {
-  min-width: 0;
-}
+@import "~normalize.css/normalize.css";
+@import "~@cds/core/global.css"; // clarity core global styles
+@import "~@cds/core/styles/theme.dark.css"; // clarity core dark theme
+@import "~@cds/core/styles/module.shims.css"; // non-evergreen browser shims
+@import "~@cds/city/css/bundles/default.css"; // load base font
+// clarity UI light/dark themes are loaded by changing <link href=...>, since they aren't prepared for theming
 
 svg.icon {
   /* Fix positioning */
@@ -15,24 +11,29 @@ svg.icon {
   bottom: -0.125em;
 }
 
-/* Override Hex underline text-decoration in buttons in alerts
-see: https://github.com/bitnami/hex/issues/216 */
-.alert .button {
-  text-decoration: none;
+[slot~="modal-header"] {
+  color: var(--cds-global-typography-color-400, #21333b);
+  font-size: var(--cds-global-typography-font-size-6, 0.55rem);
 }
 
-.centered-modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  border: 1px solid rgb(204, 204, 204);
-  background: rgb(255, 255, 255);
-  overflow: auto;
-  border-radius: 4px;
-  outline: none;
-  padding: 20px;
-  margin-right: -50%;
-  transform: translate(-50%, -50%);
+// CSS tweaks the dark mode theme theme
+[cds-theme~="dark"] {
+  %convert-to-white {
+    filter: invert(1) brightness(100%) saturate(0%);
+  }
+
+  .section-not-found img {
+    // White 404 logo
+    @extend %convert-to-white;
+  }
+
+  .kubeapps-header-subtitle img {
+    // White header subtitle Helm logo
+    @extend %convert-to-white;
+  }
+
+  .bg-img img {
+    // White Helm logo in card overlay
+    @extend %convert-to-white;
+  }
 }

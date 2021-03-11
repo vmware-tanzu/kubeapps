@@ -1,5 +1,6 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
+import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -240,7 +241,7 @@ function Catalog(props: ICatalogProps) {
       const regex = new RegExp(escapeRegExp(searchFilter), "i");
       return (
         regex.test(c.metadata.name) ||
-        c?.spec?.customresourcedefinitions?.owned.find(crd => regex.test(crd.displayName))
+        c?.spec?.customresourcedefinitions?.owned?.find(crd => regex.test(crd.displayName))
       );
     })
     .filter(
@@ -256,8 +257,20 @@ function Catalog(props: ICatalogProps) {
 
   // Required to have the latest value of page
   const setPageWithContext = () => {
+    if (!error) {
+      increaseRequestedPage();
+    }
+  };
+
+  const forceRetry = () => {
+    dispatch(actions.charts.clearErrorChart());
+    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
+  };
+
+  const increaseRequestedPage = () => {
     setPage(page + 1);
   };
+
   const observeBorder = (node: any) => {
     // Check if the IntersectionAPI is enabled
     if ("IntersectionObserver" in window && "IntersectionObserverEntry" in window) {
@@ -305,7 +318,15 @@ function Catalog(props: ICatalogProps) {
         }
       />
       {error && (
-        <Alert theme="danger">An error occurred while fetching the catalog: {error.message}</Alert>
+        <Alert theme="danger">
+          An error occurred while fetching the catalog: {error.message}.{" "}
+          {!hasFinishedFetching && (
+            <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
+              {" "}
+              Try again{" "}
+            </CdsButton>
+          )}
+        </Alert>
       )}
       {isEqual(filters, initialFilterState()) &&
       hasFinishedFetching &&
@@ -426,6 +447,12 @@ function Catalog(props: ICatalogProps) {
                         filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
                         <div className="endPageMessage">
                           <LoadingWrapper medium={true} loaded={false} />
+                          {error && !hasFinishedFetching && (
+                            <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
+                              {" "}
+                              Try again{" "}
+                            </CdsButton>
+                          )}
                         </div>
                       )}
                     {!hasFinishedFetching && !isFetching && (

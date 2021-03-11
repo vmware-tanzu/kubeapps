@@ -1,5 +1,5 @@
-import { CdsButton } from "@clr/react/button";
-import { CdsIcon } from "@clr/react/icon";
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import DifferentialTab from "components/DeploymentFormBody/DifferentialTab";
 import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
@@ -82,6 +82,7 @@ function DeploymentFormBody({
         <ConfirmDialog
           modalIsOpen={modalIsOpen}
           loading={false}
+          headerText={"Restore defaults"}
           confirmationText={"Are you sure you want to restore the default instance values?"}
           confirmationButtonText={"Restore"}
           onConfirm={restoreDefaultValues}
@@ -126,7 +127,7 @@ function DeploymentFormBody({
         </div>
         <div className="deployment-form-control-buttons">
           <CdsButton status="primary" type="submit">
-            <CdsIcon shape="deploy" inverse={true} /> Deploy
+            <CdsIcon shape="deploy" /> Deploy
           </CdsButton>
           {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
             https://github.com/vmware/clarity/issues/5038

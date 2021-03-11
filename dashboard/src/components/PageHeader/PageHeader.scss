@@ -2,8 +2,8 @@
   width: 100%;
   height: 4rem;
   padding-top: 0.3rem;
-  border-bottom: 2px solid #f1f1f1;
-  background-color: white;
+  border-bottom: 2px solid var(--cds-alias-object-overlay-background, #f1f1f1);
+  background-color: var(--cds-alias-object-app-background, #fff);
 
   .img-container {
     display: contents;
@@ -42,7 +42,7 @@
             max-width: 30px;
           }
           span {
-            color: var(--clr-p1-color, #666666);
+            color: var(--cds-global-typography-color-400, #333);
             padding-top: 0.1rem;
           }
         }
@@ -62,9 +62,11 @@
 
 .header-version {
   &-label {
-    color: var(--clr-h3-color, black);
+    color: var(--cds-global-typography-color-400, #333);
     font-weight: 500;
-    margin-right: 0.2rem;
     margin-right: 0.6rem;
+  }
+  & button {
+    color: var(--cds-global-typography-color-400, #333);
   }
 }

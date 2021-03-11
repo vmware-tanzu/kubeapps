@@ -42,6 +42,8 @@ const chartsSelectedReducer = (
       return { ...state, readme: action.payload, readmeError: undefined };
     case getType(actions.charts.errorChart):
       return { ...state, error: action.payload };
+    case getType(actions.charts.clearErrorChart):
+      return { ...state, error: undefined };
     case getType(actions.charts.errorReadme):
       return { ...state, readmeError: action.payload };
     case getType(actions.charts.resetChartVersion):
@@ -105,7 +107,12 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         hasFinishedFetching: false,
-        items: [],
+        items: state.items,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
+    case getType(actions.charts.clearErrorChart):
+      return {
+        ...state,
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.errorChartCatetories):

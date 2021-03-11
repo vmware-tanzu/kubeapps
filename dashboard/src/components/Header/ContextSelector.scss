@@ -16,7 +16,7 @@
     background-color: #25333d;
   }
   button {
-    color: var(--clr-header-font-color, #fafafa);
+    color: var(--cds-global-color-gray-50, #fafafa);
   }
 }
 
@@ -43,7 +43,7 @@
     padding: 0 1rem 0.6rem 1rem;
   }
   .context-selector-header {
-    color: var(--clr-header-font-color, #fafafa);
+    color: var(--cds-global-color-gray-50, #fafafa);
     font-size: small;
     max-width: 100%;
     white-space: normal;
@@ -52,7 +52,7 @@
   .clr-select-wrapper {
     display: block;
     .clr-page-size-select {
-      color: var(--clr-header-font-color, #fafafa);
+      color: var(--cds-global-color-gray-50, #fafafa);
       width: 100%;
     }
   }
@@ -62,7 +62,8 @@
   display: flex;
   justify-content: flex-end;
   cds-button {
-    --color: var(--clr-header-font-color, #fafafa);
+    --color: var(--cds-global-color-gray-50, #fafafa);
     outline: 0px;
+    margin-top: 1em;
   }
 }

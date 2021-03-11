@@ -1,7 +1,5 @@
-import { CdsButton } from "@clr/react/button";
 import actions from "actions";
 import { shallow } from "enzyme";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { ISecret } from "shared/types";
@@ -22,6 +20,7 @@ const defaultProps = {
   togglePullSecret: jest.fn(),
   selectedImagePullSecrets: {},
   namespace: "default",
+  appVersion: "1.0.0",
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -73,7 +72,7 @@ it("renders the form to create a registry secret", () => {
 
   expect(wrapper.text()).not.toContain("Secret Name");
 
-  const button = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Add new"));
+  const button = wrapper.find(".btn-info-outline").filterWhere(b => b.html().includes("Add new"));
   act(() => {
     (button.prop("onClick") as any)();
   });
@@ -90,7 +89,7 @@ it("submits the new secret", async () => {
   };
   const wrapper = shallow(<AppRepoAddDockerCreds {...defaultProps} />);
   // Open form
-  const button = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Add new"));
+  const button = wrapper.find(".btn-info-outline").filterWhere(b => b.html().includes("Add new"));
   act(() => {
     (button.prop("onClick") as any)();
   });
@@ -113,7 +112,7 @@ it("submits the new secret", async () => {
   wrapper.find("#kubeapps-docker-cred-email").simulate("change", { target: { value: email } });
   wrapper.update();
 
-  const submit = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Submit"));
+  const submit = wrapper.find(".btn-info-outline").filterWhere(b => b.html().includes("Submit"));
   await act(async () => {
     await (submit.prop("onClick") as () => Promise<any>)();
   });

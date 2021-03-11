@@ -1,4 +1,4 @@
-import { CdsButton } from "@clr/react/button";
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Alert from "components/js/Alert";
@@ -42,7 +42,7 @@ it("deletes an application", async () => {
   expect(wrapper.find(ConfirmDialog).prop("modalIsOpen")).toBe(true);
   await act(async () => {
     await (wrapper
-      .find(CdsButton)
+      .find(".btn")
       .filterWhere(b => b.text() === "Delete")
       .prop("onClick") as any)();
   });
