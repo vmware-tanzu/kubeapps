@@ -4,7 +4,7 @@ metadata:
   name: jwt-authenticator
   namespace: pinniped-concierge
 spec:
-  issuer: https://172.18.0.2:32000
+  issuer: https://172.19.0.2:32000
   audience: default
   claims:
     groups: groups

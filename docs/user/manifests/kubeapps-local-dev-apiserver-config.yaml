@@ -12,7 +12,7 @@ nodes:
     kind: ClusterConfiguration
     apiServer:
       extraArgs:
-        oidc-issuer-url: https://172.18.0.2:32000
+        oidc-issuer-url: https://172.19.0.2:32000
         oidc-client-id: default
         oidc-ca-file: /etc/kubernetes/pki/apiserver.crt
         oidc-username-claim: email
