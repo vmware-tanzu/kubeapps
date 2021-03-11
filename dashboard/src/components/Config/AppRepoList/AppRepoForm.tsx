@@ -12,6 +12,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { toFilterRule, toParams } from "shared/jq";
 import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "../../../shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
@@ -105,9 +106,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
       setSkipTLS(!!repo.spec?.tlsInsecureSkipVerify);
       if (repo.spec?.filterRule?.jq) {
-        setFilterRegex(repo.spec.filterRule.jq.includes("| test"));
-        setFilterExclude(repo.spec.filterRule.jq.includes("| not"));
-        setFilterNames(Object.values(repo.spec.filterRule.variables || {}).join(", "));
+        const { names, regex, exclude } = toParams(repo.spec.filterRule);
+        setFilterRegex(regex);
+        setFilterExclude(exclude);
+        setFilterNames(names);
       }
       if (secret) {
         if (secret.data["ca.crt"]) {
@@ -164,20 +166,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     }
     let filter: IAppRepositoryFilter | undefined;
     if (type === TYPE_HELM && filterNames !== "") {
-      if (filterRegex) {
-        filter = { jq: ".name | test($var)", variables: { $var: filterNames } };
-      } else {
-        const names = filterNames.split(",").map(n => n.trim());
-        const variables = names.reduce((acc, n, i) => {
-          acc[`$var${i}`] = n;
-          return acc;
-        }, {});
-        const jq = names.map((v, i) => `.name == $var${i}`).join(" or ");
-        filter = { jq, variables };
-      }
-      if (filterExclude) {
-        filter.jq += " | not";
-      }
+      filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
     if (currentlyValidated || force) {
       const imagePullSecretsNames = Object.keys(selectedImagePullSecrets).filter(
@@ -248,15 +237,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handleFilterNames = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setFilterNames(e.target.value);
-    setValidated(undefined);
   };
   const handleFilterRegex = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterRegex(!filterRegex);
-    setValidated(undefined);
   };
   const handleFilterExclude = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterExclude(!filterExclude);
-    setValidated(undefined);
   };
 
   const togglePullSecret = (imagePullSecret: string) => {
