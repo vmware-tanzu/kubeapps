@@ -2,7 +2,7 @@ kind: JWTAuthenticator
 apiVersion: authentication.concierge.pinniped.dev/v1alpha1
 metadata:
   name: jwt-authenticator
-  namespace: pinniped-concierge # remove if Pinniped >= 0.6.0
+  namespace: pinniped-concierge
 spec:
   issuer: https://172.19.0.2:32000
   audience: default
