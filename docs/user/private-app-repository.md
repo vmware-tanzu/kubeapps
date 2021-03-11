@@ -34,6 +34,35 @@ When Kubeapps deploys any chart from this AppRepository, if a referenced docker 
 
 There will be further work to enable private AppRepositories to be available in multiple namespaces. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87).
 
+## Filter applications
+
+Since Kubeapps 2.3, it's possible to limit the number of packages that Kubeapps will expose to the users of an Application Repository. For doing so, edit the filter field of the form:
+
+<img src="../img/apprepo-form-filter.png" alt="AppRepository with filter" width="600px">
+
+- If "Exclude Packages" is marked, all the applications matching the given names will be excluded.
+- If "Regular Expression" is marked, rather than treating the input as a comma-separated list of application names, it will be treated as a [PCRE regex](https://stedolan.github.io/jq/manual/#RegularexpressionsPCRE). This can be used when the name of the application is not known or when you want to filter different applications with the same name.
+
+### Advanced filtering
+
+> **NOTE**: This is not supported by the Kubeapps Dashboard.
+
+In case you want to add a custom filter, based on a metadata field different than the name, it's possible to specify a [jq](https://stedolan.github.io/jq/) query to filter applications. This is only available when manually creating the AppRepository manifest. In this example, we are filtering applications that contain "Bitnami" as one of the maintainers:
+
+```yaml
+apiVersion: kubeapps.com/v1alpha1
+kind: AppRepository
+metadata:
+  name: my-repo
+  namespace: kubeapps
+spec:
+  url: https://my.charts.com/
+  filterRule:
+    jq: .maintainers | any(.name == "Bitnami")
+```
+
+> **Caveat**: Only the latest version of the chart is evaluated.
+
 ## ChartMuseum
 
 [ChartMuseum](https://chartmuseum.com) is an open-source Helm Chart Repository written in Go (Golang), with support for cloud storage backends, including Google Cloud Storage, Amazon S3, Microsoft Azure Blob Storage, Alibaba Cloud OSS Storage and OpenStack Object Storage.

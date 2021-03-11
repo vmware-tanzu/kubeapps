@@ -487,6 +487,7 @@ describe("installRepo", () => {
     [],
     [],
     false,
+    undefined,
   );
 
   context("when authHeader provided", () => {
@@ -501,6 +502,7 @@ describe("installRepo", () => {
       [],
       [],
       false,
+      undefined,
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -517,6 +519,7 @@ describe("installRepo", () => {
         [],
         [],
         false,
+        undefined,
       );
     });
 
@@ -533,6 +536,7 @@ describe("installRepo", () => {
           [],
           ["apache", "jenkins"],
           false,
+          undefined,
         ),
       );
       expect(AppRepository.create).toHaveBeenCalledWith(
@@ -547,6 +551,7 @@ describe("installRepo", () => {
         [],
         ["apache", "jenkins"],
         false,
+        undefined,
       );
     });
 
@@ -563,6 +568,7 @@ describe("installRepo", () => {
           [],
           [],
           true,
+          undefined,
         ),
       );
       expect(AppRepository.create).toHaveBeenCalledWith(
@@ -577,6 +583,7 @@ describe("installRepo", () => {
         [],
         [],
         true,
+        undefined,
       );
     });
 
@@ -598,6 +605,7 @@ describe("installRepo", () => {
       [],
       [],
       false,
+      undefined,
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -614,6 +622,7 @@ describe("installRepo", () => {
         [],
         [],
         false,
+        undefined,
       );
     });
 
@@ -636,6 +645,7 @@ describe("installRepo", () => {
             [],
             [],
             false,
+            undefined,
           ),
         );
 
@@ -653,6 +663,7 @@ describe("installRepo", () => {
           [],
           [],
           false,
+          undefined,
         );
       });
 
@@ -673,6 +684,7 @@ describe("installRepo", () => {
             [],
             [],
             false,
+            undefined,
           ),
         );
         expect(AppRepository.create).not.toHaveBeenCalled();
@@ -695,6 +707,7 @@ describe("installRepo", () => {
         [],
         [],
         false,
+        undefined,
       );
     });
 
@@ -760,6 +773,7 @@ describe("installRepo", () => {
         ["repo-1"],
         [],
         false,
+        undefined,
       ),
     );
 
@@ -775,6 +789,7 @@ describe("installRepo", () => {
       ["repo-1"],
       [],
       false,
+      undefined,
     );
   });
 });
@@ -816,6 +831,7 @@ describe("updateRepo", () => {
         ["repo-1"],
         [],
         false,
+        undefined,
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
@@ -831,6 +847,7 @@ describe("updateRepo", () => {
       ["repo-1"],
       [],
       false,
+      undefined,
     );
   });
 
@@ -870,6 +887,7 @@ describe("updateRepo", () => {
         ["repo-1"],
         [],
         false,
+        undefined,
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
@@ -885,6 +903,7 @@ describe("updateRepo", () => {
       ["repo-1"],
       [],
       false,
+      undefined,
     );
   });
 
@@ -914,6 +933,7 @@ describe("updateRepo", () => {
         [],
         [],
         false,
+        undefined,
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
@@ -935,6 +955,7 @@ describe("updateRepo", () => {
         [],
         ["apache", "jenkins"],
         false,
+        undefined,
       ),
     );
     expect(AppRepository.update).toHaveBeenCalledWith(
@@ -949,6 +970,7 @@ describe("updateRepo", () => {
       [],
       ["apache", "jenkins"],
       false,
+      undefined,
     );
   });
 });

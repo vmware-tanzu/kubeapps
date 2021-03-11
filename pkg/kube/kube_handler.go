@@ -315,16 +315,17 @@ type appRepositoryRequest struct {
 }
 
 type appRepositoryRequestDetails struct {
-	Name                  string                 `json:"name"`
-	Type                  string                 `json:"type"`
-	RepoURL               string                 `json:"repoURL"`
-	AuthHeader            string                 `json:"authHeader"`
-	CustomCA              string                 `json:"customCA"`
-	RegistrySecrets       []string               `json:"registrySecrets"`
-	SyncJobPodTemplate    corev1.PodTemplateSpec `json:"syncJobPodTemplate"`
-	ResyncRequests        uint                   `json:"resyncRequests"`
-	OCIRepositories       []string               `json:"ociRepositories"`
-	TLSInsecureSkipVerify bool                   `json:"tlsInsecureSkipVerify"`
+	Name                  string                  `json:"name"`
+	Type                  string                  `json:"type"`
+	RepoURL               string                  `json:"repoURL"`
+	AuthHeader            string                  `json:"authHeader"`
+	CustomCA              string                  `json:"customCA"`
+	RegistrySecrets       []string                `json:"registrySecrets"`
+	SyncJobPodTemplate    corev1.PodTemplateSpec  `json:"syncJobPodTemplate"`
+	ResyncRequests        uint                    `json:"resyncRequests"`
+	OCIRepositories       []string                `json:"ociRepositories"`
+	TLSInsecureSkipVerify bool                    `json:"tlsInsecureSkipVerify"`
+	FilterRule            v1alpha1.FilterRuleSpec `json:"filterRule"`
 }
 
 // ErrGlobalRepositoryWithSecrets defines the error returned when an attempt is
@@ -705,6 +706,7 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 			ResyncRequests:        appRepo.ResyncRequests,
 			OCIRepositories:       appRepo.OCIRepositories,
 			TLSInsecureSkipVerify: appRepo.TLSInsecureSkipVerify,
+			FilterRule:            appRepo.FilterRule,
 		},
 	}
 }

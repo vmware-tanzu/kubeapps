@@ -7,6 +7,7 @@ import Chart from "../shared/Chart";
 import Secret from "../shared/Secret";
 import {
   IAppRepository,
+  IAppRepositoryFilter,
   IAppRepositoryKey,
   ISecret,
   IStoreState,
@@ -245,6 +246,7 @@ export const installRepo = (
   registrySecrets: string[],
   ociRepositories: string[],
   skipTLS: boolean,
+  filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -265,6 +267,7 @@ export const installRepo = (
         registrySecrets,
         ociRepositories,
         skipTLS,
+        filter,
       );
       dispatch(addedRepo(data.appRepository));
 
@@ -287,6 +290,7 @@ export const updateRepo = (
   registrySecrets: string[],
   ociRepositories: string[],
   skipTLS: boolean,
+  filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -307,6 +311,7 @@ export const updateRepo = (
         registrySecrets,
         ociRepositories,
         skipTLS,
+        filter,
       );
       dispatch(repoUpdated(data.appRepository));
       // Re-fetch the helm repo secret that could have been modified with the updated headers
