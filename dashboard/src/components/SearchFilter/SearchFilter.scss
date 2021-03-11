@@ -1,9 +1,9 @@
-header .search-box input[type="text"] {
+#search {
   color: var(--cds-global-typography-color-500, #000);
   margin-left: 0.3rem;
 }
 
-header .search-box input::placeholder {
+#search input::placeholder {
   color: var(--cds-global-typography-color-300, #454545);
 }
 

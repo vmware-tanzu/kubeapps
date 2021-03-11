@@ -35,12 +35,14 @@ function ConfirmDialog({
           {headerText && <CdsModalHeader>{headerText}</CdsModalHeader>}
           {error && <Alert theme="danger">An error ocurred: {error.message}</Alert>}
           {loading === true ? (
-            <>
+            <div className="center">
               <CdsModalContent>
-                <span>Loading, please wait</span>
-                <LoadingWrapper loaded={false} />
+                <p>Loading, please wait</p>
+                <div className="center">
+                  <LoadingWrapper loaded={false} />
+                </div>
               </CdsModalContent>
-            </>
+            </div>
           ) : (
             <>
               <CdsModalContent>

@@ -17,7 +17,7 @@ export const initialState: IConfigState = {
   oauthLogoutURI: "",
   authProxySkipLoginPage: false,
   clusters: [],
-  theme: SupportedThemes.light,
+  theme: (localStorage.getItem("theme") as SupportedThemes) || SupportedThemes.light,
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
@@ -26,6 +26,7 @@ const configReducer = (state: IConfigState = initialState, action: ConfigAction)
       return initialState;
     case getType(actions.config.receiveConfig):
       return {
+        ...state,
         loaded: true,
         ...action.payload,
       };
