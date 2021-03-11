@@ -12,7 +12,7 @@ import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import { push } from "connected-react-router";
 import * as yaml from "js-yaml";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -200,10 +200,10 @@ function OperatorInstance({
         version={csv?.spec.version}
         buttons={[
           <CdsButton key="update-button" status="primary" onClick={onUpdateClick}>
-            <CdsIcon shape="upload-cloud" inverse={true} /> Update
+            <CdsIcon shape="upload-cloud" /> Update
           </CdsButton>,
           <CdsButton key="delete-button" status="primary" onClick={openModal}>
-            <CdsIcon shape="trash" inverse={true} /> Delete
+            <CdsIcon shape="trash" /> Delete
           </CdsButton>,
         ]}
       />

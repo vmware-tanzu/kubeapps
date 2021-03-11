@@ -1,0 +1,20 @@
+.docker-creds-subform {
+  width: 84%;
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-top: -0.6em;
+  background-color: var(--cds-alias-object-app-background, #fff);
+  h6:not([cds-text]) {
+    margin-top: 0.6em;
+  }
+}
+
+.docker-creds-subform-button {
+  margin-top: -0.9em;
+}
+
+.secret-label {
+  // By default, labels are capitalized but in the case of a secret, we still want it
+  // to be lowercase
+  text-transform: lowercase;
+}

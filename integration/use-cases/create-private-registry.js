@@ -16,31 +16,41 @@ test("Creates a private registry", async () => {
 
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
   const repoName = "my-repo-" + randomNumber;
-  await page.type("#kubeapps-repo-name", repoName);
+  await page.type("input[placeholder=\"example\"]", repoName);
 
   await page.type(
-    "#kubeapps-repo-url",
+    "input[placeholder=\"https://charts.example.com/stable\"]",
     "http://chartmuseum-chartmuseum.kubeapps:8080"
   );
 
   await expect(page).toClick("label", { text: "Basic Auth" });
 
   // Credentials from e2e-test.sh
-  await page.type("#kubeapps-repo-username", "admin");
-  await page.type("#kubeapps-repo-password", "password");
+  await page.type("input[placeholder=\"Username\"]", "admin");
+  await page.type("input[placeholder=\"Password\"]", "password");
 
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
-  await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
-  await page.type("#kubeapps-docker-cred-secret-name", secret);
+  try {
+    // TODO(andresmgot): Remove this line once 2.3 is released
+    await expect(page).toClick("cds-button", { text: "Add new credentials" });
+  } catch(e) {
+    await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
+  }
+  await page.type("input[placeholder=\"Secret\"]", secret);
   await page.type(
-    "#kubeapps-docker-cred-server",
+    "input[placeholder=\"https://index.docker.io/v1/\"]",
     "https://index.docker.io/v1/"
   );
-  await page.type("#kubeapps-docker-cred-username", "user");
-  await page.type("#kubeapps-docker-cred-password", "password");
-  await page.type("#kubeapps-docker-cred-email", "user@example.com");
-  await expect(page).toClick(".btn-info-outline", { text: "Submit" });
+  await page.type("input[placeholder=\"Username\"][value=\"\"]", "user");
+  await page.type("input[placeholder=\"Password\"][value=\"\"]", "password");
+  await page.type("input[placeholder=\"user@example.com\"]", "user@example.com");
+  try {
+    // TODO(andresmgot): Remove this line once 2.3 is released
+    await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
+  } catch(e) {
+    await expect(page).toClick(".btn-info-outline", { text: "Submit" });
+  }
 
   // Select the new secret
   await expect(page).toClick("label", { text: secret });
@@ -61,7 +71,7 @@ test("Creates a private registry", async () => {
   const appName = "my-app" + randomNumber;
   await page.type("#releaseName", appName);
 
-  await expect(page).toMatch("Deploy v7.3.15", { timeout: 10000 });
+  await expect(page).toMatch("Deploy 7.3.15", { timeout: 10000 });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

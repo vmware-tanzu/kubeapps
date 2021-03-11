@@ -3,7 +3,7 @@ import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import { push } from "connected-react-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -37,7 +37,7 @@ export default function DeleteButton({ cluster, namespace, releaseName }: IDelet
   return (
     <>
       <CdsButton status="danger" onClick={openModal}>
-        <CdsIcon shape="trash" inverse={true} /> Delete
+        <CdsIcon shape="trash" /> Delete
       </CdsButton>
       <ConfirmDialog
         modalIsOpen={modalIsOpen}

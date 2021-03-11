@@ -30,7 +30,7 @@ export function AppRepoRefreshAllButton() {
   return (
     <div className="refresh-all-button">
       <CdsButton action="outline" onClick={handleResyncAllClick} disabled={refreshing}>
-        <CdsIcon shape="refresh" inverse={true} /> {refreshing ? "Refreshing" : "Refresh All"}
+        <CdsIcon shape="refresh" /> {refreshing ? "Refreshing" : "Refresh All"}
       </CdsButton>
     </div>
   );

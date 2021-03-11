@@ -58,11 +58,17 @@ var syncCmd = &cobra.Command{
 		}
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
+
+		filters, err := parseFilters(filterRules)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+
 		var repoIface Repo
 		if args[2] == "helm" {
-			repoIface, err = getHelmRepo(namespace, args[0], args[1], authorizationHeader, netClient)
+			repoIface, err = getHelmRepo(namespace, args[0], args[1], authorizationHeader, filters, netClient)
 		} else {
-			repoIface, err = getOCIRepo(namespace, args[0], args[1], authorizationHeader, ociRepositories, netClient)
+			repoIface, err = getOCIRepo(namespace, args[0], args[1], authorizationHeader, filters, ociRepositories, netClient)
 		}
 		if err != nil {
 			logrus.Fatal(err)
