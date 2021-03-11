@@ -1,7 +1,7 @@
 import actions from "actions";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
-import * as React from "react";
+
 import * as ReactRedux from "react-redux";
 import ResourceRef from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";

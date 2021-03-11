@@ -1,5 +1,5 @@
 import { CdsIcon } from "@cds/react/icon";
-import * as React from "react";
+import React from "react";
 import Input from "../js/Input";
 
 import Column from "components/js/Column";

@@ -1,4 +1,3 @@
-import * as React from "react";
 import { HashLink as Link } from "react-router-hash-link";
 
 const LinkRenderer: React.FunctionComponent<{}> = (props: any) => {

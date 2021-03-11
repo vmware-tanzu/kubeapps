@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";

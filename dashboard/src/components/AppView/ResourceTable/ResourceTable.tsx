@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 
 import { CdsIcon } from "@cds/react/icon";

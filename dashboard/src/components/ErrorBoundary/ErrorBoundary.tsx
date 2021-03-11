@@ -1,6 +1,6 @@
 import { CdsInlineButton } from "@cds/react/button";
 import Alert from "components/js/Alert";
-import * as React from "react";
+import React from "react";
 
 export interface IErrorBoundaryProps {
   error?: Error;

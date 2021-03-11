@@ -1,4 +1,3 @@
-import * as React from "react";
 import * as ReactRedux from "react-redux";
 
 import actions from "actions";

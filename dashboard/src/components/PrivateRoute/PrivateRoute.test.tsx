@@ -1,7 +1,7 @@
 import { CdsModal } from "@cds/react/modal";
 import { shallow } from "enzyme";
 import { createMemoryHistory } from "history";
-import * as React from "react";
+import React from "react";
 import { Redirect, RouteComponentProps } from "react-router";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 

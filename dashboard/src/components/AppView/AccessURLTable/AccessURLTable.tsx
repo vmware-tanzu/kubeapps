@@ -1,5 +1,5 @@
 import { get } from "lodash";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import actions from "actions";
 import Table from "components/js/Table";

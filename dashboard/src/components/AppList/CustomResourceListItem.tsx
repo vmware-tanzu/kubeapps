@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import { app } from "shared/url";
 import operatorIcon from "../../icons/operator-framework.svg";
 import { findOwnedKind, getIcon } from "../../shared/Operators";

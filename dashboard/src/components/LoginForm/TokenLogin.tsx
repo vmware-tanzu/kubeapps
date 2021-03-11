@@ -1,5 +1,4 @@
 import { CdsButton } from "@cds/react/button";
-import * as React from "react";
 import { useIntl } from "react-intl";
 
 interface ILoginFormProps {

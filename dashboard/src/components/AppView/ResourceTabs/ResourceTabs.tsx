@@ -1,5 +1,3 @@
-import React from "react";
-
 import Tabs from "components/Tabs";
 import ResourceTable from "containers/ResourceTableContainer";
 import ResourceRef from "shared/ResourceRef";

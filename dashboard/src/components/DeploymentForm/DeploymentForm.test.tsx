@@ -1,6 +1,5 @@
 import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
-import * as React from "react";
 import * as ReactRedux from "react-redux";
 
 import ChartHeader from "components/ChartView/ChartHeader";

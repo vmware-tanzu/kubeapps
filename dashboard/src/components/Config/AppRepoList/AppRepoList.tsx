@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
@@ -7,7 +7,7 @@ import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
-import * as qs from "qs";
+import qs from "qs";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";

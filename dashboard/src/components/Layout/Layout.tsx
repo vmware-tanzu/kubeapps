@@ -1,8 +1,7 @@
-import * as React from "react";
-
 import actions from "actions";
 import Header from "components/Header";
 import ErrorBoundaryContainer from "containers/ErrorBoundaryContainer";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";

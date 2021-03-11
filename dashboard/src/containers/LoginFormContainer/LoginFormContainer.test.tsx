@@ -1,6 +1,5 @@
 import { shallow } from "enzyme";
 import { Location } from "history";
-import * as React from "react";
 import { IAuthState } from "reducers/auth";
 import { IClustersState } from "reducers/cluster";
 import { IConfigState } from "reducers/config";

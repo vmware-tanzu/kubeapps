@@ -1,6 +1,5 @@
 import { CdsIcon } from "@cds/react/icon";
 import { mount } from "enzyme";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import DifferentialTab from "./DifferentialTab";
 

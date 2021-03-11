@@ -1,5 +1,5 @@
 import context from "jest-plugin-context";
-import * as React from "react";
+import React from "react";
 import * as ReactRedux from "react-redux";
 
 import { deepClone } from "@cds/core/internal";

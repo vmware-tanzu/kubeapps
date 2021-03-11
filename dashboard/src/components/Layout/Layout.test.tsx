@@ -1,5 +1,4 @@
 import actions from "actions";
-import * as React from "react";
 import * as ReactRedux from "react-redux";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import Layout from "./Layout";

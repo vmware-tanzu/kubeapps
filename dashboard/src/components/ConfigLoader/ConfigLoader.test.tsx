@@ -1,7 +1,6 @@
 import Alert from "components/js/Alert";
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
-import * as React from "react";
 
 import ConfigLoader from ".";
 import itBehavesLike from "../../shared/specs";

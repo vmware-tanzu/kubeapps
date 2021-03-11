@@ -1,6 +1,6 @@
 import * as jsdiff from "diff";
 import * as Diff2Html from "diff2html";
-import * as React from "react";
+import React from "react";
 
 import "diff2html/bundles/css/diff2html.min.css";
 import "./Differential.css";

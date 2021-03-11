@@ -1,5 +1,5 @@
 import { trimStart } from "lodash";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { getIcon } from "shared/Operators";
 import { IChart, IClusterServiceVersion } from "shared/types";
 import CatalogItem, { ICatalogItemProps } from "./CatalogItem";

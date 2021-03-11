@@ -2,7 +2,7 @@ import AppList from "components/AppList/AppList";
 import AppView from "components/AppView";
 import AppRepoList from "components/Config/AppRepoList";
 import LoadingWrapper from "components/LoadingWrapper";
-import * as React from "react";
+import React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";

@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChart, IClusterServiceVersion } from "shared/types";
 import CatalogItem from "./CatalogItem";

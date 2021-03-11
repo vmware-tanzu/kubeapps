@@ -1,4 +1,3 @@
-import * as React from "react";
 import { setValue } from "../../../shared/schema";
 import { DeploymentEvent, IBasicFormParam } from "../../../shared/types";
 import { getValueFromEvent } from "../../../shared/utils";
