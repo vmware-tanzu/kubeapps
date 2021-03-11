@@ -241,6 +241,7 @@ fn get_pinniped_login_api_group() ->  String  {
     return format!("{}.{}", "login.concierge", &api_suffix).to_string();
 }
 
+
 #[macro_use]
 #[cfg(test)]
 mod tests {
@@ -293,6 +294,7 @@ mod tests {
     #[test]
     #[serial(envtest)]
     fn test_get_api_group_getters() -> Result<()> {
+        env::remove_var("DEFAULT_DEFAULT_PINNIPED_API_SUFFIX");
         let authenticator_api_group =  get_pinniped_authenticator_api_group();
         assert_eq!(authenticator_api_group, "authentication.concierge.pinniped.dev");
 
@@ -306,5 +308,23 @@ mod tests {
         let login_api_group = get_pinniped_login_api_group();
         assert_eq!(login_api_group, "login.concierge.foo.bar");
         Ok(())
-}
+    }
+
+    #[test]
+    #[serial(envtest)]
+    fn test_get_is_tmc_environment() -> Result<()> {
+        env::remove_var("DEFAULT_PINNIPED_API_SUFFIX");
+        let is_tmc_environment: bool = env::var(DEFAULT_PINNIPED_API_SUFFIX).unwrap_or(DEFAULT_API_SUFFIX.into()) == TMC_PINNIPED_API_SUFFIX;
+        assert_eq!(is_tmc_environment, false);
+        
+        let is_tmc_environment: bool = env::var(DEFAULT_PINNIPED_API_SUFFIX).unwrap_or(DEFAULT_API_SUFFIX.into()) == TMC_PINNIPED_API_SUFFIX;
+        env::set_var(DEFAULT_PINNIPED_API_SUFFIX, "foo.bar");
+        assert_eq!(is_tmc_environment, false);
+
+        let is_tmc_environment: bool = env::var(DEFAULT_PINNIPED_API_SUFFIX).unwrap_or(DEFAULT_API_SUFFIX.into()) == TMC_PINNIPED_API_SUFFIX;
+        env::set_var(DEFAULT_PINNIPED_API_SUFFIX, "pinniped.tmc.cloud.vmware.com");
+        assert_eq!(is_tmc_environment, false);
+
+        Ok(())
+    }
 }
