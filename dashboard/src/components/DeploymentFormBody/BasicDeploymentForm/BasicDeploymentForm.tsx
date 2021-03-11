@@ -1,4 +1,3 @@
-import * as React from "react";
 import { DeploymentEvent, IBasicFormParam } from "shared/types";
 
 import "./BasicDeploymentForm.css";

@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import { app } from "shared/url";
 import InfoCard from "../InfoCard/InfoCard";
 import CustomResourceListItem from "./CustomResourceListItem";

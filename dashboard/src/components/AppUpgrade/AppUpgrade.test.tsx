@@ -1,6 +1,5 @@
 import { shallow } from "enzyme";
 import context from "jest-plugin-context";
-import * as React from "react";
 
 import Alert from "components/js/Alert";
 import { hapi } from "shared/hapi/release";

@@ -1,6 +1,5 @@
 import { CdsButton } from "@cds/react/button";
 import { mount, shallow } from "enzyme";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import LoadingWrapper from "../../../../components/LoadingWrapper/LoadingWrapper";
 import RollbackDialog from "./RollbackDialog";

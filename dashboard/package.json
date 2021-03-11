@@ -29,7 +29,7 @@
     "axios": "^0.21.1",
     "connected-react-router": "^6.9.1",
     "diff": "^5.0.0",
-    "diff2html": "^3.3.0",
+    "diff2html": "^3.3.1",
     "enzyme-adapter-react-16": "^1.1.1",
     "fast-json-patch": "^3.0.0-1",
     "fstream": "^1.0.12",
@@ -150,7 +150,10 @@
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.18.0",
     "tslint-react": "^4.1.0",
-    "typescript": "^4.1.0"
+    "typescript": "^4.2.3"
+  },
+  "resolutions": {
+    "@typescript-eslint/typescript-estree": "^4.17.0"
   },
   "jest": {
     "resetMocks": false,

@@ -1,5 +1,4 @@
 import { mount } from "enzyme";
-import * as React from "react";
 import PageHeader from "./PageHeader";
 
 const defaultProps = {

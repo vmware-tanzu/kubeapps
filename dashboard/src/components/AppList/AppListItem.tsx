@@ -1,4 +1,3 @@
-import * as React from "react";
 import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
 import { IAppOverview } from "../../shared/types";

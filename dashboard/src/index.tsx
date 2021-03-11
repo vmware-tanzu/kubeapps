@@ -1,4 +1,4 @@
-import * as ReactDOM from "react-dom";
+import ReactDOM from "react-dom";
 import { addAuthHeaders, addErrorHandling, axios, axiosWithAuth } from "shared/AxiosInstance";
 
 import Root from "./containers/Root";

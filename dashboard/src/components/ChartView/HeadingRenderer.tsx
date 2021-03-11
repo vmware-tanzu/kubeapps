@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 
 // Code from https://github.com/rexxars/react-markdown/issues/69
 function flatten(text: string, child: any): any {

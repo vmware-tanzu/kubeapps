@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import Input from "../js/Input";
 import SearchFilter, { ISearchFilterProps } from "./SearchFilter";
 

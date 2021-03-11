@@ -1,7 +1,6 @@
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { cloneDeep } from "lodash";
-import * as React from "react";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import OperatorSummary from "./OperatorSummary";
 

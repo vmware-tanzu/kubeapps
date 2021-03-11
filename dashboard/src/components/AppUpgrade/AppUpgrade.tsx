@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import Alert from "components/js/Alert";
 import { RouterAction } from "connected-react-router";

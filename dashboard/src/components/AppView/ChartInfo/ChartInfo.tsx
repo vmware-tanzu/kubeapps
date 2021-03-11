@@ -1,4 +1,3 @@
-import * as React from "react";
 import { IRelease } from "shared/types";
 import "./ChartInfo.css";
 import ChartUpdateInfo from "./ChartUpdateInfo";

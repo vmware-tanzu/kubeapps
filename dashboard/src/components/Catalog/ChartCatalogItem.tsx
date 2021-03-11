@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useSelector } from "react-redux";
 import { trimDescription } from "shared/utils";
 import helmIcon from "../../icons/helm.svg";

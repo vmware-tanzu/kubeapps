@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import OperatorDescription from "./OperatorDescription";

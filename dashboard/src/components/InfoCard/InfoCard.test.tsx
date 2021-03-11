@@ -1,6 +1,5 @@
 import Icon from "components/Icon/Icon";
 import { shallow } from "enzyme";
-import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { CardBlock } from "../js/Card";

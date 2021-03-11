@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";

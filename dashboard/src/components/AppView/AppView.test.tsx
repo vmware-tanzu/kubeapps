@@ -1,5 +1,4 @@
 import * as yaml from "js-yaml";
-import * as React from "react";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 

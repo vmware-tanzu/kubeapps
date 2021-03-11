@@ -1,4 +1,3 @@
-import * as React from "react";
 import { app } from "shared/url";
 import { trimDescription } from "shared/utils";
 import operatorIcon from "../../icons/operator-framework.svg";

@@ -3,7 +3,7 @@ import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { cloneDeep } from "lodash";
-import * as React from "react";
+
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";

@@ -1,6 +1,5 @@
 import LoadingWrapper from "components/LoadingWrapper";
 import { Location } from "history";
-import * as React from "react";
 import { act } from "react-dom/test-utils";
 import { Redirect } from "react-router";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";

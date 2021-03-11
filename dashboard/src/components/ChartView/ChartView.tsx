@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Dispatch } from "redux";
 
 import { CdsButton } from "@cds/react/button";

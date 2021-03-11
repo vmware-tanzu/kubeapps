@@ -381,6 +381,13 @@ kubeops:
       port: 8080
     initialDelaySeconds: 0
     timeoutSeconds: 5
+  ## Additional environment variables to set
+  ## E.g:
+  ## extraEnvVars:
+  ##   - name: TZ
+  ##     value: Europe/Madrid
+  ##
+  extraEnvVars: []
   nodeSelector: {}
   tolerations: []
   affinity: {}
