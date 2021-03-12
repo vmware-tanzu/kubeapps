@@ -169,7 +169,7 @@ Frontend service port number
 {{- if .Values.authProxy.enabled -}}
 3000
 {{- else -}}
-8080
+{{ .Values.frontend.service.port }}
 {{- end -}}
 {{- end -}}
 

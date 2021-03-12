@@ -152,7 +152,7 @@ frontend:
     type: ClusterIP
     ## HTTP Port
     ##
-    port: 80
+    port: 8080
     ## Set a static load balancer IP (only when frontend.service.type="LoadBalancer")
     ## ref: http://kubernetes.io/docs/user-guide/services/#type-loadbalancer
     ##
