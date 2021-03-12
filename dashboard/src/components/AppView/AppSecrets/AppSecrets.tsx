@@ -40,7 +40,7 @@ function AppSecrets({ secretRefs }: IResourceTableProps) {
     });
   }
   return (
-    <section aria-labelledby="app-secrets" className="app-secrets-section">
+    <section aria-labelledby="app-secrets">
       <h5 className="section-title" id="app-secrets">
         Application Secrets
       </h5>
