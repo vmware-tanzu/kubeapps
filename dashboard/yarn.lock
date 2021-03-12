@@ -13570,10 +13570,10 @@ swagger-client@^3.13.1:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^3.44.1:
-  version "3.44.1"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-3.44.1.tgz#a546166b60a663cfa3a56e9d5e8323458a791288"
-  integrity sha512-Z4yQ7qgTpxpsOMN7CWVk0p/n1ieoP4UPAKpquRAHVsuIIDv6VRG2wydWW/hncC3r2RACIXmkiU69Coa7ALNPUg==
+swagger-ui-react@^3.45.0:
+  version "3.45.0"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-3.45.0.tgz#6692c7ad62a452ecb2473aeda729cfb8e1d821d5"
+  integrity sha512-wCoZEWfhg6/6u0sY2Kks1zDua2aMQnSMnS10/N/40G4h2SGr6Qfqex5ca5uaJvprpLLIPUv4BcRHs++ZTxjK4A==
   dependencies:
     "@babel/runtime-corejs3" "^7.13.9"
     "@braintree/sanitize-url" "^5.0.0"
