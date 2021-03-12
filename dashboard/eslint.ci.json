@@ -1,0 +1,69 @@
+{
+  "extends": [
+    "react-app",
+    "react-app/jest",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:react/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json",
+    "sourceType": "module"
+  },
+  "plugins": ["eslint-plugin-import", "eslint-plugin-react", "@typescript-eslint"],
+  "rules": {
+    "object-literal-sort-keys": 0,
+    "quotes": [
+      "error",
+      "double",
+      {
+        "allowTemplateLiterals": true,
+        "avoidEscape": true
+      }
+    ],
+    "import/no-anonymous-default-export": [
+      "error",
+      {
+        "allowObject": true,
+        "allowArrowFunction": true
+      }
+    ],
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/ban-types": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/no-inferrable-types": "off",
+    "@typescript-eslint/no-misused-promises": "off",
+    "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-unnecessary-type-assertion": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/prefer-regexp-exec": "off",
+    "@typescript-eslint/require-await": "off",
+    "@typescript-eslint/restrict-plus-operands": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/unbound-method": "off",
+    "jest/no-conditional-expect": "off",
+    "jest/no-identical-title": "off",
+    "jest/valid-title": "off",
+    "react/display-name": "off",
+    "react/no-children-prop": "off",
+    "react/no-unescaped-entities": "off",
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

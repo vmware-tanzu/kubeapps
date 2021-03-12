@@ -84,15 +84,14 @@
     "test": "yarn run build-css && yarn run compile-lang && react-scripts test",
     "eject": "react-scripts eject",
     "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
-    "tslint-check": "tslint-config-prettier-check ./tslint.ci.json",
     "prettier": "prettier --write 'src/**/*.{ts,tsx,scss}'",
     "prettier-check": "prettier --check 'src/**/*.{ts,tsx,scss}'",
-    "lint-js": "tslint -c ./tslint.ci.json 'src/**/*.{ts,tsx}'",
-    "lint-js-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'",
+    "lint-js": "eslint -c ./eslint.ci.json 'src/**/*.{ts,tsx}'",
+    "lint-js-fix": "eslint -c ./eslint.ci.json --fix 'src/**/*.{ts,tsx}'",
     "lint-css": "stylelint --config ./.stylelintrc.json 'src/**/*.scss'",
     "lint-css-fix": "stylelint --config ./.stylelintrc.json --fix 'src/**/*.scss'",
-    "eslint": "eslint '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --max-warnings=0",
-    "eslint-fix": "eslint '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --fix --max-warnings=0",
+    "eslint": "eslint -c ./eslint.ci.json '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --max-warnings=0",
+    "eslint-fix": "eslint -c ./eslint.ci.json '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --fix --max-warnings=0",
     "lint": "npm-run-all lint-js lint-css eslint",
     "ts-compile-check": "yarn run compile-lang && tsc -p tsconfig.json --noEmit",
     "extract-lang": "formatjs extract 'src/**/*.ts*' --out-file lang/en.json --id-interpolation-pattern '[sha512:contenthash:base64:6]' --format simple",
@@ -129,6 +128,8 @@
     "@types/redux-mock-store": "^1.0.0",
     "@types/swagger-ui-react": "^3.35.0",
     "enzyme": "^3.11.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
     "husky": "^4.3.8",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
@@ -146,9 +147,6 @@
     "stylelint-config-recommended-scss": "^4.2.0",
     "stylelint-scss": "^3.19.0",
     "ts-jest": "^26.5.3",
-    "tslint": "^5.9.1",
-    "tslint-config-prettier": "^1.18.0",
-    "tslint-react": "^4.1.0",
     "typescript": "^4.2.3"
   },
   "resolutions": {
@@ -163,18 +161,6 @@
     "transformIgnorePatterns": [
       "node_modules/(?!@clr|@cds|lit-element|lit-html|ramda|lodash-es|.*css)"
     ]
-  },
-  "eslintConfig": {
-    "extends": "react-app",
-    "rules": {
-      "import/no-anonymous-default-export": [
-        "error",
-        {
-          "allowObject": true,
-          "allowArrowFunction": true
-        }
-      ]
-    }
   },
   "husky": {
     "hooks": {
