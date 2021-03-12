@@ -45,10 +45,17 @@ spec:
             - --database-url={{ template "kubeapps.postgresql.fullname" . }}-headless:5432
           env:
             - name: DB_PASSWORD
+              {{- if .Values.postgresql.existingSecret }}
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.postgresql.existingSecret }}
                   key: postgresql-password
+              {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kubeapps.postgresql.fullname" . }}
+                  key: postgresql-password
+              {{- end }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:

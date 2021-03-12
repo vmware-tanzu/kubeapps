@@ -49,10 +49,17 @@ spec:
             - --database-name=assets
           env:
             - name: DB_PASSWORD
+              {{- if .Values.postgresql.existingSecret }}
               valueFrom:
                 secretKeyRef:
                   key: postgresql-password
                   name: {{ .Values.postgresql.existingSecret }}
+              {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kubeapps.postgresql.fullname" . }}
+                  key: postgresql-password
+              {{- end }}
       {{- if .Values.postgresql.existingSecret }}
       initContainers:
         # Helm 3.1 supports a lookup template tag to create a secret if it does not exist
