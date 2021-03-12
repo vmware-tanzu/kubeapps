@@ -16,7 +16,7 @@
     "@types/moxios": "^0.4.10",
     "@types/pako": "^1.0.1",
     "@types/qs": "^6.9.6",
-    "@types/react": "^17.0.2",
+    "@types/react": "^17.0.3",
     "@types/react-copy-to-clipboard": "^5.0.0",
     "@types/react-jsonschema-form": "^1.7.4",
     "@types/react-router-dom": "^5.1.7",
