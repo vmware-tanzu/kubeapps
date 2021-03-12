@@ -294,7 +294,7 @@ mod tests {
     #[test]
     #[serial(envtest)]
     fn test_get_api_group_getters() -> Result<()> {
-        env::remove_var("DEFAULT_DEFAULT_PINNIPED_API_SUFFIX");
+        env::remove_var("DEFAULT_PINNIPED_API_SUFFIX");
         let authenticator_api_group =  get_pinniped_authenticator_api_group();
         assert_eq!(authenticator_api_group, "authentication.concierge.pinniped.dev");
 
