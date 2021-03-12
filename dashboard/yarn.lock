@@ -11719,10 +11719,10 @@ react-markdown@^5.0.0:
     unist-util-visit "^2.0.0"
     xtend "^4.0.1"
 
-react-minimal-pie-chart@^8.1.0:
-  version "8.1.0"
-  resolved "https://registry.yarnpkg.com/react-minimal-pie-chart/-/react-minimal-pie-chart-8.1.0.tgz#2b5a239ca2ab8d88f8915abf4f602cff3e0c72eb"
-  integrity sha512-eoorRrGySbkkzpG1vX0/p18xxhSA/6OqIlMnlAlMez+cjfLnsX/u8+PFaOsWltQwhiwtA4DaO8VriWKryIluyg==
+react-minimal-pie-chart@^8.2.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/react-minimal-pie-chart/-/react-minimal-pie-chart-8.2.0.tgz#22b53af2363f040d818331721658dfa7a1ea847a"
+  integrity sha512-RhrHzprJt3KfBe4L3sE0Ha6fj4kYcwQtesQgscnld9Umf64+nZnxxInycnbimKsbIjxJONv77JIZp+qRbJD+bA==
 
 react-motion@^0.5.2:
   version "0.5.2"
