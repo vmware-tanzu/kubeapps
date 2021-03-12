@@ -12,7 +12,6 @@ it("should use default values when first deploying", () => {
     />,
   );
   expect(wrapper.find(Differential).props()).toMatchObject({
-    title: "Difference from chart defaults",
     oldValues: "foo",
     newValues: "bar",
   });
@@ -28,7 +27,6 @@ it("should use deployed values when upgrading", () => {
     />,
   );
   expect(wrapper.find(Differential).props()).toMatchObject({
-    title: "Difference from deployed version",
     oldValues: "foobar",
     newValues: "bar",
   });

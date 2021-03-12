@@ -108,11 +108,6 @@ function DeploymentFormBody({
                 key="advanced-deployment-form"
               />,
               <Differential
-                title={
-                  deployedValues
-                    ? "Difference from deployed values"
-                    : "Difference from example defaults"
-                }
                 oldValues={deployedValues || defaultValues}
                 newValues={values}
                 emptyDiffText={
