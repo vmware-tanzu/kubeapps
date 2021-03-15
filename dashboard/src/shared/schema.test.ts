@@ -372,13 +372,11 @@ describe("setValue", () => {
     },
   ].forEach(t => {
     it(t.description, () => {
-      let res: any;
-      try {
-        res = setValue(t.values, t.path, t.newValue);
-      } catch (e) {
-        expect(t.error).toBe(true);
+      if (t.error) {
+        expect(() => setValue(t.values, t.path, t.newValue)).toThrow();
+      } else {
+        expect(setValue(t.values, t.path, t.newValue)).toEqual(t.result);
       }
-      expect(res).toEqual(t.result);
     });
   });
 });

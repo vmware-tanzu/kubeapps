@@ -73,7 +73,6 @@
     "@typescript-eslint/no-explicit-any": "off", // allow using 'any'
     "@typescript-eslint/no-non-null-assertion": "off", // allow non-null assertions using '!'
     "jest/no-conditional-expect": "off", // allow 'expect' in 'if' and 'try-catch'
-    "jest/no-try-expect": "off",
     "jest/valid-title": "off",
     "jsx-a11y/label-has-associated-control": "off", // TODO(agamez): check if <label><customelement></label> works
     "jsx-a11y/no-onchange": "off", // TODO(agamez): allow using onChange instead of onBlur, but it is not recommended
