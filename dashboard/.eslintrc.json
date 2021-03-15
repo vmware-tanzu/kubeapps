@@ -85,7 +85,6 @@
     "jest/valid-title": "off",
     "jsx-a11y/click-events-have-key-events": "off",
     "jsx-a11y/label-has-associated-control": "off",
-    "jsx-a11y/no-interactive-element-to-noninteractive-role": "off",
     "jsx-a11y/no-onchange": "off", // allow using onChange instead of onBlur, but it is not recommended
     "react/no-unescaped-entities": [
       "error",
