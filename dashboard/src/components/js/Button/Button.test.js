@@ -25,7 +25,7 @@ describe(Button, () => {
 
   describe("Themes", () => {
     Object.keys(ButtonThemes).map(k => {
-      it(`apply the ${k} theme`, () => {
+      return it(`apply the ${k} theme`, () => {
         const wrapper = shallow(
           <Button theme={ButtonThemes[k]} onClick={() => {}}>
             Test
@@ -38,7 +38,7 @@ describe(Button, () => {
 
   describe("Types", () => {
     Object.keys(ButtonTypes).map(k => {
-      it(`apply the ${k} theme`, () => {
+      return it(`apply the ${k} theme`, () => {
         const wrapper = shallow(
           <Button type={ButtonTypes[k]} onClick={() => {}}>
             Test

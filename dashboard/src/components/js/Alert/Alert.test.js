@@ -77,7 +77,7 @@ describe(Alert, () => {
       const theme = AlertThemes[k];
       const icon = AlertIcons[k];
 
-      it(`apply the ${theme} theme`, () => {
+      return it(`apply the ${theme} theme`, () => {
         const wrapper = shallow(<Alert theme={theme}>Test</Alert>);
 
         expect(wrapper).toHaveClassName(`alert-${theme}`);
