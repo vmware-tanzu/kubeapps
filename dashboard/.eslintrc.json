@@ -71,7 +71,7 @@
       }
     ],
     "@typescript-eslint/no-explicit-any": "off", // allow using 'any'
-    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-non-null-assertion": "off", // allow non-null assertions using '!'
     "@typescript-eslint/no-unnecessary-type-assertion": "off",
     "@typescript-eslint/no-unsafe-assignment": "off",
     "@typescript-eslint/no-unsafe-call": "off",
