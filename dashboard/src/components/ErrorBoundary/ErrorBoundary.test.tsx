@@ -4,7 +4,6 @@ import { mount } from "enzyme";
 import React from "react";
 import ErrorBoundary from "./ErrorBoundary";
 
-// tslint:disable:no-console
 const consoleOrig = console.error;
 
 const defaultProps = {

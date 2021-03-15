@@ -7,9 +7,6 @@ import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
 
-// Allow defining multiple error classes
-// tslint:disable:max-classes-per-file
-
 class CustomError extends Error {
   // The constructor is defined so we can later on compare the returned object
   // via err.contructor  == FOO
