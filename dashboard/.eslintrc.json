@@ -95,7 +95,11 @@
     "no-case-declarations": "off",
     "react/display-name": "off",
     "react/no-unescaped-entities": [
-    "react/no-unescaped-entities": "off",
+        "error",
+        {
+          "forbid": [">", "}"] // avoid warnings with single/double quotes
+        }
+      ],
     "react/jsx-uses-react": "off", // allow removing unused react imports (react >17)
     "react/react-in-jsx-scope": "off", // allow removing unused react imports (react >17)
     "no-use-before-define": "off" // superseed with @typescript-eslint/no-use-before-define
