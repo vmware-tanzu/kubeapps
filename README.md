@@ -42,6 +42,14 @@ If you have followed the instructions for [installing Kubeapps](./docs/user/gett
 - [Kubeapps components](./docs/architecture/overview.md)
 - [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
 
+## API documentation
+
+Whereas Kubeapps does not have yet a well-design API, we still want to share the current status of the APIs used across the internal components. Check out the [latest API online documentation](https://app.swaggerhub.com/apis/kubeapps/Kubeapps) or download the Kubeapps [OpenAPI Specification yaml file](./dashboard/public/openapi.yaml) from the repository.
+
+> This API documentation is subject to change in each Kubeapps version. If you are planning to build any solution on the top of the Kubeapps API, please [reach us](https://kubernetes.slack.com/messages/kubeapps) for further information.
+
+Besides, you install Kubeapps in your cluster, you can find the interactive API documentation portal on the right menu.
+
 ## Differences from Monocular
 
 The [Monocular](https://github.com/helm/monocular) project was designed to run a public search and discovery website for Helm repositories (e.g. https://hub.kubeapps.com). Following its 1.0 release, Monocular is focused on delivering the experience for the Helm Hub.
