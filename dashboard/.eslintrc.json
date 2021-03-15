@@ -72,12 +72,7 @@
     ],
     "@typescript-eslint/no-explicit-any": "off", // allow using 'any'
     "@typescript-eslint/no-non-null-assertion": "off", // allow non-null assertions using '!'
-    "@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/no-var-requires": "off",
-    "@typescript-eslint/prefer-regexp-exec": "off",
-    "@typescript-eslint/require-await": "off",
-    "@typescript-eslint/restrict-template-expressions": "off",
-    "@typescript-eslint/unbound-method": "off",
     "jest/no-conditional-expect": "off",
     "jest/no-export": "off",
     "jest/no-identical-title": "off",
