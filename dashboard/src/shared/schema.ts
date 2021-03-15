@@ -9,6 +9,7 @@ import YAML from "yaml";
 import { IBasicFormParam } from "./types";
 
 // Avoid to explicitly add "null" when an element is not defined
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { nullOptions } = require("yaml/types");
 nullOptions.nullStr = "";
 
