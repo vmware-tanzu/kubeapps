@@ -1,20 +1,41 @@
 {
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/resolver": {
+      "typescript": {}
+    }
+  },
   "extends": [
     "react-app",
     "react-app/jest",
+    "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:jsx-a11y/recommended",
+    "plugin:jest/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "prettier",
     "plugin:react/recommended",
     "plugin:prettier/recommended"
   ],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "project": "tsconfig.json",
-    "sourceType": "module"
+  "plugins": ["react", "@typescript-eslint", "jest", "jsx-a11y", "import"],
+  "env": {
+    "browser": true,
+    "es6": true,
+    "jest": true
   },
-  "plugins": ["eslint-plugin-import", "eslint-plugin-react", "@typescript-eslint"],
   "rules": {
-    "object-literal-sort-keys": 0,
     "quotes": [
       "error",
       "double",
@@ -33,6 +54,7 @@
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/ban-types": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-floating-promises": "off",
@@ -49,21 +71,25 @@
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/prefer-regexp-exec": "off",
     "@typescript-eslint/require-await": "off",
-    "@typescript-eslint/restrict-plus-operands": "off",
+    // "@typescript-eslint/restrict-plus-operands": "off",
     "@typescript-eslint/restrict-template-expressions": "off",
     "@typescript-eslint/unbound-method": "off",
+    "jest/no-commented-out-tests": "off",
     "jest/no-conditional-expect": "off",
+    "jest/no-export": "off",
     "jest/no-identical-title": "off",
+    "jest/no-try-expect": "off",
     "jest/valid-title": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "jsx-a11y/no-interactive-element-to-noninteractive-role": "off",
+    "jsx-a11y/no-onchange": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "no-case-declarations": "off",
     "react/display-name": "off",
     "react/no-children-prop": "off",
     "react/no-unescaped-entities": "off",
-    "react/prop-types": "off",
-    "react/react-in-jsx-scope": "off"
-  },
-  "settings": {
-    "react": {
-      "version": "detect"
-    }
+    "react/jsx-uses-react": "off", // allow removing unused react imports (react >17)
+    "react/react-in-jsx-scope": "off" // allow removing unused react imports (react >17)
   }
 }

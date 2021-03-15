@@ -86,20 +86,17 @@
     "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
     "prettier": "prettier --write 'src/**/*.{ts,tsx,scss}'",
     "prettier-check": "prettier --check 'src/**/*.{ts,tsx,scss}'",
-    "lint-js": "eslint -c ./eslint.ci.json 'src/**/*.{ts,tsx}'",
-    "lint-js-fix": "eslint -c ./eslint.ci.json --fix 'src/**/*.{ts,tsx}'",
     "lint-css": "stylelint --config ./.stylelintrc.json 'src/**/*.scss'",
     "lint-css-fix": "stylelint --config ./.stylelintrc.json --fix 'src/**/*.scss'",
-    "eslint": "eslint -c ./eslint.ci.json '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --max-warnings=0",
-    "eslint-fix": "eslint -c ./eslint.ci.json '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --fix --max-warnings=0",
-    "lint": "npm-run-all lint-js lint-css eslint",
+    "eslint": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --quiet --max-warnings=0",
+    "eslint-fix": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --fix --max-warnings=0",
+    "lint": "npm-run-all lint-css eslint",
     "ts-compile-check": "yarn run compile-lang && tsc -p tsconfig.json --noEmit",
     "extract-lang": "formatjs extract 'src/**/*.ts*' --out-file lang/en.json --id-interpolation-pattern '[sha512:contenthash:base64:6]' --format simple",
     "compile-lang": "formatjs compile-folder lang src/locales/ --ast --format simple"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "yarn run lint-js-fix",
       "yarn run eslint-fix",
       "prettier --write",
       "git add"
@@ -129,6 +126,7 @@
     "@types/swagger-ui-react": "^3.35.0",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.1.0",
+    "eslint-import-resolver-typescript": "^2.4.0",
     "eslint-plugin-prettier": "^3.3.1",
     "husky": "^4.3.8",
     "jest-enzyme": "^7.1.2",
@@ -148,9 +146,6 @@
     "stylelint-scss": "^3.19.0",
     "ts-jest": "^26.5.3",
     "typescript": "^4.2.3"
-  },
-  "resolutions": {
-    "@typescript-eslint/typescript-estree": "^4.17.0"
   },
   "jest": {
     "resetMocks": false,
