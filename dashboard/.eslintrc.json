@@ -51,7 +51,6 @@
         "allowArrowFunction": true
       }
     ],
-    "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/ban-types": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-empty-function": "off",
@@ -71,7 +70,6 @@
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/prefer-regexp-exec": "off",
     "@typescript-eslint/require-await": "off",
-    // "@typescript-eslint/restrict-plus-operands": "off",
     "@typescript-eslint/restrict-template-expressions": "off",
     "@typescript-eslint/unbound-method": "off",
     "jest/no-commented-out-tests": "off",
@@ -90,6 +88,7 @@
     "react/no-children-prop": "off",
     "react/no-unescaped-entities": "off",
     "react/jsx-uses-react": "off", // allow removing unused react imports (react >17)
-    "react/react-in-jsx-scope": "off" // allow removing unused react imports (react >17)
+    "react/react-in-jsx-scope": "off", // allow removing unused react imports (react >17)
+    "no-use-before-define": "off" // superseed with @typescript-eslint/no-use-before-define
   }
 }
