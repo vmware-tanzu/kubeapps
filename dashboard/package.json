@@ -72,7 +72,7 @@
     "semver": "^7.3.4",
     "swagger-ui-react": "^3.45.0",
     "typesafe-actions": "^5.1.0",
-    "yaml": "1.10.0"
+    "yaml": "1.10.2"
   },
   "scripts": {
     "build-css": "sass src/ --no-source-map && yarn run copy-clr",
