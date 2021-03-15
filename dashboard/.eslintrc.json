@@ -94,7 +94,7 @@
     "jsx-a11y/no-static-element-interactions": "off",
     "no-case-declarations": "off",
     "react/display-name": "off",
-    "react/no-children-prop": "off",
+    "react/no-unescaped-entities": [
     "react/no-unescaped-entities": "off",
     "react/jsx-uses-react": "off", // allow removing unused react imports (react >17)
     "react/react-in-jsx-scope": "off", // allow removing unused react imports (react >17)
