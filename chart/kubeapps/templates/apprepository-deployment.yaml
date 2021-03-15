@@ -55,7 +55,7 @@ spec:
             {{- if .Values.postgresql.existingSecret }}
             - --database-secret-name={{ .Values.postgresql.existingSecret }}
             {{- else }}
-            - --database-secret-name={{ template "kubeapps.postgresql.fullname" . }}q
+            - --database-secret-name={{ template "kubeapps.postgresql.fullname" . }}
             {{- end }}
             - --database-secret-key=postgresql-password
             - --database-url={{ template "kubeapps.postgresql.fullname" . }}:5432
