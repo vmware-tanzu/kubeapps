@@ -2,8 +2,7 @@ import { getType } from "typesafe-actions";
 import actions from "../actions";
 
 import { IAppRepository } from "shared/types";
-import reposReducer from "./repos";
-import { IAppRepositoryState } from "./repos";
+import reposReducer, { IAppRepositoryState } from "./repos";
 
 describe("reposReducer", () => {
   let initialState: IAppRepositoryState;

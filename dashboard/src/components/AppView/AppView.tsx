@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
-import { assignWith } from "lodash";
-import { get } from "lodash";
+import { assignWith, get } from "lodash";
+
 import { useEffect, useState } from "react";
 import YAML from "yaml";
 import placeholder from "../../placeholder.png";

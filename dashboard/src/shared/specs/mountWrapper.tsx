@@ -1,7 +1,7 @@
 import { RouterState } from "connected-react-router";
 import { mount } from "enzyme";
-import { merge } from "lodash";
-import { cloneDeep } from "lodash";
+import { merge, cloneDeep } from "lodash";
+
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
