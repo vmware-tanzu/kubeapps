@@ -97,7 +97,6 @@
     "jsx-a11y/label-has-associated-control": "off",
     "jsx-a11y/no-interactive-element-to-noninteractive-role": "off",
     "jsx-a11y/no-onchange": "off",
-    "jsx-a11y/no-static-element-interactions": "off",
     "react/no-unescaped-entities": [
       "error",
       {

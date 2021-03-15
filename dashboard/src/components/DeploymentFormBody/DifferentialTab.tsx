@@ -40,7 +40,7 @@ export default function DifferentialTab({
     }
   }, [oldValues, appValues]);
   return (
-    <div onClick={setNewChangesFalse} className="notification-icon">
+    <div role="presentation" onClick={setNewChangesFalse} className="notification-icon">
       Changes
       <CdsIcon hidden={!newChanges} shape="circle" solid={true} />
     </div>
