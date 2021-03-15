@@ -45,7 +45,7 @@ const clusterReducer = (
   action: ConfigAction | NamespaceAction | LocationChangeAction | AuthAction,
 ): IClustersState => {
   switch (action.type) {
-    case getType(actions.namespace.receiveNamespace):
+    case getType(actions.namespace.receiveNamespace): {
       if (
         !state.clusters[action.payload.cluster].namespaces.includes(
           action.payload.namespace.metadata.name,
@@ -66,7 +66,8 @@ const clusterReducer = (
         };
       }
       return state;
-    case getType(actions.namespace.receiveNamespaces):
+    }
+    case getType(actions.namespace.receiveNamespaces): {
       return {
         ...state,
         clusters: {
@@ -83,7 +84,8 @@ const clusterReducer = (
           },
         },
       };
-    case getType(actions.namespace.setNamespaceState):
+    }
+    case getType(actions.namespace.setNamespaceState): {
       return {
         ...state,
         currentCluster: action.payload.cluster,
@@ -96,7 +98,8 @@ const clusterReducer = (
           },
         },
       };
-    case getType(actions.namespace.errorNamespaces):
+    }
+    case getType(actions.namespace.errorNamespaces): {
       return {
         ...state,
         clusters: {
@@ -107,14 +110,16 @@ const clusterReducer = (
           },
         },
       };
-    case getType(actions.namespace.clearClusters):
+    }
+    case getType(actions.namespace.clearClusters): {
       return {
         ...state,
         clusters: {
           ...initialState.clusters,
         },
       };
-    case getType(actions.namespace.setAllowCreate):
+    }
+    case getType(actions.namespace.setAllowCreate): {
       return {
         ...state,
         clusters: {
@@ -125,7 +130,8 @@ const clusterReducer = (
           },
         },
       };
-    case LOCATION_CHANGE:
+    }
+    case LOCATION_CHANGE: {
       const pathname = action.payload.location.pathname;
       // looks for either or both of /c/:cluster and /ns/:namespace in URL
       const matches = pathname.match(/(?:\/c\/(?<cluster>[^/]*))?(?:\/ns\/(?<namespace>[^/]*))?/);
@@ -146,7 +152,8 @@ const clusterReducer = (
         };
       }
       break;
-    case getType(actions.config.receiveConfig):
+    }
+    case getType(actions.config.receiveConfig): {
       // Initialize the clusters when receiving the config.
       const config = action.payload as IConfig;
       const clusters: IClustersMap = {};
@@ -163,6 +170,7 @@ const clusterReducer = (
         currentCluster: config.clusters[0],
         clusters,
       };
+    }
     default:
   }
   return state;

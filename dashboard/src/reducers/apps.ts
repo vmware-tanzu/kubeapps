@@ -41,7 +41,7 @@ const appsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveRollbackApp):
       return { ...state, isFetching: false };
-    case getType(actions.apps.receiveAppUpdateInfo):
+    case getType(actions.apps.receiveAppUpdateInfo): {
       let listOverview;
       if (state.listOverview) {
         // TODO: Review structure to use byID and update items directly
@@ -70,6 +70,7 @@ const appsReducer = (
         listOverview: listOverview || state.listOverview,
         selected: selected || state.selected,
       };
+    }
     case LOCATION_CHANGE:
       return {
         ...state,

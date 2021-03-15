@@ -87,7 +87,7 @@ const reposReducer = (
       };
     case getType(actions.repos.receiveReposSecrets):
       return { ...state, repoSecrets: action.payload };
-    case getType(actions.repos.receiveReposSecret):
+    case getType(actions.repos.receiveReposSecret): {
       const secret = action.payload;
       const repoSecrets = state.repoSecrets.map(s =>
         s.metadata.name === secret.metadata.name &&
@@ -96,6 +96,7 @@ const reposReducer = (
           : s,
       );
       return { ...state, repoSecrets };
+    }
     case getType(actions.repos.requestRepos):
       return { ...state, ...isFetching(state, "repositories", true) };
     case getType(actions.repos.addRepo):
@@ -107,7 +108,7 @@ const reposReducer = (
         lastAdded: action.payload,
         repos: [...state.repos, action.payload],
       };
-    case getType(actions.repos.repoUpdated):
+    case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
       const repos = state.repos.map(r =>
         r.metadata.name === updatedRepo.metadata.name &&
@@ -116,6 +117,7 @@ const reposReducer = (
           : r,
       );
       return { ...state, repos };
+    }
     case getType(actions.repos.repoValidating):
       return { ...state, validating: true };
     case getType(actions.repos.repoValidated):
