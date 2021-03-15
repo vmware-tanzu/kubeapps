@@ -4,13 +4,15 @@ The [Pinniped project](https://pinniped.dev/) exists to "Simplify user authentic
 
 ## Installing Pinniped
 
-Install Pinniped 0.5.0 into a `pinniped-concierge` namespace on your cluster with:
+Install Pinniped 0.6.0 into a `pinniped-concierge` namespace on your cluster with:
 
 ```bash
-kubectl apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.5.0/install-pinniped-concierge.yaml
+kubectl apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.6.0/install-pinniped-concierge.yaml
 ```
 
-**NOTE**: At the time of writing, [0.6.0 of Pinniped](https://github.com/vmware-tanzu/pinniped/releases/tag/v0.6.0) has been released but due to a breaking change noted in the release notes, does not yet work with Kubeapps ([#2426](https://github.com/kubeapps/kubeapps/issues/2426)).
+**NOTE**: Due to a breaking change in [Pinniped 0.6.0](https://github.com/vmware-tanzu/pinniped/releases/tag/v0.6.0), the minimum version supported by Kubeapps is 0.6.0. Furthermore, [custom API suffixes](https://pinniped.dev/posts/multiple-pinnipeds) (introduced in Pinniped 0.5.0) are not yet fully supported. If your platform uses this feature, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new).
+
+
 
 ## Configure Pinniped to trust your OIDC identity provider
 
@@ -21,7 +23,6 @@ kind: JWTAuthenticator
 apiVersion: authentication.concierge.pinniped.dev/v1alpha1
 metadata:
   name: jwt-authenticator
-  namespace: pinniped-concierge
 spec:
   issuer: https://172.18.0.2:32000
   audience: default
@@ -31,6 +32,8 @@ spec:
   tls:
     certificateAuthorityData: <removed-for-clarity>
 ```
+
+> Note that in TMC, `authentication.concierge.pinniped.dev/v1alpha1` will become `authentication.concierge.pinniped.tmc.cloud.vmware.com/v1alpha1`
 
 When the `pinniped-proxy` service of Kubeapps requests to exchange a JWT `id_token` for client certificates, Pinniped will verify the `id_token` is signed by the issuer identified here. Once verified, the claims for `username` and `groups` will be included on the generated client certificate so that the Kubernetes API server knows the username and groups associated with the request.
 
