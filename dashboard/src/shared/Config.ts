@@ -41,5 +41,5 @@ export default class Config {
     localStorage.setItem("theme", theme);
   }
 
-  private static APIEndpoint: string = "config.json";
+  private static APIEndpoint = "config.json";
 }

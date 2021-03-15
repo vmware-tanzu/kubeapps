@@ -71,7 +71,6 @@
       }
     ],
     "@typescript-eslint/no-explicit-any": "off", // allow using 'any'
-    "@typescript-eslint/no-inferrable-types": "off",
     "@typescript-eslint/no-misused-promises": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-unnecessary-type-assertion": "off",
