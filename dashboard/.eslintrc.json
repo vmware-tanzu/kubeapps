@@ -63,12 +63,12 @@
     ],
     "@typescript-eslint/explicit-module-boundary-types": "off", // disable warning when missing return type
     "@typescript-eslint/no-empty-function": [
-        "error",
-        {
-            "allow": [
-                "arrowFunctions" // allow () => {}
-            ]
-        }
+      "error",
+      {
+        "allow": [
+          "arrowFunctions" // allow () => {}
+        ]
+      }
     ],
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-explicit-any": "off",
@@ -88,7 +88,6 @@
     "@typescript-eslint/require-await": "off",
     "@typescript-eslint/restrict-template-expressions": "off",
     "@typescript-eslint/unbound-method": "off",
-    "jest/no-commented-out-tests": "off",
     "jest/no-conditional-expect": "off",
     "jest/no-export": "off",
     "jest/no-identical-title": "off",
@@ -100,11 +99,11 @@
     "jsx-a11y/no-onchange": "off",
     "jsx-a11y/no-static-element-interactions": "off",
     "react/no-unescaped-entities": [
-        "error",
-        {
-          "forbid": [">", "}"] // avoid warnings with single/double quotes
-        }
-      ],
+      "error",
+      {
+        "forbid": [">", "}"] // avoid warnings with single/double quotes
+      }
+    ],
     "react/jsx-uses-react": "off", // allow removing unused react imports (react >17)
     "react/react-in-jsx-scope": "off", // allow removing unused react imports (react >17)
     "no-use-before-define": "off" // superseed with @typescript-eslint/no-use-before-define
