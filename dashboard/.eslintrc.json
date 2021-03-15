@@ -51,7 +51,16 @@
         "allowArrowFunction": true
       }
     ],
-    "@typescript-eslint/ban-types": "off",
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        "extendDefaults": true,
+        "types": {
+          "{}": false, // allow {} as a type as it is safe to be used in React
+          "object": false // allow object as a type
+        }
+      }
+    ],
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-empty-interface": "off",
