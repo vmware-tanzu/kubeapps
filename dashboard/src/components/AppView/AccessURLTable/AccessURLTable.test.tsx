@@ -68,7 +68,7 @@ context("when some resource is fetching", () => {
     expect(wrapper.find(LoadingWrapper)).toExist();
   });
 
-  it("displays the error", () => {
+  it("displays the error (while fetching)", () => {
     const ingressItem = { isFetching: true };
     const ingressUrl = "ingress";
     const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
@@ -274,7 +274,7 @@ context("when the app contains services and ingresses", () => {
 });
 
 context("when the app contains resources with errors", () => {
-  it("displays the error", () => {
+  it("displays the error (when resources with errors)", () => {
     const serviceItem = { isFetching: false, error: new Error("could not find Service") };
     const svcUrl = "svc";
     const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];

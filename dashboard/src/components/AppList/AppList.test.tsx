@@ -137,12 +137,12 @@ context("while fetching apps", () => {
     expect(wrapper.find(LoadingWrapper)).toExist();
   });
 
-  it("renders a Application header", () => {
+  it("renders a Application header (while fetching)", () => {
     const wrapper = mountWrapper(getStore(state), <AppList />);
     expect(wrapper.find("h1").text()).toContain("Applications");
   });
 
-  it("shows the search filter and deploy button", () => {
+  it("shows the search filter and deploy button (while fetching)", () => {
     const wrapper = mountWrapper(getStore(state), <AppList />);
     expect(wrapper.find("SearchFilter")).toExist();
     expect(wrapper.find("Link")).toExist();
@@ -155,7 +155,7 @@ context("when fetched but not apps available", () => {
     expect(wrapper.find(".applist-empty").text()).toContain("Welcome To Kubeapps");
   });
 
-  it("shows the search filter and deploy button", () => {
+  it("shows the search filter and deploy button (no apps available)", () => {
     const wrapper = mountWrapper(defaultStore, <AppList />);
     expect(wrapper.find("SearchFilter")).toExist();
     expect(wrapper.find("Link")).toExist();
@@ -172,7 +172,7 @@ context("when an error is present", () => {
     expect(wrapper.find(Alert).html()).toContain("Boom!");
   });
 
-  it("renders a Application header", () => {
+  it("renders a Application header (when error)", () => {
     const wrapper = mountWrapper(getStore(state), <AppList />);
     expect(wrapper.find("h1").text()).toContain("Applications");
   });

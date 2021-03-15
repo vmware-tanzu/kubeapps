@@ -73,7 +73,6 @@
     "@typescript-eslint/no-explicit-any": "off", // allow using 'any'
     "@typescript-eslint/no-non-null-assertion": "off", // allow non-null assertions using '!'
     "jest/no-conditional-expect": "off", // allow 'expect' in 'if' and 'try-catch'
-    "jest/no-identical-title": "off",
     "jest/no-try-expect": "off",
     "jest/valid-title": "off",
     "jsx-a11y/click-events-have-key-events": "off",

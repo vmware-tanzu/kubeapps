@@ -267,7 +267,7 @@ describe("updateResource", () => {
   });
 });
 
-describe("getResources", () => {
+describe("listResources", () => {
   it("list resources in a namespace", async () => {
     const csv = {
       metadata: { name: "foo" },
