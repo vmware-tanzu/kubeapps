@@ -38,18 +38,18 @@
   },
   "rules": {
     "quotes": [
-      "error",
+      "error", // enforce double quotes
       "double",
       {
-        "allowTemplateLiterals": true,
-        "avoidEscape": true
+        "allowTemplateLiterals": true, // allows strings to use ``
+        "avoidEscape": true // allows strings to use single/double for escapping purposes
       }
     ],
     "import/no-anonymous-default-export": [
       "error",
       {
-        "allowObject": true,
-        "allowArrowFunction": true
+        "allowObject": true, // allow "export default {}"
+        "allowArrowFunction": true // allow "export default () => {}"
       }
     ],
     "@typescript-eslint/ban-types": [
@@ -82,7 +82,7 @@
     "jest/no-conditional-expect": "off", // allow 'expect' in 'if' and 'try-catch'
     "jest/valid-title": "off", // allow dynamic test names (e.g., 't.name')
     "jsx-a11y/label-has-associated-control": "off", // TODO(agamez): check if <label><customelement></label> works
-    "jsx-a11y/no-onchange": "off", // TODO(agamez): allow using onChange instead of onBlur, but it is not recommended
+    "jsx-a11y/no-onchange": "off", // disable since it is deprecated, new browsers do support onChange
     "react/no-unescaped-entities": [
       "error",
       {

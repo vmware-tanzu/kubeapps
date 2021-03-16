@@ -73,11 +73,11 @@ describe(Alert, () => {
   });
 
   describe("Themes", () => {
-    Object.values(AlertThemes).map(k => {
+    Object.values(AlertThemes).forEach(k => {
       const theme = AlertThemes[k];
       const icon = AlertIcons[k];
 
-      return it(`apply the ${theme} theme`, () => {
+      it(`apply the ${theme} theme`, () => {
         const wrapper = shallow(<Alert theme={theme}>Test</Alert>);
 
         expect(wrapper).toHaveClassName(`alert-${theme}`);
