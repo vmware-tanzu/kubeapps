@@ -54,7 +54,7 @@
     "react-intl": "^5.13.2",
     "react-jsonschema-form": "^1.0.3",
     "react-markdown": "^5.0.0",
-    "react-minimal-pie-chart": "^8.1.0",
+    "react-minimal-pie-chart": "^8.2.0",
     "react-redux": "^7.1.9",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
@@ -70,9 +70,9 @@
     "remark-gfm": "^1.0.0",
     "seamless-immutable": "^7.1.4",
     "semver": "^7.3.4",
-    "swagger-ui-react": "^3.44.1",
+    "swagger-ui-react": "^3.45.0",
     "typesafe-actions": "^5.1.0",
-    "yaml": "1.10.0"
+    "yaml": "1.10.2"
   },
   "scripts": {
     "build-css": "sass src/ --no-source-map && yarn run copy-clr",
@@ -116,11 +116,11 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^3.1.6",
+    "@formatjs/cli": "^3.2.0",
     "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.1",
     "@types/jest": "^26.0.3",
-    "@types/node": "^14.14.34",
+    "@types/node": "^14.14.35",
     "@types/react-dom": "^17.0.2",
     "@types/react-helmet": "^6.1.0",
     "@types/react-redux": "^7.1.9",
