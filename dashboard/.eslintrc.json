@@ -26,10 +26,11 @@
     "plugin:import/errors",
     "plugin:import/warnings",
     "prettier",
+    "plugin:react-hooks/recommended",
     "plugin:react/recommended",
     "plugin:prettier/recommended"
   ],
-  "plugins": ["react", "@typescript-eslint", "jest", "jsx-a11y", "import"],
+  "plugins": ["@typescript-eslint", "import", "jest", "jsx-a11y", "react", "react-hooks"],
   "env": {
     "browser": true,
     "es6": true,
