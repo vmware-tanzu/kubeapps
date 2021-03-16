@@ -3,6 +3,7 @@ import React from "react";
 import { getValue } from "shared/schema";
 import { DeploymentEvent, IBasicFormParam, IBasicFormSliderParam } from "shared/types";
 import BooleanParam from "./BooleanParam";
+import CustomFormComponentLoader from "./CustomFormParam";
 import SliderParam from "./SliderParam";
 import Subsection from "./Subsection";
 import TextParam from "./TextParam";
@@ -99,6 +100,18 @@ export default function Param({
       return paramDeploymentEvent === deploymentEvent;
     }
   };
+
+  // Return early for custom components
+  if (param.customComponent) {
+    return (
+      <div key={id} hidden={isHidden()}>
+        <CustomFormComponentLoader
+          param={param}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+        />
+      </div>
+    );
+  }
 
   // If the type of the param is an array, represent it as its first type
   const type = isArray(param.type) ? param.type[0] : param.type;
