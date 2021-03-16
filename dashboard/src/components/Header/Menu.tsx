@@ -53,6 +53,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
     document.body.setAttribute("cds-theme", theme);
   }, [theme]);
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <>
       <Helmet>
@@ -73,29 +74,31 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
         <CSSTransition in={open} timeout={200} classNames="transition-drawer">
           <div className="dropdown-menu dropdown-configuration-menu" role="menu" hidden={!open}>
             <div>
-              <label className="dropdown-menu-padding dropdown-menu-label">Administration</label>
-              <Link
-                to={app.config.apprepositories(clusters.currentCluster, namespaceSelected)}
-                className="dropdown-menu-link"
-                onClick={toggleOpen}
-              >
-                <div className="dropdown-menu-item" role="menuitem">
-                  <img src={helmIcon} alt="helm-icon" />
-                  <span>App Repositories</span>
-                </div>
-              </Link>
-              <div className="dropdown-divider" role="separator" />
-              <Link
-                to={app.config.operators(clusters.currentCluster, namespaceSelected)}
-                className="dropdown-menu-link"
-                onClick={toggleOpen}
-              >
-                <div className="dropdown-menu-item" role="menuitem">
-                  <img src={operatorIcon} alt="helm-icon" />
-                  <span>Operators</span>
-                </div>
-              </Link>
-              <div className="dropdown-divider" role="separator" />
+              <label className="dropdown-menu-padding dropdown-menu-label">
+                Administration
+                <Link
+                  to={app.config.apprepositories(clusters.currentCluster, namespaceSelected)}
+                  className="dropdown-menu-link"
+                  onClick={toggleOpen}
+                >
+                  <div className="dropdown-menu-item" role="menuitem">
+                    <img src={helmIcon} alt="helm-icon" />
+                    <span>App Repositories</span>
+                  </div>
+                </Link>
+                <div className="dropdown-divider" role="separator" />
+                <Link
+                  to={app.config.operators(clusters.currentCluster, namespaceSelected)}
+                  className="dropdown-menu-link"
+                  onClick={toggleOpen}
+                >
+                  <div className="dropdown-menu-item" role="menuitem">
+                    <img src={operatorIcon} alt="helm-icon" />
+                    <span>Operators</span>
+                  </div>
+                </Link>
+                <div className="dropdown-divider" role="separator" />
+              </label>
             </div>
             <div>
               <div className="dropdown-menu-subtext">

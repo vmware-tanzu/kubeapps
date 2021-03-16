@@ -267,6 +267,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     return message;
   };
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <form onSubmit={handleInstallClick}>
       <CdsFormGroup layout="vertical">

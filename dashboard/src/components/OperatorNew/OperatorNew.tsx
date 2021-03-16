@@ -137,6 +137,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     }
   };
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <OperatorHeader

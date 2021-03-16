@@ -190,6 +190,7 @@ export default function OperatorList({
     }
   });
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <PageHeader
@@ -254,38 +255,44 @@ export default function OperatorList({
                     </h5>
                     {allCategories.length > 0 && (
                       <div className="filter-section">
-                        <label className="filter-label">Category</label>
-                        <FilterGroup
-                          name={filterNames.CATEGORY}
-                          options={allCategories}
-                          currentFilters={filters[filterNames.CATEGORY]}
-                          onAddFilter={addFilter}
-                          onRemoveFilter={removeFilter}
-                        />
+                        <label className="filter-label">
+                          Category
+                          <FilterGroup
+                            name={filterNames.CATEGORY}
+                            options={allCategories}
+                            currentFilters={filters[filterNames.CATEGORY]}
+                            onAddFilter={addFilter}
+                            onRemoveFilter={removeFilter}
+                          />
+                        </label>
                       </div>
                     )}
                     {allCapabilities.length > 0 && (
                       <div className="filter-section">
-                        <label>Capability</label>
-                        <FilterGroup
-                          name={filterNames.CAPABILITY}
-                          options={allCapabilities}
-                          currentFilters={filters[filterNames.CAPABILITY]}
-                          onAddFilter={addFilter}
-                          onRemoveFilter={removeFilter}
-                        />
+                        <label>
+                          Capability
+                          <FilterGroup
+                            name={filterNames.CAPABILITY}
+                            options={allCapabilities}
+                            currentFilters={filters[filterNames.CAPABILITY]}
+                            onAddFilter={addFilter}
+                            onRemoveFilter={removeFilter}
+                          />
+                        </label>
                       </div>
                     )}
                     {allProviders.length > 0 && (
                       <div className="filter-section">
-                        <label>Provider</label>
-                        <FilterGroup
-                          name={filterNames.PROVIDER}
-                          options={allProviders}
-                          currentFilters={filters[filterNames.PROVIDER]}
-                          onAddFilter={addFilter}
-                          onRemoveFilter={removeFilter}
-                        />
+                        <label>
+                          Provider
+                          <FilterGroup
+                            name={filterNames.PROVIDER}
+                            options={allProviders}
+                            currentFilters={filters[filterNames.PROVIDER]}
+                            onAddFilter={addFilter}
+                            onRemoveFilter={removeFilter}
+                          />
+                        </label>
                       </div>
                     )}
                   </div>

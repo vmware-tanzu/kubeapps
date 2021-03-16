@@ -303,6 +303,7 @@ function Catalog(props: ICatalogProps) {
     }
   };
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <PageHeader
@@ -360,50 +361,58 @@ function Catalog(props: ICatalogProps) {
               </h5>
               {csvs.length > 0 && (
                 <div className="filter-section">
-                  <label>Application Type</label>
-                  <FilterGroup
-                    name={filterNames.TYPE}
-                    options={["Operators", "Charts"]}
-                    currentFilters={filters[filterNames.TYPE]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
+                  <label>
+                    Application Type
+                    <FilterGroup
+                      name={filterNames.TYPE}
+                      options={["Operators", "Charts"]}
+                      currentFilters={filters[filterNames.TYPE]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </label>
                 </div>
               )}
               {allCategories.length > 0 && (
                 <div className="filter-section">
-                  <label className="filter-label">Category</label>
-                  <FilterGroup
-                    name={filterNames.CATEGORY}
-                    options={allCategories}
-                    currentFilters={filters[filterNames.CATEGORY]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
+                  <label className="filter-label">
+                    Category
+                    <FilterGroup
+                      name={filterNames.CATEGORY}
+                      options={allCategories}
+                      currentFilters={filters[filterNames.CATEGORY]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </label>
                 </div>
               )}
               {allRepos.length > 0 && (
                 <div className="filter-section">
-                  <label>Application Repository</label>
-                  <FilterGroup
-                    name={filterNames.REPO}
-                    options={allRepos}
-                    currentFilters={filters[filterNames.REPO]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
+                  <label>
+                    Application Repository
+                    <FilterGroup
+                      name={filterNames.REPO}
+                      options={allRepos}
+                      currentFilters={filters[filterNames.REPO]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </label>
                 </div>
               )}
               {allProviders.length > 0 && (
                 <div className="filter-section">
-                  <label className="filter-label">Operator Provider</label>
-                  <FilterGroup
-                    name={filterNames.OPERATOR_PROVIDER}
-                    options={allProviders}
-                    currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
-                    onAddFilter={addFilter}
-                    onRemoveFilter={removeFilter}
-                  />
+                  <label className="filter-label">
+                    Operator Provider
+                    <FilterGroup
+                      name={filterNames.OPERATOR_PROVIDER}
+                      options={allProviders}
+                      currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
+                      onAddFilter={addFilter}
+                      onRemoveFilter={removeFilter}
+                    />
+                  </label>
                 </div>
               )}
             </div>

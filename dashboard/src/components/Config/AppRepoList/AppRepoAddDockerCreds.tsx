@@ -72,7 +72,7 @@ export function AppRepoAddDockerCreds({
       setShowSecretSubForm(false);
     }
   };
-
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <>
       <CdsCheckboxGroup>
