@@ -11769,7 +11769,7 @@ react-inspector@^2.3.0:
     is-dom "^1.0.9"
     prop-types "^15.6.1"
 
-react-intl@^5.13.2:
+react-intl@^5.13.3:
   version "5.13.3"
   resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-5.13.3.tgz#8a2683d39dcea58d6fff6283a2238bc6c7c29fe4"
   integrity sha512-+t5bCycrq2TpAac7Nwcw314fOBJgcSPm3zv4NWuuMuWj5roItGuycOXct9WnqOzRbAqFR40YlTg9Ze4svSfagQ==
