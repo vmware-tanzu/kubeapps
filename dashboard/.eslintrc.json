@@ -76,7 +76,7 @@
     "import/no-unresolved": [
       "error",
       {
-        "ignore": ["\\.css$"] // ignore *.css not found files since they are generated later
+        "ignore": ["\\.css$", "\\.json$"] // ignore *.css and *.json not found files since they are generated later
       }
     ],
     "jest/no-conditional-expect": "off", // allow 'expect' in 'if' and 'try-catch'
