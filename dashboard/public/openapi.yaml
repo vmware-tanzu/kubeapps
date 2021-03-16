@@ -1,6 +1,6 @@
 openapi: 3.0.3
 servers:
-  - url: '{schema}://{url}:{port}'
+  - url: "{schema}://{url}:{port}"
     description: Development URL
     variables:
       schema:
@@ -10,52 +10,52 @@ servers:
         default: http
         description: URL schema
       url:
-        default: '127.0.0.1'
+        default: "127.0.0.1"
         description: Kubeapps URL
       port:
-        default: '8080'
+        default: "8080"
         description: Kubeapps port
 info:
   description: |
-   [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
-    
-    [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.
-    
-    Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.
-    #### Developer Documentation
-    - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).
-    - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
-    - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
+    [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
+     
+     [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.
+     
+     Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.
+     #### Developer Documentation
+     - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).
+     - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
+     - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
   version: 0.1.0
   title: Kubeapps API
-  termsOfService: 'https://github.com/kubeapps/kubeapps/blob/master/LICENSE'
+  termsOfService: "https://github.com/kubeapps/kubeapps/blob/master/LICENSE"
   license:
     name: Apache 2.0
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 tags:
   - name: assetsvc
     externalDocs:
-      url: 'https://github.com/kubeapps/kubeapps/tree/master/cmd/assetsvc'
-    description: 'The assetsvc component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that is populated in a Postgresql server.'
+      url: "https://github.com/kubeapps/kubeapps/tree/master/cmd/assetsvc"
+    description: "The assetsvc component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that is populated in a Postgresql server."
   - name: kubeops
     externalDocs:
-      url: 'https://github.com/kubeapps/kubeapps/tree/master/cmd/kubeops'
-    description: 'The kubeops component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.'
+      url: "https://github.com/kubeapps/kubeapps/tree/master/cmd/kubeops"
+    description: "The kubeops component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources."
   - name: kubernetes
     externalDocs:
-      url: 'https://kubernetes.io/docs/concepts/overview/kubernetes-api/'
-    description: 'Kubernetes API'
+      url: "https://kubernetes.io/docs/concepts/overview/kubernetes-api/"
+    description: "Kubernetes API"
 externalDocs:
   description: Kuebapps GitHub repository
-  url: 'https://github.com/kubeapps/kubeapps'
+  url: "https://github.com/kubeapps/kubeapps"
 paths:
   # Endpoints defined at cmd/assetsvc/main.go
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts':
+  "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts":
     get:
       tags:
         - assetsvc
       summary: listChartsWithFilters
-      description: ''
+      description: ""
       operationId: listChartsWithFilters
       parameters:
         - name: cluster
@@ -113,14 +113,14 @@ paths:
           required: false
           schema:
             type: string
-            default: '1'
+            default: "1"
           description: Number of the page to fetch (used with 'size' parameter)
         - name: size
           in: query
           required: false
           schema:
             type: string
-            default: '0'
+            default: "0"
           description: Number results to fetch (used with 'page' parameter)
       responses:
         default:
@@ -128,8 +128,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -139,24 +139,24 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ChartResponse'
+                      $ref: "#/components/schemas/ChartResponse"
                   meta:
                     type: object
                     properties:
                       totalPages:
                         type: integer
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/categories':
+                $ref: "#/components/schemas/Error"
+  "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/categories":
     get:
       tags:
         - assetsvc
       summary: getChartCategories
-      description: ''
+      description: ""
       operationId: getChartCategories
       parameters:
         - name: cluster
@@ -215,8 +215,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -226,19 +226,19 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ChartCategory'
-        '401':
+                      $ref: "#/components/schemas/ChartCategory"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/categories':
+                $ref: "#/components/schemas/Error"
+  "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/categories":
     get:
       tags:
         - assetsvc
       summary: getChartCategories
-      description: ''
+      description: ""
       operationId: getChartCategories_repo
       parameters:
         - name: cluster
@@ -304,8 +304,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -315,19 +315,19 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ChartCategory'
-        '401':
+                      $ref: "#/components/schemas/ChartCategory"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}':
+                $ref: "#/components/schemas/Error"
+  "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}":
     get:
       tags:
         - assetsvc
       summary: listChartsWithFilters
-      description: ''
+      description: ""
       operationId: listChartsWithFilters_repo
       parameters:
         - name: cluster
@@ -392,14 +392,14 @@ paths:
           required: false
           schema:
             type: string
-            default: '1'
+            default: "1"
           description: Number of the page to fetch (used with 'size' parameter)
         - name: size
           in: query
           required: false
           schema:
             type: string
-            default: '0'
+            default: "0"
           description: Number results to fetch (used with 'page' parameter)
       responses:
         default:
@@ -407,8 +407,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -418,24 +418,24 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ChartResponse'
+                      $ref: "#/components/schemas/ChartResponse"
                   meta:
                     type: object
                     properties:
                       totalPages:
                         type: integer
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}':
+                $ref: "#/components/schemas/Error"
+  "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}":
     get:
       tags:
         - assetsvc
       summary: getChart
-      description: ''
+      description: ""
       operationId: getChart
       parameters:
         - name: cluster
@@ -471,8 +471,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -480,25 +480,25 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/ChartResponse'
-        '404':
+                    $ref: "#/components/schemas/ChartResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions':
+                $ref: "#/components/schemas/Error"
+  "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions":
     get:
       tags:
         - assetsvc
       summary: listChartVersions
-      description: ''
+      description: ""
       operationId: listChartVersions
       parameters:
         - name: cluster
@@ -534,8 +534,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -545,25 +545,25 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ChartVersionResponse'
-        '404':
+                      $ref: "#/components/schemas/ChartVersionResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions/{version}':
-    get:
+                $ref: "#/components/schemas/Error"
+  ? "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions/{version}"
+  : get:
       tags:
         - assetsvc
       summary: getChartVersion
-      description: ''
+      description: ""
       operationId: getChartVersion
       parameters:
         - name: cluster
@@ -605,8 +605,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -614,25 +614,25 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/ChartVersionResponse'
-        '404':
+                    $ref: "#/components/schemas/ChartVersionResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/README.md':
-    get:
+                $ref: "#/components/schemas/Error"
+  ? "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/README.md"
+  : get:
       tags:
         - assetsvc
       summary: getChartVersionReadme
-      description: ''
+      description: ""
       operationId: getChartVersionReadme
       parameters:
         - name: cluster
@@ -674,31 +674,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
                 type: string
-        '404':
+        "404":
           description: Not found
           content:
             text/plain:
               schema:
                 type: string
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.yaml':
-    get:
+                $ref: "#/components/schemas/Error"
+  ? "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.yaml"
+  : get:
       tags:
         - assetsvc
       summary: getChartVersionValues
-      description: ''
+      description: ""
       operationId: getChartVersionValues
       parameters:
         - name: cluster
@@ -740,31 +740,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
                 type: string
-        '404':
+        "404":
           description: Not found
           content:
             text/plain:
               schema:
                 type: string
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.schema.json':
-    get:
+                $ref: "#/components/schemas/Error"
+  ? "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/versions/{version}/values.schema.json"
+  : get:
       tags:
         - assetsvc
       summary: getChartVersionSchema
-      description: ''
+      description: ""
       operationId: getChartVersionSchema
       parameters:
         - name: cluster
@@ -806,31 +806,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
                 type: string
-        '404':
+        "404":
           description: Not found
           content:
             text/plain:
               schema:
                 type: string
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/logo':
+                $ref: "#/components/schemas/Error"
+  "/api/assetsvc/v1/clusters/{cluster}/namespaces/{namespace}/assets/{repo}/{chartName}/logo":
     get:
       tags:
         - assetsvc
       summary: getChartIcon
-      description: ''
+      description: ""
       operationId: getChartIcon
       parameters:
         - name: cluster
@@ -866,8 +866,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             image/png:
@@ -877,24 +877,24 @@ paths:
             image/svg+xml:
               schema:
                 type: string
-        '404':
+        "404":
           description: Not found
           content:
             text/plain:
               schema:
                 type: string
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/assetsvc/v1/ns/{namespace}/assets/{repo}/{chartName}/logo':
+                $ref: "#/components/schemas/Error"
+  "/api/assetsvc/v1/ns/{namespace}/assets/{repo}/{chartName}/logo":
     get:
       tags:
         - assetsvc
       summary: getChartIcon
-      description: ''
+      description: ""
       operationId: getChartIcon_noncluster
       parameters:
         - name: namespace
@@ -923,8 +923,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             image/png:
@@ -934,26 +934,26 @@ paths:
             image/svg+xml:
               schema:
                 type: string
-        '404':
+        "404":
           description: Not found
           content:
             text/plain:
               schema:
                 type: string
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  
+                $ref: "#/components/schemas/Error"
+
   # Proxied Kubernetes API
-  '/api/clusters/{cluster}/apis':
+  "/api/clusters/{cluster}/apis":
     get:
       tags:
         - kubernetes
       summary: Proxied Kubernetes API
-      description: 'The whole Kubernetes API is exposed through this endpoint'
+      description: "The whole Kubernetes API is exposed through this endpoint"
       parameters:
         - name: cluster
           in: path
@@ -968,25 +968,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful Kubernetes response
           content:
             application/json:
               schema:
                 type: object
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/clusters/{cluster}/openapi/v2':
+                $ref: "#/components/schemas/Error"
+  "/api/clusters/{cluster}/openapi/v2":
     get:
       tags:
         - kubernetes
       summary: Kubernetes OpenAPI documentation
-      description: 'Current documentation for the Kubernetes API'
+      description: "Current documentation for the Kubernetes API"
       parameters:
         - name: cluster
           in: path
@@ -1001,28 +1001,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
               schema:
                 type: object
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  
+                $ref: "#/components/schemas/Error"
+
   # Endpoints defined at pkg/http-handler/http-handler.go
-  '/api/v1/clusters/{cluster}/can-i':
+  "/api/v1/clusters/{cluster}/can-i":
     post:
       tags:
         - kubeops
-      summary: 'CanI'
-      description: ''
-      operationId: 'CanI'
+      summary: "CanI"
+      description: ""
+      operationId: "CanI"
       parameters:
         - name: cluster
           in: path
@@ -1032,44 +1032,44 @@ paths:
             default: default
           description: Cluster name
       requestBody:
-        description: ''
+        description: ""
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourceAttributes'
+              $ref: "#/components/schemas/ResourceAttributes"
       responses:
         default:
           description: Default code/message response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
-                $ref: '#/components/schemas/AllowedResponse'
-        '401':
+                $ref: "#/components/schemas/AllowedResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             text/plain:
               schema:
-                type: string     
-  '/api/v1/clusters/{cluster}/namespaces':
+                type: string
+  "/api/v1/clusters/{cluster}/namespaces":
     get:
       tags:
         - kubeops
-      summary: 'GetNamespaces'
-      description: ''
-      operationId: 'GetNamespaces'
+      summary: "GetNamespaces"
+      description: ""
+      operationId: "GetNamespaces"
       parameters:
         - name: cluster
           in: path
@@ -1084,8 +1084,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
@@ -1095,20 +1095,20 @@ paths:
                   namespaces:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Namespace'
-        '401':
+                      $ref: "#/components/schemas/Namespace"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/v1/clusters/{cluster}/apprepositories':
+                $ref: "#/components/schemas/Error"
+  "/api/v1/clusters/{cluster}/apprepositories":
     get:
       tags:
         - kubeops
-      summary: 'ListAppRepositories'
-      description: ''
-      operationId: 'ListAppRepositories'
+      summary: "ListAppRepositories"
+      description: ""
+      operationId: "ListAppRepositories"
       parameters:
         - name: cluster
           in: path
@@ -1123,26 +1123,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
-                $ref: '#/components/schemas/AppRepositoryResponse'
-        '401':
+                $ref: "#/components/schemas/AppRepositoryResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories':
+                $ref: "#/components/schemas/Error"
+  "/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories":
     get:
       tags:
         - kubeops
-      summary: 'ListAppRepositories_ns'
-      description: ''
-      operationId: 'ListAppRepositories_ns'
+      summary: "ListAppRepositories_ns"
+      description: ""
+      operationId: "ListAppRepositories_ns"
       parameters:
         - name: cluster
           in: path
@@ -1164,25 +1164,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
-                $ref: '#/components/schemas/AppRepositoryResponse'
-        '401':
+                $ref: "#/components/schemas/AppRepositoryResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     post:
       tags:
         - kubeops
-      summary: 'CreateAppRepository'
-      description: ''
-      operationId: 'CreateAppRepository'
+      summary: "CreateAppRepository"
+      description: ""
+      operationId: "CreateAppRepository"
       parameters:
         - name: cluster
           in: path
@@ -1199,40 +1199,40 @@ paths:
             default: default
           description: Namespace name
       requestBody:
-        description: ''
+        description: ""
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AppRepositoryRequest'
+              $ref: "#/components/schemas/AppRepositoryRequest"
       responses:
         default:
           description: Default code/message response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
-                $ref: '#/components/schemas/AppRepositoryResponse'
-        '401':
+                $ref: "#/components/schemas/AppRepositoryResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
+                $ref: "#/components/schemas/Error"
+        "422":
           description: Unprocessable entity
-  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/validate':
+  "/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/validate":
     post:
       tags:
         - kubeops
-      summary: 'ValidateAppRepository'
-      description: ''
-      operationId: 'ValidateAppRepository'
+      summary: "ValidateAppRepository"
+      description: ""
+      operationId: "ValidateAppRepository"
       parameters:
         - name: cluster
           in: path
@@ -1249,38 +1249,38 @@ paths:
             default: default
           description: Namespace name
       requestBody:
-        description: ''
+        description: ""
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AppRepository'
+              $ref: "#/components/schemas/AppRepository"
       responses:
         default:
           description: Default code/message response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
-                $ref: '#/components/schemas/ValidationResponse'
-        '401':
+                $ref: "#/components/schemas/ValidationResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}':
+                $ref: "#/components/schemas/Error"
+  "/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}":
     put:
       tags:
         - kubeops
-      summary: 'UpdateAppRepository'
-      description: ''
-      operationId: 'UpdateAppRepository'
+      summary: "UpdateAppRepository"
+      description: ""
+      operationId: "UpdateAppRepository"
       parameters:
         - name: cluster
           in: path
@@ -1304,37 +1304,37 @@ paths:
             default: default
           description: Apprepository name
       requestBody:
-        description: ''
+        description: ""
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AppRepositoryRequest'
+              $ref: "#/components/schemas/AppRepositoryRequest"
       responses:
         default:
           description: Default code/message response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
-                $ref: '#/components/schemas/AppRepositoryResponse'
-        '401':
+                $ref: "#/components/schemas/AppRepositoryResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - kubeops
-      summary: 'DeleteAppRepository'
-      description: ''
-      operationId: 'DeleteAppRepository'
+      summary: "DeleteAppRepository"
+      description: ""
+      operationId: "DeleteAppRepository"
       parameters:
         - name: cluster
           in: path
@@ -1358,31 +1358,31 @@ paths:
             default: default
           description: Apprepository name
       responses:
-        '404':
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             text/plain:
               schema:
                 type: string
-  '/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}/refresh':
+  "/api/v1/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}/refresh":
     post:
       tags:
         - kubeops
-      summary: 'RefreshAppRepository'
-      description: ''
-      operationId: 'RefreshAppRepository'
+      summary: "RefreshAppRepository"
+      description: ""
+      operationId: "RefreshAppRepository"
       parameters:
         - name: cluster
           in: path
@@ -1411,26 +1411,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
-                $ref: '#/components/schemas/AppRepositoryResponse'
-        '401':
+                $ref: "#/components/schemas/AppRepositoryResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/v1/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo':
+                $ref: "#/components/schemas/Error"
+  "/api/v1/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo":
     get:
       tags:
         - kubeops
-      summary: 'GetOperatorLogo'
-      description: ''
-      operationId: 'GetOperatorLogo'
+      summary: "GetOperatorLogo"
+      description: ""
+      operationId: "GetOperatorLogo"
       parameters:
         - name: cluster
           in: path
@@ -1459,8 +1459,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             image/png:
@@ -1470,7 +1470,7 @@ paths:
             image/svg+xml:
               schema:
                 type: string
-        '500':
+        "500":
           description: Internal server error
           content:
             text/plain:
@@ -1478,13 +1478,13 @@ paths:
                 type: string
 
   # Endpoints defined at cmd/kubeops/main.go
-  '/api/kubeops/v1/clusters/{cluster}/releases':
+  "/api/kubeops/v1/clusters/{cluster}/releases":
     get:
       tags:
         - kubeops
-      summary: 'ListAllReleases'
-      description: ''
-      operationId: 'ListAllReleases'
+      summary: "ListAllReleases"
+      description: ""
+      operationId: "ListAllReleases"
       parameters:
         - name: cluster
           in: path
@@ -1499,8 +1499,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -1510,20 +1510,20 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AppOverview'
-        '401':
+                      $ref: "#/components/schemas/AppOverview"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases':
+                $ref: "#/components/schemas/Error"
+  "/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases":
     get:
       tags:
         - kubeops
-      summary: 'ListReleases'
-      description: ''
-      operationId: 'ListReleases'
+      summary: "ListReleases"
+      description: ""
+      operationId: "ListReleases"
       parameters:
         - name: cluster
           in: path
@@ -1545,8 +1545,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -1556,19 +1556,19 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AppOverview'
-        '401':
+                      $ref: "#/components/schemas/AppOverview"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     post:
       tags:
         - kubeops
-      summary: 'CreateRelease'
-      description: ''
-      operationId: 'CreateRelease'
+      summary: "CreateRelease"
+      description: ""
+      operationId: "CreateRelease"
       parameters:
         - name: cluster
           in: path
@@ -1585,20 +1585,20 @@ paths:
             default: default
           description: Namespace name
       requestBody:
-        description: ''
+        description: ""
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Details'
+              $ref: "#/components/schemas/Details"
       responses:
         default:
           description: Default code/message response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -1606,26 +1606,26 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/Release'
-        '401':
+                    $ref: "#/components/schemas/Release"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             text/plain:
               schema:
                 type: string
-  '/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}':
+  "/api/kubeops/v1/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}":
     get:
       tags:
         - kubeops
-      summary: 'GetRelease'
-      description: ''
-      operationId: 'GetRelease'
+      summary: "GetRelease"
+      description: ""
+      operationId: "GetRelease"
       parameters:
         - name: cluster
           in: path
@@ -1654,8 +1654,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -1663,19 +1663,19 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/Release'
-        '401':
+                    $ref: "#/components/schemas/Release"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - kubeops
-      summary: 'DeleteRelease'
-      description: ''
-      operationId: 'DeleteRelease'
+      summary: "DeleteRelease"
+      description: ""
+      operationId: "DeleteRelease"
       parameters:
         - name: cluster
           in: path
@@ -1704,20 +1704,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             text/plain:
               schema:
                 type: string
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             text/plain:
@@ -1726,9 +1726,9 @@ paths:
     put:
       tags:
         - kubeops
-      summary: 'OperateRelease'
-      description: ''
-      operationId: 'OperateRelease'
+      summary: "OperateRelease"
+      description: ""
+      operationId: "OperateRelease"
       parameters:
         - name: cluster
           in: path
@@ -1755,7 +1755,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: ["upgrade","rollback"]
+            enum: ["upgrade", "rollback"]
             default: upgrade
           description: Action to perform
         - name: revision
@@ -1767,20 +1767,20 @@ paths:
             default: 1
           description: Revision to rollback to (only if ?action=rollback)
       requestBody:
-        description: ''
+        description: ""
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Details'
+              $ref: "#/components/schemas/Details"
       responses:
         default:
           description: Default code/message response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '200':
+                $ref: "#/components/schemas/Error"
+        "200":
           description: Successful response
           content:
             application/json:
@@ -1788,14 +1788,14 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/Release'
-        '401':
+                    $ref: "#/components/schemas/Release"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             text/plain:
@@ -1823,7 +1823,7 @@ components:
         name:
           type: string
         repo:
-          $ref: '#/components/schemas/Repo'
+          $ref: "#/components/schemas/Repo"
         description:
           type: string
         home:
@@ -1852,7 +1852,7 @@ components:
         chartVersions:
           type: object
           items:
-            $ref: '#/components/schemas/ChartVersion'
+            $ref: "#/components/schemas/ChartVersion"
     # pkg/chart/models/chart.go
     ChartVersion:
       type: object
@@ -1917,7 +1917,7 @@ components:
         type:
           type: string
         attributes:
-          $ref: '#/components/schemas/Chart'
+          $ref: "#/components/schemas/Chart"
         links:
           type: object
         relationships:
@@ -1925,11 +1925,11 @@ components:
           additionalProperties: false
           properties:
             latestChartVersion:
-               type: object
-               additionalProperties: false
-               properties:
+              type: object
+              additionalProperties: false
+              properties:
                 data:
-                  $ref: '#/components/schemas/ChartVersion'
+                  $ref: "#/components/schemas/ChartVersion"
                 links:
                   type: object
                   additionalProperties: false
@@ -1946,7 +1946,7 @@ components:
         type:
           type: string
         attributes:
-          $ref: '#/components/schemas/ChartVersion'
+          $ref: "#/components/schemas/ChartVersion"
         links:
           type: object
         relationships:
@@ -1954,11 +1954,11 @@ components:
           additionalProperties: false
           properties:
             chart:
-               type: object
-               additionalProperties: false
-               properties:
+              type: object
+              additionalProperties: false
+              properties:
                 data:
-                  $ref: '#/components/schemas/Chart'
+                  $ref: "#/components/schemas/Chart"
                 links:
                   type: object
                   additionalProperties: false
@@ -1983,7 +1983,7 @@ components:
         chart:
           type: string
         chartMetadata:
-          $ref: '#/components/schemas/ChartMetadata'
+          $ref: "#/components/schemas/ChartMetadata"
     # pkg/kube/kube_handler.go
     AppRepositoryRequestDetails:
       type: object
@@ -2001,16 +2001,16 @@ components:
           type: string
         registrySecrets:
           type: array
-          items: 
+          items:
             type: string
         syncJobPodTemplate:
-          $ref: '#/components/schemas/PodTemplateSpec'
+          $ref: "#/components/schemas/PodTemplateSpec"
         resyncRequests:
           type: integer
           format: int64
         ociRepositories:
           type: array
-          items: 
+          items:
             type: string
         tlsInsecureSkipVerify:
           type: boolean
@@ -2037,14 +2037,14 @@ components:
       additionalProperties: false
       properties:
         appRepository:
-          $ref: '#/components/schemas/AppRepositoryList'
+          $ref: "#/components/schemas/AppRepositoryList"
     # pkg/http-handler/http-handler.go
     AppRepositoryRequest:
       type: object
       additionalProperties: false
       properties:
         appRepository:
-          $ref: '#/components/schemas/AppRepositoryRequestDetails'
+          $ref: "#/components/schemas/AppRepositoryRequestDetails"
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepositoryList:
       type: object
@@ -2055,7 +2055,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/AppRepository'
+            $ref: "#/components/schemas/AppRepository"
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepository:
       type: object
@@ -2063,10 +2063,10 @@ components:
       properties:
         metadata:
           type: object
-        spec: 
-          $ref: '#/components/schemas/AppRepositorySpec'
+        spec:
+          $ref: "#/components/schemas/AppRepositorySpec"
         status:
-          $ref: '#/components/schemas/AppRepositoryStatus'
+          $ref: "#/components/schemas/AppRepositoryStatus"
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepositorySpec:
       type: object
@@ -2074,24 +2074,24 @@ components:
       properties:
         type:
           type: string
-        url: 
+        url:
           type: string
         auth:
-          $ref: '#/components/schemas/AppRepositoryAuth'
-        resyncRequests: 
+          $ref: "#/components/schemas/AppRepositoryAuth"
+        resyncRequests:
           type: integer
           format: int64
-        syncJobPodTemplate: 
+        syncJobPodTemplate:
           type: object
-        dockerRegistrySecrets: 
+        dockerRegistrySecrets:
           type: array
-          items: 
+          items:
             type: string
-        ociRepositories: 
+        ociRepositories:
           type: array
-          items: 
+          items:
             type: string
-        tlsInsecureSkipVerify: 
+        tlsInsecureSkipVerify:
           type: boolean
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepositoryStatus:
@@ -2106,9 +2106,9 @@ components:
       additionalProperties: false
       properties:
         header:
-          $ref: '#/components/schemas/AppRepositoryAuthHeader'
+          $ref: "#/components/schemas/AppRepositoryAuthHeader"
         customCA:
-          $ref: '#/components/schemas/AppRepositoryCustomCA'
+          $ref: "#/components/schemas/AppRepositoryCustomCA"
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepositoryAuthHeader:
       type: object
@@ -2133,7 +2133,7 @@ components:
         spec:
           type: object
     # pkg/mod/k8s.io/api/core/v1/types.go
-    Namespace: 
+    Namespace:
       type: object
       properties:
         metadata:
@@ -2161,7 +2161,7 @@ components:
           type: string
         name:
           type: string
-   # pkg/mod/k8s.io/helm@v2.16.0+incompatible/pkg/proto/hapi/chart/metadata.pb.go
+    # pkg/mod/k8s.io/helm@v2.16.0+incompatible/pkg/proto/hapi/chart/metadata.pb.go
     ChartMetadata:
       type: object
       additionalProperties: false
@@ -2188,7 +2188,7 @@ components:
           type: string
         maintainers:
           type: array
-          items: 
+          items:
             type: object
             properties:
               name:
@@ -2201,7 +2201,7 @@ components:
           type: string
         sources:
           type: array
-          items: 
+          items:
             type: string
         tags:
           type: string
