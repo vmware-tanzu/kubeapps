@@ -83,7 +83,7 @@ describe(Tooltip, () => {
   });
 
   describe("Accessibility", () => {
-    it("it has the correct role and popup properties", () => {
+    it("has the correct role and popup properties", () => {
       const wrapper = shallow(<Tooltip {...defaultProps}>test</Tooltip>);
 
       expect(wrapper.prop("role")).toBe("tooltip");

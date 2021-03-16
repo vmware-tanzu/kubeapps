@@ -256,7 +256,7 @@ describe("deploy chart", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
+  it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema", async () => {
     const res = await store.dispatch(
       actions.apps.deployChart(
         "target-cluster",
@@ -330,7 +330,7 @@ describe("upgradeApp", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
+  it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema", async () => {
     const res = await store.dispatch(
       actions.apps.upgradeApp(
         "default-c",
