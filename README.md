@@ -46,9 +46,7 @@ If you have followed the instructions for [installing Kubeapps](./docs/user/gett
 
 Whereas Kubeapps does not have yet a well-design API, we still want to share the current status of the APIs used across the internal components. Check out the [latest API online documentation](https://app.swaggerhub.com/apis/kubeapps/Kubeapps) or download the Kubeapps [OpenAPI Specification yaml file](./dashboard/public/openapi.yaml) from the repository.
 
-> This API documentation is subject to change in each Kubeapps version. If you are planning to build any solution on the top of the Kubeapps API, please [reach us](https://kubernetes.slack.com/messages/kubeapps) for further information.
-
-Besides, you install Kubeapps in your cluster, you can find the interactive API documentation portal on the right menu.
+> This API documentation is subject to change in each Kubeapps version. If you are interested in the Kubeapps API, please [reach out to us](https://kubernetes.slack.com/messages/kubeapps) for further information.
 
 ## Differences from Monocular
 
