@@ -73,6 +73,12 @@
     ],
     "@typescript-eslint/no-explicit-any": "off", // allow using 'any'
     "@typescript-eslint/no-non-null-assertion": "off", // allow non-null assertions using '!'
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": ["\\.css$"] // ignore *.css not found files since they are generated later
+      }
+    ],
     "jest/no-conditional-expect": "off", // allow 'expect' in 'if' and 'try-catch'
     "jest/valid-title": "off", // allow dynamic test names (e.g., 't.name')
     "jsx-a11y/label-has-associated-control": "off", // TODO(agamez): check if <label><customelement></label> works
