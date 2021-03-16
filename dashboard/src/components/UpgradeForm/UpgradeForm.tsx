@@ -173,6 +173,8 @@ function UpgradeForm({
   }
 
   const chartAttrs = version.relationships.chart.data;
+
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <LoadingWrapper loaded={!isFetching}>
@@ -200,14 +202,14 @@ function UpgradeForm({
                 <div className="upgrade-form-version-selector">
                   <label className="centered deployment-form-label deployment-form-label-text-param">
                     Upgrade to Version
-                    <ChartVersionSelector
-                      versions={selected.versions}
-                      selectedVersion={selected.version?.attributes.version}
-                      onSelect={selectVersion}
-                      currentVersion={deployed.chartVersion?.attributes.version}
-                      chartAttrs={chartAttrs}
-                    />{" "}
                   </label>
+                  <ChartVersionSelector
+                    versions={selected.versions}
+                    selectedVersion={selected.version?.attributes.version}
+                    onSelect={selectVersion}
+                    currentVersion={deployed.chartVersion?.attributes.version}
+                    chartAttrs={chartAttrs}
+                  />
                 </div>
                 <DeploymentFormBody
                   deploymentEvent="upgrade"
