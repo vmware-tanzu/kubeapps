@@ -11,7 +11,7 @@
     "@types/diff": "^5.0.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json-schema": "^7.0.7",
-    "@types/jsonwebtoken": "^8.5.0",
+    "@types/jsonwebtoken": "^8.5.1",
     "@types/lodash": "^4.14.168",
     "@types/moxios": "^0.4.10",
     "@types/pako": "^1.0.1",
