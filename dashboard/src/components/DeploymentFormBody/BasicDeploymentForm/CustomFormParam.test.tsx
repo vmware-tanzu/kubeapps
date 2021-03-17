@@ -20,11 +20,14 @@ const defaultProps = {
 // Mocking the window so that the injected components are imported correctly
 const location = window.location;
 beforeAll((): void => {
-  window.location = {
-    origin: "../../../../../docs/developer/examples/CustomComponent.min.js",
-  } as any;
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    writable: true,
+    value: { origin: "../../../../../docs/developer/examples/CustomComponent.min.js" },
+  });
 });
 afterAll((): void => {
+  // eslint-disable-next-line no-restricted-globals
   window.location = location;
 });
 
