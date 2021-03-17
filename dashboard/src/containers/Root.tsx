@@ -26,24 +26,24 @@ function Root() {
 
   return (
     <Provider store={store}>
-      <ConfigLoaderContainer>
-        <ConnectedRouter history={history}>
-          <Suspense fallback={null}>
-            <IntlProvider
-              locale={i18nConfig.locale}
-              key={i18nConfig.locale}
-              messages={i18nConfig.messages}
-              defaultLocale="en"
-            >
+      <IntlProvider
+        locale={i18nConfig.locale}
+        key={i18nConfig.locale}
+        messages={i18nConfig.messages}
+        defaultLocale="en"
+      >
+        <ConfigLoaderContainer>
+          <ConnectedRouter history={history}>
+            <Suspense fallback={null}>
               <HeadManager>
                 <Layout headerComponent={Header}>
                   <Routes />
                 </Layout>
               </HeadManager>
-            </IntlProvider>
-          </Suspense>
-        </ConnectedRouter>
-      </ConfigLoaderContainer>
+            </Suspense>
+          </ConnectedRouter>
+        </ConfigLoaderContainer>
+      </IntlProvider>
     </Provider>
   );
 }
