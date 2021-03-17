@@ -73,7 +73,13 @@ function DeploymentFormBody({
   };
 
   if (isFetching) {
-    return <LoadingWrapper loaded={false} />;
+    return (
+      <LoadingWrapper
+        className="margin-t-xxl"
+        loadingText="Fetching Application..."
+        loaded={false}
+      />
+    );
   }
   return (
     <>

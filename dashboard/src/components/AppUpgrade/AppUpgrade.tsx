@@ -100,7 +100,9 @@ function AppUpgrade({
   }
 
   if (appsIsFetching || !app || !app.updateInfo) {
-    return <LoadingWrapper loaded={false} />;
+    return (
+      <LoadingWrapper loadingText="Fetching app info..." className="margin-t-xxl" loaded={false} />
+    );
   }
 
   const appRepoName = repoName || app.updateInfo.repository.name;

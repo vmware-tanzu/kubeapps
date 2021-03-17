@@ -151,7 +151,14 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
   ) as Array<IKubeItem<IResource>>;
 
   if (isSomeResourceLoading(ingresses.concat(services))) {
-    return <LoadingWrapper loaded={false} />;
+    return (
+      <section aria-labelledby="access-urls-title">
+        <h5 className="section-title" id="access-urls-title">
+          Access URLs
+        </h5>
+        <LoadingWrapper loaded={false} />
+      </section>
+    );
   }
   if (!hasItems(services, ingresses)) {
     return null;

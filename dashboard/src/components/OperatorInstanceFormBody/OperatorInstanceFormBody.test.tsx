@@ -1,9 +1,9 @@
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
 import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import itBehavesLike from "../../shared/specs";
 import OperatorInstanceFormBody from "./OperatorInstanceFormBody";
 import { IOperatorInstanceFormProps } from "./OperatorInstanceFormBody";
 
@@ -14,9 +14,12 @@ const defaultProps: IOperatorInstanceFormProps = {
   defaultValues: "",
 };
 
-itBehavesLike("aLoadingComponent", {
-  component: OperatorInstanceFormBody,
-  props: { ...defaultProps, isFetching: true },
+it("set a loading wrapper", () => {
+  const wrapper = mountWrapper(
+    defaultStore,
+    <OperatorInstanceFormBody {...defaultProps} isFetching={true} />,
+  );
+  expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
 
 it("set default values", () => {

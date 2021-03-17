@@ -152,14 +152,34 @@ export default function AppView() {
       return;
     }
 
+    if (Object.values(resourceRefs).some(ref => ref.length)) {
+      // Already populated, skip
+      return;
+    }
+
     let parsedManifest: IResource[] = YAML.parseAllDocuments(
       app.manifest,
     ).map((doc: YAML.Document) => doc.toJSON());
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
-    setResourceRefs(parseResources(parsedManifest, kinds, cluster, app.namespace));
-  }, [app, cluster, kinds]);
+    const parsedRefs = parseResources(parsedManifest, kinds, cluster, app.namespace);
+    if (Object.values(parsedRefs).some(ref => ref.length)) {
+      // Avoid setting refs if the manifest is empty
+      setResourceRefs(parsedRefs);
+    }
+  }, [app, cluster, kinds, resourceRefs]);
+
+  useEffect(() => {
+    Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
+      refs.forEach(ref => dispatch(actions.kube.getAndWatchResource(ref)));
+    });
+    return function cleanup() {
+      Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
+        refs.forEach(ref => dispatch(actions.kube.closeWatchResource(ref)));
+      });
+    };
+  }, [dispatch, resourceRefs]);
 
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Application not found. Received: {error.message}</Alert>;

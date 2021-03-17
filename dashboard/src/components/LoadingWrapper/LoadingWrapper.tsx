@@ -1,14 +1,24 @@
-import Spinner from "../js/Spinner";
+import { CdsProgressCircle } from "@cds/react/progress-circle";
 
 export interface ILoadingWrapperProps {
   loaded?: boolean;
-  small?: boolean;
-  medium?: boolean;
+  size?: string;
+  loadingText?: string | JSX.Element;
   children?: any;
+  className?: string;
 }
 
 function LoadingWrapper(props: ILoadingWrapperProps) {
-  return props.loaded ? props.children : <Spinner medium={props.medium} small={props.small} />;
+  return props.loaded ? (
+    props.children
+  ) : (
+    <div className={props.className || ""}>
+      {props.loadingText && <div className="flex-h-center">{props.loadingText}</div>}
+      <div className="flex-h-center margin-t-md">
+        <CdsProgressCircle size={props.size || "xxl"} status="info" />
+      </div>
+    </div>
+  );
 }
 
 export default LoadingWrapper;

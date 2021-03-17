@@ -59,7 +59,7 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
     );
   }
   if (isFetching || !operator) {
-    return <LoadingWrapper />;
+    return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Operator..." />;
   }
   const channel = Operators.getDefaultChannel(operator);
   if (!channel) {

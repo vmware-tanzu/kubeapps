@@ -86,7 +86,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     );
   }
   if (isFetching || !operator) {
-    return <LoadingWrapper />;
+    return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Application..." />;
   }
   if (!updateChannel) {
     return (

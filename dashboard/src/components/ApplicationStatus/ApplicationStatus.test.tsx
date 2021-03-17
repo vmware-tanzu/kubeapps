@@ -5,29 +5,10 @@ import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
 
 const defaultProps = {
-  watchWorkloads: jest.fn(),
-  closeWatches: jest.fn(),
   deployments: [],
   statefulsets: [],
   daemonsets: [],
 };
-
-describe("componentDidMount", () => {
-  it("calls watchWorkloads", () => {
-    const mock = jest.fn();
-    mount(<ApplicationStatus {...defaultProps} watchWorkloads={mock} />);
-    expect(mock).toHaveBeenCalled();
-  });
-});
-
-describe("componentWillUnmount", () => {
-  it("calls closeWatches", () => {
-    const mock = jest.fn();
-    const wrapper = mount(<ApplicationStatus {...defaultProps} closeWatches={mock} />);
-    wrapper.unmount();
-    expect(mock).toHaveBeenCalled();
-  });
-});
 
 it("renders a loading status", () => {
   const deployments = [
@@ -37,7 +18,6 @@ it("renders a loading status", () => {
   ];
   const wrapper = shallow(<ApplicationStatus {...defaultProps} deployments={deployments} />);
   expect(wrapper.text()).toContain("Loading");
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("renders a deleting status", () => {
@@ -50,7 +30,6 @@ it("renders a deleting status", () => {
     <ApplicationStatus {...defaultProps} deployments={deployments} info={{ deleted: {} }} />,
   );
   expect(wrapper.text()).toContain("Deleted");
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("renders a failed status", () => {
@@ -67,7 +46,6 @@ it("renders a failed status", () => {
     />,
   );
   expect(wrapper.text()).toContain("Failed");
-  expect(wrapper).toMatchSnapshot();
 });
 
 describe("isFetching", () => {

@@ -1,10 +1,8 @@
-import actions from "actions";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 
-import * as ReactRedux from "react-redux";
 import ResourceRef from "shared/ResourceRef";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IResource } from "shared/types";
 import ResourceTable from "./ResourceTable";
 
@@ -41,40 +39,6 @@ const deployment = {
     availableReplicas: 0,
   },
 };
-
-let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
-beforeEach(() => {
-  actions.kube = {
-    ...actions.kube,
-    getAndWatchResource: jest.fn(),
-    closeWatchResource: jest.fn(),
-  };
-  const mockDispatch = jest.fn();
-  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-});
-
-afterEach(() => {
-  actions.kube = { ...kubeaActions };
-  spyOnUseDispatch.mockRestore();
-});
-
-it("watches the given resources and close watchers", async () => {
-  const watchResource = jest.fn();
-  const closeWatch = jest.fn();
-  actions.kube = {
-    ...actions.kube,
-    getAndWatchResource: watchResource,
-    closeWatchResource: closeWatch,
-  };
-  const wrapper = mountWrapper(
-    defaultStore,
-    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
-  );
-  expect(watchResource).toHaveBeenCalledWith(sampleResourceRef);
-  wrapper.unmount();
-  expect(closeWatch).toHaveBeenCalledWith(sampleResourceRef);
-});
 
 it("renders a table with a resource", () => {
   const state = getStore({

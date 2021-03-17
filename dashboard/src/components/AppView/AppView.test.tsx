@@ -25,10 +25,17 @@ const routeParams = {
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseParams: jest.SpyInstance;
 const appActions = { ...actions.apps };
+const kubeaActions = { ...actions.kube };
+
 beforeEach(() => {
   actions.apps = {
     ...actions.apps,
     getAppWithUpdateInfo: jest.fn(),
+  };
+  actions.kube = {
+    ...actions.kube,
+    getAndWatchResource: jest.fn(),
+    closeWatchResource: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -37,6 +44,7 @@ beforeEach(() => {
 
 afterEach(() => {
   actions.apps = { ...appActions };
+  actions.kube = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
   spyOnUseParams.mockRestore();
 });
@@ -149,6 +157,45 @@ describe("AppViewComponent", () => {
           appRelease.namespace,
         ),
       ]);
+    });
+
+    it("watches the given resources and close watchers", async () => {
+      const watchResource = jest.fn();
+      const closeWatch = jest.fn();
+      actions.kube = {
+        ...actions.kube,
+        getAndWatchResource: watchResource,
+        closeWatchResource: closeWatch,
+      };
+      const manifest = generateYamlManifest([resources.deployment, resources.service]);
+      const depResource = {
+        cluster: routeParams.cluster,
+        apiVersion: resources.deployment.apiVersion,
+        kind: resources.deployment.kind,
+        name: resources.deployment.metadata.name,
+        namespace: appRelease.namespace,
+        namespaced: true,
+        plural: "deployments",
+      };
+      const svcResource = {
+        cluster: routeParams.cluster,
+        apiVersion: resources.service.apiVersion,
+        kind: resources.service.kind,
+        name: resources.service.metadata.name,
+        namespace: appRelease.namespace,
+        namespaced: true,
+        plural: "services",
+      };
+
+      const wrapper = mountWrapper(
+        getStore({ apps: { selected: { ...appRelease, manifest } } }),
+        <AppViewComponent />,
+      );
+      expect(watchResource).toHaveBeenCalledWith(depResource);
+      expect(watchResource).toHaveBeenCalledWith(svcResource);
+      wrapper.unmount();
+      expect(closeWatch).toHaveBeenCalledWith(depResource);
+      expect(closeWatch).toHaveBeenCalledWith(svcResource);
     });
 
     it("stores other k8s resources", () => {

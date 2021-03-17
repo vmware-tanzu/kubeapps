@@ -203,7 +203,11 @@ function AppRepoList() {
           )}
           {!errors.fetch && (
             <>
-              <LoadingWrapper loaded={!isFetching}>
+              <LoadingWrapper
+                className="margin-t-xxl"
+                loadingText="Fetching Application Repositories..."
+                loaded={!isFetching}
+              >
                 <h3>Global Repositories:</h3>
                 <p>Global repositories are available for all Kubeapps users.</p>
                 {globalRepos.length ? (
