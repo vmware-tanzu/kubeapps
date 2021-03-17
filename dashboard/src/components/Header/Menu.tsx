@@ -53,6 +53,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
     document.body.setAttribute("cds-theme", theme);
   }, [theme]);
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <>
       <Helmet>

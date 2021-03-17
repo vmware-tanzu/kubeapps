@@ -138,7 +138,11 @@ function DeploymentFormBody({
     />,
   ];
   if (shouldRenderBasicForm()) {
-    tabColumns.unshift(<span onClick={refreshBasicParameters}>Form</span>);
+    tabColumns.unshift(
+      <span role="presentation" onClick={refreshBasicParameters}>
+        Form
+      </span>,
+    );
     tabData.unshift(
       <BasicDeploymentForm
         deploymentEvent={deploymentEvent}

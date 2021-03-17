@@ -1,6 +1,6 @@
 import { CdsIcon } from "@cds/react/icon";
-import { flatten } from "lodash";
-import { get } from "lodash";
+import { flatten, get } from "lodash";
+
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
 

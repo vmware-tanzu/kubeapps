@@ -124,7 +124,7 @@ describe("App", () => {
       });
     });
   });
-  describe("fetchChartVersions", () => {
+  describe("fetchChartVersion", () => {
     [
       {
         description: "fetch chart version url",

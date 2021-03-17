@@ -72,7 +72,7 @@ it("renders the repo selection form if not introduced", () => {
   expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
 
-it("renders the repo selection form if not introduced", () => {
+it("renders the repo selection form if not introduced when the app is loaded", () => {
   const wrapper = shallow(
     <AppUpgrade
       {...defaultProps}
@@ -98,7 +98,6 @@ it("renders the repo selection form if not introduced", () => {
   expect(wrapper.find(SelectRepoForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(UpgradeForm)).not.toExist();
-  expect(wrapper).toMatchSnapshot();
 });
 
 context("when an error exists", () => {

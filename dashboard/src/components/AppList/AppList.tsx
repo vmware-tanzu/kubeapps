@@ -87,6 +87,7 @@ function AppList() {
     setAllNS(allNSQuery === "yes" ? true : false);
   }, [allNSQuery]);
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <PageHeader

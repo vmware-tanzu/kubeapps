@@ -6,7 +6,7 @@ const clusterName = "cluster-name";
 
 describe("ResourceRef", () => {
   describe("constructor", () => {
-    it("it returns a ResourceRef with the correct details", () => {
+    it("returns a ResourceRef with the correct details", () => {
       const r = {
         apiVersion: "apps/v1",
         kind: "Deployment",

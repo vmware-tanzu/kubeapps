@@ -131,7 +131,7 @@ function AppUpgrade({
       </div>
     );
   }
-
+  /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
   return (
     <SelectRepoForm cluster={cluster} namespace={namespace} chartName={chart?.metadata?.name!} />
   );

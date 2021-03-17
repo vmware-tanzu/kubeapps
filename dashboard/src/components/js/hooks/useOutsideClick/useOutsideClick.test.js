@@ -58,6 +58,7 @@ describe(useOutsideClick, () => {
     expect(listeners["mousedown"]).toBeDefined();
   });
 
+  /* eslint-disable jest/no-commented-out-tests */
   // TODO: Find a way to test real events
   // it('should execute the callback when users click outside the element', () => {
   //   // This test is not implemented for now because we need to investigate

@@ -1,6 +1,7 @@
 import { shallow } from "enzyme";
 
 // Shared jest examples that checks that the provided component is rendering the Loading Wrapper
+/* eslint-disable jest/no-export */
 export default (args: any) => {
   const { component: Component, props, state } = args;
   const renderComponent = () => {

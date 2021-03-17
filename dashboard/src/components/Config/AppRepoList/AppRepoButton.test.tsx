@@ -10,6 +10,7 @@ import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoForm } from "./AppRepoForm";
 
 // Mocking AppRepoForm to easily test this component standalone
+/* eslint-disable react/display-name */
 jest.mock("./AppRepoForm", () => {
   return {
     AppRepoForm: () => <div />,

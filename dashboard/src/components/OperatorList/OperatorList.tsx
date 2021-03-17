@@ -190,6 +190,7 @@ export default function OperatorList({
     }
   });
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <PageHeader

@@ -60,7 +60,7 @@ const chartsReducer = (
   switch (action.type) {
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };
-    case getType(actions.charts.receiveCharts):
+    case getType(actions.charts.receiveCharts): {
       const isLastPage = action.payload.page >= action.payload.totalPages;
       return {
         ...state,
@@ -68,6 +68,7 @@ const chartsReducer = (
         hasFinishedFetching: isLastPage,
         items: uniqBy([...state.items, ...action.payload.items], "id"),
       };
+    }
     case getType(actions.charts.receiveChartCategories):
       return { ...state, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):

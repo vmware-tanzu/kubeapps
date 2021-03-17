@@ -1,9 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders the repo selection form if not introduced 1`] = `
-<SelectRepoForm
-  chartName="bar"
-  cluster="default"
-  namespace="default"
-/>
-`;

@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsCheckbox } from "@cds/react/checkbox";
-import { CdsControlMessage } from "@cds/react/forms";
-import { CdsFormGroup } from "@cds/react/forms";
+import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
+
 import { CdsInput } from "@cds/react/input";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
 import { CdsTextarea } from "@cds/react/textarea";
@@ -267,6 +267,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     return message;
   };
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <form onSubmit={handleInstallClick}>
       <CdsFormGroup layout="vertical">

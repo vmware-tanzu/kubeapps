@@ -303,6 +303,7 @@ function Catalog(props: ICatalogProps) {
     }
   };
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <PageHeader
