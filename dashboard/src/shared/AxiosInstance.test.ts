@@ -79,12 +79,7 @@ describe("createAxiosInterceptorWithAuth", () => {
         response: { message: `Will raise ${t.errorClass.name}` },
         status: t.code,
       });
-
-      try {
-        await axios.get(testPath);
-      } catch (error) {
-        expect(error.message).toBe(`Will raise ${t.errorClass.name}`);
-      }
+      await expect(axios.get(testPath)).rejects.toThrow(`Will raise ${t.errorClass.name}`);
     });
 
     it(`returns the custom error ${t.errorClass.name} if ${t.code} returned`, async () => {
@@ -92,12 +87,7 @@ describe("createAxiosInterceptorWithAuth", () => {
         response: {},
         status: t.code,
       });
-
-      try {
-        await axios.get(testPath);
-      } catch (error) {
-        expect(error.constructor).toBe(t.errorClass);
-      }
+      await expect(axios.get(testPath)).rejects.toThrowError(t.errorClass);
     });
   });
 
@@ -106,12 +96,7 @@ describe("createAxiosInterceptorWithAuth", () => {
       response: {},
       status: 555,
     });
-
-    try {
-      await axios.get(testPath);
-    } catch (error) {
-      expect(error.message).toBe("Request failed with status code 555");
-    }
+    await expect(axios.get(testPath)).rejects.toThrow("Request failed with status code 555");
   });
 
   it("returns the response message", async () => {
@@ -119,12 +104,7 @@ describe("createAxiosInterceptorWithAuth", () => {
       response: { message: "this is an error!" },
       status: 555,
     });
-
-    try {
-      await axios.get(testPath);
-    } catch (error) {
-      expect(error.message).toBe("this is an error!");
-    }
+    await expect(axios.get(testPath)).rejects.toThrow("this is an error!");
   });
 
   it("dispatches auth error and logout if 401 with auth proxy", async () => {
@@ -145,12 +125,7 @@ describe("createAxiosInterceptorWithAuth", () => {
       response: { message: "Boom!" },
       status: 401,
     });
-
-    try {
-      await axios.get(testPath);
-    } catch (error) {
-      expect(error.message).toBe("Boom!");
-    }
+    await expect(axios.get(testPath)).rejects.toThrow("Boom!");
     expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
@@ -173,12 +148,7 @@ describe("createAxiosInterceptorWithAuth", () => {
       responseText: "not ajson paylod",
       status: 401,
     });
-
-    try {
-      await axios.get(testPath);
-    } catch (error) {
-      expect(error.message).toBe("not ajson paylod");
-    }
+    await expect(axios.get(testPath)).rejects.toThrow("not ajson paylod");
     expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
@@ -211,14 +181,9 @@ describe("createAxiosInterceptorWithAuth", () => {
       },
       status: 403,
     });
-
-    try {
-      await axios.get(testPath);
-    } catch (error) {
-      expect(error.message).toBe(
-        '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
-      );
-    }
+    await expect(axios.get(testPath)).rejects.toThrow(
+      '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthToken).toHaveBeenCalled();
   });
@@ -231,13 +196,8 @@ describe("createAxiosInterceptorWithAuth", () => {
       },
       status: 403,
     });
-
-    try {
-      await axios.get(testPath);
-    } catch (error) {
-      expect(error.message).toBe(
-        'Forbidden error, missing permissions: apiGroup: "v1", resource: "secrets", action: "list, get", namespace: default',
-      );
-    }
+    await expect(axios.get(testPath)).rejects.toThrow(
+      'Forbidden error, missing permissions: apiGroup: "v1", resource: "secrets", action: "list, get", namespace: default',
+    );
   });
 });

@@ -2,8 +2,7 @@ import { getType } from "typesafe-actions";
 import actions from "../actions";
 
 import { IClusterServiceVersion, IPackageManifest, IResource } from "shared/types";
-import operatorReducer from "./operators";
-import { IOperatorsState } from "./operators";
+import operatorReducer, { IOperatorsState } from "./operators";
 
 describe("catalogReducer", () => {
   let initialState: IOperatorsState;

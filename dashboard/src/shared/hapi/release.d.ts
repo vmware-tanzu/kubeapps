@@ -1,4 +1,4 @@
-// tslint:disable
+/* eslint-disable */
 import * as $protobuf from "protobufjs";
 
 /** Namespace hapi. */

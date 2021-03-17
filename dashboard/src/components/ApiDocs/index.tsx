@@ -6,7 +6,6 @@ import "./ApiDocs.css";
 
 // Request interface needed for avoiding type error in the requestInterceptor
 // it is being used, but it is not exported, so we define it here
-// tslint:disable-next-line
 interface Request {
   [k: string]: any;
 }

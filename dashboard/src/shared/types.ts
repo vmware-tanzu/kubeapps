@@ -7,9 +7,6 @@ import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
 
-// Allow defining multiple error classes
-// tslint:disable:max-classes-per-file
-
 class CustomError extends Error {
   // The constructor is defined so we can later on compare the returned object
   // via err.contructor  == FOO
@@ -428,56 +425,54 @@ export interface IK8sList<I, M> extends IK8sResource {
   } & M;
 }
 
-export interface IAppRepository
-  extends IK8sObject<
-    {
-      clusterName: string;
-      creationTimestamp: string;
-      deletionGracePeriodSeconds: string | null;
-      deletionTimestamp: string | null;
-      resourceVersion: string;
-      selfLink: string;
-    },
-    {
-      type: string;
-      url: string;
-      auth?: {
-        header?: {
-          secretKeyRef: {
-            name: string;
-            key: string;
-          };
-        };
-        customCA?: {
-          secretKeyRef: {
-            name: string;
-            key: string;
-          };
+export type IAppRepository = IK8sObject<
+  {
+    clusterName: string;
+    creationTimestamp: string;
+    deletionGracePeriodSeconds: string | null;
+    deletionTimestamp: string | null;
+    resourceVersion: string;
+    selfLink: string;
+  },
+  {
+    type: string;
+    url: string;
+    auth?: {
+      header?: {
+        secretKeyRef: {
+          name: string;
+          key: string;
         };
       };
-      resyncRequests: number;
-      syncJobPodTemplate?: object;
-      dockerRegistrySecrets?: string[];
-      ociRepositories?: string[];
-      tlsInsecureSkipVerify?: boolean;
-      filterRule?: IAppRepositoryFilter;
-    },
-    undefined
-  > {}
+      customCA?: {
+        secretKeyRef: {
+          name: string;
+          key: string;
+        };
+      };
+    };
+    resyncRequests: number;
+    syncJobPodTemplate?: object;
+    dockerRegistrySecrets?: string[];
+    ociRepositories?: string[];
+    tlsInsecureSkipVerify?: boolean;
+    filterRule?: IAppRepositoryFilter;
+  },
+  undefined
+>;
 
 export interface ICreateAppRepositoryResponse {
   appRepository: IAppRepository;
 }
 
-export interface IAppRepositoryList
-  extends IK8sList<
-    IAppRepository,
-    {
-      continue: string;
-      resourceVersion: string;
-      selfLink: string;
-    }
-  > {}
+export type IAppRepositoryList = IK8sList<
+  IAppRepository,
+  {
+    continue: string;
+    resourceVersion: string;
+    selfLink: string;
+  }
+>;
 
 export interface IAppRepositoryKey {
   name: string;

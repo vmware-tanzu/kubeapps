@@ -422,7 +422,7 @@ describe("pagination and chart fetching", () => {
     } as any;
     spyOnUseState = jest
       .spyOn(React, "useState")
-      //  @ts-ignore
+      /* @ts-expect-error: Argument of type '(init: any) => any' is not assignable to parameter of type '() => [unknown, Dispatch<unknown>]' */
       .mockImplementation((init: any) => {
         if (init === false) {
           // Mocking the result of hasLoadedFirstPage to simulate that is already loaded

@@ -173,6 +173,8 @@ function UpgradeForm({
   }
 
   const chartAttrs = version.relationships.chart.data;
+
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <LoadingWrapper loaded={!isFetching}>

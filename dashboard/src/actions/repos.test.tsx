@@ -505,7 +505,7 @@ describe("installRepo", () => {
       undefined,
     );
 
-    it("calls AppRepository create including a auth struct", async () => {
+    it("calls AppRepository create including a auth struct (authHeader)", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
         "default",
@@ -608,7 +608,7 @@ describe("installRepo", () => {
       undefined,
     );
 
-    it("calls AppRepository create including a auth struct", async () => {
+    it("calls AppRepository create including a auth struct (custom CA)", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
         "default",
@@ -626,7 +626,7 @@ describe("installRepo", () => {
       );
     });
 
-    it("returns true", async () => {
+    it("returns true (installRepoCMDAuth)", async () => {
       const res = await store.dispatch(installRepoCMDAuth);
       expect(res).toBe(true);
     });
@@ -711,7 +711,7 @@ describe("installRepo", () => {
       );
     });
 
-    it("returns true", async () => {
+    it("returns true (installRepoCMD)", async () => {
       const res = await store.dispatch(installRepoCMD);
       expect(res).toBe(true);
     });

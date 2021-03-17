@@ -1,0 +1,95 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/resolver": {
+      "typescript": {}
+    }
+  },
+  "extends": [
+    "react-app",
+    "react-app/jest",
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:jest/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "prettier",
+    "plugin:react-hooks/recommended",
+    "plugin:react/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "import", "jest", "jsx-a11y", "react", "react-hooks"],
+  "env": {
+    "browser": true,
+    "es6": true,
+    "jest": true
+  },
+  "rules": {
+    "quotes": [
+      "error", // enforce double quotes
+      "double",
+      {
+        "allowTemplateLiterals": true, // allows strings to use ``
+        "avoidEscape": true // allows strings to use single/double for escapping purposes
+      }
+    ],
+    "import/no-anonymous-default-export": [
+      "error",
+      {
+        "allowObject": true, // allow "export default {}"
+        "allowArrowFunction": true // allow "export default () => {}"
+      }
+    ],
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        "extendDefaults": true,
+        "types": {
+          "{}": false, // allow {} as a type as it is safe to be used in React
+          "object": false // allow object as a type
+        }
+      }
+    ],
+    "@typescript-eslint/explicit-module-boundary-types": "off", // disable warning when missing return type
+    "@typescript-eslint/no-empty-function": [
+      "error",
+      {
+        "allow": [
+          "arrowFunctions" // allow () => {}
+        ]
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "off", // allow using 'any'
+    "@typescript-eslint/no-non-null-assertion": "off", // allow non-null assertions using '!'
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": ["\\.css$", "\\.json$"] // ignore *.css and *.json not found files since they are generated later
+      }
+    ],
+    "jest/no-conditional-expect": "off", // allow 'expect' in 'if' and 'try-catch'
+    "jest/valid-title": "off", // allow dynamic test names (e.g., 't.name')
+    "jsx-a11y/no-onchange": "off", // disable since it is deprecated, new browsers do support onChange
+    "react/no-unescaped-entities": [
+      "error",
+      {
+        "forbid": [">", "}"] // avoid warnings with single/double quotes
+      }
+    ],
+    "react/jsx-uses-react": "off", // allow removing unused react imports (react >17)
+    "react/react-in-jsx-scope": "off", // allow removing unused react imports (react >17)
+    "no-use-before-define": "off" // superseed with @typescript-eslint/no-use-before-define
+  }
+}

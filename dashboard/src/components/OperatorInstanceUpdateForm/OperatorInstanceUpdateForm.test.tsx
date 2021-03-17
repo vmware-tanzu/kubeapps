@@ -5,8 +5,9 @@ import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError } from "shared/types";
-import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
-import { IOperatorInstanceUpgradeFormProps } from "./OperatorInstanceUpdateForm";
+import OperatorInstanceUpdateForm, {
+  IOperatorInstanceUpgradeFormProps,
+} from "./OperatorInstanceUpdateForm";
 
 const defaultProps: IOperatorInstanceUpgradeFormProps = {
   csvName: "foo",

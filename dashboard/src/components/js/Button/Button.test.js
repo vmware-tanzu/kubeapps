@@ -24,7 +24,7 @@ describe(Button, () => {
   });
 
   describe("Themes", () => {
-    Object.keys(ButtonThemes).map(k => {
+    Object.keys(ButtonThemes).forEach(k => {
       it(`apply the ${k} theme`, () => {
         const wrapper = shallow(
           <Button theme={ButtonThemes[k]} onClick={() => {}}>
@@ -37,7 +37,7 @@ describe(Button, () => {
   });
 
   describe("Types", () => {
-    Object.keys(ButtonTypes).map(k => {
+    Object.keys(ButtonTypes).forEach(k => {
       it(`apply the ${k} theme`, () => {
         const wrapper = shallow(
           <Button type={ButtonTypes[k]} onClick={() => {}}>

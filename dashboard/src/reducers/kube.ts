@@ -131,19 +131,21 @@ const kubeReducer = (
 ): IKubeState => {
   let key: string;
   switch (action.type) {
-    case getType(actions.kube.requestResource):
+    case getType(actions.kube.requestResource): {
       const requestedItem = { [action.payload]: { isFetching: true } };
       return { ...state, items: { ...state.items, ...requestedItem } };
-    case getType(actions.kube.receiveResource):
+    }
+    case getType(actions.kube.receiveResource): {
       const receivedItem = {
         [action.payload.key]: { isFetching: false, item: action.payload.resource },
       };
       return { ...state, items: { ...state.items, ...receivedItem } };
+    }
     case getType(actions.kube.receiveResourceKinds):
       return { ...state, kinds: action.payload };
     case getType(actions.kube.receiveKindsError):
       return { ...state, kinds: initialKinds, kindsError: action.payload };
-    case getType(actions.kube.receiveResourceFromList):
+    case getType(actions.kube.receiveResourceFromList): {
       const stateListItem = state.items[action.payload.key].item as IK8sList<IResource, {}>;
       const newItem = action.payload.resource as IResource;
       if (!stateListItem || !stateListItem.items) {
@@ -174,12 +176,14 @@ const kubeReducer = (
           },
         },
       };
-    case getType(actions.kube.receiveResourceError):
+    }
+    case getType(actions.kube.receiveResourceError): {
       const erroredItem = {
         [action.payload.key]: { isFetching: false, error: action.payload.error },
       };
       return { ...state, items: { ...state.items, ...erroredItem } };
-    case getType(actions.kube.openWatchResource):
+    }
+    case getType(actions.kube.openWatchResource): {
       const { ref, handler, onError } = action.payload;
       key = ref.watchResourceURL();
       if (state.sockets[key]) {
@@ -196,10 +200,11 @@ const kubeReducer = (
           [key]: { socket, onError },
         },
       };
+    }
     // TODO(adnan): this won't handle cases where one component closes a socket
     // another one is using. Whilst not a problem today, a reference counter
     // approach could be used here to enable this in the future.
-    case getType(actions.kube.closeWatchResource):
+    case getType(actions.kube.closeWatchResource): {
       key = action.payload.watchResourceURL();
       const { sockets } = state;
       const { [key]: foundSocket, ...otherSockets } = sockets;
@@ -221,7 +226,8 @@ const kubeReducer = (
           [timerID]: undefined,
         },
       };
-    case getType(actions.kube.addTimer):
+    }
+    case getType(actions.kube.addTimer): {
       if (!state.timers[action.payload.id]) {
         return {
           ...state,
@@ -232,7 +238,8 @@ const kubeReducer = (
         };
       }
       return state;
-    case getType(actions.kube.removeTimer):
+    }
+    case getType(actions.kube.removeTimer): {
       if (state.timers[action.payload]) {
         clearInterval(state.timers[action.payload] as NodeJS.Timer);
         return {
@@ -244,11 +251,9 @@ const kubeReducer = (
         };
       }
       return state;
+    }
     case LOCATION_CHANGE:
-      return {
-        ...state,
-        items: {},
-      };
+      return { ...state, items: {} };
     default:
   }
   return state;

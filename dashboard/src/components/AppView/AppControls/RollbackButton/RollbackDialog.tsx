@@ -38,6 +38,8 @@ function RollbackDialog({
   for (let i = currentRevision - 1; i > 0; i--) {
     options.push(i);
   }
+
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <>
       {modalIsOpen && (

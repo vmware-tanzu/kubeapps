@@ -10,7 +10,8 @@ interface IHandleProps {
   getHandleProps: GetHandleProps;
 }
 
-export const Handle: React.SFC<IHandleProps> = ({
+/* eslint-disable react/prop-types */
+export const Handle: React.FC<IHandleProps> = ({
   domain: [min, max],
   handle: { id, value, percent },
   getHandleProps,
@@ -46,7 +47,7 @@ interface ITrackProps {
   getTrackProps: GetTrackProps;
 }
 
-export const Track: React.SFC<ITrackProps> = ({ source, target, getTrackProps }) => (
+export const Track: React.FC<ITrackProps> = ({ source, target, getTrackProps }) => (
   <div
     style={{
       position: "absolute",

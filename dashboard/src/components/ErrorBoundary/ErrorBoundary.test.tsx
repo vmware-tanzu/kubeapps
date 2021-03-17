@@ -4,7 +4,6 @@ import { mount } from "enzyme";
 import React from "react";
 import ErrorBoundary from "./ErrorBoundary";
 
-// tslint:disable:no-console
 const consoleOrig = console.error;
 
 const defaultProps = {
@@ -75,7 +74,9 @@ describe("ErrorBoundary around a component", () => {
 
 it("renders an error if it exists as a property", () => {
   const wrapper = mount(
-    <ErrorBoundary {...defaultProps} error={new Error("boom!")} children={<></>} />,
+    <ErrorBoundary {...defaultProps} error={new Error("boom!")}>
+      <></>
+    </ErrorBoundary>,
   );
   expect(wrapper.find(Alert).text()).toContain("boom!");
 });
@@ -83,7 +84,9 @@ it("renders an error if it exists as a property", () => {
 it("logs out when clicking on the link", () => {
   const logout = jest.fn();
   const wrapper = mount(
-    <ErrorBoundary {...defaultProps} logout={logout} error={new Error("boom!")} children={<></>} />,
+    <ErrorBoundary {...defaultProps} logout={logout} error={new Error("boom!")}>
+      <></>
+    </ErrorBoundary>,
   );
   const link = wrapper.find(Alert).find(CdsInlineButton);
   expect(link).toExist();

@@ -4,8 +4,7 @@ import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import itBehavesLike from "../../shared/specs";
-import OperatorInstanceFormBody from "./OperatorInstanceFormBody";
-import { IOperatorInstanceFormProps } from "./OperatorInstanceFormBody";
+import OperatorInstanceFormBody, { IOperatorInstanceFormProps } from "./OperatorInstanceFormBody";
 
 const defaultProps: IOperatorInstanceFormProps = {
   isFetching: false,

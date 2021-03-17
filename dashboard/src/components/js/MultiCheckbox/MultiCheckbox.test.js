@@ -37,12 +37,7 @@ describe(MultiCheckbox, () => {
 
       const wrapper = shallow(<MultiCheckbox {...propsWithColumns} />);
 
-      expect(
-        wrapper
-          .find(".multicheckbox-wrapper")
-          .first()
-          .prop("style"),
-      ).toStrictEqual({
+      expect(wrapper.find(".multicheckbox-wrapper").first().prop("style")).toStrictEqual({
         "--col-lg-num": 2,
         "--col-md-num": 2,
         "--col-sm-num": 2,
@@ -58,12 +53,7 @@ describe(MultiCheckbox, () => {
 
       const wrapper = shallow(<MultiCheckbox {...propsWithColumns} />);
 
-      expect(
-        wrapper
-          .find(".multicheckbox-wrapper")
-          .first()
-          .prop("style"),
-      ).toStrictEqual({
+      expect(wrapper.find(".multicheckbox-wrapper").first().prop("style")).toStrictEqual({
         "--col-lg-num": 1,
         "--col-md-num": 1,
         "--col-sm-num": 1,
@@ -79,12 +69,7 @@ describe(MultiCheckbox, () => {
 
       const wrapper = shallow(<MultiCheckbox {...propsWithColumns} />);
 
-      expect(
-        wrapper
-          .find(".multicheckbox-wrapper")
-          .first()
-          .prop("style"),
-      ).toStrictEqual({
+      expect(wrapper.find(".multicheckbox-wrapper").first().prop("style")).toStrictEqual({
         "--col-lg-num": 3,
         "--col-md-num": 2,
         "--col-sm-num": 1,
@@ -99,12 +84,7 @@ describe(MultiCheckbox, () => {
       };
       const wrapper = shallow(<MultiCheckbox {...propsWithColumns} />);
 
-      expect(
-        wrapper
-          .find(".multicheckbox-wrapper")
-          .first()
-          .prop("style"),
-      ).toStrictEqual({
+      expect(wrapper.find(".multicheckbox-wrapper").first().prop("style")).toStrictEqual({
         "--col-lg-num": 2,
         "--col-md-num": 2,
         "--col-sm-num": 1,

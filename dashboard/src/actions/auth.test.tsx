@@ -131,7 +131,7 @@ describe("OIDC authentication", () => {
     });
   });
 
-  it("expires the session and logs out ", () => {
+  it("expires the session and logs out", () => {
     Auth.usingOIDCToken = jest.fn(() => true);
     // After the JSDOM upgrade, window.xxx are read-only properties
     // https://github.com/facebook/jest/issues/9471
