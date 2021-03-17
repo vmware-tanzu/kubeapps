@@ -1,7 +1,6 @@
 import Header from "components/Header";
 import HeadManager from "components/HeadManager/HeadManager";
 import Layout from "components/Layout";
-import LoadingWrapper from "components/LoadingWrapper";
 import { ConnectedRouter } from "connected-react-router";
 import { Suspense, useEffect, useState } from "react";
 import { IntlProvider } from "react-intl";
@@ -29,7 +28,7 @@ function Root() {
     <Provider store={store}>
       <ConfigLoaderContainer>
         <ConnectedRouter history={history}>
-          <Suspense fallback={LoadingWrapper}>
+          <Suspense fallback={null}>
             <IntlProvider
               locale={i18nConfig.locale}
               key={i18nConfig.locale}

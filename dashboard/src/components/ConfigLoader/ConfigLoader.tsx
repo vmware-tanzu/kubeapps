@@ -18,7 +18,9 @@ function ConfigLoader({ getConfig, error, ...otherProps }: IConfigLoaderProps) {
   if (error) {
     return <Alert theme="danger">Unable to load Kubeapps configuration: {error.message}</Alert>;
   }
-  return <LoadingWrapper {...otherProps} />;
+  return (
+    <LoadingWrapper className="margin-t-xxl" loadingText={<h1>Kubeapps</h1>} {...otherProps} />
+  );
 }
 
 export default ConfigLoader;

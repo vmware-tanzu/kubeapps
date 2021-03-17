@@ -75,7 +75,7 @@ class Routes extends React.Component<IRoutesProps> {
   private rootNamespacedRedirect = () => {
     if (this.props.authenticated) {
       if (!this.props.cluster || !this.props.currentNamespace) {
-        return <LoadingWrapper />;
+        return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Cluster Info..." />;
       }
       return <Redirect to={app.apps.list(this.props.cluster, this.props.currentNamespace)} />;
     }

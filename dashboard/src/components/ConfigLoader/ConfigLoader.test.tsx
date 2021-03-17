@@ -1,18 +1,13 @@
 import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper";
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 
 import ConfigLoader from ".";
-import itBehavesLike from "../../shared/specs";
 
-context("when the config is not ready", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: ConfigLoader,
-    props: {
-      loaded: false,
-      getConfig: jest.fn(),
-    },
-  });
+it("renders a loading wrapper", () => {
+  const wrapper = shallow(<ConfigLoader loaded={false} getConfig={jest.fn()} />);
+  expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
 
 context("when there is an error", () => {
