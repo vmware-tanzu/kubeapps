@@ -580,6 +580,7 @@ export interface IBasicFormParam {
   maximum?: number;
   render?: string;
   description?: string;
+  customComponent?: object;
   enum?: string[];
   hidden?:
     | {
