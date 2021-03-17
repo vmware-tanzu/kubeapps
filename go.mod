@@ -13,7 +13,7 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.0 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/containerd/containerd v1.4.4
-	github.com/deislabs/oras v0.8.1
+	github.com/deislabs/oras v0.11.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82 // indirect
