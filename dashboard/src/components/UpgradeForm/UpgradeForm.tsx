@@ -172,7 +172,7 @@ function UpgradeForm({
     return (
       <LoadingWrapper
         className="margin-t-xxl"
-        loadingText="Fetching Application..."
+        loadingText={`Fetching ${chartName}...`}
         loaded={false}
       />
     );

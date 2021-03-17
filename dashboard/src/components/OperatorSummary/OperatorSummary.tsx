@@ -10,7 +10,7 @@ import "./CapabilityLevel.css";
 export default function OperatorSummary() {
   const { operator, isFetching, csv } = useSelector((state: IStoreState) => state.operators);
   if (isFetching || (!operator && !csv)) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Operator Info..." />;
+    return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Operator info..." />;
   }
   let capabilityLevel = "";
   let repository = "";

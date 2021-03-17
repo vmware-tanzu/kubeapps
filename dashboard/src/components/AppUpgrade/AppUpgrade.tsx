@@ -101,7 +101,11 @@ function AppUpgrade({
 
   if (appsIsFetching || !app || !app.updateInfo) {
     return (
-      <LoadingWrapper loadingText="Fetching app info..." className="margin-t-xxl" loaded={false} />
+      <LoadingWrapper
+        loadingText={`Fetching ${releaseName}...`}
+        className="margin-t-xxl"
+        loaded={false}
+      />
     );
   }
 

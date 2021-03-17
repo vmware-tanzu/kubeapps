@@ -229,7 +229,7 @@ export default function AppView() {
           <Alert theme="danger">An error occurred: {error.message}</Alert>
         ))}
       {!app || !app.info ? (
-        <LoadingWrapper loadingText="Loading Application..." />
+        <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
       ) : (
         <Row>
           <Column span={3}>

@@ -76,7 +76,7 @@ function DeploymentFormBody({
     return (
       <LoadingWrapper
         className="margin-t-xxl"
-        loadingText="Fetching Application..."
+        loadingText="Fetching application..."
         loaded={false}
       />
     );

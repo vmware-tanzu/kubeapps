@@ -42,7 +42,7 @@ function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IC
   return (
     <LoadingWrapper
       className="margin-t-xxl"
-      loadingText="Fetching Application README..."
+      loadingText="Fetching application README..."
       loaded={!!readme}
     >
       {readme && (

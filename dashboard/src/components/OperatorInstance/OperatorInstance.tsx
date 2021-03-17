@@ -210,7 +210,7 @@ function OperatorInstance({
       <section>
         <LoadingWrapper
           className="margin-t-xxl"
-          loadingText="Fetching Application..."
+          loadingText={`Fetching ${instanceName}...`}
           loaded={!isFetching}
         >
           {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}

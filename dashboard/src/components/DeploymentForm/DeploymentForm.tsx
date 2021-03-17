@@ -124,7 +124,7 @@ function DeploymentForm({
   }
 
   if (!version) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Application..." />;
+    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
   }
   const chartAttrs = version.relationships.chart.data;
   return (

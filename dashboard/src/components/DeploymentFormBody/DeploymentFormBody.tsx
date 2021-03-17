@@ -107,7 +107,7 @@ function DeploymentFormBody({
     );
   }
   if (chartsIsFetching || !version || !versions.length) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Application..." />;
+    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
   }
   const tabColumns = [
     "YAML",
