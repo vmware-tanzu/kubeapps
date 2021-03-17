@@ -447,7 +447,7 @@ function Catalog(props: ICatalogProps) {
                       (!filters[filterNames.TYPE].length ||
                         filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
                         <div className="endPageMessage">
-                          <LoadingWrapper medium={true} loaded={false} />
+                          <LoadingWrapper loaded={false} />
                           {error && !hasFinishedFetching && (
                             <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
                               {" "}

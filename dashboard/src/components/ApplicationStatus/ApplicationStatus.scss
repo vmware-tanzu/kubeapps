@@ -6,7 +6,6 @@
   &-title {
     margin-top: 1.2rem;
     margin-bottom: 0.6rem;
-    font-weight: 600;
   }
   &-label {
     position: relative;
@@ -27,4 +26,8 @@
   th {
     text-transform: uppercase;
   }
+}
+
+.statusLoadingWrapper {
+  min-width: 140px;
 }

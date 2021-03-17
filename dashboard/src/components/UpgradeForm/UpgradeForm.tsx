@@ -169,7 +169,13 @@ function UpgradeForm({
   };
 
   if (selected.versions.length === 0 || !version) {
-    return <LoadingWrapper loaded={false} />;
+    return (
+      <LoadingWrapper
+        className="margin-t-xxl"
+        loadingText={`Fetching ${chartName}...`}
+        loaded={false}
+      />
+    );
   }
 
   const chartAttrs = version.relationships.chart.data;

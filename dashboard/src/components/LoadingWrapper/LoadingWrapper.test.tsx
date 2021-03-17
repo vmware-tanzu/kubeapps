@@ -1,5 +1,5 @@
+import { CdsProgressCircle } from "@cds/react/progress-circle";
 import { shallow } from "enzyme";
-import Spinner from "../js/Spinner";
 import LoadingWrapper from "./LoadingWrapper";
 
 let props = {} as any;
@@ -21,31 +21,26 @@ describe("when loaded is false", () => {
     };
   });
 
-  it("matches the snapshot", () => {
-    const wrapper = renderComponent(props);
-    expect(wrapper).toMatchSnapshot();
-  });
-
   it("does not render any children", () => {
     const wrapper = renderComponent(props);
     expect(wrapper.find(ChildrenComponent)).not.toExist();
   });
 
-  it("renders a Spinner", () => {
+  it("renders a progress circle", () => {
     const wrapper = renderComponent(props);
-    expect(wrapper.find(Spinner)).toExist();
+    expect(wrapper.find(CdsProgressCircle)).toExist();
   });
 
-  it("renders a mid size Spinner", () => {
-    const wrapper = renderComponent({ ...props, medium: true });
-    expect(wrapper.find(Spinner)).toExist();
-    expect(wrapper.find(Spinner).prop("medium")).toBe(true);
+  it("renders a mid size progress circle", () => {
+    const wrapper = renderComponent({ ...props, size: "md" });
+    expect(wrapper.find(CdsProgressCircle)).toExist();
+    expect(wrapper.find(CdsProgressCircle).prop("size")).toBe("md");
   });
 
-  it("renders a small Spinner", () => {
-    const wrapper = renderComponent({ ...props, small: true });
-    expect(wrapper.find(Spinner)).toExist();
-    expect(wrapper.find(Spinner).prop("small")).toBe(true);
+  it("renders a small progress circle", () => {
+    const wrapper = renderComponent({ ...props, size: "sm" });
+    expect(wrapper.find(CdsProgressCircle)).toExist();
+    expect(wrapper.find(CdsProgressCircle).prop("size")).toBe("sm");
   });
 });
 
@@ -54,11 +49,6 @@ describe("when loaded is true", () => {
     props = {
       loaded: true,
     };
-  });
-
-  it("matches the snapshot", () => {
-    const wrapper = renderComponent(props);
-    expect(wrapper).toMatchSnapshot();
   });
 
   it("renders it wrapped component", () => {

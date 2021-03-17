@@ -2,6 +2,7 @@ import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 
 import Alert from "components/js/Alert";
+import LoadingWrapper from "components/LoadingWrapper";
 import { hapi } from "shared/hapi/release";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
@@ -12,7 +13,6 @@ import {
   IRelease,
   UpgradeError,
 } from "shared/types";
-import itBehavesLike from "../../shared/specs";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 import AppUpgrade, { IAppUpgradeProps } from "./AppUpgrade";
@@ -67,12 +67,12 @@ beforeEach(() => {
   jest.resetAllMocks();
 });
 
-itBehavesLike("aLoadingComponent", {
-  component: AppUpgrade,
-  props: { ...defaultProps, isFetching: true },
+it("renders the repo selection form if not introduced", () => {
+  const wrapper = shallow(<AppUpgrade {...defaultProps} appsIsFetching={true} />);
+  expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
 
-it("renders the repo selection form if not introduced", () => {
+it("renders the repo selection form if not introduced when the app is loaded", () => {
   const wrapper = shallow(
     <AppUpgrade
       {...defaultProps}
@@ -98,7 +98,6 @@ it("renders the repo selection form if not introduced", () => {
   expect(wrapper.find(SelectRepoForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(UpgradeForm)).not.toExist();
-  expect(wrapper).toMatchSnapshot();
 });
 
 context("when an error exists", () => {

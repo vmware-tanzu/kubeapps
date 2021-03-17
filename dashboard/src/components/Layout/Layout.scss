@@ -30,6 +30,12 @@
   align-items: center;
 }
 
+.flex-h-center {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
 .flex-v-center {
   display: flex;
   align-items: center;
@@ -209,6 +215,22 @@
 
 .margin-t-sm {
   margin-top: 0.3rem;
+}
+
+.margin-t-md {
+  margin-top: 0.6rem;
+}
+
+.margin-t-lg {
+  margin-top: 0.9rem;
+}
+
+.margin-t-xl {
+  margin-top: 1.2rem;
+}
+
+.margin-t-xxl {
+  margin-top: 1.9rem;
 }
 
 .clr-control-container {

@@ -123,7 +123,11 @@ function AppList() {
           </Link>,
         ]}
       />
-      <LoadingWrapper loaded={!isFetching && !isFetchingResources}>
+      <LoadingWrapper
+        loaded={!isFetching && !isFetchingResources}
+        loadingText="Getting the list of applications..."
+        className="margin-t-xl"
+      >
         {error ? (
           <Alert theme="danger">Unable to list apps: {error.message}</Alert>
         ) : (

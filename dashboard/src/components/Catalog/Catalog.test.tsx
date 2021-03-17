@@ -118,9 +118,7 @@ it("should render a spinner if there are no elements but it's still fetching", (
     defaultStore,
     <Catalog {...defaultProps} charts={{ ...defaultChartState, hasFinishedFetching: false }} />,
   );
-  const spinner = wrapper.find(".endPageMessage span").at(1);
-  expect(spinner).toExist();
-  expect(spinner).toIncludeText("Loading...");
+  expect(wrapper.find(LoadingWrapper)).toExist();
 });
 
 it("should not render a spinner if there are no elements and it finished fetching", () => {
@@ -128,8 +126,7 @@ it("should not render a spinner if there are no elements and it finished fetchin
     defaultStore,
     <Catalog {...defaultProps} charts={{ ...defaultChartState, hasFinishedFetching: true }} />,
   );
-  const spinner = wrapper.find(".endPageMessage span").at(1);
-  expect(spinner).not.toExist();
+  expect(wrapper.find(LoadingWrapper)).not.toExist();
 });
 
 it("should render a spinner if there already pending elements", () => {
@@ -137,9 +134,7 @@ it("should render a spinner if there already pending elements", () => {
     defaultStore,
     <Catalog {...populatedProps} charts={{ ...populatedChartProps, hasFinishedFetching: false }} />,
   );
-  const spinner = wrapper.find(".endPageMessage span").at(1);
-  expect(spinner).toExist();
-  expect(spinner).toIncludeText("Loading...");
+  expect(wrapper.find(LoadingWrapper)).toExist();
 });
 
 it("should not render a message if only operators are selected", () => {
@@ -151,10 +146,7 @@ it("should not render a message if only operators are selected", () => {
       filter={{ [filterNames.TYPE]: "Operators" }}
     />,
   );
-  const spinner = wrapper.find(".endPageMessage span").at(1);
-  const message = wrapper.find(".endPageMessage span").at(2);
-  expect(spinner).not.toExist();
-  expect(message).not.toExist();
+  expect(wrapper.find(LoadingWrapper)).not.toExist();
 });
 
 it("should not render a message if there are no more elements", () => {

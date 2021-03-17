@@ -132,7 +132,11 @@ const kubeReducer = (
   let key: string;
   switch (action.type) {
     case getType(actions.kube.requestResource): {
-      const requestedItem = { [action.payload]: { isFetching: true } };
+      let item = state.items[action.payload];
+      if (!item) {
+        item = { isFetching: true };
+      }
+      const requestedItem = { [action.payload]: item };
       return { ...state, items: { ...state.items, ...requestedItem } };
     }
     case getType(actions.kube.receiveResource): {

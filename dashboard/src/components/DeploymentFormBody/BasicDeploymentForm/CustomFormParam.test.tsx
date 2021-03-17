@@ -18,6 +18,7 @@ const defaultProps = {
 };
 
 // Mocking the window so that the injected components are imported correctly
+const location = window.location;
 beforeAll((): void => {
   Object.defineProperty(window, "location", {
     configurable: true,

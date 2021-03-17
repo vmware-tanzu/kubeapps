@@ -1,11 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 
 import { CdsIcon } from "@cds/react/icon";
-import actions from "actions";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import ResourceRef from "shared/ResourceRef";
 import { flattenResources } from "shared/utils";
 import { DaemonSetColumns } from "./ResourceData/DaemonSet";
@@ -49,7 +48,7 @@ function getData(
     name,
   };
   if (!resource || resource.isFetching) {
-    data[accessors[1]] = <LoadingWrapper small={true} />;
+    data[accessors[1]] = <LoadingWrapper size={"sm"} />;
     return data;
   }
   if (resource.error) {
@@ -72,13 +71,6 @@ function getData(
 }
 
 function ResourceTable({ id, title, resourceRefs }: IResourceTableProps) {
-  const dispatch = useDispatch();
-  useEffect(() => {
-    resourceRefs.forEach(r => dispatch(actions.kube.getAndWatchResource(r)));
-    return function cleanup() {
-      resourceRefs.forEach(r => dispatch(actions.kube.closeWatchResource(r)));
-    };
-  }, [resourceRefs, dispatch]);
   const resources = useSelector((state: IStoreState) =>
     flattenResources(resourceRefs, state.kube.items),
   );

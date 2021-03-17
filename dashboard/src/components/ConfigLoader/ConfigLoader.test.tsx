@@ -1,34 +1,30 @@
 import Alert from "components/js/Alert";
-import { mount, shallow } from "enzyme";
+import LoadingWrapper from "components/LoadingWrapper";
 import context from "jest-plugin-context";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 
 import ConfigLoader from ".";
-import itBehavesLike from "../../shared/specs";
 
-context("when the config is not ready", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: ConfigLoader,
-    props: {
-      loaded: false,
-      getConfig: jest.fn(),
-    },
-  });
+it("renders a loading wrapper", () => {
+  const wrapper = mountWrapper(defaultStore, <ConfigLoader loaded={false} getConfig={jest.fn()} />);
+  expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
 
 context("when there is an error", () => {
   it("renders the error details", () => {
-    const wrapper = shallow(
+    const wrapper = mountWrapper(
+      defaultStore,
       <ConfigLoader error={new Error("Wrong config!")} getConfig={jest.fn()} />,
     );
     expect(wrapper.find(Alert)).toExist();
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.find(Alert).text()).toContain("Wrong config!");
   });
 });
 
 describe("componentDidMount", () => {
   it("calls getConfig", () => {
     const getConfig = jest.fn();
-    mount(<ConfigLoader getConfig={getConfig} />);
+    mountWrapper(defaultStore, <ConfigLoader getConfig={getConfig} />);
     expect(getConfig).toHaveBeenCalled();
   });
 });

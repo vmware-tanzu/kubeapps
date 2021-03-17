@@ -208,7 +208,11 @@ function OperatorInstance({
         ]}
       />
       <section>
-        <LoadingWrapper loaded={!isFetching}>
+        <LoadingWrapper
+          className="margin-t-xxl"
+          loadingText={`Fetching ${instanceName}...`}
+          loaded={!isFetching}
+        >
           {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
           {resource && (
             <Row>

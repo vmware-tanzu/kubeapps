@@ -47,8 +47,7 @@ function RollbackDialog({
           <CdsModalHeader>Rollback application</CdsModalHeader>
           <CdsModalContent>
             {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
-            {loading && <p>Loading, please wait.</p>}
-            <LoadingWrapper loaded={!loading}>
+            <LoadingWrapper className="center" loadingText="Loading, please wait" loaded={!loading}>
               {disableRollback ? (
                 <p>The application has not been upgraded, it's not possible to rollback.</p>
               ) : (

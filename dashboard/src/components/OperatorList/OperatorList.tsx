@@ -218,7 +218,11 @@ export default function OperatorList({
           </a>
         </div>
       </Alert>
-      <LoadingWrapper loaded={!isFetching}>
+      <LoadingWrapper
+        className="margin-t-xxl"
+        loadingText="Fetching Operators..."
+        loaded={!isFetching}
+      >
         {!isOLMInstalled ? (
           <OLMNotFound />
         ) : (

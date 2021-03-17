@@ -37,10 +37,7 @@ function ConfirmDialog({
           {loading === true ? (
             <div className="center">
               <CdsModalContent>
-                <p>Loading, please wait</p>
-                <div className="center">
-                  <LoadingWrapper loaded={false} />
-                </div>
+                <LoadingWrapper loadingText="Loading, please wait" loaded={false} />
               </CdsModalContent>
             </div>
           ) : (
