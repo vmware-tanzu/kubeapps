@@ -197,6 +197,7 @@ kubectl delete namespace kubeapps
 - [Is there any API documentation?](#is-there-any-api-documentation)
 - [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
 - [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
+- [Slow response when listing namespaces?](#slow-response-when-listing-namespaces)
 - [More questions?](#more-questions)
 
 ### How to install Kubeapps for demo purposes?
@@ -274,6 +275,12 @@ You could alternatively ensure that the `imagePullSecret` is available in all na
 ### Does Kubeapps support Operators?
 
 Yes! You can get started by following the [operators documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md).
+
+### Slow response when listing namespaces
+
+Kubeapps uses the logged user account to retrieve the list of namespaces. If the user doesn't have permission to list namespaces, the fallback mechanism verifies if the user has permissions to get secrets for each namespace (to verify it it should be allowed to use that namespace or not). This can lead to a slow response if the number of namespaces of the cluster is big enough.
+
+To reduce this time, you can increase the number of checks that Kubeapps will perform in parallel setting the value: `kubeops.extraEnvVars[0].name=MAX_REQUESTS` and `kubeops.extraEnvVars[0].value=<desired_number>`. The default value, if not set is 20 concurrent requests.
 
 ### More questions? 
 
