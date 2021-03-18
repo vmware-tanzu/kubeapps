@@ -38,6 +38,7 @@ export default class Config {
   }
 
   public static setTheme(theme: SupportedThemes) {
+    document.body.setAttribute("cds-theme", theme);
     localStorage.setItem("theme", theme);
   }
 
