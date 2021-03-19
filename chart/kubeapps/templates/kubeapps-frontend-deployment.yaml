@@ -2,8 +2,13 @@ apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
   name: {{ template "common.names.fullname" . }}
-  labels:{{ include "kubeapps.extraAppLabels" . | nindent 4 }}
+  labels:
+    {{- include "kubeapps.extraAppLabels" . | nindent 4 }}
     app: {{ template "common.names.fullname" . }}
+  {{- with .Values.frontend.annotations }}
+  annotations:
+    {{ toYaml . }}
+  {{- end }}
 spec:
   replicas: {{ .Values.frontend.replicaCount }}
   selector:
