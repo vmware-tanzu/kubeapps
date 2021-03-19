@@ -187,34 +187,20 @@ install_cluster: &install_cluster
     EOF
     {
       echo "Creating cluster..."
-      kind create cluster \ 
-        --name kind-kubeapps-ci \
-        --config=./kubeapps-local-dev-apiserver-config.yaml \
-        --retain \
-        --wait 10s &&
+      kind create cluster --name kind-kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --retain --wait 10s &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
-      kubectl wait --namespace ingress-nginx \
-        --for=condition=ready pod \
-        --selector=app.kubernetes.io/component=controller \
-        --timeout=120s &&
+      kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
         echo "Cluster created"
     } || {
       echo "Cluster creation failed, retrying..."
       kind delete clusters kind-kubeapps-ci || true
-      kind create cluster \ 
-        --name kind-kubeapps-ci \
-        --config=./kubeapps-local-dev-apiserver-config.yaml \
-        --retain \
-        --wait 10s || true &&
+      kind create cluster --name kind-kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --retain --wait 10s || true &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
-      kubectl wait --namespace ingress-nginx \
-        --for=condition=ready pod \
-        --selector=app.kubernetes.io/component=controller \
-        --timeout=120s &&
+      kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
         echo "Cluster created"
     } || {
         echo "Error while creating the cluster after retry"
