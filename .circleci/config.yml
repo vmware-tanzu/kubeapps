@@ -276,7 +276,7 @@ jobs:
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
   test_pinniped_proxy:
     docker:
-      - image: circleci/rust
+      - image: circleci/rust:1.50
     steps:
       - checkout
       - run: cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
