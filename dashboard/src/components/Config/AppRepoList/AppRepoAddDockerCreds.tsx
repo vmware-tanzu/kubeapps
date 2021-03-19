@@ -98,11 +98,7 @@ export function AppRepoAddDockerCreds({
             // Need to manually add slot=controls while this Clarity issue is addressed:
             // https://github.com/vmware/clarity/issues/5689
             <CdsCheckbox key={`checkbox-${secret.metadata.name}`} slot="controls">
-              <label>
-                {/* Need to create a span within the label to be able to overwrite the forced
-                    style that capitalizes labels */}
-                <span className="secret-label">{secret.metadata.name}</span>
-              </label>
+              <label className="secret-label">{secret.metadata.name}</label>
               <input
                 type="checkbox"
                 id={`app-repo-secret-${secret.metadata.name}`}
