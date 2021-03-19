@@ -5,8 +5,8 @@
   "homepage": "./",
   "dependencies": {
     "@cds/city": "^1.1.0",
-    "@cds/core": "^5.0.3",
-    "@cds/react": "^5.0.3",
+    "@cds/core": "^5.1.0",
+    "@cds/react": "^5.1.0",
     "@clr/ui": "^5.0.3",
     "@paciolan/remote-component": "^2.11.0",
     "@types/diff": "^5.0.0",

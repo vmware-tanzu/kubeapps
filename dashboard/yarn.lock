@@ -1174,10 +1174,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.0.3":
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.0.3.tgz#b91676c91f07faddce708401e3b9a5e99b2aa196"
-  integrity sha512-Kj10s+MpSLpft6J7Pd7sLEzJASI5EUK6U/FAq9Jf3h6b0MuOyUh8cpkTUujwEIlFBnaAh5t5vCRzRNOfk8wp7A==
+"@cds/core@^5.1.0":
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.1.0.tgz#a5bece2f39db20abcad02bc24e8605cde41650d1"
+  integrity sha512-bvguLhodI9og/qcMrrwWjl/QhxaRwuunTrWiGdYDgmuxcLdXdu3+LUtra/PaWXGgpxq6ksf6noYkknPufn5N/g==
   dependencies:
     "@types/resize-observer-browser" "^0.1.3"
     lit-element "^2.3.1"
@@ -1188,10 +1188,10 @@
     "@cds/city" "^1.1.0"
     normalize.css "^8.0.1"
 
-"@cds/react@^5.0.3":
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.0.3.tgz#36464617a45362d84a5e4fbe0dd1189a90f5ebcd"
-  integrity sha512-w6B0t20C6B2ODdwUAJhIS5Ng1bfGZ5SpAsQYam+VIyQFpZXspuy5TLraV7Bnvnzy47LmikwwLHPsAEjTnS78PQ==
+"@cds/react@^5.1.0":
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.1.0.tgz#21591dc05a87f6df2b2a3c935b67a6e912b6e0e5"
+  integrity sha512-q7nshEhLeWQCZ+ScLito5RBb54DpLcKFZHAetGNkc3PMOlFDjRMSrZeIK+2vPIjgl02/HhjUturrb30qkuMXyg==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
