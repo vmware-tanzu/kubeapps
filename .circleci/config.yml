@@ -224,7 +224,7 @@ local_e2e_steps: &local_e2e_steps
     - <<: *exports
     # Install kind
     - run: |
-        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-Linux-amd64
+        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-Linux-amd64
         chmod +x kind-Linux-amd64
         sudo mv kind-Linux-amd64 /usr/local/bin/kind
     - run: |
