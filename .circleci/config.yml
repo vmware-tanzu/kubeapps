@@ -25,20 +25,20 @@ workflows:
   version: 2
   kubeapps:
     jobs:
-      - test_go:
-          <<: *build_always
-      - test_dashboard:
-          <<: *build_always
-      - test_pinniped_proxy:
-          <<: *build_always
-      - test_chart_render:
-          <<: *build_always
-      - build_go_images:
-          <<: *build_always
-      - build_dashboard:
-          <<: *build_always
-      - build_pinniped_proxy:
-          <<: *build_always
+      # - test_go:
+      #     <<: *build_always
+      # - test_dashboard:
+      #     <<: *build_always
+      # - test_pinniped_proxy:
+      #     <<: *build_always
+      # - test_chart_render:
+      #     <<: *build_always
+      # - build_go_images:
+      #     <<: *build_always
+      # - build_dashboard:
+      #     <<: *build_always
+      # - build_pinniped_proxy:
+      #     <<: *build_always
       - local_e2e_tests:
           <<: *build_always
           matrix:
@@ -46,63 +46,63 @@ workflows:
               # Enable the line below to do bundle builds to debug CI issues
               number: ["1"]
               # number: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_15_MASTER:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_15_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_16_MASTER:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_16_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - sync_chart:
-          <<: *build_on_master
-          requires:
-            - local_e2e_tests
-            - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
-            - GKE_1_16_MASTER
-            - GKE_1_16_LATEST_RELEASE
-      - push_images:
-          <<: *build_on_master
-          requires:
-            - local_e2e_tests
-            - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
-            - GKE_1_16_MASTER
-            - GKE_1_16_LATEST_RELEASE
-      - release:
-          <<: *build_on_tag
-          requires:
-            - local_e2e_tests
-            - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
-            - GKE_1_16_MASTER
-            - GKE_1_16_LATEST_RELEASE
+          # requires:
+          #   - test_go
+          #   - test_dashboard
+          #   - build_go_images
+          #   - build_dashboard
+      # - GKE_1_15_MASTER:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - GKE_1_15_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - GKE_1_16_MASTER:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - GKE_1_16_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - sync_chart:
+      #     <<: *build_on_master
+      #     requires:
+      #       - local_e2e_tests
+      #       - GKE_1_15_MASTER
+      #       - GKE_1_15_LATEST_RELEASE
+      #       - GKE_1_16_MASTER
+      #       - GKE_1_16_LATEST_RELEASE
+      # - push_images:
+      #     <<: *build_on_master
+      #     requires:
+      #       - local_e2e_tests
+      #       - GKE_1_15_MASTER
+      #       - GKE_1_15_LATEST_RELEASE
+      #       - GKE_1_16_MASTER
+      #       - GKE_1_16_LATEST_RELEASE
+      # - release:
+          # <<: *build_on_tag
+          # requires:
+          #   - local_e2e_tests
+          #   - GKE_1_15_MASTER
+          #   - GKE_1_15_LATEST_RELEASE
+          #   - GKE_1_16_MASTER
+          #   - GKE_1_16_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
