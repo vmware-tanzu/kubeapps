@@ -154,7 +154,7 @@ build_images: &build_images
           - "*"
 install_kubectl: &install_kubectl
   run: |
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.14.0/bin/linux/amd64/kubectl
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl
     chmod +x ./kubectl
     sudo mv ./kubectl /usr/local/bin/kubectl
 run_e2e_tests: &run_e2e_tests
