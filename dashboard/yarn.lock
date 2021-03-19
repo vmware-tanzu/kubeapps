@@ -1199,10 +1199,10 @@
     "@cds/city" "^1.1.0"
     normalize.css "^8.0.1"
 
-"@clr/ui@^5.0.3":
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-5.0.3.tgz#45b8a96a55bfe4303b9bfb19454c41c706c4f17e"
-  integrity sha512-LABEYZCx4bSyqvz/87JLu8iaEazN0ttfyKTJOIeIVC+5bephs9qEI8P8ncW31WGgt2M3OlrjeETkGY4e0O6YBQ==
+"@clr/ui@^5.1.0":
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-5.1.0.tgz#fbe933c682083c2490dd7447275104363cd47719"
+  integrity sha512-fk4dcBaS5BpA156mxZM01z9YyOaq+DSWtysi7dHS/fvr3Vr7FC5QmptkuL9vgNqqcAY5Gh3aZjanyE1RWfUFrg==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -11514,10 +11514,12 @@ qs@6.7.0:
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.7.0.tgz#41dc1a015e3d581f1621776be31afb2876a9b1bc"
   integrity sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==
 
-qs@^6.9.4, qs@^6.9.5:
-  version "6.9.6"
-  resolved "https://registry.yarnpkg.com/qs/-/qs-6.9.6.tgz#26ed3c8243a431b2924aca84cc90471f35d5a0ee"
-  integrity sha512-TIRk4aqYLNoJUbd+g2lEdz5kLWIuTMRagAXxl78Q0RiVjAOugHmeKNGdd3cwo/ktpf9aL9epCfFqWDEKysUlLQ==
+qs@^6.10.0, qs@^6.9.4:
+  version "6.10.0"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.10.0.tgz#8b6519121ab291c316a3e4d49cecf6d13d8c7fe5"
+  integrity sha512-yjACOWijC6L/kmPZZAsVBNY2zfHSIbpdpL977quseu56/8BZ2LoF5axK2bGhbzhVKt7V9xgWTtpyLbxwIoER0Q==
+  dependencies:
+    side-channel "^1.0.4"
 
 qs@~6.5.2:
   version "6.5.2"
