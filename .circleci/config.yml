@@ -131,7 +131,7 @@ exports: &exports
 build_images: &build_images
   steps:
     - setup_remote_docker:
-        version: 18.09.3
+        version: 20.10.2
     - checkout
     - <<: *exports
     - run: |
