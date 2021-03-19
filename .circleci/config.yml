@@ -268,7 +268,7 @@ jobs:
           docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
   test_dashboard:
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:14
     steps:
       - checkout
       - run: yarn install --cwd=dashboard --frozen-lockfile
