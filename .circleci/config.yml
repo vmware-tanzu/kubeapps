@@ -188,10 +188,10 @@ install_cluster: &install_cluster
     {
       echo "Creating cluster..."
       kind create cluster \ 
-            --name kind-kubeapps-ci 
-            --config=./kubeapps-local-dev-apiserver-config.yaml \
-            --retain \
-            --wait 10s &&
+        --name kind-kubeapps-ci \
+        --config=./kubeapps-local-dev-apiserver-config.yaml \
+        --retain \
+        --wait 10s &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
@@ -204,10 +204,10 @@ install_cluster: &install_cluster
       echo "Cluster creation failed, retrying..."
       kind delete clusters kind-kubeapps-ci || true
       kind create cluster \ 
-            --name kind-kubeapps-ci 
-            --config=./kubeapps-local-dev-apiserver-config.yaml \
-            --retain \
-            --wait 10s || true &&
+        --name kind-kubeapps-ci \
+        --config=./kubeapps-local-dev-apiserver-config.yaml \
+        --retain \
+        --wait 10s || true &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
