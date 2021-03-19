@@ -138,6 +138,7 @@ installOrUpgradeKubeapps() {
     local chartSource=$1
     # Install Kubeapps
     info "Installing Kubeapps..."
+    kubectl -n kubeapps delete secret localhost-tls || true
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
@@ -145,7 +146,26 @@ installOrUpgradeKubeapps() {
       --set kubeops.replicaCount=1 \
       --set assetsvc.replicaCount=1 \
       --set dashboard.replicaCount=1 \
-      --set postgresql.replication.enabled=false
+      --set postgresql.replication.enabled=false \
+      # OIDC configuration
+      --set authProxy.enabled: true \
+      --set authProxy.provider: oidc \
+      --set authProxy.clientID: default \
+      --set authProxy.clientSecret: ZXhhbXBsZS1hcHAtc2VjcmV0 \
+      --set authProxy.cookieSecret: bm90LWdvb2Qtc2VjcmV0Cg== \
+      --set authProxy.additionalFlags[0]="--oidc-issuer-url=$DEX_IP" \
+      --set authProxy.additionalFlags[1]="--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster" \
+      --set authProxy.additionalFlags[2]="----ssl-insecure-skip-verify=true" \
+      # Multicluster configuration
+      --set clusters[0].name: default \
+      --set clusters[1].name: second-cluster \
+      --set clusters[1].apiServiceURL: "$ADDITIONAL_CLUSTER_IP" \
+      --set clusters[1].insecure: true \
+      --set clusters[1].serviceToken: ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsbHpiSEp5TlZwM1QwaG9WSE5PYkhVdE5GQkRablY2TW0wd05rUmtMVmxFWVV4MlZEazNaeTEyUmxFaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUprWldaaGRXeDBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmt0ZEc5clpXNHRjV295Ym1naUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWEzVmlaV0Z3Y0hNdGJtRnRaWE53WVdObExXUnBjMk52ZG1WeWVTSXNJbXQxWW1WeWJtVjBaWE11YVc4dmMyVnlkbWxqWldGalkyOTFiblF2YzJWeWRtbGpaUzFoWTJOdmRXNTBMblZwWkNJNkltVXhaakE1WmpSakxUTTRNemt0TkRJME15MWhZbUptTFRKaU5HWm1OREZrWW1RMllTSXNJbk4xWWlJNkluTjVjM1JsYlRwelpYSjJhV05sWVdOamIzVnVkRHBrWldaaGRXeDBPbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmtpZlEuTnh6V2dsUGlrVWpROVQ1NkpWM2xJN1VWTUVSR3J2bklPSHJENkh4dUVwR0luLWFUUzV5Q0pDa3Z0cTF6S3Z3b05sc2MyX0YxaTdFOUxWRGFwbC1UQlhleUN5Rl92S1B1TDF4dTdqZFBMZ1dKT1pQX3JMcXppaDV4ZlkxalFoOHNhdTRZclFJLUtqb3U1UkRRZ0tOQS1BaS1lRlFOZVh2bmlUNlBKYWVkc184V0t3dHRMMC1wdHpYRnBnOFl5dkx6N0U1UWdTR2tjNWpDVXlsS0RvZVRUaVRSOEc2RHFHYkFQQUYwREt0b3MybU9Geno4SlJYNHhoQmdvaUcxVTVmR1g4Z3hnTU1SV0VHRE9kaGMyeXRvcFdRUkRpYmhvaldNS3VDZlNua09zMDRGYTBkYmEwQ0NTbld2a29LZ3Z4QVR5aVVrWm9wV3VpZ1JJNFd5dDkzbXhR
+      
+      kubectl -n kubeapps create secret tls localhost-tls \
+        --key ./devel/localhost-key.pem \
+        --cert ./devel/localhost-cert.pem
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -167,6 +187,7 @@ images=(
   "assetsvc"
   "dashboard"
   "kubeops"
+  "pinniped-proxy"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -181,6 +202,8 @@ img_flags=(
   "--set" "dashboard.image.repository=${images[3]}"
   "--set" "kubeops.image.tag=${DEV_TAG}"
   "--set" "kubeops.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
+  "--set" "pinnipedProxy.image.repository=${images[4]}"
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
@@ -188,6 +211,24 @@ invalidateCacheFlag=""
 if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   invalidateCacheFlag="--set featureFlags.invalidateCache=true"
 fi
+
+# Begin multicluster dependencies
+info "Installing multicluster dependencies"
+
+helm repo add stable https://charts.helm.sh/stable
+
+  # Create certs
+kubectl -n dex create secret tls dex-web-server-tls \
+  --key ./devel/dex.key \
+  --cert ./devel/dex.crt
+openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 1 -out certificate.pem
+mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEX_IP
+
+  # Install dex
+helm install dex stable/dex --namespace dex --create-namespace --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+  # Install openldap
+helm install ldap stable/openldap --namespace ldap --create-namespace 
+# End multicluster dependencies
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
@@ -197,9 +238,6 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps bitnami/kubeapps
-  # Due to a breaking change in PG chart 9.X, we need to delete the statefulset before upgrading
-  # This can be removed after the release 2.0.0
-  kubectl delete statefulset -n kubeapps --all
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"

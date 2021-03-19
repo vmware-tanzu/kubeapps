@@ -152,6 +152,100 @@ build_images: &build_images
         root: images
         paths:
           - "*"
+install_cluster: &install_cluster
+  run: |
+    DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
+    ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+    cat << EOF | sed "s/172.18.0.2/$DEX_IP/" | tee ./kubeapps-local-dev-apiserver-config.yaml
+    kind: Cluster
+    apiVersion: kind.x-k8s.io/v1alpha4
+    nodes:
+    - role: control-plane
+      kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+      - |
+        kind: ClusterConfiguration
+        apiServer:
+          extraArgs:
+            oidc-issuer-url: https://172.18.0.2:32000
+            oidc-client-id: default
+            oidc-ca-file: /etc/kubernetes/pki/apiserver.crt
+            oidc-username-claim: email
+            oidc-username-prefix: "oidc:"
+            oidc-groups-claim: groups
+            oidc-groups-prefix: "oidc:"
+      extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+    EOF
+    {
+      echo "Creating cluster..."
+      kind create cluster \ 
+            --name kind-kubeapps-ci 
+            --config=./kubeapps-local-dev-apiserver-config.yaml \
+            --retain \
+            --wait 10s &&
+      kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+      sleep 5 &&
+      kubectl wait --namespace ingress-nginx \
+        --for=condition=ready pod \
+        --selector=app.kubernetes.io/component=controller \
+        --timeout=120s &&
+        echo "Cluster created"
+    } || {
+      echo "Cluster creation failed, retrying..."
+      kind delete clusters kind-kubeapps-ci || true
+      kind create cluster \ 
+            --name kind-kubeapps-ci 
+            --config=./kubeapps-local-dev-apiserver-config.yaml \
+            --retain \
+            --wait 10s || true &&
+      kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+      sleep 5 &&
+      kubectl wait --namespace ingress-nginx \
+        --for=condition=ready pod \
+        --selector=app.kubernetes.io/component=controller \
+        --timeout=120s &&
+        echo "Cluster created"
+    } || {
+        echo "Error while creating the cluster after retry"
+    }
+install_additional_cluster: &install_additional_cluster
+  run: |
+    {
+        echo "Creating additional cluster..."
+      kind create cluster \
+        --name kind-kubeapps-ci-additional \
+        --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
+        --retain \
+        --wait 10s &&
+      kubectl apply --kubeconfig=$(kind get kubeconfig-path --name=kind-kubeapps-ci-additional) -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl apply --kubeconfig=$(kind get kubeconfig-path --name=kind-kubeapps-ci-additional) -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        echo "Additional cluster created"
+    } || {
+        echo "Additional cluster creation failed, retrying..."
+        kind delete clusters kind-kubeapps-ci-additional || true
+        kind create cluster \
+        --name kind-kubeapps-ci-additional \
+        --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
+        --retain \
+        --wait 10s &&
+      kubectl apply --kubeconfig=$(kind get kubeconfig-path --name=kind-kubeapps-ci-additional) -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl apply --kubeconfig=$(kind get kubeconfig-path --name=kind-kubeapps-ci-additional) -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        echo "Additional cluster created"
+    } || {
+        echo "Error while creating the additional cluster after retry"
+    }
 install_kubectl: &install_kubectl
   run: |
     curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl
@@ -227,15 +321,19 @@ local_e2e_steps: &local_e2e_steps
         curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-Linux-amd64
         chmod +x kind-Linux-amd64
         sudo mv kind-Linux-amd64 /usr/local/bin/kind
+    # Create the "kind-kubeapps-ci" cluster and configure it to use dex (for the OIDC authentication)
+    - <<: *install_cluster
+    # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
     - run: |
-        if kind create cluster; then
-          echo "Cluster created"
-        else
-          echo "Cluster creation failed, retrying"
-          kind delete cluster || true
-          kind create cluster
-        fi
-    - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
+        docker cp kind-kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
+        docker cp kind-kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+    # Create the "kind-kubeapps-ci-additional" cluster
+    - <<: *install_additional_cluster
+    - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind-kubeapps-ci)" >> $BASH_ENV
+    - run: |
+        curl -LO https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-linux-amd64
+        chmod +x mkcert-v1.4.3-linux-amd64
+        sudo mv mkcert-v1.4.3-linux-amd64 /usr/local/bin/mkcert
     - <<: *install_kubectl
     - <<: *install_helm_cli
     # Load images from other jobs
