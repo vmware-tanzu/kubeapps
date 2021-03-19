@@ -311,6 +311,7 @@ local_e2e_steps: &local_e2e_steps
         curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-Linux-amd64
         chmod +x kind-Linux-amd64
         sudo mv kind-Linux-amd64 /usr/local/bin/kind
+    - <<: *install_kubectl
     # Create the "kubeapps-ci" cluster and configure it to use dex (for the OIDC authentication)
     - <<: *install_cluster
     # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
@@ -323,7 +324,6 @@ local_e2e_steps: &local_e2e_steps
         curl -LO https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-linux-amd64
         chmod +x mkcert-v1.4.3-linux-amd64
         sudo mv mkcert-v1.4.3-linux-amd64 /usr/local/bin/mkcert
-    - <<: *install_kubectl
     - <<: *install_helm_cli
     # Load images from other jobs
     - attach_workspace:
