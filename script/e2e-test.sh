@@ -150,7 +150,7 @@ installOrUpgradeKubeapps() {
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
-  installOLM 0.16.1
+  installOLM 0.17.0
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
