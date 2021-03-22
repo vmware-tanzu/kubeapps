@@ -260,6 +260,7 @@ install_olm: &install_olm
         url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}
 
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/crds.yaml 
+        sleep 10
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/olm.yaml 
       fi
 check_olm: &check_olm
