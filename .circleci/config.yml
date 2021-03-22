@@ -260,10 +260,15 @@ install_olm: &install_olm
         url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}
 
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/crds.yaml 
-        sleep 5
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/olm.yaml 
-        sleep 5
-        # wait for deployments to be ready
+      fi
+check_olm: &check_olm
+  run:
+    name: "Check OLM"
+    command:  |
+      # Operators are not supported in GKE 1.14 and flaky in 1.15
+      if [[ -z "${GKE_BRANCH-}" ]]; then
+        echo "Waiting for OLM deployments to be ready..."
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/catalog-operator
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/olm-operator
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/packageserver
@@ -352,14 +357,15 @@ local_e2e_steps: &local_e2e_steps
     - <<: *install_kubectl
     # Create the "kubeapps-ci" cluster and configure it to use dex (for the OIDC authentication)
     - <<: *install_cluster
+    - <<: *install_olm
+    # Create the "kubeapps-ci-additional" cluster
+    # - <<: *install_additional_cluster
     # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
     - run:
         name: "Copy apiserver certificates"
         command:  |
           docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
           docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
-    # Create the "kubeapps-ci-additional" cluster
-    # - <<: *install_additional_cluster
     # Export variables and kubeconfig 
     - <<: *export_cluster_variables
     - run:
@@ -374,7 +380,7 @@ local_e2e_steps: &local_e2e_steps
     # - attach_workspace:
         # at: /tmp/images
     # - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
-    - <<: *install_olm
+    - <<: *check_olm
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
