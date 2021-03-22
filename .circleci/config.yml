@@ -262,7 +262,7 @@ install_olm: &install_olm
 
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/crds.yaml 
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/olm.yaml 
-
+        sleep 5
         # wait for deployments to be ready
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/catalog-operator
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/olm-operator
