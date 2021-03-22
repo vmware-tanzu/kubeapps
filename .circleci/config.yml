@@ -243,7 +243,7 @@ install_olm: &install_olm
   run: |
     # Operators are not supported in GKE 1.14 and flaky in 1.15
     if [[ -z "${GKE_BRANCH-}" ]]; then
-      info "Installing OLM ${OLM_VERSION} ..."
+      echo "Installing OLM ${OLM_VERSION} ..."
       url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}
 
       kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply -f ${url}/crds.yaml 
