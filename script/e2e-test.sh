@@ -217,17 +217,16 @@ info "Installing multicluster dependencies"
 
 helm repo add stable https://charts.helm.sh/stable
 
-  # Create certs
-kubectl -n dex create secret tls dex-web-server-tls \
-  --key ./devel/dex.key \
-  --cert ./devel/dex.crt
-openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 1 -out certificate.pem
-mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEX_IP
-
   # Install dex
 helm install dex stable/dex --namespace dex --create-namespace --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
   # Install openldap
 helm install ldap stable/openldap --namespace ldap --create-namespace 
+
+  # Create certs
+kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
+openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 1 -out certificate.pem
+mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEX_IP
+
 # End multicluster dependencies
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
