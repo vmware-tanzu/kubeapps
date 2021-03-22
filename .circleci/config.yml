@@ -155,7 +155,6 @@ build_images: &build_images
           - "*"
 install_cluster: &install_cluster
   run: |
-    export DEFAULT_DEX_IP=172.18.0.2
     cat \<< EOF | sed "s/172.18.0.2/$DEFAULT_DEX_IP/" | tee ./kubeapps-local-dev-apiserver-config.yaml
     kind: Cluster
     apiVersion: kind.x-k8s.io/v1alpha4
@@ -415,6 +414,7 @@ jobs:
       HELM_VERSION: "v3.5.2"
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
+      DEFAULT_DEX_IP: "172.18.0.2"
     parameters:
       number:
         type: string

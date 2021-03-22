@@ -83,10 +83,11 @@ pub async fn proxy(mut req: Request<Body>, default_ca_data: Vec<u8>) -> Result<R
     match client.request(req).await {
         Ok(r) => {
             info!("{}", logging::response_log_data(&r, log_data));
-            if r.status() == StatusCode::SwitchingProtocols {
-                return handle_error(anyhow::anyhow!(e), StatusCode::INTERNAL_SERVER_ERROR, log_data),
+            if r.status() == StatusCode::SWITCHING_PROTOCOLS {
+                Ok(Response::builder().status(StatusCode::NOT_IMPLEMENTED).body(Body::from("pinniped-proxy does not support websockets")).unwrap())
+            }else{
+                Ok(r)
             }
-            Ok(r)
         },
         Err(e) => return handle_error(anyhow::anyhow!(e), StatusCode::INTERNAL_SERVER_ERROR, log_data),
     }
