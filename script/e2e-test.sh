@@ -215,7 +215,7 @@ fi
 # Begin multicluster dependencies
 info "Installing multicluster dependencies"
 
-mkcertVersion = "v1.4.3"
+MKCERT_VERSION="v1.4.3"
 
 helm repo add stable https://charts.helm.sh/stable
 
@@ -226,7 +226,7 @@ helm install ldap stable/openldap --namespace ldap --create-namespace
 
   # Create certs
 kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
-curl -L -o mkcert "https://github.com/FiloSottile/mkcert/releases/download/${mkcertVersion}/mkcert-${mkcertVersion}-linux-amd64"
+curl -L -o mkcert "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64"
 chmod +x ./mkcert
 ./mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEX_IP
 
