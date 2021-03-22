@@ -246,12 +246,12 @@ install_olm: &install_olm
       echo "Installing OLM ${OLM_VERSION} ..."
       url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}
 
-      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply -f ${url}/crds.yaml 
-      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply -f ${url}/olm.yaml 
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/crds.yaml 
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/olm.yaml 
 
       # wait for deployments to be ready
-      kubectl rollout status -w deployment/olm-operator --namespace=olm
-      kubectl rollout status -w deployment/catalog-operator --namespace=olm
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci rollout status -w deployment/olm-operator --namespace=olm
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci rollout status -w deployment/catalog-operator --namespace=olm
     fi
 install_kubectl: &install_kubectl
   run: |
