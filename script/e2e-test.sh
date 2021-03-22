@@ -215,6 +215,8 @@ fi
 # Begin multicluster dependencies
 info "Installing multicluster dependencies"
 
+mkcertVersion = "v1.4.3"
+
 helm repo add stable https://charts.helm.sh/stable
 
   # Install dex
@@ -224,12 +226,13 @@ helm install ldap stable/openldap --namespace ldap --create-namespace
 
   # Create certs
 kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
-openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 1 -out certificate.pem
-mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEX_IP
+curl -L -o mkcert "https://github.com/FiloSottile/mkcert/releases/download/${mkcertVersion}/mkcert-${mkcertVersion}-linux-amd64"
+chmod +x ./mkcert
+./mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEX_IP
 
 # End multicluster dependencies
 
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add bitnami https://charts.bitnami.crom/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
 
