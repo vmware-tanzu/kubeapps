@@ -76,7 +76,7 @@ installOLM() {
     namespace=olm
 
     kubectl apply -f ${url}/crds.yaml
-    kubectl apply -f ${url}/crds.yaml
+    kubectl apply -f ${url}/olm.yaml
 
     # wait for deployments to be ready
     kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
