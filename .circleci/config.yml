@@ -282,6 +282,133 @@ install_kubectl: &install_kubectl
       curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
       chmod +x ./kubectl
       sudo mv ./kubectl /usr/local/bin/kubectl
+install_kind: &install_kind
+  run:
+    name: "Install kind"
+    command:  |
+      curl -LO https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-Linux-amd64
+      chmod +x kind-Linux-amd64
+      sudo mv kind-Linux-amd64 /usr/local/bin/kind
+install_mkcert: &install_mkcert
+  run:
+    name: "Install mkcert"
+    command:  |
+      curl -LO "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64"
+      chmod +x "mkcert-${MKCERT_VERSION}-linux-amd64"
+      sudo mv "mkcert-${MKCERT_VERSION}-linux-amd64" /usr/local/bin/mkcert
+      mkcert -install
+install_multicluster_deps: &install_multicluster_deps
+  run:
+    name: "Install multicluster deps"
+    command:  |
+      helm repo add stable https://charts.helm.sh/stable
+      # Install dex
+      cat \<< EOF | sed "s/172.18.0.2/$DEX_IP/" | tee ./kubeapps-local-dev-dex-values.yaml
+      https: true
+      certs:
+        web:
+          create: false
+      config:
+        # TODO: Don't assume that kind network will be the first non-default bridged network (ie. 172.18.0.2)
+        # This means we'll need to generate the certs as well, rather than pre-configuring them.
+        # Or check if we can use cert generated for tls with k8s node?
+        issuer: https://172.18.0.2:32000
+        web:
+          tlsCert: /etc/dex/tls/https/server/tls.crt
+          tlsKey: /etc/dex/tls/https/server/tls.key
+        # Instead of reading from an external storage, use this list of clients.
+        staticClients:
+        # The default client is in this setup the client used by Kubeapps'
+        # auth-proxy, though importantly, any additional clients used by additional
+        # k8s api servers trust this first client as a peer so that it can create
+        # tokens which can be used against those additional clients which trust this
+        # one.
+        - id: default
+          redirectURIs:
+          - 'https://localhost/oauth2/callback'
+          name: 'Default-Cluster'
+          secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+        # The second-cluster clientid exists for the additional cluster but not used
+        # by Kubeapps at all. Importantly, it lists the client-id used by Kubeapps as
+        # a trusted peer.
+        - id: second-cluster
+          redirectURIs:
+          - 'https://localhost/oauth2/callback'
+          name: 'Second-Cluster'
+          secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
+          trustedPeers:
+          - default
+        # The thired-cluster clientid is completely fabricated and exists only to
+        # verify that more than one additional audience will be present on the
+        # returned id_token.
+        - id: third-cluster
+          redirectURIs:
+          - 'https://localhost/oauth2/callback'
+          name: 'Third-Cluster'
+          secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
+          trustedPeers:
+          - default
+        staticPasswords:
+        # Both users have a bcrypt hash of the string "password"
+        - email: "kubeapps-operator@example.com"
+          hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+          username: "admin"
+          userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+        - email: "kubeapps-user@example.com"
+          hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+          username: "kubeapps-user"
+          userID: "08a8684b-db88-4b73-90a9-3cd1661f5467"
+        connectors:
+        - type: ldap
+          name: OpenLDAP
+          id: ldap
+          config:
+            host: ldap-openldap.ldap:389
+
+            # No TLS for this setup.
+            insecureNoSSL: true
+
+            # This would normally be a read-only user.
+            bindDN: cn=admin,dc=example,dc=org
+            bindPW: password
+
+            usernamePrompt: Email Address
+
+            userSearch:
+              baseDN: ou=People,dc=example,dc=org
+              filter: "(objectClass=person)"
+              username: mail
+              # "DN" (case sensitive) is a special attribute name. It indicates that
+              # this value should be taken from the entity's DN not an attribute on
+              # the entity.
+              idAttr: DN
+              emailAttr: mail
+              nameAttr: cn
+
+            groupSearch:
+              baseDN: ou=Groups,dc=example,dc=org
+              filter: "(objectClass=groupOfNames)"
+
+              # A user is a member of a group when their DN matches
+              # the value of a "member" attribute on the group entity.
+              userAttr: DN
+              groupAttr: member
+
+              # The group name should be the "cn" value.
+              nameAttr: cn
+      grpc: false
+      service:
+        type: NodePort
+      EOF
+      helm install dex stable/dex --namespace dex --create-namespace --values ./kubeapps-local-dev-dex-values.yaml
+      
+      # Install openldap
+      helm install ldap stable/openldap --namespace ldap --create-namespace 
+
+      # Create certs
+      kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
+      mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost ${DEX_IP}
+
 run_e2e_tests: &run_e2e_tests
   run:
     name: "Run e2e tests script"
@@ -349,15 +476,8 @@ local_e2e_steps: &local_e2e_steps
   steps:
     - checkout
     - <<: *exports
-    # Install kind
-    - run:
-        name: "Install kind"
-        command:  |
-          curl -LO https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-Linux-amd64
-          chmod +x kind-Linux-amd64
-          sudo mv kind-Linux-amd64 /usr/local/bin/kind
+    - <<: *install_kind
     - <<: *install_kubectl
-    # Create the "kubeapps-ci" cluster and configure it to use dex (for the OIDC authentication)
     - <<: *install_cluster
     - <<: *install_olm
     # Create the "kubeapps-ci-additional" cluster
@@ -370,18 +490,13 @@ local_e2e_steps: &local_e2e_steps
           docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
     # Export variables and kubeconfig 
     - <<: *export_cluster_variables
-    - run:
-        name: "Install mkcert"
-        command:  |
-          curl -LO "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64"
-          chmod +x "mkcert-${MKCERT_VERSION}-linux-amd64"
-          sudo mv "mkcert-${MKCERT_VERSION}-linux-amd64" /usr/local/bin/mkcert
-          mkcert -install
+    - <<: *install_mkcert
     - <<: *install_helm_cli
     # Load images from other jobs
     # - attach_workspace:
         # at: /tmp/images
     # - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+    - <<: *install_multicluster_deps
     - <<: *check_olm
     - <<: *run_e2e_tests
     - store_artifacts:

@@ -137,6 +137,7 @@ pushChart() {
 #   $1: chart source
 # Returns: None
 #########################
+
 installOrUpgradeKubeapps() {
     local chartSource=$1
     # Install Kubeapps
@@ -212,22 +213,6 @@ invalidateCacheFlag=""
 if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   invalidateCacheFlag="--set featureFlags.invalidateCache=true"
 fi
-
-# Begin multicluster dependencies
-info "Installing multicluster dependencies"
-
-helm repo add stable https://charts.helm.sh/stable
-
-  # Install dex
-helm install dex stable/dex --namespace dex --create-namespace --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
-  # Install openldap
-helm install ldap stable/openldap --namespace ldap --create-namespace 
-
-  # Create certs
-kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
-mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost ${DEX_IP}
-
-# End multicluster dependencies
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
