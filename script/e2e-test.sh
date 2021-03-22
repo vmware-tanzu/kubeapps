@@ -164,6 +164,9 @@ installOrUpgradeKubeapps() {
       --set clusters[1].insecure=true \
       --set clusters[1].serviceToken=ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsbHpiSEp5TlZwM1QwaG9WSE5PYkhVdE5GQkRablY2TW0wd05rUmtMVmxFWVV4MlZEazNaeTEyUmxFaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUprWldaaGRXeDBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmt0ZEc5clpXNHRjV295Ym1naUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWEzVmlaV0Z3Y0hNdGJtRnRaWE53WVdObExXUnBjMk52ZG1WeWVTSXNJbXQxWW1WeWJtVjBaWE11YVc4dmMyVnlkbWxqWldGalkyOTFiblF2YzJWeWRtbGpaUzFoWTJOdmRXNTBMblZwWkNJNkltVXhaakE1WmpSakxUTTRNemt0TkRJME15MWhZbUptTFRKaU5HWm1OREZrWW1RMllTSXNJbk4xWWlJNkluTjVjM1JsYlRwelpYSjJhV05sWVdOamIzVnVkRHBrWldaaGRXeDBPbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmtpZlEuTnh6V2dsUGlrVWpROVQ1NkpWM2xJN1VWTUVSR3J2bklPSHJENkh4dUVwR0luLWFUUzV5Q0pDa3Z0cTF6S3Z3b05sc2MyX0YxaTdFOUxWRGFwbC1UQlhleUN5Rl92S1B1TDF4dTdqZFBMZ1dKT1pQX3JMcXppaDV4ZlkxalFoOHNhdTRZclFJLUtqb3U1UkRRZ0tOQS1BaS1lRlFOZVh2bmlUNlBKYWVkc184V0t3dHRMMC1wdHpYRnBnOFl5dkx6N0U1UWdTR2tjNWpDVXlsS0RvZVRUaVRSOEc2RHFHYkFQQUYwREt0b3MybU9Geno4SlJYNHhoQmdvaUcxVTVmR1g4Z3hnTU1SV0VHRE9kaGMyeXRvcFdRUkRpYmhvaldNS3VDZlNua09zMDRGYTBkYmEwQ0NTbld2a29LZ3Z4QVR5aVVrWm9wV3VpZ1JJNFd5dDkzbXhR
     kubectl -n kubeapps create secret tls localhost-tls --key ./devel/localhost-key.pem --cert ./devel/localhost-cert.pem
+    sleep 30
+    kubectl logs -n kubeapps deployment/kubeapps-ci nginx
+    kubectl logs -n kubeapps deployment/kubeapps-ci auth-proxy
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -201,7 +204,7 @@ img_flags=(
   "--set" "kubeops.image.tag=${DEV_TAG}"
   "--set" "kubeops.image.repository=${images[4]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.repository=${images[5]}"
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
