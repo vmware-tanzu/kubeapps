@@ -46,12 +46,12 @@ workflows:
               # Enable the line below to do bundle builds to debug CI issues
               number: ["1"]
               # number: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-          requires:
+          # requires:
           #   - test_go
           #   - test_dashboard
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
+            # - build_go_images
+            # - build_dashboard
+            # - build_pinniped_proxy
       # - GKE_1_15_MASTER:
       #     <<: *build_on_master
       #     requires:
@@ -155,8 +155,8 @@ build_images: &build_images
           - "*"
 install_cluster: &install_cluster
   run: |
-    DEX_IP=172.18.0.2
-    cat \<< EOF | sed "s/172.18.0.2/$DEX_IP/" | tee ./kubeapps-local-dev-apiserver-config.yaml
+    DEFAULT_DEX_IP=172.18.0.2
+    cat \<< EOF | sed "s/172.18.0.2/$DEFAULT_DEX_IP/" | tee ./kubeapps-local-dev-apiserver-config.yaml
     kind: Cluster
     apiVersion: kind.x-k8s.io/v1alpha4
     nodes:
@@ -206,8 +206,10 @@ install_cluster: &install_cluster
     } || {
         echo "Error while creating the cluster after retry"
     }
+    ls {HOME}/.kube/
     DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
     ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+    echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
     echo DEX_IP=$DEX_IP
     echo ADDITIONAL_CLUSTER_IP=$ADDITIONAL_CLUSTER_IP
 install_additional_cluster: &install_additional_cluster
@@ -236,6 +238,7 @@ install_additional_cluster: &install_additional_cluster
     } || {
         echo "Error while creating the additional cluster after retry"
     }
+    ls {HOME}/.kube/
 install_kubectl: &install_kubectl
   run: |
     curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl
@@ -326,9 +329,9 @@ local_e2e_steps: &local_e2e_steps
         sudo mv mkcert-v1.4.3-linux-amd64 /usr/local/bin/mkcert
     - <<: *install_helm_cli
     # Load images from other jobs
-    - attach_workspace:
-        at: /tmp/images
-    - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+    # - attach_workspace:
+        # at: /tmp/images
+    # - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
