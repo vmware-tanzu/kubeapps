@@ -148,7 +148,6 @@ installOrUpgradeKubeapps() {
       --set assetsvc.replicaCount=1 \
       --set dashboard.replicaCount=1 \
       --set postgresql.replication.enabled=false \
-      # OIDC configuration
       --set authProxy.enabled=true \
       --set authProxy.provider=oidc \
       --set authProxy.clientID=default \
@@ -156,8 +155,7 @@ installOrUpgradeKubeapps() {
       --set authProxy.cookieSecret=bm90LWdvb2Qtc2VjcmV0Cg== \
       --set authProxy.additionalFlags[0]="--oidc-issuer-url=${DEX_IP}" \
       --set authProxy.additionalFlags[1]="--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster" \
-      --set authProxy.additionalFlags[2]="----ssl-insecure-skip-verify=true" \
-      # Multicluster configuration
+      --set authProxy.additionalFlags[2]="--ssl-insecure-skip-verify=true" \
       --set clusters[0].name=default \
       --set clusters[1].name=second-cluster \
       --set clusters[1].apiServiceURL="$ADDITIONAL_CLUSTER_IP" \

@@ -107,28 +107,34 @@ workflows:
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
-  run: |
-    echo "export PATH=$PATH:${HOME}/google-cloud-sdk/bin" >> $BASH_ENV
-    echo "export CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> $BASH_ENV
-    if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
-      rm -rf $HOME/google-cloud-sdk;
-      curl https://sdk.cloud.google.com | bash;
-    fi
+  run:
+    name: "Install gcloud sdk"
+    command:  |
+      echo "export PATH=$PATH:${HOME}/google-cloud-sdk/bin" >> $BASH_ENV
+      echo "export CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> $BASH_ENV
+      if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
+        rm -rf $HOME/google-cloud-sdk;
+        curl https://sdk.cloud.google.com | bash;
+      fi
 install_helm_cli: &install_helm_cli
-  run: |
-    wget https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
-    tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
-    sudo mv linux-amd64/helm /usr/local/bin/
+  run:
+    name: "Install helm"
+    command:  |
+      wget https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
+      tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
+      sudo mv linux-amd64/helm /usr/local/bin/
 exports: &exports
-  run: |
-    # It is not possible to resolve env vars in the environment section:
-    # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
-    # DEV_TAG and PROD_TAG are the tags used for the Kubeapps docker images
-    echo "export DEV_TAG=build-${CIRCLE_SHA1}" >> $BASH_ENV
-    echo "export PROD_TAG=${CIRCLE_TAG:-latest}" >> $BASH_ENV
-    # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
-    # history of the production tag
-    echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
+  run:
+    name: "Export variables"
+    command:  |
+      # It is not possible to resolve env vars in the environment section:
+      # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
+      # DEV_TAG and PROD_TAG are the tags used for the Kubeapps docker images
+      echo "export DEV_TAG=build-${CIRCLE_SHA1}" >> $BASH_ENV
+      echo "export PROD_TAG=${CIRCLE_TAG:-latest}" >> $BASH_ENV
+      # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
+      # history of the production tag
+      echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
 build_images: &build_images
   steps:
     - setup_remote_docker:
