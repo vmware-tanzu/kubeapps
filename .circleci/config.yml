@@ -155,7 +155,7 @@ build_images: &build_images
           - "*"
 install_cluster: &install_cluster
   run: |
-    DEFAULT_DEX_IP=172.18.0.2
+    export DEFAULT_DEX_IP=172.18.0.2
     cat \<< EOF | sed "s/172.18.0.2/$DEFAULT_DEX_IP/" | tee ./kubeapps-local-dev-apiserver-config.yaml
     kind: Cluster
     apiVersion: kind.x-k8s.io/v1alpha4
@@ -220,9 +220,7 @@ export_cluster_variables: &export_cluster_variables
     kubectl config set-context kind-kubeapps-ci
 
     # If the default IP the proper one, the multicluster setup will fail
-    if [ "$DEFAULT_DEX_IP" -ne "$DEX_IP" ]
-      exit 1; 
-    fi
+    if [ "$DEFAULT_DEX_IP" != "$DEX_IP" ]; then echo "Default IP does not match with current IP used in Kind"; exit 1; fi
 install_additional_cluster: &install_additional_cluster
   run: |
     {
