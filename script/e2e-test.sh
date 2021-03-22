@@ -21,7 +21,8 @@ set -o pipefail
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 DEV_TAG=${1:?missing dev tag}
 IMG_MODIFIER=${2:-""}
-DEX_IP=${3:"172.18.0.2"}
+DEX_IP=${3:-"172.18.0.2"}
+
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
