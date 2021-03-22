@@ -52,6 +52,12 @@ spec:
             {{- if .Values.pinnipedProxy.enabled }}
             - --pinniped-proxy-url=http://kubeapps-internal-pinniped-proxy.{{ .Release.Namespace }}:{{ .Values.pinnipedProxy.service.port }}
             {{- end }}
+            {{- if .Values.kubeops.burst }}
+            - --burst={{ .Values.kubeops.burst }}
+            {{- end }}
+            {{- if .Values.kubeops.QPS }}
+            - --qps={{ .Values.kubeops.QPS }}
+            {{- end }}
           {{- if .Values.clusters }}
           volumeMounts:
             - name: kubeops-config

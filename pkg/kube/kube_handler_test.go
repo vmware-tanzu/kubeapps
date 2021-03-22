@@ -152,6 +152,10 @@ func (f fakeCombinedClientset) RestClient() rest.Interface {
 	return f.rc
 }
 
+func (f fakeCombinedClientset) MaxWorkers() int {
+	return 1
+}
+
 func checkErr(t *testing.T, err error, expectedError error) {
 	if err == nil && expectedError != nil {
 		t.Errorf("got: nil, want: %+v", expectedError)
@@ -1138,8 +1142,6 @@ func TestNewClusterConfig(t *testing.T) {
 			expectedConfig: &rest.Config{
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
-				Burst:           maxReq * 2,
-				QPS:             float32(maxReq),
 			},
 		},
 		{
@@ -1174,8 +1176,6 @@ func TestNewClusterConfig(t *testing.T) {
 					CAData: []byte("ca-file-data"),
 					CAFile: "/tmp/ca-file-data",
 				},
-				Burst: maxReq * 2,
-				QPS:   float32(maxReq),
 			},
 		},
 		{
@@ -1203,8 +1203,6 @@ func TestNewClusterConfig(t *testing.T) {
 				Host:            "https://cluster-1.example.com:7890",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
-				Burst:           maxReq * 2,
-				QPS:             float32(maxReq),
 			},
 		},
 		{
@@ -1236,8 +1234,6 @@ func TestNewClusterConfig(t *testing.T) {
 				Host:            "https://172.0.1.18:3333",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
-				Burst:           maxReq * 2,
-				QPS:             float32(maxReq),
 			},
 		},
 		{
@@ -1263,42 +1259,12 @@ func TestNewClusterConfig(t *testing.T) {
 				Host:            "https://172.0.1.18:3333",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
-				Burst:           maxReq * 2,
-				QPS:             float32(maxReq),
-			},
-		},
-		{
-			name:      "increases Burst and QPS properties of the config",
-			userToken: "token-1",
-			cluster:   "default",
-			clustersConfig: ClustersConfig{
-				KubeappsClusterName: "default",
-				Clusters: map[string]ClusterConfig{
-					"default": {},
-				},
-			},
-			inClusterConfig: &rest.Config{
-				BearerToken:     "something-else",
-				BearerTokenFile: "/foo/bar",
-			},
-			maxReq: 100,
-			expectedConfig: &rest.Config{
-				BearerToken:     "token-1",
-				BearerTokenFile: "",
-				Burst:           200,
-				QPS:             100,
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.maxReq != 0 {
-				maxReq = tc.maxReq
-			} else {
-				// Default value
-				maxReq = 20
-			}
 			config, err := NewClusterConfig(tc.inClusterConfig, tc.userToken, tc.cluster, tc.clustersConfig)
 			if got, want := err != nil, tc.errorExpected; got != want {
 				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)

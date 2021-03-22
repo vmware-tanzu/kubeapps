@@ -22,11 +22,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -45,22 +44,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
-
-var (
-	maxReq = 20
-)
-
-func init() {
-	maxReqStr := os.Getenv("MAX_REQUESTS")
-	if maxReqStr != "" {
-		var err error
-		maxReq, err = strconv.Atoi(maxReqStr)
-		if err != nil {
-			log.Errorf("Unable to parse the given MAX_REQUEST: %v", err)
-			maxReq = 20
-		}
-	}
-}
 
 // ClusterConfig contains required info to talk to additional clusters.
 type ClusterConfig struct {
@@ -119,12 +102,6 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	config := rest.CopyConfig(inClusterConfig)
 	config.BearerToken = userToken
 	config.BearerTokenFile = ""
-	// Modify the default number of requests that the given client can do
-	// This is useful to handle a large number of namespaces which are check in parallel
-	// Burst is the initial number of request made in parallel
-	// Then further requests are performed following the QPS rate
-	config.Burst = maxReq * 2
-	config.QPS = float32(maxReq)
 
 	clusterConfig, ok := clustersConfig.Clusters[cluster]
 	if !ok {
@@ -177,6 +154,7 @@ type combinedClientsetInterface interface {
 	CoreV1() corev1typed.CoreV1Interface
 	AuthorizationV1() authorizationv1.AuthorizationV1Interface
 	RestClient() rest.Interface
+	MaxWorkers() int
 }
 
 // Need to use a type alias to embed the two Clientset's without a name clash.
@@ -189,6 +167,10 @@ type combinedClientset struct {
 
 func (c *combinedClientset) RestClient() rest.Interface {
 	return c.restCli
+}
+
+func (c *combinedClientset) MaxWorkers() int {
+	return int(c.restCli.GetRateLimiter().QPS())
 }
 
 // kubeHandler handles http requests for operating on app repositories and k8s resources
@@ -363,7 +345,7 @@ var ErrEmptyOCIRegistry = fmt.Errorf("You need to specify at least one repositor
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
-func NewHandler(kubeappsNamespace string, clustersConfig ClustersConfig) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace string, burst int, qps float32, clustersConfig ClustersConfig) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -380,6 +362,16 @@ func NewHandler(kubeappsNamespace string, clustersConfig ClustersConfig) (AuthHa
 	config, err := clientConfig.ClientConfig()
 	if err != nil {
 		return nil, err
+	}
+	// Modify the default number of requests that the given client can do
+	// This is useful to handle a large number of namespaces which are check in parallel
+	// Burst is the initial number of request made in parallel
+	// Then further requests are performed following the QPS rate
+	if burst != 0 {
+		config.Burst = burst
+	}
+	if qps != 0 {
+		config.QPS = qps
 	}
 
 	svcRestConfig, err := rest.InClusterConfig()
@@ -808,11 +800,12 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 	allowedNamespaces := []corev1.Namespace{}
 
 	var wg sync.WaitGroup
-	checkNSJobs := make(chan checkNSJob, maxReq)
-	nsCheckRes := make(chan checkNSResult, maxReq)
+	workers := int(math.Min(float64(len(namespaces)), float64(userClientset.MaxWorkers())))
+	checkNSJobs := make(chan checkNSJob, workers)
+	nsCheckRes := make(chan checkNSResult, workers)
 
 	// Process maxReq ns at a time
-	for i := 0; i < maxReq; i++ {
+	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		go func() {
 			nsCheckerWorker(userClientset, checkNSJobs, nsCheckRes)
@@ -831,7 +824,7 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 		close(checkNSJobs)
 	}()
 
-	// Start receiving tags
+	// Start receiving results
 	for res := range nsCheckRes {
 		if res.Error == nil {
 			if res.allowed {

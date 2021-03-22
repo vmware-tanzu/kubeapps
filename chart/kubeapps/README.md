@@ -278,9 +278,9 @@ Yes! You can get started by following the [operators documentation](https://gith
 
 ### Slow response when listing namespaces
 
-Kubeapps uses the logged user account to retrieve the list of namespaces. If the user doesn't have permission to list namespaces, the fallback mechanism verifies if the user has permissions to get secrets for each namespace (to verify it it should be allowed to use that namespace or not). This can lead to a slow response if the number of namespaces of the cluster is big enough.
+Kubeapps uses the currently logged-in user credential to retrieve the list of all namespaces. If the user doesn't have permission to list namespaces, the backend will try again with its own service account to list all namespaces and then iterate through each namespace to check if the user has permissions to get secrets for each namespace (to verify if they should be allowed to use that namespace or not and hence whether it is included in the selector). This can lead to a slow response if the number of namespaces on the cluster is large.
 
-To reduce this time, you can increase the number of checks that Kubeapps will perform in parallel setting the value: `kubeops.extraEnvVars[0].name=MAX_REQUESTS` and `kubeops.extraEnvVars[0].value=<desired_number>`. The default value, if not set is 20 concurrent requests.
+To reduce this time, you can increase the number of checks that Kubeapps will perform in parallel (per connection) setting the value: `kubeops.burst=<desired_number>` and `kubeops.QPS=<desired_number>`. The default value, if not set, is 15 burst requests and 10 QPS afterwards.
 
 ### More questions? 
 
