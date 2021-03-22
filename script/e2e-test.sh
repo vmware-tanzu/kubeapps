@@ -232,11 +232,13 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps bitnami/kubeapps
-  # Wait for Kubeapps Pods
+
+  info "Waiting for Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
+info "Waiting for Kubeapps components to be ready..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password
