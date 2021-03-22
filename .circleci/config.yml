@@ -206,11 +206,23 @@ install_cluster: &install_cluster
     } || {
         echo "Error while creating the cluster after retry"
     }
-    DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
-    ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+export_cluster_variables: &export_cluster_variables
+  run: |
+    export DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
+    export ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+    
     echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
     echo DEX_IP=$DEX_IP
     echo ADDITIONAL_CLUSTER_IP=$ADDITIONAL_CLUSTER_IP
+
+    # If running kubectl without args, use the default "kubeapps-ci" cluster
+    export KUBECONFIG=/home/circleci/.kube/kind-config-kubeapps-ci
+    kubectl config set-context kind-kubeapps-ci
+
+    # If the default IP the proper one, the multicluster setup will fail
+    if [ "$DEFAULT_DEX_IP" -ne "$DEX_IP" ]
+      exit 1; 
+    fi
 install_additional_cluster: &install_additional_cluster
   run: |
     {
@@ -313,6 +325,8 @@ local_e2e_steps: &local_e2e_steps
         docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
     # Create the "kubeapps-ci-additional" cluster
     - <<: *install_additional_cluster
+    # Export variables and kubeconfig 
+    - <<: *export_cluster_variables
     - run: |
         curl -LO https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-linux-amd64
         chmod +x mkcert-v1.4.3-linux-amd64
