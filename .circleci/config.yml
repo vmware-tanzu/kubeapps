@@ -188,17 +188,17 @@ install_cluster: &install_cluster
     {
       echo "Creating cluster..."
       kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 10s &&
-      kubectl --context kind-kubeapps-ci --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-      kubectl --context kind-kubeapps-ci --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
-      kubectl --context kind-kubeapps-ci --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
         echo "Cluster created"
     } || {
       echo "Cluster creation failed, retrying..."
       kind delete clusters kubeapps-ci || true
       kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 10s || true &&
-      kubectl --context kind-kubeapps-ci --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-      kubectl --context kind-kubeapps-ci --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
       kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
         echo "Cluster created"
@@ -215,8 +215,8 @@ export_cluster_variables: &export_cluster_variables
     echo ADDITIONAL_CLUSTER_IP=$ADDITIONAL_CLUSTER_IP
 
     # If running kubectl without args, use the default "kubeapps-ci" cluster
-    export KUBECONFIG=/home/circleci/.kube/kind-config-kubeapps-ci
-    kubectl config set-context kind-kubeapps-ci
+    cp ${HOME}/.kube/kind-config-kubeapps-ci ${HOME}/.kube/config
+    kubectl config set-context kind-kubeapps-ci 
 
     # If the default IP the proper one, the multicluster setup will fail
     if [ "$DEFAULT_DEX_IP" != "$DEX_IP" ]; then echo "Default IP does not match with current IP used in Kind"; exit 1; fi
@@ -225,15 +225,15 @@ install_additional_cluster: &install_additional_cluster
     {
       echo "Creating additional cluster..."
       kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 10s &&
-      kubectl --context kind-kubeapps-ci-additional --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-      kubectl --context kind-kubeapps-ci-additional --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
         echo "Additional cluster created"
     } || {
         echo "Additional cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci-additional || true
         kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 10s &&
-      kubectl --context kind-kubeapps-ci-additional --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-      kubectl --context kind-kubeapps-ci-additional --kubeconfig /home/circleci/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
         echo "Additional cluster created"
     } || {
         echo "Error while creating the additional cluster after retry"
@@ -386,7 +386,7 @@ jobs:
       - image: circleci/golang:1.16
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
-      GOPATH: /home/circleci/.go_workspace
+      GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc"
     <<: *build_images
   build_dashboard:

@@ -75,8 +75,8 @@ installOLM() {
     url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
     namespace=olm
 
-    kubectl apply -f ${url}/crds.yaml 2>/dev/null
-    kubectl apply -f ${url}/crds.yaml 2>/dev/null
+    kubectl apply -f ${url}/crds.yaml
+    kubectl apply -f ${url}/crds.yaml
 
     # wait for deployments to be ready
     kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
