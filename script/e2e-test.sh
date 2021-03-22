@@ -153,7 +153,7 @@ installOrUpgradeKubeapps() {
       --set authProxy.clientID=default \
       --set authProxy.clientSecret=ZXhhbXBsZS1hcHAtc2VjcmV0 \
       --set authProxy.cookieSecret=bm90LWdvb2Qtc2VjcmV0Cg== \
-      --set authProxy.additionalFlags[0]="--oidc-issuer-url=${DEX_IP}" \
+      --set authProxy.additionalFlags[0]="--oidc-issuer-url=$DEX_IP" \
       --set authProxy.additionalFlags[1]="--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster" \
       --set authProxy.additionalFlags[2]="--ssl-insecure-skip-verify=true" \
       --set clusters[0].name=default \
