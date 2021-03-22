@@ -69,19 +69,19 @@ isOperatorHubCatalogRunning() {
 #   $1: Version of OLM
 # Returns: None
 #########################
-# installOLM() {
-#     local release=$1
-#     info "Installing OLM ${release} ..."
-#     url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
-#     namespace=olm
+installOLM() {
+    local release=$1
+    info "Installing OLM ${release} ..."
+    url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
+    namespace=olm
 
-#     kubectl apply -f ${url}/crds.yaml 2>/dev/null
-#     kubectl apply -f ${url}/olm.yaml 2>/dev/null
+    kubectl apply -f ${url}/crds.yaml 2>/dev/null
+    kubectl apply -f ${url}/olm.yaml 2>/dev/null
 
-#     # wait for deployments to be ready
-#     kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
-#     kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
-# }
+    # wait for deployments to be ready
+    kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
+    kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
+}
 
 ########################
 # Install chartmuseum

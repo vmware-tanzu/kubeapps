@@ -187,7 +187,7 @@ install_cluster: &install_cluster
     EOF
     {
       echo "Creating cluster..."
-      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 10s &&
+      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 30s &&
       kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
@@ -196,7 +196,7 @@ install_cluster: &install_cluster
     } || {
       echo "Cluster creation failed, retrying..."
       kind delete clusters kubeapps-ci || true
-      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 10s || true &&
+      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 30s || true &&
       kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
@@ -217,6 +217,7 @@ export_cluster_variables: &export_cluster_variables
     # If running kubectl without args, use the default "kubeapps-ci" cluster
     cp ${HOME}/.kube/kind-config-kubeapps-ci ${HOME}/.kube/config
     kubectl config set-context kind-kubeapps-ci 
+    kubectl get pods
 
     # If the default IP the proper one, the multicluster setup will fail
     if [ "$DEFAULT_DEX_IP" != "$DEX_IP" ]; then echo "Default IP does not match with current IP used in Kind"; exit 1; fi
@@ -309,7 +310,6 @@ gke_test: &gke_test
     - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
     - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
     # Install helm
-    - <<: *install_olm
     - <<: *install_helm_cli
     - <<: *run_e2e_tests
     - store_artifacts:
@@ -336,7 +336,7 @@ local_e2e_steps: &local_e2e_steps
         docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
         docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
     # Create the "kubeapps-ci-additional" cluster
-    - <<: *install_additional_cluster
+    # - <<: *install_additional_cluster
     # Export variables and kubeconfig 
     - <<: *export_cluster_variables
     - run: |
@@ -348,6 +348,7 @@ local_e2e_steps: &local_e2e_steps
     # - attach_workspace:
         # at: /tmp/images
     # - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+    - <<: *install_olm
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
