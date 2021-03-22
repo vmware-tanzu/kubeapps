@@ -163,50 +163,21 @@ install_cluster: &install_cluster
   run:
     name: "Install cluster"
     command:  |
-      cat \<< EOF | sed "s/172.18.0.2/$DEFAULT_DEX_IP/" | tee ./kubeapps-local-dev-apiserver-config.yaml
-      kind: Cluster
-      apiVersion: kind.x-k8s.io/v1alpha4
-      nodes:
-      - role: control-plane
-        kubeadmConfigPatches:
-        - |
-          kind: InitConfiguration
-          nodeRegistration:
-            kubeletExtraArgs:
-              node-labels: "ingress-ready=true"
-        - |
-          kind: ClusterConfiguration
-          apiServer:
-            extraArgs:
-              oidc-issuer-url: https://172.18.0.2:32000
-              oidc-client-id: default
-              oidc-ca-file: /etc/kubernetes/pki/apiserver.crt
-              oidc-username-claim: email
-              oidc-username-prefix: "oidc:"
-              oidc-groups-claim: groups
-              oidc-groups-prefix: "oidc:"
-        extraPortMappings:
-        - containerPort: 80
-          hostPort: 80
-          protocol: TCP
-        - containerPort: 443
-          hostPort: 443
-          protocol: TCP
-      EOF
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml
       {
         echo "Creating cluster..."
-        kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kind create cluster --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
         echo "Cluster created"
       } || {
         echo "Cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci || true
-        kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kind create cluster --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
         echo "Cluster created"
@@ -237,15 +208,15 @@ install_additional_cluster: &install_additional_cluster
       {
         echo "Creating additional cluster..."
         kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
           echo "Additional cluster created"
       } || {
           echo "Additional cluster creation failed, retrying..."
           kind delete clusters kubeapps-ci-additional || true
           kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
           echo "Additional cluster created"
       } || {
           echo "Error while creating the additional cluster after retry"
@@ -303,111 +274,16 @@ install_multicluster_deps: &install_multicluster_deps
     command:  |
       helm repo add stable https://charts.helm.sh/stable
       # Install dex
-      cat \<< EOF | sed "s/172.18.0.2/$DEX_IP/" | tee ./kubeapps-local-dev-dex-values.yaml
-      https: true
-      certs:
-        web:
-          create: false
-      config:
-        # TODO: Don't assume that kind network will be the first non-default bridged network (ie. 172.18.0.2)
-        # This means we'll need to generate the certs as well, rather than pre-configuring them.
-        # Or check if we can use cert generated for tls with k8s node?
-        issuer: https://172.18.0.2:32000
-        web:
-          tlsCert: /etc/dex/tls/https/server/tls.crt
-          tlsKey: /etc/dex/tls/https/server/tls.key
-        # Instead of reading from an external storage, use this list of clients.
-        staticClients:
-        # The default client is in this setup the client used by Kubeapps'
-        # auth-proxy, though importantly, any additional clients used by additional
-        # k8s api servers trust this first client as a peer so that it can create
-        # tokens which can be used against those additional clients which trust this
-        # one.
-        - id: default
-          redirectURIs:
-          - 'https://localhost/oauth2/callback'
-          name: 'Default-Cluster'
-          secret: ZXhhbXBsZS1hcHAtc2VjcmV0
-        # The second-cluster clientid exists for the additional cluster but not used
-        # by Kubeapps at all. Importantly, it lists the client-id used by Kubeapps as
-        # a trusted peer.
-        - id: second-cluster
-          redirectURIs:
-          - 'https://localhost/oauth2/callback'
-          name: 'Second-Cluster'
-          secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
-          trustedPeers:
-          - default
-        # The thired-cluster clientid is completely fabricated and exists only to
-        # verify that more than one additional audience will be present on the
-        # returned id_token.
-        - id: third-cluster
-          redirectURIs:
-          - 'https://localhost/oauth2/callback'
-          name: 'Third-Cluster'
-          secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
-          trustedPeers:
-          - default
-        staticPasswords:
-        # Both users have a bcrypt hash of the string "password"
-        - email: "kubeapps-operator@example.com"
-          hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-          username: "admin"
-          userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
-        - email: "kubeapps-user@example.com"
-          hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-          username: "kubeapps-user"
-          userID: "08a8684b-db88-4b73-90a9-3cd1661f5467"
-        connectors:
-        - type: ldap
-          name: OpenLDAP
-          id: ldap
-          config:
-            host: ldap-openldap.ldap:389
-
-            # No TLS for this setup.
-            insecureNoSSL: true
-
-            # This would normally be a read-only user.
-            bindDN: cn=admin,dc=example,dc=org
-            bindPW: password
-
-            usernamePrompt: Email Address
-
-            userSearch:
-              baseDN: ou=People,dc=example,dc=org
-              filter: "(objectClass=person)"
-              username: mail
-              # "DN" (case sensitive) is a special attribute name. It indicates that
-              # this value should be taken from the entity's DN not an attribute on
-              # the entity.
-              idAttr: DN
-              emailAttr: mail
-              nameAttr: cn
-
-            groupSearch:
-              baseDN: ou=Groups,dc=example,dc=org
-              filter: "(objectClass=groupOfNames)"
-
-              # A user is a member of a group when their DN matches
-              # the value of a "member" attribute on the group entity.
-              userAttr: DN
-              groupAttr: member
-
-              # The group name should be the "cn" value.
-              nameAttr: cn
-      grpc: false
-      service:
-        type: NodePort
-      EOF
-      helm install dex stable/dex --namespace dex --create-namespace --values ./kubeapps-local-dev-dex-values.yaml
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+      cat ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+      helm install dex stable/dex --namespace dex --create-namespace --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
       
       # Install openldap
       helm install ldap stable/openldap --namespace ldap --create-namespace 
 
       # Create certs
       kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
-      mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost ${DEX_IP}
+      mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEFAULT_DEX_IP
 
 run_e2e_tests: &run_e2e_tests
   run:
@@ -420,7 +296,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER $DEX_IP $ADDITIONAL_CLUSTER_IP; then
+      if ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
