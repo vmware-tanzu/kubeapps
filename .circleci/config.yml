@@ -132,7 +132,7 @@ exports: &exports
 build_images: &build_images
   steps:
     - setup_remote_docker:
-        version: 20.10.2
+        version: 19.03.13
     - checkout
     - <<: *exports
     - run: |
