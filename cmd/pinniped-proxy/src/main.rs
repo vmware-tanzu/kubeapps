@@ -2,7 +2,9 @@ use std::convert::Infallible;
 use std::fs;
 
 use anyhow::{Context, Result};
-use hyper::{Server, service::{make_service_fn, service_fn}};
+use hyper::{
+    service::{make_service_fn, service_fn}, Server
+};
 use log::info;
 use structopt::StructOpt;
 
