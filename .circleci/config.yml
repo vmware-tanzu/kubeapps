@@ -238,6 +238,20 @@ install_additional_cluster: &install_additional_cluster
     } || {
         echo "Error while creating the additional cluster after retry"
     }
+install_olm: &install_olm
+  run: |
+    # Operators are not supported in GKE 1.14 and flaky in 1.15
+    if [[ -z "${GKE_BRANCH-}" ]]; then
+      info "Installing OLM ${OLM_VERSION} ..."
+      url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}
+
+      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply -f ${url}/crds.yaml 
+      kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply -f ${url}/olm.yaml 
+
+      # wait for deployments to be ready
+      kubectl rollout status -w deployment/olm-operator --namespace=olm
+      kubectl rollout status -w deployment/catalog-operator --namespace=olm
+    fi
 install_kubectl: &install_kubectl
   run: |
     curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl
@@ -295,6 +309,7 @@ gke_test: &gke_test
     - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
     - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
     # Install helm
+    - <<: *install_olm
     - <<: *install_helm_cli
     - <<: *run_e2e_tests
     - store_artifacts:
@@ -415,6 +430,7 @@ jobs:
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
       DEFAULT_DEX_IP: "172.18.0.2"
+      OLM_VERSION: "v0.17.0"
     parameters:
       number:
         type: string
