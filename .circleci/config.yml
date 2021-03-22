@@ -260,6 +260,7 @@ install_olm: &install_olm
         url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}
 
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/crds.yaml 
+        # Add sleep to avoid erros like "no matches for kind OperatorGroup"
         sleep 10
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/olm.yaml 
       fi
@@ -270,9 +271,9 @@ check_olm: &check_olm
       # Operators are not supported in GKE 1.14 and flaky in 1.15
       if [[ -z "${GKE_BRANCH-}" ]]; then
         echo "Waiting for OLM deployments to be ready..."
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/catalog-operator
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/olm-operator
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=60s deployment/packageserver
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=120s deployment/catalog-operator
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=120s deployment/olm-operator
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=120s deployment/packageserver
       fi
 install_kubectl: &install_kubectl
   run:
