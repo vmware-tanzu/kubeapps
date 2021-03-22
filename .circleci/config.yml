@@ -33,12 +33,12 @@ workflows:
       #     <<: *build_always
       # - test_chart_render:
       #     <<: *build_always
-      - build_go_images:
-          <<: *build_always
-      - build_dashboard:
-          <<: *build_always
-      - build_pinniped_proxy:
-          <<: *build_always
+      # - build_go_images:
+      #     <<: *build_always
+      # - build_dashboard:
+      #     <<: *build_always
+      # - build_pinniped_proxy:
+      #     <<: *build_always
       - local_e2e_tests:
           <<: *build_always
           matrix:
@@ -188,7 +188,7 @@ install_cluster: &install_cluster
     EOF
     {
       echo "Creating cluster..."
-      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --retain --wait 10s &&
+      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 10s &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
@@ -197,7 +197,7 @@ install_cluster: &install_cluster
     } || {
       echo "Cluster creation failed, retrying..."
       kind delete clusters kubeapps-ci || true
-      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --retain --wait 10s || true &&
+      kind create cluster --name kubeapps-ci --config=./kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 10s || true &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
       sleep 5 &&
@@ -206,7 +206,7 @@ install_cluster: &install_cluster
     } || {
         echo "Error while creating the cluster after retry"
     }
-    ls {HOME}/.kube/
+    kubectl get nodes kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci
     DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
     ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
     echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
@@ -216,22 +216,14 @@ install_additional_cluster: &install_additional_cluster
   run: |
     {
       echo "Creating additional cluster..."
-      kind create cluster \
-        --name kubeapps-ci-additional \
-        --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
-        --retain \
-        --wait 10s &&
+      kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 10s &&
       kubectl apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
         echo "Additional cluster created"
     } || {
         echo "Additional cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci-additional || true
-        kind create cluster \
-        --name kubeapps-ci-additional \
-        --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
-        --retain \
-        --wait 10s &&
+        kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 10s &&
       kubectl apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
       kubectl apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
         echo "Additional cluster created"
