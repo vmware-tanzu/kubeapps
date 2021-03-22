@@ -136,11 +136,13 @@ pushChart() {
 #########################
 installOrUpgradeKubeapps() {
     local chartSource=$1
+    local flags=${@:2}
     # Install Kubeapps
     info "Installing Kubeapps..."
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
+      "${flags[@]}" \
       --set frontend.replicaCount=1 \
       --set kubeops.replicaCount=1 \
       --set assetsvc.replicaCount=1 \
@@ -196,10 +198,9 @@ kubectl create ns kubeapps
 if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
-  installOrUpgradeKubeapps bitnami/kubeapps
-  # Due to a breaking change in PG chart 9.X, we need to delete the statefulset before upgrading
-  # This can be removed after the release 2.0.0
-  kubectl delete statefulset -n kubeapps --all
+  # Breaking change at 6.X, the initialRepos are no longer in a hook
+  installOrUpgradeKubeapps bitnami/kubeapps \
+    --set apprepository.initialRepos=null
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
