@@ -291,7 +291,7 @@ run_e2e_tests: &run_e2e_tests
       # If we want to test the latest version instead we override the image to be used
       if [[ -n "$TEST_LATEST_RELEASE" ]]; then
         # source ./script/chart_sync_utils.sh
-        latest="$(latestReleaseTag) "
+        # latest=" "
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=" "
       fi 
