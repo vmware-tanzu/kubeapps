@@ -1,13 +1,25 @@
 test("Fails to deploy an application due to missing permissions", async () => {
   await page.goto(getUrl("/#/login"));
 
-  await expect(page).toFillForm("form", {
-    token: process.env.VIEW_TOKEN,
-  });
+  await page.waitForNavigation();
+
+  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
+
+  await page.waitForNavigation();
+
+  await expect(page).toClick(".dex-container button", { text: "Log in with Email" });
+
+  await page.waitForNavigation();
+
+  await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
+  await page.type("input[id=\"password\"]", "password");
 
   await page.evaluate(() =>
-    document.querySelector("#login-submit-button").click()
+    document.querySelector("#submit-login").click()
   );
+  await page.waitForNavigation();
+
+  await page.goto(getUrl("/#/login"));
 
   await expect(page).toClick("a", { text: "Catalog" });
 

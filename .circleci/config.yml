@@ -286,7 +286,7 @@ install_multicluster_deps: &install_multicluster_deps
 
       # Create certs
       kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
-      mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost $DEFAULT_DEX_IP
+      mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost kubeapps-ci.kubeapps $DEFAULT_DEX_IP
 
 run_e2e_tests: &run_e2e_tests
   run:
