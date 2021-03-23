@@ -70,7 +70,7 @@
     "redux-thunk": "^2.2.0",
     "remark-gfm": "^1.0.0",
     "seamless-immutable": "^7.1.4",
-    "semver": "^7.3.4",
+    "semver": "^7.3.5",
     "swagger-ui-react": "^3.45.1",
     "typesafe-actions": "^5.1.0",
     "yaml": "1.10.2"
@@ -118,7 +118,7 @@
     "@types/enzyme-adapter-react-16": "^1.0.1",
     "@types/jest": "^26.0.21",
     "@types/node": "^14.14.35",
-    "@types/react-dom": "^17.0.2",
+    "@types/react-dom": "^17.0.3",
     "@types/react-helmet": "^6.1.0",
     "@types/react-redux": "^7.1.9",
     "@types/react-router": "^5.1.12",
