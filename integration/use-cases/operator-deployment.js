@@ -8,27 +8,22 @@ const path = require("path");
 jest.setTimeout(360000);
 
 test("Deploys an Operator", async () => {
-  await page.goto(getUrl("/#/c/default/ns/kubeapps/operators"));
-
-  await page.waitForNavigation();
-
-  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
-
-  await page.waitForNavigation();
-
-  await expect(page).toClick(".dex-container button", { text: "Log in with Email" });
-
-  await page.waitForNavigation();
-
-  await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
-  await page.type("input[id=\"password\"]", "password");
-
-  await page.evaluate(() =>
-    document.querySelector("#submit-login").click()
-  );
-  await page.waitForNavigation();
-
-  await page.goto(getUrl("/#/c/default/ns/kubeapps/operators"));
+  // ODIC login
+  await Promise.all([
+    await page.goto(getUrl("/#/c/default/ns/kubeapps/operators")),
+    await page.waitForNavigation(),
+    await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" }),
+    await page.waitForNavigation(),
+    await expect(page).toClick(".dex-container button", { text: "Log in with Email" }),
+    await page.waitForNavigation(),
+    await page.type("input[id=\"login\"]", "kubeapps-operator@example.com"),
+    await page.type("input[id=\"password\"]", "password"),
+    await page.click("#submit-login"),
+    await page.waitForNavigation({ waitUntil: 'networkidle2' }),
+    await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
+    await page.waitForNavigation(),
+    await page.goto(getUrl("/#/c/default/ns/kubeapps/operators")),
+  ]);
 
   // Browse operator
   await expect(page).toClick("a", { text: "prometheus" });
@@ -50,7 +45,7 @@ test("Deploys an Operator", async () => {
   await expect(page).toClick("a", { text: "Catalog" });
 
   await utils.retryAndRefresh(page, 30, async () => {
-    await expect(page).toMatch("Operators", {timeout: 10000});
+    await expect(page).toMatch("Operators", { timeout: 10000 });
 
     // Filter out charts to search only for the prometheus operator
     await expect(page).toClick("label", { text: "Operators" });
@@ -62,27 +57,27 @@ test("Deploys an Operator", async () => {
 
   await utils.retryAndRefresh(page, 2, async () => {
     // Found the error "prometheuses.monitoring.coreos.com not found in the definition of prometheusoperator"
-    await expect(page).toMatch("Deploy", {timeout: 10000});
+    await expect(page).toMatch("Deploy", { timeout: 10000 });
   });
 
 
   await utils.retryAndRefresh(page, 5, async () => {
     await expect(page).toClick("cds-button", { text: "Deploy" });
 
-    await expect(page).toMatch("Installation Values", {timeout: 20000});
+    await expect(page).toMatch("Installation Values", { timeout: 20000 });
   }, "operator-view");
 
   // Update
   await expect(page).toClick("cds-button", { text: "Update" });
 
   await utils.retryAndRefresh(page, 2, async () => {
-    await expect(page).toMatch("creationTimestamp", {timeout: 10000});
+    await expect(page).toMatch("creationTimestamp", { timeout: 10000 });
   });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await utils.retryAndRefresh(page, 2, async () => {
-    await expect(page).toMatch("Installation Values", {timeout: 10000});
+    await expect(page).toMatch("Installation Values", { timeout: 10000 });
   });
 
   // Delete
@@ -97,8 +92,8 @@ test("Deploys an Operator", async () => {
       {
         text: "Delete",
       }
-    );  
-  } catch(e) {
+    );
+  } catch (e) {
     await expect(page).toClick(
       "#root > section > main > div > div > section > cds-modal > cds-modal-actions > button.btn.btn-danger",
       {

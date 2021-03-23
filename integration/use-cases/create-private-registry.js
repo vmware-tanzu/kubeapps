@@ -2,30 +2,23 @@ const axios = require("axios");
 const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
-  await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
-
-  await page.waitForNavigation();
-
-  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
-
-  await page.waitForNavigation();
-
-  await expect(page).toClick(".dex-container button", { text: "Log in with Email" });
-
-  await page.waitForNavigation();
-
-  await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
-  await page.type("input[id=\"password\"]", "password");
-
-  await page.evaluate(() =>
-    document.querySelector("#submit-login").click()
-  );
-  await page.waitForNavigation();
-
-  await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
-
+  // ODIC login
+  await Promise.all([
+    await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
+    await page.waitForNavigation(),
+    await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" }),
+    await page.waitForNavigation(),
+    await expect(page).toClick(".dex-container button", { text: "Log in with Email" }),
+    await page.waitForNavigation(),
+    await page.type("input[id=\"login\"]", "kubeapps-operator@example.com"),
+    await page.type("input[id=\"password\"]", "password"),
+    await page.click("#submit-login"),
+    await page.waitForNavigation({ waitUntil: 'networkidle2' }),
+    await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
+    await page.waitForNavigation(),
+  ]);
+  
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
-
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
   const repoName = "my-repo-" + randomNumber;
   await page.type("input[placeholder=\"example\"]", repoName);
@@ -46,7 +39,7 @@ test("Creates a private registry", async () => {
   try {
     // TODO(andresmgot): Remove this line once 2.3 is released
     await expect(page).toClick("cds-button", { text: "Add new credentials" });
-  } catch(e) {
+  } catch (e) {
     await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
   }
   await page.type("input[placeholder=\"Secret\"]", secret);
@@ -60,7 +53,7 @@ test("Creates a private registry", async () => {
   try {
     // TODO(andresmgot): Remove this line once 2.3 is released
     await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
-  } catch(e) {
+  } catch (e) {
     await expect(page).toClick(".btn-info-outline", { text: "Submit" });
   }
 
@@ -120,7 +113,7 @@ test("Creates a private registry", async () => {
     );
     let chartVersionValue = await chartVersionElementContent.jsonValue();
     expect(chartVersionValue).toEqual("7.3.15");
-  } catch(e) {
+  } catch (e) {
     retries--;
     if (!retries) {
       throw e;

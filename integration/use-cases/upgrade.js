@@ -1,27 +1,22 @@
 const utils = require("./lib/utils");
 
 test("Upgrades an application", async () => {
-  await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami"));
-
-  await page.waitForNavigation();
-
-  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
-
-  await page.waitForNavigation();
-
-  await expect(page).toClick(".dex-container button", { text: "Log in with Email" });
-
-  await page.waitForNavigation();
-
-  await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
-  await page.type("input[id=\"password\"]", "password");
-
-  await page.evaluate(() =>
-    document.querySelector("#submit-login").click()
-  );
-  await page.waitForNavigation();
-
-  await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami"));
+  // ODIC login
+  await Promise.all([
+    await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami")),
+    await page.waitForNavigation(),
+    await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" }),
+    await page.waitForNavigation(),
+    await expect(page).toClick(".dex-container button", { text: "Log in with Email" }),
+    await page.waitForNavigation(),
+    await page.type("input[id=\"login\"]", "kubeapps-operator@example.com"),
+    await page.type("input[id=\"password\"]", "password"),
+    await page.click("#submit-login"),
+    await page.waitForNavigation({ waitUntil: 'networkidle2' }),
+    await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
+    await page.waitForNavigation(),
+    await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami")),
+  ]);
 
   await expect(page).toMatch("apache", { timeout: 60000 });
 
