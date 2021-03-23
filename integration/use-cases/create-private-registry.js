@@ -14,10 +14,9 @@ test("Creates a private registry", async () => {
     await page.type("input[id=\"password\"]", "password"),
     await page.waitForSelector("#submit-login", {visible: true, timeout: 3000 }),
     await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login"),
-    await page.waitForNavigation(),
-    await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
-    await page.waitForNavigation(),
   ]);
+  await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
+  await page.waitForNavigation(),
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
