@@ -9,22 +9,19 @@ jest.setTimeout(360000);
 
 test("Deploys an Operator", async () => {
   // ODIC login
-  await Promise.all([
-    await page.goto(getUrl("/#/c/default/ns/kubeapps/operators")),
-    await page.waitForNavigation(),
-    await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" }),
-    await page.waitForNavigation(),
-    await expect(page).toClick(".dex-container button", { text: "Log in with Email" }),
-    await page.waitForNavigation(),
-    await page.type("input[id=\"login\"]", "kubeapps-operator@example.com"),
-    await page.type("input[id=\"password\"]", "password"),
-    await page.waitForSelector("#submit-login", {visible: true, timeout: 3000 }),
-    await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login"),
-    await page.waitForNavigation(),
-    await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
-    await page.waitForNavigation(),
-    await page.goto(getUrl("/#/c/default/ns/kubeapps/operators")),
-  ]);
+  await page.goto(getUrl("/#/c/default/ns/kubeapps/operators");
+  await page.waitForNavigation();
+  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
+  await page.waitForNavigation();
+  await expect(page).toClick(".dex-container button", { text: "Log in with Email" });
+  await page.waitForNavigation();
+  await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
+  await page.type("input[id=\"password\"]", "password");
+  await page.waitForSelector("#submit-login", { visible: true, timeout: 3000 });
+  await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
+  await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 3000 });
+  await page.goto(getUrl("/#/c/default/ns/kubeapps/operators");
+  await page.waitForNavigation();
 
   // Browse operator
   await expect(page).toClick("a", { text: "prometheus" });
