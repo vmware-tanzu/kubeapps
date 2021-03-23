@@ -12,12 +12,12 @@ test("Creates a private registry", async () => {
     await page.waitForNavigation(),
     await page.type("input[id=\"login\"]", "kubeapps-operator@example.com"),
     await page.type("input[id=\"password\"]", "password"),
-    await page.click("#submit-login"),
+    await expect(page).toClick("#submit-login", { text: "Login" }),
     await page.waitForNavigation({ waitUntil: 'networkidle2' }),
     await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
     await page.waitForNavigation(),
   ]);
-  
+
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
   const repoName = "my-repo-" + randomNumber;
