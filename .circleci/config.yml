@@ -188,8 +188,8 @@ export_cluster_variables: &export_cluster_variables
   run:
     name: "Export cluster variables"
     command:  |
-      export DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
-      export ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+      DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
+      ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
       
       echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
       echo DEX_IP=$DEX_IP
@@ -201,6 +201,10 @@ export_cluster_variables: &export_cluster_variables
 
       # If the default IP the proper one, the multicluster setup will fail
       if [ "$DEFAULT_DEX_IP" != "$DEX_IP" ]; then echo "Default IP does not match with current IP used in Kind"; exit 1; fi
+
+      echo "export DEFAULT_DEX_IP=${DEFAULT_DEX_IP}" >> $BASH_ENV
+      echo "export DEX_IP=${DEX_IP}" >> $BASH_ENV
+      echo "export ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP}" >> $BASH_ENV
 install_additional_cluster: &install_additional_cluster
   run:
     name: "Install additional cluster"
