@@ -136,13 +136,12 @@ pushChart() {
 #########################
 installOrUpgradeKubeapps() {
     local chartSource=$1
-    local flags=${@:2}
     # Install Kubeapps
     info "Installing Kubeapps..."
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
-      "${flags[@]}" \
+      "${@:2}" \
       --set frontend.replicaCount=1 \
       --set kubeops.replicaCount=1 \
       --set assetsvc.replicaCount=1 \
@@ -200,7 +199,7 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
   info "Installing latest Kubeapps chart available"
   # Breaking change at 6.X, the initialRepos are no longer in a hook
   installOrUpgradeKubeapps bitnami/kubeapps \
-    --set apprepository.initialRepos=null
+    "--set" "apprepository.initialRepos=null"
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
