@@ -19,10 +19,10 @@ set -o pipefail
 
 # Constants
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
-DEV_TAG=${1:?missing dev tag}
-IMG_MODIFIER=${2:-""}
-DEX_IP=${3:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${4:-"172.18.0.3"}
+DEX_IP=${1:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${2:-"172.18.0.3"}
+DEV_TAG=${3:?missing dev tag}
+IMG_MODIFIER=${4:-""}
 
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline

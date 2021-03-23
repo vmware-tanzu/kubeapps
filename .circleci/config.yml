@@ -290,13 +290,12 @@ run_e2e_tests: &run_e2e_tests
     command:  |
       # If we want to test the latest version instead we override the image to be used
       if [[ -n "$TEST_LATEST_RELEASE" ]]; then
-        # source ./script/chart_sync_utils.sh
-        # latest=" "
+        source ./script/chart_sync_utils.sh
+        latest="$(latestReleaseTag)"
         DEV_TAG=${latest/v/}
-        IMG_MODIFIER=" "
-      fi 
-      echo "./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP"
-      if ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
+        IMG_MODIFIER=""
+      fi
+      if ./script/e2e-test.sh  $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $DEV_TAG $IMG_MODIFIER; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
@@ -350,30 +349,30 @@ gke_test: &gke_test
         when: always
 local_e2e_steps: &local_e2e_steps
   steps:
-    # - checkout
-    # - <<: *exports
-    # - <<: *install_kind
-    # - <<: *install_kubectl
-    # - <<: *install_cluster
-    # - <<: *install_olm
-    # # Create the "kubeapps-ci-additional" cluster
-    # # - <<: *install_additional_cluster
-    # # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
-    # - run:
-    #     name: "Copy apiserver certificates"
-    #     command:  |
-    #       docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
-    #       docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
-    # # Export variables and kubeconfig 
-    # - <<: *export_cluster_variables
-    # - <<: *install_mkcert
-    # - <<: *install_helm_cli
-    # # Load images from other jobs
-    # # - attach_workspace:
-    #     # at: /tmp/images
-    # # - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
-    # - <<: *install_multicluster_deps
-    # - <<: *check_olm
+    - checkout
+    - <<: *exports
+    - <<: *install_kind
+    - <<: *install_kubectl
+    - <<: *install_cluster
+    - <<: *install_olm
+    # Create the "kubeapps-ci-additional" cluster
+    # - <<: *install_additional_cluster
+    # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
+    - run:
+        name: "Copy apiserver certificates"
+        command:  |
+          docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
+          docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+    # Export variables and kubeconfig 
+    - <<: *export_cluster_variables
+    - <<: *install_mkcert
+    - <<: *install_helm_cli
+    # Load images from other jobs
+    # - attach_workspace:
+        # at: /tmp/images
+    # - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+    - <<: *install_multicluster_deps
+    - <<: *check_olm
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
