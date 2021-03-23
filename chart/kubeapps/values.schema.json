@@ -1,135 +1,159 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "type": "object",
   "properties": {
-    "frontend": {
-      "type": "object",
-      "title": "Frontend configuration",
-      "form": true,
-      "properties": {
-        "replicaCount": {
-          "type": "integer",
-          "title": "Number of replicas",
-          "form": true
-        }
-      }
-    },
-    "dashboard": {
-      "type": "object",
-      "title": "Dashboard configuration",
-      "form": true,
-      "properties": {
-        "replicaCount": {
-          "type": "integer",
-          "title": "Number of replicas",
-          "form": true
-        }
-      }
-    },
     "assetsvc": {
-      "type": "object",
-      "title": "Assetsvc configuration",
       "form": true,
       "properties": {
         "replicaCount": {
-          "type": "integer",
+          "form": true,
           "title": "Number of replicas",
-          "form": true
+          "type": "integer"
         }
-      }
-    },
-    "ingress": {
-      "type": "object",
-      "form": true,
-      "title": "Ingress configuration",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "form": true,
-          "title": "Use a custom hostname",
-          "description": "Enable the ingress resource that allows you to access the Kubeapps dashboard."
-        },
-        "hostname": {
-          "type": "string",
-          "form": true,
-          "title": "Hostname",
-          "hidden": {
-            "value": false,
-            "path": "ingress/enabled"
-          }
-        },
-        "tls": {
-          "type": "boolean",
-          "form": true,
-          "title": "Enable TLS configuration",
-          "hidden": {
-            "value": false,
-            "path": "ingress/enabled"
-          }
-        },
-        "certManager": {
-          "type": "boolean",
-          "form": true,
-          "title": "Use cert-manager to auto-generate the TLS certificate",
-          "description": "Add the corresponding annotations for cert-manager to auto-generate the TLS certificate",
-          "hidden": {
-            "value": false,
-            "path": "ingress/enabled"
-          }
-        }
-      }
+      },
+      "title": "Assetsvc configuration"
     },
     "authProxy": {
-      "type": "object",
-      "title": "OIDC Proxy configuration",
       "properties": {
-        "enabled": {
-          "type": "boolean",
-          "form": true,
-          "title": "Enable OIDC proxy",
-          "description": "Use an OIDC provider in order to manage accounts, groups and roles with a single application"
-        },
-        "provider": {
-          "type": "string",
-          "form": true,
-          "title": "Identity Provider name",
-          "description": "See https://pusher.github.io/oauth2_proxy/auth-configuration to find available providers",
-          "hidden": {
-            "value": false,
-            "path": "authProxy/enabled"
-          }
-        },
         "clientID": {
-          "type": "string",
-          "form": true,
-          "title": "Client ID:",
           "description": "Client ID of the Identity Provider",
+          "form": true,
           "hidden": {
-            "value": false,
-            "path": "authProxy/enabled"
-          }
+            "path": "authProxy/enabled",
+            "value": false
+          },
+          "title": "Client ID:",
+          "type": "string"
         },
         "clientSecret": {
-          "type": "string",
-          "form": true,
-          "title": "Client Secret",
           "description": "Secret used to validate the Client ID",
+          "form": true,
           "hidden": {
-            "value": false,
-            "path": "authProxy/enabled"
-          }
+            "path": "authProxy/enabled",
+            "value": false
+          },
+          "title": "Client Secret",
+          "type": "string"
         },
         "cookieSecret": {
-          "type": "string",
-          "form": true,
-          "title": "Cookie Secret",
           "description": "Used by OAuth2 Proxy to encrypt any credentials",
+          "form": true,
           "hidden": {
-            "value": false,
-            "path": "authProxy/enabled"
-          }
+            "path": "authProxy/enabled",
+            "value": false
+          },
+          "title": "Cookie Secret",
+          "type": "string"
+        },
+        "enabled": {
+          "description": "Use an OIDC provider in order to manage accounts, groups and roles with a single application",
+          "form": true,
+          "title": "Enable OIDC proxy",
+          "type": "boolean"
+        },
+        "provider": {
+          "description": "See https://pusher.github.io/oauth2_proxy/auth-configuration to find available providers",
+          "form": true,
+          "hidden": {
+            "path": "authProxy/enabled",
+            "value": false
+          },
+          "title": "Identity Provider name",
+          "type": "string"
         }
-      }
+      },
+      "title": "OIDC Proxy configuration"
+    },
+    "dashboard": {
+      "form": true,
+      "properties": {
+        "replicaCount": {
+          "form": true,
+          "title": "Number of replicas",
+          "type": "integer"
+        }
+      },
+      "title": "Dashboard configuration"
+    },
+    "frontend": {
+      "form": true,
+      "properties": {
+        "replicaCount": {
+          "form": true,
+          "title": "Number of replicas",
+          "type": "integer"
+        }
+      },
+      "title": "Frontend configuration"
+    },
+    "ingress": {
+      "form": true,
+      "properties": {
+        "certManager": {
+          "description": "Add the corresponding annotations for cert-manager to auto-generate the TLS certificate",
+          "form": true,
+          "hidden": {
+            "path": "ingress/enabled",
+            "value": false
+          },
+          "title": "Use cert-manager to auto-generate the TLS certificate",
+          "type": "boolean"
+        },
+        "enabled": {
+          "description": "Enable the ingress resource that allows you to access the Kubeapps dashboard.",
+          "form": true,
+          "title": "Use a custom hostname",
+          "type": "boolean"
+        },
+        "hostname": {
+          "form": true,
+          "hidden": {
+            "path": "ingress/enabled",
+            "value": false
+          },
+          "title": "Hostname",
+          "type": "string"
+        },
+        "tls": {
+          "form": true,
+          "hidden": {
+            "path": "ingress/enabled",
+            "value": false
+          },
+          "title": "Enable TLS configuration",
+          "type": "boolean"
+        }
+      },
+      "title": "Ingress configuration"
+    },
+    "securityContext": {
+      "form": true,
+      "properties": {
+        "enabled": {
+          "form": true,
+          "title": "Enable security context",
+          "type": "boolean",
+         "default": false
+        },
+        "fsgroup": {
+          "form": true,
+          "hidden": {
+            "path": "securityContext/enabled",
+            "value": false
+          },
+          "title": "File System Group ID",
+          "type": "integer"
+        },
+        "runAsUser": {
+          "form": true,
+          "hidden": {
+            "path": "securityContext/enabled",
+            "value": false
+          },
+          "title": "File System User ID",
+          "type": "integer"
+        }
+      },
+      "title": "Frontend configuration"
     }
   }
 }
