@@ -22,7 +22,7 @@ spec:
         - tail
         - -f
         - /dev/null
-        image: kubeapps/integration-tests:latest
+        image: antgamdia/integration-tests:latest
         name: integration
         resources:
           requests:
