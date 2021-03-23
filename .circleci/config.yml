@@ -453,12 +453,14 @@ jobs:
     environment:
       HELM_VERSION: "v3.5.2"
       KUBEAPPS_DB: "postgresql"
-      TEST_UPGRADE: "1"
+      # TEST_UPGRADE: "1"
       DEFAULT_DEX_IP: "172.18.0.2"
       OLM_VERSION: "v0.17.0"
       MKCERT_VERSION: "v1.4.3"
       KUBECTL_VERSION: "v1.20.5"
       KIND_VERSION: "v0.10.0"
+      # Remove. just for shorten times when creating the multicluster env
+      TEST_LATEST_RELEASE: 1
     parameters:
       number:
         type: string
