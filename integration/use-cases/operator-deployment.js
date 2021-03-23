@@ -18,6 +18,7 @@ test("Deploys an Operator", async () => {
     await page.waitForNavigation(),
     await page.type("input[id=\"login\"]", "kubeapps-operator@example.com"),
     await page.type("input[id=\"password\"]", "password"),
+    await page.waitForSelector("#submit-login", {visible: true, timeout: 3000 }),
     await expect(page).toClick("#submit-login", { text: "Login" }),
     await page.waitForNavigation({ waitUntil: 'networkidle2' }),
     await page.goto(getUrl("/#/c/default/ns/default/config/repos")),
