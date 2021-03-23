@@ -93,7 +93,15 @@ pub async fn proxy(
     match client.request(req).await {
         Ok(r) => {
             info!("{}", logging::response_log_data(&r, log_data));
-            Ok(r)
+            if r.status() == StatusCode::SWITCHING_PROTOCOLS {
+                // TODO(agamez): implement ws proxing here; see https://github.com/kubeapps/kubeapps/issues/2328
+                Ok(Response::builder()
+                    .status(StatusCode::NOT_IMPLEMENTED)
+                    .body(Body::from("pinniped-proxy does not support websockets yet"))
+                    .unwrap())
+            } else {
+                Ok(r)
+            }
         }
         Err(e) => {
             return handle_error(

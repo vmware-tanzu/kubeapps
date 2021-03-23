@@ -176,8 +176,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/daviddengcn/go-colortext v0.0.0-20160507010035-511bcaf42ccd/go.mod h1:dv4zxwHi5C/8AeI+4gX4dCWOIvNi7I6JCSX0HvlKPgE=
 github.com/deislabs/oras v0.8.1/go.mod h1:Mx0rMSbBNaNfY9hjpccEnxkOqJL6KGjtxNHPLC4G4As=
-github.com/deislabs/oras v0.11.0 h1:EM2OYQOmIHS0cOpWIFHQV/fLhG4CxAZcekt7aTZyfns=
-github.com/deislabs/oras v0.11.0/go.mod h1:39lCtf8Q6WDC7ul9cnyWXONNzKvabEKk+AX+L0ImnQk=
+github.com/deislabs/oras v0.11.1 h1:oo2J/3vXdcti8cjFi8ghMOkx0OacONxHC8dhJ17NdJ0=
+github.com/deislabs/oras v0.11.1/go.mod h1:39lCtf8Q6WDC7ul9cnyWXONNzKvabEKk+AX+L0ImnQk=
 github.com/denisenkom/go-mssqldb v0.0.0-20191001013358-cfbb681360f0/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/denverdino/aliyungo v0.0.0-20190125010748-a747050bb1ba/go.mod h1:dV8lFg6daOBZbT6/BDGIz6Y3WFGn8juu6G+CQ6LHtl0=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
