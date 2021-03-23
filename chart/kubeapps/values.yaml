@@ -391,6 +391,10 @@ kubeops:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  ## Kubeops QPS and Burst configuration (per user request)
+  ## Used when requesting namespaces
+  # QPS: 10
+  # burst: 15
 
 ## Assetsvc is used to serve assets metadata over a REST API.
 ##
