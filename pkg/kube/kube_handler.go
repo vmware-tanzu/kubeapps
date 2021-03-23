@@ -367,12 +367,8 @@ func NewHandler(kubeappsNamespace string, burst int, qps float32, clustersConfig
 	// This is useful to handle a large number of namespaces which are check in parallel
 	// Burst is the initial number of request made in parallel
 	// Then further requests are performed following the QPS rate
-	if burst != 0 {
-		config.Burst = burst
-	}
-	if qps != 0 {
-		config.QPS = qps
-	}
+	config.Burst = burst
+	config.QPS = qps
 
 	svcRestConfig, err := rest.InClusterConfig()
 	if err != nil {
