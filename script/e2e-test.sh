@@ -189,8 +189,6 @@ installOrUpgradeKubeapps() {
     kubectl -n kubeapps create secret tls localhost-tls --key ./devel/localhost-key.pem --cert ./devel/localhost-cert.pem
     sleep 15
     kubectl describe -n kubeapps deployment/kubeapps-ci-internal-dashboard
-    kubectl logs -n kubeapps deployment/kubeapps-ci nginx
-    kubectl logs -n kubeapps deployment/kubeapps-ci auth-proxy
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
