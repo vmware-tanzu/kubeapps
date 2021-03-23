@@ -146,6 +146,7 @@ installOrUpgradeKubeapps() {
       --set kubeops.replicaCount=1 \
       --set assetsvc.replicaCount=1 \
       --set dashboard.replicaCount=1 \
+      --set postgresql.postgresqlPassword=password \
       --set postgresql.replication.enabled=false
 }
 

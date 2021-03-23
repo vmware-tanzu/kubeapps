@@ -542,19 +542,22 @@ dashboard:
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
 ##
 postgresql:
+  # Enable PostgreSQL. This should be true
+  enabled: true
   ## Enable replication for high availability
   replication:
     enabled: true
   ## Create a database for Kubeapps on the first run
   postgresqlDatabase: assets
+  ## PostgreSQL admin password (used when `postgresqlUsername` is not `postgres`)
+  ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#creating-a-database-user-on-first-run (see note!)
+  ##
+  postgresqlPassword: ""
   ## Kubeapps uses PostgreSQL as a cache and persistence is not required
   ##
   persistence:
     enabled: false
     size: 8Gi
-  ## PostgreSQL credentials are handled by kubeapps to facilitate upgrades
-  ##
-  existingSecret: kubeapps-db
   ## Pod Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ##

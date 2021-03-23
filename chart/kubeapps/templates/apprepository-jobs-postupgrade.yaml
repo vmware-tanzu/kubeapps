@@ -57,17 +57,4 @@ spec:
               {{- else }}
                   name: {{ template "kubeapps.postgresql.fullname" . }}
               {{- end }}
-      {{- if .Values.postgresql.existingSecret }}
-      initContainers:
-        # Helm 3.1 supports a lookup template tag to create a secret if it does not exist
-        # but we can't yet restrict to helm 3.1, hence manually doing this with an initContainer.
-        - name: ensure-postgres-password
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.hooks.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.hooks.image.pullPolicy | quote }}
-          command:
-            - /bin/bash
-          args:
-            - -c
-            - 'kubectl -n {{ .Release.Namespace }} get secret {{ .Values.postgresql.existingSecret }} || kubectl -n {{ .Release.Namespace }} create secret generic {{ .Values.postgresql.existingSecret }} --from-literal=postgresql-password={{ randAlphaNum 10 | quote }} --from-literal=postgresql-replication-password={{ randAlphaNum 10 | quote }}'
-      {{- end }}
 {{- end }}
