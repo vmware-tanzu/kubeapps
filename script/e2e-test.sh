@@ -167,6 +167,7 @@ installOrUpgradeKubeapps() {
       --set authProxy.additionalFlags[4]="--cookie-secure=false" \
       --set authProxy.additionalFlags[5]="--cookie-domain=kubeapps-ci.kubeapps" \
       --set authProxy.additionalFlags[6]="--whitelist-domain=kubeapps-ci.kubeapps" \
+      --set authProxy.additionalFlags[7]="--set-authorization-header=true" \
       --set clusters[0].name=default \
       --set clusters[1].name=second-cluster \
       --set clusters[1].apiServiceURL="https://${ADDITIONAL_CLUSTER_IP}:6443" \
