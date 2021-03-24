@@ -126,29 +126,17 @@
       "title": "Ingress configuration"
     },
     "securityContext": {
-      "form": true,
       "properties": {
         "enabled": {
-          "form": true,
           "title": "Enable security context",
           "type": "boolean",
          "default": false
         },
         "fsgroup": {
-          "form": true,
-          "hidden": {
-            "path": "securityContext/enabled",
-            "value": false
-          },
           "title": "File System Group ID",
           "type": "integer"
         },
         "runAsUser": {
-          "form": true,
-          "hidden": {
-            "path": "securityContext/enabled",
-            "value": false
-          },
           "title": "File System User ID",
           "type": "integer"
         }
