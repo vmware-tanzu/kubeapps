@@ -152,9 +152,6 @@ installOrUpgradeKubeapps() {
       --set assetsvc.replicaCount=1 \
       --set dashboard.replicaCount=1 \
       --set postgresql.replication.enabled=false \
-      # --set ingress.enabled=true  \
-      # --set ingress.hostname=localhost  \
-      # --set ingress.tls=true  \
       --set authProxy.enabled=true \
       --set authProxy.provider=oidc \
       --set authProxy.clientID=default \
