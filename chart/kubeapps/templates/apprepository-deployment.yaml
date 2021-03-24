@@ -34,6 +34,27 @@ spec:
         fsGroup: {{ .Values.securityContext.fsGroup }}
         runAsUser: {{ .Values.securityContext.runAsUser }}
       {{- end }}
+      initContainers:
+        - name: invalidate-cache
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.apprepository.syncImage "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.apprepository.syncImage.pullPolicy | quote }}
+          command:
+            - /asset-syncer
+          args:
+            - invalidate-cache
+            - --database-url={{ template "kubeapps.postgresql.fullname" . }}:5432
+            - --database-user=postgres
+            - --database-name=assets
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-password
+              {{- if .Values.postgresql.existingSecret }}
+                  name: {{ .Values.postgresql.existingSecret }}
+              {{- else }}
+                  name: {{ template "kubeapps.postgresql.fullname" . }}
+              {{- end }}
       containers:
         - name: controller
           image: {{ include "common.images.image" (dict "imageRoot" .Values.apprepository.image "global" .Values.global) }}
