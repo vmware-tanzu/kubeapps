@@ -163,7 +163,7 @@ installOrUpgradeKubeapps() {
       --set authProxy.additionalFlags[0]="--oidc-issuer-url=https://${DEX_IP}:32000" \
       --set authProxy.additionalFlags[1]="--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster" \
       --set authProxy.additionalFlags[2]="--ssl-insecure-skip-verify=true" \
-      --set authProxy.additionalFlags[3]="--redirect-url=http://kubeapps.kubeapps/oauth2/callback" \
+      --set authProxy.additionalFlags[3]="--redirect-url=http://kubeapps-ci.kubeapps/oauth2/callback" \
       --set clusters[0].name=default \
       --set clusters[1].name=second-cluster \
       --set clusters[1].apiServiceURL="https://${ADDITIONAL_CLUSTER_IP}:6443" \
