@@ -198,7 +198,9 @@ kubectl create ns kubeapps
 if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
-  # Breaking change at 6.X, the initialRepos are no longer in a hook
+  # Breaking change at 6.X, the initialRepos are no longer installed by a hook
+  # which causes Helm to detect a conflict: "rendered manifests contain a new resource that already exists"
+  # To avoid it, we don't include any initialRepos in the first installation
   installOrUpgradeKubeapps bitnami/kubeapps \
     "--set" "apprepository.initialRepos=null"
 fi
