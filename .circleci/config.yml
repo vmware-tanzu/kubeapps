@@ -374,7 +374,7 @@ local_e2e_steps: &local_e2e_steps
     - <<: *install_helm_cli
     # Load images from other jobs
     # - attach_workspace:
-        # at: /tmp/images
+    #     at: /tmp/images
     # - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
     - <<: *install_multicluster_deps
     - <<: *check_olm

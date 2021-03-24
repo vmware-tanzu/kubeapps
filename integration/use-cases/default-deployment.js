@@ -1,5 +1,6 @@
 test("Deploys an application with the values by default", async () => {
   // ODIC login
+  var token;
   await page.goto(getUrl("/#/login"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
@@ -8,11 +9,11 @@ test("Deploys an application with the values by default", async () => {
   await page.waitForNavigation();
   await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
   await page.type("input[id=\"password\"]", "password");
-  await page.waitForSelector("#submit-login", { visible: true, timeout: 3000 });
+  await page.waitForSelector("#submit-login", { visible: true, timeout: 10000 });
   await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
-  await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 3000 });
+  await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
+  console.log("Token after OIDC authentication: " + token);
   await page.goto(getUrl("/#/login"));
-  await page.waitForNavigation();
 
   await expect(page).toClick("a", { text: "Catalog" });
 

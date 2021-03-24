@@ -176,11 +176,6 @@ installOrUpgradeKubeapps() {
     kubectl -n kubeapps create secret tls localhost-tls --key ./devel/localhost-key.pem --cert ./devel/localhost-cert.pem || true
 }
 
-# Operators are not supported in GKE 1.14 and flaky in 1.15
-# if [[ -z "${GKE_BRANCH-}" ]]; then
-#   installOLM v0.17.0
-# fi
-
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"

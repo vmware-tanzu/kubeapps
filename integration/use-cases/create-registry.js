@@ -2,7 +2,8 @@ const utils = require("./lib/utils");
 
 test("Creates a registry", async () => {
   // ODIC login
-  await page.goto(getUrl("/#/c/default/ns/kubeapps/config/repos"));
+  var token;
+  await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
   await page.waitForNavigation();
@@ -10,11 +11,11 @@ test("Creates a registry", async () => {
   await page.waitForNavigation();
   await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
   await page.type("input[id=\"password\"]", "password");
-  await page.waitForSelector("#submit-login", { visible: true, timeout: 3000 });
+  await page.waitForSelector("#submit-login", { visible: true, timeout: 10000 });
   await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
-  await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 3000 });
+  await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
+  console.log("Token after OIDC authentication: " + token);
   await page.goto(getUrl("/#/c/default/ns/kubeapps/config/repos"));
-  await page.waitForNavigation();
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
 

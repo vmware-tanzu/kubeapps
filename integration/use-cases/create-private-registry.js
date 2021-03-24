@@ -4,11 +4,6 @@ const utils = require("./lib/utils");
 test("Creates a private registry", async () => {
   // ODIC login
   var token;
-  page.on('response', response => {
-    if (response.status() >= 400)
-      console.log("ERROR: ", response.status() + " " + response.url());
-    token = response.headers()["authorization"] || token;
-  });
   await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
@@ -22,7 +17,6 @@ test("Creates a private registry", async () => {
   await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
   console.log("Token after OIDC authentication: " + token);
   await page.goto(getUrl("/#/c/default/ns/kubeapps/config/repos"));
-  await page.waitForNavigation({waituntil: 'networkidle0', timeout: 30000});
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
