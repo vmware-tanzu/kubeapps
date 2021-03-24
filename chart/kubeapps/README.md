@@ -324,7 +324,10 @@ It is possible that when upgrading Kubeapps an error appears. That can be caused
 
 > Note: These steps assume that you have installed Kubeapps in the namespace `kubeapps` using the name `kubeapps`. If that is not the case replace the command with your namespace and/or name.
 
+> Note: If you are upgrading from 2.3.1 see the [following section](#upgrading-to-2-3-1).
+
 > Note: If you are upgrading from 1.X to 2.X see the [following section](#upgrading-to-2-0).
+
 
 1.  (Optional) Backup your personal repositories (if you have any):
 
@@ -416,3 +419,38 @@ kubectl delete statefulset -n kubeapps kubeapps-postgresql-master kubeapps-postg
 ```
 
 After that you should be able to upgrade Kubeapps as always and the database will be repopulated.
+
+### Upgrading to 2.3.1
+
+Kubeapps 2.3.1 (Chart version 6.0.0) introduces some breaking changes. Helm specific functionality has been removed in order to support other installation methods (like using YAML manifests, [`kapp`](https://carvel.dev/kapp) or `kustomize`(https://kustomize.io/)). Because of that, there are some steps required before upgrading from a previous version:
+
+1. The secret with the PostgreSQL password is no longer automatically generated and persisted. If you try to upgrade Kubeapps and you installed it without setting a password, you will get the following error:
+
+```
+Error: UPGRADE FAILED: template: kubeapps/templates/NOTES.txt:73:4: executing "kubeapps/templates/NOTES.txt" at <include "common.errors.upgrade.passwords.empty" (dict "validationErrors" $passwordValidationErrors "context" $)>: error calling include: template: kubeapps/charts/common/templates/_errors.tpl:18:48: executing "common.errors.upgrade.passwords.empty" at <fail>: error calling fail: 
+PASSWORDS ERROR: you must provide your current passwords when upgrade the release
+    'postgresql.postgresqlPassword' must not be empty, please add '--set postgresql.postgresqlPassword=$POSTGRESQL_PASSWORD' to the command. To get the current value:
+```
+
+While the error gives you generic instructions for retrieving the PostgreSQL password, you can just specify the secret name. We will do so but first lets address the following issue.
+
+2. The chart initialRepos are no longer installed using [Helm hooks](https://helm.sh/docs/topics/charts_hooks/) which caused these repos to not be handled by Helm after the first installation. Now they will be tracked for every update but if you don't delete the existing ones, it will fail to update with:
+
+```
+Error: UPGRADE FAILED: rendered manifests contain a resource that already exists. Unable to continue with update: AppRepository "bitnami" in namespace "kubeapps" exists and cannot be imported into the current release: invalid ownership metadata; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "kubeapps"; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to "kubeapps"
+```
+
+To bypass this issue, you will need to before delete all the initialRepos from the chart values (only the `bitnami` repo by default):
+
+
+```
+$ kubectl delete apprepositories.kubeapps.com -n kubeapps bitnami
+```
+
+> NOTE: Replace the namespace in the command with the namespace in which you have deployed Kubeapps.
+
+After that, you will be able to upgrade Kubeapps to 2.3.1 using the existing database secret:
+
+```
+helm upgrade kubeapps bitnami/kubeapps -n kubeapps --set postgresql.existingSecret=kubeapps-db
+```
