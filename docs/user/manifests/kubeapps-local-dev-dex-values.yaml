@@ -21,8 +21,6 @@ config:
     redirectURIs:
     - 'http://localhost/oauth2/callback'
     - 'https://localhost/oauth2/callback'
-    - 'https://kubeapps.kubeapps/oauth2/callback'
-    - 'http://kubeapps.kubeapps/oauth2/callback'
     name: 'Default-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
   # The second-cluster clientid exists for the additional cluster but not used
@@ -32,8 +30,6 @@ config:
     redirectURIs:
     - 'http://localhost/oauth2/callback'
     - 'https://localhost/oauth2/callback'
-    - 'https://kubeapps.kubeapps/oauth2/callback'
-    - 'http://kubeapps.kubeapps/oauth2/callback'
     name: 'Second-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
     trustedPeers:
@@ -45,8 +41,6 @@ config:
     redirectURIs:
     - 'http://localhost/oauth2/callback'
     - 'https://localhost/oauth2/callback'
-    - 'https://kubeapps.kubeapps/oauth2/callback'
-    - 'http://kubeapps.kubeapps/oauth2/callback'
     name: 'Third-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
     trustedPeers:
