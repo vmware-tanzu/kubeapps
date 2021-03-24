@@ -454,3 +454,5 @@ After that, you will be able to upgrade Kubeapps to 2.3.1 using the existing dat
 ```
 helm upgrade kubeapps bitnami/kubeapps -n kubeapps --set postgresql.existingSecret=kubeapps-db
 ```
+
+> NOTE: Specifing the existingSecret will only work if you are upgrading from 2.3.0 (chart 5.4.0) or before. For newer versions, follow the error instructions to set the PostgreSQL password.
