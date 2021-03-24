@@ -3,6 +3,12 @@ const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
   // ODIC login
+
+  page.on('response', response => {
+    if (response.status() >= 400)
+      console.log("response code: ", response.status() + " " + response.url());
+    // do something here
+  });
   await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
@@ -12,7 +18,6 @@ test("Creates a private registry", async () => {
   await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
   await page.type("input[id=\"password\"]", "password");
   await page.waitForSelector("#submit-login", { visible: true, timeout: 3000 });
-  console.log(await page.cookies());
   await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
   console.log(await page.cookies());
   await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 3000 });
