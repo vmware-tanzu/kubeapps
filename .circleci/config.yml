@@ -278,7 +278,7 @@ install_multicluster_deps: &install_multicluster_deps
     command:  |
       helm repo add stable https://charts.helm.sh/stable
       # Install dex
-      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s|https://localhost|http://kubeapps-ci.kubeapps|g" ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
       helm install dex stable/dex --namespace dex --create-namespace --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
       
       # Install openldap
