@@ -226,6 +226,16 @@ install_additional_cluster: &install_additional_cluster
       } || {
           echo "Error while creating the additional cluster after retry"
       }
+
+copy_apiserver_certificates: &copy_apiserver_certificates
+  run:
+    name: "Copy apiserver certificates"
+    command: |
+      # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
+      docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
+      docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+      sudo chown circleci ./devel/dex.key
+      sudo chown circleci ./devel/dex.crt
 install_olm: &install_olm
   run:
     name: "Install OLM"
@@ -360,14 +370,9 @@ local_e2e_steps: &local_e2e_steps
     - <<: *install_kind
     - <<: *install_kubectl
     - <<: *install_cluster
-    - <<: *install_olm
-    # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
-    - run:
-        name: "Copy apiserver certificates"
-        command: |
-          docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
-          docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+    - <<: *copy_apiserver_certificates
     # Create the "kubeapps-ci-additional" cluster
+    - <<: *install_olm
     - <<: *install_additional_cluster
     # Export variables and kubeconfig
     - <<: *export_cluster_variables
