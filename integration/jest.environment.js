@@ -76,9 +76,9 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
           });
         }
       })
-      .on("pageerror", ({ message }) => console.log(message))
+      .on("pageerror", ({ message }) => console.log("todo mal"+message))
       .on("requestfailed", (request) =>
-        console.log(`${request.failure().errorText} ${request.url()}`)
+        console.log(`${request.failure().errorText} todo mal ${request.url()}`)
       );
   }
 
