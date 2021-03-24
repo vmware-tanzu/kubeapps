@@ -209,6 +209,7 @@ install_additional_cluster: &install_additional_cluster
   run:
     name: "Install additional cluster"
     command: |
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
       {
         echo "Creating additional cluster..."
         kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
