@@ -3,7 +3,8 @@ const { headless } = require("./args");
 module.exports = {
   launch: {
     headless,
-    args: ["--no-sandbox", "--window-size=1200,780", "--ignore-certificate-errors"]
+    args: ["--no-sandbox", "--window-size=1200,780", "--ignore-certificate-errors"],
+    userDataDir: './myUserDataDir'
   },
   browserContext: "incognito"
 };
