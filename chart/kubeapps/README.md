@@ -424,26 +424,33 @@ After that you should be able to upgrade Kubeapps as always and the database wil
 
 Kubeapps 2.3.1 (Chart version 6.0.0) introduces some breaking changes. Helm specific functionality has been removed in order to support other installation methods (like using YAML manifests, [`kapp`](https://carvel.dev/kapp) or `kustomize`(https://kustomize.io/)). Because of that, there are some steps required before upgrading from a previous version:
 
-1. The secret with the PostgreSQL password is no longer automatically generated and persisted. If you try to upgrade Kubeapps and you installed it without setting a password, you will get the following error:
+1. Kubeapps will no longer create a database secret for you automatically but rather will rely on the default behavior of the PostgreSQL chart. If you try to upgrade Kubeapps and you installed it without setting a password, you will get the following error:
 
-```
+```console
 Error: UPGRADE FAILED: template: kubeapps/templates/NOTES.txt:73:4: executing "kubeapps/templates/NOTES.txt" at <include "common.errors.upgrade.passwords.empty" (dict "validationErrors" $passwordValidationErrors "context" $)>: error calling include: template: kubeapps/charts/common/templates/_errors.tpl:18:48: executing "common.errors.upgrade.passwords.empty" at <fail>: error calling fail: 
 PASSWORDS ERROR: you must provide your current passwords when upgrade the release
     'postgresql.postgresqlPassword' must not be empty, please add '--set postgresql.postgresqlPassword=$POSTGRESQL_PASSWORD' to the command. To get the current value:
 ```
 
-While the error gives you generic instructions for retrieving the PostgreSQL password, you can just specify the secret name. We will do so but first lets address the following issue.
+The error gives you generic instructions for retrieving the PostgreSQL password, but if you have installed a Kubeapps version prior to 2.3.1, the name of the secret will differ. Execute:
+
+```console
+export POSTGRESQL_PASSWORD=$(kubectl get secret --namespace "kubeapps" kubeapps-db -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+```
+
+> NOTE: Replace the namespace in the command with the namespace in which you have deployed Kubeapps.
+
+Make sure that you have stored the password in the variable `$POSTGRESQL_PASSWORD` before continuing with the next issue.
 
 2. The chart initialRepos are no longer installed using [Helm hooks](https://helm.sh/docs/topics/charts_hooks/) which caused these repos to not be handled by Helm after the first installation. Now they will be tracked for every update but if you don't delete the existing ones, it will fail to update with:
 
-```
+```console
 Error: UPGRADE FAILED: rendered manifests contain a resource that already exists. Unable to continue with update: AppRepository "bitnami" in namespace "kubeapps" exists and cannot be imported into the current release: invalid ownership metadata; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "kubeapps"; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to "kubeapps"
 ```
 
 To bypass this issue, you will need to before delete all the initialRepos from the chart values (only the `bitnami` repo by default):
 
-
-```
+```console
 $ kubectl delete apprepositories.kubeapps.com -n kubeapps bitnami
 ```
 
@@ -451,8 +458,8 @@ $ kubectl delete apprepositories.kubeapps.com -n kubeapps bitnami
 
 After that, you will be able to upgrade Kubeapps to 2.3.1 using the existing database secret:
 
-```
-helm upgrade kubeapps bitnami/kubeapps -n kubeapps --set postgresql.existingSecret=kubeapps-db
-```
+> **WARNING**: Make sure that the variable `$POSTGRESQL_PASSWORD` is properly populated. Setting a wrong (or empty) password will corrupt the release.
 
-> NOTE: Specifing the existingSecret will only work if you are upgrading from 2.3.0 (chart 5.4.0) or before. For newer versions, follow the error instructions to set the PostgreSQL password.
+```console
+$ helm upgrade kubeapps bitnami/kubeapps -n kubeapps --set postgresql.postgresqlPassword=$POSTGRESQL_PASSWORD
+```
