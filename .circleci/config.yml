@@ -383,7 +383,9 @@ local_e2e_steps: &local_e2e_steps
     # Load images from other jobs
     - attach_workspace:
         at: /tmp/images
-    - run: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+    - run:
+        name: Load CI images in the cluster
+        command: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
     - <<: *install_multicluster_deps
     - <<: *check_olm
     - <<: *run_e2e_tests
