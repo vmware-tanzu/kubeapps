@@ -14,10 +14,10 @@ cli-dependencies:
 
 # Build the helm and kapp package plugins with the output in the devel directory.
 devel/helm-packages-v1-plugin.so:
-	go build -o $@ -buildmode=plugin plugins/helm/packages/v1/main.go
+	go build -o $@ -buildmode=plugin kubeappsapis/plugins/packages/helm/v1/plugin/main.go
 
 devel/kapp-controller-packages-v1-plugin.so:
-	go build -o $@ -buildmode=plugin plugins/kapp-controller/packages/v1/main.go
+	go build -o $@ -buildmode=plugin kubeappsapis/plugins/packages/kapp_controller/v1/plugin/main.go
 
 run: devel/helm-packages-v1-plugin.so devel/kapp-controller-packages-v1-plugin.so
 	go run main.go --plugin-dir devel/

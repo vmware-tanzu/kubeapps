@@ -18,21 +18,21 @@ package server
 import (
 	"context"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/core"
+	core "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/core/v1"
 	"google.golang.org/grpc/metadata"
 	log "k8s.io/klog/v2"
 )
 
 // coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
 type coreServer struct {
-	core.UnimplementedCoreServer
+	core.UnimplementedCoreServiceServer
 }
 
-func (s *coreServer) PluginsAvailable(ctx context.Context, in *core.EmptyMessage) (*core.PluginsResponse, error) {
+func (s *coreServer) PluginsAvailable(ctx context.Context, in *core.PluginsAvailableRequest) (*core.PluginsAvailableResponse, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	log.Infof("md: %+v, ok: %+v", md, ok)
 
-	return &core.PluginsResponse{
+	return &core.PluginsAvailableResponse{
 		Plugins: []string{"foobar.package.v1"},
 	}, nil
 }

@@ -1,9 +1,0 @@
-syntax = "proto3";
-package kubeapps.api.packages.v1.helm;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/plugins/helm/packages/v1";
-
-import "core/packages/v1/packages.proto";
-
-service Packages {
-  rpc GetAvailablePackages(GetAvailablePackagesRequest) returns (stream AvailablePackage);
-}
