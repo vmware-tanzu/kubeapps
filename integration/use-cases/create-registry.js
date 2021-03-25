@@ -21,7 +21,9 @@ test("Creates a registry", async () => {
   await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
   await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
   console.log("Token after OIDC authentication: " + token);
+  
   await page.goto(getUrl("/#/c/default/ns/kubeapps/config/repos"));
+  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl")); // wait for the loading msg to disappear
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
 

@@ -7,7 +7,7 @@ test("Fails to deploy an application due to missing permissions", async () => {
     }
     token = response.headers()["authorization"] || token;
   });
-  await page.goto(getUrl("/#/login"));
+  await page.goto(getUrl("/#/c/default/ns/default"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
   await page.waitForNavigation();
