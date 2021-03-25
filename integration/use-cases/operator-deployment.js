@@ -39,9 +39,9 @@ test("Deploys an Operator", async () => {
     // wait for the loading msg to disappear
     await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
 
-    await utils.retryAndRefresh(page, 3, async () => {
+    await utils.retryAndRefresh(page, 4, async () => {
       // The CSV takes a bit to get populated
-      await expect(page).toMatch("Installed");
+      await expect(page).toMatch("Installed", { timeout: 10000 });
     });
   } else {
     console.log("Warning: the operator has already been deployed")
