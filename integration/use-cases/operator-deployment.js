@@ -6,7 +6,7 @@ jest.setTimeout(360000);
 
 test("Deploys an Operator", async () => {
   // ODIC login
-  await page.goto(getUrl("/#/c/mydefaultcluster/ns/kubeapps/operators"));
+  await page.goto(getUrl("/#/c/default/ns/kubeapps/operators"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
   await page.waitForNavigation();
@@ -17,7 +17,7 @@ test("Deploys an Operator", async () => {
   await page.waitForSelector("#submit-login", { visible: true, timeout: 10000 });
   await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
   await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
-  await page.goto(getUrl("/#/c/mydefaultcluster/ns/kubeapps/operators"));
+  await page.goto(getUrl("/#/c/default/ns/kubeapps/operators"));
 
   // Browse operator
   await expect(page).toClick("a", { text: "prometheus" });
