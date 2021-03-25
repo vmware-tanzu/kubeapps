@@ -1,3 +1,7 @@
+# make build
+# make push
+# kind load docker-image antgamdia/integration-tests:latest--name kubeapps
+
 # kubectl apply -f ./manifests/executor.yaml
 # kubectl wait --for=condition=ready --timeout=60s deploy/integration
 pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")

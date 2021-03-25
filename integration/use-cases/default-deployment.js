@@ -1,13 +1,6 @@
 test("Deploys an application with the values by default", async () => {
   // ODIC login
-  var token;
-  page.on('response', response => {
-    if (response.status() >= 400) {
-      console.log("ERROR: ", response.status() + " " + response.url());
-    }
-    token = response.headers()["authorization"] || token;
-  });
-  await page.goto(getUrl("/#/c/default/ns/default"));
+  await page.goto(getUrl("/"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
   await page.waitForNavigation();
@@ -18,7 +11,6 @@ test("Deploys an application with the values by default", async () => {
   await page.waitForSelector("#submit-login", { visible: true, timeout: 10000 });
   await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
   await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
-  console.log("Token after OIDC authentication: " + token);
 
   await expect(page).toClick("a", { text: "Catalog" });
 
@@ -27,6 +19,9 @@ test("Deploys an application with the values by default", async () => {
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
+
+  // wait for the loading msg to disappear
+  await page.waitForFunction(() => !document.querySelector("#root > section > main > div > div > section > h3")); 
 
   await expect(page).toMatch("Ready", { timeout: 60000 });
 });

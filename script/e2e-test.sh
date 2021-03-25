@@ -338,6 +338,10 @@ kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create role view-secrets --verb=get,list,watch --resource=secrets
 kubectl create rolebinding kubeapps-view-secret --role view-secrets --serviceaccount kubeapps:kubeapps-view
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
+## Create view user (oidc)
+kubectl delete rolebinding kubeapps-user -n  kubeapps-user-namespace
+kubectl create rolebinding kubeapps-view-secret --role view-secrets --user oidc:kubeapps-user@example.com
+kubectl create clusterrolebinding kubeapps-view  --clusterrole=view --user oidc:kubeapps-user@example.com
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
@@ -352,6 +356,14 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 ## Run tests
+
+
+
+
+
+
+
+
 info "Running Integration tests..."
 if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
   ## Integration tests failed, get report screenshot

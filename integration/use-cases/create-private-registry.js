@@ -5,12 +5,9 @@ test("Creates a private registry", async () => {
   // ODIC login
   var token;
   page.on('response', response => {
-    if (response.status() >= 400) {
-      console.log("ERROR: ", response.status() + " " + response.url());
-    }
     token = response.headers()["authorization"] || token;
   });
-  await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
+  await page.goto(getUrl("/#/c/mydefaultcluster/ns/default/config/repos"));
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
   await page.waitForNavigation();
@@ -23,9 +20,9 @@ test("Creates a private registry", async () => {
   await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
   console.log("Token after OIDC authentication: " + token);
 
-  await page.goto(getUrl("/#/c/default/ns/kubeapps/config/repos"));
+  await page.goto(getUrl("/#/c/mydefaultcluster/ns/kubeapps/config/repos"));
   await page.waitForFunction(() => !document.querySelector(".margin-t-xxl")); // wait for the loading msg to disappear
-  
+
   await expect(page).toClick("cds-button", { text: "Add App Repository", timeout: 10000 });
 
   await page.evaluate(() => {
@@ -54,7 +51,7 @@ test("Creates a private registry", async () => {
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
   console.log("quiero Add new credentials, estan?"); console.log(await page.evaluate(() => document.body.innerHTML))
-  
+
   await expect(page).toClick("cds-button", { text: "Add new credentials", timeout: 10000 });
 
   await page.type("input[placeholder=\"Secret\"]", secret);
