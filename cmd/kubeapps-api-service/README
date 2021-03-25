@@ -1,0 +1,10 @@
+Using cobra for commands. Currently root command to run server
+
+Requires go 1.16 (due to MapFS being used for testing).
+
+```bash
+make cli-dependencies
+```
+Ensure GOPATH is on path.
+
+Using `buf` to handle grpc generation etc. Need to install.

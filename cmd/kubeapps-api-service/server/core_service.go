@@ -19,6 +19,8 @@ import (
 	"context"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/core"
+	"google.golang.org/grpc/metadata"
+	log "k8s.io/klog/v2"
 )
 
 // coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
@@ -27,6 +29,9 @@ type coreServer struct {
 }
 
 func (s *coreServer) PluginsAvailable(ctx context.Context, in *core.EmptyMessage) (*core.PluginsResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	log.Infof("md: %+v, ok: %+v", md, ok)
+
 	return &core.PluginsResponse{
 		Plugins: []string{"foobar.package.v1"},
 	}, nil

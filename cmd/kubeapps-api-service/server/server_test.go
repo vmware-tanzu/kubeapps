@@ -87,7 +87,7 @@ func createTestFS(t *testing.T, filenames []string) fstest.MapFS {
 	}
 
 	for _, filename := range filenames {
-		relFilename, err := filepath.Rel(PLUGIN_ROOT_DIR, filename)
+		relFilename, err := filepath.Rel(pluginRootDir, filename)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}

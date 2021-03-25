@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	v1 "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/plugins/helm/packages/v1/server"
+	v1 "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/plugins/kapp-controller/packages/v1/server"
 )
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server.

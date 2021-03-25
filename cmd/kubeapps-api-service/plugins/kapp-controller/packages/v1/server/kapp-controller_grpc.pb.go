@@ -125,5 +125,5 @@ var Packages_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "plugins/kapp-controller/packages/v1/kapp-controller.proto",
+	Metadata: "plugins/kapp-controller/packages/v1/server/kapp-controller.proto",
 }
