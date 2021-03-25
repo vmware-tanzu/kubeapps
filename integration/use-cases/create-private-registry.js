@@ -23,7 +23,7 @@ test("Creates a private registry", async () => {
   await page.goto(getUrl("/#/c/mydefaultcluster/ns/kubeapps/config/repos"));
   await page.waitForFunction(() => !document.querySelector(".margin-t-xxl")); // wait for the loading msg to disappear
 
-  await expect(page).toClick("cds-button", { text: "Add App Repository", timeout: 10000 });
+  await expect(page).toClick("cds-button", { text: "Add App Repository" });
 
   await page.evaluate(() => {
     [...document.querySelectorAll('cds-modal-header')].find(element => element.outerText.includes("Add an App Repository"));
@@ -38,12 +38,8 @@ test("Creates a private registry", async () => {
     "http://chartmuseum-chartmuseum.kubeapps:8080"
   );
 
-  await expect(page).toClick("label", { text: "Basic Auth", timeout: 10000 });
-  await expect(page).toClick("label", { text: "Basic Auth", timeout: 10000 });
-  await expect(page).toClick("label", { text: "Basic Auth", timeout: 10000 });
-  await expect(page).toClick("label", { text: "Basic Auth", timeout: 10000 });
-
-
+  await expect(page).toClick("label", { text: "Basic Auth" });
+    
   // Credentials from e2e-test.sh
   await page.type("input[placeholder=\"Username\"]", "admin");
   await page.type("input[placeholder=\"Password\"]", "password");
@@ -52,7 +48,7 @@ test("Creates a private registry", async () => {
   const secret = "my-repo-secret" + randomNumber;
   console.log("quiero Add new credentials, estan?"); console.log(await page.evaluate(() => document.body.innerHTML))
 
-  await expect(page).toClick("cds-button", { text: "Add new credentials", timeout: 10000 });
+  await expect(page).toClick("cds-button", { text: "Add new credentials" });
 
   await page.type("input[placeholder=\"Secret\"]", secret);
   await page.type(
@@ -62,14 +58,14 @@ test("Creates a private registry", async () => {
   await page.type("input[placeholder=\"Username\"][value=\"\"]", "user");
   await page.type("input[placeholder=\"Password\"][value=\"\"]", "password");
   await page.type("input[placeholder=\"user@example.com\"]", "user@example.com");
-  await expect(page).toClick(".secondary-input cds-button", { text: "Submit", timeout: 10000 });
+  await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
 
   // Select the new secret
-  await expect(page).toClick("label", { text: secret, timeout: 10000 });
+  await expect(page).toClick("label", { text: secret });
 
-  await expect(page).toClick("cds-button", { text: "Install Repo", timeout: 10000 });
+  await expect(page).toClick("cds-button", { text: "Install Repo" });
 
-  await expect(page).toClick("a", { text: repoName, timeout: 10000 });
+  await expect(page).toClick("a", { text: repoName });
 
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("apache", { timeout: 2000 });
@@ -77,7 +73,7 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("a", { text: "apache", timeout: 60000 });
 
-  await expect(page).toClick("cds-button", { text: "Deploy", timeout: 10000 });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toSelect('select[name="chart-versions"]', "7.3.15");
   const appName = "my-app" + randomNumber;
@@ -85,7 +81,7 @@ test("Creates a private registry", async () => {
 
   await expect(page).toMatch(/Deploy.*7.3.15/, { timeout: 10000 });
 
-  await expect(page).toClick("cds-button", { text: "Deploy", timeout: 10000 });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatch("Update Now", { timeout: 60000 });
 
@@ -106,7 +102,7 @@ test("Creates a private registry", async () => {
   ]);
 
   // Upgrade apache and verify.
-  await expect(page).toClick("cds-button", { text: "Upgrade", timeout: 10000 });
+  await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   let retries = 3;
   try {
@@ -146,11 +142,11 @@ test("Creates a private registry", async () => {
   chartVersionValue = await chartVersionElementContent.jsonValue();
   expect(chartVersionValue).toEqual("7.3.16");
 
-  await expect(page).toClick("li", { text: "Changes", timeout: 10000 });
+  await expect(page).toClick("li", { text: "Changes" });
 
   await expect(page).toMatch("tag: 2.4.43-debian-10-r54");
 
-  await expect(page).toClick("cds-button", { text: "Deploy", timeout: 10000 });
+  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatch("Up to date", { timeout: 60000 });
   await expect(page).toMatch("Ready");
