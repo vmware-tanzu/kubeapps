@@ -132,9 +132,9 @@ ingress:
 ##
 frontend:
   replicaCount: 2
-  ## Add additional annotations to the frontend deployment
+  ## Add additional annotations to the frontend pods
   ##
-  annotations: {}
+  podAnnotations: {}
   ## Bitnami Nginx image
   ## ref: https://hub.docker.com/r/bitnami/nginx/tags/
   ##
@@ -232,9 +232,9 @@ apprepository:
   ## Running a single controller replica to avoid sync job duplication
   ##
   replicaCount: 1
-  ## Add additional annotations to the controllers deployment
+  ## Add additional annotations to the controllers pods
   ##
-  annotations: {}
+  podAnnotations: {}
   ## Schedule for syncing apprepositories. Every ten minutes by default
   # crontab: "*/10 * * * *"
   ## Bitnami Kubeapps AppRepository Controller image
@@ -354,9 +354,9 @@ hooks:
 # Kubeops is an interface between the Kubeapps Dashboard and Helm 3/Kubernetes.
 kubeops:
   replicaCount: 2
-  ## Add additional annotations to the kubeops deployment
+  ## Add additional annotations to the kubeops pods
   ##
-  annotations: {}
+  podAnnotations: {}
   image:
     registry: docker.io
     repository: kubeapps/kubeops
@@ -405,9 +405,9 @@ kubeops:
 ##
 assetsvc:
   replicaCount: 2
-  ## Add additional annotations to the assetsvc deployment
+  ## Add additional annotations to the assetsvc pods
   ##
-  annotations: {}
+  podAnnotations: {}
   ## Bitnami Kubeapps Assetsvc image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-assetsvc/tags/
   ##
@@ -473,9 +473,9 @@ assetsvc:
 ##
 dashboard:
   replicaCount: 2
-  ## Add additional annotations to the dashboard deployment
+  ## Add additional annotations to the dashboard pods
   ##
-  annotations: {}
+  podAnnotations: {}
   ## Bitnami Kubeapps Dashboard image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-dashboard/tags/
   ##

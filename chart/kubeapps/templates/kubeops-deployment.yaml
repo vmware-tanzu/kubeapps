@@ -5,10 +5,6 @@ metadata:
   labels:
     {{- include "kubeapps.extraAppLabels" . | nindent 4 }}
     app: {{ template "kubeapps.kubeops.fullname" . }}
-  {{- with .Values.kubeops.annotations }}
-  annotations:
-    {{ toYaml . }}
-  {{- end }}
 spec:
   replicas: {{ .Values.kubeops.replicaCount }}
   selector:
@@ -17,6 +13,10 @@ spec:
       release: {{ .Release.Name }}
   template:
     metadata:
+      {{- with .Values.kubeops.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         app: {{ template "kubeapps.kubeops.fullname" . }}
         app.kubernetes.io/name: {{ template "common.names.name" . }}

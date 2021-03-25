@@ -5,10 +5,6 @@ metadata:
   labels:
     {{- include "kubeapps.extraAppLabels" . | nindent 4 }}
     app: {{ template "kubeapps.dashboard.fullname" . }}
-  {{- with .Values.dashboard.annotations }}
-  annotations:
-    {{ toYaml . }}
-  {{- end }}
 spec:
   replicas: {{ .Values.dashboard.replicaCount }}
   selector:
@@ -19,6 +15,9 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/dashboard-config.yaml") . | sha256sum }}
+        {{- with .Values.dashboard.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         app: {{ template "kubeapps.dashboard.fullname" . }}
         app.kubernetes.io/name: {{ template "common.names.name" . }}

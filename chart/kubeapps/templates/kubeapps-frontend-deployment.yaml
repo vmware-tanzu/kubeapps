@@ -5,10 +5,6 @@ metadata:
   labels:
     {{- include "kubeapps.extraAppLabels" . | nindent 4 }}
     app: {{ template "common.names.fullname" . }}
-  {{- with .Values.frontend.annotations }}
-  annotations:
-    {{ toYaml . }}
-  {{- end }}
 spec:
   replicas: {{ .Values.frontend.replicaCount }}
   selector:
@@ -19,6 +15,9 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/kubeapps-frontend-config.yaml") . | sha256sum }}
+        {{- with .Values.frontend.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         app: {{ template "common.names.fullname" . }}
         app.kubernetes.io/name: {{ template "common.names.name" . }}
