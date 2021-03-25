@@ -310,8 +310,10 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh  $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP latest $IMG_MODIFIER; then
-      # if ./script/e2e-test.sh  $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $DEV_TAG $IMG_MODIFIER; then
+      
+      # Delete this line
+      # if ./script/e2e-test.sh  $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP latest $IMG_MODIFIER; then
+      if ./script/e2e-test.sh  $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $DEV_TAG $IMG_MODIFIER; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
