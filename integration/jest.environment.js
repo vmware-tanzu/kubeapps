@@ -76,7 +76,7 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
           });
         }
       })
-      .on("pageerror", ({ message }) => console.log(+message))
+      .on("pageerror", ({ message }) => console.log(message))
       .on("requestfailed", (request) =>
         console.log(`${request.failure().errorText} ${request.url()}`)
       );

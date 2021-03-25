@@ -1,7 +1,4 @@
 const utils = require("./lib/utils");
-// const {
-//   screenshotsFolder,
-// } = require("../args");
 const path = require("path");
 
 // The operator may take some minutes to be created
@@ -10,6 +7,12 @@ jest.setTimeout(360000);
 test("Deploys an Operator", async () => {
   // ODIC login
   var token;
+  page.on('response', response => {
+    if (response.status() >= 400) {
+      console.log("ERROR: ", response.status() + " " + response.url());
+    }
+    token = response.headers()["authorization"] || token;
+  });
   await page.goto(getUrl("/#/c/default/ns/kubeapps/operators");
   await page.waitForNavigation();
   await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
