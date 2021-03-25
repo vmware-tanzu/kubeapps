@@ -1,0 +1,85 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "kubeappsapis/plugins/packages/kapp_controller/v1/kapp_conttroller.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PackagesService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AvailablePackage": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the package."
+        },
+        "repository": {
+          "$ref": "#/definitions/v1PackageRepository",
+          "description": "The package repository where this package is located."
+        },
+        "latestVersion": {
+          "type": "string",
+          "description": "The latest version of the package in the repository."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "A url for an icon."
+        }
+      },
+      "description": "An AvailablePackage defines a package available for installation."
+    },
+    "v1PackageRepository": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        }
+      },
+      "description": "A PackageRepository is identified by a name and optionally a specific namespace."
+    }
+  }
+}
