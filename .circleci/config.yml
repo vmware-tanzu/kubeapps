@@ -1,4 +1,35 @@
 version: 2.1
+parameters:
+  GOLANG_VERSION:
+    type: string
+    default: "1.13"
+  NODE_VERSION:
+    type: string
+    default: "12"
+  DOCKER_VERSION:
+    type: string
+    default: "19.03.13"
+  HELM_VERSION:
+    type: "string"
+    default: "v3.1.0"
+  OLM_VERSION:
+    type: "string"
+    default: "v0.17.0"
+  MKCERT_VERSION:
+    type: "string"
+    default: "v1.4.3"
+  KUBECTL_VERSION:
+    type: "string"
+    default: "v1.20.5"
+  KIND_VERSION:
+    type: "string"
+    default: "v0.10.0"
+  K8S_KIND_VERSION:
+    type: "string"
+    default: "v1.20.2"
+  POSTGRESQL_VERSION:
+    type: "string"
+    default: "11.11.0-debian-10-r45"
 
 ## Build conditions
 # Build in any branch or tag
@@ -138,7 +169,7 @@ exports: &exports
 build_images: &build_images
   steps:
     - setup_remote_docker:
-        version: 19.03.13
+        version: << pipeline.parameters.DOCKER_VERSION >>
     - checkout
     - <<: *exports
     - run: |
@@ -166,7 +197,7 @@ install_cluster: &install_cluster
       sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml
       {
         echo "Creating cluster..."
-        kind create cluster --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
@@ -175,7 +206,7 @@ install_cluster: &install_cluster
       } || {
         echo "Cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci || true
-        kind create cluster --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
@@ -212,14 +243,14 @@ install_additional_cluster: &install_additional_cluster
       sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
       {
         echo "Creating additional cluster..."
-        kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
           echo "Additional cluster created"
       } || {
           echo "Additional cluster creation failed, retrying..."
           kind delete clusters kubeapps-ci-additional || true
-          kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+          kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
           echo "Additional cluster created"
@@ -310,7 +341,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      
+
       if ./script/e2e-test.sh  $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $DEV_TAG $IMG_MODIFIER; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
@@ -320,7 +351,7 @@ run_e2e_tests: &run_e2e_tests
       fi
 gke_test: &gke_test
   docker:
-    - image: circleci/golang:1.13
+    - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
   steps:
     - checkout
     - run: |
@@ -397,8 +428,9 @@ jobs:
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       CGO_ENABLED: "0"
+      POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *exports
@@ -406,13 +438,13 @@ jobs:
       - setup_remote_docker
       # Integration tests for DB
       - run: |
-          docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.11.0-debian-10-r45
-          docker run --network container:postgresql -d --name tests circleci/golang:1.13 tail -f /dev/null
+          docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
+          docker run --network container:postgresql -d --name tests circleci/golang:<< pipeline.parameters.GOLANG_VERSION >> tail -f /dev/null
           docker cp /go tests:/
           docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
   test_dashboard:
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
       - checkout
       - run: yarn install --cwd=dashboard --frozen-lockfile
@@ -426,9 +458,9 @@ jobs:
       - run: cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
   test_chart_render:
     environment:
-      HELM_VERSION: "v3.5.2"
+      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - <<: *exports
       - checkout
@@ -436,7 +468,7 @@ jobs:
       - run: ./script/chart-template-test.sh
   build_go_images:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
@@ -444,34 +476,35 @@ jobs:
     <<: *build_images
   build_dashboard:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     environment:
       IMAGES: "dashboard"
     <<: *build_images
   build_pinniped_proxy:
     docker:
       # We're building the image in a docker container anyway so just re-use the golang image already in use.
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
   release:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
   local_e2e_tests:
     machine: true
     environment:
-      HELM_VERSION: "v3.5.2"
+      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
       DEFAULT_DEX_IP: "172.18.0.2"
-      OLM_VERSION: "v0.17.0"
-      MKCERT_VERSION: "v1.4.3"
-      KUBECTL_VERSION: "v1.20.5"
-      KIND_VERSION: "v0.10.0"
+      OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
+      MKCERT_VERSION: << pipeline.parameters.MKCERT_VERSION >>
+      KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
+      KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
+      K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
     parameters:
       number:
         type: string
@@ -479,32 +512,32 @@ jobs:
   GKE_1_15_MASTER:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.5.2"
+      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
   GKE_1_15_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.5.2"
+      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
   GKE_1_16_MASTER:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.5.2"
+      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
   GKE_1_16_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v3.5.2"
+      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
   sync_chart:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - add_ssh_keys:
@@ -519,7 +552,7 @@ jobs:
           ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
   push_images:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - setup_remote_docker
       - <<: *exports
