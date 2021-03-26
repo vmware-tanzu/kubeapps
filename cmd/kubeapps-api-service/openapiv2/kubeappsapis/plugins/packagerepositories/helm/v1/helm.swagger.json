@@ -1,0 +1,133 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "kubeappsapis/plugins/packagerepositories/helm/v1/helm.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PackageRepositoriesService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/packagerepositories/helm/v1/get-available-packages": {
+      "get": {
+        "operationId": "PackageRepositoriesService_GetAvailablePackages",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1AvailablePackage"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1AvailablePackage"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided otherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackageRepositoriesService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AvailablePackage": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the package."
+        },
+        "repository": {
+          "$ref": "#/definitions/v1PackageRepository",
+          "description": "The package repository where this package is located."
+        },
+        "latestVersion": {
+          "type": "string",
+          "description": "The latest version of the package in the repository."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "A url for an icon."
+        }
+      },
+      "description": "An AvailablePackage defines a package available for installation."
+    },
+    "v1PackageRepository": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        }
+      },
+      "description": "A PackageRepository is identified by a name and optionally a specific namespace."
+    }
+  }
+}

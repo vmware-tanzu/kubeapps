@@ -21,16 +21,16 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	v1 "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/plugins/packages/helm/v1"
+	v1 "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/plugins/packagerepositories/kapp_controller/v1"
 )
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
-	v1.RegisterPackagesServiceServer(s, &v1.Server{})
+	v1.RegisterPackageRepositoriesServiceServer(s, &v1.Server{})
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-	return v1.RegisterPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	return v1.RegisterPackageRepositoriesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

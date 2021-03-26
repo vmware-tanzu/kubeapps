@@ -1,0 +1,14 @@
+syntax = "proto3";
+package kubeappsapis.plugins.packagerepositories.helm.v1;
+option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/plugins/packagerepositories/helm/v1";
+
+import "kubeappsapis/core/packagerepositories/v1/repositories.proto";
+import "google/api/annotations.proto";
+
+service PackageRepositoriesService {
+  rpc GetAvailablePackages(kubeappsapis.core.packagerepositories.v1.GetAvailablePackagesRequest) returns (stream kubeappsapis.core.packagerepositories.v1.AvailablePackage) {
+    option (google.api.http) = {
+      get: "/packagerepositories/helm/v1/get-available-packages"
+    };
+  }
+}

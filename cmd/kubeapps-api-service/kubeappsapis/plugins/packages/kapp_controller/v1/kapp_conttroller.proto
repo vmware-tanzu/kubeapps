@@ -1,9 +1,0 @@
-syntax = "proto3";
-package kubeappsapis.plugins.packages.kapp_controller.v1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/plugins/packages.kapp_controller/v1";
-
-import "kubeappsapis/core/packages/v1/packages.proto";
-
-service PackagesService {
-  rpc GetAvailablePackages(kubeappsapis.core.packages.v1.GetAvailablePackagesRequest) returns (stream kubeappsapis.core.packages.v1.AvailablePackage);
-}

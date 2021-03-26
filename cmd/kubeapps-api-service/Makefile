@@ -13,13 +13,13 @@ cli-dependencies:
 		google.golang.org/protobuf/cmd/protoc-gen-go
 
 # Build the helm and kapp package plugins with the output in the devel directory.
-devel/helm-packages-v1-plugin.so:
-	go build -o $@ -buildmode=plugin kubeappsapis/plugins/packages/helm/v1/plugin/main.go
+devel/helm-packagerepositories-v1-plugin.so:
+	go build -o $@ -buildmode=plugin kubeappsapis/plugins/packagerepositories/helm/v1/plugin/main.go
 
-devel/kapp-controller-packages-v1-plugin.so:
-	go build -o $@ -buildmode=plugin kubeappsapis/plugins/packages/kapp_controller/v1/plugin/main.go
+devel/kapp-controller-packagerepositories-v1-plugin.so:
+	go build -o $@ -buildmode=plugin kubeappsapis/plugins/packagerepositories/kapp_controller/v1/plugin/main.go
 
-run: devel/helm-packages-v1-plugin.so devel/kapp-controller-packages-v1-plugin.so
+run: devel/helm-packagerepositories-v1-plugin.so devel/kapp-controller-packagerepositories-v1-plugin.so
 	go run main.go --plugin-dir devel/
 
 test:
