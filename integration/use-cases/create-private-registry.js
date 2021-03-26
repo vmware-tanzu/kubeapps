@@ -2,15 +2,28 @@ const axios = require("axios");
 const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
+  // ODIC login
+  var token;
+  page.on('response', response => {
+    token = response.headers()["authorization"] || token;
+  });
+  await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
+  await page.waitForNavigation();
+  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
+  await page.waitForNavigation();
+  await expect(page).toClick(".dex-container button", { text: "Log in with Email" });
+  await page.waitForNavigation();
+  await page.type("input[id=\"login\"]", "kubeapps-operator@example.com");
+  await page.type("input[id=\"password\"]", "password");
+  await page.waitForSelector("#submit-login", { visible: true, timeout: 10000 });
+  await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
+  await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
+  console.log("Token after OIDC authentication: " + token);
+
   await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
 
-  await expect(page).toFillForm("form", {
-    token: process.env.ADMIN_TOKEN,
-  });
-
-  await page.evaluate(() =>
-    document.querySelector("#login-submit-button").click()
-  );
+  // wait for the loading msg to disappear
+  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
 
@@ -31,12 +44,14 @@ test("Creates a private registry", async () => {
 
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
+
   try {
     // TODO(andresmgot): Remove this line once 2.3 is released
     await expect(page).toClick("cds-button", { text: "Add new credentials" });
-  } catch(e) {
+  } catch (e) {
     await expect(page).toClick(".btn-info-outline", { text: "Add new credentials" });
   }
+
   await page.type("input[placeholder=\"Secret\"]", secret);
   await page.type(
     "input[placeholder=\"https://index.docker.io/v1/\"]",
@@ -45,10 +60,11 @@ test("Creates a private registry", async () => {
   await page.type("input[placeholder=\"Username\"][value=\"\"]", "user");
   await page.type("input[placeholder=\"Password\"][value=\"\"]", "password");
   await page.type("input[placeholder=\"user@example.com\"]", "user@example.com");
+
   try {
     // TODO(andresmgot): Remove this line once 2.3 is released
     await expect(page).toClick(".secondary-input cds-button", { text: "Submit" });
-  } catch(e) {
+  } catch (e) {
     await expect(page).toClick(".btn-info-outline", { text: "Submit" });
   }
 
@@ -83,9 +99,17 @@ test("Creates a private registry", async () => {
   const URL = getUrl(
     "/api/clusters/default/apis/apps/v1/namespaces/default/deployments"
   );
-  const response = await axios.get(URL, {
-    headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
-  });
+
+  const cookies = await page.cookies();
+  const axiosConfig = {
+    headers: {
+      "Authorization": `${token}`,
+      "Cookie": `${cookies[0].name}=${cookies[0].value};`,
+    },
+  };
+  const response = await axios.get(URL, axiosConfig);
+  expect(response.status).toEqual(200);
+
   const deployment = response.data.items.find((deployment) => {
     return deployment.metadata.name.match(appName);
   });
@@ -108,7 +132,7 @@ test("Creates a private registry", async () => {
     );
     let chartVersionValue = await chartVersionElementContent.jsonValue();
     expect(chartVersionValue).toEqual("7.3.15");
-  } catch(e) {
+  } catch (e) {
     retries--;
     if (!retries) {
       throw e;
