@@ -55,3 +55,11 @@ Similarly, tests can be run with the cargo tool:
 ```bash
 cargo test
 ```
+
+## Formatting the code
+
+Using `rustfmt` formatting tool with cargo:
+
+```bash
+cargo fmt
+```

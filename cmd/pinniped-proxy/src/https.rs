@@ -1,10 +1,5 @@
 use anyhow::Result;
-use hyper::{
-    client::connect::HttpConnector,
-    Client,
-    HeaderMap,
-    header::HeaderValue, Request,
-};
+use hyper::{client::connect::HttpConnector, header::HeaderValue, Client, HeaderMap, Request};
 use hyper_tls::HttpsConnector;
 use log::debug;
 use native_tls::{Certificate, TlsConnectorBuilder};
@@ -31,7 +26,7 @@ fn validate_url(u: String) -> Result<String> {
         Err(e) => {
             debug!("unable to parse url '{}': {}", u, e);
             Err(anyhow::anyhow!(e))
-        },
+        }
     }
 }
 
@@ -39,12 +34,23 @@ fn validate_url(u: String) -> Result<String> {
 ///
 /// The client cert is obtained by exchanging the authorization token for a client identity via
 /// pinniped.
-pub async fn include_client_identity_for_headers<'a>(mut tls_builder: &'a mut TlsConnectorBuilder, request_headers: HeaderMap<HeaderValue>, k8s_api_server_url: &str, k8s_api_ca_cert_data: &[u8]) -> Result<&'a mut TlsConnectorBuilder> {
+pub async fn include_client_identity_for_headers<'a>(
+    mut tls_builder: &'a mut TlsConnectorBuilder,
+    request_headers: HeaderMap<HeaderValue>,
+    k8s_api_server_url: &str,
+    k8s_api_ca_cert_data: &[u8],
+) -> Result<&'a mut TlsConnectorBuilder> {
     if request_headers.contains_key("Authorization") {
-        match pinniped::exchange_token_for_identity(request_headers["Authorization"].to_str()?, k8s_api_server_url, k8s_api_ca_cert_data).await {
+        match pinniped::exchange_token_for_identity(
+            request_headers["Authorization"].to_str()?,
+            k8s_api_server_url,
+            k8s_api_ca_cert_data,
+        )
+        .await
+        {
             Ok(identity) => {
                 tls_builder = tls_builder.identity(identity);
-            },
+            }
             Err(e) => return Err(e),
         };
     }
@@ -62,11 +68,14 @@ pub fn get_api_server_url(request_headers: &HeaderMap<HeaderValue>) -> Result<St
                 Ok(hv) => validate_url(hv.to_string()),
                 Err(e) => Err(anyhow::anyhow!(e)),
             }
-        },
+        }
         None => {
-            debug!("no {} header present, defaulting to {}", HEADER_K8S_API_SERVER_URL, DEFAULT_K8S_API_SERVER_URL);
+            debug!(
+                "no {} header present, defaulting to {}",
+                HEADER_K8S_API_SERVER_URL, DEFAULT_K8S_API_SERVER_URL
+            );
             Ok(DEFAULT_K8S_API_SERVER_URL.to_string())
-        },
+        }
     }
 }
 
@@ -75,7 +84,10 @@ pub fn get_api_server_cert_auth_data(cacert_header: &HeaderValue) -> Result<Vec<
     match base64::decode(cacert_header.as_bytes()) {
         Ok(data) => Ok(data),
         Err(e) => {
-            debug!("failed to base64 decode {} header data: {}", HEADER_K8S_API_SERVER_CA_CERT, e);
+            debug!(
+                "failed to base64 decode {} header data: {}",
+                HEADER_K8S_API_SERVER_CA_CERT, e
+            );
             Err(anyhow::anyhow!(e))
         }
     }
@@ -88,13 +100,16 @@ pub fn cert_for_cert_data(cert_data: Vec<u8>) -> Result<Certificate> {
         Err(e) => {
             debug!("unable to create certificate from PEM data: {}", e);
             Err(anyhow::anyhow!(e))
-        },
+        }
     }
 }
 
 /// rewrite_request directs the specified request to the targeted backend api
 /// server.
-pub fn rewrite_request(mut req: Request<hyper::Body>, k8s_api_server_url: String) -> Result<Request<hyper::Body>> {
+pub fn rewrite_request(
+    mut req: Request<hyper::Body>,
+    k8s_api_server_url: String,
+) -> Result<Request<hyper::Body>> {
     // Update the request URI from
     // http://pinniped-proxy:1234/api/v1/foo?bar
     // to
@@ -116,7 +131,7 @@ pub fn rewrite_request(mut req: Request<hyper::Body>, k8s_api_server_url: String
                 None => host_header,
             };
             Some(HeaderValue::from_str(&host_header)?)
-        },
+        }
         None => None,
     };
     match host {
@@ -128,7 +143,9 @@ pub fn rewrite_request(mut req: Request<hyper::Body>, k8s_api_server_url: String
 }
 
 /// make_https_connector returns the tls-configured http connector.
-pub fn make_https_client(tls_builder: &mut TlsConnectorBuilder) -> Result<Client<HttpsConnector<HttpConnector>>> {
+pub fn make_https_client(
+    tls_builder: &mut TlsConnectorBuilder,
+) -> Result<Client<HttpsConnector<HttpConnector>>> {
     let tls = tls_builder.build()?;
     let tokio_tls = tokio_native_tls::TlsConnector::from(tls);
     let mut http = HttpConnector::new();
@@ -147,8 +164,6 @@ mod tests {
     const VALID_API_SERVER_URL: &str = "https://172.1.18.4:12345";
     const VALID_CERT_BASE64: &'static str = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJd01UQXlOakl6TXpBME5Wb1hEVE13TVRBeU5ESXpNekEwTlZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT1ZKCnFuOVBFZUp3UDRQYnI0cFo1ZjZKUmliOFZ5a2tOYjV2K1hzTVZER01aWGZLb293Y29IYjFwRWh5d0pzeDFiME4Kd2YvZ1JURi9maEgzT0drRnNQMlV2a0lHVytzNUlBd0sxMFRXYkN5VzAwT3lzVkdLcnl5bHNWcEhCWXBZRGJBcQpkdnQzc0FkcFJZaGlLZSs2NkVTL3dQNTdLV3g0SVdwZko0UGpyejh2NkJBWlptZ3o5ZzRCSFNMQkhpbTVFbTdYClBJTmpKL1RJTXFzVW1PR1ppUUNHR0ptRnQxZ21jQTd3eHZ0ZXg2ckkxSWdFNkh5NW10UzJ3NDZaMCtlVU1RSzgKSE9UdnI5aGFETnhJenVjbkduaFlCT2Z2U2VVaXNCR0pOUm5QbENydWx4b2NSZGI3N20rQUdzWW52QitNd2prVQpEbXNQTWZBelpSRHEwekhzcGEwQ0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFBWndybXJLa3FVaDJUYld2VHdwSWlOd0o1NzAKaU9lTVl2WWhNakZxTmt6Tk9OUW55c3lPd1laRGJFMDRrV3AxclRLNHVZaUh3NTJUc0cyelJsZ0QzMzNKaEtvUQpIVloyV1hUT3Z5U2RJaWl5bVpKM2N3d0p2T0lhMW5zZnhYY1NJakJnYnNzYXowMndpRCtlazRPdmlRZktjcXJpCnFQbWZabDZDSkk0NU1rd3JwTExFaTZkNVhGbkhDb3d4eklxQjBrUDhwOFlOaGJYWTNYY2JaNElvY2lMemRBamUKQ1l6NXFVSlBlSDJCcHNaM0JXNXRDbjcycGZYazVQUjlYOFRUTHh6aTA4SU9yYjgvRDB4Tnk3emQyMnVjNXM1bwoveXZIeEt6cXBiczVuRXJkT0JFVXNGWnBpUEhaVGc1dExmWlZ4TG00VjNTZzQwRWUyNFd6d09zaDNIOD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=";
 
-
-
     #[test]
     fn test_valid_url_success() -> Result<()> {
         let valid_url = "https://example.com:8443".to_string();
@@ -156,8 +171,8 @@ mod tests {
             Ok(u) => {
                 assert_eq!(valid_url, u);
                 Ok(())
-            },
-            Err(e) => anyhow::bail!("got: {:#?}, want: {}", e, valid_url)
+            }
+            Err(e) => anyhow::bail!("got: {:#?}, want: {}", e, valid_url),
         }
     }
 
@@ -167,19 +182,30 @@ mod tests {
         match validate_url(bad_url) {
             Ok(u) => anyhow::bail!("got: {}, want: error", u),
             Err(e) => {
-                assert!(e.is::<url::ParseError>(), "got: {:#?}, want: {}", e, url::ParseError::InvalidDomainCharacter);
+                assert!(
+                    e.is::<url::ParseError>(),
+                    "got: {:#?}, want: {}",
+                    e,
+                    url::ParseError::InvalidDomainCharacter
+                );
                 Ok(())
             }
         }
     }
 
     #[test]
-    fn test_invalid_protocol() -> Result<()>{
+    fn test_invalid_protocol() -> Result<()> {
         let invalid_proto = "ftp://example.com".to_string();
         match validate_url(invalid_proto) {
             Ok(u) => anyhow::bail!("got: {}, want: error", u),
             Err(e) => {
-                assert_eq!(INVALID_SCHEME_ERROR, e.to_string(), "got: {:#?}, want: {}", e, INVALID_SCHEME_ERROR);
+                assert_eq!(
+                    INVALID_SCHEME_ERROR,
+                    e.to_string(),
+                    "got: {:#?}, want: {}",
+                    e,
+                    INVALID_SCHEME_ERROR
+                );
                 Ok(())
             }
         }
@@ -188,38 +214,61 @@ mod tests {
     #[test]
     fn get_api_server_url_success() -> Result<()> {
         let mut headers = HeaderMap::new();
-        headers.insert(HEADER_K8S_API_SERVER_URL, HeaderValue::from_static(VALID_API_SERVER_URL));
+        headers.insert(
+            HEADER_K8S_API_SERVER_URL,
+            HeaderValue::from_static(VALID_API_SERVER_URL),
+        );
 
-        assert_eq!(get_api_server_url(&headers)?, VALID_API_SERVER_URL.to_string());
+        assert_eq!(
+            get_api_server_url(&headers)?,
+            VALID_API_SERVER_URL.to_string()
+        );
         Ok(())
     }
 
     #[test]
     fn get_api_server_url_invalid() -> Result<()> {
         let mut headers = HeaderMap::new();
-        headers.insert(HEADER_K8S_API_SERVER_URL, HeaderValue::from_static("not a url"));
+        headers.insert(
+            HEADER_K8S_API_SERVER_URL,
+            HeaderValue::from_static("not a url"),
+        );
 
         let want = url::ParseError::InvalidDomainCharacter;
         match get_api_server_url(&headers) {
             Ok(got) => anyhow::bail!("got: {}, want: {}", got, want),
             Err(got) => {
-                assert!(got.is::<url::ParseError>(), "got: {:#?}, want: {}", got, want);
+                assert!(
+                    got.is::<url::ParseError>(),
+                    "got: {:#?}, want: {}",
+                    got,
+                    want
+                );
                 Ok(())
-            },
+            }
         }
     }
 
     #[test]
     fn get_api_server_url_wrong_scheme() -> Result<()> {
         let mut headers = HeaderMap::new();
-        headers.insert(HEADER_K8S_API_SERVER_URL, HeaderValue::from_static("http://172.1.2.18"));
+        headers.insert(
+            HEADER_K8S_API_SERVER_URL,
+            HeaderValue::from_static("http://172.1.2.18"),
+        );
 
         match get_api_server_url(&headers) {
             Ok(got) => anyhow::bail!("got: {}, want: Err({})", got, INVALID_SCHEME_ERROR),
             Err(got) => {
-                assert_eq!(got.to_string(), INVALID_SCHEME_ERROR, "got: {:#?}, want: Err({})", got, INVALID_SCHEME_ERROR);
+                assert_eq!(
+                    got.to_string(),
+                    INVALID_SCHEME_ERROR,
+                    "got: {:#?}, want: Err({})",
+                    got,
+                    INVALID_SCHEME_ERROR
+                );
                 Ok(())
-            },
+            }
         }
     }
 
@@ -227,7 +276,10 @@ mod tests {
     fn get_api_server_url_default() -> Result<()> {
         let headers = HeaderMap::new();
 
-        assert_eq!(get_api_server_url(&headers)?, DEFAULT_K8S_API_SERVER_URL.to_string());
+        assert_eq!(
+            get_api_server_url(&headers)?,
+            DEFAULT_K8S_API_SERVER_URL.to_string()
+        );
         Ok(())
     }
 
@@ -237,7 +289,7 @@ mod tests {
             Ok(data) => {
                 assert_eq!(data, base64::decode(VALID_CERT_BASE64.as_bytes())?);
                 Ok(())
-            },
+            }
             Err(e) => anyhow::bail!("got {}, want: valid cert data", e),
         }
     }
@@ -246,9 +298,13 @@ mod tests {
     fn get_api_server_cert_auth_data_nonb64() -> Result<()> {
         match get_api_server_cert_auth_data(&HeaderValue::from_static("not base64 data")) {
             Err(e) => {
-                assert!(e.is::<base64::DecodeError>(), "got: {:#?}, want: base64::DecodeErro", e);
+                assert!(
+                    e.is::<base64::DecodeError>(),
+                    "got: {:#?}, want: base64::DecodeErro",
+                    e
+                );
                 Ok(())
-            },
+            }
             _ => anyhow::bail!("got: valid cert, wanted base64::DecodeError"),
         }
     }
@@ -265,9 +321,13 @@ mod tests {
     fn cert_for_cert_data_invalid_pem() -> Result<()> {
         match cert_for_cert_data("not valid PEM".as_bytes().to_vec()) {
             Err(e) => {
-                assert!(e.is::<native_tls::Error>(), "got: {:#?}, want: native_tls::Error", e);
+                assert!(
+                    e.is::<native_tls::Error>(),
+                    "got: {:#?}, want: native_tls::Error",
+                    e
+                );
                 Ok(())
-            },
+            }
             _ => anyhow::bail!("got: valid cert, wanted native_tls::Error"),
         }
     }
@@ -282,7 +342,10 @@ mod tests {
 
         let want = format!("{}/foo/bar/zed", VALID_API_SERVER_URL);
         assert_eq!(want, req.uri().to_string());
-        assert_eq!(VALID_API_SERVER_HOST, req.headers().get("HOST").unwrap().to_str()?);
+        assert_eq!(
+            VALID_API_SERVER_HOST,
+            req.headers().get("HOST").unwrap().to_str()?
+        );
         Ok(())
     }
 }

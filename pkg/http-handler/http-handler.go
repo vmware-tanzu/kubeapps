@@ -332,8 +332,8 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 }
 
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router, clustersConfig kube.ClustersConfig) error {
-	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), clustersConfig)
+func SetupDefaultRoutes(r *mux.Router, burst int, qps float32, clustersConfig kube.ClustersConfig) error {
+	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), burst, qps, clustersConfig)
 	if err != nil {
 		return err
 	}

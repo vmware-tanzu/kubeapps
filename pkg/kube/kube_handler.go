@@ -22,10 +22,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	apprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
@@ -152,6 +154,7 @@ type combinedClientsetInterface interface {
 	CoreV1() corev1typed.CoreV1Interface
 	AuthorizationV1() authorizationv1.AuthorizationV1Interface
 	RestClient() rest.Interface
+	MaxWorkers() int
 }
 
 // Need to use a type alias to embed the two Clientset's without a name clash.
@@ -164,6 +167,10 @@ type combinedClientset struct {
 
 func (c *combinedClientset) RestClient() rest.Interface {
 	return c.restCli
+}
+
+func (c *combinedClientset) MaxWorkers() int {
+	return int(c.restCli.GetRateLimiter().QPS())
 }
 
 // kubeHandler handles http requests for operating on app repositories and k8s resources
@@ -338,7 +345,7 @@ var ErrEmptyOCIRegistry = fmt.Errorf("You need to specify at least one repositor
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
-func NewHandler(kubeappsNamespace string, clustersConfig ClustersConfig) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace string, burst int, qps float32, clustersConfig ClustersConfig) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -356,6 +363,12 @@ func NewHandler(kubeappsNamespace string, clustersConfig ClustersConfig) (AuthHa
 	if err != nil {
 		return nil, err
 	}
+	// Modify the default number of requests that the given client can do
+	// This is useful to handle a large number of namespaces which are check in parallel
+	// Burst is the initial number of request made in parallel
+	// Then further requests are performed following the QPS rate
+	config.Burst = burst
+	config.QPS = qps
 
 	svcRestConfig, err := rest.InClusterConfig()
 	if err != nil {
@@ -753,24 +766,68 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
-func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	allowedNamespaces := []corev1.Namespace{}
-	for _, namespace := range namespaces {
+type checkNSJob struct {
+	ns corev1.Namespace
+}
+
+type checkNSResult struct {
+	checkNSJob
+	allowed bool
+	Error   error
+}
+
+func nsCheckerWorker(userClientset combinedClientsetInterface, nsJobs <-chan checkNSJob, resultChan chan checkNSResult) {
+	for j := range nsJobs {
 		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
 			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationapi.ResourceAttributes{
 					Group:     "",
 					Resource:  "secrets",
 					Verb:      "get",
-					Namespace: namespace.Name,
+					Namespace: j.ns.Name,
 				},
 			},
 		}, metav1.CreateOptions{})
-		if err != nil {
-			return nil, err
+		resultChan <- checkNSResult{j, res.Status.Allowed, err}
+	}
+}
+
+func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces []corev1.Namespace) ([]corev1.Namespace, error) {
+	allowedNamespaces := []corev1.Namespace{}
+
+	var wg sync.WaitGroup
+	workers := int(math.Min(float64(len(namespaces)), float64(userClientset.MaxWorkers())))
+	checkNSJobs := make(chan checkNSJob, workers)
+	nsCheckRes := make(chan checkNSResult, workers)
+
+	// Process maxReq ns at a time
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			nsCheckerWorker(userClientset, checkNSJobs, nsCheckRes)
+			wg.Done()
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(nsCheckRes)
+	}()
+
+	go func() {
+		for _, ns := range namespaces {
+			checkNSJobs <- checkNSJob{ns}
 		}
-		if res.Status.Allowed {
-			allowedNamespaces = append(allowedNamespaces, namespace)
+		close(checkNSJobs)
+	}()
+
+	// Start receiving results
+	for res := range nsCheckRes {
+		if res.Error == nil {
+			if res.allowed {
+				allowedNamespaces = append(allowedNamespaces, res.ns)
+			}
+		} else {
+			log.Errorf("failed to check namespace permissions. Got %v", res.Error)
 		}
 	}
 	return allowedNamespaces, nil
@@ -789,6 +846,7 @@ func filterActiveNamespaces(namespaces []corev1.Namespace) []corev1.Namespace {
 // GetNamespaces return the list of namespaces that the user has permission to access
 func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	// Try to list namespaces with the user token, for backward compatibility
+	var namespaceList []corev1.Namespace
 	namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		if k8sErrors.IsForbidden(err) {
@@ -801,12 +859,15 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 		} else {
 			return nil, err
 		}
-	}
 
-	// Filter namespaces in which the user has permissions to write (secrets) only
-	namespaceList, err := filterAllowedNamespaces(a.clientset, namespaces.Items)
-	if err != nil {
-		return nil, err
+		// Filter namespaces in which the user has permissions to write (secrets) only
+		namespaceList, err = filterAllowedNamespaces(a.clientset, namespaces.Items)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// If the user can list namespaces, do not filter them
+		namespaceList = namespaces.Items
 	}
 
 	// Filter namespaces that are in terminating state
