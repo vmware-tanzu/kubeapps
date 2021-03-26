@@ -29,7 +29,7 @@ impl fmt::Display for LogData {
     }
 }
 
-/// request_log_data returns a new LogData with the relevant data from the request. 
+/// request_log_data returns a new LogData with the relevant data from the request.
 pub fn request_log_data(req: &Request<Body>) -> LogData {
     LogData {
         target_uri: req.uri().clone(),
@@ -84,11 +84,14 @@ mod tests {
 
         let log_data = request_log_data(&request);
 
-        assert_eq!(log_data, LogData {
-            target_uri: URI.parse::<Uri>().unwrap(),
-            method: Method::GET,
-            status_code: None,
-        })
+        assert_eq!(
+            log_data,
+            LogData {
+                target_uri: URI.parse::<Uri>().unwrap(),
+                method: Method::GET,
+                status_code: None,
+            }
+        )
     }
 
     #[test]
@@ -100,9 +103,12 @@ mod tests {
 
         let log_data = response_log_data(&response, Default::default());
 
-        assert_eq!(log_data, LogData {
-            status_code: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
-        })
+        assert_eq!(
+            log_data,
+            LogData {
+                status_code: Some(StatusCode::NOT_FOUND),
+                ..Default::default()
+            }
+        )
     }
 }

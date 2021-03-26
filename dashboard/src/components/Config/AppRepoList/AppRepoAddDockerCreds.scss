@@ -14,7 +14,5 @@
 }
 
 .secret-label {
-  // By default, labels are capitalized but in the case of a secret, we still want it
-  // to be lowercase
-  text-transform: lowercase;
+  --text-transform: lowercase;
 }
