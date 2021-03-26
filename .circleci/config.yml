@@ -51,6 +51,7 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
+            - build_pinniped_proxy
       - GKE_1_15_MASTER:
           <<: *build_on_master
           requires:
@@ -106,28 +107,34 @@ workflows:
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
-  run: |
-    echo "export PATH=$PATH:${HOME}/google-cloud-sdk/bin" >> $BASH_ENV
-    echo "export CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> $BASH_ENV
-    if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
-      rm -rf $HOME/google-cloud-sdk;
-      curl https://sdk.cloud.google.com | bash;
-    fi
+  run:
+    name: "Install gcloud sdk"
+    command: |
+      echo "export PATH=$PATH:${HOME}/google-cloud-sdk/bin" >> $BASH_ENV
+      echo "export CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> $BASH_ENV
+      if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
+        rm -rf $HOME/google-cloud-sdk;
+        curl https://sdk.cloud.google.com | bash;
+      fi
 install_helm_cli: &install_helm_cli
-  run: |
-    wget https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
-    tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
-    sudo mv linux-amd64/helm /usr/local/bin/
+  run:
+    name: "Install helm"
+    command: |
+      wget https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
+      tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
+      sudo mv linux-amd64/helm /usr/local/bin/
 exports: &exports
-  run: |
-    # It is not possible to resolve env vars in the environment section:
-    # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
-    # DEV_TAG and PROD_TAG are the tags used for the Kubeapps docker images
-    echo "export DEV_TAG=build-${CIRCLE_SHA1}" >> $BASH_ENV
-    echo "export PROD_TAG=${CIRCLE_TAG:-latest}" >> $BASH_ENV
-    # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
-    # history of the production tag
-    echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
+  run:
+    name: "Export variables"
+    command: |
+      # It is not possible to resolve env vars in the environment section:
+      # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
+      # DEV_TAG and PROD_TAG are the tags used for the Kubeapps docker images
+      echo "export DEV_TAG=build-${CIRCLE_SHA1}" >> $BASH_ENV
+      echo "export PROD_TAG=${CIRCLE_TAG:-latest}" >> $BASH_ENV
+      # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
+      # history of the production tag
+      echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
 build_images: &build_images
   steps:
     - setup_remote_docker:
@@ -152,27 +159,165 @@ build_images: &build_images
         root: images
         paths:
           - "*"
+install_cluster: &install_cluster
+  run:
+    name: "Install cluster"
+    command: |
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml
+      {
+        echo "Creating cluster..."
+        kind create cluster --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        sleep 5 &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
+        echo "Cluster created"
+      } || {
+        echo "Cluster creation failed, retrying..."
+        kind delete clusters kubeapps-ci || true
+        kind create cluster --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        sleep 5 &&
+        kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
+        echo "Cluster created"
+      } || {
+        echo "Error while creating the cluster after retry"
+      }
+export_cluster_variables: &export_cluster_variables
+  run:
+    name: "Export cluster variables"
+    command: |
+      DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
+      ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+
+      echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
+      echo DEX_IP=$DEX_IP
+      echo ADDITIONAL_CLUSTER_IP=$ADDITIONAL_CLUSTER_IP
+
+      # If running kubectl without args, use the default "kubeapps-ci" cluster
+      cp ${HOME}/.kube/kind-config-kubeapps-ci ${HOME}/.kube/config
+      kubectl config set-context kind-kubeapps-ci 
+
+      # If the default IP the proper one, the multicluster setup will fail
+      if [ "$DEFAULT_DEX_IP" != "$DEX_IP" ]; then echo "Default IP does not match with current IP used in Kind"; exit 1; fi
+
+      echo "export DEFAULT_DEX_IP=${DEFAULT_DEX_IP}" >> $BASH_ENV
+      echo "export DEX_IP=${DEX_IP}" >> $BASH_ENV
+      echo "export ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP}" >> $BASH_ENV
+install_additional_cluster: &install_additional_cluster
+  run:
+    name: "Install additional cluster"
+    command: |
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
+      {
+        echo "Creating additional cluster..."
+        kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+          echo "Additional cluster created"
+      } || {
+          echo "Additional cluster creation failed, retrying..."
+          kind delete clusters kubeapps-ci-additional || true
+          kind create cluster --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+          echo "Additional cluster created"
+      } || {
+          echo "Error while creating the additional cluster after retry"
+      }
+
+copy_apiserver_certificates: &copy_apiserver_certificates
+  run:
+    name: "Copy apiserver certificates"
+    command: |
+      # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
+      docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
+      docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+      sudo chown circleci ./devel/dex.key
+      sudo chown circleci ./devel/dex.crt
+install_olm: &install_olm
+  run:
+    name: "Install OLM"
+    command: |
+      # Operators are not supported in GKE 1.14 and flaky in 1.15
+      if [[ -z "${GKE_BRANCH-}" ]]; then
+        echo "Installing OLM ${OLM_VERSION} ..."
+        url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}
+
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/crds.yaml 
+        # Add sleep to avoid erros like "no matches for kind OperatorGroup"
+        sleep 10
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ${url}/olm.yaml 
+      fi
+check_olm: &check_olm
+  run:
+    name: "Check OLM"
+    command: |
+      # Operators are not supported in GKE 1.14 and flaky in 1.15
+      if [[ -z "${GKE_BRANCH-}" ]]; then
+        echo "Waiting for OLM deployments to be ready..."
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=360s deployment/catalog-operator
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=360s deployment/olm-operator
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci  wait --namespace olm --for=condition=available  --timeout=360s deployment/packageserver
+      fi
 install_kubectl: &install_kubectl
-  run: |
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl
-    chmod +x ./kubectl
-    sudo mv ./kubectl /usr/local/bin/kubectl
+  run:
+    name: "Install kubectl"
+    command: |
+      curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+      chmod +x ./kubectl
+      sudo mv ./kubectl /usr/local/bin/kubectl
+install_kind: &install_kind
+  run:
+    name: "Install kind"
+    command: |
+      curl -LO https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-Linux-amd64
+      chmod +x kind-Linux-amd64
+      sudo mv kind-Linux-amd64 /usr/local/bin/kind
+install_mkcert: &install_mkcert
+  run:
+    name: "Install mkcert"
+    command: |
+      curl -LO "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64"
+      chmod +x "mkcert-${MKCERT_VERSION}-linux-amd64"
+      sudo mv "mkcert-${MKCERT_VERSION}-linux-amd64" /usr/local/bin/mkcert
+      mkcert -install
+install_multicluster_deps: &install_multicluster_deps
+  run:
+    name: "Install multicluster deps"
+    command: |
+      helm repo add stable https://charts.helm.sh/stable
+      # Install dex
+      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+      helm install dex stable/dex --namespace dex --create-namespace --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+
+      # Install openldap
+      helm install ldap stable/openldap --namespace ldap --create-namespace 
+
+      # Create certs
+      kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
+      mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost kubeapps-ci.kubeapps $DEFAULT_DEX_IP
+
 run_e2e_tests: &run_e2e_tests
-  run: |
-    # If we want to test the latest version instead we override the image to be used
-    if [[ -n "$TEST_LATEST_RELEASE" ]]; then
-      source ./script/chart_sync_utils.sh
-      latest=$(latestReleaseTag)
-      DEV_TAG=${latest/v/}
-      IMG_MODIFIER=""
-    fi
-    if ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER; then
-      # Test success
-      echo "export TEST_RESULT=$?" >> $BASH_ENV
-    else
-      # Test failed
-      echo "export TEST_RESULT=$?" >> $BASH_ENV
-    fi
+  run:
+    name: "Run e2e tests script"
+    command: |
+      # If we want to test the latest version instead we override the image to be used
+      if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+        source ./script/chart_sync_utils.sh
+        latest="$(latestReleaseTag)"
+        DEV_TAG=${latest/v/}
+        IMG_MODIFIER=""
+      fi
+      
+      if ./script/e2e-test.sh  $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $DEV_TAG $IMG_MODIFIER; then
+        # Test success
+        echo "export TEST_RESULT=$?" >> $BASH_ENV
+      else
+        # Test failed
+        echo "export TEST_RESULT=$?" >> $BASH_ENV
+      fi
 gke_test: &gke_test
   docker:
     - image: circleci/golang:1.13
@@ -222,26 +367,25 @@ local_e2e_steps: &local_e2e_steps
   steps:
     - checkout
     - <<: *exports
-    # Install kind
-    - run: |
-        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-Linux-amd64
-        chmod +x kind-Linux-amd64
-        sudo mv kind-Linux-amd64 /usr/local/bin/kind
-    - run: |
-        if kind create cluster; then
-          echo "Cluster created"
-        else
-          echo "Cluster creation failed, retrying"
-          kind delete cluster || true
-          kind create cluster
-        fi
-    - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
+    - <<: *install_kind
     - <<: *install_kubectl
+    - <<: *install_cluster
+    - <<: *copy_apiserver_certificates
+    # Create the "kubeapps-ci-additional" cluster
+    - <<: *install_olm
+    - <<: *install_additional_cluster
+    # Export variables and kubeconfig
+    - <<: *export_cluster_variables
+    - <<: *install_mkcert
     - <<: *install_helm_cli
     # Load images from other jobs
     - attach_workspace:
         at: /tmp/images
-    - run: for image in /tmp/images/*; do kind load image-archive "$image"; done
+    - run:
+        name: Load CI images in the cluster
+        command: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+    - <<: *install_multicluster_deps
+    - <<: *check_olm
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
@@ -295,7 +439,7 @@ jobs:
       - image: circleci/golang:1.13
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
-      GOPATH: /home/circleci/.go_workspace
+      GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc"
     <<: *build_images
   build_dashboard:
@@ -323,6 +467,11 @@ jobs:
       HELM_VERSION: "v3.5.2"
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
+      DEFAULT_DEX_IP: "172.18.0.2"
+      OLM_VERSION: "v0.17.0"
+      MKCERT_VERSION: "v1.4.3"
+      KUBECTL_VERSION: "v1.20.5"
+      KIND_VERSION: "v0.10.0"
     parameters:
       number:
         type: string
