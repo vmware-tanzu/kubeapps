@@ -262,7 +262,7 @@ jobs:
       - setup_remote_docker
       # Integration tests for DB
       - run: |
-          docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.11.0-debian-10-r31
+          docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.11.0-debian-10-r45
           docker run --network container:postgresql -d --name tests circleci/golang:1.16 tail -f /dev/null
           docker cp /go tests:/
           docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
