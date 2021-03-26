@@ -12,6 +12,13 @@ test("Deploys an application with the values by default", async () => {
   await page.evaluate((selector) => document.querySelector(selector).click(), "#submit-login");
   await page.waitForSelector(".kubeapps-header-content", { visible: true, timeout: 10000 });
 
+  // Change cluster using ui
+  await expect(page).toClick(".kubeapps-nav-link");
+
+  await page.select('select[name="clusters"]', 'second-cluster')
+
+  await expect(page).toClick("cds-button", { text: "Change Context" });
+
   await expect(page).toClick("a", { text: "Catalog" });
 
   await expect(page).toClick("a", { text: "apache", timeout: 60000 });
