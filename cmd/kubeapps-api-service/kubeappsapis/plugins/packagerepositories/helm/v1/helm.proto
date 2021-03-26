@@ -8,7 +8,7 @@ import "google/api/annotations.proto";
 service PackageRepositoriesService {
   rpc GetAvailablePackages(kubeappsapis.core.packagerepositories.v1.GetAvailablePackagesRequest) returns (stream kubeappsapis.core.packagerepositories.v1.AvailablePackage) {
     option (google.api.http) = {
-      get: "/packagerepositories/helm/v1/get-available-packages"
+      get: "/helm/v1/available-packages"
     };
   }
 }

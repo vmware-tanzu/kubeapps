@@ -16,8 +16,8 @@ option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubea
 // below for import and re-use.
 
 // A PackageRepository is identified by a name and optionally a specific namespace.
-// TODO: this should be embedded in the AvailablePackage as it's just a summary
-// of a repo, not an entity on its own.
+// TODO: this should be embedded in the AvailablePackage as it's just a reference
+// to a repo, not an entity on its own.
 message PackageRepository {
   string name = 1;
   string namespace = 2;

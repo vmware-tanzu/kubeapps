@@ -4,7 +4,7 @@ option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubea
 
 // Each packages.v1 plugin should implement the following service:
 //
-// service Packages {
+// service PackagesService {
 //   // More to come.
 //   rpc GetAvailablePackages(GetAvailablePackagesRequest) returns (stream AvailablePackage)
 // }
@@ -16,13 +16,11 @@ option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubea
 message InstalledPackageSummary {
   string name = 1;
   string namespace = 2;
+  string version = 3;
+  string icon_url = 4;
 }
 
-
+// Get installed packages within a namespace or on the cluster (if RBAC allows)
 message GetInstalledPackagesRequest {
   string namespace = 1;
-}
-
-message GetInstalledPackagesResponse {
-  // multiple InstalledPackageSummary - or stream them?
 }

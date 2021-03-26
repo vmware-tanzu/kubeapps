@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1_0 "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/core/packagerepositories/v1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/core/packagerepositories/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_PackageRepositoriesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, client PackageRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (PackageRepositoriesService_GetAvailablePackagesClient, runtime.ServerMetadata, error) {
-	var protoReq v1_0.GetAvailablePackagesRequest
+	var protoReq v1.GetAvailablePackagesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -138,7 +138,7 @@ func RegisterPackageRepositoriesServiceHandlerClient(ctx context.Context, mux *r
 }
 
 var (
-	pattern_PackageRepositoriesService_GetAvailablePackages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"packagerepositories", "helm", "v1", "get-available-packages"}, ""))
+	pattern_PackageRepositoriesService_GetAvailablePackages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"helm", "v1", "available-packages"}, ""))
 )
 
 var (

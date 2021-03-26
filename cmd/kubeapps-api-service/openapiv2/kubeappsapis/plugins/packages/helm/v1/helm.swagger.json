@@ -16,9 +16,9 @@
     "application/json"
   ],
   "paths": {
-    "/packages/helm/v1/get-available-packages": {
+    "/helm/v1/installed-packages": {
       "get": {
-        "operationId": "PackagesService_GetAvailablePackages",
+        "operationId": "PackagesService_GetInstalledPackages",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -26,13 +26,13 @@
               "type": "object",
               "properties": {
                 "result": {
-                  "$ref": "#/definitions/v1AvailablePackage"
+                  "$ref": "#/definitions/v1InstalledPackageSummary"
                 },
                 "error": {
                   "$ref": "#/definitions/rpcStatus"
                 }
               },
-              "title": "Stream result of v1AvailablePackage"
+              "title": "Stream result of v1InstalledPackageSummary"
             }
           },
           "default": {
@@ -45,7 +45,6 @@
         "parameters": [
           {
             "name": "namespace",
-            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -88,35 +87,19 @@
         }
       }
     },
-    "v1AvailablePackage": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the package."
-        },
-        "repository": {
-          "$ref": "#/definitions/v1PackageRepository",
-          "description": "The package repository where this package is located."
-        },
-        "latestVersion": {
-          "type": "string",
-          "description": "The latest version of the package in the repository."
-        },
-        "iconUrl": {
-          "type": "string",
-          "description": "A url for an icon."
-        }
-      },
-      "description": "An AvailablePackage defines a package available for installation."
-    },
-    "v1PackageRepository": {
+    "v1InstalledPackageSummary": {
       "type": "object",
       "properties": {
         "name": {
           "type": "string"
         },
         "namespace": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "iconUrl": {
           "type": "string"
         }
       },

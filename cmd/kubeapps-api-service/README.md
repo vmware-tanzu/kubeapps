@@ -12,7 +12,7 @@ Using `buf` to handle grpc generation etc. Need to install.
 
 TODO:
 
-* Add second plugin (separating packages from packagerepositories) API points.
+* Re-org so generated files are all in a separate directory.
 * Enforce required methods for each api.
 * Add required authz (will need for actual calls anyway).
 * Actually serve generated swagger files

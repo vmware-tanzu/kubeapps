@@ -21,6 +21,8 @@ const (
 )
 
 // A PackageRepository is identified by a name and optionally a specific namespace.
+// TODO: this should be embedded in the AvailablePackage as it's just a reference
+// to a repo, not an entity on its own.
 type PackageRepository struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

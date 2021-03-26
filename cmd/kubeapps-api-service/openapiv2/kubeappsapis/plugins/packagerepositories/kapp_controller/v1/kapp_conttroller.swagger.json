@@ -79,7 +79,7 @@
           "type": "string"
         }
       },
-      "description": "A PackageRepository is identified by a name and optionally a specific namespace."
+      "description": "A PackageRepository is identified by a name and optionally a specific namespace.\nTODO: this should be embedded in the AvailablePackage as it's just a reference\nto a repo, not an entity on its own."
     }
   }
 }
