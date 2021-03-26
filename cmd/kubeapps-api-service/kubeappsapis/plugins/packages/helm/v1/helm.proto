@@ -7,6 +7,8 @@ import "google/api/annotations.proto";
 
 service PackagesService {
   rpc GetInstalledPackages(kubeappsapis.core.packages.v1.GetInstalledPackagesRequest) returns (stream kubeappsapis.core.packages.v1.InstalledPackageSummary) {
+    // Although the GRPC services for packages and packagerepositories are separate,
+    // it is trivial to have them in a simplified URL structure.
     option (google.api.http) = {
       get: "/helm/v1/installed-packages"
     };
