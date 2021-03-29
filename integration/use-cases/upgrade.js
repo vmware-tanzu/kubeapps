@@ -1,7 +1,7 @@
-const utils = require("./lib/utils");
+import { login, retryAndRefresh } from "./lib/utils";
 
 test("Upgrades an application", async () => {
-  await utils.login(
+  await login(
     page,
     document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -19,7 +19,7 @@ test("Upgrades an application", async () => {
 
   let latestChartVersion = "";
 
-  await utils.retryAndRefresh(page, 3, async () => {
+  await retryAndRefresh(page, 3, async () => {
     await new Promise((r) => setTimeout(r, 1000));
 
     const chartVersionElement = await expect(page).toMatchElement(
@@ -37,7 +37,7 @@ test("Upgrades an application", async () => {
 
   await new Promise((r) => setTimeout(r, 500));
 
-  await utils.retryAndRefresh(page, 3, async () => {
+  await retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("7.3.2", { timeout: 10000 });
   });
 
@@ -62,13 +62,13 @@ test("Upgrades an application", async () => {
   await new Promise((r) => setTimeout(r, 1000));
 
   // Verify that the form contains the old version
-  await utils.retryAndRefresh(page, 3, async () => {
+  await retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("7.3.2", { timeout: 10000 });
   });
 
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
-  await utils.retryAndRefresh(page, 3, async () => {
+  await retryAndRefresh(page, 3, async () => {
     await expect(page).toSelect(
       'select[name="chart-versions"]',
       latestChartVersion

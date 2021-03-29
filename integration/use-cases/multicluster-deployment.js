@@ -1,5 +1,7 @@
+import { login, retryAndRefresh } from "./lib/utils";
+
 test("Deploys an application with the values by default", async () => {
-  await utils.login(
+  await login(
     page,
     document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,

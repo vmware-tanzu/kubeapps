@@ -1,11 +1,10 @@
-const utils = require("./lib/utils");
-const path = require("path");
+import { login, retryAndRefresh } from "./lib/utils";
 
 // The operator may take some minutes to be created
 jest.setTimeout(360000);
 
 test("Deploys an Operator", async () => {
-  await utils.login(
+  await login(
     page,
     document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -21,7 +20,7 @@ test("Deploys an Operator", async () => {
   // Browse operator
   await expect(page).toClick("a", { text: "prometheus", timeout: 10000 });
 
-  await utils.retryAndRefresh(page, 3, async () => {
+  await retryAndRefresh(page, 3, async () => {
     // Sometimes this fails with: TypeError: Cannot read property 'click' of null
     await expect(page).toClick("cds-button", { text: "Deploy" });
   });
@@ -37,7 +36,7 @@ test("Deploys an Operator", async () => {
     // wait for the loading msg to disappear
     await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
 
-    await utils.retryAndRefresh(page, 4, async () => {
+    await retryAndRefresh(page, 4, async () => {
       // The CSV takes a bit to get populated
       await expect(page).toMatch("Installed", { timeout: 10000 });
     });
@@ -48,7 +47,7 @@ test("Deploys an Operator", async () => {
   // Wait for the operator to be ready to be used
   await expect(page).toClick("a", { text: "Catalog" });
 
-  await utils.retryAndRefresh(page, 30, async () => {
+  await retryAndRefresh(page, 30, async () => {
     await expect(page).toMatch("Operators", { timeout: 10000 });
 
     // Filter out charts to search only for the prometheus operator
@@ -62,12 +61,12 @@ test("Deploys an Operator", async () => {
     });
   });
 
-  await utils.retryAndRefresh(page, 2, async () => {
+  await retryAndRefresh(page, 2, async () => {
     // Found the error "prometheuses.monitoring.coreos.com not found in the definition of prometheusoperator"
     await expect(page).toMatch("Deploy", { timeout: 10000 });
   });
 
-  await utils.retryAndRefresh(
+  await retryAndRefresh(
     page,
     5,
     async () => {
@@ -81,13 +80,13 @@ test("Deploys an Operator", async () => {
   // Update
   await expect(page).toClick("cds-button", { text: "Update" });
 
-  await utils.retryAndRefresh(page, 2, async () => {
+  await retryAndRefresh(page, 2, async () => {
     await expect(page).toMatch("creationTimestamp", { timeout: 10000 });
   });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await utils.retryAndRefresh(page, 2, async () => {
+  await retryAndRefresh(page, 2, async () => {
     await expect(page).toMatch("Installation Values", { timeout: 10000 });
   });
 

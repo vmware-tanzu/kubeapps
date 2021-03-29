@@ -1,5 +1,7 @@
+import { login } from "./lib/utils";
+
 test("Fails to deploy an application due to missing permissions", async () => {
-  await utils.login(
+  await login(
     page,
     document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
