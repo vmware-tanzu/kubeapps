@@ -19,8 +19,9 @@ set -o pipefail
 
 # Constants
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
-DEV_TAG=${1:?missing dev tag}
-IMG_MODIFIER=${2:-""}
+OLM_VERSION=${1:-"v0.17.0"}
+DEV_TAG=${2:?missing dev tag}
+IMG_MODIFIER=${3:-""}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -189,6 +190,7 @@ images=(
   "assetsvc"
   "dashboard"
   "kubeops"
+  "pinniped-proxy"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -203,6 +205,8 @@ img_flags=(
   "--set" "dashboard.image.repository=${images[3]}"
   "--set" "kubeops.image.tag=${DEV_TAG}"
   "--set" "kubeops.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
+  "--set" "pinnipedProxy.image.repository=${images[5]}"
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
@@ -219,12 +223,14 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps bitnami/kubeapps
-  # Due to a breaking change in PG chart 9.X, we need to delete the statefulset before upgrading
-  # This can be removed after the release 2.0.0
-  kubectl delete statefulset -n kubeapps --all
+
+  info "Waiting for Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
+info "Waiting for Kubeapps components to be ready..."
+k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password
 pushChart apache 7.3.16 admin password
@@ -337,6 +343,7 @@ kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceacco
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
+
 ## Give the cluster some time to avoid issues like
 ## https://circleci.com/gh/kubeapps/kubeapps/16102
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "5" "1"
@@ -346,6 +353,7 @@ retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "
 admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
+
 ## Run tests
 info "Running Integration tests..."
 if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
