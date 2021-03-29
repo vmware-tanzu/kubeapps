@@ -15,7 +15,7 @@ test("Deploys an Operator", async () => {
   );
 
   // wait for the loading msg to disappear
-  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
+  await page.waitForFunction(() => !document.querySelector("cds-progress-circle"));
 
   // Browse operator
   await expect(page).toClick("a", { text: "prometheus", timeout: 10000 });
