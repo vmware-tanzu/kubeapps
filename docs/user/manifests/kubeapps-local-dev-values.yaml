@@ -3,8 +3,6 @@ frontend:
   service:
     type: NodePort
     nodePort: 30000
-tillerProxy:
-  replicaCount: 1
 assetsvc:
   replicaCount: 1
 dashboard:
