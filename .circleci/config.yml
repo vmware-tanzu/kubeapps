@@ -131,7 +131,7 @@ exports: &exports
 build_images: &build_images
   steps:
     - setup_remote_docker:
-        version: 18.09.3
+        version: 19.03.13
     - checkout
     - <<: *exports
     - run: |
@@ -154,7 +154,7 @@ build_images: &build_images
           - "*"
 install_kubectl: &install_kubectl
   run: |
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.14.0/bin/linux/amd64/kubectl
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl
     chmod +x ./kubectl
     sudo mv ./kubectl /usr/local/bin/kubectl
 run_e2e_tests: &run_e2e_tests
@@ -224,16 +224,16 @@ local_e2e_steps: &local_e2e_steps
     - <<: *exports
     # Install kind
     - run: |
-        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-Linux-amd64
+        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-Linux-amd64
         chmod +x kind-Linux-amd64
         sudo mv kind-Linux-amd64 /usr/local/bin/kind
     - run: |
-        if kind create cluster; then
+        if kind create cluster --image kindest/node:v1.20.2; then
           echo "Cluster created"
         else
           echo "Cluster creation failed, retrying"
           kind delete cluster || true
-          kind create cluster
+          kind create cluster --image kindest/node:v1.20.2
         fi
     - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
     - <<: *install_kubectl
@@ -262,7 +262,7 @@ jobs:
       - setup_remote_docker
       # Integration tests for DB
       - run: |
-          docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.6.0-debian-9-r0
+          docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.11.0-debian-10-r45
           docker run --network container:postgresql -d --name tests circleci/golang:1.13 tail -f /dev/null
           docker cp /go tests:/
           docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
@@ -276,7 +276,7 @@ jobs:
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
   test_pinniped_proxy:
     docker:
-      - image: circleci/rust
+      - image: circleci/rust:1.50
     steps:
       - checkout
       - run: cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml

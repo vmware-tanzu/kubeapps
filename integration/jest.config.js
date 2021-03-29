@@ -5,5 +5,5 @@ module.exports = {
   globalTeardown: "jest-environment-puppeteer/teardown",
   testEnvironment: "./jest.environment.js",
   testRunner: "jest-circus/runner",
-  setupFilesAfterEnv: ["./jest.setup.js"]
+  setupFilesAfterEnv: ["./jest.setup.js"],
 };

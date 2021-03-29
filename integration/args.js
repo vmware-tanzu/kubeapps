@@ -5,5 +5,5 @@ module.exports = {
   headless: process.env.INTEGRATION_HEADLESS != "false",
   retryAttempts: process.env.INTEGRATION_RETRY_ATTEMPTS || 0,
   screenshotsFolder:
-    process.env.INTEGRATION_SCREENSHOTS_FOLDER || "reports/screenshots"
+    process.env.INTEGRATION_SCREENSHOTS_FOLDER || "reports/screenshots",
 };
