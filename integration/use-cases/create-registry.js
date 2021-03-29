@@ -1,7 +1,7 @@
-import { login, retryAndRefresh } from "./lib/utils";
+const utils = require("./lib/utils");
 
 test("Creates a registry", async () => {
-  await login(
+  await utils.login(
     page,
     document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -27,7 +27,7 @@ test("Creates a registry", async () => {
   // the Install Repo doesn't always register (in fact, from the
   // screenshot on failure, it appears to focus the button only (hover css applied)
   await expect(page).toClick("cds-button", { text: "Install Repo" });
-  await retryAndRefresh(page, 3, async () => {
+  await utils.retryAndRefresh(page, 3, async () => {
     // TODO(andresmgot): In theory, there is no need to refresh but sometimes the repo
     // does not appear
     await expect(page).toClick("a", { text: "my-repo" });
@@ -36,7 +36,7 @@ test("Creates a registry", async () => {
   // wait for the loading msg to disappear
   await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
 
-  await retryAndRefresh(page, 3, async () => {
+  await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("gitlab-runner", { timeout: 10000 });
   });
 });

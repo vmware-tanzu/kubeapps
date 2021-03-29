@@ -1,5 +1,5 @@
-import { get } from "axios";
-import { login, retryAndRefresh } from "./lib/utils";
+const axios = require("axios");
+const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
   var token = process.env.USE_MULTICLUSTER_OIDC_ENV ? undefined : process.env.ADMIN_TOKEN;
@@ -8,7 +8,7 @@ test("Creates a private registry", async () => {
     token = response.headers()["authorization"] || token;
   });
 
-  await login(
+  await utils.login(
     page,
     document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -75,7 +75,7 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("a", { text: repoName });
 
-  await retryAndRefresh(page, 3, async () => {
+  await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("apache", { timeout: 2000 });
   });
 

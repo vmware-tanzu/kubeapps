@@ -1,7 +1,7 @@
-import { login } from "./lib/utils";
+const utils = require("./lib/utils");
 
 test("Deploys an application with the values by default", async () => {
-  await login(
+  await utils.login(
     page,
     document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
