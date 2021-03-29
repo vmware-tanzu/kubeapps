@@ -105,7 +105,7 @@ test("Creates a private registry", async () => {
       Cookie: `${cookies[0].name}=${cookies[0].value};`,
     },
   };
-  const response = await get(URL, axiosConfig);
+  const response = await axios.get(URL, axiosConfig);
   expect(response.status).toEqual(200);
 
   const deployment = response.data.items.find(deployment => {
