@@ -1,8 +1,4 @@
 const utils = require("./lib/utils");
-const { screenshotsFolder } = require("../args");
-  screenshotsFolder,
-} = require("../args");
-const path = require("path");
 
 // The operator may take some minutes to be created
 jest.setTimeout(360000);
