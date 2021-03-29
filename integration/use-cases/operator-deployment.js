@@ -47,7 +47,7 @@ test("Deploys an Operator", async () => {
     await expect(page).toMatch("Operators", { timeout: 10000 });
 
     // Filter out charts to search only for the prometheus operator
-    await expect(page).toClick("label", { text: "Operators" });
+    await expect(page).toClick("label", { text: "Operators", timeout: 10000 });
 
     await expect(page).toMatch("Prometheus");
 
