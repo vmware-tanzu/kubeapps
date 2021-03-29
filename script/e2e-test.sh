@@ -19,10 +19,12 @@ set -o pipefail
 
 # Constants
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
-DEX_IP=${1:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${2:-"172.18.0.3"}
-DEV_TAG=${3:?missing dev tag}
-IMG_MODIFIER=${4:-""}
+USE_MULTICLUSTER_OIDC_ENV=${1:-false}
+OLM_VERSION=${2:-"v0.17.0"}
+DEX_IP=${3:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${4:-"172.18.0.3"}
+DEV_TAG=${5:?missing dev tag}
+IMG_MODIFIER=${6:-""}
 
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
@@ -78,12 +80,34 @@ installOLM() {
     url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
     namespace=olm
 
-    kubectl apply -f ${url}/crds.yaml
-    kubectl apply -f ${url}/olm.yaml
+    kubectl apply -f "${url}/crds.yaml"
+    kubectl wait --for=condition=Established -f "${url}/crds.yaml"
+    kubectl apply -f "${url}/olm.yaml"
 
     # wait for deployments to be ready
     kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
     kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
+
+    retries=30
+    until [[ $retries == 0 ]]; do
+        new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
+        if [[ $new_csv_phase != "$csv_phase" ]]; then
+            csv_phase=$new_csv_phase
+            echo "CSV \"packageserver\" phase: $csv_phase"
+        fi
+        if [[ "$new_csv_phase" == "Succeeded" ]]; then
+      break
+        fi
+        sleep 10
+        retries=$((retries - 1))
+    done
+
+  if [ $retries == 0 ]; then
+      echo "CSV \"packageserver\" failed to reach phase succeeded"
+      exit 1
+  fi
+
+  kubectl rollout status -w deployment/packageserver --namespace="${namespace}"
 }
 
 ########################
@@ -137,7 +161,6 @@ pushChart() {
 #   $1: chart source
 # Returns: None
 #########################
-
 installOrUpgradeKubeapps() {
     local chartSource=$1
     # Install Kubeapps
@@ -174,6 +197,11 @@ installOrUpgradeKubeapps() {
       --set clusters[1].insecure=true \
       --set clusters[1].serviceToken=ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsbHpiSEp5TlZwM1QwaG9WSE5PYkhVdE5GQkRablY2TW0wd05rUmtMVmxFWVV4MlZEazNaeTEyUmxFaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUprWldaaGRXeDBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmt0ZEc5clpXNHRjV295Ym1naUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWEzVmlaV0Z3Y0hNdGJtRnRaWE53WVdObExXUnBjMk52ZG1WeWVTSXNJbXQxWW1WeWJtVjBaWE11YVc4dmMyVnlkbWxqWldGalkyOTFiblF2YzJWeWRtbGpaUzFoWTJOdmRXNTBMblZwWkNJNkltVXhaakE1WmpSakxUTTRNemt0TkRJME15MWhZbUptTFRKaU5HWm1OREZrWW1RMllTSXNJbk4xWWlJNkluTjVjM1JsYlRwelpYSjJhV05sWVdOamIzVnVkRHBrWldaaGRXeDBPbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmtpZlEuTnh6V2dsUGlrVWpROVQ1NkpWM2xJN1VWTUVSR3J2bklPSHJENkh4dUVwR0luLWFUUzV5Q0pDa3Z0cTF6S3Z3b05sc2MyX0YxaTdFOUxWRGFwbC1UQlhleUN5Rl92S1B1TDF4dTdqZFBMZ1dKT1pQX3JMcXppaDV4ZlkxalFoOHNhdTRZclFJLUtqb3U1UkRRZ0tOQS1BaS1lRlFOZVh2bmlUNlBKYWVkc184V0t3dHRMMC1wdHpYRnBnOFl5dkx6N0U1UWdTR2tjNWpDVXlsS0RvZVRUaVRSOEc2RHFHYkFQQUYwREt0b3MybU9Geno4SlJYNHhoQmdvaUcxVTVmR1g4Z3hnTU1SV0VHRE9kaGMyeXRvcFdRUkRpYmhvaldNS3VDZlNua09zMDRGYTBkYmEwQ0NTbld2a29LZ3Z4QVR5aVVrWm9wV3VpZ1JJNFd5dDkzbXhR
 }
+
+# Operators are not supported in GKE 1.14 and flaky in 1.15
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  installOLM v0.17.0
+fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
@@ -359,7 +387,7 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 ## Run tests
 
 info "Running Integration tests..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
