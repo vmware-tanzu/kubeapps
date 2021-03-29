@@ -33,9 +33,6 @@ test("Deploys an Operator", async () => {
     // Deploy the Operator
     await expect(page).toClick("cds-button", { text: "Deploy" });
 
-    // wait for the loading msg to disappear
-    await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
-
     await utils.retryAndRefresh(page, 4, async () => {
       // The CSV takes a bit to get populated
       await expect(page).toMatch("Installed", { timeout: 10000 });

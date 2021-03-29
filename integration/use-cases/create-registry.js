@@ -33,9 +33,6 @@ test("Creates a registry", async () => {
     await expect(page).toClick("a", { text: "my-repo" });
   });
 
-  // wait for the loading msg to disappear
-  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
-
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("gitlab-runner", { timeout: 10000 });
   });
