@@ -151,7 +151,7 @@ export function validate(
   values: string,
   schema: jsonSchema.JSONSchema4,
 ): { valid: boolean; errors: ErrorObject[] | null | undefined } {
-  const ajv = new Ajv();
+  const ajv = new Ajv({ strict: false });
   const valid = ajv.validate(schema, YAML.parse(values));
   return { valid: !!valid, errors: ajv.errors };
 }
