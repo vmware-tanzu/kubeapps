@@ -1,16 +1,27 @@
 test("Deploys an application with the values by default", async () => {
-  await page.goto(getUrl("/#/login"));
-
-  await expect(page).toFillForm("form", {
-    token: process.env.ADMIN_TOKEN,
+  // ODIC login
+  await page.goto(getUrl("/"));
+  await page.waitForNavigation();
+  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
+  await page.waitForNavigation();
+  await expect(page).toClick(".dex-container button", {
+    text: "Log in with Email",
   });
-
-  // I am not sure why, but clicking on the Login button causes an error
-  // "Node is either not visible or not an HTMLElement"
-  // https://github.com/puppeteer/puppeteer/issues/2977
-  await page.evaluate(() =>
-    document.querySelector("#login-submit-button").click()
+  await page.waitForNavigation();
+  await page.type('input[id="login"]', "kubeapps-operator@example.com");
+  await page.type('input[id="password"]', "password");
+  await page.waitForSelector("#submit-login", {
+    visible: true,
+    timeout: 10000,
+  });
+  await page.evaluate(
+    (selector) => document.querySelector(selector).click(),
+    "#submit-login"
   );
+  await page.waitForSelector(".kubeapps-header-content", {
+    visible: true,
+    timeout: 10000,
+  });
 
   await expect(page).toClick("a", { text: "Catalog" });
 
@@ -19,6 +30,15 @@ test("Deploys an application with the values by default", async () => {
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
+
+  // wait for the loading msg to disappear
+  await page.waitForFunction(
+    () =>
+      !document.querySelector(
+        "#root > section > main > div > div > section > h3"
+      ),
+    { timeout: 60000 }
+  );
 
   await expect(page).toMatch("Ready", { timeout: 60000 });
 });

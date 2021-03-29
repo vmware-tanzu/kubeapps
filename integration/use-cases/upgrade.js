@@ -1,15 +1,30 @@
 const utils = require("./lib/utils");
 
 test("Upgrades an application", async () => {
+  // ODIC login
   await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami"));
-
-  await expect(page).toFillForm("form", {
-    token: process.env.EDIT_TOKEN,
+  await page.waitForNavigation();
+  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
+  await page.waitForNavigation();
+  await expect(page).toClick(".dex-container button", {
+    text: "Log in with Email",
   });
-
-  await page.evaluate(() =>
-    document.querySelector("#login-submit-button").click()
+  await page.waitForNavigation();
+  await page.type('input[id="login"]', "kubeapps-operator@example.com");
+  await page.type('input[id="password"]', "password");
+  await page.waitForSelector("#submit-login", {
+    visible: true,
+    timeout: 10000,
+  });
+  await page.evaluate(
+    (selector) => document.querySelector(selector).click(),
+    "#submit-login"
   );
+  await page.waitForSelector(".kubeapps-header-content", {
+    visible: true,
+    timeout: 10000,
+  });
+  await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami"));
 
   await expect(page).toMatch("apache", { timeout: 60000 });
 
@@ -80,7 +95,9 @@ test("Upgrades an application", async () => {
     const chartVersionElement = await expect(page).toMatchElement(
       '.upgrade-form-version-selector select[name="chart-versions"]'
     );
-    const chartVersionElementContent = await chartVersionElement.getProperty("value");
+    const chartVersionElementContent = await chartVersionElement.getProperty(
+      "value"
+    );
     const chartVersionValue = await chartVersionElementContent.jsonValue();
     expect(chartVersionValue).toEqual(latestChartVersion);
   });
