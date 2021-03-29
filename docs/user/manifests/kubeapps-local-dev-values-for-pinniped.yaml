@@ -1,0 +1,20 @@
+frontend:
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePort: 30000
+assetsvc:
+  replicaCount: 1
+dashboard:
+  replicaCount: 1
+kubeops:
+  replicaCount: 1
+postgresql:
+  replication:
+    enabled: false
+ingress:
+  enabled: true
+  hostname: localhost
+  tls: true
+pinnipedProxy:
+  enabled: true
