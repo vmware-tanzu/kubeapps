@@ -1,5 +1,5 @@
 const utils = require("./lib/utils");
-const {
+const { screenshotsFolder } = require("../args");
   screenshotsFolder,
 } = require("../args");
 const path = require("path");
