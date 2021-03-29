@@ -20,7 +20,7 @@ set -o pipefail
 # Constants
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 OLM_VERSION=${1:-"v0.17.0"}
-DEV_TAG=${3:?missing dev tag}
+DEV_TAG=${2:?missing dev tag}
 IMG_MODIFIER=${3:-""}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
