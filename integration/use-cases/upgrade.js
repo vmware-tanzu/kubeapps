@@ -1,30 +1,15 @@
 const utils = require("./lib/utils");
 
 test("Upgrades an application", async () => {
-  // ODIC login
-  await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami"));
-  await page.waitForNavigation();
-  await expect(page).toClick("cds-button", { text: "Login via OIDC Provider" });
-  await page.waitForNavigation();
-  await expect(page).toClick(".dex-container button", {
-    text: "Log in with Email",
-  });
-  await page.waitForNavigation();
-  await page.type('input[id="login"]', "kubeapps-operator@example.com");
-  await page.type('input[id="password"]', "password");
-  await page.waitForSelector("#submit-login", {
-    visible: true,
-    timeout: 10000,
-  });
-  await page.evaluate(
-    (selector) => document.querySelector(selector).click(),
-    "#submit-login"
+  await utils.login(
+    page,
+    document,
+    process.env.USE_MULTICLUSTER_OIDC_ENV,
+    "/",
+    process.env.EDIT_TOKEN,
+    "kubeapps-operator@example.com",
+    "password"
   );
-  await page.waitForSelector(".kubeapps-header-content", {
-    visible: true,
-    timeout: 10000,
-  });
-  await page.goto(getUrl("/#/c/default/ns/default/catalog?Repository=bitnami"));
 
   await expect(page).toMatch("apache", { timeout: 60000 });
 
