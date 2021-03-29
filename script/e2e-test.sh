@@ -346,8 +346,10 @@ for f in *.js; do
 done
 testsToIgnore=()
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+# Also skip the multicluster scenario
 if [[ -n "${GKE_BRANCH-}" ]]; then
   testsToIgnore=("operator-deployment.js" "${testsToIgnore[@]}")
+  testsToIgnore=("add-multicluster-deployment.js" "${testsToIgnore[@]}")
 fi
 ignoreFlag=""
 if [[ "${#testsToIgnore[@]}" > "0" ]]; then
