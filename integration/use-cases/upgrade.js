@@ -4,7 +4,7 @@ test("Upgrades an application", async () => {
   await utils.login(
     page,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
-    "/",
+    "/#/c/default/ns/default/catalog?Repository=bitnami",
     process.env.EDIT_TOKEN,
     "kubeapps-operator@example.com",
     "password",
