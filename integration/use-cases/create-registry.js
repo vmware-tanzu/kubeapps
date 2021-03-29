@@ -12,7 +12,7 @@ test("Creates a registry", async () => {
   );
 
   // wait for the loading msg to disappear
-  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
+  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
 
@@ -34,7 +34,7 @@ test("Creates a registry", async () => {
   });
 
   // wait for the loading msg to disappear
-  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
+  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
 
   await retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("gitlab-runner", { timeout: 10000 });

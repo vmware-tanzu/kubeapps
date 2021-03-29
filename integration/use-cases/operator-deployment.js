@@ -15,7 +15,7 @@ test("Deploys an Operator", async () => {
   );
 
   // wait for the loading msg to disappear
-  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
+  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
 
   // Browse operator
   await expect(page).toClick("a", { text: "prometheus", timeout: 10000 });
@@ -34,7 +34,7 @@ test("Deploys an Operator", async () => {
     await expect(page).toClick("cds-button", { text: "Deploy" });
 
     // wait for the loading msg to disappear
-    await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
+    await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
 
     await retryAndRefresh(page, 4, async () => {
       // The CSV takes a bit to get populated

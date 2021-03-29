@@ -19,7 +19,7 @@ test("Creates a private registry", async () => {
   );
 
   // wait for the loading msg to disappear
-  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
+  await page.waitForFunction(() => !document.querySelector(".margin-t-xxl cds-progress-circle"));
 
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
 
