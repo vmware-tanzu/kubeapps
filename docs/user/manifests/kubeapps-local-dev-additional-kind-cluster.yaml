@@ -1,5 +1,5 @@
 clusters:
- - name: mydefaultcluster
+ - name: default
  - name: second-cluster
    apiServiceURL: https://172.18.0.3:6443
    # insecure is set to true only for local dev cluster testing. Always specify the
