@@ -3,7 +3,6 @@ const utils = require("./lib/utils");
 test("Creates a registry", async () => {
   await utils.login(
     page,
-    document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
     "/#/c/default/ns/kubeapps/config/repos",
     process.env.ADMIN_TOKEN,

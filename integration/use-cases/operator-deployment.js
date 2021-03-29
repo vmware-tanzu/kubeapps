@@ -6,7 +6,6 @@ jest.setTimeout(360000);
 test("Deploys an Operator", async () => {
   await utils.login(
     page,
-    document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
     "/#/c/default/ns/kubeapps/operators",
     process.env.ADMIN_TOKEN,

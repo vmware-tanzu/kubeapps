@@ -3,7 +3,6 @@ const utils = require("./lib/utils");
 test("Deploys an application with the values by default", async () => {
   await utils.login(
     page,
-    document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
     "/",
     process.env.ADMIN_TOKEN,

@@ -3,7 +3,6 @@ const utils = require("./lib/utils");
 test("Upgrades an application", async () => {
   await utils.login(
     page,
-    document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
     "/",
     process.env.EDIT_TOKEN,

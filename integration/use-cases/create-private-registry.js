@@ -10,7 +10,6 @@ test("Creates a private registry", async () => {
 
   await utils.login(
     page,
-    document,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
     "/#/c/default/ns/default/config/repos",
     process.env.ADMIN_TOKEN,

@@ -36,10 +36,7 @@ module.exports = {
       }
     }
   },
-  click: async (page, document, selector) => {
-    page.evaluate(() => document.querySelector(selector).click());
-  },
-  login: async (page, document, isOIDC, uri, token, username, password) => {
+  login: async (page, isOIDC, uri, token, username, password) => {
     await page.goto(getUrl(uri));
     if (isOIDC) {
       await page.waitForNavigation();
@@ -57,7 +54,7 @@ module.exports = {
         visible: true,
         timeout: 10000,
       });
-      await page.evaluate(selector => document.querySelector(selector).click(), "#submit-login");
+      await page.click("#submit-login");
       await page.waitForSelector(".kubeapps-header-content", {
         visible: true,
         timeout: 10000,
@@ -69,7 +66,11 @@ module.exports = {
       await expect(page).toFillForm("form", {
         token: token,
       });
-      await page.evaluate(() => document.querySelector("#login-submit-button").click());
+      await page.waitForSelector("#login-submit-button", {
+        visible: true,
+        timeout: 10000,
+      });
+      await page.click("#login-submit-button");
     }
   },
 };
