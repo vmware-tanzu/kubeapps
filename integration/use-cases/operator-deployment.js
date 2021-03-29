@@ -23,7 +23,7 @@ test("Deploys an Operator", async () => {
   await page.waitForFunction(() => !document.querySelector(".margin-t-xxl"));
 
   // Browse operator
-  await expect(page).toClick("a", { text: "prometheus" });
+  await expect(page).toClick("a", { text: "prometheus" , timeout: 10000 });
 
   await utils.retryAndRefresh(page, 3, async () => {
     // Sometimes this fails with: TypeError: Cannot read property 'click' of null
@@ -58,7 +58,7 @@ test("Deploys an Operator", async () => {
 
     await expect(page).toMatch("Prometheus");
 
-    await expect(page).toClick(".info-card-header", { text: "Prometheus" });
+    await expect(page).toClick(".info-card-header", { text: "Prometheus" , timeout: 10000 });
   });
 
   await utils.retryAndRefresh(page, 2, async () => {
@@ -78,7 +78,7 @@ test("Deploys an Operator", async () => {
   await utils.retryAndRefresh(page, 2, async () => {
     await expect(page).toMatch("creationTimestamp", { timeout: 10000 });
   });
-  // 
+
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await utils.retryAndRefresh(page, 2, async () => {
