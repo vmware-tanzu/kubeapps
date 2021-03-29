@@ -19,9 +19,9 @@ test("Deploys an Operator", async () => {
   );
 
   // Browse operator
-  await expect(page).toClick("a", { text: "prometheus" });
+  await expect(page).toClick("a", { text: "prometheus", timeout: 10000 });
 
-  await utils.retryAndRefresh(page, 2, async () => {
+  await utils.retryAndRefresh(page, 3, async () => {
     // Sometimes this fails with: TypeError: Cannot read property 'click' of null
     await expect(page).toClick("cds-button", { text: "Deploy" });
   });
@@ -38,39 +38,39 @@ test("Deploys an Operator", async () => {
   await expect(page).toClick("a", { text: "Catalog" });
 
   await utils.retryAndRefresh(page, 30, async () => {
-    await expect(page).toMatch("Operators", {timeout: 10000});
+    await expect(page).toMatch("Operators", { timeout: 10000 });
 
     // Filter out charts to search only for the prometheus operator
     await expect(page).toClick("label", { text: "Operators" });
 
     await expect(page).toMatch("Prometheus");
 
-    await expect(page).toClick(".info-card-header", { text: "Prometheus" });
+    await expect(page).toClick(".info-card-header", { text: "Prometheus", timeout: 10000 });
   });
 
   await utils.retryAndRefresh(page, 2, async () => {
     // Found the error "prometheuses.monitoring.coreos.com not found in the definition of prometheusoperator"
-    await expect(page).toMatch("Deploy", {timeout: 10000});
+    await expect(page).toMatch("Deploy", { timeout: 10000 });
   });
 
 
   await utils.retryAndRefresh(page, 5, async () => {
     await expect(page).toClick("cds-button", { text: "Deploy" });
 
-    await expect(page).toMatch("Installation Values", {timeout: 20000});
+    await expect(page).toMatch("Installation Values", { timeout: 20000 });
   }, "operator-view");
 
   // Update
   await expect(page).toClick("cds-button", { text: "Update" });
 
   await utils.retryAndRefresh(page, 2, async () => {
-    await expect(page).toMatch("creationTimestamp", {timeout: 10000});
+    await expect(page).toMatch("creationTimestamp", { timeout: 10000 });
   });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await utils.retryAndRefresh(page, 2, async () => {
-    await expect(page).toMatch("Installation Values", {timeout: 10000});
+    await expect(page).toMatch("Installation Values", { timeout: 10000 });
   });
 
   // Delete
@@ -85,8 +85,8 @@ test("Deploys an Operator", async () => {
       {
         text: "Delete",
       }
-    );  
-  } catch(e) {
+    );
+  } catch (e) {
     await expect(page).toClick(
       "#root > section > main > div > div > section > cds-modal > cds-modal-actions > button.btn.btn-danger",
       {
