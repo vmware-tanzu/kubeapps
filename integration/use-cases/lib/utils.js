@@ -13,9 +13,7 @@ module.exports = {
           await page.screenshot({
             path: path.join(
               __dirname,
-              `../../${screenshotsFolder}/${testName}-${
-                retries - retriesLeft
-              }.png`
+              `../../${screenshotsFolder}/${testName}-${retries - retriesLeft}.png`,
             ),
           });
         }
@@ -59,10 +57,7 @@ module.exports = {
         visible: true,
         timeout: 10000,
       });
-      await page.evaluate(
-        (selector) => document.querySelector(selector).click(),
-        "#submit-login"
-      );
+      await page.evaluate(selector => document.querySelector(selector).click(), "#submit-login");
       await page.waitForSelector(".kubeapps-header-content", {
         visible: true,
         timeout: 10000,
@@ -74,9 +69,7 @@ module.exports = {
       await expect(page).toFillForm("form", {
         token: token,
       });
-      await page.evaluate(() =>
-        document.querySelector("#login-submit-button").click()
-      );
+      await page.evaluate(() => document.querySelector("#login-submit-button").click());
     }
   },
 };

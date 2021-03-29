@@ -8,7 +8,7 @@ test("Deploys an application with the values by default", async () => {
     "/",
     process.env.ADMIN_TOKEN,
     "kubeapps-operator@example.com",
-    "password"
+    "password",
   );
 
   // Change cluster using ui
@@ -28,11 +28,8 @@ test("Deploys an application with the values by default", async () => {
 
   // wait for the loading msg to disappear
   await page.waitForFunction(
-    () =>
-      !document.querySelector(
-        "#root > section > main > div > div > section > h3"
-      ),
-    { timeout: 60000 }
+    () => !document.querySelector("#root > section > main > div > div > section > h3"),
+    { timeout: 60000 },
   );
 
   await expect(page).toMatch("Ready", { timeout: 60000 });

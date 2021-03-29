@@ -13,7 +13,7 @@ if (endpoint == null || endpoint == "") {
 global.endpoint = endpoint;
 
 // Helper to get the proper endpoint
-global.getUrl = (path) => `${global.endpoint}${path}`;
+global.getUrl = path => `${global.endpoint}${path}`;
 
 // Timeout for a test
 jest.setTimeout(120000);

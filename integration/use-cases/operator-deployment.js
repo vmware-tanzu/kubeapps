@@ -11,7 +11,7 @@ test("Deploys an Operator", async () => {
     "/#/c/default/ns/kubeapps/operators",
     process.env.ADMIN_TOKEN,
     "kubeapps-operator@example.com",
-    "password"
+    "password",
   );
 
   // wait for the loading msg to disappear
@@ -26,7 +26,7 @@ test("Deploys an Operator", async () => {
   });
 
   const isAlreadyDeployed = await page.evaluate(
-    () => document.querySelector("cds-button[disabled]") !== null
+    () => document.querySelector("cds-button[disabled]") !== null,
   );
 
   if (!isAlreadyDeployed) {
@@ -74,7 +74,7 @@ test("Deploys an Operator", async () => {
 
       await expect(page).toMatch("Installation Values", { timeout: 20000 });
     },
-    "operator-view"
+    "operator-view",
   );
 
   // Update
@@ -101,14 +101,14 @@ test("Deploys an Operator", async () => {
       "div.modal-dialog.modal-md > div > div.modal-body > div > div > cds-button:nth-child(2)",
       {
         text: "Delete",
-      }
+      },
     );
   } catch (e) {
     await expect(page).toClick(
       "#root > section > main > div > div > section > cds-modal > cds-modal-actions > button.btn.btn-danger",
       {
         text: "Delete",
-      }
+      },
     );
   }
 

@@ -2,10 +2,8 @@ import { get } from "axios";
 import { login, retryAndRefresh } from "./lib/utils";
 
 test("Creates a private registry", async () => {
-  var token = process.env.USE_MULTICLUSTER_OIDC_ENV
-    ? undefined
-    : process.env.ADMIN_TOKEN;
-  page.on("response", (response) => {
+  var token = process.env.USE_MULTICLUSTER_OIDC_ENV ? undefined : process.env.ADMIN_TOKEN;
+  page.on("response", response => {
     // retrieves the token after the oidc flow, note this require "--set-authorization-header=true" flag to be enabled in oauth2proxy
     token = response.headers()["authorization"] || token;
   });
@@ -17,7 +15,7 @@ test("Creates a private registry", async () => {
     "/#/c/default/ns/default/config/repos",
     process.env.ADMIN_TOKEN,
     "kubeapps-operator@example.com",
-    "password"
+    "password",
   );
 
   // wait for the loading msg to disappear
@@ -31,7 +29,7 @@ test("Creates a private registry", async () => {
 
   await page.type(
     'input[placeholder="https://charts.example.com/stable"]',
-    "http://chartmuseum-chartmuseum.kubeapps:8080"
+    "http://chartmuseum-chartmuseum.kubeapps:8080",
   );
 
   await expect(page).toClick("label", { text: "Basic Auth" });
@@ -55,7 +53,7 @@ test("Creates a private registry", async () => {
   await page.type('input[placeholder="Secret"]', secret);
   await page.type(
     'input[placeholder="https://index.docker.io/v1/"]',
-    "https://index.docker.io/v1/"
+    "https://index.docker.io/v1/",
   );
   await page.type('input[placeholder="Username"][value=""]', "user");
   await page.type('input[placeholder="Password"][value=""]', "password");
@@ -98,9 +96,7 @@ test("Creates a private registry", async () => {
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the kubernetes API to get info of the
   // deployment
-  const URL = getUrl(
-    "/api/clusters/default/apis/apps/v1/namespaces/default/deployments"
-  );
+  const URL = getUrl("/api/clusters/default/apis/apps/v1/namespaces/default/deployments");
 
   const cookies = await page.cookies();
   const axiosConfig = {
@@ -112,26 +108,22 @@ test("Creates a private registry", async () => {
   const response = await get(URL, axiosConfig);
   expect(response.status).toEqual(200);
 
-  const deployment = response.data.items.find((deployment) => {
+  const deployment = response.data.items.find(deployment => {
     return deployment.metadata.name.match(appName);
   });
-  expect(deployment.spec.template.spec.imagePullSecrets).toEqual([
-    { name: secret },
-  ]);
+  expect(deployment.spec.template.spec.imagePullSecrets).toEqual([{ name: secret }]);
 
   // Upgrade apache and verify.
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   let retries = 3;
   try {
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 500));
 
     let chartVersionElement = await expect(page).toMatchElement(
-      '.upgrade-form-version-selector select[name="chart-versions"]'
+      '.upgrade-form-version-selector select[name="chart-versions"]',
     );
-    let chartVersionElementContent = await chartVersionElement.getProperty(
-      "value"
-    );
+    let chartVersionElementContent = await chartVersionElement.getProperty("value");
     let chartVersionValue = await chartVersionElementContent.jsonValue();
     expect(chartVersionValue).toEqual("7.3.15");
   } catch (e) {
@@ -143,18 +135,18 @@ test("Creates a private registry", async () => {
 
   // TODO(andresmgot): Avoid race condition for selecting the latest version
   // but going back to the previous version
-  await new Promise((r) => setTimeout(r, 1000));
+  await new Promise(r => setTimeout(r, 1000));
 
   await expect(page).toSelect(
     '.upgrade-form-version-selector select[name="chart-versions"]',
-    "7.3.16"
+    "7.3.16",
   );
 
-  await new Promise((r) => setTimeout(r, 1000));
+  await new Promise(r => setTimeout(r, 1000));
 
   // Ensure that the new value is selected
   chartVersionElement = await expect(page).toMatchElement(
-    '.upgrade-form-version-selector select[name="chart-versions"]'
+    '.upgrade-form-version-selector select[name="chart-versions"]',
   );
   chartVersionElementContent = await chartVersionElement.getProperty("value");
   chartVersionValue = await chartVersionElementContent.jsonValue();

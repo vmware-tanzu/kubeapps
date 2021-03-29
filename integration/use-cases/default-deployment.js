@@ -8,7 +8,7 @@ test("Deploys an application with the values by default", async () => {
     "/",
     process.env.ADMIN_TOKEN,
     "kubeapps-operator@example.com",
-    "password"
+    "password",
   );
 
   await expect(page).toClick("a", { text: "Catalog" });
@@ -18,15 +18,6 @@ test("Deploys an application with the values by default", async () => {
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
-
-  // wait for the loading msg to disappear
-  await page.waitForFunction(
-    () =>
-      !document.querySelector(
-        "#root > section > main > div > div > section > h3"
-      ),
-    { timeout: 60000 }
-  );
 
   await expect(page).toMatch("Ready", { timeout: 60000 });
 });

@@ -8,7 +8,7 @@ test("Creates a registry", async () => {
     "/#/c/default/ns/kubeapps/config/repos",
     process.env.ADMIN_TOKEN,
     "kubeapps-operator@example.com",
-    "password"
+    "password",
   );
 
   // wait for the loading msg to disappear
@@ -20,7 +20,7 @@ test("Creates a registry", async () => {
 
   await page.type(
     'input[placeholder="https://charts.example.com/stable"]',
-    "https://charts.gitlab.io/"
+    "https://charts.gitlab.io/",
   );
 
   // Similar to the above click for an App Repository, the click on
