@@ -342,7 +342,7 @@ gke_test: &gke_test
         command: | 
           source ./script/chart_sync_utils.sh
 
-          # In case of GKE we will only want to build if it is
+          # In the case of GKE we will only want to build if it is
           # a build of a branch in the kubeapps repository
           if [[ -z "$GKE_ADMIN" ]]; then
             echo "Step aborted, we are not in the Kubeapps repository"
@@ -359,7 +359,7 @@ gke_test: &gke_test
     - <<: *install_gcloud_sdk
     - setup_remote_docker
     - run:
-        name: Configure Google Clould
+        name: Configure Google Cloud
         command: | 
           gcloud -q config set project $GKE_PROJECT
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/client_secrets.json
