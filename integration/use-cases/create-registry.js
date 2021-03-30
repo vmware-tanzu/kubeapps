@@ -11,7 +11,7 @@ test("Creates a registry", async () => {
     document.querySelector("#login-submit-button").click()
   );
 
-  await expect(page).toClick("cds-button", { text: "Add App Repository" });
+  await expect(page).toClick("cds-button", { text: "Add App Repository", timeout: 10000 });
 
   await page.type("input[placeholder=\"example\"]", "my-repo");
 

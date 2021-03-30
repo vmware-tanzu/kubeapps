@@ -27,7 +27,7 @@ test("Deploys an Operator", async () => {
 
   await utils.retryAndRefresh(page, 2, async () => {
     // The CSV takes a bit to get populated
-    await expect(page).toMatch("Installed");
+    await expect(page).toMatch("Installed", { timeout: 10000 });
   });
 
   // Wait for the operator to be ready to be used
@@ -37,7 +37,8 @@ test("Deploys an Operator", async () => {
     await expect(page).toMatch("Operators", { timeout: 10000 });
 
     // Filter out charts to search only for the prometheus operator
-    await expect(page).toClick("label", { text: "Operators" });
+    await expect(page).toClick("label", { text: "Operators", timeout: 10000 });
+
 
     await expect(page).toMatch("Prometheus");
 
