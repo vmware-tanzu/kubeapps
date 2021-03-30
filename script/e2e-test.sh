@@ -175,7 +175,8 @@ installOrUpgradeKubeapps() {
       --set assetsvc.replicaCount=1 \
       --set dashboard.replicaCount=1 \
       --set postgresql.replication.enabled=false \
-      --set ingress.enabled=true  \
+      --set postgresql.postgresqlPassword=password \
+      --set ingress.enabled=true \
       --set ingress.hostname=localhost  \
       --set ingress.tls=true  \
       --set authProxy.enabled=true \
@@ -249,7 +250,8 @@ kubectl create ns kubeapps
 if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
-  installOrUpgradeKubeapps bitnami/kubeapps
+  installOrUpgradeKubeapps bitnami/kubeapps \
+    "--set" "apprepository.initialRepos=null"
 
   info "Waiting for Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
@@ -261,7 +263,6 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
-
 info "Waiting for Kubeapps components to be ready..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
