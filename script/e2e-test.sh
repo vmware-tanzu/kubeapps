@@ -255,11 +255,6 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
 
   info "Waiting for Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
-
-  # TODO(agamez): Remove these lines in the next version
-  kubectl delete  clusterrole -n kubapps kubeapps:controller:kubeops-ns-discovery-kubeapps kubeapps:controller:kubeops-operators-kubeapps kubeapps:kubeapps:apprepositories-read kubeapps:kubeapps:apprepositories-refresh kubeapps:kubeapps:apprepositories-write || true
-  kubectl delete  clusterrolebinding -n kubapps kubeapps:controller:kubeapps:apprepositories-read kubeapps:controller:kubeops-ns-discovery-kubeapps || true
-  kubectl delete apprepositories.kubeapps.com -n kubeapps bitnami || true
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
