@@ -1068,7 +1068,12 @@ version: 1.0.0
 				w[tag] = recorder
 				content[tag] = recorder.Body
 			}
+			url, _ := parseRepoURL("http://oci-test")
 
+			tags := map[string]string{}
+			for _, tag := range tt.tags {
+				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
+			}
 			chartsRepo := OCIRegistry{
 				repositories: []string{tt.chartName},
 				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
@@ -1078,6 +1083,12 @@ version: 1.0.0
 				puller: &helmfake.OCIPuller{
 					Content:  content,
 					Checksum: "123",
+				},
+				ociCli: &ociAPICli{
+					url: url,
+					netClient: &goodOCIAPIHTTPClient{
+						responseByPath: tags,
+					},
 				},
 			}
 			charts, err := chartsRepo.Charts()
