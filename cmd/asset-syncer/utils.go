@@ -426,7 +426,7 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) Checksum() (string, error) {
-	r.tags = map[string]TagList{} 
+	r.tags = map[string]TagList{}
 	for _, appName := range r.repositories {
 		tags, err := r.ociCli.TagList(appName)
 		if err != nil {
@@ -579,7 +579,7 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 
 func (r *OCIRegistry) filterTags() {
 	unfilteredTags := r.tags
-	r.tags = map[string]TagList{} 
+	r.tags = map[string]TagList{}
 	checktagJobs := make(chan checkTagJob, numWorkers)
 	tagcheckRes := make(chan checkTagResult, numWorkers)
 	var wg sync.WaitGroup
@@ -631,9 +631,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	}
 
 	// Filter the current tags before pulling charts
-	log.Debugf("unfiltered tags! %v", r.tags)
 	r.filterTags()
-	log.Debugf("Tags filtered! %v", r.tags)
 
 	chartJobs := make(chan pullChartJob, numWorkers)
 	chartResults := make(chan pullChartResult, numWorkers)
