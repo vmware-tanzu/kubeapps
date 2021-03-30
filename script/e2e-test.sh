@@ -246,18 +246,16 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
 
-# if [[ -n "${TEST_UPGRADE}" ]]; then
-#   # To test the upgrade, first install the latest version published
-#   info "Installing latest Kubeapps chart available"
-#   installOrUpgradeKubeapps bitnami/kubeapps \
-#     "--set" "apprepository.initialRepos=null"
+if [[ -n "${TEST_UPGRADE}" ]]; then
+  # To test the upgrade, first install the latest version published
+  info "Installing latest Kubeapps chart available"
+  installOrUpgradeKubeapps bitnami/kubeapps
 
-#   info "Waiting for Kubeapps components to be ready..."
-#   k8s_wait_for_deployment kubeapps kubeapps-ci
-# fi
+  info "Waiting for Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+fi
 
-installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
-    "--set" "apprepository.initialRepos=null"
+installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 
 info "Waiting for Kubeapps components to be ready..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
@@ -278,12 +276,12 @@ deployments=(
   "kubeapps-ci-internal-apprepository-controller"
   "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
+  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
   info "Deployment ${dep} ready"
 done
-k8s_wait_for_deployment kubeapps kubeapps-ci-internal-kubeops
 
 # Wait for Kubeapps Jobs
 # Clean up existing jobs
@@ -386,7 +384,6 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 ## Run tests
-
 info "Running Integration tests..."
 if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
   ## Integration tests failed, get report screenshot
