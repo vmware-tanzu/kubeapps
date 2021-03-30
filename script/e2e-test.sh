@@ -256,7 +256,9 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
   k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
-installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
+installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "apprepository.initialRepos=null"
+
 info "Waiting for Kubeapps components to be ready..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
