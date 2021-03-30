@@ -38,7 +38,14 @@ test("Creates a private registry", async () => {
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
 
-  await expect(page).toClick("cds-button", { text: "Add new credentials" });
+  try {
+    // TODO(andresmgot): Remove this line once 2.3 is released
+    await expect(page).toClick("cds-button", { text: "Add new credentials" });
+  } catch (e) {
+    await expect(page).toClick(".btn-info-outline", {
+      text: "Add new credentials",
+    });
+  }
 
   await page.type('input[placeholder="Secret"]', secret);
   await page.type(
@@ -49,9 +56,14 @@ test("Creates a private registry", async () => {
   await page.type('input[placeholder="Password"][value=""]', "password");
   await page.type('input[placeholder="user@example.com"]', "user@example.com");
 
-  await expect(page).toClick(".secondary-input cds-button", {
-    text: "Submit",
-  });
+  try {
+    // TODO(andresmgot): Remove this line once 2.3 is released
+    await expect(page).toClick(".secondary-input cds-button", {
+      text: "Submit",
+    });
+  } catch (e) {
+    await expect(page).toClick(".btn-info-outline", { text: "Submit" });
+  }
 
   // Select the new secret
   await expect(page).toClick("label", { text: secret });
