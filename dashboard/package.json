@@ -113,7 +113,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.0.0",
+    "@formatjs/cli": "^4.2.4",
     "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.1",
     "@types/jest": "^26.0.22",
