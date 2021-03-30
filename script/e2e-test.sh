@@ -26,7 +26,6 @@ ADDITIONAL_CLUSTER_IP=${4:-"172.18.0.3"}
 DEV_TAG=${5:?missing dev tag}
 IMG_MODIFIER=${6:-""}
 
-
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
 if [[ -n "$TEST_LATEST_RELEASE" ]]; then
@@ -201,7 +200,7 @@ installOrUpgradeKubeapps() {
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
-  installOLM v0.17.0
+  installOLM $OLM_VERSION
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
@@ -369,10 +368,6 @@ kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create role view-secrets --verb=get,list,watch --resource=secrets
 kubectl create rolebinding kubeapps-view-secret --role view-secrets --serviceaccount kubeapps:kubeapps-view
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
-## Create view user (oidc)
-kubectl delete rolebinding kubeapps-user -n  kubeapps-user-namespace
-kubectl create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com
-kubectl create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit

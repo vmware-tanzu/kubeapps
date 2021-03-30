@@ -220,9 +220,14 @@ install_cluster: &install_cluster
         echo "Creating cluster..."
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
+        
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Cluster created"
       } || {
         echo "Cluster creation failed, retrying..."
@@ -232,6 +237,10 @@ install_cluster: &install_cluster
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
+
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Cluster created"
       } || {
         echo "Error while creating the cluster after retry"
@@ -267,16 +276,24 @@ install_additional_cluster: &install_additional_cluster
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
-          echo "Additional cluster created"
+
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
+        echo "Additional cluster created"
       } || {
-          echo "Additional cluster creation failed, retrying..."
-          kind delete clusters kubeapps-ci-additional || true
-          kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        echo "Additional cluster creation failed, retrying..."
+        kind delete clusters kubeapps-ci-additional || true
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
-          echo "Additional cluster created"
+
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
+        echo "Additional cluster created"
       } || {
-          echo "Error while creating the additional cluster after retry"
+        echo "Error while creating the additional cluster after retry"
       }
 
 copy_apiserver_certificates: &copy_apiserver_certificates
