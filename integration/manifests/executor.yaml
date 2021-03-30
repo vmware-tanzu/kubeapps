@@ -18,13 +18,13 @@ spec:
         run: integration
     spec:
       containers:
-      - args:
-        - tail
-        - -f
-        - /dev/null
-        image: kubeapps/integration-tests:latest
-        name: integration
-        resources:
-          requests:
-            memory: 100Mi
+        - args:
+            - tail
+            - -f
+            - /dev/null
+          image: kubeapps/integration-tests:v1.0.0
+          name: integration
+          resources:
+            requests:
+              memory: 100Mi
 status: {}

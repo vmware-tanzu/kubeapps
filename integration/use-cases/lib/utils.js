@@ -1,19 +1,22 @@
-const {
-  screenshotsFolder,
-} = require("../../args");
+const { screenshotsFolder } = require("../../args");
 const path = require("path");
 
 module.exports = {
-  retryAndRefresh: async (page, retries, toCheck,  testName) => {
+  retryAndRefresh: async (page, retries, toCheck, testName) => {
     let retriesLeft = retries;
     while (retriesLeft > 0) {
       try {
         await toCheck();
         break;
       } catch (e) {
-        if(testName) {
+        if (testName) {
           await page.screenshot({
-            path: path.join(__dirname, `../../${screenshotsFolder}/${testName}-${retries - retriesLeft}.png`),
+            path: path.join(
+              __dirname,
+              `../../${screenshotsFolder}/${testName}-${
+                retries - retriesLeft
+              }.png`
+            ),
           });
         }
         if (retriesLeft === 1) {

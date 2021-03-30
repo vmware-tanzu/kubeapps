@@ -36,6 +36,8 @@ var (
 	helmDriverArg      string
 	listLimit          int
 	pinnipedProxyURL   string
+	burst              int
+	qps                float32
 	settings           environment.EnvSettings
 	timeout            int64
 	userAgentComment   string
@@ -51,6 +53,8 @@ func init() {
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&clustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	pflag.StringVar(&pinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
+	pflag.IntVar(&burst, "burst", 15, "internal burst capacity")
+	pflag.Float32Var(&qps, "qps", 10, "internal QPS rate")
 }
 
 func main() {
@@ -79,6 +83,8 @@ func main() {
 		Timeout:           timeout,
 		KubeappsNamespace: kubeappsNamespace,
 		ClustersConfig:    clustersConfig,
+		Burst:             burst,
+		QPS:               qps,
 	}
 
 	storageForDriver := agent.StorageForSecrets
@@ -109,7 +115,7 @@ func main() {
 	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), clustersConfig)
+	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), options.Burst, options.QPS, clustersConfig)
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}

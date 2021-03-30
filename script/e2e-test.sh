@@ -19,8 +19,9 @@ set -o pipefail
 
 # Constants
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
-DEV_TAG=${1:?missing dev tag}
-IMG_MODIFIER=${2:-""}
+OLM_VERSION=${1:-"v0.17.0"}
+DEV_TAG=${2:?missing dev tag}
+IMG_MODIFIER=${3:-""}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -75,12 +76,34 @@ installOLM() {
     url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
     namespace=olm
 
-    kubectl apply -f ${url}/crds.yaml
-    kubectl apply -f ${url}/olm.yaml
+    kubectl apply -f "${url}/crds.yaml"
+    kubectl wait --for=condition=Established -f "${url}/crds.yaml"
+    kubectl apply -f "${url}/olm.yaml"
 
     # wait for deployments to be ready
     kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
     kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
+
+    retries=30
+    until [[ $retries == 0 ]]; do
+        new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
+        if [[ $new_csv_phase != "$csv_phase" ]]; then
+            csv_phase=$new_csv_phase
+            echo "CSV \"packageserver\" phase: $csv_phase"
+        fi
+        if [[ "$new_csv_phase" == "Succeeded" ]]; then
+      break
+        fi
+        sleep 10
+        retries=$((retries - 1))
+    done
+
+  if [ $retries == 0 ]; then
+      echo "CSV \"packageserver\" failed to reach phase succeeded"
+      exit 1
+  fi
+
+  kubectl rollout status -w deployment/packageserver --namespace="${namespace}"
 }
 
 ########################
@@ -152,7 +175,7 @@ installOrUpgradeKubeapps() {
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
-  installOLM 0.16.1
+  installOLM v0.17.0
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
@@ -169,6 +192,7 @@ images=(
   "assetsvc"
   "dashboard"
   "kubeops"
+  "pinniped-proxy"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -183,6 +207,8 @@ img_flags=(
   "--set" "dashboard.image.repository=${images[3]}"
   "--set" "kubeops.image.tag=${DEV_TAG}"
   "--set" "kubeops.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
+  "--set" "pinnipedProxy.image.repository=${images[5]}"
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
@@ -198,14 +224,16 @@ kubectl create ns kubeapps
 if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
-  # Breaking change at 6.X, the initialRepos are no longer installed by a hook
-  # which causes Helm to detect a conflict: "rendered manifests contain a new resource that already exists"
-  # To avoid it, we don't include any initialRepos in the first installation
   installOrUpgradeKubeapps bitnami/kubeapps \
     "--set" "apprepository.initialRepos=null"
+
+  info "Waiting for Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
+info "Waiting for Kubeapps components to be ready..."
+k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password
 pushChart apache 7.3.16 admin password
@@ -318,6 +346,7 @@ kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceacco
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
+
 ## Give the cluster some time to avoid issues like
 ## https://circleci.com/gh/kubeapps/kubeapps/16102
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "5" "1"
@@ -327,6 +356,7 @@ retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "
 admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
+
 ## Run tests
 info "Running Integration tests..."
 if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then

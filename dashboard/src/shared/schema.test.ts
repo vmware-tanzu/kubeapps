@@ -436,12 +436,12 @@ describe("validate", () => {
       errors: [
         {
           keyword: "type",
-          dataPath: ".foo",
+          instancePath: "/foo",
           schemaPath: "#/properties/foo/type",
           params: {
             type: "integer",
           },
-          message: "should be integer",
+          message: "must be integer",
         },
       ],
     },

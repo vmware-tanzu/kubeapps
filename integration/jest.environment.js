@@ -30,9 +30,8 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
     try {
       // Check the server is up before running the test suite
       console.log(
-        `Waiting ${endpoint} to be ready before running the tests (${
-          waitTimeout / 1000
-        }s)`
+        `Waiting ${endpoint} to be ready before running the tests 
+        (${waitTimeout / 1000}s)`
       );
       await waitOn({
         resources: [endpoint],
@@ -79,13 +78,18 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
       .on("pageerror", ({ message }) => console.log(message))
       .on("requestfailed", (request) =>
         console.log(`${request.failure().errorText} ${request.url()}`)
-      );
+      )
+      .on("response", (response) => {
+        if (response.status() >= 400) {
+          console.log(`${response.status()} in ${response.url()}`);
+        }
+      });
   }
 
   async teardown() {
     // Wait a few seconds before tearing down the page so we
     // have time to take screenshots and handle other events
-    await this.global.page.waitFor(2000);
+    await this.global.page.waitForTimeout(2000);
     await super.teardown();
   }
 

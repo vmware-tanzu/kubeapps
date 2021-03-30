@@ -152,6 +152,10 @@ func (f fakeCombinedClientset) RestClient() rest.Interface {
 	return f.rc
 }
 
+func (f fakeCombinedClientset) MaxWorkers() int {
+	return 1
+}
+
 func checkErr(t *testing.T, err error, expectedError error) {
 	if err == nil && expectedError != nil {
 		t.Errorf("got: nil, want: %+v", expectedError)
@@ -869,16 +873,6 @@ func TestGetNamespaces(t *testing.T) {
 			allowed:            true,
 		},
 		{
-			name: "it does filter the namespaces if returned by the user client",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-				{"bar", corev1.NamespaceActive},
-				{"zed", corev1.NamespaceActive},
-			},
-			expectedNamespaces: []string{},
-			allowed:            false,
-		},
-		{
 			name: "it lists namespaces if the userclient fails but the service client succeeds",
 			existingNamespaces: []existingNs{
 				{"foo", corev1.NamespaceActive},
@@ -1129,6 +1123,7 @@ func TestNewClusterConfig(t *testing.T) {
 		inClusterConfig *rest.Config
 		expectedConfig  *rest.Config
 		errorExpected   bool
+		maxReq          int
 	}{
 		{
 			name:      "returns an in-cluster with explicit token for the default cluster",
