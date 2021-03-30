@@ -170,6 +170,7 @@ installOrUpgradeKubeapps() {
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
+      "${@:2}" \
       --set frontend.replicaCount=1 \
       --set kubeops.replicaCount=1 \
       --set assetsvc.replicaCount=1 \
@@ -249,7 +250,8 @@ kubectl create ns kubeapps
 if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
-  installOrUpgradeKubeapps bitnami/kubeapps
+  installOrUpgradeKubeapps bitnami/kubeapps \
+    "--set" "apprepository.initialRepos=null"
 
   info "Waiting for Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci

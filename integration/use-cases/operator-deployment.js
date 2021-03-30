@@ -48,6 +48,7 @@ test("Deploys an Operator", async () => {
     await expect(page).toMatchElement("label", { text: "Operators", timeout: 60000 });
     await expect(page).toClick("label", { text: "Operators" });
 
+
     await expect(page).toMatch("Prometheus");
 
     await expect(page).toClick(".info-card-header", { text: "Prometheus" });

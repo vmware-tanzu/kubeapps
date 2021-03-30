@@ -276,7 +276,7 @@ describe("deploy chart", () => {
       {
         type: getType(actions.apps.errorApp),
         payload: new UnprocessableEntity(
-          "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
+          "The given values don't match the required format. The following errors were found:\n  - /foo: must be string",
         ),
       },
     ];
@@ -351,7 +351,7 @@ describe("upgradeApp", () => {
       {
         type: getType(actions.apps.errorApp),
         payload: new UnprocessableEntity(
-          "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
+          "The given values don't match the required format. The following errors were found:\n  - /foo: must be string",
         ),
       },
     ];
