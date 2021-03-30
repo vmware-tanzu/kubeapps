@@ -253,7 +253,6 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
 
   info "Waiting for Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
-  sleep 15
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
