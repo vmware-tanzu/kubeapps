@@ -1,6 +1,7 @@
 const { endpoint } = require("./args");
 const { setDefaultOptions } = require("expect-puppeteer");
 
+// Change timeout for Puppeteer page.waitForXXX functions from 0.5s to 4s
 setDefaultOptions({ timeout: 4000 });
 
 // endpoint argument is mandatory

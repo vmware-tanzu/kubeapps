@@ -17,9 +17,7 @@ test("Creates a private registry", async () => {
     "password",
   );
 
-  // wait for the loading msg to disappear
-  await page.waitForFunction(() => !document.querySelector("cds-progress-circle"));
-
+  await expect(page).toMatchElement("cds-button", { text: "Add App Repository" });
   await expect(page).toClick("cds-button", { text: "Add App Repository" });
 
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
@@ -40,14 +38,7 @@ test("Creates a private registry", async () => {
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
 
-  try {
-    // TODO(andresmgot): Remove this line once 2.3 is released
-    await expect(page).toClick("cds-button", { text: "Add new credentials" });
-  } catch (e) {
-    await expect(page).toClick(".btn-info-outline", {
-      text: "Add new credentials",
-    });
-  }
+  await expect(page).toClick("cds-button", { text: "Add new credentials" });
 
   await page.type('input[placeholder="Secret"]', secret);
   await page.type(
@@ -58,14 +49,9 @@ test("Creates a private registry", async () => {
   await page.type('input[placeholder="Password"][value=""]', "password");
   await page.type('input[placeholder="user@example.com"]', "user@example.com");
 
-  try {
-    // TODO(andresmgot): Remove this line once 2.3 is released
-    await expect(page).toClick(".secondary-input cds-button", {
-      text: "Submit",
-    });
-  } catch (e) {
-    await expect(page).toClick(".btn-info-outline", { text: "Submit" });
-  }
+  await expect(page).toClick(".secondary-input cds-button", {
+    text: "Submit",
+  });
 
   // Select the new secret
   await expect(page).toClick("label", { text: secret });
@@ -75,10 +61,11 @@ test("Creates a private registry", async () => {
   await expect(page).toClick("a", { text: repoName });
 
   await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("apache", { timeout: 2000 });
+    await expect(page).toMatch("apache");
   });
 
-  await expect(page).toClick("a", { text: "apache", timeout: 60000 });
+  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
+  await expect(page).toClick("a", { text: "apache" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
@@ -86,7 +73,7 @@ test("Creates a private registry", async () => {
   const appName = "my-app" + randomNumber;
   await page.type("#releaseName", appName);
 
-  await expect(page).toMatch(/Deploy.*7.3.15/, { timeout: 10000 });
+  await expect(page).toMatch(/Deploy.*7.3.15/);
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

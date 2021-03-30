@@ -33,7 +33,7 @@ test("Upgrades an application", async () => {
   await new Promise(r => setTimeout(r, 500));
 
   await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("7.3.2", { timeout: 10000 });
+    await expect(page).toMatch("7.3.2");
   });
 
   await expect(page).toMatchElement("input[type='number']");
@@ -58,7 +58,7 @@ test("Upgrades an application", async () => {
 
   // Verify that the form contains the old version
   await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("7.3.2", { timeout: 10000 });
+    await expect(page).toMatch("7.3.2");
   });
 
   await expect(page).toMatchElement("input[type='number']", { value: 2 });

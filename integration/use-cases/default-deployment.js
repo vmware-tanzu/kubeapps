@@ -12,7 +12,8 @@ test("Deploys an application with the values by default", async () => {
 
   await expect(page).toClick("a", { text: "Catalog" });
 
-  await expect(page).toClick("a", { text: "apache", timeout: 60000 });
+  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
+  await expect(page).toClick("a", { text: "apache" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

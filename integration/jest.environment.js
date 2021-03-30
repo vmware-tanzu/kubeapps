@@ -49,7 +49,7 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
       height: 780,
       deviceScaleFactor: 1,
     });
-    await this.global.page.setDefaultTimeout(8000);
+    await this.global.page.setDefaultTimeout(30000); // 30s is the default value
     this.global.page
       .on("console", async message => {
         if (message.type() === "error") {
