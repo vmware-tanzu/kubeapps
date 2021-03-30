@@ -48,7 +48,6 @@ test("Deploys an Operator", async () => {
     await expect(page).toMatchElement("label", { text: "Operators", timeout: 60000 });
     await expect(page).toClick("label", { text: "Operators" });
 
-
     await expect(page).toMatch("Prometheus");
 
     await expect(page).toClick(".info-card-header", { text: "Prometheus" });
@@ -59,11 +58,13 @@ test("Deploys an Operator", async () => {
     await expect(page).toMatch("Deploy");
   });
 
-  await utils.retryAndRefresh(page, 5, async () => {
-    await expect(page).toClick("cds-button", { text: "Deploy" });
-
-    await expect(page).toMatch("Installation Values");
-  },
+  await utils.retryAndRefresh(
+    page,
+    5,
+    async () => {
+      await expect(page).toClick("cds-button", { text: "Deploy" });
+      await expect(page).toMatch("Installation Values");
+    },
     "operator-view",
   );
 
