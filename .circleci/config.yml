@@ -33,6 +33,9 @@ parameters:
   POSTGRESQL_VERSION:
     type: "string"
     default: "11.11.0-debian-10-r45"
+  IMAGES_TO_PUSH:
+    type: "string"
+    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy"
 
 ## Build conditions
 # Build in any branch or tag
@@ -140,6 +143,19 @@ workflows:
             - GKE_1_16_LATEST_RELEASE
 
 ## Definitions
+common_envars: &common_envars
+  DOCKER_VERSION: << pipeline.parameters.DOCKER_VERSION >>
+  GOLANG_VERSION: << pipeline.parameters.GOLANG_VERSION >>
+  HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
+  K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
+  KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
+  KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
+  MKCERT_VERSION: << pipeline.parameters.MKCERT_VERSION >>
+  NODE_VERSION: << pipeline.parameters.NODE_VERSION >>
+  OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
+  POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
+  RUST_VERSION: << pipeline.parameters.RUST_VERSION >>
+
 install_gcloud_sdk: &install_gcloud_sdk
   run:
     name: "Install gcloud sdk"
@@ -418,7 +434,7 @@ jobs:
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       CGO_ENABLED: "0"
-      POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
+      <<: *common_envars
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
@@ -433,7 +449,7 @@ jobs:
           name: Run go integration tests for DB
           command: | 
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
-            docker run --network container:postgresql -d --name tests circleci/golang:<< pipeline.parameters.GOLANG_VERSION >> tail -f /dev/null
+            docker run --network container:postgresql -d --name tests circleci/golang:${GOLANG_VERSION} tail -f /dev/null
             docker cp /go tests:/
             docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
   test_dashboard:
@@ -464,7 +480,7 @@ jobs:
               cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
   test_chart_render:
     environment:
-      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
+      <<: *common_envars
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
@@ -508,16 +524,11 @@ jobs:
   local_e2e_tests:
     machine: true
     environment:
-      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
+      DEFAULT_DEX_IP: "172.18.0.2"
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
-      DEFAULT_DEX_IP: "172.18.0.2"
-      USE_MULTICLUSTER_OIDC_ENV: true
-      OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
-      MKCERT_VERSION: << pipeline.parameters.MKCERT_VERSION >>
-      KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
-      KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
-      K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
+      USE_MULTICLUSTER_OIDC_ENV: "true"
+      <<: *common_envars
     parameters:
       number:
         type: string
@@ -525,37 +536,33 @@ jobs:
   GKE_1_15_MASTER:
     <<: *gke_test
     environment:
-      USE_MULTICLUSTER_OIDC_ENV: false
-      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
-      OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
+      USE_MULTICLUSTER_OIDC_ENV: "false"
+      <<: *common_envars
   GKE_1_15_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      USE_MULTICLUSTER_OIDC_ENV: false
-      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
-      OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
+      USE_MULTICLUSTER_OIDC_ENV: "false"
+      <<: *common_envars
   GKE_1_16_MASTER:
     <<: *gke_test
     environment:
-      USE_MULTICLUSTER_OIDC_ENV: false
-      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
-      OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
+      USE_MULTICLUSTER_OIDC_ENV: "false"
+      <<: *common_envars
   GKE_1_16_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      USE_MULTICLUSTER_OIDC_ENV: false
-      HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
-      OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
+      USE_MULTICLUSTER_OIDC_ENV: "false"
+      <<: *common_envars
   sync_chart:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
@@ -584,7 +591,7 @@ jobs:
           command: | 
             if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
               docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-              for IMAGE in kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy; do
+              for IMAGE in << pipeline.parameters.IMAGES_TO_PUSH >>; do
                 docker pull ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
                 docker tag ${IMAGE}${IMG_MODIFIER}:${DEV_TAG} ${IMAGE}:${PROD_TAG}
                 docker push ${IMAGE}:${PROD_TAG}
