@@ -74,7 +74,11 @@ var syncCmd = &cobra.Command{
 			logrus.Fatal(err)
 		}
 		repo := repoIface.Repo()
-		checksum, err := repoIface.Checksum()
+		index, err := repoIface.Index()
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		checksum, err := repoIface.Checksum(index)
 		if err != nil {
 			logrus.Fatal(err)
 		}
@@ -85,7 +89,7 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		charts, err := repoIface.Charts()
+		charts, err := repoIface.Charts(index)
 		if err != nil {
 			logrus.Fatal(err)
 		}

@@ -590,7 +590,11 @@ type fakeRepo struct {
 	chartFiles models.ChartFiles
 }
 
-func (r *fakeRepo) Checksum() (string, error) {
+func (r *fakeRepo) Index() (interface{}, error) {
+	return "", nil
+}
+
+func (r *fakeRepo) Checksum(interface{}) (string, error) {
 	return "checksum", nil
 }
 
@@ -598,7 +602,7 @@ func (r *fakeRepo) Repo() *models.RepoInternal {
 	return r.RepoInternal
 }
 
-func (r *fakeRepo) Charts() ([]models.Chart, error) {
+func (r *fakeRepo) Charts(interface{}) ([]models.Chart, error) {
 	return r.charts, nil
 }
 
@@ -641,7 +645,6 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		netClient := &badHTTPClient{}
 		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
-			content:      []byte{},
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
@@ -673,7 +676,6 @@ func Test_fetchAndImportFiles(t *testing.T) {
 
 		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
-			content:      []byte{},
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
@@ -700,7 +702,6 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		r := &models.RepoInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
 		repo := &HelmRepo{
 			RepoInternal: r,
-			content:      []byte{},
 			netClient:    netClient,
 		}
 		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
@@ -876,30 +877,20 @@ func (o *fakeOCIAPICli) IsHelmChart(appName, tag string) (bool, error) {
 }
 
 func Test_OCIRegistry(t *testing.T) {
-	repo := OCIRegistry{
-		repositories: []string{"apache", "jenkins"},
-		RepoInternal: &models.RepoInternal{
-			URL: "http://oci-test",
-		},
-	}
-
-	t.Run("Checksum - failed request", func(t *testing.T) {
-		repo.ociCli = &fakeOCIAPICli{err: fmt.Errorf("request failed")}
-		_, err := repo.Checksum()
+	t.Run("Index - failed request", func(t *testing.T) {
+		repo := OCIRegistry{
+			repositories: []string{"apache", "jenkins"},
+			RepoInternal: &models.RepoInternal{
+				URL: "http://oci-test",
+			},
+			ociCli: &fakeOCIAPICli{err: fmt.Errorf("request failed")},
+		}
+		_, err := repo.Index()
 		assert.Err(t, fmt.Errorf("request failed"), err)
 	})
 
-	t.Run("Checksum - success", func(t *testing.T) {
-		repo.ociCli = &fakeOCIAPICli{
-			tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
-		}
-		checksum, err := repo.Checksum()
-		assert.NoErr(t, err)
-		assert.Equal(t, checksum, "b1b1ae17ddc8f83606acb8a175025a264e8634bb174b6e6a5799bdb5d20eaa58", "checksum")
-	})
-
-	t.Run("Checksum - stores the list of tags", func(t *testing.T) {
-		emptyRepo := OCIRegistry{
+	t.Run("Index - success", func(t *testing.T) {
+		repo := OCIRegistry{
 			repositories: []string{"apache"},
 			RepoInternal: &models.RepoInternal{
 				URL: "http://oci-test",
@@ -908,11 +899,20 @@ func Test_OCIRegistry(t *testing.T) {
 				tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
 			},
 		}
-		_, err := emptyRepo.Checksum()
+		index, err := repo.Index()
 		assert.NoErr(t, err)
-		assert.Equal(t, emptyRepo.tags, map[string]TagList{
+		expected := map[string]TagList{
 			"apache": {Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
-		}, "expected tags")
+		}
+		actual := index.(map[string]TagList)
+		assert.Equal(t, actual, expected, "tag list")
+	})
+
+	t.Run("Checksum - success", func(t *testing.T) {
+		repo := OCIRegistry{}
+		checksum, err := repo.Checksum(map[string]TagList{"apache": {Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}}})
+		assert.NoErr(t, err)
+		assert.Equal(t, checksum, "60435581bd25f69a01289cbc574ded359f6f712ee498487c554b7387770d5cb9", "checksum")
 	})
 
 	chartYAML := `
@@ -1070,16 +1070,17 @@ version: 1.0.0
 			}
 			url, _ := parseRepoURL("http://oci-test")
 
-			tags := map[string]string{}
+			tagTypes := map[string]string{}
 			for _, tag := range tt.tags {
-				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
+				tagTypes[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
 			}
+			tags := map[string]TagList{
+				tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
+			}
+
 			chartsRepo := OCIRegistry{
 				repositories: []string{tt.chartName},
 				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
-				tags: map[string]TagList{
-					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
-				},
 				puller: &helmfake.OCIPuller{
 					Content:  content,
 					Checksum: "123",
@@ -1087,11 +1088,11 @@ version: 1.0.0
 				ociCli: &ociAPICli{
 					url: url,
 					netClient: &goodOCIAPIHTTPClient{
-						responseByPath: tags,
+						responseByPath: tagTypes,
 					},
 				},
 			}
-			charts, err := chartsRepo.Charts()
+			charts, err := chartsRepo.Charts(tags)
 			assert.NoErr(t, err)
 			if !cmp.Equal(charts, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(charts, tt.expected))
