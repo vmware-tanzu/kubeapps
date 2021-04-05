@@ -1,9 +1,6 @@
 # Kubeapps Pinniped-Proxy Developer Guide
 
-`pinniped-proxy` proxies incoming requests with an `Authorization: Bearer
-token` header, exchanging the token via the pinniped aggregate API for x509
-short-lived client certificates, before forwarding the request onwards
-to the destination k8s API server.
+`pinniped-proxy` proxies incoming requests with an `Authorization: Bearer token` header, exchanging the token via the pinniped aggregate API for x509 short-lived client certificates, before forwarding the request onwards to the destination k8s API server.
 
 `pinniped-proxy` can be used by our Kubeapps frontend to ensure OIDC requests for the Kubernetes API server are forwarded through only after exchanging the OIDC id token for client certificates used by the Kubernetes API server, for situations where the Kubernetes API server is not configured for OIDC.
 
@@ -55,6 +52,72 @@ Similarly, tests can be run with the cargo tool:
 ```bash
 cargo test
 ```
+
+## Running the local playground environment
+
+### Prerequisite: getting the node IP
+
+First of all, execute `docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway'` (adapt this line as you require, you only will need the Kind Gateway IP), get the IP and use the next one. For example, if you get `172.18.0.1` in your command, you will need `172.18.0.2`.
+
+Next, follow the steps in [/docs/developer/using-makefiles.md](../developer/using-makefiles.md) to modify the proper yaml files by replacing with this value.
+
+Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next one) the following files:
+    - [script/deploy-dev.mk](../../script/deploy-dev.mk)
+    - [kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml)
+    - [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
+    - [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
+
+### Launching the multi-cluster dev environment
+
+ - Execute `make multi-cluster-kind-for-pinniped`.
+ - Update [/docs/user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) copying the certificate-authority-data from the additional cluster (`~/.kube/kind-config-kubeapps-additional`) to the `certificate-authority-data` of the second cluster.
+ - Execute `make deploy-dev-for-pinniped`.
+ - Edit [/docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml](../user/manifests/kubeapps-pinniped-jwt-authenticator.yaml) with the `certificate-authority-data` from the main cluster (`~/.kube/kind-config-kubeapps`).
+ - Execute `make add-pinniped-jwt-authenticator`.
+ - Open https://localhost/ and login with `kubeapps-operator@example.com`/`password`
+
+> Note: make sure you are really copying `certificate-authority-data` and not the `client-certificate-data` or ` client-certificate-data`. Otherwise, the setup will not work.
+
+### Update the pinniped-proxy image in your cluster
+
+In order to test your local changes in your cluster, assuming you are using [Kind](https://kind.sigs.k8s.io), you will need to make the local container image, upload it to the cluster and patch the kubeapps deployment to use this new image:
+
+```bash
+IMAGE_TAG=dev make kubeapps/pinniped-proxy
+kind load docker-image kubeapps/pinniped-proxy:dev --name kubeapps
+kubectl set image -n kubeapps deployment kubeapps pinniped-proxy=kubeapps/pinniped-proxy:dev
+kubectl delete pod -n kubeapps -l app=kubeapps
+```
+
+### View logs
+
+Check the pinniped-proxy logs:
+```bash
+kubectl logs deployment/kubeapps pinniped-proxy -n kubeapps -f
+```
+
+Check the Pinnped logs:
+```bash
+kubectl logs deployment/pinniped-concierge -n pinniped-concierge -f
+```
+
+### Troubleshooting
+
+Please have a look at the following guides: 
+ - [Using an OIDC provider with Pinniped](../user/using-an-OIDC-provider-with-pinniped.md).
+ - [Debugging auth failures when using OIDC](../user/using-an-OIDC-provider.md#debugging-auth-failures-when-using-oidc).
+
+Also, please verify that you have modified the Kind node IP accordingly and the `certificate-authority-data` has been properly copied to the corresponding files.
+
+Find below some typical problems with a possible workaround:
+
+- Missing permissions to access any namespace:
+  - Add RBAC config by executing `kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml`
+- Not logging in even if everything is correct:
+  - Delete and create the jwt authenticator: `make delete-pinniped-jwt-authenticator add-pinniped-jwt-authenticator`
+  - If still not working, remove Pinniped and create it again: `make delete-pinniped make deploy-pinniped deploy-pinniped-additional`.
+- When running the makefile it says `make: Nothing to be done for ...`:
+  - Simply try using the `-B` flag in your make command to force it and see which error is really being thrown.
 
 ## Formatting the code
 

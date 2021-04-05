@@ -7,7 +7,9 @@ VERSION ?= $$(git rev-parse HEAD)
 default: all
 
 include ./script/cluster-kind.mk
+include ./script/cluster-kind-for-pinniped.mk
 include ./script/deploy-dev.mk
+include ./script/deploy-dev-for-pinniped.mk
 
 IMG_MODIFIER ?=
 

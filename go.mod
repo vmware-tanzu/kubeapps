@@ -25,14 +25,14 @@ require (
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-openapi/spec v0.19.4 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
-	github.com/golang/protobuf v1.5.1
+	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
 	github.com/gorilla/handlers v1.4.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gregjones/httpcache v0.0.0-20181110185634-c63ab54fda8f // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
-	github.com/itchyny/gojq v0.12.2
+	github.com/itchyny/gojq v0.12.3
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47
