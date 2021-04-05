@@ -86,22 +86,10 @@ test("Deploys an Operator", async () => {
 
   await expect(page).toMatch("Are you sure you want to delete the resource?");
 
-  try {
-    // TODO(andresmgot): Remove this line once 2.3 is released
-    await expect(page).toClick(
-      "div.modal-dialog.modal-md > div > div.modal-body > div > div > cds-button:nth-child(2)",
-      {
-        text: "Delete",
-      },
-    );
-  } catch (e) {
-    await expect(page).toClick(
-      "#root > section > main > div > div > section > cds-modal > cds-modal-actions > button.btn.btn-danger",
-      {
-        text: "Delete",
-      },
-    );
-  }
+  await expect(page).toClick("cds-button", {
+    text: "Delete",
+  });
+
   // Goes back to application list
   await expect(page).toMatch("Applications", { timeout: 60000 });
 });
