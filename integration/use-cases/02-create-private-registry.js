@@ -38,7 +38,7 @@ test("Creates a private registry", async () => {
   // Open form to create a new secret
   const secret = "my-repo-secret" + randomNumber;
 
-  await expect(page).toClick("cds-button", { text: "Add new credentials" });
+  await expect(page).toClick("button", { text: "Add new credentials" });
 
   await page.type('input[placeholder="Secret"]', secret);
   await page.type(
@@ -49,7 +49,7 @@ test("Creates a private registry", async () => {
   await page.type('input[placeholder="Password"][value=""]', "password");
   await page.type('input[placeholder="user@example.com"]', "user@example.com");
 
-  await expect(page).toClick(".secondary-input cds-button", {
+  await expect(page).toClick("button", {
     text: "Submit",
   });
 
