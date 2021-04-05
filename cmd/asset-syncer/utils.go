@@ -427,57 +427,14 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) Checksum() (string, error) {
 	r.tags = map[string]TagList{}
-	checktagJobs := make(chan checkTagJob, numWorkers)
-	tagcheckRes := make(chan checkTagResult, numWorkers)
-	var wg sync.WaitGroup
-
-	// Process 10 tags at a time
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
-			wg.Done()
-		}()
-	}
-	go func() {
-		wg.Wait()
-		close(tagcheckRes)
-	}()
-
-	unfilteredTags := map[string]TagList{}
 	for _, appName := range r.repositories {
 		tags, err := r.ociCli.TagList(appName)
 		if err != nil {
 			return "", err
 		}
-		unfilteredTags[appName] = *tags
+		r.tags[appName] = *tags
 	}
 
-	go func() {
-		for _, appName := range r.repositories {
-			for _, tag := range unfilteredTags[appName].Tags {
-				checktagJobs <- checkTagJob{AppName: appName, Tag: tag}
-			}
-		}
-		close(checktagJobs)
-	}()
-
-	// Start receiving tags
-	for res := range tagcheckRes {
-		if res.Error == nil {
-			if res.isHelmChart {
-				r.tags[res.AppName] = TagList{
-					Name: unfilteredTags[res.AppName].Name,
-					Tags: append(r.tags[res.AppName].Tags, res.Tag),
-				}
-				sort.Strings(r.tags[res.AppName].Tags)
-			}
-		} else {
-			log.Errorf("failed to pull chart. Got %v", res.Error)
-		}
-	}
-
-	log.Debugf("Final list of tags: %v", r.tags)
 	content, err := json.Marshal(r.tags)
 	if err != nil {
 		return "", err
@@ -620,6 +577,51 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 	}
 }
 
+func (r *OCIRegistry) filterTags() {
+	unfilteredTags := r.tags
+	r.tags = map[string]TagList{}
+	checktagJobs := make(chan checkTagJob, numWorkers)
+	tagcheckRes := make(chan checkTagResult, numWorkers)
+	var wg sync.WaitGroup
+
+	// Process 10 tags at a time
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
+			wg.Done()
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(tagcheckRes)
+	}()
+
+	go func() {
+		for _, appName := range r.repositories {
+			for _, tag := range unfilteredTags[appName].Tags {
+				checktagJobs <- checkTagJob{AppName: appName, Tag: tag}
+			}
+		}
+		close(checktagJobs)
+	}()
+
+	// Start receiving tags
+	for res := range tagcheckRes {
+		if res.Error == nil {
+			if res.isHelmChart {
+				r.tags[res.AppName] = TagList{
+					Name: unfilteredTags[res.AppName].Name,
+					Tags: append(r.tags[res.AppName].Tags, res.Tag),
+				}
+				sort.Strings(r.tags[res.AppName].Tags)
+			}
+		} else {
+			log.Errorf("failed to pull chart. Got %v", res.Error)
+		}
+	}
+}
+
 // Charts retrieve the list of charts exposed in the repo
 func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	result := map[string]*models.Chart{}
@@ -627,6 +629,9 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Filter the current tags before pulling charts
+	r.filterTags()
 
 	chartJobs := make(chan pullChartJob, numWorkers)
 	chartResults := make(chan pullChartResult, numWorkers)
