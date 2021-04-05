@@ -215,13 +215,19 @@ install_cluster: &install_cluster
   run:
     name: "Install cluster"
     command: |
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml
       {
         echo "Creating cluster..."
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
+        
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Cluster created"
       } || {
         echo "Cluster creation failed, retrying..."
@@ -231,6 +237,10 @@ install_cluster: &install_cluster
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
+
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Cluster created"
       } || {
         echo "Error while creating the cluster after retry"
@@ -239,9 +249,62 @@ export_cluster_variables: &export_cluster_variables
   run:
     name: "Export cluster variables"
     command: |
+      DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
+      ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+
+      echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
+      echo DEX_IP=$DEX_IP
+      echo ADDITIONAL_CLUSTER_IP=$ADDITIONAL_CLUSTER_IP
+
       # If running kubectl without args, use the default "kubeapps-ci" cluster
       cp ${HOME}/.kube/kind-config-kubeapps-ci ${HOME}/.kube/config
       kubectl config set-context kind-kubeapps-ci 
+
+      # If the default IP the proper one, the multicluster setup will fail
+      if [ "$DEFAULT_DEX_IP" != "$DEX_IP" ]; then echo "Default IP does not match with current IP used in Kind"; exit 1; fi
+
+      echo "export DEFAULT_DEX_IP=${DEFAULT_DEX_IP}" >> $BASH_ENV
+      echo "export DEX_IP=${DEX_IP}" >> $BASH_ENV
+      echo "export ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP}" >> $BASH_ENV
+install_additional_cluster: &install_additional_cluster
+  run:
+    name: "Install additional cluster"
+    command: |
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
+      {
+        echo "Creating additional cluster..."
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
+        echo "Additional cluster created"
+      } || {
+        echo "Additional cluster creation failed, retrying..."
+        kind delete clusters kubeapps-ci-additional || true
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
+        echo "Additional cluster created"
+      } || {
+        echo "Error while creating the additional cluster after retry"
+      }
+
+copy_apiserver_certificates: &copy_apiserver_certificates
+  run:
+    name: "Copy apiserver certificates"
+    command: |
+      # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
+      docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
+      docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+      sudo chown circleci ./devel/dex.key
+      sudo chown circleci ./devel/dex.crt
 install_kubectl: &install_kubectl
   run:
     name: "Install kubectl"
@@ -264,6 +327,25 @@ install_mkcert: &install_mkcert
       chmod +x "mkcert-${MKCERT_VERSION}-linux-amd64"
       sudo mv "mkcert-${MKCERT_VERSION}-linux-amd64" /usr/local/bin/mkcert
       mkcert -install
+install_multicluster_deps: &install_multicluster_deps
+  run:
+    name: "Install multicluster deps"
+    command: |
+      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+      helm repo add stable https://charts.helm.sh/stable
+      
+      # Install dex
+      kubectl create namespace dex
+      helm install dex stable/dex --namespace dex --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+
+      # Install openldap
+      kubectl create namespace ldap
+      helm install ldap stable/openldap --namespace ldap 
+
+      # Create certs
+      kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
+      mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost kubeapps-ci.kubeapps $DEFAULT_DEX_IP
+
 run_e2e_tests: &run_e2e_tests
   run:
     name: "Run e2e tests script"
@@ -276,7 +358,7 @@ run_e2e_tests: &run_e2e_tests
         IMG_MODIFIER=""
       fi
 
-      if ./script/e2e-test.sh $OLM_VERSION $DEV_TAG $IMG_MODIFIER; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $DEV_TAG $IMG_MODIFIER; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
@@ -344,7 +426,9 @@ local_e2e_steps: &local_e2e_steps
     - <<: *install_kind
     - <<: *install_kubectl
     - <<: *install_cluster
+    - <<: *copy_apiserver_certificates
     # Create the "kubeapps-ci-additional" cluster
+    - <<: *install_additional_cluster
     # Export variables and kubeconfig
     - <<: *export_cluster_variables
     - <<: *install_mkcert
@@ -355,6 +439,7 @@ local_e2e_steps: &local_e2e_steps
     - run:
         name: Load CI images in the cluster
         command: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+    - <<: *install_multicluster_deps
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
@@ -459,6 +544,7 @@ jobs:
       DEFAULT_DEX_IP: "172.18.0.2"
       KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
+      USE_MULTICLUSTER_OIDC_ENV: "true"
       <<: *common_envars
     parameters:
       number:
@@ -469,6 +555,7 @@ jobs:
     environment:
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
+      USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
   GKE_1_15_LATEST_RELEASE:
     <<: *gke_test
@@ -476,12 +563,14 @@ jobs:
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
+      USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
   GKE_1_16_MASTER:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
+      USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
   GKE_1_16_LATEST_RELEASE:
     <<: *gke_test
@@ -489,6 +578,7 @@ jobs:
       GKE_BRANCH: "1.16"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
+      USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
   sync_chart:
     docker:

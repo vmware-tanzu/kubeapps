@@ -19,6 +19,7 @@ config:
   # one.
   - id: default
     redirectURIs:
+    - 'http://localhost/oauth2/callback'
     - 'https://localhost/oauth2/callback'
     name: 'Default-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
@@ -27,6 +28,7 @@ config:
   # a trusted peer.
   - id: second-cluster
     redirectURIs:
+    - 'http://localhost/oauth2/callback'
     - 'https://localhost/oauth2/callback'
     name: 'Second-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
@@ -37,6 +39,7 @@ config:
   # returned id_token.
   - id: third-cluster
     redirectURIs:
+    - 'http://localhost/oauth2/callback'
     - 'https://localhost/oauth2/callback'
     name: 'Third-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy

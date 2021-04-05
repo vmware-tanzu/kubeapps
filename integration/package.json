@@ -6,9 +6,11 @@
   "private": true,
   "scripts": {
     "start": "jest --runInBand --ci --colors",
-    "start:window": "INTEGRATION_HEADLESS=false jest --runInBand"
+    "start:window": "INTEGRATION_HEADLESS=false jest --runInBand",
+    "prettier": "prettier --write './**/*.{js, json}'"
   },
   "dependencies": {
+    "@jest/test-sequencer": "^26.6.3",
     "axios": "^0.21.1",
     "expect-puppeteer": "^4.4.0",
     "jest": "^26.6.3",
@@ -16,5 +18,8 @@
     "jest-puppeteer": "^4.4.0",
     "puppeteer": "^8.0.0",
     "wait-on": "^5.3.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1"
   }
 }
