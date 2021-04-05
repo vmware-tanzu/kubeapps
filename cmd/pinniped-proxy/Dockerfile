@@ -1,4 +1,4 @@
-FROM rust:1.49 as builder
+FROM rust:1.51 as builder
 
 # Create a new project and build pinniped-proxy dependencies only, so that they
 # are built as a layer on their own, to reduce build times when only our code
