@@ -89,6 +89,7 @@ updateRepo() {
     replaceImage asset-syncer "${targetChartPath}/values.yaml"
     replaceImage assetsvc "${targetChartPath}/values.yaml"
     replaceImage kubeops "${targetChartPath}/values.yaml"
+    replaceImage pinniped-proxy "${targetChartPath}/values.yaml"
 }
 
 commitAndPushChanges() {
