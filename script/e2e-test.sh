@@ -19,9 +19,12 @@ set -o pipefail
 
 # Constants
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
-OLM_VERSION=${1:-"v0.17.0"}
-DEV_TAG=${2:?missing dev tag}
-IMG_MODIFIER=${3:-""}
+USE_MULTICLUSTER_OIDC_ENV=${1:-false}
+OLM_VERSION=${2:-"v0.17.0"}
+DEX_IP=${3:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${4:-"172.18.0.3"}
+DEV_TAG=${5:?missing dev tag}
+IMG_MODIFIER=${6:-""}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -161,6 +164,8 @@ installOrUpgradeKubeapps() {
     local chartSource=$1
     # Install Kubeapps
     info "Installing Kubeapps..."
+    kubectl -n kubeapps delete secret localhost-tls || true
+    
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
@@ -169,13 +174,34 @@ installOrUpgradeKubeapps() {
       --set kubeops.replicaCount=1 \
       --set assetsvc.replicaCount=1 \
       --set dashboard.replicaCount=1 \
+      --set postgresql.replication.enabled=false \
       --set postgresql.postgresqlPassword=password \
-      --set postgresql.replication.enabled=false
+      --set ingress.enabled=true \
+      --set ingress.hostname=localhost  \
+      --set ingress.tls=true  \
+      --set authProxy.enabled=true \
+      --set authProxy.provider=oidc \
+      --set authProxy.clientID=default \
+      --set authProxy.clientSecret=ZXhhbXBsZS1hcHAtc2VjcmV0 \
+      --set authProxy.cookieSecret=bm90LWdvb2Qtc2VjcmV0Cg== \
+      --set authProxy.additionalFlags[0]="--oidc-issuer-url=https://${DEX_IP}:32000" \
+      --set authProxy.additionalFlags[1]="--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster" \
+      --set authProxy.additionalFlags[2]="--ssl-insecure-skip-verify=true" \
+      --set authProxy.additionalFlags[3]="--redirect-url=http://kubeapps-ci.kubeapps/oauth2/callback" \
+      --set authProxy.additionalFlags[4]="--cookie-secure=false" \
+      --set authProxy.additionalFlags[5]="--cookie-domain=kubeapps-ci.kubeapps" \
+      --set authProxy.additionalFlags[6]="--whitelist-domain=kubeapps-ci.kubeapps" \
+      --set authProxy.additionalFlags[7]="--set-authorization-header=true" \
+      --set clusters[0].name=default \
+      --set clusters[1].name=second-cluster \
+      --set clusters[1].apiServiceURL="https://${ADDITIONAL_CLUSTER_IP}:6443" \
+      --set clusters[1].insecure=true \
+      --set clusters[1].serviceToken=ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsbHpiSEp5TlZwM1QwaG9WSE5PYkhVdE5GQkRablY2TW0wd05rUmtMVmxFWVV4MlZEazNaeTEyUmxFaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUprWldaaGRXeDBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmt0ZEc5clpXNHRjV295Ym1naUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWEzVmlaV0Z3Y0hNdGJtRnRaWE53WVdObExXUnBjMk52ZG1WeWVTSXNJbXQxWW1WeWJtVjBaWE11YVc4dmMyVnlkbWxqWldGalkyOTFiblF2YzJWeWRtbGpaUzFoWTJOdmRXNTBMblZwWkNJNkltVXhaakE1WmpSakxUTTRNemt0TkRJME15MWhZbUptTFRKaU5HWm1OREZrWW1RMllTSXNJbk4xWWlJNkluTjVjM1JsYlRwelpYSjJhV05sWVdOamIzVnVkRHBrWldaaGRXeDBPbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmtpZlEuTnh6V2dsUGlrVWpROVQ1NkpWM2xJN1VWTUVSR3J2bklPSHJENkh4dUVwR0luLWFUUzV5Q0pDa3Z0cTF6S3Z3b05sc2MyX0YxaTdFOUxWRGFwbC1UQlhleUN5Rl92S1B1TDF4dTdqZFBMZ1dKT1pQX3JMcXppaDV4ZlkxalFoOHNhdTRZclFJLUtqb3U1UkRRZ0tOQS1BaS1lRlFOZVh2bmlUNlBKYWVkc184V0t3dHRMMC1wdHpYRnBnOFl5dkx6N0U1UWdTR2tjNWpDVXlsS0RvZVRUaVRSOEc2RHFHYkFQQUYwREt0b3MybU9Geno4SlJYNHhoQmdvaUcxVTVmR1g4Z3hnTU1SV0VHRE9kaGMyeXRvcFdRUkRpYmhvaldNS3VDZlNua09zMDRGYTBkYmEwQ0NTbld2a29LZ3Z4QVR5aVVrWm9wV3VpZ1JJNFd5dDkzbXhR
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
-  installOLM v0.17.0
+  installOLM $OLM_VERSION
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
@@ -251,12 +277,12 @@ deployments=(
   "kubeapps-ci-internal-apprepository-controller"
   "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
+  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
   info "Deployment ${dep} ready"
 done
-k8s_wait_for_deployment kubeapps kubeapps-ci-internal-kubeops
 
 # Wait for Kubeapps Jobs
 # Clean up existing jobs
@@ -322,8 +348,9 @@ for f in *.js; do
 done
 testsToIgnore=()
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+# Also skip the multicluster scenario
 if [[ -n "${GKE_BRANCH-}" ]]; then
-  testsToIgnore=("operator-deployment.js" "${testsToIgnore[@]}")
+  testsToIgnore=("operator-deployment.js" "add-multicluster-deployment.js" "${testsToIgnore[@]}")
 fi
 ignoreFlag=""
 if [[ "${#testsToIgnore[@]}" > "0" ]]; then
@@ -359,7 +386,7 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 
 ## Run tests
 info "Running Integration tests..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports

@@ -13,9 +13,7 @@ module.exports = {
           await page.screenshot({
             path: path.join(
               __dirname,
-              `../../${screenshotsFolder}/${testName}-${
-                retries - retriesLeft
-              }.png`
+              `../../${screenshotsFolder}/${testName}-${retries - retriesLeft}.png`,
             ),
           });
         }
@@ -38,7 +36,41 @@ module.exports = {
       }
     }
   },
-  click: async (page, document, selector) => {
-    page.evaluate(() => document.querySelector(selector).click());
+  login: async (page, isOIDC, uri, token, username, password) => {
+    await page.goto(getUrl(uri));
+    if (isOIDC) {
+      await page.waitForNavigation();
+      await expect(page).toClick("cds-button", {
+        text: "Login via OIDC Provider",
+      });
+      await page.waitForNavigation();
+      await expect(page).toClick(".dex-container button", {
+        text: "Log in with Email",
+      });
+      await page.waitForNavigation();
+      await page.type('input[id="login"]', username);
+      await page.type('input[id="password"]', password);
+      await page.waitForSelector("#submit-login", {
+        visible: true,
+        timeout: 10000,
+      });
+      await page.click("#submit-login");
+      await page.waitForSelector(".kubeapps-header-content", {
+        visible: true,
+        timeout: 10000,
+      });
+      if (uri !== "/") {
+        await page.goto(getUrl(uri));
+      }
+    } else {
+      await expect(page).toFillForm("form", {
+        token: token,
+      });
+      await page.waitForSelector("#login-submit-button", {
+        visible: true,
+        timeout: 10000,
+      });
+      await page.click("#login-submit-button");
+    }
   },
 };
