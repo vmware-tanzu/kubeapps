@@ -178,7 +178,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		return
 	}
 	// TODO: currently app repositories are only supported on the cluster on which Kubeapps is installed. #1982
-	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Options.ClustersConfig.KubeappsClusterName, cfg.Options.KubeappsNamespace)
+	appRepo, caCertSecret, authSecret, registryCreds, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Options.ClustersConfig.KubeappsClusterName, cfg.Options.KubeappsNamespace)
 	if err != nil {
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
@@ -186,7 +186,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	ch, err := handlerutil.GetChart(
 		chartDetails,
 		appRepo,
-		caCertSecret, authSecret,
+		caCertSecret, authSecret, registryCreds,
 		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
 	if err != nil {
@@ -231,7 +231,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
-	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Cluster, cfg.Options.KubeappsNamespace)
+	appRepo, caCertSecret, authSecret, registryCreds, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Cluster, cfg.Options.KubeappsNamespace)
 	if err != nil {
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
@@ -239,7 +239,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	ch, err := handlerutil.GetChart(
 		chartDetails,
 		appRepo,
-		caCertSecret, authSecret,
+		caCertSecret, authSecret, registryCreds,
 		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
 	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo.Spec.DockerRegistrySecrets, cfg.Cluster, appRepo.Namespace, cfg.Token, cfg.KubeHandler)

@@ -77,7 +77,7 @@ func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Objec
 				},
 			}
 			if repoStub.private {
-				authHeader := &v1alpha1.AppRepositoryAuthHeader{}
+				authHeader := &v1alpha1.AppRepoAuthSecret{}
 				authHeader.SecretKeyRef.LocalObjectReference.Name = secretNameForRepo(repoStub.name)
 				appRepo.Spec.Auth.Header = authHeader
 			}
@@ -632,7 +632,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
 					Auth: v1alpha1.AppRepositoryAuth{
-						Header: &v1alpha1.AppRepositoryAuthHeader{
+						Header: &v1alpha1.AppRepoAuthSecret{
 							SecretKeyRef: corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: "apprepo-test-repo",
@@ -660,7 +660,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
 					Auth: v1alpha1.AppRepositoryAuth{
-						CustomCA: &v1alpha1.AppRepositoryCustomCA{
+						CustomCA: &v1alpha1.AppRepoAuthSecret{
 							SecretKeyRef: corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: "apprepo-test-repo",
@@ -1045,7 +1045,17 @@ func TestValidateAppRepository(t *testing.T) {
 
 	for _, tc := range getValidationCliAndReqTests {
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, cli, err := getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(),
+				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
+			}
+			handler := userHandler{
+				kubeappsNamespace: kubeappsNamespace,
+				svcClientset:      cs,
+				clientset:         cs,
+			}
+			appRepo, cli, err := handler.getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
 			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
 				t.Fatalf("got: %+v, want: %+v", err, tc.expectedError)
 			}

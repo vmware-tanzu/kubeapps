@@ -51,6 +51,6 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 }
 
 // InitClient fake
-func (f *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+func (f *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, registryCreds *corev1.Secret) error {
 	return nil
 }

@@ -56,18 +56,13 @@ type AppRepositorySpec struct {
 
 // AppRepositoryAuth is the auth for an AppRepository resource
 type AppRepositoryAuth struct {
-	Header   *AppRepositoryAuthHeader `json:"header,omitempty"`
-	CustomCA *AppRepositoryCustomCA   `json:"customCA,omitempty"`
+	Header        *AppRepoAuthSecret `json:"header,omitempty"`
+	CustomCA      *AppRepoAuthSecret `json:"customCA,omitempty"`
+	RegistryCreds *AppRepoAuthSecret `json:"registryCreds,omitEmpty"`
 }
 
-// AppRepositoryAuthHeader secret-key reference
-type AppRepositoryAuthHeader struct {
-	// Selects a key of a secret in the pod's namespace
-	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
-}
-
-// AppRepositoryCustomCA secret-key reference
-type AppRepositoryCustomCA struct {
+// AppRepoAuthSecret secret-key reference
+type AppRepoAuthSecret struct {
 	// Selects a key of a secret in the pod's namespace
 	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }

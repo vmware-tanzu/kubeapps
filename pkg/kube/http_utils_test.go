@@ -85,7 +85,7 @@ func TestInitNetClient(t *testing.T) {
 			name: "custom CA added when passed an AppRepository CRD",
 			appRepoSpec: v1alpha1.AppRepositorySpec{
 				Auth: v1alpha1.AppRepositoryAuth{
-					CustomCA: &v1alpha1.AppRepositoryCustomCA{
+					CustomCA: &v1alpha1.AppRepoAuthSecret{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "custom-secret-key",
@@ -100,7 +100,7 @@ func TestInitNetClient(t *testing.T) {
 			name: "errors if custom CA key cannot be found in secret",
 			appRepoSpec: v1alpha1.AppRepositorySpec{
 				Auth: v1alpha1.AppRepositoryAuth{
-					CustomCA: &v1alpha1.AppRepositoryCustomCA{
+					CustomCA: &v1alpha1.AppRepoAuthSecret{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "some-other-secret-key",
@@ -115,7 +115,7 @@ func TestInitNetClient(t *testing.T) {
 			name: "errors if custom CA cannot be parsed",
 			appRepoSpec: v1alpha1.AppRepositorySpec{
 				Auth: v1alpha1.AppRepositoryAuth{
-					CustomCA: &v1alpha1.AppRepositoryCustomCA{
+					CustomCA: &v1alpha1.AppRepoAuthSecret{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "custom-secret-key",
@@ -130,7 +130,7 @@ func TestInitNetClient(t *testing.T) {
 			name: "authorization header added when passed an AppRepository CRD",
 			appRepoSpec: v1alpha1.AppRepositorySpec{
 				Auth: v1alpha1.AppRepositoryAuth{
-					Header: &v1alpha1.AppRepositoryAuthHeader{
+					Header: &v1alpha1.AppRepoAuthSecret{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: authHeaderSecretName},
 							Key:                  "custom-secret-key",
@@ -210,7 +210,11 @@ func TestInitNetClient(t *testing.T) {
 			if tc.appRepoSpec.Auth.Header != nil {
 				testAuthSecret = authSecret
 			}
-			httpClient, err := InitNetClient(appRepo, testCASecret, testAuthSecret, nil)
+			var testRegSecret *corev1.Secret
+			if tc.appRepoSpec.Auth.RegistryCreds != nil {
+				testRegSecret = authSecret
+			}
+			httpClient, err := InitNetClient(appRepo, testCASecret, testAuthSecret, testRegSecret, nil)
 			if err != nil {
 				if tc.errorExpected {
 					return
@@ -396,6 +400,37 @@ func TestGetProxyConfig(t *testing.T) {
 			}
 			if got, want := getProxyConfig(appRepo), tc.expectedConfig; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func Test_GetDataFromRegistrySecret(t *testing.T) {
+	testCases := []struct {
+		name     string
+		secret   *corev1.Secret
+		expected string
+	}{
+		{
+			name: "retrieves username and password from a dockerconfigjson",
+			secret: &corev1.Secret{
+				Data: map[string][]byte{
+					// base64('{"auths":{"foo":{"username":"foo","password":"bar"}}}')
+					".dockerconfigjson": []byte("eyJhdXRocyI6eyJmb28iOnsidXNlcm5hbWUiOiJmb28iLCJwYXNzd29yZCI6ImJhciJ9fX0="),
+				},
+			},
+			// Basic: base64(foo:bar)
+			expected: "Basic Zm9vOmJhcg==",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			auth, err := GetDataFromRegistrySecret(".dockerconfigjson", tc.secret)
+			if err != nil {
+				t.Fatalf("Unexpected error %v", err)
+			}
+			if auth != tc.expected {
+				t.Errorf("Expecting %s, got %s", tc.expected, auth)
 			}
 		})
 	}
