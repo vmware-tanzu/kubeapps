@@ -47,9 +47,9 @@ k8s_wait_for_deployment() {
     then
       info "Rollout exit code: '${exit_code}'"
       exit_code=0;
-      info "Retrying after 60s..."
+      info "Retrying after 10s..."
       kubectl get pods --namespace "$namespace"
-      sleep 60
+      sleep 10
       silence kubectl rollout status --namespace "$namespace" deployment "$deployment" -w --timeout=60s || exit_code=$?
       if [ ${exit_code} -ne 0 ]
       then
