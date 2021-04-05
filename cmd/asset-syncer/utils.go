@@ -124,31 +124,23 @@ func getSha256(src []byte) (string, error) {
 
 // Repo defines the methods to retrive information from the given repository
 type Repo interface {
-	Index() (interface{}, error)
-	Checksum(interface{}) (string, error)
+	Checksum() (string, error)
 	Repo() *models.RepoInternal
-	Charts(interface{}) ([]models.Chart, error)
+	Charts() ([]models.Chart, error)
 	FetchFiles(name string, cv models.ChartVersion) (map[string]string, error)
 }
 
 // HelmRepo implements the Repo interface for chartmuseum-like repositories
 type HelmRepo struct {
+	content []byte
 	*models.RepoInternal
 	netClient httpClient
 	filter    *apprepov1alpha1.FilterRuleSpec
 }
 
-func (r *HelmRepo) Index() (interface{}, error) {
-	return fetchRepoIndex(r.URL, r.AuthorizationHeader, r.netClient)
-}
-
 // Checksum returns the sha256 of the repo
-func (r *HelmRepo) Checksum(content interface{}) (string, error) {
-	index, ok := content.([]byte)
-	if !ok {
-		return "", fmt.Errorf("Unable to parse %v as an index", content)
-	}
-	return getSha256(index)
+func (r *HelmRepo) Checksum() (string, error) {
+	return getSha256(r.content)
 }
 
 // Repo returns the repo information
@@ -225,12 +217,8 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *HelmRepo) Charts(content interface{}) ([]models.Chart, error) {
-	indexData, ok := content.([]byte)
-	if !ok {
-		return nil, fmt.Errorf("Unable to parse %v as an index", content)
-	}
-	index, err := parseRepoIndex(indexData)
+func (r *HelmRepo) Charts() ([]models.Chart, error) {
+	index, err := parseRepoIndex(r.content)
 	if err != nil {
 		return []models.Chart{}, err
 	}
@@ -327,6 +315,7 @@ type TagList struct {
 type OCIRegistry struct {
 	repositories []string
 	*models.RepoInternal
+	tags   map[string]TagList
 	puller helm.ChartPuller
 	ociCli ociAPI
 	filter *apprepov1alpha1.FilterRuleSpec
@@ -433,27 +422,20 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 	}
 }
 
-func (r *OCIRegistry) Index() (interface{}, error) {
-	tagList := map[string]TagList{}
-	for _, appName := range r.repositories {
-		tags, err := r.ociCli.TagList(appName)
-		if err != nil {
-			return nil, err
-		}
-		tagList[appName] = *tags
-	}
-	return tagList, nil
-}
-
 // Checksum returns the sha256 of the repo by concatenating tags for
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
-func (r *OCIRegistry) Checksum(tagList interface{}) (string, error) {
-	tags, ok := tagList.(map[string]TagList)
-	if !ok {
-		return "", fmt.Errorf("Unable to parse %v as tag list", tagList)
+func (r *OCIRegistry) Checksum() (string, error) {
+	r.tags = map[string]TagList{}
+	for _, appName := range r.repositories {
+		tags, err := r.ociCli.TagList(appName)
+		if err != nil {
+			return "", err
+		}
+		r.tags[appName] = *tags
 	}
-	content, err := json.Marshal(tags)
+
+	content, err := json.Marshal(r.tags)
 	if err != nil {
 		return "", err
 	}
@@ -595,8 +577,9 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 	}
 }
 
-func (r *OCIRegistry) filterTags(unfilteredTags map[string]TagList) map[string]TagList {
-	result := map[string]TagList{}
+func (r *OCIRegistry) filterTags() {
+	unfilteredTags := r.tags
+	r.tags = map[string]TagList{}
 	checktagJobs := make(chan checkTagJob, numWorkers)
 	tagcheckRes := make(chan checkTagResult, numWorkers)
 	var wg sync.WaitGroup
@@ -627,27 +610,20 @@ func (r *OCIRegistry) filterTags(unfilteredTags map[string]TagList) map[string]T
 	for res := range tagcheckRes {
 		if res.Error == nil {
 			if res.isHelmChart {
-				result[res.AppName] = TagList{
+				r.tags[res.AppName] = TagList{
 					Name: unfilteredTags[res.AppName].Name,
-					Tags: append(result[res.AppName].Tags, res.Tag),
+					Tags: append(r.tags[res.AppName].Tags, res.Tag),
 				}
-				sort.Strings(result[res.AppName].Tags)
+				sort.Strings(r.tags[res.AppName].Tags)
 			}
 		} else {
 			log.Errorf("failed to pull chart. Got %v", res.Error)
 		}
 	}
-
-	return result
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *OCIRegistry) Charts(tagList interface{}) ([]models.Chart, error) {
-	tags, ok := tagList.(map[string]TagList)
-	if !ok {
-		return nil, fmt.Errorf("Unable to parse %v as tag list", tagList)
-	}
-
+func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	result := map[string]*models.Chart{}
 	url, err := parseRepoURL(r.RepoInternal.URL)
 	if err != nil {
@@ -655,7 +631,7 @@ func (r *OCIRegistry) Charts(tagList interface{}) ([]models.Chart, error) {
 	}
 
 	// Filter the current tags before pulling charts
-	filteredTags := r.filterTags(tags)
+	r.filterTags()
 
 	chartJobs := make(chan pullChartJob, numWorkers)
 	chartResults := make(chan pullChartResult, numWorkers)
@@ -677,7 +653,7 @@ func (r *OCIRegistry) Charts(tagList interface{}) ([]models.Chart, error) {
 	log.Debugf("starting %d workers", numWorkers)
 	go func() {
 		for _, appName := range r.repositories {
-			for _, tag := range filteredTags[appName].Tags {
+			for _, tag := range r.tags[appName].Tags {
 				chartJobs <- pullChartJob{AppName: appName, Tag: tag}
 			}
 		}
@@ -734,7 +710,13 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 		return nil, err
 	}
 
+	repoBytes, err := fetchRepoIndex(url.String(), authorizationHeader, netClient)
+	if err != nil {
+		return nil, err
+	}
+
 	return &HelmRepo{
+		content: repoBytes,
 		RepoInternal: &models.RepoInternal{
 			Namespace:           namespace,
 			Name:                name,
