@@ -2,13 +2,13 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.13"
+    default: "1.16"
   NODE_VERSION:
     type: string
-    default: "12"
+    default: "14"
   RUST_VERSION:
     type: string
-    default: "1.50"
+    default: "1.51"
   DOCKER_VERSION:
     type: string
     default: "19.03.13"
@@ -23,7 +23,7 @@ parameters:
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.20.5"
+    default: "v1.19.9"
   KIND_VERSION:
     type: "string"
     default: "v0.10.0"
