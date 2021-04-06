@@ -223,6 +223,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   invalidateCacheFlag="--set featureFlags.invalidateCache=true"
 fi
 
+multiclusterFlags=""
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ] ; then
   multiclusterFlags=(
     "--set" "ingress.enabled=true"
