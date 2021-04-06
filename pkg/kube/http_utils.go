@@ -61,21 +61,8 @@ func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error)
 	return c.client.Do(req)
 }
 
-// GetData retrieves the given key from the secret as a string
-func GetData(key string, s *corev1.Secret) (string, error) {
-	auth, ok := s.StringData[key]
-	if !ok {
-		authBytes, ok := s.Data[key]
-		if !ok {
-			return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
-		}
-		auth = string(authBytes)
-	}
-	return auth, nil
-}
-
-// GetDataFromRegistrySecret retrieves the given key from the secret as a string
-func GetDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
+// getDataFromRegistrySecret retrieves the given key from the secret as a string
+func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 	dockerConfigJsonEncoded, ok := s.StringData[key]
 	if !ok {
 		authBytes, ok := s.Data[key]
@@ -104,6 +91,24 @@ func GetDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 	}
 
 	return "", fmt.Errorf("secret %q did not contain docker creds", s.Name)
+}
+
+// GetData retrieves the given key from the secret as a string
+func GetData(key string, s *corev1.Secret) (string, error) {
+	if key == ".dockerconfigjson" {
+		// Parse the secret as a docker registry secret
+		return getDataFromRegistrySecret(key, s)
+	}
+	// Parse the secret as a plain secret
+	auth, ok := s.StringData[key]
+	if !ok {
+		authBytes, ok := s.Data[key]
+		if !ok {
+			return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
+		}
+		auth = string(authBytes)
+	}
+	return auth, nil
 }
 
 // InitHTTPClient returns a HTTP client using the configuration from the apprepo and CA secret given.
@@ -149,7 +154,7 @@ func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret
 
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret, registryCreds *corev1.Secret, defaultHeaders http.Header) (HTTPClient, error) {
+func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *corev1.Secret, defaultHeaders http.Header) (HTTPClient, error) {
 	netClient, err := InitHTTPClient(appRepo, caCertSecret)
 	if err != nil {
 		return nil, err
@@ -164,13 +169,6 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret, re
 			return nil, err
 		}
 		defaultHeaders.Set("Authorization", string(auth))
-	} else if registryCreds != nil && appRepo.Spec.Auth.RegistryCreds != nil {
-		var auth string
-		auth, err = GetDataFromRegistrySecret(appRepo.Spec.Auth.RegistryCreds.SecretKeyRef.Key, registryCreds)
-		if err != nil {
-			return nil, err
-		}
-		defaultHeaders.Set("Authorization", auth)
 	}
 
 	return &clientWithDefaultHeaders{

@@ -238,7 +238,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					CustomCA: &appRepov1.AppRepoAuthSecret{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "custom-secret-key",
@@ -256,7 +256,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					CustomCA: &appRepov1.AppRepoAuthSecret{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
 							Key:                  "custom-secret-key",
@@ -274,7 +274,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepoAuthSecret{
+					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: authHeaderSecretName},
 							Key:                  "custom-secret-key",
@@ -292,7 +292,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					CustomCA: &appRepov1.AppRepoAuthSecret{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
 							Key:                  "custom-secret-key",
@@ -310,7 +310,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					RegistryCreds: &appRepov1.AppRepoAuthSecret{
+					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{Name: regCredsSecretName},
 							Key:                  ".dockerconfigjson",
@@ -359,7 +359,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		}}
 
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, caCertSecret, authSecret, regCredsSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", "", "")
+			appRepo, caCertSecret, authSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", "", "")
 			if err != nil {
 				if tc.errorExpected {
 					return
@@ -376,9 +376,6 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				t.Errorf("Expecting auth secret")
 			}
 			if tc.appRepoSpec.Auth.CustomCA != nil && caCertSecret == nil {
-				t.Errorf("Expecting auth secret")
-			}
-			if tc.appRepoSpec.Auth.RegistryCreds != nil && regCredsSecret == nil {
 				t.Errorf("Expecting auth secret")
 			}
 			// The client holds a reference to the appRepo.
@@ -804,7 +801,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 func TestOCIClient(t *testing.T) {
 	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		cli.InitClient(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{}, &corev1.Secret{})
+		cli.InitClient(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
 		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "User-Agent", "foo")
 	})
 
@@ -813,7 +810,7 @@ func TestOCIClient(t *testing.T) {
 		appRepo := &appRepov1.AppRepository{
 			Spec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepoAuthSecret{
+					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{},
 							Key:                  "custom-secret-key",
@@ -827,7 +824,7 @@ func TestOCIClient(t *testing.T) {
 				"custom-secret-key": []byte("Basic Auth"),
 			},
 		}
-		cli.InitClient(appRepo, &corev1.Secret{}, authSecret, &corev1.Secret{})
+		cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
 		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "Authorization", "Basic Auth")
 	})
 
@@ -836,7 +833,7 @@ func TestOCIClient(t *testing.T) {
 		appRepo := &appRepov1.AppRepository{
 			Spec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					RegistryCreds: &appRepov1.AppRepoAuthSecret{
+					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{},
 							Key:                  ".dockerconfigjson",
@@ -851,7 +848,7 @@ func TestOCIClient(t *testing.T) {
 				".dockerconfigjson": []byte("eyJhdXRocyI6eyJmb28iOnsidXNlcm5hbWUiOiJmb28iLCJwYXNzd29yZCI6ImJhciJ9fX0="),
 			},
 		}
-		err := cli.InitClient(appRepo, &corev1.Secret{}, &corev1.Secret{}, authSecret)
+		err := cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}

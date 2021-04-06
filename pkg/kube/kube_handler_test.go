@@ -77,7 +77,7 @@ func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Objec
 				},
 			}
 			if repoStub.private {
-				authHeader := &v1alpha1.AppRepoAuthSecret{}
+				authHeader := &v1alpha1.AppRepositoryAuthHeader{}
 				authHeader.SecretKeyRef.LocalObjectReference.Name = secretNameForRepo(repoStub.name)
 				appRepo.Spec.Auth.Header = authHeader
 			}
@@ -632,7 +632,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
 					Auth: v1alpha1.AppRepositoryAuth{
-						Header: &v1alpha1.AppRepoAuthSecret{
+						Header: &v1alpha1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: "apprepo-test-repo",
@@ -660,7 +660,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
 					Auth: v1alpha1.AppRepositoryAuth{
-						CustomCA: &v1alpha1.AppRepoAuthSecret{
+						CustomCA: &v1alpha1.AppRepositoryCustomCA{
 							SecretKeyRef: corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: "apprepo-test-repo",

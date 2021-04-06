@@ -586,15 +586,14 @@ func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespa
 
 	repoSecret := secretForRequest(appRepoRequest, appRepo)
 
-	var regCreds *corev1.Secret
 	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
-		regCreds, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
+		repoSecret, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
-	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, regCreds, nil)
+	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
 	}
@@ -689,29 +688,39 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 	appRepo := appRepoRequest.AppRepository
 
 	var auth v1alpha1.AppRepositoryAuth
-	if appRepo.AuthHeader != "" || appRepo.CustomCA != "" {
-		secretName := secretNameForRepo(appRepo.Name)
-		if appRepo.AuthHeader != "" {
-			auth.Header = &v1alpha1.AppRepoAuthSecret{
-				SecretKeyRef: corev1.SecretKeySelector{
-					Key: "authorizationHeader",
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secretName,
-					},
+	secretName := secretNameForRepo(appRepo.Name)
+
+	if appRepo.AuthHeader != "" {
+		auth.Header = &v1alpha1.AppRepositoryAuthHeader{
+			SecretKeyRef: corev1.SecretKeySelector{
+				Key: "authorizationHeader",
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: secretName,
 				},
-			}
-		}
-		if appRepo.CustomCA != "" {
-			auth.CustomCA = &v1alpha1.AppRepoAuthSecret{
-				SecretKeyRef: corev1.SecretKeySelector{
-					Key: "ca.crt",
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secretName,
-					},
-				},
-			}
+			},
 		}
 	}
+	if appRepo.AuthRegCreds != "" {
+		auth.Header = &v1alpha1.AppRepositoryAuthHeader{
+			SecretKeyRef: corev1.SecretKeySelector{
+				Key: ".dockerconfigjson",
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: appRepo.AuthRegCreds,
+				},
+			},
+		}
+	}
+	if appRepo.CustomCA != "" {
+		auth.CustomCA = &v1alpha1.AppRepositoryCustomCA{
+			SecretKeyRef: corev1.SecretKeySelector{
+				Key: "ca.crt",
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: secretName,
+				},
+			},
+		}
+	}
+
 	if appRepo.Type == "" {
 		// Use helm type by default
 		appRepo.Type = "helm"

@@ -133,7 +133,7 @@ func Test_newCronJob(t *testing.T) {
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
-						Header: &apprepov1alpha1.AppRepoAuthSecret{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 					},
 				},
@@ -231,7 +231,7 @@ func Test_newCronJob(t *testing.T) {
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
-						Header: &apprepov1alpha1.AppRepoAuthSecret{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
 					},
 				},
@@ -488,7 +488,7 @@ func Test_newSyncJob(t *testing.T) {
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
-						Header: &apprepov1alpha1.AppRepoAuthSecret{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 					},
 				},
@@ -576,7 +576,7 @@ func Test_newSyncJob(t *testing.T) {
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
-						CustomCA: &apprepov1alpha1.AppRepoAuthSecret{
+						CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
 						},
 					},
@@ -673,10 +673,10 @@ func Test_newSyncJob(t *testing.T) {
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
-						CustomCA: &apprepov1alpha1.AppRepoAuthSecret{
+						CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
 						},
-						Header: &apprepov1alpha1.AppRepoAuthSecret{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"},
 						},
 					},

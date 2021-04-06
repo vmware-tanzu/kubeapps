@@ -80,7 +80,7 @@ type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
 
 // Resolver for exposed funcs
 type Resolver interface {
-	InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, registryCreds *corev1.Secret) error
+	InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
 	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
 }
 
@@ -266,7 +266,7 @@ func ParseDetails(data []byte) (*Details, error) {
 
 // GetAppRepoAndRelatedSecrets retrieves the given repo from its namespace
 // Depending on the repo namespace and the
-func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler kube.AuthHandler, userAuthToken, cluster, kubeappsNamespace string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, *corev1.Secret, error) {
+func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler kube.AuthHandler, userAuthToken, cluster, kubeappsNamespace string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	client, err := handler.AsUser(userAuthToken, cluster)
 	if kubeappsNamespace == appRepoNamespace {
 		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
@@ -274,11 +274,11 @@ func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler k
 		client, err = handler.AsSVC(cluster)
 	}
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
+		return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
 	}
 	appRepo, err := client.GetAppRepository(appRepoName, appRepoNamespace)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", appRepoName, err)
+		return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", appRepoName, err)
 	}
 
 	auth := appRepo.Spec.Auth
@@ -287,7 +287,7 @@ func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler k
 		secretName := auth.CustomCA.SecretKeyRef.Name
 		caCertSecret, err = client.GetSecret(secretName, appRepo.Namespace)
 		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
+			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
 	}
 
@@ -296,28 +296,18 @@ func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler k
 		secretName := auth.Header.SecretKeyRef.Name
 		authSecret, err = client.GetSecret(secretName, appRepo.Namespace)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	var registryCreds *corev1.Secret
-	// Auth information may be encoded in a registry secret
-	if auth.RegistryCreds != nil {
-		secretName := auth.RegistryCreds.SecretKeyRef.Name
-		registryCreds, err = client.GetSecret(secretName, appRepo.Namespace)
-		if err != nil {
-			return nil, nil, nil, nil, err
-		}
-	}
-
-	return appRepo, caCertSecret, authSecret, registryCreds, nil
+	return appRepo, caCertSecret, authSecret, nil
 }
 
 // InitClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, registryCreds *corev1.Secret) error {
+func (c *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	var err error
-	c.netClient, err = kube.InitNetClient(appRepo, caCertSecret, authSecret, registryCreds, http.Header{"User-Agent": []string{c.userAgent}})
+	c.netClient, err = kube.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
 	return err
 }
 
@@ -388,7 +378,7 @@ func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token
 // InitClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
 // TODO(andresmgot): Using a custom CA cert is not supported by ORAS (neither helm), only using the insecure flag
-func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, registryCreds *corev1.Secret) error {
+func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	var err error
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
@@ -404,13 +394,6 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 			return err
 		}
 		headers.Set("Authorization", string(auth))
-	} else if registryCreds != nil && appRepo.Spec.Auth.RegistryCreds != nil {
-		var auth string
-		auth, err = kube.GetDataFromRegistrySecret(appRepo.Spec.Auth.RegistryCreds.SecretKeyRef.Key, registryCreds)
-		if err != nil {
-			return err
-		}
-		headers.Set("Authorization", auth)
 	}
 
 	c.puller = &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})}

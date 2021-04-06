@@ -105,8 +105,8 @@ func (c *ClientResolver) New(repoType, userAgent string) chartUtils.Resolver {
 }
 
 // GetChart retrieves a chart
-func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, registryCreds *corev1.Secret, resolver chartUtils.Resolver) (*chart.Chart, error) {
-	err := resolver.InitClient(appRepo, caCertSecret, authSecret, registryCreds)
+func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, resolver chartUtils.Resolver) (*chart.Chart, error) {
+	err := resolver.InitClient(appRepo, caCertSecret, authSecret)
 	if err != nil {
 		return nil, err
 	}
