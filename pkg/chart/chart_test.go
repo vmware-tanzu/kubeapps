@@ -207,6 +207,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 
 	const (
 		authHeaderSecretName = "auth-header-secret-name"
+		regCredsSecretName   = "reg-creds-secret-name"
 		authHeaderSecretData = "really-secret-stuff"
 		customCASecretName   = "custom-ca-secret-name"
 		customCASecretData   = "some-cert-data"
@@ -301,10 +302,28 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 			errorExpected: true,
 		},
+		{
+			name: "authorization header added when passed an AppRepository CRD",
+			details: &Details{
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
+			},
+			appRepoSpec: appRepov1.AppRepositorySpec{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{Name: regCredsSecretName},
+							Key:                  ".dockerconfigjson",
+						},
+					},
+				},
+			},
+			numCertsExpected: len(systemCertPool.Subjects()),
+		},
 	}
 
 	for _, tc := range testCases {
-		// The fake k8s client will contain secret for the CA and header respectively.
+		// The fake k8s client will contain secret for the CA, header and registry credentials respectively.
 		secrets := []*corev1.Secret{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      customCASecretName,
@@ -320,6 +339,14 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(authHeaderSecretData),
+			},
+		}, {
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      regCredsSecretName,
+				Namespace: appRepoNamespace,
+			},
+			Data: map[string][]byte{
+				".dockerconfigjson": []byte(authHeaderSecretData),
 			},
 		}}
 
@@ -799,6 +826,34 @@ func TestOCIClient(t *testing.T) {
 		}
 		cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
 		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "Authorization", "Basic Auth")
+	})
+
+	t.Run("InitClient - Creates puller with Docker Creds Authorization", func(t *testing.T) {
+		cli := NewOCIClient("")
+		appRepo := &appRepov1.AppRepository{
+			Spec: appRepov1.AppRepositorySpec{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{},
+							Key:                  ".dockerconfigjson",
+						},
+					},
+				},
+			},
+		}
+		authSecret := &corev1.Secret{
+			Data: map[string][]byte{
+				// base64('{"auths":{"foo":{"username":"foo","password":"bar"}}}')
+				".dockerconfigjson": []byte("eyJhdXRocyI6eyJmb28iOnsidXNlcm5hbWUiOiJmb28iLCJwYXNzd29yZCI6ImJhciJ9fX0="),
+			},
+		}
+		err := cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		// Authorization: Basic base64('foo:bar')
+		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "Authorization", "Basic Zm9vOmJhcg==")
 	})
 
 	t.Run("GetChart - Fails if the puller has not been instantiated", func(t *testing.T) {

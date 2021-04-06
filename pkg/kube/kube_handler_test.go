@@ -1045,7 +1045,17 @@ func TestValidateAppRepository(t *testing.T) {
 
 	for _, tc := range getValidationCliAndReqTests {
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, cli, err := getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(),
+				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
+			}
+			handler := userHandler{
+				kubeappsNamespace: kubeappsNamespace,
+				svcClientset:      cs,
+				clientset:         cs,
+			}
+			appRepo, cli, err := handler.getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
 			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
 				t.Fatalf("got: %+v, want: %+v", err, tc.expectedError)
 			}

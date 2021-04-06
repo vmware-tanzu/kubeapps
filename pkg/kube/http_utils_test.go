@@ -400,3 +400,34 @@ func TestGetProxyConfig(t *testing.T) {
 		})
 	}
 }
+
+func Test_getDataFromRegistrySecret(t *testing.T) {
+	testCases := []struct {
+		name     string
+		secret   *corev1.Secret
+		expected string
+	}{
+		{
+			name: "retrieves username and password from a dockerconfigjson",
+			secret: &corev1.Secret{
+				Data: map[string][]byte{
+					// base64('{"auths":{"foo":{"username":"foo","password":"bar"}}}')
+					".dockerconfigjson": []byte("eyJhdXRocyI6eyJmb28iOnsidXNlcm5hbWUiOiJmb28iLCJwYXNzd29yZCI6ImJhciJ9fX0="),
+				},
+			},
+			// Basic: base64(foo:bar)
+			expected: "Basic Zm9vOmJhcg==",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			auth, err := getDataFromRegistrySecret(".dockerconfigjson", tc.secret)
+			if err != nil {
+				t.Fatalf("Unexpected error %v", err)
+			}
+			if auth != tc.expected {
+				t.Errorf("Expecting %s, got %s", tc.expected, auth)
+			}
+		})
+	}
+}

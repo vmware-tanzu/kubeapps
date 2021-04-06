@@ -19,6 +19,8 @@ package kube
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -28,6 +30,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"golang.org/x/net/http/httpproxy"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 const (
@@ -58,8 +61,45 @@ func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error)
 	return c.client.Do(req)
 }
 
+// getDataFromRegistrySecret retrieves the given key from the secret as a string
+func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
+	dockerConfigJsonEncoded, ok := s.StringData[key]
+	if !ok {
+		authBytes, ok := s.Data[key]
+		if !ok {
+			return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
+		}
+		dockerConfigJsonEncoded = string(authBytes)
+	}
+	dockerConfigJson, err := base64.StdEncoding.DecodeString(dockerConfigJsonEncoded)
+	if err != nil {
+		return "", fmt.Errorf("Unable to decode docker config secret. Got: %v", err)
+	}
+
+	dockerConfig := &credentialprovider.DockerConfigJson{}
+	err = json.Unmarshal(dockerConfigJson, dockerConfig)
+	if err != nil {
+		return "", fmt.Errorf("Unable to parse secret %s as a Docker config. Got: %v", s.Name, err)
+	}
+
+	// This is a simplified handler of a Docker config which only looks for the username:password
+	// of the first entry.
+	for _, entry := range dockerConfig.Auths {
+		auth := fmt.Sprintf("%s:%s", entry.Username, entry.Password)
+		authHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(auth)))
+		return authHeader, nil
+	}
+
+	return "", fmt.Errorf("secret %q did not contain docker creds", s.Name)
+}
+
 // GetData retrieves the given key from the secret as a string
 func GetData(key string, s *corev1.Secret) (string, error) {
+	if key == ".dockerconfigjson" {
+		// Parse the secret as a docker registry secret
+		return getDataFromRegistrySecret(key, s)
+	}
+	// Parse the secret as a plain secret
 	auth, ok := s.StringData[key]
 	if !ok {
 		authBytes, ok := s.Data[key]

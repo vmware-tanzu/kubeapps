@@ -327,6 +327,7 @@ type appRepositoryRequestDetails struct {
 	RepoURL               string                  `json:"repoURL"`
 	AuthHeader            string                  `json:"authHeader"`
 	CustomCA              string                  `json:"customCA"`
+	AuthRegCreds          string                  `json:"authRegCreds"`
 	RegistrySecrets       []string                `json:"registrySecrets"`
 	SyncJobPodTemplate    corev1.PodTemplateSpec  `json:"syncJobPodTemplate"`
 	ResyncRequests        uint                    `json:"resyncRequests"`
@@ -567,7 +568,7 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	return err
 }
 
-func getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (*v1alpha1.AppRepository, HTTPClient, error) {
+func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (*v1alpha1.AppRepository, HTTPClient, error) {
 	appRepoRequest, err := parseRepoRequest(appRepoBody)
 	if err != nil {
 		return nil, nil, err
@@ -584,6 +585,14 @@ func getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNames
 	}
 
 	repoSecret := secretForRequest(appRepoRequest, appRepo)
+
+	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
+		repoSecret, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
@@ -647,7 +656,7 @@ func getRequests(appRepo *v1alpha1.AppRepository, cli HTTPClient) ([]*http.Reque
 
 func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	// Split body parsing to a different function for ease testing
-	appRepo, cli, err := getValidationCli(appRepoBody, requestNamespace, a.kubeappsNamespace)
+	appRepo, cli, err := a.getValidationCli(appRepoBody, requestNamespace, a.kubeappsNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -679,29 +688,39 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 	appRepo := appRepoRequest.AppRepository
 
 	var auth v1alpha1.AppRepositoryAuth
-	if appRepo.AuthHeader != "" || appRepo.CustomCA != "" {
-		secretName := secretNameForRepo(appRepo.Name)
-		if appRepo.AuthHeader != "" {
-			auth.Header = &v1alpha1.AppRepositoryAuthHeader{
-				SecretKeyRef: corev1.SecretKeySelector{
-					Key: "authorizationHeader",
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secretName,
-					},
+	secretName := secretNameForRepo(appRepo.Name)
+
+	if appRepo.AuthHeader != "" {
+		auth.Header = &v1alpha1.AppRepositoryAuthHeader{
+			SecretKeyRef: corev1.SecretKeySelector{
+				Key: "authorizationHeader",
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: secretName,
 				},
-			}
-		}
-		if appRepo.CustomCA != "" {
-			auth.CustomCA = &v1alpha1.AppRepositoryCustomCA{
-				SecretKeyRef: corev1.SecretKeySelector{
-					Key: "ca.crt",
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secretName,
-					},
-				},
-			}
+			},
 		}
 	}
+	if appRepo.AuthRegCreds != "" {
+		auth.Header = &v1alpha1.AppRepositoryAuthHeader{
+			SecretKeyRef: corev1.SecretKeySelector{
+				Key: ".dockerconfigjson",
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: appRepo.AuthRegCreds,
+				},
+			},
+		}
+	}
+	if appRepo.CustomCA != "" {
+		auth.CustomCA = &v1alpha1.AppRepositoryCustomCA{
+			SecretKeyRef: corev1.SecretKeySelector{
+				Key: "ca.crt",
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: secretName,
+				},
+			},
+		}
+	}
+
 	if appRepo.Type == "" {
 		// Use helm type by default
 		appRepo.Type = "helm"
