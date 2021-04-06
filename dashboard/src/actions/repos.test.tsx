@@ -484,6 +484,7 @@ describe("installRepo", () => {
     "",
     "",
     "",
+    "",
     [],
     [],
     false,
@@ -497,6 +498,7 @@ describe("installRepo", () => {
       "http://foo.bar",
       "helm",
       "Bearer: abc",
+      "",
       "",
       "",
       [],
@@ -514,6 +516,7 @@ describe("installRepo", () => {
         "http://foo.bar",
         "helm",
         "Bearer: abc",
+        "",
         "",
         {},
         [],
@@ -533,6 +536,7 @@ describe("installRepo", () => {
           "",
           "",
           "",
+          "",
           [],
           ["apache", "jenkins"],
           false,
@@ -545,6 +549,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         "oci",
+        "",
         "",
         "",
         {},
@@ -565,6 +570,7 @@ describe("installRepo", () => {
           "",
           "",
           "",
+          "",
           [],
           [],
           true,
@@ -577,6 +583,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         "oci",
+        "",
         "",
         "",
         {},
@@ -600,6 +607,7 @@ describe("installRepo", () => {
       "http://foo.bar",
       "helm",
       "",
+      "",
       "This is a cert!",
       "",
       [],
@@ -616,6 +624,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         "helm",
+        "",
         "",
         "This is a cert!",
         {},
@@ -641,6 +650,7 @@ describe("installRepo", () => {
             "helm",
             "",
             "",
+            "",
             safeYAMLTemplate,
             [],
             [],
@@ -655,6 +665,7 @@ describe("installRepo", () => {
           "my-namespace",
           "http://foo.bar",
           "helm",
+          "",
           "",
           "",
           {
@@ -680,6 +691,7 @@ describe("installRepo", () => {
             "helm",
             "",
             "",
+            "",
             unsafeYAMLTemplate,
             [],
             [],
@@ -701,6 +713,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         "helm",
+        "",
         "",
         "",
         {},
@@ -770,6 +783,7 @@ describe("installRepo", () => {
         "",
         "",
         "",
+        "",
         ["repo-1"],
         [],
         false,
@@ -783,6 +797,7 @@ describe("installRepo", () => {
       "foo",
       "http://foo.bar",
       "helm",
+      "",
       "",
       "",
       {},
@@ -826,6 +841,7 @@ describe("updateRepo", () => {
         "http://foo.bar",
         "helm",
         "foo",
+        "",
         "bar",
         safeYAMLTemplate,
         ["repo-1"],
@@ -842,6 +858,7 @@ describe("updateRepo", () => {
       "http://foo.bar",
       "helm",
       "foo",
+      "",
       "bar",
       { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
       ["repo-1"],
@@ -882,6 +899,7 @@ describe("updateRepo", () => {
         "http://foo.bar",
         "helm",
         "foo",
+        "",
         "bar",
         safeYAMLTemplate,
         ["repo-1"],
@@ -898,6 +916,7 @@ describe("updateRepo", () => {
       "http://foo.bar",
       "helm",
       "foo",
+      "",
       "bar",
       { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
       ["repo-1"],
@@ -928,6 +947,7 @@ describe("updateRepo", () => {
         "http://foo.bar",
         "helm",
         "foo",
+        "",
         "bar",
         safeYAMLTemplate,
         [],
@@ -952,6 +972,7 @@ describe("updateRepo", () => {
         "",
         "",
         "",
+        "",
         [],
         ["apache", "jenkins"],
         false,
@@ -964,6 +985,7 @@ describe("updateRepo", () => {
       "my-namespace",
       "http://foo.bar",
       "oci",
+      "",
       "",
       "",
       {},
@@ -1043,7 +1065,7 @@ describe("validateRepo", () => {
     ];
 
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(true);
@@ -1064,7 +1086,7 @@ describe("validateRepo", () => {
       },
     ];
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
@@ -1088,7 +1110,7 @@ describe("validateRepo", () => {
       },
     ];
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
@@ -1099,13 +1121,14 @@ describe("validateRepo", () => {
       code: 200,
     });
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "oci", "", "", ["apache", "jenkins"], false),
+      repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false),
     );
     expect(res).toBe(true);
     expect(AppRepository.validate).toHaveBeenCalledWith(
       "default",
       "url",
       "oci",
+      "",
       "",
       "",
       ["apache", "jenkins"],

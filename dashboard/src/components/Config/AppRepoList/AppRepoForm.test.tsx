@@ -132,6 +132,7 @@ it("should call the install method with OCI information", async () => {
     "",
     "",
     "",
+    "",
     [],
     ["apache", "jenkins"],
     false,
@@ -158,6 +159,7 @@ it("should call the install skipping TLS verification", async () => {
     "",
     "https://helm.repo",
     "helm",
+    "",
     "",
     "",
     "",
@@ -191,6 +193,7 @@ describe("when using a filter", () => {
       "",
       "https://helm.repo",
       "helm",
+      "",
       "",
       "",
       "",
@@ -228,6 +231,7 @@ describe("when using a filter", () => {
       "",
       "",
       "",
+      "",
       [],
       [],
       false,
@@ -258,6 +262,7 @@ describe("when using a filter", () => {
       "",
       "https://oci.repo",
       "oci",
+      "",
       "",
       "",
       "",
@@ -302,9 +307,13 @@ it("should call the install method with the selected docker credentials", async 
     <AppRepoForm {...defaultProps} onSubmit={install} />,
   );
 
-  const label = wrapper.find("#app-repo-secret-repo-1");
+  const label = wrapper.find("select");
   act(() => {
-    label.simulate("change");
+    label.simulate("change", { target: { value: "repo-1" } });
+  });
+  const radio = wrapper.find("#kubeapps-repo-auth-method-registry");
+  act(() => {
+    radio.simulate("change", { target: { value: "registry" } });
   });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
   wrapper.update();
@@ -318,6 +327,54 @@ it("should call the install method with the selected docker credentials", async 
     "",
     "http://test",
     "helm",
+    "",
+    "repo-1",
+    "",
+    "",
+    ["repo-1"],
+    [],
+    false,
+    undefined,
+  );
+});
+
+it("should call the install reusing as auth the selected docker credentials", async () => {
+  const validateRepo = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+    validateRepo,
+  };
+  const secret = {
+    metadata: {
+      name: "repo-1",
+    },
+  } as ISecret;
+
+  const wrapper = mountWrapper(
+    getStore({
+      repos: { imagePullSecrets: [secret] },
+    }),
+    <AppRepoForm {...defaultProps} onSubmit={install} />,
+  );
+
+  const label = wrapper.find("select");
+  act(() => {
+    label.simulate("change", { target: { value: "repo-1" } });
+  });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
+  wrapper.update();
+
+  await act(async () => {
+    await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<any>)({
+      preventDefault: jest.fn(),
+    });
+  });
+  expect(install).toHaveBeenCalledWith(
+    "",
+    "http://test",
+    "helm",
+    "",
     "",
     "",
     "",
@@ -409,6 +466,16 @@ describe("when the repository info is already populated", () => {
       expect(wrapper.find("#kubeapps-repo-token").prop("value")).toBe("foo");
     });
 
+    it("should select a docker secret as auth mechanism", () => {
+      const repo = { metadata: { name: "foo" } } as any;
+      const secret = { data: { ".dockerconfigjson": "QmVhcmVyIGZvbw==" } } as any;
+      const wrapper = mountWrapper(
+        defaultStore,
+        <AppRepoForm {...defaultProps} repo={repo} secret={secret} />,
+      );
+      expect(wrapper.find("#kubeapps-repo-auth-method-registry")).toBeChecked();
+    });
+
     it("should pre-select the existing docker registry secret", () => {
       const secret = {
         metadata: {
@@ -422,7 +489,7 @@ describe("when the repository info is already populated", () => {
         }),
         <AppRepoForm {...defaultProps} repo={repo} />,
       );
-      expect(wrapper.find("#app-repo-secret-foo").prop("checked")).toBe(true);
+      expect(wrapper.find("select").prop("value")).toBe("foo");
     });
 
     it("should parse the existing filter (simple)", () => {
