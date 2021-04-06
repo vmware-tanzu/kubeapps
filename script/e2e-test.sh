@@ -318,7 +318,12 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
     kubectl get pods -n kubeapps
     for pod in $(kubectl get po -l release=kubeapps-ci -oname -n kubeapps); do
       warn "LOGS for pod $pod ------------"
-      kubectl logs -n kubeapps "$pod"
+      if [[ "$pod" =~ .*internal.* ]]; then
+        kubectl logs -n kubeapps "$pod"
+      else
+        kubectl logs -n kubeapps "$pod" nginx
+        kubectl logs -n kubeapps "$pod" auth-proxy
+      fi
     done;
     echo
     warn "LOGS for assetsvc tests --------"
