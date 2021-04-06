@@ -21,10 +21,10 @@ set -o pipefail
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.17.0"}
-DEX_IP=${3:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${4:-"172.18.0.3"}
-DEV_TAG=${5:?missing dev tag}
-IMG_MODIFIER=${6:-""}
+DEV_TAG=${3:?missing dev tag}
+IMG_MODIFIER=${4:-""}
+DEX_IP=${5:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
