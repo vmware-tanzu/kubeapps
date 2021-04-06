@@ -152,11 +152,12 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 	var imagePullSecrets []map[string]interface{}
 	existingNames := map[string]bool{}
 	if existingPullSecrets, ok := podSpec["imagePullSecrets"]; ok {
-		imagePullSecrets = existingPullSecrets.([]map[string]interface{})
-		for _, s := range imagePullSecrets {
-			if name, ok := s["name"]; ok {
+		for _, s := range existingPullSecrets.([]interface{}) {
+			pullSecret := s.(map[interface{}]interface{})
+			if name, ok := pullSecret["name"]; ok {
 				if n, ok := name.(string); ok {
 					existingNames[n] = true
+					imagePullSecrets = append(imagePullSecrets, map[string]interface{}{"name": n})
 				}
 			}
 		}

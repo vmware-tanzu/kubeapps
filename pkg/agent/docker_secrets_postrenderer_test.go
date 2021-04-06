@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"gopkg.in/yaml.v2"
 )
 
 func TestNewDockerSecretsPostRenderer(t *testing.T) {
@@ -281,19 +282,14 @@ other: doc
 func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 	testCases := []struct {
 		name                string
-		podSpec             map[interface{}]interface{}
+		podSpec             string
 		secrets             map[string]string
 		expectedPullSecrets interface{}
 	}{
 		{
 			name: "it does not add image pull secrets when no secret matches",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-				},
-			},
+			podSpec: `containers:
+- image: "example.com/foobar:v1"`,
 			secrets: map[string]string{
 				"other.com": "secret-1",
 			},
@@ -301,13 +297,8 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it adds an image pull secret when one secret matches",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-				},
-			},
+			podSpec: `containers:
+- image: "example.com/foobar:v1"`,
 			secrets: map[string]string{
 				"example.com": "secret-1",
 			},
@@ -317,16 +308,9 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it adds multiple image pull secrets when multiple secrets matches",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-					map[interface{}]interface{}{
-						"image": "otherexample.com/foobar:v1",
-					},
-				},
-			},
+			podSpec: `containers:
+- image: "example.com/foobar:v1"
+- image: "otherexample.com/foobar:v1"`,
 			secrets: map[string]string{
 				"example.com":      "secret-1",
 				"otherexample.com": "secret-2",
@@ -338,21 +322,11 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it appends to existing image pull secrets",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-					map[interface{}]interface{}{
-						"image": "otherexample.com/foobar:v1",
-					},
-				},
-				"imagePullSecrets": []map[string]interface{}{
-					{
-						"name": "secret-1",
-					},
-				},
-			},
+			podSpec: `containers:
+- image: "example.com/foobar:v1"
+- image: "otherexample.com/foobar:v1"
+imagePullSecrets:
+- name: "secret-1"`,
 			secrets: map[string]string{
 				"example.com":      "secret-2",
 				"otherexample.com": "secret-3",
@@ -365,21 +339,11 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it does not duplicate existing image pull secrets",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-					map[interface{}]interface{}{
-						"image": "otherexample.com/foobar:v1",
-					},
-				},
-				"imagePullSecrets": []map[string]interface{}{
-					{
-						"name": "secret-1",
-					},
-				},
-			},
+			podSpec: `containers:
+- image: "example.com/foobar:v1"
+- image: "otherexample.com/foobar:v1"
+imagePullSecrets:
+- name: "secret-1"`,
 			secrets: map[string]string{
 				"example.com":      "secret-1",
 				"otherexample.com": "secret-2",
@@ -391,13 +355,8 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it does not mistake domainless image refs from dockerhub with a badly-named secret",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "wordpress",
-					},
-				},
-			},
+			podSpec: `containers:
+- image: wordpress`,
 			secrets: map[string]string{
 				"wordpress": "secret-1",
 			},
@@ -405,13 +364,8 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it adds an explicit dockerhub secret when the registry server matches dockerhubs",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "wordpress",
-					},
-				},
-			},
+			podSpec: `containers:
+- image: wordpress`,
 			secrets: map[string]string{
 				"https://index.docker.io/v1/": "secret-1",
 			},
@@ -421,35 +375,23 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it makes no changes if a containers key does not exist",
-			podSpec: map[interface{}]interface{}{
-				"notcontainers": []interface{}{
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-				},
-			},
+			podSpec: `notcontainers:
+- image: example.com/foobar:v1`,
 			secrets: map[string]string{
 				"example.com": "secret-1",
 			},
 			expectedPullSecrets: nil,
 		},
 		{
-			name: "it makes no changes if a containers value is not a slice",
-			podSpec: map[interface{}]interface{}{
-				"containers": "not a slice",
-			},
+			name:                "it makes no changes if a containers value is not a slice",
+			podSpec:             `containers: "not a slice"`,
 			expectedPullSecrets: nil,
 		},
 		{
 			name: "it ignores containers with non-map values while updating others",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					"not a map",
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-				},
-			},
+			podSpec: `containers:
+- "not a map"
+- image: "example.com/foobar:v1"`,
 			secrets: map[string]string{
 				"example.com": "secret-1",
 			},
@@ -459,16 +401,9 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		},
 		{
 			name: "it ignores containers without an image key",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
-					map[interface{}]interface{}{
-						"notimage": "somethingelse.com/foobar:v1",
-					},
-					map[interface{}]interface{}{
-						"image": "example.com/foobar:v1",
-					},
-				},
-			},
+			podSpec: `containers:
+- notimage: "somethingelse.com/foobar:v1"
+- image: "example.com/foobar:v1"`,
 			secrets: map[string]string{
 				"example.com": "secret-1",
 			},
@@ -485,9 +420,14 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			r.updatePodSpecWithPullSecrets(tc.podSpec)
+			var podSpec map[interface{}]interface{}
+			err = yaml.Unmarshal([]byte(tc.podSpec), &podSpec)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			r.updatePodSpecWithPullSecrets(podSpec)
 
-			if got, want := tc.podSpec["imagePullSecrets"], tc.expectedPullSecrets; !cmp.Equal(got, want) {
+			if got, want := podSpec["imagePullSecrets"], tc.expectedPullSecrets; !cmp.Equal(got, want) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
