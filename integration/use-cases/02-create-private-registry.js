@@ -55,7 +55,8 @@ test("Creates a private registry", async () => {
   });
 
   // Select the new secret
-  await expect(page).toClick("label", { text: secret });
+  await expect(page).toMatch(secret);
+  await expect(page).toSelect("form > cds-form-group > cds-select > select", secret);
 
   await expect(page).toClick("cds-button", { text: "Install Repo" });
 
