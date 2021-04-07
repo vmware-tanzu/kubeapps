@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { CdsCheckbox, CdsCheckboxGroup } from "@cds/react/checkbox";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import actions from "actions";
@@ -10,21 +9,24 @@ import { ThunkDispatch } from "redux-thunk";
 import { ISecret, IStoreState } from "../../../shared/types";
 
 import "./AppRepoAddDockerCreds.css";
+import { CdsSelect } from "@cds/react/select";
 
 interface IAppRepoFormProps {
   imagePullSecrets: ISecret[];
-  togglePullSecret: (imagePullSecret: string) => () => void;
-  selectedImagePullSecrets: { [key: string]: boolean };
+  selectPullSecret: (imagePullSecret: string) => void;
+  selectedImagePullSecret: string;
   namespace: string;
   appVersion: string;
+  required: boolean;
 }
 
 export function AppRepoAddDockerCreds({
   imagePullSecrets,
-  togglePullSecret,
-  selectedImagePullSecrets,
+  selectPullSecret,
+  selectedImagePullSecret,
   namespace,
   appVersion,
+  required,
 }: IAppRepoFormProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [secretName, setSecretName] = useState("");
@@ -75,8 +77,8 @@ export function AppRepoAddDockerCreds({
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <>
-      <CdsCheckboxGroup>
-        <label>Associate Docker Registry Credentials (optional)</label>
+      <CdsSelect>
+        <label>Associate Docker Registry Credentials{required ? "" : " (optional)"}</label>
         {currentImagePullSecrets.length ? (
           <CdsControlMessage>
             Select existing secret(s) to access a private Docker registry and pull images from it.
@@ -93,22 +95,17 @@ export function AppRepoAddDockerCreds({
         ) : (
           <CdsControlMessage>No existing credentials found.</CdsControlMessage>
         )}
-        {currentImagePullSecrets.map(secret => {
-          return (
-            // Need to manually add slot=controls while this Clarity issue is addressed:
-            // https://github.com/vmware/clarity/issues/5689
-            <CdsCheckbox key={`checkbox-${secret.metadata.name}`} slot="controls">
-              <label className="secret-label">{secret.metadata.name}</label>
-              <input
-                type="checkbox"
-                id={`app-repo-secret-${secret.metadata.name}`}
-                onChange={togglePullSecret(secret.metadata.name)}
-                checked={selectedImagePullSecrets[secret.metadata.name] || false}
-              />
-            </CdsCheckbox>
-          );
-        })}
-      </CdsCheckboxGroup>
+        <select
+          value={selectedImagePullSecret}
+          required={required}
+          onChange={e => selectPullSecret(e.target.value)}
+        >
+          <option />
+          {currentImagePullSecrets.map(secret => {
+            return <option key={`option-${secret.metadata.name}`}>{secret.metadata.name}</option>;
+          })}
+        </select>
+      </CdsSelect>
       {showSecretSubForm && (
         <div className="docker-creds-subform">
           <h6>New Docker Registry Credentials</h6>

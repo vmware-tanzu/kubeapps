@@ -23,6 +23,7 @@ interface IAppRepoFormProps {
     url: string,
     type: string,
     authHeader: string,
+    dockerRegCreds: string,
     customCA: string,
     syncJobPodTemplate: string,
     registrySecrets: string[],
@@ -41,6 +42,7 @@ const AUTH_METHOD_NONE = "none";
 const AUTH_METHOD_BASIC = "basic";
 const AUTH_METHOD_BEARER = "bearer";
 const AUTH_METHOD_CUSTOM = "custom";
+const AUTH_METHOD_REGISTRY_SECRET = "registry";
 
 const TYPE_HELM = "helm";
 const TYPE_OCI = "oci";
@@ -64,10 +66,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
   const [filterExclude, setFilterExclude] = useState(false);
-
-  const [selectedImagePullSecrets, setSelectedImagePullSecrets] = useState(
-    {} as { [key: string]: boolean },
-  );
+  const [selectedImagePullSecret, setSelectedImagePullSecret] = useState("");
   const [validated, setValidated] = useState(undefined as undefined | boolean);
 
   const {
@@ -83,17 +82,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     // Select the pull secrets if they are already selected in the existing repo
     imagePullSecrets.forEach(pullSecret => {
       const secretName = pullSecret.metadata.name;
-      if (
-        repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName) &&
-        !selectedImagePullSecrets[secretName]
-      ) {
-        setSelectedImagePullSecrets({
-          ...selectedImagePullSecrets,
-          [pullSecret.metadata.name]: true,
-        });
+      if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName)) {
+        setSelectedImagePullSecret(secretName);
       }
     });
-  }, [imagePullSecrets, repo, selectedImagePullSecrets]);
+  }, [imagePullSecrets, repo, selectedImagePullSecret]);
 
   useEffect(() => {
     if (repo) {
@@ -129,6 +122,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             setAuthHeader(atob(secret.data.authorizationHeader));
           }
         }
+        if (secret.data[".dockerconfigjson"]) {
+          setAuthMethod(AUTH_METHOD_REGISTRY_SECRET);
+        }
       }
     }
   }, [repo, secret, authHeader]);
@@ -140,6 +136,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   const install = async () => {
     let finalHeader = "";
+    let dockerRegCreds = "";
     switch (authMethod) {
       case AUTH_METHOD_CUSTOM:
         finalHeader = authHeader;
@@ -150,6 +147,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       case AUTH_METHOD_BEARER:
         finalHeader = `Bearer ${token}`;
         break;
+      case AUTH_METHOD_REGISTRY_SECRET:
+        dockerRegCreds = selectedImagePullSecret;
     }
     const ociRepoList = ociRepositories.length ? ociRepositories.split(",").map(r => r.trim()) : [];
     // If the scheme is not specified, assume HTTPS. This is common for OCI registries
@@ -160,7 +159,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     let currentlyValidated = validated;
     if (!validated && !force) {
       currentlyValidated = await dispatch(
-        actions.repos.validateRepo(finalURL, type, finalHeader, customCA, ociRepoList, skipTLS),
+        actions.repos.validateRepo(
+          finalURL,
+          type,
+          finalHeader,
+          dockerRegCreds,
+          customCA,
+          ociRepoList,
+          skipTLS,
+        ),
       );
       setValidated(currentlyValidated);
     }
@@ -169,17 +176,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
     if (currentlyValidated || force) {
-      const imagePullSecretsNames = Object.keys(selectedImagePullSecrets).filter(
-        s => selectedImagePullSecrets[s],
-      );
       const success = await onSubmit(
         name,
         finalURL,
         type,
         finalHeader,
+        dockerRegCreds,
         customCA,
         syncJobPodTemplate,
-        imagePullSecretsNames,
+        selectedImagePullSecret.length ? [selectedImagePullSecret] : [],
         ociRepoList,
         skipTLS,
         filter,
@@ -245,13 +250,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     setFilterExclude(!filterExclude);
   };
 
-  const togglePullSecret = (imagePullSecret: string) => {
-    return () => {
-      setSelectedImagePullSecrets({
-        ...selectedImagePullSecrets,
-        [imagePullSecret]: !selectedImagePullSecrets[imagePullSecret],
-      });
-    };
+  const selectPullSecret = (imagePullSecret: string) => {
+    setSelectedImagePullSecret(imagePullSecret);
   };
 
   const parseValidationError = (error: Error) => {
@@ -266,6 +266,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     }
     return message;
   };
+
+  /* Only when using a namespace different than the Kubeapps namespace (Global)
+    the repository can be associated with Docker Registry Credentials since
+    the pull secret won't be available in all namespaces */
+  const shouldEnableDockerRegistryCreds = namespace !== kubeappsNamespace;
 
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
@@ -296,6 +301,33 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             required={true}
           />
         </CdsInput>
+
+        <CdsRadioGroup layout="vertical">
+          <label>Repository Type</label>
+          <CdsControlMessage>Select the chart storage type.</CdsControlMessage>
+          <CdsRadio>
+            <label>Helm Repository</label>
+            <input
+              id="kubeapps-repo-type-helm"
+              type="radio"
+              name="type"
+              value={TYPE_HELM}
+              checked={type === TYPE_HELM}
+              onChange={handleTypeRadioButtonChange}
+            />
+          </CdsRadio>
+          <CdsRadio>
+            <label>OCI Registry</label>
+            <input
+              id="kubeapps-repo-type-oci"
+              type="radio"
+              name="type"
+              value={TYPE_OCI}
+              checked={type === TYPE_OCI}
+              onChange={handleTypeRadioButtonChange}
+            />
+          </CdsRadio>
+        </CdsRadioGroup>
 
         <div cds-layout="grid gap:lg">
           <CdsRadioGroup cds-layout="col@xs:4">
@@ -333,6 +365,19 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                 onChange={handleAuthRadioButtonChange}
               />
             </CdsRadio>
+            {shouldEnableDockerRegistryCreds && (
+              <CdsRadio>
+                <label>Use Docker Registry Credentials</label>
+                <input
+                  id="kubeapps-repo-auth-method-registry"
+                  type="radio"
+                  name="auth"
+                  value={AUTH_METHOD_REGISTRY_SECRET}
+                  checked={authMethod === AUTH_METHOD_REGISTRY_SECRET}
+                  onChange={handleAuthRadioButtonChange}
+                />
+              </CdsRadio>
+            )}
             <CdsRadio>
               <label>Custom</label>
               <input
@@ -395,32 +440,17 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </div>
         </div>
 
-        <CdsRadioGroup layout="vertical">
-          <label>Repository Type</label>
-          <CdsControlMessage>Select the chart storage type.</CdsControlMessage>
-          <CdsRadio>
-            <label>Helm Repository</label>
-            <input
-              id="kubeapps-repo-type-helm"
-              type="radio"
-              name="type"
-              value={TYPE_HELM}
-              checked={type === TYPE_HELM}
-              onChange={handleTypeRadioButtonChange}
-            />
-          </CdsRadio>
-          <CdsRadio>
-            <label>OCI Registry</label>
-            <input
-              id="kubeapps-repo-type-oci"
-              type="radio"
-              name="type"
-              value={TYPE_OCI}
-              checked={type === TYPE_OCI}
-              onChange={handleTypeRadioButtonChange}
-            />
-          </CdsRadio>
-        </CdsRadioGroup>
+        {shouldEnableDockerRegistryCreds && (
+          <AppRepoAddDockerCreds
+            imagePullSecrets={imagePullSecrets}
+            selectPullSecret={selectPullSecret}
+            selectedImagePullSecret={selectedImagePullSecret}
+            namespace={namespace}
+            appVersion={appVersion}
+            required={authMethod === AUTH_METHOD_REGISTRY_SECRET}
+          />
+        )}
+
         {type === TYPE_OCI ? (
           <CdsTextarea>
             <label htmlFor="kubeapps-oci-repositories">List of Repositories</label>
@@ -464,21 +494,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             </CdsCheckbox>
           </>
         )}
-
-        {
-          /* Only when using a namespace different than the Kubeapps namespace (Global)
-              the repository can be associated with Docker Registry Credentials since
-              the pull secret won't be available in all namespaces */
-          namespace !== kubeappsNamespace && (
-            <AppRepoAddDockerCreds
-              imagePullSecrets={imagePullSecrets}
-              togglePullSecret={togglePullSecret}
-              selectedImagePullSecrets={selectedImagePullSecrets}
-              namespace={namespace}
-              appVersion={appVersion}
-            />
-          )
-        }
 
         <CdsTextarea layout="vertical">
           <label>Custom CA Certificate (optional)</label>
