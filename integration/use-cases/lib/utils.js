@@ -38,7 +38,7 @@ module.exports = {
   },
   login: async (page, isOIDC, uri, token, username, password) => {
     await page.goto(getUrl(uri));
-    if (isOIDC === true || isOIDC === "true") {
+    if (isOIDC === "true") {
       await page.waitForNavigation();
       await expect(page).toClick("cds-button", {
         text: "Login via OIDC Provider",

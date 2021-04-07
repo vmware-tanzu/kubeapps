@@ -3,10 +3,7 @@ const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
   var token =
-    process.env.USE_MULTICLUSTER_OIDC_ENV === true ||
-      process.env.USE_MULTICLUSTER_OIDC_ENV === "true"
-      ? undefined
-      : process.env.ADMIN_TOKEN;
+    process.env.USE_MULTICLUSTER_OIDC_ENV === "true" ? undefined : process.env.ADMIN_TOKEN;
   page.on("response", response => {
     // retrieves the token after the oidc flow, note this require "--set-authorization-header=true" flag to be enabled in oauth2proxy
     token = response.headers()["authorization"] || token;
