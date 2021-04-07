@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { ISecret, IStoreState } from "../../../shared/types";
+import Tooltip from "components/js/Tooltip";
 
 import "./AppRepoAddDockerCreds.css";
 import { CdsSelect } from "@cds/react/select";
@@ -18,6 +19,7 @@ interface IAppRepoFormProps {
   namespace: string;
   appVersion: string;
   required: boolean;
+  disabled: boolean;
 }
 
 export function AppRepoAddDockerCreds({
@@ -27,6 +29,7 @@ export function AppRepoAddDockerCreds({
   namespace,
   appVersion,
   required,
+  disabled,
 }: IAppRepoFormProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [secretName, setSecretName] = useState("");
@@ -78,7 +81,29 @@ export function AppRepoAddDockerCreds({
   return (
     <>
       <CdsSelect>
-        <label>Associate Docker Registry Credentials{required ? "" : " (optional)"}</label>
+        <label>
+          Associate Docker Registry Credentials{required ? "" : " (optional)"}{" "}
+          <span className="tooltip-wrapper">
+            <Tooltip
+              label="pending-tooltip"
+              id={`pending-tooltip`}
+              icon="help"
+              position="bottom-right"
+              large={true}
+              iconProps={{ solid: true, size: "sm" }}
+            >
+              You can only associate Docker Registry Credentials to namespaced Application
+              Repositories (non-global). More info{" "}
+              <a
+                target="_blank"
+                rel="noreferrer"
+                href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#associating-docker-image-pull-secrets-to-an-apprepository"
+              >
+                here
+              </a>
+            </Tooltip>
+          </span>
+        </label>
         {currentImagePullSecrets.length ? (
           <CdsControlMessage>
             Select existing secret(s) to access a private Docker registry and pull images from it.
@@ -99,6 +124,7 @@ export function AppRepoAddDockerCreds({
           value={selectedImagePullSecret}
           required={required}
           onChange={e => selectPullSecret(e.target.value)}
+          disabled={disabled}
         >
           <option />
           {currentImagePullSecrets.map(secret => {
@@ -186,7 +212,7 @@ export function AppRepoAddDockerCreds({
         <button
           className="btn btn-info-outline"
           type="button"
-          disabled={creating}
+          disabled={disabled || creating}
           onClick={toggleCredSubForm}
         >
           Add new credentials

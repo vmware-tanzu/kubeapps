@@ -274,12 +274,13 @@ describe("when using a filter", () => {
   });
 });
 
-it("should not show the docker registry credentials section if the namespace is the global one", () => {
+it("should disable the docker registry credentials section if the namespace is the global one", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <AppRepoForm {...defaultProps} kubeappsNamespace={defaultProps.namespace} />,
   );
-  expect(wrapper.html()).not.toContain("Associate Docker Registry Credentials");
+  expect(wrapper.find("select")).toBeDisabled();
+  expect(wrapper.find(".docker-creds-subform-button button")).toBeDisabled();
 });
 
 it("should render the docker registry credentials section", () => {
