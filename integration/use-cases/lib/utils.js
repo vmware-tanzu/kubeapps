@@ -38,12 +38,15 @@ module.exports = {
   },
   login: async (page, isOIDC, uri, token, username, password) => {
     await page.goto(getUrl(uri));
-    if (isOIDC) {
+    if (isOIDC === "true") {
       await page.waitForNavigation();
       await expect(page).toClick("cds-button", {
         text: "Login via OIDC Provider",
       });
-      await page.waitForNavigation();
+      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+      await expect(page).toMatchElement(".dex-container button", {
+        text: "Log in with Email",
+      });
       await expect(page).toClick(".dex-container button", {
         text: "Log in with Email",
       });
