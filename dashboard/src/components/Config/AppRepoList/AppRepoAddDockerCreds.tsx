@@ -101,6 +101,7 @@ export function AppRepoAddDockerCreds({
               >
                 here
               </a>
+              .
             </Tooltip>
           </span>
         </label>
