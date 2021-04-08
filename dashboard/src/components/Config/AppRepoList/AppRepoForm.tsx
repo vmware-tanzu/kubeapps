@@ -440,16 +440,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </div>
         </div>
 
-        {shouldEnableDockerRegistryCreds && (
-          <AppRepoAddDockerCreds
-            imagePullSecrets={imagePullSecrets}
-            selectPullSecret={selectPullSecret}
-            selectedImagePullSecret={selectedImagePullSecret}
-            namespace={namespace}
-            appVersion={appVersion}
-            required={authMethod === AUTH_METHOD_REGISTRY_SECRET}
-          />
-        )}
+        <AppRepoAddDockerCreds
+          imagePullSecrets={imagePullSecrets}
+          selectPullSecret={selectPullSecret}
+          selectedImagePullSecret={selectedImagePullSecret}
+          namespace={namespace}
+          appVersion={appVersion}
+          disabled={!shouldEnableDockerRegistryCreds}
+          required={authMethod === AUTH_METHOD_REGISTRY_SECRET}
+        />
 
         {type === TYPE_OCI ? (
           <CdsTextarea>

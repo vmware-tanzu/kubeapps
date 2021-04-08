@@ -22,6 +22,7 @@ const defaultProps = {
   namespace: "default",
   appVersion: "1.0.0",
   required: false,
+  disabled: false,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
