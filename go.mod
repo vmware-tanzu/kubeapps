@@ -57,10 +57,10 @@ require (
 	gopkg.in/square/go-jose.v1 v1.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.0
-	k8s.io/api v0.20.5
+	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/cli-runtime v0.20.5
-	k8s.io/client-go v0.20.5
+	k8s.io/client-go v0.21.0
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kubernetes v1.13.0
