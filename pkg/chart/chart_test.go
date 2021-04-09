@@ -844,8 +844,7 @@ func TestOCIClient(t *testing.T) {
 		}
 		authSecret := &corev1.Secret{
 			Data: map[string][]byte{
-				// base64('{"auths":{"foo":{"username":"foo","password":"bar"}}}')
-				".dockerconfigjson": []byte("eyJhdXRocyI6eyJmb28iOnsidXNlcm5hbWUiOiJmb28iLCJwYXNzd29yZCI6ImJhciJ9fX0="),
+				".dockerconfigjson": []byte(`{"auths":{"foo":{"username":"foo","password":"bar"}}}`),
 			},
 		}
 		err := cli.InitClient(appRepo, &corev1.Secret{}, authSecret)

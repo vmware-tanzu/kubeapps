@@ -61,27 +61,7 @@ func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error)
 	return c.client.Do(req)
 }
 
-// getDataFromRegistrySecret retrieves the given key from the secret as a string
-func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
-	dockerConfigJsonEncoded, ok := s.StringData[key]
-	if !ok {
-		authBytes, ok := s.Data[key]
-		if !ok {
-			return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
-		}
-		dockerConfigJsonEncoded = string(authBytes)
-	}
-	dockerConfigJson, err := base64.StdEncoding.DecodeString(dockerConfigJsonEncoded)
-	if err != nil {
-		return "", fmt.Errorf("Unable to decode docker config secret. Got: %v", err)
-	}
-
-	dockerConfig := &credentialprovider.DockerConfigJson{}
-	err = json.Unmarshal(dockerConfigJson, dockerConfig)
-	if err != nil {
-		return "", fmt.Errorf("Unable to parse secret %s as a Docker config. Got: %v", s.Name, err)
-	}
-
+func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfigJson) (string, error) {
 	// This is a simplified handler of a Docker config which only looks for the username:password
 	// of the first entry.
 	for _, entry := range dockerConfig.Auths {
@@ -89,8 +69,27 @@ func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 		authHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(auth)))
 		return authHeader, nil
 	}
+	return "", fmt.Errorf("The given config doesn't include an auth entry")
+}
 
-	return "", fmt.Errorf("secret %q did not contain docker creds", s.Name)
+// getDataFromRegistrySecret retrieves the given key from the secret as a string
+func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
+	dockerConfigJson, ok := s.Data[key]
+	if !ok {
+		authBytes, ok := s.StringData[key]
+		if !ok {
+			return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
+		}
+		dockerConfigJson = []byte(authBytes)
+	}
+
+	dockerConfig := &credentialprovider.DockerConfigJson{}
+	err := json.Unmarshal(dockerConfigJson, dockerConfig)
+	if err != nil {
+		return "", fmt.Errorf("Unable to parse secret %s as a Docker config. Got: %v", s.Name, err)
+	}
+
+	return GetAuthHeaderFromDockerConfig(dockerConfig)
 }
 
 // GetData retrieves the given key from the secret as a string

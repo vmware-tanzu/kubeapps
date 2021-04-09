@@ -415,19 +415,24 @@ func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) 
 
 func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, requestNamespace string, appRepo *v1alpha1.AppRepository) error {
 	// TODO: pass request context through from user request to clientset.
-	_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
-	if err != nil && k8sErrors.IsAlreadyExists(err) {
-		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
-	}
-	if err != nil {
-		return err
+	if _, ok := repoSecret.Data[".dockerconfigjson"]; !ok {
+		// Create the secret in the requested namespace if it's not an existing docker config secret
+		_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
+		if err != nil && k8sErrors.IsAlreadyExists(err) {
+			_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
 	if requestNamespace != a.kubeappsNamespace {
 		repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
+		repoSecret.ObjectMeta.Namespace = a.kubeappsNamespace
 		repoSecret.ObjectMeta.OwnerReferences = nil
-		_, err = a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
+		repoSecret.ObjectMeta.ResourceVersion = ""
+		_, err := a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
 		if err != nil && k8sErrors.IsAlreadyExists(err) {
 			_, err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
 		}
@@ -474,8 +479,15 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 	}
 
 	repoSecret := secretForRequest(appRepoRequest, appRepo)
+	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
+		repoSecret, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if repoSecret != nil {
-		a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
+		err = a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
 		if err != nil {
 			return nil, err
 		}
@@ -517,6 +529,13 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 	}
 
 	repoSecret := secretForRequest(appRepoRequest, appRepo)
+	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
+		repoSecret, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if repoSecret != nil {
 		a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
 		if err != nil {

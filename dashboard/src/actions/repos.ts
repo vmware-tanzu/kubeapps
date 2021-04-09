@@ -353,12 +353,14 @@ export const validateRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: { currentCluster },
+      clusters: { currentCluster, clusters },
     } = getState();
+    const namespace = clusters[currentCluster].currentNamespace;
     try {
       dispatch(repoValidating());
       const data = await AppRepository.validate(
         currentCluster,
+        namespace,
         repoURL,
         type,
         authHeader,
