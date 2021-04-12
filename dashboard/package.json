@@ -26,7 +26,7 @@
     "@types/react-transition-group": "^4.4.1",
     "@types/semver": "^7.3.4",
     "@types/ws": "^7.4.1",
-    "ajv": "^8.0.5",
+    "ajv": "^8.1.0",
     "axios": "^0.21.1",
     "connected-react-router": "^6.9.1",
     "enzyme-adapter-react-16": "^1.1.1",
@@ -113,7 +113,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.2.6",
+    "@formatjs/cli": "^4.2.7",
     "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.1",
     "@types/jest": "^26.0.22",
