@@ -478,12 +478,9 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, err
 	}
 
-	repoSecret := secretForRequest(appRepoRequest, appRepo)
-	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
-		repoSecret, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
-		if err != nil {
-			return nil, err
-		}
+	repoSecret, err := a.secretForRequest(appRepoRequest, appRepo, requestNamespace)
+	if err != nil {
+		return nil, err
 	}
 
 	if repoSecret != nil {
@@ -528,12 +525,9 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, err
 	}
 
-	repoSecret := secretForRequest(appRepoRequest, appRepo)
-	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
-		repoSecret, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
-		if err != nil {
-			return nil, err
-		}
+	repoSecret, err := a.secretForRequest(appRepoRequest, appRepo, requestNamespace)
+	if err != nil {
+		return nil, err
 	}
 
 	if repoSecret != nil {
@@ -603,13 +597,9 @@ func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespa
 		return nil, nil, ErrGlobalRepositoryWithSecrets
 	}
 
-	repoSecret := secretForRequest(appRepoRequest, appRepo)
-
-	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
-		repoSecret, err = a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, requestNamespace)
-		if err != nil {
-			return nil, nil, err
-		}
+	repoSecret, err := a.secretForRequest(appRepoRequest, appRepo, requestNamespace)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
@@ -763,7 +753,10 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 }
 
 // secretForRequest takes care of parsing the request data into a secret for an AppRepository.
-func secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.AppRepository) *corev1.Secret {
+func (a *userHandler) secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.AppRepository, namespace string) (*corev1.Secret, error) {
+	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
+		return a.GetSecret(appRepoRequest.AppRepository.AuthRegCreds, namespace)
+	}
 	appRepoDetails := appRepoRequest.AppRepository
 	secrets := map[string]string{}
 	if appRepoDetails.AuthHeader != "" {
@@ -774,7 +767,7 @@ func secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.Ap
 	}
 
 	if len(secrets) == 0 {
-		return nil
+		return nil, nil
 	}
 	blockOwnerDeletion := true
 	return &corev1.Secret{
@@ -791,7 +784,7 @@ func secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.Ap
 			},
 		},
 		StringData: secrets,
-	}
+	}, nil
 }
 
 func secretNameForRepo(repoName string) string {

@@ -62,15 +62,13 @@ var syncCmd = &cobra.Command{
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
 		// The auth header may be a dockerconfig that we need to parse
-		dockerConfig := &credentialprovider.DockerConfigJson{}
-		err = json.Unmarshal([]byte(authorizationHeader), dockerConfig)
-		if err != nil {
-			// Not an dockerconfig, skip
-		} else {
-			authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
+		if os.Getenv("DOCKER_CONFIG_JSON") != "" {
+			dockerConfig := &credentialprovider.DockerConfigJson{}
+			err = json.Unmarshal([]byte(os.Getenv("DOCKER_CONFIG_JSON")), dockerConfig)
 			if err != nil {
 				logrus.Fatal(err)
 			}
+			authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
 		}
 
 		filters, err := parseFilters(filterRules)

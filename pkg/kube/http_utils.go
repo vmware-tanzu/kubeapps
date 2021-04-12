@@ -62,6 +62,9 @@ func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error)
 }
 
 func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfigJson) (string, error) {
+	if len(dockerConfig.Auths) > 1 {
+		return "", fmt.Errorf("The given config should include one auth entry")
+	}
 	// This is a simplified handler of a Docker config which only looks for the username:password
 	// of the first entry.
 	for _, entry := range dockerConfig.Auths {
@@ -76,11 +79,7 @@ func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfig
 func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 	dockerConfigJson, ok := s.Data[key]
 	if !ok {
-		authBytes, ok := s.StringData[key]
-		if !ok {
-			return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
-		}
-		dockerConfigJson = []byte(authBytes)
+		return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
 	}
 
 	dockerConfig := &credentialprovider.DockerConfigJson{}
