@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -73,6 +74,34 @@ func getNamespaceAndCluster(req *http.Request) (string, string) {
 	requestNamespace := mux.Vars(req)["namespace"]
 	requestCluster := mux.Vars(req)["cluster"]
 	return requestNamespace, requestCluster
+}
+
+// GetHeaderNamespaces returns a list of namespaces from the header request
+// The name and the value of the header field is specified by 2 environment variables:
+// - KUBEAPPS_NAMESPACE_HEADER is a name of the expected header field,
+//     e.g. KUBEAPPS_NAMESPACE_HEADER=X-Consumer-Groups
+// - KUBEAPPS_NAMESPACE_PATTERN is a regular expression and it matches only single regex group,
+//     e.g. KUBEAPPS_NAMESPACE_PATTERN=namespace:([\w-]+)
+func getHeaderNamespaces(req *http.Request) []string {
+	headerName := os.Getenv("KUBEAPPS_NAMESPACE_HEADER")
+	if headerName == "" {
+		return []string{}
+	}
+	headerPattern := os.Getenv("KUBEAPPS_NAMESPACE_PATTERN")
+	if headerPattern == "" {
+		return []string{}
+	}
+	r := regexp.MustCompile(headerPattern)
+	headerNamespacesOrigin := strings.Split(req.Header.Get(headerName), ",")
+	var namespaces = []string{}
+	for _, n := range headerNamespacesOrigin {
+		rns := r.FindStringSubmatch(strings.TrimSpace(n))
+		if rns == nil || len(rns) < 2 {
+			continue
+		}
+		namespaces = append(namespaces, rns[1])
+	}
+	return namespaces
 }
 
 // ListAppRepositories list app repositories
@@ -253,10 +282,19 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 			return
 		}
 
-		namespaces, err := clientset.GetNamespaces()
+		headerNamespaces := getHeaderNamespaces(req)
+		namespaces, err := clientset.GetNamespacesFromList(headerNamespaces)
 		if err != nil {
 			returnK8sError(err, w)
 		}
+
+		if len(namespaces) == 0 {
+			namespaces, err = clientset.GetNamespaces()
+			if err != nil {
+				returnK8sError(err, w)
+			}
+		}
+
 		response := namespacesResponse{
 			Namespaces: namespaces,
 		}

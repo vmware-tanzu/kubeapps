@@ -229,6 +229,7 @@ type handler interface {
 	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
+	GetNamespacesFromList(headerNamespaces []string) ([]corev1.Namespace, error)
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
@@ -841,6 +842,41 @@ func filterActiveNamespaces(namespaces []corev1.Namespace) []corev1.Namespace {
 		}
 	}
 	return readyNamespaces
+}
+
+// GetNamespacesFromList return the list of namespaces that the user has permission to access
+func (a *userHandler) GetNamespacesFromList(headerNamespaces []string) ([]corev1.Namespace, error) {
+	namespaceList := []corev1.Namespace{}
+
+	for _, ns := range headerNamespaces {
+		listOptions := metav1.ListOptions{FieldSelector: "metadata.name=" + ns}
+		namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), listOptions)
+		if err != nil {
+			if k8sErrors.IsForbidden(err) {
+				// The user doesn't have permissions to list namespaces, use the current serviceaccount
+				namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), listOptions)
+				if err != nil {
+					// If the configured svcclient doesn't have permission, just return an empty list.
+					return []corev1.Namespace{}, nil
+				}
+			} else {
+				log.Infof("unable to get namesapce %s: %v", ns, err)
+				return nil, err
+			}
+		}
+		namespaceList = append(namespaceList, namespaces.Items...)
+	}
+
+	// Filter namespaces that are in terminating state
+	namespaceList = filterActiveNamespaces(namespaceList)
+
+	// Filter namespaces in which the user has permissions to write (secrets) only
+	namespaceList, err := filterAllowedNamespaces(a.clientset, namespaceList)
+	if err != nil {
+		return nil, err
+	}
+
+	return namespaceList, nil
 }
 
 // GetNamespaces return the list of namespaces that the user has permission to access

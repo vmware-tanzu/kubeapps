@@ -92,6 +92,14 @@ func (c *FakeHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	return c.Namespaces, c.Err
 }
 
+// GetNamespacesFromList fake
+func (c *FakeHandler) GetNamespacesFromList(headerNamespaces []string) ([]corev1.Namespace, error) {
+	if len(headerNamespaces) == 0 {
+		return []corev1.Namespace{}, nil
+	}
+	return c.Namespaces, c.Err
+}
+
 // GetSecret fake
 func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	for _, r := range c.Secrets {

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -249,6 +250,8 @@ func TestGetNamespaces(t *testing.T) {
 		namespaces   []corev1.Namespace
 		err          error
 		expectedCode int
+		headerName   string
+		headerValue  string
 	}{
 		{
 			name:         "it should return the list of namespaces and a 200 if the repo is created",
@@ -260,11 +263,38 @@ func TestGetNamespaces(t *testing.T) {
 			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
 			expectedCode: 403,
 		},
+		{
+			name:         "it should return the list of namespaces from header and a 200 if the repo is created",
+			namespaces:   []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}}, {ObjectMeta: metav1.ObjectMeta{Name: "ns2"}}},
+			expectedCode: 200,
+			headerName:   "X-Consumer-Groups",
+			headerValue:  "namespace:ns1, namespace:ns2",
+		},
+		{
+			name:         "it should return the list of namespaces and a 200 when header does not match KUBEAPPS_NAMESPACE_HEADER",
+			namespaces:   []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedCode: 200,
+			headerName:   "X-Consumer-Groups",
+			headerValue:  "nspaces:ns1, nspaces:ns2",
+		},
+		{
+			name:         "it should return the list of namespaces and a 200 when when header does not match KUBEAPPS_NAMESPACE_PATTERN",
+			namespaces:   []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedCode: 200,
+			headerName:   "Y-Consumer-Groups",
+			headerValue:  "namespace:ns1, namespace:ns2",
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			getNSFunc := GetNamespaces(&kube.FakeHandler{Namespaces: tc.namespaces, Err: tc.err})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
+
+			if tc.headerName != "" {
+				os.Setenv("KUBEAPPS_NAMESPACE_HEADER", "X-Consumer-Groups")
+				os.Setenv("KUBEAPPS_NAMESPACE_PATTERN", "namespace:([\\w-]+)")
+				req.Header.Set(tc.headerName, tc.headerValue)
+			}
 
 			response := httptest.NewRecorder()
 			getNSFunc(response, req)
