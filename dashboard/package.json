@@ -61,7 +61,7 @@
     "react-router-dom": "^5.2.0",
     "react-router-hash-link": "^2.4.0",
     "react-switch": "^6.0.0",
-    "react-tabs": "^3.2.1",
+    "react-tabs": "^3.2.2",
     "react-test-renderer": "^16.2.0",
     "react-tooltip": "^4.2.17",
     "react-transition-group": "^4.4.1",
@@ -113,7 +113,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.2.6",
+    "@formatjs/cli": "^4.2.7",
     "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.1",
     "@types/jest": "^26.0.22",

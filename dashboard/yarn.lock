@@ -1293,13 +1293,13 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@formatjs/cli@^4.2.6":
-  version "4.2.6"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.2.6.tgz#97fabdb4a910512e8756c6b03243a44468ee59c2"
-  integrity sha512-P7i2f0F/z4eZ+1+NeLkKxcMDWm/guiNPmKISTo4xZEEakO50qYtCe6rd37/4Ai7N7AX0DJ58ANAHfmE/+gf/dQ==
+"@formatjs/cli@^4.2.7":
+  version "4.2.7"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.2.7.tgz#fdd04083a3bc844625251192f4681c5b6d2372f3"
+  integrity sha512-TYDUqId9ww13cLpsf9DcdEhGIzoGJVl4WqBkw4RJepAHgzAPU3e7YHdjrCSQyBCgYpK9KW7nYV0tydnsQI0skQ==
   dependencies:
-    "@formatjs/icu-messageformat-parser" "1.1.4"
-    "@formatjs/ts-transformer" "3.3.6"
+    "@formatjs/icu-messageformat-parser" "1.1.5"
+    "@formatjs/ts-transformer" "3.3.7"
     "@types/json-stable-stringify" "^1.0.32"
     "@types/lodash" "^4.14.150"
     "@types/node" "14"
@@ -1315,27 +1315,11 @@
     tslib "^2.1.0"
     typescript "^4.0"
 
-"@formatjs/ecma402-abstract@1.6.4":
-  version "1.6.4"
-  resolved "https://registry.yarnpkg.com/@formatjs/ecma402-abstract/-/ecma402-abstract-1.6.4.tgz#cff5ef03837fb6bae70b16d04940213c17e87884"
-  integrity sha512-ukFjGD9dLsxcD9D5AEshJqQElPQeUAlTALT/lzIV6OcYojyuU81gw/uXDUOrs6XW79jtOJwQDkLqHbCJBJMOTw==
-  dependencies:
-    tslib "^2.1.0"
-
 "@formatjs/ecma402-abstract@1.6.5":
   version "1.6.5"
   resolved "https://registry.yarnpkg.com/@formatjs/ecma402-abstract/-/ecma402-abstract-1.6.5.tgz#ab461b6a284278ffe051ddd817537be4092e71be"
   integrity sha512-dhRWSoPPw8PhB5tSOEP9Gi5XZNFC2IkfP95Va70ouIuED0wBlsU1WmO4jDHITL7/kSNqvzKFTT+2S+6jHPq6jw==
   dependencies:
-    tslib "^2.1.0"
-
-"@formatjs/icu-messageformat-parser@1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@formatjs/icu-messageformat-parser/-/icu-messageformat-parser-1.1.4.tgz#75ee0cbb9289cf456929b78a2bbbcd43b5fa0da4"
-  integrity sha512-MrlF7g9RFy3AYZkWk+YVlMtb1biwVzgYUp+84LQL226/9t5FxWS6iGmcSzz54F1kIl3VETeaTHNy8SP2o9SOYw==
-  dependencies:
-    "@formatjs/ecma402-abstract" "1.6.4"
-    "@formatjs/icu-skeleton-parser" "1.1.1"
     tslib "^2.1.0"
 
 "@formatjs/icu-messageformat-parser@1.1.5":
@@ -1345,14 +1329,6 @@
   dependencies:
     "@formatjs/ecma402-abstract" "1.6.5"
     "@formatjs/icu-skeleton-parser" "1.1.2"
-    tslib "^2.1.0"
-
-"@formatjs/icu-skeleton-parser@1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@formatjs/icu-skeleton-parser/-/icu-skeleton-parser-1.1.1.tgz#b2c39a7817816d68d31272947dded970f6d1d1c7"
-  integrity sha512-hkRJhjr9G0IE730Kxwq65+rz/2fdCckSJTPrKmViMxLNtRmIt6Hx67tffElr9/QSlpzGlXw9XAMdFOa1ylRrJQ==
-  dependencies:
-    "@formatjs/ecma402-abstract" "1.6.4"
     tslib "^2.1.0"
 
 "@formatjs/icu-skeleton-parser@1.1.2":
@@ -1392,12 +1368,12 @@
     intl-messageformat "9.6.7"
     tslib "^2.1.0"
 
-"@formatjs/ts-transformer@3.3.6":
-  version "3.3.6"
-  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.3.6.tgz#dee57c18652113b82937838664c17621d41cc743"
-  integrity sha512-lC51Qmvu0snWpOhsmWgmizYuDglyKMtuwc6w5xlMzX8erSPmULbYpsqB3EMibNLHb6jIEKhhu0bTJ9HONyTiXg==
+"@formatjs/ts-transformer@3.3.7":
+  version "3.3.7"
+  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.3.7.tgz#ce480366366195f71a588c863378b0e965e18f41"
+  integrity sha512-njO4HMo0zGETY5cYz2ifsEO5FnZs+NyIUSXrGrcE0l9p188P5AIsJ+9HeK3ZGP6u/srtchBytIQFrvhskaQOzQ==
   dependencies:
-    "@formatjs/icu-messageformat-parser" "1.1.4"
+    "@formatjs/icu-messageformat-parser" "1.1.5"
     tslib "^2.1.0"
     typescript "^4.0"
 
@@ -12028,10 +12004,10 @@ react-syntax-highlighter@^15.4.3:
     prismjs "^1.22.0"
     refractor "^3.2.0"
 
-react-tabs@^3.2.1:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/react-tabs/-/react-tabs-3.2.1.tgz#b0ce1e8b9f68bca82292ddecfb6480c9042bcb48"
-  integrity sha512-M7ERQvJgBVLTyojFmC3G4tpaJuMmUtsnYenVQm2oA1NjDrGXq1UuzHgxhVTDwimkJcKEbzgWCybXFSHQ/+2bsA==
+react-tabs@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/react-tabs/-/react-tabs-3.2.2.tgz#07bdc3cdb17bdffedd02627f32a93cd4b3d6e4d0"
+  integrity sha512-/o52eGKxFHRa+ssuTEgSM8qORnV4+k7ibW+aNQzKe+5gifeVz8nLxCrsI9xdRhfb0wCLdgIambIpb1qCxaMN+A==
   dependencies:
     clsx "^1.1.0"
     prop-types "^15.5.0"
