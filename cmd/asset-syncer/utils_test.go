@@ -314,7 +314,7 @@ func Test_parseRepoIndex(t *testing.T) {
 func Test_chartsFromIndex(t *testing.T) {
 	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, r)
+	charts := chartsFromIndex(index, r, false)
 	assert.Equal(t, len(charts), 2, "number of charts")
 
 	indexWithDeprecated := validRepoIndexYAML + `
@@ -323,14 +323,23 @@ func Test_chartsFromIndex(t *testing.T) {
     deprecated: true`
 	index2, err := parseRepoIndex([]byte(indexWithDeprecated))
 	assert.NoErr(t, err)
-	charts = chartsFromIndex(index2, r)
+	charts = chartsFromIndex(index2, r, false)
 	assert.Equal(t, len(charts), 2, "number of charts")
+	assert.Equal(t, len(charts[1].ChartVersions), 2, "number of versions")
+}
+
+func Test_shallowChartsFromIndex(t *testing.T) {
+	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
+	charts := chartsFromIndex(index, r, true)
+	assert.Equal(t, len(charts), 2, "number of charts")
+	assert.Equal(t, len(charts[1].ChartVersions), 1, "number of versions")
 }
 
 func Test_newChart(t *testing.T) {
 	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	c := newChart(index.Entries["wordpress"], r)
+	c := newChart(index.Entries["wordpress"], r, false)
 	assert.Equal(t, c.Name, "wordpress", "correctly built")
 	assert.Equal(t, len(c.ChartVersions), 2, "correctly built")
 	assert.Equal(t, c.Description, "new description!", "takes chart fields from latest entry")
@@ -533,7 +542,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 	})
 
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"})
+	charts := chartsFromIndex(index, &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
 
 	t.Run("failed download", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
@@ -598,7 +607,11 @@ func (r *fakeRepo) Repo() *models.RepoInternal {
 	return r.RepoInternal
 }
 
-func (r *fakeRepo) Charts() ([]models.Chart, error) {
+func (r *fakeRepo) FilterIndex() {
+	// no-op
+}
+
+func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
 	return r.charts, nil
 }
 
@@ -613,7 +626,7 @@ func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	charts := chartsFromIndex(index, &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL})
+	charts := chartsFromIndex(index, &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
 	chartVersion := charts[0].ChartVersions[0]
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
@@ -915,6 +928,23 @@ func Test_OCIRegistry(t *testing.T) {
 		}, "expected tags")
 	})
 
+	t.Run("FilterIndex - order tags by semver", func(t *testing.T) {
+		repo := OCIRegistry{
+			repositories: []string{"apache"},
+			RepoInternal: &models.RepoInternal{
+				URL: "http://oci-test",
+			},
+			tags: map[string]TagList{
+				"apache": {Name: "test/apache", Tags: []string{"1.0.0", "2.0.0", "1.1.0"}},
+			},
+			ociCli: &fakeOCIAPICli{},
+		}
+		repo.FilterIndex()
+		assert.Equal(t, repo.tags, map[string]TagList{
+			"apache": {Name: "test/apache", Tags: []string{"2.0.0", "1.1.0", "1.0.0"}},
+		}, "tag list")
+	})
+
 	chartYAML := `
 annotations:
   category: Infrastructure
@@ -939,6 +969,7 @@ version: 1.0.0
 		ociArtifactFiles []tarballFile
 		tags             []string
 		expected         []models.Chart
+		shallow          bool
 	}{
 		{
 			"Retrieve chart metadata",
@@ -969,6 +1000,7 @@ version: 1.0.0
 					},
 				},
 			},
+			false,
 		},
 		{
 			"Retrieve other files",
@@ -995,6 +1027,7 @@ version: 1.0.0
 					},
 				},
 			},
+			false,
 		},
 		{
 			"A chart with a /",
@@ -1021,6 +1054,7 @@ version: 1.0.0
 					},
 				},
 			},
+			false,
 		},
 		{
 			"Multiple chart versions",
@@ -1053,6 +1087,34 @@ version: 1.0.0
 					},
 				},
 			},
+			false,
+		},
+		{
+			"Single chart version for a shallow run",
+			"repo/kubeapps",
+			[]tarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			[]string{"1.1.0", "1.0.0"},
+			[]models.Chart{
+				{
+					ID:          "test/repo%2Fkubeapps",
+					Name:        "repo%2Fkubeapps",
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
+					Maintainers: []chart.Maintainer{},
+					ChartVersions: []models.ChartVersion{
+						{
+							Digest: "123",
+							Readme: "chart readme",
+							Values: "chart values",
+							Schema: "chart schema",
+						},
+					},
+				},
+			},
+			true,
 		},
 	}
 	for _, tt := range tests {
@@ -1091,7 +1153,7 @@ version: 1.0.0
 					},
 				},
 			}
-			charts, err := chartsRepo.Charts()
+			charts, err := chartsRepo.Charts(tt.shallow)
 			assert.NoErr(t, err)
 			if !cmp.Equal(charts, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(charts, tt.expected))

@@ -37,7 +37,7 @@ func Test_DeletePGRepo(t *testing.T) {
 	}
 }
 
-func Test_PGRepoAlreadyProcessed(t *testing.T) {
+func Test_PGRepoLastChecksum(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -45,8 +45,8 @@ func Test_PGRepoAlreadyProcessed(t *testing.T) {
 		WithArgs("foo", "repo-namespace").
 		WillReturnRows(sqlmock.NewRows([]string{"checksum"}).AddRow("123"))
 
-	if got, want := pgManager.RepoAlreadyProcessed(models.Repo{Namespace: "repo-namespace", Name: "foo"}, "123"), true; got != want {
-		t.Errorf("got: %t, want: %t", got, want)
+	if got, want := pgManager.LastChecksum(models.Repo{Namespace: "repo-namespace", Name: "foo"}), "123"; got != want {
+		t.Errorf("got: %s, want: %s", got, want)
 	}
 }
 

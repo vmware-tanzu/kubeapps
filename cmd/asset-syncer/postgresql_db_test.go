@@ -412,30 +412,25 @@ func TestRepoAlreadyProcessed(t *testing.T) {
 	defer cleanup()
 
 	// not processed when it doesn't exist
-	if got, want := pam.RepoAlreadyProcessed(repo, checksum), false; got != want {
-		t.Errorf("got: %t, want: %t", got, want)
+	if got, want := pam.LastChecksum(repo), ""; got != want {
+		t.Errorf("got: %s, want: %s", got, want)
 	}
 
 	// not processed when repo exists but has not been processed
 	pam.EnsureRepoExists(repoNamespace, repoName)
-	if got, want := pam.RepoAlreadyProcessed(repo, checksum), false; got != want {
-		t.Errorf("got: %t, want: %t", got, want)
+	if got, want := pam.LastChecksum(repo), ""; got != want {
+		t.Errorf("got: %s, want: %s", got, want)
 	}
 
-	// not processed when checksum doesn't match
 	pam.UpdateLastCheck(repoNamespace, repoName, checksum, time.Now())
-	if got, want := pam.RepoAlreadyProcessed(repo, "other-checksum"), false; got != want {
-		t.Errorf("got: %t, want: %t", got, want)
-	}
-
 	// processed when checksums match
-	if got, want := pam.RepoAlreadyProcessed(repo, checksum), true; got != want {
-		t.Errorf("got: %t, want: %t", got, want)
+	if got, want := pam.LastChecksum(repo), checksum; got != want {
+		t.Errorf("got: %s, want: %s", got, want)
 	}
 
 	// it does not match the same repo in a different namespace
-	if got, want := pam.RepoAlreadyProcessed(models.Repo{Namespace: "other-namespace", Name: repo.Name}, checksum), false; got != want {
-		t.Errorf("got: %t, want: %t", got, want)
+	if got, want := pam.LastChecksum(models.Repo{Namespace: "other-namespace", Name: repo.Name}), ""; got != want {
+		t.Errorf("got: %s, want: %s", got, want)
 	}
 }
 
