@@ -82,7 +82,7 @@ With those changes, Kubeapps is ready to send any request for a specific cluster
 
 ## Debugging auth failures when using OIDC
 
-For general OIDC issues, have a look a [this OIDC debugging guide](./using-an-OIDC-provider-with-pinniped.md#debugging-auth-failures-when-using-OIDC).
+For general OIDC issues, have a look at [this OIDC debugging guide](./using-an-OIDC-provider-with-pinniped.md#debugging-auth-failures-when-using-OIDC).
 
 ### Pinniped not trusting your OIDC
 
