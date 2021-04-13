@@ -86,14 +86,23 @@ For general OIDC issues, have a look a [this OIDC debugging guide](./using-an-OI
 
 ### Pinniped not trusting your OIDC
 
-There are some scenarios (e.g., TMC) in which Pinniped is not being bundled with the usual CA certificates. As a result, common OIDC providers (e.g.,  Google, VMware CSP login, etc.) are not trusted by Pinniped and, as result, the authentication in Kubeapps will always fail with a 401 status code.
+There are some scenarios (e.g., TMC) in which Pinniped is not being bundled with the usual CA certificates. As a result, common OIDC providers (e.g.,  Google, VMware CSP login, etc.) are not trusted by Pinniped and, as a result, the authentication in Kubeapps will always fail with a 401 status code.
 
-You can work around this issue by setting `spec.tls.certificateAuthorityData` in the `JWTAuthenticator` to match with the TLS CA used by the OIDC discovery endpoint.
+You can work around this issue by setting `spec.tls.certificateAuthorityData` in the `JWTAuthenticator` to match with the TLS CA used by the ODIC issuer.
 
-For instance, if adding Google as an OIDC provider, you will have to check the CA of the [OIDC discovery endpoint](https://accounts.google.com/.well-known/openid-configuration):
+#### Example (command line): using Google as the OIDC provider
+
+For instance, if adding Google as an OIDC provider, you will have to check the CA of the `issuer` located in the [Google OIDC discovery endpoint](https://accounts.google.com/.well-known/openid-configuration):
+
 
 ```bash
-curl --insecure -vvI https://accounts.google.com/.well-known/openid-configuration 2>&1 | grep issuer
+curl -s https://accounts.google.com/.well-known/openid-configuration 2>&1 | jq '.issuer'
+
+"https://accounts.google.com"
+```
+
+```bash
+curl --insecure -vvI "https://accounts.google.com" 2>&1 | grep issuer
 
 *  issuer: C=US; O=Google Trust Services; CN=GTS CA 1O1
 ```
@@ -108,4 +117,46 @@ LS0tLS1CRUdJTiBDRVJUSU...
 
 Next, use this `LS0tLS1CRUdJTiBDRVJUSU...` value as the `spec.tls.certificateAuthorityData` in your `JWTAuthenticator`.
 
-Proceed analogously with other OIDC providers. Also, you can use your browser's view certificate option to get the CA certificate.
+
+#### Example (graphical): using VMware Cloud as the OIDC provider
+
+Also, you can use your browser to check the proper CA certificate you will need. In this example, we will use the [VMware Cloud ODIC discovery endpoint](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration). Access this URL and retrieve the `issuer` endpoint.
+
+```json
+{
+    "issuer": "https://gaz.csp-vidm-prod.com",
+    ...
+}
+```
+
+Next, go to `https://gaz.csp-vidm-prod.com` to check the CA certificate using your browser. For instance, in Google Chrome:
+
+
+![Checking the CA certificate using Chrome](../img/ca-certificate-chrome.png "Checking the CA certificate using Chrome")
+
+The CA used is `DigiCert SHA2 High Assurance Server CA`, so you will need to look up this certificate in the [DigiCert repository](https://www.digicert.com/kb/digicert-root-certificates.htm). Download the proper `.pem` file (in this case, [this one](https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem)) and convert the content to base64. For simplicity, we perform this step by executing:
+
+```bash
+curl -s https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem | base64
+
+LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JS ...
+``` 
+
+Finally, add this output to the JWT Authenticator, as follows:
+
+``` yaml
+apiVersion: authentication.concierge.pinniped.dev/v1alpha1
+kind: JWTAuthenticator
+metadata:
+  name: jwt-authenticator
+spec:
+  audience: <you-client-id> # use your own client id
+  claims:
+    groups: groups
+    username: email
+  issuer: https://gaz.csp-vidm-prod.com # or https://gaz-preview.csp-vidm-prod.co
+  tls:
+    certificateAuthorityData: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVzVENDQTVtZ0F3SUJBZ0lRQk9IbnBOeGM4dk50d0N0Q3VGMFZuekFOQmdrcWhraUc5dzBCQVFzRkFEQnMKTVFzd0NRWURWUVFHRXdKVlV6RVZNQk1HQTFVRUNoTU1SR2xuYVVObGNuUWdTVzVqTVJrd0Z3WURWUVFMRXhCMwpkM2N1WkdsbmFXTmxjblF1WTI5dE1Tc3dLUVlEVlFRREV5SkVhV2RwUTJWeWRDQklhV2RvSUVGemMzVnlZVzVqClpTQkZWaUJTYjI5MElFTkJNQjRYRFRFek1UQXlNakV5TURBd01Gb1hEVEk0TVRBeU1qRXlNREF3TUZvd2NERUwKTUFrR0ExVUVCaE1DVlZNeEZUQVRCZ05WQkFvVERFUnBaMmxEWlhKMElFbHVZekVaTUJjR0ExVUVDeE1RZDNkMwpMbVJwWjJsalpYSjBMbU52YlRFdk1DMEdBMVVFQXhNbVJHbG5hVU5sY25RZ1UwaEJNaUJJYVdkb0lFRnpjM1Z5CllXNWpaU0JUWlhKMlpYSWdRMEV3Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRQzIKNEMvQ0pBYkliUVJmMSs4S1pBYXlmU0ltWlJhdVFrQ2J6dHlmbjNZSFBzTXdWWWNadVUrVURscVVIMVZXdE1JQwpLcS9RbU80TFFOZkUwRHR5eUJTZTc1Q3hFYW11MHNpNFF6clpDd3ZWMVpYMVFLL0lIZTFObkY5WHQ0WlFhSm4xCml0clN4d1VmcUpmSjNLU3hnb1F0eHEybG5NY1pncWFGRDE1RVdDbzNqLzAxOFFzSUp6SmE5YnVMbnFTOVVkQW4KNHQwN1FqT2pCU2pFdXlqTW1xd3JJdzE0eG52bVhuRzNTajRJKzRHM0ZoYWhuU01TVGVYWGtnaXNkYVNjdXMwWApzaDVFTldWL1V5VTUwUndLbW1NYkdaSjBhQW8zd3NKU1NNczVXcUsyNFYzQjNhQWd1Q0dpa3ladkZFb2hRY2Z0CmJadnlTQy96QS9XaWFKSlRMMTdqQWdNQkFBR2pnZ0ZKTUlJQlJUQVNCZ05WSFJNQkFmOEVDREFHQVFIL0FnRUEKTUE0R0ExVWREd0VCL3dRRUF3SUJoakFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJdwpOQVlJS3dZQkJRVUhBUUVFS0RBbU1DUUdDQ3NHQVFVRkJ6QUJoaGhvZEhSd09pOHZiMk56Y0M1a2FXZHBZMlZ5CmRDNWpiMjB3U3dZRFZSMGZCRVF3UWpCQW9ENmdQSVk2YUhSMGNEb3ZMMk55YkRRdVpHbG5hV05sY25RdVkyOXQKTDBScFoybERaWEowU0dsbmFFRnpjM1Z5WVc1alpVVldVbTl2ZEVOQkxtTnliREE5QmdOVkhTQUVOakEwTURJRwpCRlVkSUFBd0tqQW9CZ2dyQmdFRkJRY0NBUlljYUhSMGNITTZMeTkzZDNjdVpHbG5hV05sY25RdVkyOXRMME5RClV6QWRCZ05WSFE0RUZnUVVVV2ova0s4Q0IzVTh6TmxsWkdLaUVyaFpjanN3SHdZRFZSMGpCQmd3Rm9BVXNUN0QKYVFQNHYwY0IxSmdtR2dnQzcyTmtLOE13RFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUJpS2xZa0Q1bTNmWFB3ZAphT3BLajRQV1VTK05hMFFXbnF4ajlkSnViSVNaaTZxQmNZUmI3VFJPc0xkNWtpbk1MWUJxOEk0ZzRYbWsvZ05ICkUrcjFoc3BaY1gzMEJKWnIwMWxZUGY3VE1TVmNHRGlFbythZmd2Mk1XNWd4VHMxNG5ocjloY3RKcXZJbmk1bHkKL0Q2cTFVRUwydFUyb2I4Y2JrZEpmMTdaU0h3RDJmMkxTYUNZSmtKQTY5YVNFYVJrQ2xkVXhQVWQxZ0plYTZ6dQp4SUNhRW5MNlZwUFgvNzh3aFFZd3Z3dC9UdjlYQlowazdZWERLL3VtZGFpc0xSYnZmWGtuc3V2Q25Rc0g2cXFGCjB3R2pJQ2hCV1VNbzBvSGpxdmJzZXp0M3RrQmlnQVZCUlFIdkZ3WSszc0F6bTJmVFlTNXloK1JwL0JJQVYwQWUKY1BVZXliUT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+``` 
+
+> Remember that `apiVersion: authentication.concierge.pinniped.dev/v1alpha1` will become `apiVersion: authentication.concierge.pinniped.tmc.cloud.vmware.com/v1alpha1` in TMC.
