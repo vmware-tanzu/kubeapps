@@ -1126,6 +1126,7 @@ describe("validateRepo", () => {
     expect(res).toBe(true);
     expect(AppRepository.validate).toHaveBeenCalledWith(
       "default",
+      "kubeapps-namespace",
       "url",
       "oci",
       "",

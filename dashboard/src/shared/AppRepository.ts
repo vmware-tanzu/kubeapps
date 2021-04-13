@@ -108,6 +108,7 @@ export class AppRepository {
 
   public static async validate(
     cluster: string,
+    namespace: string,
     repoURL: string,
     type: string,
     authHeader: string,
@@ -116,17 +117,20 @@ export class AppRepository {
     ociRepositories: string[],
     skipTLS: boolean,
   ) {
-    const { data } = await axiosWithAuth.post<any>(url.backend.apprepositories.validate(cluster), {
-      appRepository: {
-        repoURL,
-        type,
-        authHeader,
-        authRegCreds,
-        customCA,
-        ociRepositories,
-        tlsInsecureSkipVerify: skipTLS,
+    const { data } = await axiosWithAuth.post<any>(
+      url.backend.apprepositories.validate(cluster, namespace),
+      {
+        appRepository: {
+          repoURL,
+          type,
+          authHeader,
+          authRegCreds,
+          customCA,
+          ociRepositories,
+          tlsInsecureSkipVerify: skipTLS,
+        },
       },
-    });
+    );
     return data;
   }
 

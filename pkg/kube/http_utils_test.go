@@ -411,8 +411,7 @@ func Test_getDataFromRegistrySecret(t *testing.T) {
 			name: "retrieves username and password from a dockerconfigjson",
 			secret: &corev1.Secret{
 				Data: map[string][]byte{
-					// base64('{"auths":{"foo":{"username":"foo","password":"bar"}}}')
-					".dockerconfigjson": []byte("eyJhdXRocyI6eyJmb28iOnsidXNlcm5hbWUiOiJmb28iLCJwYXNzd29yZCI6ImJhciJ9fX0="),
+					".dockerconfigjson": []byte(`{"auths":{"foo":{"username":"foo","password":"bar"}}}`),
 				},
 			},
 			// Basic: base64(foo:bar)

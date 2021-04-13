@@ -633,12 +633,21 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, config Config
 		},
 	})
 	if apprepo.Spec.Auth.Header != nil {
-		envVars = append(envVars, corev1.EnvVar{
-			Name: "AUTHORIZATION_HEADER",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
-			},
-		})
+		if apprepo.Spec.Auth.Header.SecretKeyRef.Key == ".dockerconfigjson" {
+			envVars = append(envVars, corev1.EnvVar{
+				Name: "DOCKER_CONFIG_JSON",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
+				},
+			})
+		} else {
+			envVars = append(envVars, corev1.EnvVar{
+				Name: "AUTHORIZATION_HEADER",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
+				},
+			})
+		}
 	}
 	return envVars
 }

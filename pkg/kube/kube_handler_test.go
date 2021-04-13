@@ -200,7 +200,10 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 
 	// When appropriate, ensure the expected secret is stored.
 	if appRepoRequest.AppRepository.AuthHeader != "" {
-		expectedSecret := secretForRequest(&appRepoRequest, responseAppRepo)
+		expectedSecret, err := handler.secretForRequest(&appRepoRequest, responseAppRepo, requestNamespace)
+		if err != nil {
+			t.Errorf("error getting the expected secret: %+v", err)
+		}
 		expectedSecret.ObjectMeta.Namespace = requestNamespace
 		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(context.TODO(), expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
 
@@ -788,6 +791,12 @@ func TestSecretForRequest(t *testing.T) {
 			BlockOwnerDeletion: &blockOwnerDeletion,
 		},
 	}
+	dockerCredsSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+	}
 
 	testCases := []struct {
 		name    string
@@ -836,12 +845,36 @@ func TestSecretForRequest(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "uses the given secret for docker creds",
+			request: appRepositoryRequestDetails{
+				Name:         "test-repo",
+				RepoURL:      "http://example.com/test-repo",
+				AuthRegCreds: dockerCredsSecret.Name,
+			},
+			secret: dockerCredsSecret,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := secretForRequest(&appRepositoryRequest{tc.request}, &appRepo), tc.secret; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(),
+				fakecoreclientset.NewSimpleClientset(dockerCredsSecret),
+				&fakeRest.RESTClient{},
+			}
+			handler := userHandler{
+				kubeappsNamespace: kubeappsNamespace,
+				svcClientset:      cs,
+				clientset:         cs,
+			}
+
+			secret, err := handler.secretForRequest(&appRepositoryRequest{tc.request}, &appRepo, "default")
+			if err != nil {
+				t.Fatalf("unexpected error %v", err)
+			}
+			if !cmp.Equal(secret, tc.secret) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.secret, secret))
 			}
 		})
 	}

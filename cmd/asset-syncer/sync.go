@@ -17,13 +17,16 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"time"
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 var syncCmd = &cobra.Command{
@@ -58,6 +61,15 @@ var syncCmd = &cobra.Command{
 		}
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
+		// The auth header may be a dockerconfig that we need to parse
+		if os.Getenv("DOCKER_CONFIG_JSON") != "" {
+			dockerConfig := &credentialprovider.DockerConfigJson{}
+			err = json.Unmarshal([]byte(os.Getenv("DOCKER_CONFIG_JSON")), dockerConfig)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
+		}
 
 		filters, err := parseFilters(filterRules)
 		if err != nil {
