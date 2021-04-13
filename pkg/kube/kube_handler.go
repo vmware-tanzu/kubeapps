@@ -413,34 +413,27 @@ func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) 
 	return &appRepoRequest, nil
 }
 
-func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, requestNamespace string, appRepo *v1alpha1.AppRepository) error {
+func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, requestNamespace string) error {
 	// TODO: pass request context through from user request to clientset.
-	if _, ok := repoSecret.Data[".dockerconfigjson"]; !ok {
-		// Create the secret in the requested namespace if it's not an existing docker config secret
-		_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
-		if err != nil && k8sErrors.IsAlreadyExists(err) {
-			_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
-		}
-		if err != nil {
-			return err
-		}
+	// Create the secret in the requested namespace if it's not an existing docker config secret
+	_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
+	if err != nil && k8sErrors.IsAlreadyExists(err) {
+		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
 	}
+	return err
+}
 
-	// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
-	if requestNamespace != a.kubeappsNamespace {
-		repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
-		repoSecret.ObjectMeta.Namespace = a.kubeappsNamespace
-		repoSecret.ObjectMeta.OwnerReferences = nil
-		repoSecret.ObjectMeta.ResourceVersion = ""
-		_, err := a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
-		if err != nil && k8sErrors.IsAlreadyExists(err) {
-			_, err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
-		}
-		if err != nil {
-			return err
-		}
+// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
+func (a *userHandler) copyAppRepositorySecret(repoSecret *corev1.Secret, appRepo *v1alpha1.AppRepository) error {
+	repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
+	repoSecret.ObjectMeta.Namespace = a.kubeappsNamespace
+	repoSecret.ObjectMeta.OwnerReferences = nil
+	repoSecret.ObjectMeta.ResourceVersion = ""
+	_, err := a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
+	if err != nil && k8sErrors.IsAlreadyExists(err) {
+		_, err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
 	}
-	return nil
+	return err
 }
 
 // ListAppRepositories list AppRepositories in a namespace, bypass RBAC if the requeste namespace is the global one
@@ -484,7 +477,17 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 	}
 
 	if repoSecret != nil {
-		err = a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
+		// If the secret is a docker config, the secret already exists so we don't need to create it
+		if _, ok := repoSecret.Data[".dockerconfigjson"]; !ok {
+			err = a.applyAppRepositorySecret(repoSecret, requestNamespace)
+		}
+		if err != nil {
+			return nil, err
+		}
+		// If the namespace is different than the Kubeapps one, the secret needs to be copied
+		if requestNamespace != a.kubeappsNamespace {
+			err = a.copyAppRepositorySecret(repoSecret, appRepo)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -531,7 +534,17 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 	}
 
 	if repoSecret != nil {
-		a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
+		// If the secret is a docker config, the secret already exists so we don't need to create it
+		if _, ok := repoSecret.Data[".dockerconfigjson"]; !ok {
+			err = a.applyAppRepositorySecret(repoSecret, requestNamespace)
+		}
+		if err != nil {
+			return nil, err
+		}
+		// If the namespace is different than the Kubeapps one, the secret needs to be copied
+		if requestNamespace != a.kubeappsNamespace {
+			err = a.copyAppRepositorySecret(repoSecret, appRepo)
+		}
 		if err != nil {
 			return nil, err
 		}
