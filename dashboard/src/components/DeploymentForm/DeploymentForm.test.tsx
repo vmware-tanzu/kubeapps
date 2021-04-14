@@ -168,13 +168,11 @@ it("triggers a deployment when submitting the form", async () => {
     handleValuesChange("foo: bar");
   });
 
-  // Set the release name
-  const releaseNameInput = wrapper.find("#releaseName");
-  releaseNameInput.getDOMNode<HTMLInputElement>().value = releaseName;
-  releaseNameInput.simulate("change");
+  wrapper.find("#releaseName").simulate("change", { target: { value: releaseName } });
 
   wrapper.update();
   expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+  expect(wrapper.find(DeploymentForm).find("#releaseName").prop("value")).toBe(releaseName);
 
   await act(async () => {
     // Simulating "submit" causes a console.warning

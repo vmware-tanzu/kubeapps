@@ -82,8 +82,8 @@ function DeploymentForm({
     setValuesModified(true);
   };
 
-  const handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
-    setReleaseName(e.currentTarget.value);
+  const handleReleaseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setReleaseName(e.target.value);
   };
 
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
