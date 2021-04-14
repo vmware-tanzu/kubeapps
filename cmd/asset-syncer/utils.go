@@ -100,7 +100,7 @@ func parseRepoURL(repoURL string) (*url.URL, error) {
 type assetManager interface {
 	Delete(repo models.Repo) error
 	Sync(repo models.Repo, charts []models.Chart) error
-	LastChecksum(repo models.Repo) string
+	LastChecksum(repo models.Repo) (string, error)
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error
@@ -128,7 +128,7 @@ type Repo interface {
 	Checksum() (string, error)
 	Repo() *models.RepoInternal
 	FilterIndex()
-	Charts(shallow bool) ([]models.Chart, error)
+	Charts(fetchLatestOnly bool) ([]models.Chart, error)
 	FetchFiles(name string, cv models.ChartVersion) (map[string]string, error)
 }
 
@@ -224,7 +224,7 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *HelmRepo) Charts(shallow bool) ([]models.Chart, error) {
+func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	index, err := parseRepoIndex(r.content)
 	if err != nil {
 		return []models.Chart{}, err
@@ -236,7 +236,7 @@ func (r *HelmRepo) Charts(shallow bool) ([]models.Chart, error) {
 		URL:       r.URL,
 		Type:      r.Type,
 	}
-	charts := chartsFromIndex(index, repo, shallow)
+	charts := chartsFromIndex(index, repo, fetchLatestOnly)
 	if len(charts) == 0 {
 		return []models.Chart{}, fmt.Errorf("no charts in repository index")
 	}
@@ -651,7 +651,7 @@ func (r *OCIRegistry) FilterIndex() {
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *OCIRegistry) Charts(shallow bool) ([]models.Chart, error) {
+func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	result := map[string]*models.Chart{}
 	repoURL, err := parseRepoURL(r.RepoInternal.URL)
 	if err != nil {
@@ -678,7 +678,7 @@ func (r *OCIRegistry) Charts(shallow bool) ([]models.Chart, error) {
 	log.Debugf("starting %d workers", numWorkers)
 	go func() {
 		for _, appName := range r.repositories {
-			if shallow {
+			if fetchLatestOnly {
 				chartJobs <- pullChartJob{AppName: appName, Tag: r.tags[appName].Tags[0]}
 			} else {
 				for _, tag := range r.tags[appName].Tags {

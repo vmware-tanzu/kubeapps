@@ -103,7 +103,7 @@ func Test_QueryAll(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-	expectedCharts := []*models.Chart{&models.Chart{ID: "foo"}, &models.Chart{ID: "bar"}}
+	expectedCharts := []*models.Chart{{ID: "foo"}, {ID: "bar"}}
 	if !cmp.Equal(charts, expectedCharts) {
 		t.Errorf("Unexpected result %v", cmp.Diff(charts, expectedCharts))
 	}

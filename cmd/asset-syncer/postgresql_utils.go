@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -71,13 +72,16 @@ func (m *postgresAssetManager) Sync(repo models.Repo, charts []models.Chart) err
 	return m.removeMissingCharts(repo, charts)
 }
 
-func (m *postgresAssetManager) LastChecksum(repo models.Repo) string {
+func (m *postgresAssetManager) LastChecksum(repo models.Repo) (string, error) {
 	var lastChecksum string
 	row := m.DB.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1 AND namespace = $2", dbutils.RepositoryTable), repo.Name, repo.Namespace)
 	if row != nil {
-		row.Scan(&lastChecksum)
+		err := row.Scan(&lastChecksum)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) && !strings.Contains(err.Error(), "converting NULL to string is unsupported") {
+			return "", err
+		}
 	}
-	return lastChecksum
+	return lastChecksum, nil
 }
 
 func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {

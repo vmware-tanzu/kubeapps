@@ -92,7 +92,10 @@ var syncCmd = &cobra.Command{
 		}
 
 		// Check if the repo has been already processed
-		lastChecksum := manager.LastChecksum(models.Repo{Namespace: repo.Namespace, Name: repo.Name})
+		lastChecksum, err := manager.LastChecksum(models.Repo{Namespace: repo.Namespace, Name: repo.Name})
+		if err != nil {
+			logrus.Fatal(err)
+		}
 		logrus.Infof("Last checksum: %v", lastChecksum)
 		if lastChecksum == checksum {
 			logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Skipping repository since there are no updates")
@@ -102,15 +105,15 @@ var syncCmd = &cobra.Command{
 		// First filter the list of charts (still without applying custom filters)
 		repoIface.FilterIndex()
 
-		shallowSyncs := []bool{false}
+		fetchLatestOnlySlice := []bool{false}
 		if lastChecksum == "" {
 			// If the repo has never been processed, run first a shallow sync to give early feedback
 			// then sync all the repositories
-			shallowSyncs = []bool{true, false}
+			fetchLatestOnlySlice = []bool{true, false}
 		}
 
-		for _, shallow := range shallowSyncs {
-			charts, err := repoIface.Charts(shallow)
+		for _, fetchLatestOnly := range fetchLatestOnlySlice {
+			charts, err := repoIface.Charts(fetchLatestOnly)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -121,7 +124,7 @@ var syncCmd = &cobra.Command{
 			// Fetch and store chart icons
 			fImporter := fileImporter{manager, netClient}
 			fImporter.fetchFiles(charts, repoIface)
-			logrus.WithFields(logrus.Fields{"shallow": shallow}).Info("Repository synced")
+			logrus.WithFields(logrus.Fields{"shallow": fetchLatestOnly}).Info("Repository synced")
 		}
 
 		// Update cache in the database
