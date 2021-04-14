@@ -7,7 +7,7 @@ Kubeapps leverages CircleCI for running the tests (both unit and integration tes
 
 The main configuration is located at this [CircleCI config file](../../.circleci/config.yml)). At a glance, it contains:
 
-* **Build conditions**: `build_always`, `build_on_master` and `build_on_tag`. They will be added to each job to determine whether or not it should be executed. Whereas ones should be always run, others only make sense when pushing to master or when a new tag has been created.
+* **Build conditions**: `build_always`, `build_on_master` and `build_on_tag`. They will be added to each job to determine whether or not it should be executed. Whereas some should always be run, others only make sense when pushing to master or when a new tag has been created.
 * **Workflows**: we only use a single workflow named `kubeapps` with multiple jobs.
 * **Jobs**: the actual commands that are executed depending on the build conditions.
     * `test_go` (always): it runs every unit test for those projects written in Golang (that is, it runs `make test`) as well as it runs some DB-dependent tests.
