@@ -126,7 +126,7 @@
     "@types/redux-mock-store": "^1.0.0",
     "@types/swagger-ui-react": "^3.35.0",
     "enzyme": "^3.11.0",
-    "eslint-config-prettier": "^8.1.0",
+    "eslint-config-prettier": "^8.2.0",
     "eslint-import-resolver-typescript": "^2.4.0",
     "eslint-plugin-prettier": "^3.3.1",
     "husky": "^4.3.8",
