@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -28,7 +29,6 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
 )
 
 var ErrMultipleRows = fmt.Errorf("more than one row returned in query result")
@@ -72,15 +72,16 @@ func (m *postgresAssetManager) Sync(repo models.Repo, charts []models.Chart) err
 	return m.removeMissingCharts(repo, charts)
 }
 
-func (m *postgresAssetManager) RepoAlreadyProcessed(repo models.Repo, repoChecksum string) bool {
+func (m *postgresAssetManager) LastChecksum(repo models.Repo) (string, error) {
 	var lastChecksum string
 	row := m.DB.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1 AND namespace = $2", dbutils.RepositoryTable), repo.Name, repo.Namespace)
 	if row != nil {
 		err := row.Scan(&lastChecksum)
-		log.Errorf("lastChecksum: %+v", lastChecksum)
-		return err == nil && lastChecksum == repoChecksum
+		if err != nil && !errors.Is(err, sql.ErrNoRows) && !strings.Contains(err.Error(), "converting NULL to string is unsupported") {
+			return "", err
+		}
 	}
-	return false
+	return lastChecksum, nil
 }
 
 func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {

@@ -92,23 +92,40 @@ var syncCmd = &cobra.Command{
 		}
 
 		// Check if the repo has been already processed
-		if manager.RepoAlreadyProcessed(models.Repo{Namespace: repo.Namespace, Name: repo.Name}, checksum) {
+		lastChecksum, err := manager.LastChecksum(models.Repo{Namespace: repo.Namespace, Name: repo.Name})
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		logrus.Infof("Last checksum: %v", lastChecksum)
+		if lastChecksum == checksum {
 			logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Skipping repository since there are no updates")
 			return
 		}
 
-		charts, err := repoIface.Charts()
-		if err != nil {
-			logrus.Fatal(err)
+		// First filter the list of charts (still without applying custom filters)
+		repoIface.FilterIndex()
+
+		fetchLatestOnlySlice := []bool{false}
+		if lastChecksum == "" {
+			// If the repo has never been processed, run first a shallow sync to give early feedback
+			// then sync all the repositories
+			fetchLatestOnlySlice = []bool{true, false}
 		}
 
-		if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
-			logrus.Fatalf("Can't add chart repository to database: %v", err)
-		}
+		for _, fetchLatestOnly := range fetchLatestOnlySlice {
+			charts, err := repoIface.Charts(fetchLatestOnly)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
+				logrus.Fatalf("Can't add chart repository to database: %v", err)
+			}
 
-		// Fetch and store chart icons
-		fImporter := fileImporter{manager, netClient}
-		fImporter.fetchFiles(charts, repoIface)
+			// Fetch and store chart icons
+			fImporter := fileImporter{manager, netClient}
+			fImporter.fetchFiles(charts, repoIface)
+			logrus.WithFields(logrus.Fields{"shallow": fetchLatestOnly}).Info("Repository synced")
+		}
 
 		// Update cache in the database
 		if err = manager.UpdateLastCheck(repo.Namespace, repo.Name, checksum, time.Now()); err != nil {

@@ -37,6 +37,7 @@ import (
 	"sync"
 	"time"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
@@ -99,7 +100,7 @@ func parseRepoURL(repoURL string) (*url.URL, error) {
 type assetManager interface {
 	Delete(repo models.Repo) error
 	Sync(repo models.Repo, charts []models.Chart) error
-	RepoAlreadyProcessed(repo models.Repo, checksum string) bool
+	LastChecksum(repo models.Repo) (string, error)
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error
@@ -126,7 +127,8 @@ func getSha256(src []byte) (string, error) {
 type Repo interface {
 	Checksum() (string, error)
 	Repo() *models.RepoInternal
-	Charts() ([]models.Chart, error)
+	FilterIndex()
+	Charts(fetchLatestOnly bool) ([]models.Chart, error)
 	FetchFiles(name string, cv models.ChartVersion) (map[string]string, error)
 }
 
@@ -146,6 +148,11 @@ func (r *HelmRepo) Checksum() (string, error) {
 // Repo returns the repo information
 func (r *HelmRepo) Repo() *models.RepoInternal {
 	return r.RepoInternal
+}
+
+// FilterRepo is a no-op for a Helm repo
+func (r *HelmRepo) FilterIndex() {
+	// no-op
 }
 
 func compileJQ(rule *apprepov1alpha1.FilterRuleSpec) (*gojq.Code, []interface{}, error) {
@@ -217,7 +224,7 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *HelmRepo) Charts() ([]models.Chart, error) {
+func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	index, err := parseRepoIndex(r.content)
 	if err != nil {
 		return []models.Chart{}, err
@@ -229,7 +236,7 @@ func (r *HelmRepo) Charts() ([]models.Chart, error) {
 		URL:       r.URL,
 		Type:      r.Type,
 	}
-	charts := chartsFromIndex(index, repo)
+	charts := chartsFromIndex(index, repo, fetchLatestOnly)
 	if len(charts) == 0 {
 		return []models.Chart{}, fmt.Errorf("no charts in repository index")
 	}
@@ -577,7 +584,8 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 	}
 }
 
-func (r *OCIRegistry) filterTags() {
+// FilterIndex remove non chart tags
+func (r *OCIRegistry) FilterIndex() {
 	unfilteredTags := r.tags
 	r.tags = map[string]TagList{}
 	checktagJobs := make(chan checkTagJob, numWorkers)
@@ -614,24 +622,41 @@ func (r *OCIRegistry) filterTags() {
 					Name: unfilteredTags[res.AppName].Name,
 					Tags: append(r.tags[res.AppName].Tags, res.Tag),
 				}
-				sort.Strings(r.tags[res.AppName].Tags)
 			}
 		} else {
 			log.Errorf("failed to pull chart. Got %v", res.Error)
 		}
 	}
+
+	// Order tags by semver
+	for _, appName := range r.repositories {
+		vs := make([]*semver.Version, len(r.tags[appName].Tags))
+		for i, r := range r.tags[appName].Tags {
+			v, err := semver.NewVersion(r)
+			if err != nil {
+				log.Errorf("Error parsing version: %s", err)
+			}
+			vs[i] = v
+		}
+		sort.Sort(sort.Reverse(semver.Collection(vs)))
+		orderedTags := []string{}
+		for _, v := range vs {
+			orderedTags = append(orderedTags, v.String())
+		}
+		r.tags[appName] = TagList{
+			Name: r.tags[appName].Name,
+			Tags: orderedTags,
+		}
+	}
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *OCIRegistry) Charts() ([]models.Chart, error) {
+func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	result := map[string]*models.Chart{}
-	url, err := parseRepoURL(r.RepoInternal.URL)
+	repoURL, err := parseRepoURL(r.RepoInternal.URL)
 	if err != nil {
 		return nil, err
 	}
-
-	// Filter the current tags before pulling charts
-	r.filterTags()
 
 	chartJobs := make(chan pullChartJob, numWorkers)
 	chartResults := make(chan pullChartResult, numWorkers)
@@ -640,7 +665,7 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
-			chartImportWorker(url, r, chartJobs, chartResults)
+			chartImportWorker(repoURL, r, chartJobs, chartResults)
 			wg.Done()
 		}()
 	}
@@ -653,8 +678,12 @@ func (r *OCIRegistry) Charts() ([]models.Chart, error) {
 	log.Debugf("starting %d workers", numWorkers)
 	go func() {
 		for _, appName := range r.repositories {
-			for _, tag := range r.tags[appName].Tags {
-				chartJobs <- pullChartJob{AppName: appName, Tag: tag}
+			if fetchLatestOnly {
+				chartJobs <- pullChartJob{AppName: appName, Tag: r.tags[appName].Tags[0]}
+			} else {
+				for _, tag := range r.tags[appName].Tags {
+					chartJobs <- pullChartJob{AppName: appName, Tag: tag}
+				}
 			}
 		}
 		close(chartJobs)
@@ -769,14 +798,14 @@ func parseRepoIndex(body []byte) (*helmrepo.IndexFile, error) {
 	return &index, nil
 }
 
-func chartsFromIndex(index *helmrepo.IndexFile, r *models.Repo) []models.Chart {
+func chartsFromIndex(index *helmrepo.IndexFile, r *models.Repo, shallow bool) []models.Chart {
 	var charts []models.Chart
 	for _, entry := range index.Entries {
 		if entry[0].GetDeprecated() {
 			log.WithFields(log.Fields{"name": entry[0].GetName()}).Info("skipping deprecated chart")
 			continue
 		}
-		charts = append(charts, newChart(entry, r))
+		charts = append(charts, newChart(entry, r, shallow))
 	}
 	sort.Slice(charts, func(i, j int) bool { return charts[i].ID < charts[j].ID })
 	return charts
@@ -784,10 +813,14 @@ func chartsFromIndex(index *helmrepo.IndexFile, r *models.Repo) []models.Chart {
 
 // Takes an entry from the index and constructs a database representation of the
 // object.
-func newChart(entry helmrepo.ChartVersions, r *models.Repo) models.Chart {
+func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
 	var c models.Chart
 	copier.Copy(&c, entry[0])
-	copier.Copy(&c.ChartVersions, entry)
+	if shallow {
+		copier.Copy(&c.ChartVersions, []helmrepo.ChartVersion{*entry[0]})
+	} else {
+		copier.Copy(&c.ChartVersions, entry)
+	}
 	c.Repo = r
 	c.Name = url.PathEscape(c.Name) // escaped chart name eg. foo/bar becomes foo%2Fbar
 	c.ID = fmt.Sprintf("%s/%s", r.Name, c.Name)
