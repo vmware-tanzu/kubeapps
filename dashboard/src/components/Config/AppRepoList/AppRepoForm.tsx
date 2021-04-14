@@ -567,7 +567,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           An error occurred while updating the repository: {updateError.message}
         </Alert>
       )}
-      <div className="clr-form-separator">
+      <div className="margin-t-xl">
         <CdsButton disabled={validating} onClick={install}>
           {validating
             ? "Validating..."
