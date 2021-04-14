@@ -1,5 +1,4 @@
 import { RouterAction } from "connected-react-router";
-import * as Moniker from "moniker-native";
 import { useEffect, useState } from "react";
 
 import { JSONSchema4 } from "json-schema";
@@ -56,7 +55,7 @@ function DeploymentForm({
   kubeappsNamespace,
 }: IDeploymentFormProps) {
   const [isDeploying, setDeploying] = useState(false);
-  const [releaseName, setReleaseName] = useState(Moniker.choose());
+  const [releaseName, setReleaseName] = useState("");
   const [appValues, setAppValues] = useState(selected.values || "");
   const [valuesModified, setValuesModified] = useState(false);
   const { version } = selected;
@@ -83,8 +82,8 @@ function DeploymentForm({
     setValuesModified(true);
   };
 
-  const handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
-    setReleaseName(e.currentTarget.value);
+  const handleReleaseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setReleaseName(e.target.value);
   };
 
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {

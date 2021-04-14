@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-import * as Moniker from "moniker-native";
 import * as ReactRedux from "react-redux";
 
 import ChartHeader from "components/ChartView/ChartHeader";
@@ -30,12 +29,9 @@ const defaultProps = {
 const versions = [
   { id: "foo", attributes: { version: "1.2.3" }, relationships: { chart: { data: { repo: {} } } } },
 ] as IChartVersion[];
-let monikerChooseMock: jest.Mock;
 
 let spyOnUseDispatch: jest.SpyInstance;
 beforeEach(() => {
-  monikerChooseMock = jest.fn().mockReturnValue(releaseName);
-  Moniker.choose = monikerChooseMock;
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
 });
@@ -92,25 +88,6 @@ describe("renders an error", () => {
     expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(ChartHeader)).not.toExist();
   });
-});
-
-it("renders a release name by default, relying in Monickers output", () => {
-  monikerChooseMock.mockReturnValueOnce("foo").mockReturnValueOnce("bar");
-
-  let wrapper = mountWrapper(
-    defaultStore,
-    <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
-  );
-  const name1 = wrapper.find("#releaseName").prop("value");
-  expect(name1).toBe("foo");
-
-  // When reloading the name should change
-  wrapper = mountWrapper(
-    defaultStore,
-    <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
-  );
-  const name2 = wrapper.find("#releaseName").prop("value");
-  expect(name2).toBe("bar");
 });
 
 it("forwards the appValues when modified", () => {
@@ -190,8 +167,12 @@ it("triggers a deployment when submitting the form", async () => {
   act(() => {
     handleValuesChange("foo: bar");
   });
+
+  wrapper.find("#releaseName").simulate("change", { target: { value: releaseName } });
+
   wrapper.update();
   expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+  expect(wrapper.find(DeploymentForm).find("#releaseName").prop("value")).toBe(releaseName);
 
   await act(async () => {
     // Simulating "submit" causes a console.warning
