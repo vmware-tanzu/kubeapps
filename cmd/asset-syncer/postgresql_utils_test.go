@@ -45,10 +45,7 @@ func Test_PGRepoLastChecksum(t *testing.T) {
 		WithArgs("foo", "repo-namespace").
 		WillReturnRows(sqlmock.NewRows([]string{"checksum"}).AddRow("123"))
 
-	got, err := pgManager.LastChecksum(models.Repo{Namespace: "repo-namespace", Name: "foo"})
-	if err != nil {
-		t.Errorf("unexpected error %v", err)
-	}
+	got := pgManager.LastChecksum(models.Repo{Namespace: "repo-namespace", Name: "foo"})
 	if got != "123" {
 		t.Errorf("got: %s, want: %s", got, "123")
 	}
