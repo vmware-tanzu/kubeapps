@@ -38,13 +38,15 @@ type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request,
 
 // Options represents options that can be created without a bearer token, i.e. once at application startup.
 type Options struct {
-	ListLimit         int
-	Timeout           int64
-	UserAgent         string
-	KubeappsNamespace string
-	ClustersConfig    kube.ClustersConfig
-	Burst             int
-	QPS               float32
+	ListLimit              int
+	Timeout                int64
+	UserAgent              string
+	KubeappsNamespace      string
+	ClustersConfig         kube.ClustersConfig
+	Burst                  int
+	QPS                    float32
+	NamespaceHeaderName    string
+	NamespaceHeaderPattern string
 }
 
 // Config represents data needed by each handler to be able to create Helm 3 actions.
@@ -99,7 +101,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace, options.Burst, options.QPS, options.ClustersConfig)
+			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace, options.NamespaceHeaderName, options.NamespaceHeaderPattern, options.Burst, options.QPS, options.ClustersConfig)
 			if err != nil {
 				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)

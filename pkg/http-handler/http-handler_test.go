@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -271,14 +270,14 @@ func TestGetNamespaces(t *testing.T) {
 			headerValue:  "namespace:ns1, namespace:ns2",
 		},
 		{
-			name:         "it should return the list of namespaces and a 200 when header does not match KUBEAPPS_NAMESPACE_HEADER",
+			name:         "it should return the list of namespaces and a 200 when header does not match kubeops arg ns-header-name",
 			namespaces:   []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
 			expectedCode: 200,
 			headerName:   "X-Consumer-Groups",
 			headerValue:  "nspaces:ns1, nspaces:ns2",
 		},
 		{
-			name:         "it should return the list of namespaces and a 200 when when header does not match KUBEAPPS_NAMESPACE_PATTERN",
+			name:         "it should return the list of namespaces and a 200 when when header does not match kubeops arg ns-header-pattern",
 			namespaces:   []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
 			expectedCode: 200,
 			headerName:   "Y-Consumer-Groups",
@@ -289,12 +288,6 @@ func TestGetNamespaces(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			getNSFunc := GetNamespaces(&kube.FakeHandler{Namespaces: tc.namespaces, Err: tc.err})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
-
-			if tc.headerName != "" {
-				os.Setenv("KUBEAPPS_NAMESPACE_HEADER", "X-Consumer-Groups")
-				os.Setenv("KUBEAPPS_NAMESPACE_PATTERN", "namespace:([\\w-]+)")
-				req.Header.Set(tc.headerName, tc.headerValue)
-			}
 
 			response := httptest.NewRecorder()
 			getNSFunc(response, req)

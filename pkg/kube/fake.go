@@ -47,6 +47,11 @@ func (c *FakeHandler) AsSVC(cluster string) (handler, error) {
 	return c, nil
 }
 
+// NS fakes returning header namespace options
+func (c *FakeHandler) GetOptions() kubeOptions {
+	return kubeOptions{}
+}
+
 // ListAppRepositories fake
 func (c *FakeHandler) ListAppRepositories(requestNamespace string) (*v1alpha1.AppRepositoryList, error) {
 	appRepos := &v1alpha1.AppRepositoryList{}
@@ -88,14 +93,9 @@ func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRep
 }
 
 // GetNamespaces fake
-func (c *FakeHandler) GetNamespaces() ([]corev1.Namespace, error) {
-	return c.Namespaces, c.Err
-}
-
-// GetNamespacesFromList fake
-func (c *FakeHandler) GetNamespacesFromList(headerNamespaces []string) ([]corev1.Namespace, error) {
-	if len(headerNamespaces) == 0 {
-		return []corev1.Namespace{}, nil
+func (c *FakeHandler) GetNamespaces(trustedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
+	if len(trustedNamespaces) > 0 {
+		return trustedNamespaces, c.Err
 	}
 	return c.Namespaces, c.Err
 }

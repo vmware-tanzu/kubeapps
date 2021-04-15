@@ -63,6 +63,12 @@ spec:
             {{- if .Values.kubeops.QPS }}
             - --qps={{ .Values.kubeops.QPS }}
             {{- end }}
+            {{- if .Values.kubeops.nsheadername }}
+            - --ns-header-name={{ .Values.kubeops.nsheadername }}
+            {{- end }}
+            {{- if .Values.kubeops.nsheaderpattern }}
+            - --ns-header-pattern={{ .Values.kubeops.nsheaderpattern }}
+            {{- end }}
           {{- if .Values.clusters }}
           volumeMounts:
             - name: kubeops-config
