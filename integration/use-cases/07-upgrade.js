@@ -48,6 +48,9 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("li", { text: "Changes" });
   await expect(page).toMatch("replicaCount: 2");
 
+  await expect(page).toMatchElement("#releaseName", { text: "" });
+  await page.type("#releaseName", utils.getRandomName("my-app"));
+
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatch("Update Now", { timeout: 60000 });
