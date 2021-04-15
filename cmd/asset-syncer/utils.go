@@ -100,7 +100,7 @@ func parseRepoURL(repoURL string) (*url.URL, error) {
 type assetManager interface {
 	Delete(repo models.Repo) error
 	Sync(repo models.Repo, charts []models.Chart) error
-	LastChecksum(repo models.Repo) (string, error)
+	LastChecksum(repo models.Repo) string
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error

@@ -76,4 +76,9 @@ module.exports = {
       await page.click("#login-submit-button");
     }
   },
+  getRandomName: base => {
+    const randomNumber = Math.floor(Math.random() * Math.floor(100));
+    const name = base + "-" + randomNumber;
+    return name;
+  },
 };

@@ -92,10 +92,7 @@ var syncCmd = &cobra.Command{
 		}
 
 		// Check if the repo has been already processed
-		lastChecksum, err := manager.LastChecksum(models.Repo{Namespace: repo.Namespace, Name: repo.Name})
-		if err != nil {
-			logrus.Fatal(err)
-		}
+		lastChecksum := manager.LastChecksum(models.Repo{Namespace: repo.Namespace, Name: repo.Name})
 		logrus.Infof("Last checksum: %v", lastChecksum)
 		if lastChecksum == checksum {
 			logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Skipping repository since there are no updates")
