@@ -42,7 +42,6 @@ afterEach(() => {
 it("fetches repos and imagePullSecrets", () => {
   mountWrapper(defaultStore, <AppRepoList />);
   expect(actions.repos.fetchRepos).toHaveBeenCalledWith(namespace, true);
-  expect(actions.repos.fetchImagePullSecrets).toHaveBeenCalledWith(namespace);
 });
 
 it("fetches repos only from the kubeappsNamespace", () => {

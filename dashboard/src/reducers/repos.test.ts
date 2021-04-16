@@ -118,7 +118,7 @@ describe("reposReducer", () => {
     });
 
     it("receives a repo secret", () => {
-      const secret = { metadata: { name: "foo" } } as any;
+      const secret = { metadata: { name: "foo", namespace: "bar" } } as any;
       const modifiedSecret = { ...secret, spec: { foo: "bar" } };
       expect(
         reposReducer(

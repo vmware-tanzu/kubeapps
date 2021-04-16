@@ -69,6 +69,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [selectedImagePullSecret, setSelectedImagePullSecret] = useState("");
   const [validated, setValidated] = useState(undefined as undefined | boolean);
 
+  useEffect(() => {
+    dispatch(actions.repos.fetchImagePullSecrets(namespace));
+  }, [dispatch, namespace]);
+
   const {
     repos: {
       imagePullSecrets,
@@ -104,30 +108,43 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         setFilterExclude(exclude);
         setFilterNames(names);
       }
-      if (secret) {
-        if (secret.data["ca.crt"]) {
-          setCustomCA(atob(secret.data["ca.crt"]));
+      if (repo.spec?.auth?.customCA || repo.spec?.auth?.header) {
+        const secrets = [];
+        if (repo.spec?.auth?.customCA) {
+          secrets.push(repo.spec.auth.customCA.secretKeyRef.name);
         }
-        if (secret.data.authorizationHeader) {
-          if (authHeader.startsWith("Basic")) {
-            const userPass = atob(authHeader.split(" ")[1]).split(":");
-            setUser(userPass[0]);
-            setPassword(userPass[1]);
-            setAuthMethod(AUTH_METHOD_BASIC);
-          } else if (authHeader.startsWith("Bearer")) {
-            setToken(authHeader.split(" ")[1]);
-            setAuthMethod(AUTH_METHOD_BEARER);
-          } else {
-            setAuthMethod(AUTH_METHOD_CUSTOM);
-            setAuthHeader(atob(secret.data.authorizationHeader));
-          }
+        if (repo.spec?.auth?.header && !secrets.includes(repo.spec.auth.header.secretKeyRef.name)) {
+          secrets.push(repo.spec.auth.header.secretKeyRef.name);
         }
-        if (secret.data[".dockerconfigjson"]) {
-          setAuthMethod(AUTH_METHOD_REGISTRY_SECRET);
-        }
+        secrets.forEach(s => dispatch(actions.repos.fetchRepoSecret(namespace, s)));
       }
     }
-  }, [repo, secret, authHeader]);
+  }, [repo, namespace, dispatch]);
+
+  useEffect(() => {
+    if (secret) {
+      if (secret.data["ca.crt"]) {
+        setCustomCA(atob(secret.data["ca.crt"]));
+      }
+      if (secret.data.authorizationHeader) {
+        if (authHeader.startsWith("Basic")) {
+          const userPass = atob(authHeader.split(" ")[1]).split(":");
+          setUser(userPass[0]);
+          setPassword(userPass[1]);
+          setAuthMethod(AUTH_METHOD_BASIC);
+        } else if (authHeader.startsWith("Bearer")) {
+          setToken(authHeader.split(" ")[1]);
+          setAuthMethod(AUTH_METHOD_BEARER);
+        } else {
+          setAuthMethod(AUTH_METHOD_CUSTOM);
+          setAuthHeader(atob(secret.data.authorizationHeader));
+        }
+      }
+      if (secret.data[".dockerconfigjson"]) {
+        setAuthMethod(AUTH_METHOD_REGISTRY_SECRET);
+      }
+    }
+  }, [secret, authHeader]);
 
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

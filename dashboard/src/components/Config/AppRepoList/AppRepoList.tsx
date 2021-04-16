@@ -25,7 +25,7 @@ function AppRepoList() {
   const dispatch = useDispatch();
   const location = useLocation();
   const {
-    repos: { errors, isFetching, repos, repoSecrets },
+    repos: { errors, isFetchingElem, repos, repoSecrets },
     clusters: { clusters, currentCluster },
     config: { kubeappsCluster, kubeappsNamespace },
   } = useSelector((state: IStoreState) => state);
@@ -93,12 +93,6 @@ function AppRepoList() {
       kubeappsNamespace,
     ).then(allowed => setCanEditGlobalRepos(allowed));
   }, [cluster, kubeappsCluster, kubeappsNamespace]);
-
-  useEffect(() => {
-    if (repos) {
-      dispatch(actions.repos.fetchImagePullSecrets(namespace));
-    }
-  }, [dispatch, repos, namespace]);
 
   const globalRepos: IAppRepository[] = [];
   const namespaceRepos: IAppRepository[] = [];
@@ -208,7 +202,7 @@ function AppRepoList() {
               <LoadingWrapper
                 className="margin-t-xxl"
                 loadingText="Fetching Application Repositories..."
-                loaded={!isFetching}
+                loaded={!isFetchingElem.repositories}
               >
                 <h3>Global Repositories:</h3>
                 <p>Global repositories are available for all Kubeapps users.</p>

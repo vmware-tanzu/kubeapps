@@ -20,6 +20,8 @@ beforeEach(() => {
   actions.repos = {
     ...actions.repos,
     validateRepo: jest.fn().mockReturnValue(true),
+    fetchImagePullSecrets: jest.fn(),
+    fetchRepoSecret: jest.fn(),
   };
   const mockDispatch = jest.fn(r => r);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -28,6 +30,11 @@ beforeEach(() => {
 afterEach(() => {
   actions.kube = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
+});
+
+it("fetches repos and imagePullSecrets", () => {
+  mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
+  expect(actions.repos.fetchImagePullSecrets).toHaveBeenCalledWith(defaultProps.namespace);
 });
 
 it("disables the submit button while fetching", () => {
@@ -414,22 +421,30 @@ describe("when the repository info is already populated", () => {
 
   describe("when there is a secret associated to the repo", () => {
     it("should parse the existing CA cert", () => {
-      const repo = { metadata: { name: "foo" } } as any;
+      const repo = {
+        metadata: { name: "foo" },
+        spec: { auth: { customCA: { secretKeyRef: { name: "bar" } } } },
+      } as any;
       const secret = { data: { "ca.crt": "Zm9v" } } as any;
       const wrapper = mountWrapper(
         defaultStore,
         <AppRepoForm {...defaultProps} repo={repo} secret={secret} />,
       );
+      expect(actions.repos.fetchRepoSecret).toHaveBeenCalledWith("default", "bar");
       expect(wrapper.find("#kubeapps-repo-custom-ca").prop("value")).toBe("foo");
     });
 
     it("should parse the existing auth header", () => {
-      const repo = { metadata: { name: "foo" } } as any;
+      const repo = {
+        metadata: { name: "foo" },
+        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
+      } as any;
       const secret = { data: { authorizationHeader: "Zm9v" } } as any;
       const wrapper = mountWrapper(
         defaultStore,
         <AppRepoForm {...defaultProps} repo={repo} secret={secret} />,
       );
+      expect(actions.repos.fetchRepoSecret).toHaveBeenCalledWith("default", "bar");
       expect(wrapper.find("#kubeapps-repo-custom-header").prop("value")).toBe("foo");
     });
 
