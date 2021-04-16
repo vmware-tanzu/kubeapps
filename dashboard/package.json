@@ -34,7 +34,7 @@
     "fstream": "^1.0.12",
     "history": "^4.7.2",
     "immutable": "^4.0.0-rc.12",
-    "js-yaml": "^4.0.0",
+    "js-yaml": "^4.1.0",
     "json-schema": "^0.3.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
