@@ -34,7 +34,7 @@
     "fstream": "^1.0.12",
     "history": "^4.7.2",
     "immutable": "^4.0.0-rc.12",
-    "js-yaml": "^4.0.0",
+    "js-yaml": "^4.1.0",
     "json-schema": "^0.3.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
@@ -144,7 +144,7 @@
     "stylelint-config-prettier": "^8.0.2",
     "stylelint-config-recommended-scss": "^4.2.0",
     "stylelint-scss": "^3.19.0",
-    "ts-jest": "^26.5.4",
+    "ts-jest": "^26.5.5",
     "typescript": "^4.2.4"
   },
   "jest": {
