@@ -4,10 +4,10 @@ The [Pinniped project](https://pinniped.dev/) exists to "Simplify user authentic
 
 ## Installing Pinniped
 
-Install Pinniped 0.6.0 into a `pinniped-concierge` namespace on your cluster with:
+Install Pinniped into a `pinniped-concierge` namespace on your cluster with:
 
 ```bash
-kubectl apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.6.0/install-pinniped-concierge.yaml
+kubectl apply -f https://get.pinniped.dev/latest/install-pinniped-concierge.yaml
 ```
 
 **NOTE**: Due to a breaking change in [Pinniped 0.6.0](https://github.com/vmware-tanzu/pinniped/releases/tag/v0.6.0), the minimum version supported by Kubeapps is 0.6.0. Furthermore, [custom API suffixes](https://pinniped.dev/posts/multiple-pinnipeds) (introduced in Pinniped 0.5.0) are not yet fully supported. If your platform uses this feature, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new).

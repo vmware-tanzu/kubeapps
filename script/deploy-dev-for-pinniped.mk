@@ -24,10 +24,10 @@ deploy-dependencies-for-pinniped: deploy-dex-for-pinniped deploy-openldap-for-pi
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} create namespace kubeapps
 
 deploy-pinniped:
-	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.6.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
 
 deploy-pinniped-additional:
-	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.6.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
 
 add-pinniped-jwt-authenticator:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f ./docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml
@@ -38,8 +38,8 @@ delete-pinniped-jwt-authenticator:
 	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f ./docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml
 
 delete-pinniped:
-	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.6.0/install-pinniped-concierge.yaml
-	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.6.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
 
 deploy-dev-kubeapps-for-pinniped:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -n kubeapps delete secret localhost-tls  || true
