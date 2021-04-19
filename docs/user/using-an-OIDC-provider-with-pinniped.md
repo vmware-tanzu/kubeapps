@@ -80,13 +80,49 @@ The [Kubeapps auth-proxy configuration](./using-an-OIDC-provider.md#deploying-an
 
 With those changes, Kubeapps is ready to send any request for a specific cluster via Pinniped so that the OIDC `id_token` can be exchanged for client certificates accepted by the Kubernetes API server.
 
+[Under the hood](https://pinniped.dev/posts/bringing-the-concierge-to-more-clusters/), what Pinniped does is looking for a `kube-controller-manager` pod in the `kube-system` namespace that reads the cluster signing certificate and key. Then it loads them into an in-memory certificate signer.
+
+But, what if this `kube-controller-manager` is not a normal pod on a schedulable cluster node? In that scenario (usual in managed clusters, such AKS), an alternative way is required: the impersonation proxy. Have a look at the [enabling OIDC login in managed clusters](#enabling-oidc-login-in-managed-clusters) section to know how to configure Kubeapps for using Pinniped 0.7.0 onwards.
+
+### Enabling OIDC login in managed clusters
+
+In managed clusters, such as AKS, Pinniped cannot read the cluster's certificate and key. In this case, Pinniped will have a fallback mechanism: the [impersonation proxy](https://pinniped.dev/docs/background/architecture/). It simply creates a LoadBalancer service that proxies the actual Kubernetes API.
+
+> TL;DR - when using Kubeapps in managed clusters using Pinniped, you'll need to use the Impersonation Proxy URL instead of the usual k8s API server URL.
+
+Assuming you have successfully [installed Pinniped](#installing-pinniped) and configured the [JWTAuthenticator](#configure-pinniped-to-trust-your-oidc-identity-provider), you have to retrieve the Impersonation Proxy IP  by executing this command:
+
+
+```
+kubectl get svc -n pinniped-concierge pinniped-concierge-impersonation-proxy-load-balancer -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
+```
+
+Then, retrieve the Impersonation Proxy CA cert by executing:
+
+```
+kubectl get secret pinniped-concierge-impersonation-proxy-ca-certificate -n pinniped-concierge  -o jsonpath="{.data.ca\\.crt}"
+```
+
+Finally, use a similar `clusters` configuration: 
+
+```yaml
+clusters:
+- name: your-managed-cluster
+  apiServiceURL: https://... # impersonation proxy IP
+  certificateAuthorityData: ... #  impersonation proxy CA
+  pinnipedConfig:
+    enable: true
+```
+
 ## Debugging auth failures when using OIDC
 
 For general OIDC issues, have a look at [this OIDC debugging guide](./using-an-OIDC-provider-with-pinniped.md#debugging-auth-failures-when-using-OIDC).
 
-### Pinniped not trusting your OIDC
+### Pinniped not trusting your OIDC provider
 
-There are some scenarios (e.g., TMC) in which Pinniped is not being bundled with the usual CA certificates. As a result, common OIDC providers (e.g.,  Google, VMware CSP login, etc.) are not trusted by Pinniped and, as a result, the authentication in Kubeapps will always fail with a 401 status code.
+If you are using a managed cluster (such as AKS), make sure you are using the Pinniped Impersonation Proxy in the Kubeapps configuration. Check this section to know how to [enable OIDC login in managed clusters](#enabling-oidc-login-in-managed-clusters).
+
+If not, note that there are some scenarios (e.g., TMC) in which the installed Pinniped version is not being bundled with the usual CA certificates. As a result, common OIDC providers (e.g.,  Google, VMware CSP login, etc.) are not trusted by default. Consequently, Pinniped and, as a result, the authentication in Kubeapps will always fail with a 401 status code.
 
 You can work around this issue by setting `spec.tls.certificateAuthorityData` in the `JWTAuthenticator` to match with the TLS CA used by the ODIC issuer.
 
