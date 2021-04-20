@@ -80,9 +80,9 @@ The [Kubeapps auth-proxy configuration](./using-an-OIDC-provider.md#deploying-an
 
 With those changes, Kubeapps is ready to send any request for a specific cluster via Pinniped so that the OIDC `id_token` can be exchanged for client certificates accepted by the Kubernetes API server.
 
-[Under the hood](https://pinniped.dev/posts/bringing-the-concierge-to-more-clusters/), what Pinniped does is looking for a `kube-controller-manager` pod in the `kube-system` namespace that reads the cluster signing certificate and key. Then it loads them into an in-memory certificate signer.
+[Under the hood](https://pinniped.dev/posts/bringing-the-concierge-to-more-clusters/), Pinniped looks for a `kube-controller-manager` pod in the `kube-system` namespace that reads the cluster signing certificate and key and loads them into an in-memory certificate signer.
 
-But, what if this `kube-controller-manager` is not a normal pod on a schedulable cluster node? In that scenario (usual in managed clusters, such AKS), an alternative way is required: the impersonation proxy. Have a look at the [enabling OIDC login in managed clusters](#enabling-oidc-login-in-managed-clusters) section to know how to configure Kubeapps for using Pinniped 0.7.0 onwards.
+But, what if this `kube-controller-manager` is not a normal pod on a schedulable cluster node? In that scenario (usual in managed clusters, such AKS), an alternative way is required: the Pinniped impersonation proxy. Have a look at the [enabling OIDC login in managed clusters](#enabling-oidc-login-in-managed-clusters) section to know how to configure Kubeapps for using Pinniped 0.7.0 onwards on managed clusters.
 
 ### Enabling OIDC login in managed clusters
 
