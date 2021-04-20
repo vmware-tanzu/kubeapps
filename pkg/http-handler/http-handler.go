@@ -81,15 +81,15 @@ func getNamespaceAndCluster(req *http.Request) (string, string) {
 // The name and the value of the header field is specified by 2 variables:
 // - headerName is a name of the expected header field, e.g. X-Consumer-Groups
 // - headerPattern is a regular expression and it matches only single regex group, e.g. namespace:([\w-]+)
-func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) []corev1.Namespace {
+func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([]corev1.Namespace, error) {
 	var namespaces = []corev1.Namespace{}
 	if headerName == "" || headerPattern == "" {
-		return []corev1.Namespace{}
+		return []corev1.Namespace{}, nil
 	}
 	r, err := regexp.Compile(headerPattern)
 	if err != nil {
 		log.Errorf("unable to compile regular expression: %v", err)
-		return namespaces
+		return namespaces, err
 	}
 	headerNamespacesOrigin := strings.Split(req.Header.Get(headerName), ",")
 	for _, n := range headerNamespacesOrigin {
@@ -103,7 +103,7 @@ func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) []
 		}
 		namespaces = append(namespaces, ns)
 	}
-	return namespaces
+	return namespaces, nil
 }
 
 // ListAppRepositories list app repositories
@@ -286,7 +286,10 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 			return
 		}
 
-		headerNamespaces := getHeaderNamespaces(req, options.NamespaceHeaderName, options.NamespaceHeaderPattern)
+		headerNamespaces, err := getHeaderNamespaces(req, options.NamespaceHeaderName, options.NamespaceHeaderPattern)
+		if err != nil {
+			returnK8sError(err, w)
+		}
 
 		namespaces, err := clientset.GetNamespaces(headerNamespaces)
 		if err != nil {
@@ -368,8 +371,8 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 }
 
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router, nsName, nsPattern string, burst int, qps float32, clustersConfig kube.ClustersConfig) error {
-	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), nsName, nsPattern, burst, qps, clustersConfig)
+func SetupDefaultRoutes(r *mux.Router, namespaceHeaderName, namespaceHeaderPattern string, burst int, qps float32, clustersConfig kube.ClustersConfig) error {
+	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), namespaceHeaderName, namespaceHeaderPattern, burst, qps, clustersConfig)
 	if err != nil {
 		return err
 	}

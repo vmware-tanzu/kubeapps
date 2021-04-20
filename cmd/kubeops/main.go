@@ -57,8 +57,8 @@ func init() {
 	pflag.StringVar(&pinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
 	pflag.IntVar(&burst, "burst", 15, "internal burst capacity")
 	pflag.Float32Var(&qps, "qps", 10, "internal QPS rate")
-	pflag.StringVar(&namespaceHeaderName, "ns-header-name", "", "name of the header field")
-	pflag.StringVar(&namespaceHeaderPattern, "ns-header-pattern", "", "regular expression that matches only single group")
+	pflag.StringVar(&namespaceHeaderName, "namespace-header-name", "", "name of the header field, e.g. namespace-header-name=X-Consumer-Groups")
+	pflag.StringVar(&namespaceHeaderPattern, "namespace-header-pattern", "", "regular expression that matches only single group, e.g. namespace-header-pattern=namespace:([\\w]+):\\w+, to match namespace:ns:read")
 }
 
 func main() {

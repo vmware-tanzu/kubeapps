@@ -33,6 +33,7 @@ type FakeHandler struct {
 	Namespaces  []corev1.Namespace
 	Secrets     []*corev1.Secret
 	ValRes      *ValidationResponse
+	Options     KubeOptions
 	Err         error
 	Can         bool
 }
@@ -48,8 +49,8 @@ func (c *FakeHandler) AsSVC(cluster string) (handler, error) {
 }
 
 // NS fakes returning header namespace options
-func (c *FakeHandler) GetOptions() kubeOptions {
-	return kubeOptions{}
+func (c *FakeHandler) GetOptions() KubeOptions {
+	return c.Options
 }
 
 // ListAppRepositories fake
@@ -93,9 +94,9 @@ func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRep
 }
 
 // GetNamespaces fake
-func (c *FakeHandler) GetNamespaces(trustedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	if len(trustedNamespaces) > 0 {
-		return trustedNamespaces, c.Err
+func (c *FakeHandler) GetNamespaces(whitelistedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
+	if len(whitelistedNamespaces) > 0 {
+		return whitelistedNamespaces, c.Err
 	}
 	return c.Namespaces, c.Err
 }

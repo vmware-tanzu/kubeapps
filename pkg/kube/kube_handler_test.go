@@ -855,13 +855,13 @@ type existingNs struct {
 func TestGetNamespaces(t *testing.T) {
 
 	testCases := []struct {
-		name               string
-		existingNamespaces []existingNs
-		allowed            bool
-		userClientErr      error
-		svcClientErr       error
-		expectedNamespaces []string
-		trustedNamespaces  []corev1.Namespace
+		name                  string
+		existingNamespaces    []existingNs
+		allowed               bool
+		userClientErr         error
+		svcClientErr          error
+		expectedNamespaces    []string
+		whitelistedNamespaces []corev1.Namespace
 	}{
 		{
 			name: "it lists namespaces if the user client returns the namespaces",
@@ -915,39 +915,21 @@ func TestGetNamespaces(t *testing.T) {
 			existingNamespaces: []existingNs{
 				{"foo", corev1.NamespaceActive},
 			},
-			trustedNamespaces: []corev1.Namespace{{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo"},
-				Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
-			}},
-			expectedNamespaces: []string{"foo"},
-			allowed:            true,
-		},
-		{
-			name: "it lists namespaces if the userclient fails but the service client succeeds",
-			existingNamespaces: []existingNs{
-				{"bar", corev1.NamespaceActive},
-			},
-			trustedNamespaces: []corev1.Namespace{{
+			whitelistedNamespaces: []corev1.Namespace{{
 				ObjectMeta: metav1.ObjectMeta{Name: "bar"},
 				Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
 			}},
-			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			expectedNamespaces: []string{"bar"},
 			allowed:            true,
 		},
 		{
-			name: "it returns namespace from header, despite user and service account forbidden",
+			name: "it lists existing namespaces if the user client sends empty list of the namespaces",
 			existingNamespaces: []existingNs{
-				{"zed", corev1.NamespaceActive},
+				{"foo", corev1.NamespaceActive},
 			},
-			userClientErr: k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
-			svcClientErr:  k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
-			trustedNamespaces: []corev1.Namespace{{
-				ObjectMeta: metav1.ObjectMeta{Name: "zed"},
-				Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
-			}},
-			expectedNamespaces: []string{"zed"},
-			allowed:            true,
+			whitelistedNamespaces: []corev1.Namespace{},
+			expectedNamespaces:    []string{"foo"},
+			allowed:               true,
 		},
 	}
 	for _, tc := range testCases {
@@ -1003,7 +985,7 @@ func TestGetNamespaces(t *testing.T) {
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
-			namespaces, err := userHandler.GetNamespaces(tc.trustedNamespaces)
+			namespaces, err := userHandler.GetNamespaces(tc.whitelistedNamespaces)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}

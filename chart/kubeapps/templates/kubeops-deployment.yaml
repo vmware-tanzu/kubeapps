@@ -63,11 +63,11 @@ spec:
             {{- if .Values.kubeops.QPS }}
             - --qps={{ .Values.kubeops.QPS }}
             {{- end }}
-            {{- if .Values.kubeops.nsheadername }}
-            - --ns-header-name={{ .Values.kubeops.nsheadername }}
+            {{- if .Values.kubeops.namespaceHeaderName }}
+            - --ns-header-name={{ .Values.kubeops.namespaceHeaderName }}
             {{- end }}
-            {{- if .Values.kubeops.nsheaderpattern }}
-            - --ns-header-pattern={{ .Values.kubeops.nsheaderpattern }}
+            {{- if .Values.kubeops.namespaceHeaderPattern }}
+            - --ns-header-pattern={{ .Values.kubeops.namespaceHeaderPattern }}
             {{- end }}
           {{- if .Values.clusters }}
           volumeMounts:

@@ -405,12 +405,12 @@ kubeops:
   # QPS: 10
   # burst: 15
   ## Kubeops additional header parameters for trusted namespaces.
-  ## - nsheadername -  header field name, it can be injected by autorization proxy.
-  ## - nsheaderpattern - regular expression that matches only single item from the header list.
+  ## - namespaceHeaderName -  header field name, it can be injected by autorization proxy.
+  ## - namespaceHeaderPattern - regular expression that matches only single item from the header list.
   ##     The first capturing group must match the namespace.
   ## example: X-Consumer-Groups: namespace:ns1:read, namespace:ns2:write
-  # nsheadername: X-Consumer-Groups
-  # nsheaderpattern: namespace:([\\w-]+):\\w+
+  # namespaceHeaderName: X-Consumer-Groups
+  # namespaceHeaderPattern: namespace:([\w-]+):\w+
 
 ## Assetsvc is used to serve assets metadata over a REST API.
 ##
