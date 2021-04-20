@@ -201,6 +201,8 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
 	configs.PinnipedProxyURL = pinnipedProxyURL
 	for _, c := range clusterConfigs {
+		// Select the cluster in which Kubeapps in installed. We look for either
+		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
 		isKubeappsClusterCandidate := c.IsKubeappsCluster || c.APIServiceURL == ""
 		if isKubeappsClusterCandidate && configs.KubeappsClusterName == "" {
 			configs.KubeappsClusterName = c.Name
