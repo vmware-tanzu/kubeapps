@@ -48,15 +48,21 @@ function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IC
       {readme && (
         <div className="application-readme">
           <ReactMarkdown
-            source={readme}
             plugins={[remarkGfm]}
-            renderers={{
-              heading: HeadingRenderer,
-              link: LinkRenderer,
+            components={{
+              h1: HeadingRenderer,
+              h2: HeadingRenderer,
+              h3: HeadingRenderer,
+              h4: HeadingRenderer,
+              h5: HeadingRenderer,
+              h6: HeadingRenderer,
+              a: LinkRenderer,
               table: TableRenderer,
             }}
             skipHtml={true}
-          />
+          >
+            {readme}
+          </ReactMarkdown>
         </div>
       )}
     </LoadingWrapper>
