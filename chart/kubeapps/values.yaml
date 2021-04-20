@@ -37,6 +37,9 @@ enableIPv6: false
 #   serviceToken: ...
 clusters:
   - name: default
+    # isKubeappsCluster is an optional parameter that allows defining the cluster in which Kubeapps is installed;
+    # this param is useful when every cluster is using an apiServiceURL (e.g., when using the Pinniped Impersonation Proxy)
+    # isKubeappsCluster: true
 
 ## Force target Kubernetes version (using Helm capabilites if not set)
 ##
