@@ -200,7 +200,11 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 
 	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
 	configs.PinnipedProxyURL = pinnipedProxyURL
+	defaultKubeappsClusterName := ""
 	for _, c := range clusterConfigs {
+		if defaultKubeappsClusterName == "" {
+			defaultKubeappsClusterName = c.Name
+		}
 		if c.APIServiceURL == "" {
 			if configs.KubeappsClusterName == "" {
 				configs.KubeappsClusterName = c.Name
@@ -227,6 +231,9 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 			}
 		}
 		configs.Clusters[c.Name] = c
+	}
+	if configs.KubeappsClusterName == "" {
+		configs.KubeappsClusterName = defaultKubeappsClusterName
 	}
 	return configs, deferFn, nil
 }

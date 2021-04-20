@@ -179,10 +179,14 @@ a defined apiServiceURL.
 */}}
 {{- define "kubeapps.kubeappsCluster" -}}
     {{- $kubeappsCluster := "" }}
+    {{- $defaultKubeappsCluster := "" }}
     {{- if eq (len .Values.clusters) 0 }}
         {{- fail "At least one cluster must be defined." }}
     {{- end }}
     {{- range .Values.clusters }}
+        {{- if eq ($defaultKubeappsCluster | toString) "" }}
+            {{- $defaultKubeappsCluster = .name }}
+        {{- end }}
         {{- if eq (.apiServiceURL | toString) "<nil>" }}
             {{- if eq $kubeappsCluster "" }}
                 {{- $kubeappsCluster = .name }}
@@ -190,6 +194,9 @@ a defined apiServiceURL.
                 {{- fail "Only one cluster can be specified without an apiServiceURL to refer to the cluster on which Kubeapps is installed." }}
             {{- end }}
         {{- end }}
+    {{- end }}
+    {{- if eq ($kubeappsCluster | toString) "" }}
+        {{- $kubeappsCluster = $defaultKubeappsCluster }}
     {{- end }}
     {{- $kubeappsCluster }}
 {{- end -}}
