@@ -200,17 +200,12 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 
 	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
 	configs.PinnipedProxyURL = pinnipedProxyURL
-	defaultKubeappsClusterName := ""
 	for _, c := range clusterConfigs {
-		if defaultKubeappsClusterName == "" {
-			defaultKubeappsClusterName = c.Name
-		}
-		if c.APIServiceURL == "" {
-			if configs.KubeappsClusterName == "" {
-				configs.KubeappsClusterName = c.Name
-			} else {
-				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured without an apiServiceURL, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
-			}
+		isKubeappsClusterCandidate := c.IsKubeappsCluster || c.APIServiceURL == ""
+		if isKubeappsClusterCandidate && configs.KubeappsClusterName == "" {
+			configs.KubeappsClusterName = c.Name
+		} else if isKubeappsClusterCandidate && configs.KubeappsClusterName != "" {
+			return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
 		}
 
 		// We need to decode the base64-encoded cadata from the input.
@@ -233,7 +228,7 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 		configs.Clusters[c.Name] = c
 	}
 	if configs.KubeappsClusterName == "" {
-		configs.KubeappsClusterName = defaultKubeappsClusterName
+		return kube.ClustersConfig{}, deferFn, fmt.Errorf("unable to determine which cluster Kubeapps is installed in")
 	}
 	return configs, deferFn, nil
 }
