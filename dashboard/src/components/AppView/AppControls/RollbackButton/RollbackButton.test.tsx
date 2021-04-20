@@ -12,7 +12,7 @@ const defaultProps = {
   cluster: "default",
   namespace: "kubeapps",
   releaseName: "foo",
-  revision: 2,
+  revision: 3,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -40,6 +40,10 @@ it("rolls back an application", async () => {
   });
   wrapper.update();
   expect(wrapper.find(CdsModal)).toExist();
+  wrapper
+    .find("select")
+    .at(0)
+    .simulate("change", { target: { value: "1" } });
   await act(async () => {
     await (wrapper
       .find(CdsButton)

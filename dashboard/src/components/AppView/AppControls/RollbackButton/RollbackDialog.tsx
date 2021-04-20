@@ -28,8 +28,8 @@ function RollbackDialog({
   const options: number[] = [];
   // If there are no revisions to rollback to, disable
   const disableRollback = currentRevision === 1;
-  const selectRevision = (e: React.FormEvent<HTMLSelectElement>) => {
-    setTargetRevision(Number(e.currentTarget.value));
+  const selectRevision = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTargetRevision(Number(e.target.value));
   };
   const onClick = () => {
     onConfirm(targetRevision);
