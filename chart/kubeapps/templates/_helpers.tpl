@@ -179,26 +179,26 @@ a defined apiServiceURL.
 */}}
 {{- define "kubeapps.kubeappsCluster" -}}
     {{- $kubeappsCluster := "" }}
-    {{- $defaultKubeappsCluster := "" }}
     {{- if eq (len .Values.clusters) 0 }}
         {{- fail "At least one cluster must be defined." }}
     {{- end }}
     {{- range .Values.clusters }}
-        {{- if eq ($defaultKubeappsCluster | toString) "" }}
-            {{- $defaultKubeappsCluster = .name }}
-        {{- end }}
-        {{- if eq (.apiServiceURL | toString) "<nil>" }}
-            {{- if eq $kubeappsCluster "" }}
+        {{- if eq $kubeappsCluster "" }}
+            {{- if or (eq (.isKubeappsCluster | toString) "true") ( eq (.apiServiceURL | toString) "<nil>") }}
                 {{- $kubeappsCluster = .name }}
-            {{- else }}
-                {{- fail "Only one cluster can be specified without an apiServiceURL to refer to the cluster on which Kubeapps is installed." }}
+            {{- end }}
+        {{- else }}
+            {{- if or (eq (.isKubeappsCluster | toString) "true") ( eq (.apiServiceURL | toString) "<nil>") }}
+                {{- fail "Only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to to refer to the cluster on which Kubeapps is installed. Please check the provided 'clusters' configuration." }}
             {{- end }}
         {{- end }}
     {{- end }}
-    {{- if eq ($kubeappsCluster | toString) "" }}
-        {{- $kubeappsCluster = $defaultKubeappsCluster }}
+    {{- if empty $kubeappsCluster }}
+        {{- fail "Unable to determine which cluster Kubeapps is installed in. Define 'isKubeappsCluster: true' or add a cluster without an apiServiceURL" }}
+    {{- else }}
+        {{- $kubeappsCluster }}
     {{- end }}
-    {{- $kubeappsCluster }}
+
 {{- end -}}
 
 {{/*
