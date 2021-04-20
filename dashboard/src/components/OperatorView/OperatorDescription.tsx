@@ -1,3 +1,4 @@
+import TableRenderer from "components/ChartView/TableRenderer";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -12,14 +13,21 @@ export default function OperatorDescription(props: IOperatorDescriptionProps) {
   return (
     <div className="application-readme">
       <ReactMarkdown
-        source={props.description}
         plugins={[remarkGfm]}
-        renderers={{
-          heading: HeadingRenderer,
-          link: LinkRenderer,
+        components={{
+          h1: HeadingRenderer,
+          h2: HeadingRenderer,
+          h3: HeadingRenderer,
+          h4: HeadingRenderer,
+          h5: HeadingRenderer,
+          h6: HeadingRenderer,
+          a: LinkRenderer,
+          table: TableRenderer,
         }}
         skipHtml={true}
-      />
+      >
+        {props.description}
+      </ReactMarkdown>
     </div>
   );
 }

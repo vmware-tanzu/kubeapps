@@ -58,7 +58,7 @@ it("renders the ReactMarkdown content is readme is present", () => {
   };
   const wrapper = mountWrapper(defaultStore, <ChartReadme {...props} />);
   const component = wrapper.find(ReactMarkdown);
-  expect(component.props()).toMatchObject({ source: "# Markdown Readme" });
+  expect(component.html()).toEqual('<h1 id="markdown-readme">Markdown Readme</h1>');
 });
 
 it("renders the ReactMarkdown content with github flavored markdown (table)", () => {
@@ -68,7 +68,7 @@ it("renders the ReactMarkdown content with github flavored markdown (table)", ()
   };
   const wrapper = mountWrapper(defaultStore, <ChartReadme {...props} />);
   const component = wrapper.find(ReactMarkdown);
-  expect(component.props()).toMatchObject({ source: props.readme });
+  expect(component.props()).toMatchObject({ children: props.readme });
   expect(component.find("table th").first().text()).toBe("h1");
   expect(component.find("table th").last().text()).toBe("h2");
   expect(component.find("table td").first().text()).toBe("foo");
