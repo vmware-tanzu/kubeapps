@@ -94,9 +94,9 @@ func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRep
 }
 
 // GetNamespaces fake
-func (c *FakeHandler) GetNamespaces(whitelistedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	if len(whitelistedNamespaces) > 0 {
-		return whitelistedNamespaces, c.Err
+func (c *FakeHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
+	if len(precheckedNamespaces) > 0 {
+		return precheckedNamespaces, c.Err
 	}
 	return c.Namespaces, c.Err
 }

@@ -58,7 +58,7 @@ func init() {
 	pflag.IntVar(&burst, "burst", 15, "internal burst capacity")
 	pflag.Float32Var(&qps, "qps", 10, "internal QPS rate")
 	pflag.StringVar(&namespaceHeaderName, "namespace-header-name", "", "name of the header field, e.g. namespace-header-name=X-Consumer-Groups")
-	pflag.StringVar(&namespaceHeaderPattern, "namespace-header-pattern", "", "regular expression that matches only single group, e.g. namespace-header-pattern=namespace:([\\w]+):\\w+, to match namespace:ns:read")
+	pflag.StringVar(&namespaceHeaderPattern, "namespace-header-pattern", "", "regular expression that matches only single group, e.g. namespace-header-pattern=^namespace:([\\w]+):\\w+$, to match namespace:ns:read")
 }
 
 func main() {

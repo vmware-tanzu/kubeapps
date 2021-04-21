@@ -410,7 +410,7 @@ kubeops:
   ##     The first capturing group must match the namespace.
   ## example: X-Consumer-Groups: namespace:ns1:read, namespace:ns2:write
   # namespaceHeaderName: X-Consumer-Groups
-  # namespaceHeaderPattern: namespace:([\w-]+):\w+
+  # namespaceHeaderPattern: namespace:^([\w-]+):\w+$
 
 ## Assetsvc is used to serve assets metadata over a REST API.
 ##

@@ -80,7 +80,7 @@ func getNamespaceAndCluster(req *http.Request) (string, string) {
 // getHeaderNamespaces returns a list of namespaces from the header request
 // The name and the value of the header field is specified by 2 variables:
 // - headerName is a name of the expected header field, e.g. X-Consumer-Groups
-// - headerPattern is a regular expression and it matches only single regex group, e.g. namespace:([\w-]+)
+// - headerPattern is a regular expression and it matches only single regex group, e.g. ^namespace:([\w-]+)$
 func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([]corev1.Namespace, error) {
 	var namespaces = []corev1.Namespace{}
 	if headerName == "" || headerPattern == "" {

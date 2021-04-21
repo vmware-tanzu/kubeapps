@@ -237,7 +237,7 @@ type handler interface {
 	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
-	GetNamespaces(whitelistedNamespaces []corev1.Namespace) ([]corev1.Namespace, error)
+	GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
 	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
@@ -863,15 +863,11 @@ func filterActiveNamespaces(namespaces []corev1.Namespace) []corev1.Namespace {
 }
 
 // GetNamespaces return the list of namespaces that the user has permission to access
-func (a *userHandler) GetNamespaces(whitelistedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
+func (a *userHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
 	var namespaceList []corev1.Namespace
 
-	if len(whitelistedNamespaces) > 0 {
-		namespaceList = append(namespaceList, whitelistedNamespaces...)
-		// if any, use only overrided namespaces
-		if len(namespaceList) > 0 {
-			return namespaceList, nil
-		}
+	if len(precheckedNamespaces) > 0 {
+		namespaceList = append(namespaceList, precheckedNamespaces...)
 	} else {
 		// Try to list namespaces with the user token, for backward compatibility
 		namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
