@@ -1293,13 +1293,13 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@formatjs/cli@^4.2.7":
-  version "4.2.7"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.2.7.tgz#fdd04083a3bc844625251192f4681c5b6d2372f3"
-  integrity sha512-TYDUqId9ww13cLpsf9DcdEhGIzoGJVl4WqBkw4RJepAHgzAPU3e7YHdjrCSQyBCgYpK9KW7nYV0tydnsQI0skQ==
+"@formatjs/cli@^4.2.8":
+  version "4.2.8"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.2.8.tgz#f57cb841db6477c5470e2daca9792d392168860a"
+  integrity sha512-GD4m1rzpBSDrB9SzLcwyX0j1Pr4uPCujkXKJRip43+B/ElQ+v+1K/+NCbi0FQGH0VCQbfwAmztcOi6UIwh+agg==
   dependencies:
-    "@formatjs/icu-messageformat-parser" "1.1.5"
-    "@formatjs/ts-transformer" "3.3.7"
+    "@formatjs/icu-messageformat-parser" "1.1.6"
+    "@formatjs/ts-transformer" "3.3.8"
     "@types/json-stable-stringify" "^1.0.32"
     "@types/lodash" "^4.14.150"
     "@types/node" "14"
@@ -1326,6 +1326,15 @@
   version "1.1.5"
   resolved "https://registry.yarnpkg.com/@formatjs/icu-messageformat-parser/-/icu-messageformat-parser-1.1.5.tgz#0c0dae9878329a26a4df6c74d1d3a59de08d4df9"
   integrity sha512-TZC3Ac6zTZGlkPoOstJpllo0rkI60kYSOcyhv7zXcaqzAxgdY+6WK8D91x1O9Swy5Jk1PUQM1IAMdafxZoz+Zg==
+  dependencies:
+    "@formatjs/ecma402-abstract" "1.6.5"
+    "@formatjs/icu-skeleton-parser" "1.1.2"
+    tslib "^2.1.0"
+
+"@formatjs/icu-messageformat-parser@1.1.6":
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/@formatjs/icu-messageformat-parser/-/icu-messageformat-parser-1.1.6.tgz#1f970542edc7cc49df183b397c3a1cda1d40ad63"
+  integrity sha512-ED5VvuJvx0Bswx/lsdbOBHggjJGoyUpBRDivAFl6VWWjGI+2btx6kCHAlDWEZtw7ekrsKTIRwFArkfZQMnNGYw==
   dependencies:
     "@formatjs/ecma402-abstract" "1.6.5"
     "@formatjs/icu-skeleton-parser" "1.1.2"
@@ -1368,12 +1377,12 @@
     intl-messageformat "9.6.7"
     tslib "^2.1.0"
 
-"@formatjs/ts-transformer@3.3.7":
-  version "3.3.7"
-  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.3.7.tgz#ce480366366195f71a588c863378b0e965e18f41"
-  integrity sha512-njO4HMo0zGETY5cYz2ifsEO5FnZs+NyIUSXrGrcE0l9p188P5AIsJ+9HeK3ZGP6u/srtchBytIQFrvhskaQOzQ==
+"@formatjs/ts-transformer@3.3.8":
+  version "3.3.8"
+  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.3.8.tgz#4951e85eb762871ec596f373673b92382110cef4"
+  integrity sha512-yB2V5MaQ3ZhbILVbVxfkd6JcKc3ZDVWHRwPWvIVs6iQtieuJmGsOTBKrrLwFNGX3S4FXy1ynF/SYnD3Foh2imA==
   dependencies:
-    "@formatjs/icu-messageformat-parser" "1.1.5"
+    "@formatjs/icu-messageformat-parser" "1.1.6"
     tslib "^2.1.0"
     typescript "^4.0"
 
