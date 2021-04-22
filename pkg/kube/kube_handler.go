@@ -76,9 +76,10 @@ type ClusterConfig struct {
 	PinnipedConfig PinnipedConciergeConfig `json:"pinnipedConfig,omitempty"`
 
 	// IsKubeappsCluster is an optional per-cluster configuration specifying
-	// is this cluster is the one in which Kubeapps is being installed.
-	// Even if this info is currently being infered, if every cluster uses
-	// an APIServiceURL, there is no way to distinguish which cluster is.
+	// that this cluster is the one in which Kubeapps is being installed.
+	// Often this is inferred as the cluster without an explicit APIServiceURL, but 
+	// if every cluster defines an APIServiceURL, we can no longer infer the cluster
+	// on which Kubeapps is installed.
 	IsKubeappsCluster bool `json:"isKubeappsCluster,omitempty"`
 }
 
