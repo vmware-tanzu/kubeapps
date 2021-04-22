@@ -189,7 +189,7 @@ a defined apiServiceURL.
             {{- end }}
         {{- else }}
             {{- if or (eq (.isKubeappsCluster | toString) "true") ( eq (.apiServiceURL | toString) "<nil>") }}
-                {{- fail "Only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to to refer to the cluster on which Kubeapps is installed. Please check the provided 'clusters' configuration." }}
+                {{- fail "Only one cluster can be configured as the cluster on which Kubeapps is installed. This is either inferred by a cluster without an apiServiceURL defined, or by explicitly setting  'isKubeappsCluster: true' for a cluster. Please check the provided 'clusters' configuration." }}
             {{- end }}
         {{- end }}
     {{- end }}
