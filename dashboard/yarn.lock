@@ -4086,10 +4086,10 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-classnames@^2.2.6:
-  version "2.2.6"
-  resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.2.6.tgz#43935bffdd291f326dad0a205309b38d00f650ce"
-  integrity sha512-JR/iSQOSt+LQIWwrwEzJ9uk0xfN3mTVYMwt1Ir5mUcSN6pU+V4zQFFaJsclJbPuAUQH+yfWef6tm7l1quW3C8Q==
+classnames@^2.2.6, classnames@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.3.1.tgz#dfcfa3891e306ec1dad105d0e88f4417b8535e8e"
+  integrity sha512-OlQdbZ7gLfGarSqxesMesDa5uz7KFbID8Kpq/SxIoNGDqY8lSYs0D+hhtBXhcdB3rcbXArFr7vlHheLk1voeNA==
 
 clean-css@^4.2.3:
   version "4.2.3"
@@ -5719,10 +5719,10 @@ eslint-plugin-jsx-a11y@^6.3.1:
     jsx-ast-utils "^3.1.0"
     language-tags "^1.0.5"
 
-eslint-plugin-prettier@^3.3.1:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-3.3.1.tgz#7079cfa2497078905011e6f82e8dd8453d1371b7"
-  integrity sha512-Rq3jkcFY8RYeQLgk2cCwuc0P7SEFwDravPhsJZOQ5N4YI4DSg50NyqJ/9gdZHzQlHf8MvafSesbNJCcP/FF6pQ==
+eslint-plugin-prettier@^3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-3.4.0.tgz#cdbad3bf1dbd2b177e9825737fe63b476a08f0c7"
+  integrity sha512-UDK6rJT6INSfcOo545jiaOwB701uAIt2/dR7WnFQoGCVl1/EMqdANBmwUaqqQ45aXprsTGzSa39LI1PyuRBxxw==
   dependencies:
     prettier-linter-helpers "^1.0.0"
 
@@ -13697,17 +13697,17 @@ swagger-client@^3.13.2:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^3.46.0:
-  version "3.46.0"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-3.46.0.tgz#e2ceb89018b1747e05bf4647b9598e76abf4d460"
-  integrity sha512-LLVg9Gnh83Ctbz3SvOaBKPZ1+3ddgTt+xYuepbnGTpnWLCQRVvj904f22yJ2YZHa1DcafL+j4tD0JiX4bqjBsQ==
+swagger-ui-react@^3.47.1:
+  version "3.47.1"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-3.47.1.tgz#8abdc6674100405ae927945d8ab1313907e96a72"
+  integrity sha512-KPfhRE3kJnN9/yKrPIvKNrZYzGxSLQOEc0gVUlYXrMh6iQ5rR/fW8s9xXCV0ivOOvhvr09LQ5H3ZjwAIbvUHoA==
   dependencies:
     "@babel/runtime-corejs3" "^7.13.10"
     "@braintree/sanitize-url" "^5.0.0"
     "@kyleshockey/object-assign-deep" "^0.4.2"
     "@kyleshockey/xml" "^1.0.2"
     base64-js "^1.5.1"
-    classnames "^2.2.6"
+    classnames "^2.3.1"
     css.escape "1.5.1"
     deep-extend "0.6.0"
     dompurify "^2.2.7"

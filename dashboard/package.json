@@ -70,7 +70,7 @@
     "remark-gfm": "^1.0.0",
     "seamless-immutable": "^7.1.4",
     "semver": "^7.3.5",
-    "swagger-ui-react": "^3.46.0",
+    "swagger-ui-react": "^3.47.1",
     "typesafe-actions": "^5.1.0",
     "yaml": "1.10.2"
   },
@@ -127,7 +127,7 @@
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.2.0",
     "eslint-import-resolver-typescript": "^2.4.0",
-    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-prettier": "^3.4.0",
     "husky": "^4.3.8",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
