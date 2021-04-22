@@ -191,12 +191,7 @@ a defined apiServiceURL.
             {{- end }}
         {{- end }}
     {{- end }}
-    {{- if empty $kubeappsCluster }}
-        {{- fail "Unable to determine which cluster Kubeapps is installed in. Define 'isKubeappsCluster: true' or add a cluster without an apiServiceURL" }}
-    {{- else }}
-        {{- $kubeappsCluster }}
-    {{- end }}
-
+    {{- $kubeappsCluster }}
 {{- end -}}
 
 {{/*

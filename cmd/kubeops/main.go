@@ -231,8 +231,5 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 		}
 		configs.Clusters[c.Name] = c
 	}
-	if configs.KubeappsClusterName == "" {
-		return kube.ClustersConfig{}, deferFn, fmt.Errorf("unable to determine which cluster Kubeapps is installed in")
-	}
 	return configs, deferFn, nil
 }
