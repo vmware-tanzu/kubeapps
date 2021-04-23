@@ -103,6 +103,11 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	config.BearerToken = userToken
 	config.BearerTokenFile = ""
 
+	// If the cluster is not provided, let's assume inClusterConfig
+	if cluster == "" {
+		return config, nil
+	}
+
 	clusterConfig, ok := clustersConfig.Clusters[cluster]
 	if !ok {
 		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
@@ -252,7 +257,7 @@ func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Con
 	// cluster, the namespace selector remains unpopulated.
 	var svcClientset combinedClientsetInterface
 	var err error
-	if cluster == a.clustersConfig.KubeappsClusterName {
+	if cluster == "" || cluster == a.clustersConfig.KubeappsClusterName {
 		svcClientset = a.kubeappsSvcClientset
 	} else {
 		additionalCluster, ok := a.clustersConfig.Clusters[cluster]
