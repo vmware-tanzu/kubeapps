@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -29,6 +30,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // namespacesResponse is used to marshal the JSON response
@@ -73,6 +75,35 @@ func getNamespaceAndCluster(req *http.Request) (string, string) {
 	requestNamespace := mux.Vars(req)["namespace"]
 	requestCluster := mux.Vars(req)["cluster"]
 	return requestNamespace, requestCluster
+}
+
+// getHeaderNamespaces returns a list of namespaces from the header request
+// The name and the value of the header field is specified by 2 variables:
+// - headerName is a name of the expected header field, e.g. X-Consumer-Groups
+// - headerPattern is a regular expression and it matches only single regex group, e.g. ^namespace:([\w-]+)$
+func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([]corev1.Namespace, error) {
+	var namespaces = []corev1.Namespace{}
+	if headerName == "" || headerPattern == "" {
+		return []corev1.Namespace{}, nil
+	}
+	r, err := regexp.Compile(headerPattern)
+	if err != nil {
+		log.Errorf("unable to compile regular expression: %v", err)
+		return namespaces, err
+	}
+	headerNamespacesOrigin := strings.Split(req.Header.Get(headerName), ",")
+	for _, n := range headerNamespacesOrigin {
+		rns := r.FindStringSubmatch(strings.TrimSpace(n))
+		if rns == nil || len(rns) < 2 {
+			continue
+		}
+		ns := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{Name: rns[1]},
+			Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
+		}
+		namespaces = append(namespaces, ns)
+	}
+	return namespaces, nil
 }
 
 // ListAppRepositories list app repositories
@@ -247,16 +278,24 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
 		_, requestCluster := getNamespaceAndCluster(req)
 
+		options := kubeHandler.GetOptions()
+
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
 		if err != nil {
 			returnK8sError(err, w)
 			return
 		}
 
-		namespaces, err := clientset.GetNamespaces()
+		headerNamespaces, err := getHeaderNamespaces(req, options.NamespaceHeaderName, options.NamespaceHeaderPattern)
 		if err != nil {
 			returnK8sError(err, w)
 		}
+
+		namespaces, err := clientset.GetNamespaces(headerNamespaces)
+		if err != nil {
+			returnK8sError(err, w)
+		}
+
 		response := namespacesResponse{
 			Namespaces: namespaces,
 		}
@@ -332,8 +371,8 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 }
 
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router, burst int, qps float32, clustersConfig kube.ClustersConfig) error {
-	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), burst, qps, clustersConfig)
+func SetupDefaultRoutes(r *mux.Router, namespaceHeaderName, namespaceHeaderPattern string, burst int, qps float32, clustersConfig kube.ClustersConfig) error {
+	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), namespaceHeaderName, namespaceHeaderPattern, burst, qps, clustersConfig)
 	if err != nil {
 		return err
 	}

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -245,26 +246,106 @@ func TestDeleteAppRepository(t *testing.T) {
 
 func TestGetNamespaces(t *testing.T) {
 	testCases := []struct {
-		name         string
-		namespaces   []corev1.Namespace
-		err          error
-		expectedCode int
+		name                   string
+		existingNamespaces     []corev1.Namespace
+		expectedNamespaces     []corev1.Namespace
+		err                    error
+		expectedCode           int
+		additionalHeader       http.Header
+		namespaceHeaderOptions kube.KubeOptions
 	}{
 		{
-			name:         "it should return the list of namespaces and a 200 if the repo is created",
-			namespaces:   []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedCode: 200,
+			name:               "it should return the list of namespaces and a 200 if the repo is created",
+			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedCode:       200,
 		},
 		{
 			name:         "it should return a 403 when forbidden",
 			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
 			expectedCode: 403,
 		},
+		{
+			name:               "it should return the list of namespaces from the header and a 200 if the repo is created",
+			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []corev1.Namespace{
+				{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
+				{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
+			},
+			expectedCode:     200,
+			additionalHeader: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			namespaceHeaderOptions: kube.KubeOptions{
+				NamespaceHeaderName:    "X-Consumer-Groups",
+				NamespaceHeaderPattern: "^namespace:(\\w+)$",
+			},
+		},
+		{
+			name:               "it should return the existing list of namespaces and a 200 when header does not match kubeops arg namespace-header-name",
+			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedCode:       200,
+			additionalHeader:   http.Header{"X-Consumer-Groups": []string{"nspace:ns1", "nspace:ns2"}},
+			namespaceHeaderOptions: kube.KubeOptions{
+				NamespaceHeaderName:    "X-Consumer-Groups",
+				NamespaceHeaderPattern: "^namespace:(\\w+)$",
+			},
+		},
+		{
+			name:               "it should return the existing list of namespaces and a 200 when header does not match kubeops arg namespace-header-pattern",
+			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedCode:       200,
+			additionalHeader:   http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			namespaceHeaderOptions: kube.KubeOptions{
+				NamespaceHeaderName:    "X-Consumer-Groups",
+				NamespaceHeaderPattern: "^namespace:(\\w+)$",
+			},
+		},
+		{
+			name:               "it should return the existing list of namespaces and a 200 when kubeops arg namespace-header-name is empty",
+			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedCode:       200,
+			additionalHeader:   http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			namespaceHeaderOptions: kube.KubeOptions{
+				NamespaceHeaderName:    "",
+				NamespaceHeaderPattern: "^namespace:(\\w+)$",
+			},
+		},
+		{
+			name:               "it should return the existing list of namespaces and a 200 when kubeops arg namespace-header-pattern is empty",
+			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedCode:       200,
+			additionalHeader:   http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			namespaceHeaderOptions: kube.KubeOptions{
+				NamespaceHeaderName:    "X-Consumer-Groups",
+				NamespaceHeaderPattern: "",
+			},
+		},
+		{
+			name:               "it should return some of the namespaces from header and a 200 when not all match namespace-header-pattern",
+			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []corev1.Namespace{
+				{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
+				{ObjectMeta: metav1.ObjectMeta{Name: "ns4"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
+			},
+			expectedCode:     200,
+			additionalHeader: http.Header{"X-Consumer-Groups": []string{"namespace:ns1:read", "namespace:ns2", "ns3", "namespace:ns4", "ns:ns5:write"}},
+			namespaceHeaderOptions: kube.KubeOptions{
+				NamespaceHeaderName:    "X-Consumer-Groups",
+				NamespaceHeaderPattern: "^namespace:(\\w+)$",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getNSFunc := GetNamespaces(&kube.FakeHandler{Namespaces: tc.namespaces, Err: tc.err})
+			getNSFunc := GetNamespaces(&kube.FakeHandler{Namespaces: tc.existingNamespaces, Err: tc.err, Options: tc.namespaceHeaderOptions})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
+
+			for headerName, headerValue := range tc.additionalHeader {
+				req.Header.Set(headerName, strings.Join(headerValue, ","))
+			}
 
 			response := httptest.NewRecorder()
 			getNSFunc(response, req)
@@ -279,7 +360,7 @@ func TestGetNamespaces(t *testing.T) {
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
-				expectedResponse := namespacesResponse{Namespaces: tc.namespaces}
+				expectedResponse := namespacesResponse{Namespaces: tc.expectedNamespaces}
 				if got, want := nsResponse, expectedResponse; !cmp.Equal(want, got) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}

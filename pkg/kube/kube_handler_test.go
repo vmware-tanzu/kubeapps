@@ -888,12 +888,13 @@ type existingNs struct {
 func TestGetNamespaces(t *testing.T) {
 
 	testCases := []struct {
-		name               string
-		existingNamespaces []existingNs
-		allowed            bool
-		userClientErr      error
-		svcClientErr       error
-		expectedNamespaces []string
+		name                 string
+		existingNamespaces   []existingNs
+		allowed              bool
+		userClientErr        error
+		svcClientErr         error
+		expectedNamespaces   []string
+		precheckedNamespaces []corev1.Namespace
 	}{
 		{
 			name: "it lists namespaces if the user client returns the namespaces",
@@ -941,6 +942,27 @@ func TestGetNamespaces(t *testing.T) {
 			},
 			expectedNamespaces: []string{"bar"},
 			allowed:            true,
+		},
+		{
+			name: "it lists namespaces if the user client sends the namespaces",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceActive},
+			},
+			precheckedNamespaces: []corev1.Namespace{{
+				ObjectMeta: metav1.ObjectMeta{Name: "bar"},
+				Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
+			}},
+			expectedNamespaces: []string{"bar"},
+			allowed:            true,
+		},
+		{
+			name: "it lists existing namespaces if the user client sends empty list of the namespaces",
+			existingNamespaces: []existingNs{
+				{"foo", corev1.NamespaceActive},
+			},
+			precheckedNamespaces: []corev1.Namespace{},
+			expectedNamespaces:   []string{"foo"},
+			allowed:              true,
 		},
 	}
 	for _, tc := range testCases {
@@ -996,7 +1018,7 @@ func TestGetNamespaces(t *testing.T) {
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
-			namespaces, err := userHandler.GetNamespaces()
+			namespaces, err := userHandler.GetNamespaces(tc.precheckedNamespaces)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}

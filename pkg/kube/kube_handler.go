@@ -180,6 +180,11 @@ func (c *combinedClientset) MaxWorkers() int {
 	return int(c.restCli.GetRateLimiter().QPS())
 }
 
+type KubeOptions struct {
+	NamespaceHeaderName    string
+	NamespaceHeaderPattern string
+}
+
 // kubeHandler handles http requests for operating on app repositories and k8s resources
 // in Kubeapps, without exposing implementation details to 3rd party integrations.
 type kubeHandler struct {
@@ -204,6 +209,9 @@ type kubeHandler struct {
 	// version (and since this is a private struct, external code cannot change
 	// the function).
 	clientsetForConfig func(*rest.Config) (combinedClientsetInterface, error)
+
+	// Additional options from Kubeops arguments
+	options KubeOptions
 }
 
 // userHandler is an extension of kubeHandler for a specific service account
@@ -236,7 +244,7 @@ type handler interface {
 	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
-	GetNamespaces() ([]corev1.Namespace, error)
+	GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
 	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
@@ -248,6 +256,7 @@ type handler interface {
 type AuthHandler interface {
 	AsUser(token, cluster string) (handler, error)
 	AsSVC(cluster string) (handler, error)
+	GetOptions() KubeOptions
 }
 
 func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Config) (combinedClientsetInterface, error) {
@@ -276,6 +285,10 @@ func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Con
 		}
 	}
 	return svcClientset, nil
+}
+
+func (a *kubeHandler) GetOptions() KubeOptions {
+	return a.options
 }
 
 func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
@@ -353,7 +366,7 @@ var ErrEmptyOCIRegistry = fmt.Errorf("You need to specify at least one repositor
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
-func NewHandler(kubeappsNamespace string, burst int, qps float32, clustersConfig ClustersConfig) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace, namespaceHeaderName, namespaceHeaderPattern string, burst int, qps float32, clustersConfig ClustersConfig) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -378,6 +391,11 @@ func NewHandler(kubeappsNamespace string, burst int, qps float32, clustersConfig
 	config.Burst = burst
 	config.QPS = qps
 
+	options := KubeOptions{
+		NamespaceHeaderName:    namespaceHeaderName,
+		NamespaceHeaderPattern: namespaceHeaderPattern,
+	}
+
 	svcRestConfig, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -394,6 +412,7 @@ func NewHandler(kubeappsNamespace string, burst int, qps float32, clustersConfig
 		clientsetForConfig:   clientsetForConfig,
 		kubeappsSvcClientset: svcClientset,
 		clustersConfig:       clustersConfig,
+		options:              options,
 	}, nil
 }
 
@@ -895,37 +914,39 @@ func filterActiveNamespaces(namespaces []corev1.Namespace) []corev1.Namespace {
 }
 
 // GetNamespaces return the list of namespaces that the user has permission to access
-func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
-	// Try to list namespaces with the user token, for backward compatibility
+func (a *userHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
 	var namespaceList []corev1.Namespace
-	namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		if k8sErrors.IsForbidden(err) {
-			// The user doesn't have permissions to list namespaces, use the current serviceaccount
-			namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-			if err != nil && k8sErrors.IsForbidden(err) {
-				// If the configured svcclient doesn't have permission, just return an empty list.
-				return []corev1.Namespace{}, nil
+
+	if len(precheckedNamespaces) > 0 {
+		namespaceList = append(namespaceList, precheckedNamespaces...)
+	} else {
+		// Try to list namespaces with the user token, for backward compatibility
+		namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			if k8sErrors.IsForbidden(err) {
+				// The user doesn't have permissions to list namespaces, use the current serviceaccount
+				namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+				if err != nil && k8sErrors.IsForbidden(err) {
+					// If the configured svcclient doesn't have permission, just return an empty list.
+					return []corev1.Namespace{}, nil
+				}
+			} else {
+				return nil, err
+			}
+
+			// Filter namespaces in which the user has permissions to write (secrets) only
+			namespaceList, err = filterAllowedNamespaces(a.clientset, namespaces.Items)
+			if err != nil {
+				return nil, err
 			}
 		} else {
-			return nil, err
+			// If the user can list namespaces, do not filter them
+			namespaceList = namespaces.Items
 		}
-
-		// Filter namespaces in which the user has permissions to write (secrets) only
-		namespaceList, err = filterAllowedNamespaces(a.clientset, namespaces.Items)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// If the user can list namespaces, do not filter them
-		namespaceList = namespaces.Items
 	}
 
 	// Filter namespaces that are in terminating state
 	namespaceList = filterActiveNamespaces(namespaceList)
-	if err != nil {
-		return nil, err
-	}
 
 	return namespaceList, nil
 }
