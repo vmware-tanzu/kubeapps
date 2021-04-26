@@ -268,9 +268,12 @@ func ParseDetails(data []byte) (*Details, error) {
 // Depending on the repo namespace and the
 func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler kube.AuthHandler, userAuthToken, cluster, kubeappsNamespace string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	client, err := handler.AsUser(userAuthToken, cluster)
-	if cluster == "" || kubeappsNamespace == appRepoNamespace {
-		// If we're parsing a global repository (from the kubeappsNamespace),
-		// or we don't specify any cluster, use a service client.
+	// If the UI clusters configuration did not include the cluster on which Kubeapps is installed then
+	// we won't know the kubeappsNamespace but it will be empty. In this scenario Kubeapps only supports
+	// global app repositories (#1982 ).
+	nonUIKubeappsCluster = (cluster == "" && kubeappsNamespace == "")
+	if nonUIKubeappsCluster || kubeappsNamespace == appRepoNamespace {
+		// If we're parsing a global repository then use a service client.
 		// AppRepositories are only allowed in the default cluster for the moment
 		client, err = handler.AsSVC(cluster)
 	}
