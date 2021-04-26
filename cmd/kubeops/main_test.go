@@ -19,8 +19,9 @@ func TestParseClusterConfig(t *testing.T) {
 	}{
 		{
 			name:       "parses a single cluster",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedProxyURL": "http://172.0.1.18:3333"}]`,
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedProxyURL": "http://172.0.1.18:3333", "isKubeappsCluster": true}]`,
 			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "cluster-2",
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
 						Name:                            "cluster-2",
@@ -28,6 +29,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhCg==",
 						CertificateAuthorityDataDecoded: "ca-cert-data\n",
 						ServiceToken:                    "abcd",
+						IsKubeappsCluster:               true,
 					},
 				},
 				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
@@ -36,16 +38,18 @@ func TestParseClusterConfig(t *testing.T) {
 		{
 			name: "parses multiple clusters",
 			configJSON: `[
-	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="},
+	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "isKubeappsCluster": true},
 	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
 ]`,
 			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "cluster-2",
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
 						Name:                            "cluster-2",
 						APIServiceURL:                   "https://example.com/cluster-2",
 						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhCg==",
 						CertificateAuthorityDataDecoded: "ca-cert-data\n",
+						IsKubeappsCluster:               true,
 					},
 					"cluster-3": {
 						Name:                            "cluster-3",
@@ -87,9 +91,35 @@ func TestParseClusterConfig(t *testing.T) {
 			},
 		},
 		{
-			name:       "parses a cluster with pinniped token exchange",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedConfig": {"enable": true}}]`,
+			name: "parses config not specifying an explicit Kubeapps cluster",
+			configJSON: `[
+				{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="},
+				{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
+			]`,
 			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "",
+				Clusters: map[string]kube.ClusterConfig{
+					"cluster-2": {
+						Name:                            "cluster-2",
+						APIServiceURL:                   "https://example.com/cluster-2",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-cert-data\n",
+					},
+					"cluster-3": {
+						Name:                            "cluster-3",
+						APIServiceURL:                   "https://example.com/cluster-3",
+						CertificateAuthorityData:        "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK",
+						CertificateAuthorityDataDecoded: "ca-cert-data-additional\n",
+					},
+				},
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
+			},
+		},
+		{
+			name:       "parses a cluster with pinniped token exchange",
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedConfig": {"enable": true}, "isKubeappsCluster": true}]`,
+			expectedConfig: kube.ClustersConfig{
+				KubeappsClusterName: "cluster-2",
 				Clusters: map[string]kube.ClusterConfig{
 					"cluster-2": {
 						Name:                            "cluster-2",
@@ -100,6 +130,7 @@ func TestParseClusterConfig(t *testing.T) {
 						PinnipedConfig: kube.PinnipedConciergeConfig{
 							Enable: true,
 						},
+						IsKubeappsCluster: true,
 					},
 				},
 				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
@@ -121,6 +152,22 @@ func TestParseClusterConfig(t *testing.T) {
        {"name": "cluster-1" },
        {"name": "cluster-2" }
 ]`,
+			expectedErr: true,
+		},
+		{
+			name: "errors if more than one cluster with isKubeappsCluster=true is configured",
+			configJSON: `[
+		       {"name": "cluster-1", isKubeappsCluster: true},
+		       {"name": "cluster-2", isKubeappsCluster: true }
+		]`,
+			expectedErr: true,
+		},
+		{
+			name: "errors if both no APIServiceURL and isKubeappsCluster=true are configured",
+			configJSON: `[
+		       {"name": "cluster-1",  },
+		       {"name": "cluster-2", isKubeappsCluster: true }
+		]`,
 			expectedErr: true,
 		},
 	}
