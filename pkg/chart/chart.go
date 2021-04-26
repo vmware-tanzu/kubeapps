@@ -271,7 +271,7 @@ func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler k
 	// If the UI clusters configuration did not include the cluster on which Kubeapps is installed then
 	// we won't know the kubeappsNamespace but it will be empty. In this scenario Kubeapps only supports
 	// global app repositories (#1982 ).
-	nonUIKubeappsCluster = (cluster == "" && kubeappsNamespace == "")
+	nonUIKubeappsCluster := (cluster == "" && kubeappsNamespace == "")
 	if nonUIKubeappsCluster || kubeappsNamespace == appRepoNamespace {
 		// If we're parsing a global repository then use a service client.
 		// AppRepositories are only allowed in the default cluster for the moment
