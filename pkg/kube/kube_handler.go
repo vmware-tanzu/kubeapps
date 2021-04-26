@@ -103,7 +103,9 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	config.BearerToken = userToken
 	config.BearerTokenFile = ""
 
-	// If the cluster is not provided, let's assume inClusterConfig
+	// If the cluster is empty, we assume the rest of the inClusterConfig is correct. This can be the case when
+	// the cluster on which Kubeapps is installed is not one presented in the UI as a target (hence not in the
+	// `clusters` configuration).
 	if cluster == "" {
 		return config, nil
 	}
