@@ -302,6 +302,12 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 		_, requestCluster := getNamespaceAndCluster(req)
 
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
+
+		// If the UI clusters configuration did not include the cluster on which Kubeapps is installed, two
+		// the requestCluster will be empty. We will try using the service account instead.
+		if requestCluster == "" {
+			clientset, err = kubeHandler.AsSVC(requestCluster)
+		}
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -337,8 +343,10 @@ func SetupDefaultRoutes(r *mux.Router, burst int, qps float32, clustersConfig ku
 	if err != nil {
 		return err
 	}
+	r.Methods("POST").Path("/clusters/can-i").Handler(http.HandlerFunc(CanI(backendHandler)))
 	r.Methods("POST").Path("/clusters/{cluster}/can-i").Handler(http.HandlerFunc(CanI(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
+	// r.Methods("GET").Path("/clusters/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
