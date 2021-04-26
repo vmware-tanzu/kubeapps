@@ -74,6 +74,13 @@ type ClusterConfig struct {
 	// the pinniped namespace, authenticator type and authenticator name
 	// that should be used for any credential exchange.
 	PinnipedConfig PinnipedConciergeConfig `json:"pinnipedConfig,omitempty"`
+
+	// IsKubeappsCluster is an optional per-cluster configuration specifying
+	// that this cluster is the one in which Kubeapps is being installed.
+	// Often this is inferred as the cluster without an explicit APIServiceURL, but 
+	// if every cluster defines an APIServiceURL, we can no longer infer the cluster
+	// on which Kubeapps is installed.
+	IsKubeappsCluster bool `json:"isKubeappsCluster,omitempty"`
 }
 
 // PinnipedConciergeConfig enables each cluster configuration to specify the

@@ -201,11 +201,14 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
 	configs.PinnipedProxyURL = pinnipedProxyURL
 	for _, c := range clusterConfigs {
-		if c.APIServiceURL == "" {
+		// Select the cluster in which Kubeapps in installed. We look for either
+		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
+		isKubeappsClusterCandidate := c.IsKubeappsCluster || c.APIServiceURL == ""
+		if isKubeappsClusterCandidate {
 			if configs.KubeappsClusterName == "" {
 				configs.KubeappsClusterName = c.Name
 			} else {
-				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured without an apiServiceURL, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
+				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
 			}
 		}
 
