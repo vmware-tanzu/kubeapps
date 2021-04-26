@@ -208,7 +208,7 @@ func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, 
 			if configs.KubeappsClusterName == "" {
 				configs.KubeappsClusterName = c.Name
 			} else {
-				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
+				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
 			}
 		}
 

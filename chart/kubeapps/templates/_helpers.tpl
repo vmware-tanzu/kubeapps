@@ -187,7 +187,7 @@ a defined apiServiceURL.
             {{- if eq $kubeappsCluster "" }}
                 {{- $kubeappsCluster = .name }}
             {{- else }}
-                {{- fail "Only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to to refer to the cluster on which Kubeapps is installed. Please check the provided 'clusters' configuration." }}
+                {{- fail "Only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to refer to the cluster on which Kubeapps is installed. Please check the provided 'clusters' configuration." }}
             {{- end }}
         {{- end }}
     {{- end }}
