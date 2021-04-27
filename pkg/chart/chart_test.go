@@ -226,7 +226,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		kubeappsCluster   string
 	}{
 		{
-			name: "default cert pool without auth (as svc)",
+			name: "default cert pool without auth (as svc because cluster and kubeappsCluster are empty)",
 			details: &Details{
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
@@ -237,7 +237,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			kubeappsCluster:   "",
 		},
 		{
-			name: "default cert pool without auth (as user)",
+			name: "default cert pool without auth (as user because cluster is something other than kubeapps cluster)",
 			details: &Details{
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
