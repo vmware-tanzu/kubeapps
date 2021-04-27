@@ -2,7 +2,7 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.16"
+    default: "1.16.3"
   NODE_VERSION:
     type: string
     default: "14"
@@ -23,7 +23,7 @@ parameters:
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.19.9"
+    default: "v1.19.10"
   KIND_VERSION:
     type: "string"
     default: "v0.10.0"
@@ -32,7 +32,7 @@ parameters:
     default: "v1.20.2"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "11.11.0-debian-10-r45"
+    default: "11.11.0-debian-10-r76"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy"
