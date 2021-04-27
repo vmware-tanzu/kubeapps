@@ -81,7 +81,9 @@ func parseFlags(progname string, args []string) (config *Config, output string, 
 	flagSet.StringVar(&conf.DBSecretKey, "database-secret-key", "postgresql-root-password", "Kubernetes secret key used for database credentials")
 	flagSet.StringVar(&conf.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	flagSet.StringVar(&conf.Crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
-	//DefaultLifeTimeTTL max sync lifetime job //https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
+	// TTLSecondsAfterFinished specifies the number of seconds a sync job should live after finishing.
+	// The support for this is currently alpha in K8s itself, requiring a feature gate being set to enable
+	// it. See https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
 	flagSet.StringVar(&conf.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
 
 	err = flagSet.Parse(args)
