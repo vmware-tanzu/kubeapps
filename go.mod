@@ -1,6 +1,6 @@
 module github.com/kubeapps/kubeapps
 
-go 1.13
+go 1.16
 
 replace github.com/docker/docker => github.com/docker/docker v0.0.0-20190731150326-928381b2215c
 
