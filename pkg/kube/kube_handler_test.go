@@ -1210,6 +1210,30 @@ func TestNewClusterConfig(t *testing.T) {
 			},
 		},
 		{
+			name:      "returns an in-cluster config when no cluster is specified",
+			userToken: "token-1",
+			cluster:   "",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "",
+				Clusters: map[string]ClusterConfig{
+					"cluster-1": {
+						APIServiceURL:                   "https://cluster-1.example.com:7890",
+						CertificateAuthorityData:        "Y2EtZmlsZS1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-file-data",
+						CAFile:                          "/tmp/ca-file-data",
+					},
+				},
+			},
+			inClusterConfig: &rest.Config{
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+			},
+			expectedConfig: &rest.Config{
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
+		{
 			name:      "returns a config setup for an additional cluster",
 			userToken: "token-1",
 			cluster:   "cluster-1",

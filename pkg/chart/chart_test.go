@@ -216,19 +216,47 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name             string
-		details          *Details
-		appRepoSpec      appRepov1.AppRepositorySpec
-		errorExpected    bool
-		numCertsExpected int
+		name              string
+		details           *Details
+		appRepoSpec       appRepov1.AppRepositorySpec
+		errorExpected     bool
+		numCertsExpected  int
+		cluster           string
+		kubeappsNamespace string
+		kubeappsCluster   string
 	}{
+		{
+			name: "default cert pool without auth (as svc because cluster and kubeappsCluster are empty)",
+			details: &Details{
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
+			},
+			numCertsExpected:  len(systemCertPool.Subjects()),
+			cluster:           "",
+			kubeappsNamespace: appRepoNamespace,
+			kubeappsCluster:   "",
+		},
+		{
+			name: "default cert pool without auth (as user because cluster is something other than kubeapps cluster)",
+			details: &Details{
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
+			},
+			numCertsExpected:  len(systemCertPool.Subjects()),
+			cluster:           "target-cluster",
+			kubeappsNamespace: appRepoNamespace,
+			kubeappsCluster:   "",
+		},
 		{
 			name: "default cert pool without auth",
 			details: &Details{
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
-			numCertsExpected: len(systemCertPool.Subjects()),
+			numCertsExpected:  len(systemCertPool.Subjects()),
+			cluster:           "",
+			kubeappsNamespace: "",
+			kubeappsCluster:   "",
 		},
 		{
 			name: "custom CA added when passed an AppRepository CRD",
@@ -246,7 +274,10 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
-			numCertsExpected: len(systemCertPool.Subjects()) + 1,
+			numCertsExpected:  len(systemCertPool.Subjects()) + 1,
+			cluster:           "",
+			kubeappsNamespace: "",
+			kubeappsCluster:   "",
 		},
 		{
 			name: "errors if secret for custom CA secret cannot be found",
@@ -264,7 +295,10 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
-			errorExpected: true,
+			errorExpected:     true,
+			cluster:           "",
+			kubeappsNamespace: "",
+			kubeappsCluster:   "",
 		},
 		{
 			name: "authorization header added when passed an AppRepository CRD",
@@ -282,7 +316,10 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
-			numCertsExpected: len(systemCertPool.Subjects()),
+			numCertsExpected:  len(systemCertPool.Subjects()),
+			cluster:           "",
+			kubeappsNamespace: "",
+			kubeappsCluster:   "",
 		},
 		{
 			name: "errors if auth secret cannot be found",
@@ -300,7 +337,10 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
-			errorExpected: true,
+			errorExpected:     true,
+			cluster:           "",
+			kubeappsNamespace: "",
+			kubeappsCluster:   "",
 		},
 		{
 			name: "authorization header added when passed an AppRepository CRD",
@@ -318,7 +358,10 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
-			numCertsExpected: len(systemCertPool.Subjects()),
+			numCertsExpected:  len(systemCertPool.Subjects()),
+			cluster:           "",
+			kubeappsNamespace: "",
+			kubeappsCluster:   "",
 		},
 	}
 
@@ -359,7 +402,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		}}
 
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, caCertSecret, authSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", "", "")
+			appRepo, caCertSecret, authSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", tc.cluster, tc.kubeappsNamespace, tc.kubeappsCluster)
 			if err != nil {
 				if tc.errorExpected {
 					return

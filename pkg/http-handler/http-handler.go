@@ -341,6 +341,7 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 		_, requestCluster := getNamespaceAndCluster(req)
 
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
+
 		if err != nil {
 			returnK8sError(err, w)
 			return
