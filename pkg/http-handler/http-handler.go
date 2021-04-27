@@ -303,11 +303,6 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
 
-		// If the UI clusters configuration did not include the cluster on which Kubeapps is installed, two
-		// the requestCluster will be empty. We will try using the service account instead.
-		if requestCluster == "" {
-			clientset, err = kubeHandler.AsSVC(requestCluster)
-		}
 		if err != nil {
 			returnK8sError(err, w)
 			return
