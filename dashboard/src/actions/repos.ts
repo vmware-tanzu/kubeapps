@@ -158,28 +158,6 @@ export const resyncAllRepos = (
   };
 };
 
-export const fetchRepoSecrets = (
-  namespace: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
-    try {
-      // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
-      // to avoid listing secrets
-      // https://github.com/kubeapps/kubeapps/issues/1686
-      const secrets = await Secret.list(currentCluster, namespace);
-      const repoSecrets = secrets.items?.filter(s =>
-        s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
-      );
-      dispatch(receiveReposSecrets(repoSecrets));
-    } catch (e) {
-      dispatch(errorRepos(e, "fetch"));
-    }
-  };
-};
-
 export const fetchRepoSecret = (
   namespace: string,
   name: string,
@@ -210,7 +188,6 @@ export const fetchRepos = (
     try {
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(currentCluster, namespace);
-      dispatch(fetchRepoSecrets(namespace));
       if (!listGlobal || namespace === kubeappsNamespace) {
         dispatch(receiveRepos(repos.items));
       } else {
@@ -417,11 +394,12 @@ export function fetchImagePullSecrets(
       // TODO(andresmgot): Create an endpoint for returning just the list of secret names
       // to avoid listing all the secrets with protected information
       // https://github.com/kubeapps/kubeapps/issues/1686
-      const secrets = await Secret.list(currentCluster, namespace);
-      const imgPullSecrets = secrets.items?.filter(
-        s => s.type === "kubernetes.io/dockerconfigjson",
+      const secrets = await Secret.list(
+        currentCluster,
+        namespace,
+        "type=kubernetes.io/dockerconfigjson",
       );
-      dispatch(receiveImagePullSecrets(imgPullSecrets));
+      dispatch(receiveImagePullSecrets(secrets.items));
     } catch (e) {
       dispatch(errorRepos(e, "fetch"));
     }

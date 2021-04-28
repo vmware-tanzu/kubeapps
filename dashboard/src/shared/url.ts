@@ -203,8 +203,10 @@ export const api = {
           cluster,
         )}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/${name}`,
     },
-    secrets: (cluster: string, namespace: string) =>
-      `${api.k8s.namespace(cluster, namespace)}/secrets`,
+    secrets: (cluster: string, namespace: string, fieldSelector?: string) =>
+      `${api.k8s.namespace(cluster, namespace)}/secrets${
+        fieldSelector ? `?fieldSelector=${encodeURIComponent(fieldSelector)}` : ""
+      }`,
     secret: (cluster: string, namespace: string, name: string) =>
       `${api.k8s.secrets(cluster, namespace)}/${name}`,
   },

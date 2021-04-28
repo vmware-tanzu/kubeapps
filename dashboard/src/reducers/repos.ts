@@ -89,12 +89,18 @@ const reposReducer = (
       return { ...state, repoSecrets: action.payload };
     case getType(actions.repos.receiveReposSecret): {
       const secret = action.payload;
-      const repoSecrets = state.repoSecrets.map(s =>
-        s.metadata.name === secret.metadata.name &&
-        s.metadata.namespace === secret.metadata.namespace
-          ? secret
-          : s,
+      const existingSecret = state.repoSecrets.findIndex(
+        s =>
+          s.metadata.name === secret.metadata.name &&
+          s.metadata.namespace === secret.metadata.namespace,
       );
+      let repoSecrets: ISecret[];
+      if (existingSecret > -1) {
+        repoSecrets = [...state.repoSecrets];
+        repoSecrets[existingSecret] = secret;
+      } else {
+        repoSecrets = state.repoSecrets.concat(secret);
+      }
       return { ...state, repoSecrets };
     }
     case getType(actions.repos.requestRepos):

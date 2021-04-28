@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
@@ -49,6 +49,12 @@ export function AppRepoAddDockerCreds({
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
   const handleServerChange = (e: React.ChangeEvent<HTMLInputElement>) => setServer(e.target.value);
   const toggleCredSubForm = () => setShowSecretSubForm(!showSecretSubForm);
+
+  useEffect(() => {
+    if (imagePullSecrets.length && !currentImagePullSecrets.length) {
+      setCurrentImagePullSecrets(imagePullSecrets);
+    }
+  }, [imagePullSecrets, currentImagePullSecrets]);
 
   const handleInstallClick = async () => {
     setCreating(true);

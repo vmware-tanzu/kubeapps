@@ -9,8 +9,8 @@ export default class Secret {
     return data;
   }
 
-  public static async list(cluster: string, namespace: string) {
-    const u = url.api.k8s.secrets(cluster, namespace);
+  public static async list(cluster: string, namespace: string, fieldSelector?: string) {
+    const u = url.api.k8s.secrets(cluster, namespace, fieldSelector);
     const { data } = await axiosWithAuth.get<IK8sList<ISecret, {}>>(u);
     return data;
   }
