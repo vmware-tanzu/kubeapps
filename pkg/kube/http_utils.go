@@ -61,7 +61,7 @@ func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error)
 	return c.client.Do(req)
 }
 
-func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfigJson) (string, error) {
+func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfigJSON) (string, error) {
 	if len(dockerConfig.Auths) > 1 {
 		return "", fmt.Errorf("The given config should include one auth entry")
 	}
@@ -82,7 +82,7 @@ func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 		return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
 	}
 
-	dockerConfig := &credentialprovider.DockerConfigJson{}
+	dockerConfig := &credentialprovider.DockerConfigJSON{}
 	err := json.Unmarshal(dockerConfigJson, dockerConfig)
 	if err != nil {
 		return "", fmt.Errorf("Unable to parse secret %s as a Docker config. Got: %v", s.Name, err)
