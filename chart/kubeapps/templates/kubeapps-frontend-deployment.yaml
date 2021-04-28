@@ -68,6 +68,7 @@ spec:
             - --pass-basic-auth=false
             - --pass-access-token=true
             - --pass-authorization-header=true
+            - --proxy-websockets=true
             - --skip-auth-regex=^\/config\.json$
             - --skip-auth-regex=^\/manifest\.json$
             - --skip-auth-regex=^\/custom_style\.css$
