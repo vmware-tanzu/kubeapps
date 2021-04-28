@@ -158,28 +158,6 @@ export const resyncAllRepos = (
   };
 };
 
-// export const fetchRepoSecrets = (
-//   namespace: string,
-// ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-//   return async (dispatch, getState) => {
-//     const {
-//       clusters: { currentCluster },
-//     } = getState();
-//     try {
-//       // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
-//       // to avoid listing secrets
-//       // https://github.com/kubeapps/kubeapps/issues/1686
-//       const secrets = await Secret.list(currentCluster, namespace);
-//       const repoSecrets = secrets.items?.filter(s =>
-//         s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
-//       );
-//       dispatch(receiveReposSecrets(repoSecrets));
-//     } catch (e) {
-//       dispatch(errorRepos(e, "fetch"));
-//     }
-//   };
-// };
-
 export const fetchRepoSecret = (
   namespace: string,
   name: string,
