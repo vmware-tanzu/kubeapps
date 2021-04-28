@@ -368,7 +368,7 @@ func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token
 			return nil, fmt.Errorf("AppRepository secret must have a data map with a key %q. Secret %q did not", dockerConfigJSONKey, secretName)
 		}
 
-		dockerConfigJSON := credentialprovider.DockerConfigJson{}
+		dockerConfigJSON := credentialprovider.DockerConfigJSON{}
 		if err := json.Unmarshal(dockerConfigJSONBytes, &dockerConfigJSON); err != nil {
 			return nil, err
 		}

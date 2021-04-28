@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/distribution/reference"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )

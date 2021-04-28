@@ -63,7 +63,7 @@ var syncCmd = &cobra.Command{
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
 		// The auth header may be a dockerconfig that we need to parse
 		if os.Getenv("DOCKER_CONFIG_JSON") != "" {
-			dockerConfig := &credentialprovider.DockerConfigJson{}
+			dockerConfig := &credentialprovider.DockerConfigJSON{}
 			err = json.Unmarshal([]byte(os.Getenv("DOCKER_CONFIG_JSON")), dockerConfig)
 			if err != nil {
 				logrus.Fatal(err)
