@@ -28,8 +28,8 @@ deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 		--key ./devel/localhost-key.pem \
 		--cert ./devel/localhost-cert.pem
 
-deploy-dev-kubeapps: 
-	helm --kubeconfig=${CLUSTER_CONFIG} install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
+deploy-dev-kubeapps:
+	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
