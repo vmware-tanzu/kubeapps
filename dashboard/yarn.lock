@@ -11782,10 +11782,10 @@ react-inspector@^2.3.0:
     is-dom "^1.0.9"
     prop-types "^15.6.1"
 
-react-intl@^5.16.0:
-  version "5.17.1"
-  resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-5.17.1.tgz#7b436c119bce19bcc2c6e019eed3421ddf4eaeb0"
-  integrity sha512-ti7pcsxE3crNVD4S7wD9XiipvH+lSIkXA2DHWS6XA5WGGlGfi36U+5FYrouJp+av3d0fFwkvqw918blknNtFHA==
+react-intl@^5.17.2:
+  version "5.17.2"
+  resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-5.17.2.tgz#0074410871c4d6cec8fd4400122259fcbe0b9fbd"
+  integrity sha512-va6xsLE8dVqOnHiCvcz8DgnR4E6hrHanSs9G4AXy7KllhDqYbPlNqx6ok3bljBfmgq1z5imq1ftHjD51aJHPqw==
   dependencies:
     "@formatjs/ecma402-abstract" "1.7.0"
     "@formatjs/icu-messageformat-parser" "1.2.1"
