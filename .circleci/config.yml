@@ -117,14 +117,14 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - sync_chart:
-          <<: *build_on_master
-          requires:
-            - local_e2e_tests
-            - GKE_1_17_MASTER
-            - GKE_1_17_LATEST_RELEASE
-            - GKE_1_18_MASTER
-            - GKE_1_18_LATEST_RELEASE
+      # - sync_chart:
+      #     <<: *build_on_master
+      #     requires:
+      #       - local_e2e_tests
+      #       - GKE_1_17_MASTER
+      #       - GKE_1_17_LATEST_RELEASE
+      #       - GKE_1_18_MASTER
+      #       - GKE_1_18_LATEST_RELEASE
       - push_images:
           <<: *build_on_master
           requires:
@@ -193,7 +193,7 @@ build_images: &build_images
     - <<: *exports
     - run:
         name: Build and push CI images
-        command: | 
+        command: |
           mkdir -p images/
           read -ra IMG_ARRAY \<<< "$IMAGES"
           if [[ -n "${CIRCLE_TAG}" ]]; then
@@ -333,7 +333,7 @@ install_multicluster_deps: &install_multicluster_deps
     command: |
       sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
       helm repo add stable https://charts.helm.sh/stable
-      
+
       # Install dex
       kubectl create namespace dex
       helm install dex stable/dex --namespace dex --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
@@ -372,7 +372,7 @@ gke_test: &gke_test
     - checkout
     - run:
         name: Check conditions
-        command: | 
+        command: |
           source ./script/chart_sync_utils.sh
 
           # In the case of GKE we will only want to build if it is
@@ -393,7 +393,7 @@ gke_test: &gke_test
     - setup_remote_docker
     - run:
         name: Configure Google Cloud
-        command: | 
+        command: |
           gcloud -q config set project $GKE_PROJECT
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/client_secrets.json
           echo $GCLOUD_KEY > $GOOGLE_APPLICATION_CREDENTIALS
@@ -404,11 +404,11 @@ gke_test: &gke_test
     # A GKE cluster name cannot contain non-alphanumeric characters (nor uppercase letters)
     - run:
         name: Export escaped GKE cluster name
-        command: | 
+        command: |
           echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
     - run:
         name: Start GKE environment
-        command: | 
+        command: |
           ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
     - <<: *install_helm_cli
     - <<: *run_e2e_tests
@@ -459,12 +459,12 @@ jobs:
       - <<: *exports
       - run:
           name: Run go unit tests
-          command: | 
+          command: |
             make test
       - setup_remote_docker
       - run:
           name: Run go integration tests for DB
-          command: | 
+          command: |
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
             docker run --network container:postgresql -d --name tests circleci/golang:${GOLANG_VERSION} tail -f /dev/null
             docker cp /go tests:/
@@ -476,15 +476,15 @@ jobs:
       - checkout
       - run:
           name: Install dashboard dependencies
-          command: | 
+          command: |
             yarn install --cwd=dashboard --frozen-lockfile
       - run:
           name: Run dashboard linter
-          command: | 
+          command: |
             yarn --cwd=dashboard run lint
       - run:
           name: Run dashboard unit tests
-          command: | 
+          command: |
             yarn --cwd=dashboard run test --maxWorkers=4 --coverage
   test_pinniped_proxy:
     docker:
@@ -493,8 +493,8 @@ jobs:
       - checkout
       - run:
           name: Run rust unit tests
-          command: | 
-              cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
+          command: |
+            cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
   test_chart_render:
     environment:
       <<: *common_envars
@@ -506,7 +506,7 @@ jobs:
       - <<: *install_helm_cli
       - run:
           name: Run chart template test
-          command: | 
+          command: |
             ./script/chart-template-test.sh
   build_go_images:
     docker:
@@ -536,7 +536,7 @@ jobs:
       - checkout
       - run:
           name: Create release
-          command: | 
+          command: |
             REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
   local_e2e_tests:
     machine: true
@@ -580,23 +580,24 @@ jobs:
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  sync_chart:
-    docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "cc:ed:2d:1f:74:3b:32:c3:99:62:d7:7d:81:af:01:e0"
-      - run:
-          name: Configure ssh keys
-          command: | 
-            if ls ~/.ssh/id_rsa_* 1> /dev/null 2>&1; then
-              # Change order to use configured ssh_key first
-              ssh-add -D
-              ssh-add ~/.ssh/id_rsa_* ~/.ssh/id_rsa
-            fi
-            ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
+  # WARNING: this job is currently disabled as we are still defining how we will be syncing the chart with the bitnami/chart repo.
+  # sync_chart:
+  #   docker:
+  #     - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+  #   steps:
+  #     - checkout
+  #     - add_ssh_keys:
+  #         fingerprints:
+  #           - "cc:ed:2d:1f:74:3b:32:c3:99:62:d7:7d:81:af:01:e0"
+  #     - run:
+  #         name: Configure ssh keys
+  #         command: | 
+  #           if ls ~/.ssh/id_rsa_* 1> /dev/null 2>&1; then
+  #             # Change order to use configured ssh_key first
+  #             ssh-add -D
+  #             ssh-add ~/.ssh/id_rsa_* ~/.ssh/id_rsa
+  #           fi
+  #           ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
   push_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
@@ -605,7 +606,7 @@ jobs:
       - <<: *exports
       - run:
           name: Push images
-          command: | 
+          command: |
             if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
               docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
               for IMAGE in << pipeline.parameters.IMAGES_TO_PUSH >>; do
