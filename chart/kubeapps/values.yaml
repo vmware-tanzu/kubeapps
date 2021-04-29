@@ -67,6 +67,10 @@ ingress:
   ##
   certManager: false
 
+  ## Set this to true in order to have the chart generate a self-signed TLS cert
+  ## for use.
+  selfSigned: false
+
   ## When the ingress is enabled, a host pointing to this will be created
   ##
   hostname: kubeapps.local
