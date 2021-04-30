@@ -27,4 +27,4 @@ The main configuration is located at this [CircleCI config file](../../.circleci
 
 Note that this process is independent of the release of the official Bitnami images and chart. These Bitnami images will be created according to their internal process (so the Golang, Node or Rust versions we define here are not used by them. Manual coordination is expected here if a major version bump happens to occur).
 
-Additionally, currently is the Kubeapps team who is in charge of sending a PR to the [chart repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) each time a new chart version is pushed to the main branch.
+Additionally, currently the Kubeapps team is responsible for sending a PR to the [chart repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) each time a new chart version is pushed to the main branch.
