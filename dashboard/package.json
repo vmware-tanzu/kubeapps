@@ -70,7 +70,7 @@
     "remark-gfm": "^1.0.0",
     "seamless-immutable": "^7.1.4",
     "semver": "^7.3.5",
-    "swagger-ui-react": "^3.47.1",
+    "swagger-ui-react": "^3.48.0",
     "typesafe-actions": "^5.1.0",
     "yaml": "1.10.2"
   },
