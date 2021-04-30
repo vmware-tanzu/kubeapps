@@ -10,17 +10,17 @@ export default function Test(props) {
     setValue(props.param.value);
   }, [props.param.value]);
 
-  const handleChange = newValue => {
+  const handleChange = (newValue) => {
     handleBasicFormParamChange(props.param)({
       currentTarget: {
-        value: "test"
-      }
+        value: "test",
+      },
     });
     setValue(newValue);
   };
 
   const selectedStyle = {
-    backgroundColor: "rgba(0, 140, 255, 0.19)"
+    backgroundColor: "rgba(0, 140, 255, 0.19)",
   };
 
   return (

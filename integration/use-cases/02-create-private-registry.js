@@ -58,7 +58,7 @@ test("Creates a private registry", async () => {
   try {
     await expect(page).toMatch(secret);
     await expect(page).toSelect("form > cds-form-group > cds-select > select", secret);
-  } catch(e) {
+  } catch (e) {
     // TODO(agamez): Remove this catch block once 2.3.2 is released
     await expect(page).toClick("label", { text: secret });
   }

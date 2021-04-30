@@ -1,9 +1,8 @@
-
 # Syncing App Repositories using a webhook
 
-##  Introduction
+## Introduction
 
-Kubeapps's default configuration schedules the syncing process of the App Repositories every *ten minutes*. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/values.yaml#L215) (`crontab: "*/10 * * * *"`).
+Kubeapps's default configuration schedules the syncing process of the App Repositories every _ten minutes_. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/values.yaml#L215) (`crontab: "*/10 * * * *"`).
 
 Nevertheless, this default approach might not be useful for environments with highly frequent changes. Moreover, if there are a few App Repositories with numerous changes while others hardly are modified, therefore, increasing the default global syncing periodicity is not a good approach.
 
@@ -13,8 +12,8 @@ A number of platforms do use webhooks for triggering actions when something occu
 Webhook notifications provide information about events in JSON format and are usually delivered by an HTTP(s) POST to an existing webhook endpoint URL.
 
 The example below will use Harbor for explaining how a webhook is configured for triggering an App Repository sync process.
-> In other platforms the process will be pretty similar. Doubts? Please feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you need further guidance!
 
+> In other platforms the process will be pretty similar. Doubts? Please feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you need further guidance!
 
 ## Creating and granting a ServiceAccount for authenticating requests
 
@@ -34,7 +33,7 @@ metadata:
 EOF
 ```
 
-Besides, a `ClusterRole` *apprepositories-refresh* should be already created in the cluster if the `rbac.create=true` was passed in the `values.yaml`  file. Otherwise, this object is created as follows:
+Besides, a `ClusterRole` _apprepositories-refresh_ should be already created in the cluster if the `rbac.create=true` was passed in the `values.yaml` file. Otherwise, this object is created as follows:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -53,9 +52,10 @@ rules:
       - update
 EOF
 ```
-> Note: this is only necessary if your cluster does not already have a `ClusterRole` *apprepositories-refresh*.
 
-Next, the `ClusterRole` *apprepositories-refresh* (with `get` and `update` permissions over `apprepositories`) has to be associated to the relevant namespace(s) by means of a `RoleBinding`:
+> Note: this is only necessary if your cluster does not already have a `ClusterRole` _apprepositories-refresh_.
+
+Next, the `ClusterRole` _apprepositories-refresh_ (with `get` and `update` permissions over `apprepositories`) has to be associated to the relevant namespace(s) by means of a `RoleBinding`:
 
 > To bind it in multiple namespaces, create as many `RoleBinding`s (changing `namespace: my-namespace` to match your needs) for each namespace.
 
@@ -77,16 +77,17 @@ subjects:
   namespace: default
 EOF
 ```
-> Note: remember that the namespace `kubeapps` is special as every App Repository added here is considered as a **global** one and it is shared across every namespace. Please take it into consideration before granting the ServiceAccount with permissions on the `kubeapps` namespace.
 
+> Note: remember that the namespace `kubeapps` is special as every App Repository added here is considered as a **global** one and it is shared across every namespace. Please take it into consideration before granting the ServiceAccount with permissions on the `kubeapps` namespace.
 
 ### Retrieving the ServiceAccount token
 
-The `<TOKEN>`  for the ServiceAccount *apprepositories-refresh* is retrieved:
+The `<TOKEN>` for the ServiceAccount _apprepositories-refresh_ is retrieved:
 
 ```bash
 kubectl get secret $(kubectl get serviceaccount apprepositories-refresh -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep apprepositories-refresh) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
 ```
+
 This value will be the Bearer token to be passed in the `Authentication` HTTP header.
 
 ## Configuring a webhook in Harbor
@@ -94,20 +95,22 @@ This value will be the Bearer token to be passed in the `Authentication` HTTP he
 A high-level description of the main steps is presented below; please refer to the [official Harbor documentation](https://goharbor.io/docs/1.10/working-with-projects/project-configuration/configure-webhooks/) for further information.
 
 1. Log in to the Harbor interface with an account that has at least project administrator privileges.
-2. Go to  *Projects*, select a project, and select  *Webhooks*.
-3. Enter this URL: `https://<KUBEAPPS_URL>/api/v1/clusters/<CLUSTER_NAME>/namespaces/<NAMESPACE_NAME>/apprepositories/<APPREPO_NAME>/refresh`. Modify `<KUBEAPPS_URL>` , `<CLUSTER_NAME>`, `<NAMESPACE_NAME>`, `<APPREPO_NAME>` to match your needs. 
-  > For instance: `https://<KUBEAPPS_URL>/api/v1/clusters/default/namespaces/my-namespace/apprepositories/my-repo/refresh` will update the App Repository `my-repo` in the namespace `my-namespace` of the cluster `default`.
-  
-4.  As authentication header enter `Bearer <TOKEN>`
-  > Note `<TOKEN>`is the value retrieved [before](#retrieving-the-serviceaccount-token).
-  
+2. Go to _Projects_, select a project, and select _Webhooks_.
+3. Enter this URL: `https://<KUBEAPPS_URL>/api/v1/clusters/<CLUSTER_NAME>/namespaces/<NAMESPACE_NAME>/apprepositories/<APPREPO_NAME>/refresh`. Modify `<KUBEAPPS_URL>` , `<CLUSTER_NAME>`, `<NAMESPACE_NAME>`, `<APPREPO_NAME>` to match your needs.
+
+   > For instance: `https://<KUBEAPPS_URL>/api/v1/clusters/default/namespaces/my-namespace/apprepositories/my-repo/refresh` will update the App Repository `my-repo` in the namespace `my-namespace` of the cluster `default`.
+
+4. As authentication header enter `Bearer <TOKEN>`
+
+   > Note `<TOKEN>`is the value retrieved [before](#retrieving-the-serviceaccount-token).
+
 5. Select as many events as you need to trigger notifications. The image below shows the common events that you would want for triggering a resync.
 
-6.  Click  *Continue*  to create the webhook.
+6. Click _Continue_ to create the webhook.
 
 This picture illustrates the configuration of a webhook in Habor:
 
-  ![Configuring a webhook in Harbor](../img/harbor-webhook.png)
+![Configuring a webhook in Harbor](../img/harbor-webhook.png)
 
 ## Final remarks
 

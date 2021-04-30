@@ -6,11 +6,11 @@ The purpose of this document is to guide you through the process of releasing a 
 
 The [values.yaml](../../chart/kubeapps/values.yaml) uses the following Bitnami images for various services:
 
-* [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags)
-* [bitnami/kubectl](https://hub.docker.com/r/bitnami/kubectl/tags)
-* [bitnami/oauth2-proxy](https://hub.docker.com/r/bitnami/oauth2-proxy/tags)
-* the [dashboard/Dockerfile](../../dashboard/Dockerfile) uses bitnami/nginx and [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) also (though the latter is a rolling tag since it's a build-only image).
-* the [pinniped-proxy/Dockerfile](../../cmd/pinniped-proxy/Dockerfile) uses the [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb/tags) image.
+- [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags)
+- [bitnami/kubectl](https://hub.docker.com/r/bitnami/kubectl/tags)
+- [bitnami/oauth2-proxy](https://hub.docker.com/r/bitnami/oauth2-proxy/tags)
+- the [dashboard/Dockerfile](../../dashboard/Dockerfile) uses bitnami/nginx and [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) also (though the latter is a rolling tag since it's a build-only image).
+- the [pinniped-proxy/Dockerfile](../../cmd/pinniped-proxy/Dockerfile) uses the [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb/tags) image.
 
 All tags for these images should be updated to their latest compatible versions and security patches.
 
@@ -36,7 +36,7 @@ yarn upgrade
 
 in the dashboard directory will update the frontend packages to the latest compatible versions.
 
-Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk fixing a security issue.  If so, discuss it with a peer and come to a decision on it, trying not to release with a high/medium severity issue.
+Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk fixing a security issue. If so, discuss it with a peer and come to a decision on it, trying not to release with a high/medium severity issue.
 
 ## 1 - Create a new git tag
 

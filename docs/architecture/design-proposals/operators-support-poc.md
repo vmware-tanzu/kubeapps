@@ -8,13 +8,13 @@ After the PoC, we should be able to have enough information to iterate over the 
 
 ## Operators Source of Truth
 
-Right now, there are two places in which the community publishes open source Operators. These two places are: 
+Right now, there are two places in which the community publishes open source Operators. These two places are:
 
- - Awesome-operators: https://github.com/operator-framework/awesome-operators. This GitHub repository is just a README file that can be used for people to publish a link to their Operators. There are no rules to add an Operator there, simply open a PR with a link for more info and a small description. 
+- Awesome-operators: https://github.com/operator-framework/awesome-operators. This GitHub repository is just a README file that can be used for people to publish a link to their Operators. There are no rules to add an Operator there, simply open a PR with a link for more info and a small description.
 
- - OperatorHub: It currently contains 110 Operators. From its page: "OperatorHub.io was launched by Red Hat in conjunction with Amazon, Microsoft, and Google forming the initial group that are supporting the initiative". It’s a list of Operators more curated that leverages the [Operator Lifecycle Manager (OLM)](https://github.com/operator-framework/operator-lifecycle-manager). This is a centralized source of Operators that are more similar to what we have right now for charts. It contains metadata, icons, a standard way of installation... 
+- OperatorHub: It currently contains 110 Operators. From its page: "OperatorHub.io was launched by Red Hat in conjunction with Amazon, Microsoft, and Google forming the initial group that are supporting the initiative". It’s a list of Operators more curated that leverages the [Operator Lifecycle Manager (OLM)](https://github.com/operator-framework/operator-lifecycle-manager). This is a centralized source of Operators that are more similar to what we have right now for charts. It contains metadata, icons, a standard way of installation...
 
-Since Operators listed in the OperatorHub follow a standard and contain the required information to list and deploy them, we will use that as the source of Operators for Kubeapps. We could add a link to the awesome-operators list in the application so people can browse additional Operators. 
+Since Operators listed in the OperatorHub follow a standard and contain the required information to list and deploy them, we will use that as the source of Operators for Kubeapps. We could add a link to the awesome-operators list in the application so people can browse additional Operators.
 
 There are two types of Operators: the ones compatible just with Openshift and the ones compatible with any Kubernetes distribution. Both lists are published in GitHub. This is the list of Operators compatible with vanilla Kubernetes distributions: https://github.com/operator-framework/community-operators/tree/master/upstream-community-operators
 
@@ -22,7 +22,7 @@ There are two types of Operators: the ones compatible just with Openshift and th
 
 In this section, we will define the UX for a user that explores and deploys an Operator. In order to simplify the solution, a working environment with `kubectl` will be needed.
 
-*NOTE*: There are several steps in the management of Operators that require cluster-admin privileges. For this first implementation, we will assume that the persona using Kubeapps is a cluster administrator with admin permissions.
+_NOTE_: There are several steps in the management of Operators that require cluster-admin privileges. For this first implementation, we will assume that the persona using Kubeapps is a cluster administrator with admin permissions.
 
 1. The user goes to the Configuration > Operators section. Since they don't have the OLM installed, they get an error:
 
@@ -44,7 +44,7 @@ $ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/rele
 $ kubectl create -f https://operatorhub.io/install/etcd.yaml
 ```
 
-*NOTE:* Some Operators are namespaced. This means that it will be available just in one namespace.
+_NOTE:_ Some Operators are namespaced. This means that it will be available just in one namespace.
 
 7. After this point, Operators in a namespace will be listed. Selecting "All Namespaces" will show all the Operators in the different namespaces (showing if they are globally available or not). Clicking in one of those Operators would take the user to the Operator view (step 5).
 
@@ -52,7 +52,7 @@ $ kubectl create -f https://operatorhub.io/install/etcd.yaml
 
  <img src="./img/operator-catalog.png">
 
-*NOTE:* Another option would be to create a self-contained view for the instance types catalog, similar to what Kubeapps has with Service Classes (Open Service Broker).
+_NOTE:_ Another option would be to create a self-contained view for the instance types catalog, similar to what Kubeapps has with Service Classes (Open Service Broker).
 
 9. When clicking in a Operator instance type, the form to create the instance will be rendered. Here is where the user can modify the given example with any other specification:
 

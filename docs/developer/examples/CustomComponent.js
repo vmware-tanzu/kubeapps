@@ -1,31 +1,36 @@
 import React, { useEffect, useState } from "react"; //This is a super simple react component to demo how a custom component could look
 
 export default function Test(props) {
-  const {
-    param,
-    handleBasicFormParamChange
-  } = props;
+  const { param, handleBasicFormParamChange } = props;
   const [value, setValue] = useState(props.value || "");
   useEffect(() => {
     setValue(props.param.value);
   }, [props.param.value]);
 
-  const handleChange = newValue => {
+  const handleChange = (newValue) => {
     handleBasicFormParamChange(props.param)({
       currentTarget: {
-        value: "test"
-      }
+        value: "test",
+      },
     });
     setValue(newValue);
   };
 
   const selectedStyle = {
-    backgroundColor: "rgba(0, 140, 255, 0.19)"
+    backgroundColor: "rgba(0, 140, 255, 0.19)",
   };
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-    key: `test`,
-    type: "button",
-    onClick: () => handleChange("test"),
-    style: "test" === value ? selectedStyle : null
-  }, "Test"));
+  return /*#__PURE__*/ React.createElement(
+    React.Fragment,
+    null,
+    /*#__PURE__*/ React.createElement(
+      "button",
+      {
+        key: `test`,
+        type: "button",
+        onClick: () => handleChange("test"),
+        style: "test" === value ? selectedStyle : null,
+      },
+      "Test"
+    )
+  );
 }
