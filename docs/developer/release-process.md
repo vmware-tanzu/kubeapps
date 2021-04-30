@@ -5,7 +5,7 @@ The purpose of this document is to guide you through the process of releasing a 
 ## 0 - Ensure all 3rd-party dependencies are up to date
 
 This step aims at decreasing the number of outdated dependencies so that we can get the latest patches with bug and security fixes.
-It consists of four mian stages: update the development images, update the CI, update the chart and, finally, update the dependencies.
+It consists of four main stages: update the development images, update the CI, update the chart and, finally, update the dependencies.
 
 ### 0.1 - Development images
 
@@ -34,7 +34,7 @@ Find further information in the [CI configuration](./ci.md) and the [e2e tests d
 
 #### 0.2.1 - CI configuration
 
-In the [CircleCI configuration](../../.circleci/config.yml) we have an initial declaration of the variables used along the file.
+In the [CircleCI configuration](../../.circleci/config.yml) we have an initial declaration of the variables used along with the file.
 The versions used there _must_ match the ones used for building the container images. Consequently, these variables _must_ be changed accordingly:
 
 - `GOLANG_VERSION` _must_ match the versions used by our services written in Golang, for instance, [kubeops](../../cmd/kubeops/Dockerfile).
@@ -54,7 +54,7 @@ The versions used there _must_ match the ones used for building the container im
 
 ### 0.3 - Development chart
 
-Despite the fact that the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) is automatically able to retrieve the latest dependency versions, we still need to sync the versions declared in our own development chart.
+Even though the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) is automatically able to retrieve the latest dependency versions, we still need to sync the versions declared in our own development chart.
 
 #### 0.3.1 - Chart images
 
@@ -115,31 +115,41 @@ cargo update
 
 > As part of this release process, the dashboard deps _must_ be updated, the golang deps _should_ be updated, the rust deps _should_ be updated and the security check _must_ be performed.
 
-## 1 - Create a new git tag
+## 1 - Send a PR to the bitnami/chart repository
 
-The first step is to tag the repository master branch tip and push it upstream. It is important to note that the tag name will be used as the release name.
+Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). To this end, we need to send a PR with the changes to their repository and wait until it gets accepted.
+
+> This step is currently manual albeit prone to change shortly.
+
+## 2 - Create a new git tag
+
+Once the dependencies have been updated and the chart changes merged, the next step is to tagging the latest commit in master and pushing it to the main branch. Please note that the tag name will be used as the release name.
+
+For doing so, execute the following commands:
 
 ```bash
-export VERSION_NAME="v1.0.0-beta.1"
+export VERSION_NAME="v1.0.0-beta.1" # edit it accordingly
 
 git tag ${VERSION_NAME}
 git push origin ${VERSION_NAME}
 ```
 
-This will trigger a build, test and **release** [workflow in our CI](https://circleci.com/gh/kubeapps/workflows).
+A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](./ci.md).
 
-## 2 - Complete the GitHub release notes
+> When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
 
-Once the release job is finished, you will have a GitHub release draft pre-populated. You still must **add a high level description with the release highlights**. Save the draft and **do not publish it yet**.
+## 3 - Complete the GitHub release notes
 
-## 3 - Bump the chart version
+Once the release job is finished, you will have a pre-populated [draft GitHub release](https://github.com/kubeapps/kubeapps/releases).
 
-At this point, you will have a new set of published docker images as well as some release notes waiting to be published.
-
-But before, we need to create and merge a PR with a chart version bump in `chart/kubeapps/Chart.yaml` ([example](https://github.com/kubeapps/kubeapps/pull/663/files)). This will trigger another CI job that will publish a new version of the chart pointing to the new Docker images built in the step 1.
+You still must **add a high-level description with the release highlights**. Save the draft and **do not publish it yet**. Then, get these notes reviewed by another Kubeapps maintainer.
 
 ## 4 - Publish the GitHub release
 
-Once the chart has been published and the release notes reviewed by a peer, publish the release and we are done!
+Once the new version of the [Kubeapps official chart](<(https://github.com/bitnami/charts/tree/master/bitnami/kubeapps)>) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/kubeapps/kubeapps/releases).
 
-Don't forget to promote the release in #kubeapps!
+> Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
+
+## 5 - Promote the release
+
+Tell the community about the new release by using our Kubernetes slack [#kubeapps channel](https://kubernetes.slack.com/messages/kubeapps). If it includes major features, you might consider promoting it on social media.
