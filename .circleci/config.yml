@@ -117,14 +117,6 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      # - sync_chart:
-      #     <<: *build_on_master
-      #     requires:
-      #       - local_e2e_tests
-      #       - GKE_1_17_MASTER
-      #       - GKE_1_17_LATEST_RELEASE
-      #       - GKE_1_18_MASTER
-      #       - GKE_1_18_LATEST_RELEASE
       - push_images:
           <<: *build_on_master
           requires:
@@ -580,24 +572,6 @@ jobs:
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  # WARNING: this job is currently disabled as we are still defining how we will be syncing the chart with the bitnami/chart repo.
-  # sync_chart:
-  #   docker:
-  #     - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-  #   steps:
-  #     - checkout
-  #     - add_ssh_keys:
-  #         fingerprints:
-  #           - "cc:ed:2d:1f:74:3b:32:c3:99:62:d7:7d:81:af:01:e0"
-  #     - run:
-  #         name: Configure ssh keys
-  #         command: | 
-  #           if ls ~/.ssh/id_rsa_* 1> /dev/null 2>&1; then
-  #             # Change order to use configured ssh_key first
-  #             ssh-add -D
-  #             ssh-add ~/.ssh/id_rsa_* ~/.ssh/id_rsa
-  #           fi
-  #           ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
   push_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>

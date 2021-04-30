@@ -284,7 +284,7 @@ Kubeapps uses the currently logged-in user credential to retrieve the list of al
 To reduce this time, you can increase the number of checks that Kubeapps will perform in parallel (per connection) setting the value: `kubeops.burst=<desired_number>` and `kubeops.QPS=<desired_number>`. The default value, if not set, is 15 burst requests and 10 QPS afterwards.
 
 ### Why am I seeing two charts?
-The official Kubeapps chart is [the one provided by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), however, exclusively for development purposes, the Kubeapps repository also has its [own chart](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps) with the latest development versions.
+The official Kubeapps chart is [the one provided by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), however, exclusively for development purposes, the Kubeapps repository also has its [own chart](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps) with the latest development changes.
 
 
 ### More questions? 
