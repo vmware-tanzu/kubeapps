@@ -198,6 +198,7 @@ kubectl delete namespace kubeapps
 - [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
 - [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
 - [Slow response when listing namespaces?](#slow-response-when-listing-namespaces)
+- [Why am I seeing two charts?](#why-am-i-seeing-two-charts?)
 - [More questions?](#more-questions)
 
 ### How to install Kubeapps for demo purposes?
@@ -281,6 +282,10 @@ Yes! You can get started by following the [operators documentation](https://gith
 Kubeapps uses the currently logged-in user credential to retrieve the list of all namespaces. If the user doesn't have permission to list namespaces, the backend will try again with its own service account to list all namespaces and then iterate through each namespace to check if the user has permissions to get secrets for each namespace (to verify if they should be allowed to use that namespace or not and hence whether it is included in the selector). This can lead to a slow response if the number of namespaces on the cluster is large.
 
 To reduce this time, you can increase the number of checks that Kubeapps will perform in parallel (per connection) setting the value: `kubeops.burst=<desired_number>` and `kubeops.QPS=<desired_number>`. The default value, if not set, is 15 burst requests and 10 QPS afterwards.
+
+### Why am I seeing two charts?
+The official Kubeapps chart is [the one provided by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), however, exclusively for development purposes, the Kubeapps repository also has its [own chart](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps) with the latest development changes.
+
 
 ### More questions? 
 

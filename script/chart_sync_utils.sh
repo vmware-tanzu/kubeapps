@@ -49,13 +49,16 @@ replaceImage() {
     local currentImageEscaped="kubeapps\/${service}"
     local targetImageEscaped="bitnami\/kubeapps-${service}"
 
-    local header=""
+    echo "Replacing ${service}"...
+
+    local curl_opts=()
     if [[ $ACCESS_TOKEN != "" ]]; then
-        header="-H 'Authorization: token ${ACCESS_TOKEN}'"
+        curl_opts=(-s -H "Authorization: token ${ACCESS_TOKEN}")
     fi
 
     # Get the latest tag from the bitnami repository
-    local tag=`curl ${header} https://api.github.com/repos/bitnami/${repoName}/tags | jq -r '.[0].name'`
+   local tag=`curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name'`
+
     if [[ $tag == "" ]]; then
         echo "ERROR: Unable to obtain latest tag for ${repoName}. Aborting"
         exit 1

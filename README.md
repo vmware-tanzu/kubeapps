@@ -23,6 +23,8 @@ helm install kubeapps --namespace kubeapps bitnami/kubeapps
 
 ***Note:*** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work. For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](./docs/user/getting-started.md).
 
+> Please also take into account that Kubeapps is using the [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) as the official one. The chart inside this repository is only intended to be used for development purposes.
+
 ## Developer Documentation
 
 Please refer to:
