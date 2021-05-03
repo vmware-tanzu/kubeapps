@@ -28,7 +28,7 @@ Each plugin consists of 3 source files (and some generated files):
 
 This means that the actual go command just needs to load all the `.so` files from the specified plugin dirs and register them to start. You can see this in the `kubeapps-api-service/server/server.go` file.
 
-**Note**: I've chosen to demo both simple RPC calls (in the `kubeappsapis/core/v1/core.proto` you'll see the `PluginsAvailable` which returns a simple `PluginsAvailableResponse`) while the `GetAvailablePackages` call in `kubeappsapis/plugins/packagerepositories/helm/v1/helm.proto` returns a streaming response - no more need for pagination :) For more info about these two types of RPC calls, see [core-concepts](https://grpc.io/docs/what-is-grpc/core-concepts/).
+**Note**: I've chosen to demo both simple RPC calls (in the `kubeappsapis/core/v1/core.proto` you'll see the `PluginsAvailable` which returns a simple `PluginsAvailableResponse`) while the `GetAvailablePackages` call in `kubeappsapis/plugins/packagerepositories/helm/v1/helm.proto` returns a streaming response. For more info about these two types of RPC calls, see [core-concepts](https://grpc.io/docs/what-is-grpc/core-concepts/).
 
 ## CLI
 
