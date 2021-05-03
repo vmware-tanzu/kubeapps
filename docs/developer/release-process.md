@@ -95,7 +95,7 @@ cd dashboard
 yarn upgrade
 ```
 
-- Check the outdated [golang dependencies](../../go.mod) by running:
+- Check the outdated [golang dependencies](../../go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
 
 ```bash
 go mod tidy
@@ -123,7 +123,7 @@ Since the chart that we host in the Kubeapps repository is only intended for dev
 
 ## 2 - Create a new git tag
 
-Once the dependencies have been updated and the chart changes merged, the next step is to tagging the latest commit in master and pushing it to the main branch. Please note that the tag name will be used as the release name.
+Once the dependencies have been updated and the chart changes merged, the next step is to tag the latest commit in master and pushing it to the main branch. Please note that the tag name will be used as the release name.
 
 For doing so, execute the following commands:
 
