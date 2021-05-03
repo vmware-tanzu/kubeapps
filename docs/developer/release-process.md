@@ -111,19 +111,36 @@ cd cmd/pinniped-proxy/
 cargo update
 ```
 
-- Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk fixing a security issue. If so, discuss it with a peer and come to a decision on it, trying not to release with a high/medium severity issue.
+- Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk fixing a security issue. If so, discuss it with another Kubeapps maintainer and come to a decision on it, trying not to release with a high/medium severity issue.
 
 > As part of this release process, the dashboard deps _must_ be updated, the golang deps _should_ be updated, the rust deps _should_ be updated and the security check _must_ be performed.
 
 ## 1 - Send a PR to the bitnami/chart repository
 
-Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). To this end, we need to send a PR with the changes to their repository and wait until it gets accepted.
+Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). To this end, we need to send a PR with the changes to their repository and wait until it gets accepted. Please note that the changes in both charts may involve additions and deletions, so we need to handle them properly (e.g., deleting the files first, performing a rsync, etc.).
 
 > This step is currently manual albeit prone to change shortly.
 
-## 2 - Create a new git tag
+## 2 - Select the commit to tag and perform a manual test
 
-Once the dependencies have been updated and the chart changes merged, the next step is to tag the latest commit in master and pushing it to the main branch. Please note that the tag name will be used as the release name.
+Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch. 
+
+Even though the existing test base in our repository, we still  _should_ perform a manual review of the application as it is in the selected commit. To do so, follow these instructions:
+
+- Perform a checkout of the chosen commit.
+- Install Kubeapps using the development chart: `helm install kubeapps ./chart/kubeapps/  -n kubeapps`
+  - Note that if you are not using the latest commit in the main branch, you may have to locally build the container images so that the cluster uses the proper images.
+- Ensure the core functionality is working:
+  - Add a repository
+  - Install an application from the catalog
+  - Upgrade this application
+  - Delete this application
+  - Deploy an application in an additional cluster
+
+
+## 3 - Create a git tag
+
+Next, create a tag for the aforementioned commit and push it to the main branch. Please note that the tag name will be used as the release name.
 
 For doing so, execute the following commands:
 
@@ -138,18 +155,20 @@ A new tag pushed to the repository will trigger, apart from the usual test and b
 
 > When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
 
-## 3 - Complete the GitHub release notes
+## 4 - Complete the GitHub release notes
 
 Once the release job is finished, you will have a pre-populated [draft GitHub release](https://github.com/kubeapps/kubeapps/releases).
 
-You still must **add a high-level description with the release highlights**. Save the draft and **do not publish it yet**. Then, get these notes reviewed by another Kubeapps maintainer.
+You still _must_ add a high-level description with the release highlights. Please take apart those commits just bumping dependencies up; it may prevent important commits from being clearly identified by our users.
 
-## 4 - Publish the GitHub release
+Then, save the draft and **do not publish it yet** and get these notes reviewed by another Kubeapps maintainer.
+
+## 5 - Publish the GitHub release
 
 Once the new version of the [Kubeapps official chart](<(https://github.com/bitnami/charts/tree/master/bitnami/kubeapps)>) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/kubeapps/kubeapps/releases).
 
 > Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
 
-## 5 - Promote the release
+## 6 - Promote the release
 
 Tell the community about the new release by using our Kubernetes slack [#kubeapps channel](https://kubernetes.slack.com/messages/kubeapps). If it includes major features, you might consider promoting it on social media.
