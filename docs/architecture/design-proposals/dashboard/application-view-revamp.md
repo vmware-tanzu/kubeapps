@@ -8,10 +8,10 @@ Parent issue: https://github.com/kubeapps/kubeapps/issues/1524
 
 The goal of this revamp is to improve the Application View, which is one of the core views of the project so it gives a better user experience in different areas:
 
- - Discoverability. It should be possible to obtain information about the application dependencies. For example, Kubeapps should show that MariaDB is a dependency of WordPress. Details at https://github.com/kubeapps/kubeapps/issues/529
- - Error Detection. Make an easy to understand view that can point the user to the piece(s) of the chart that is failing.
- - Usability. Make it easier, if possible, to modify/upgrade/rollback/test/delete an application.
- - Debugging. When something fails while working with a release, it should be possible to detect the cause of the issue and fix it without the need of a terminal. This means being able to report kubernetes events/errors to the user and being able to read logs.
+- Discoverability. It should be possible to obtain information about the application dependencies. For example, Kubeapps should show that MariaDB is a dependency of WordPress. Details at https://github.com/kubeapps/kubeapps/issues/529
+- Error Detection. Make an easy to understand view that can point the user to the piece(s) of the chart that is failing.
+- Usability. Make it easier, if possible, to modify/upgrade/rollback/test/delete an application.
+- Debugging. When something fails while working with a release, it should be possible to detect the cause of the issue and fix it without the need of a terminal. This means being able to report kubernetes events/errors to the user and being able to read logs.
 
 ## Action Items
 
@@ -72,7 +72,7 @@ The current list of URLs can be improved with two small changes:
 
 Finally, we can show a single resource table with all the resources so users can inspect in detail the different resources of the application without adding too much noise to the view. Apart from the list of resources we are currently showing, we can add the list of pods related to the application (the ones that are related to a Deployment/Statefulset/Daemonset).
 
-Apart from the basic information of the resource, we could add a summary (human-friendly) to know the status of the resource if possible. 
+Apart from the basic information of the resource, we could add a summary (human-friendly) to know the status of the resource if possible.
 
 We can also show different buttons in order to show the resource YAML, description and logs if available (available for pods, services and workloads).
 

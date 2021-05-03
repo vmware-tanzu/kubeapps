@@ -22,7 +22,7 @@ And for the advanced tab:
 
 <img src="./img/deployment-form-adv.png" width="500px">
 
-*Note that the design may vary, the final proposal will be submitted in a different PR
+\*Note that the design may vary, the final proposal will be submitted in a different PR
 
 Once a user has deployed the application, when trying to upgrade, the basic form should be shown. The form will be pre-filled with the values of the previous version. When switching to a new version, those basic parameters should be maintained.
 
@@ -38,9 +38,9 @@ This JSON Schema allows us to know the structure of the `values.yaml` file but, 
 
 We should decide the first subset of applications and parameters that we want to support in order to deliver the first version of this feature. Based on the popularity of the charts managed by Bitnami that are installed through Kubeapps, we have selected:
 
-1.	bitnami/wordpress
-2.	bitnami/apache
-3.	bitnami/postgresql
+1. bitnami/wordpress
+2. bitnami/apache
+3. bitnami/postgresql
 
 Based on those applications, the first batch of parameters we can support is:
 
@@ -68,15 +68,23 @@ Note that we should be able to represent any parameter in a generic way. We are 
 Based on the above parameters, this may be an example of a JSON Schema for WordPress:
 
 ```json
-{ 
+{
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
 
   "properties": {
-    "wordpressUsername": { "type": "string", "title": "Username", "form": "username" },
-    "wordpressPassword": { "type": "string", "title": "Password", "form": "password" },
+    "wordpressUsername": {
+      "type": "string",
+      "title": "Username",
+      "form": "username"
+    },
+    "wordpressPassword": {
+      "type": "string",
+      "title": "Password",
+      "form": "password"
+    },
     "wordpressEmail": { "type": "string", "title": "Email", "form": "email" },
-    "mariadb": { 
+    "mariadb": {
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean", "title": "Enable External Database" }
@@ -101,10 +109,7 @@ Based on the above parameters, this may be an example of a JSON Schema for WordP
           "type": "string",
           "title": "Disk Size",
           "form": "diskSize",
-          "anyOf": [
-            {"pattern": ".*"},
-            {"enum": ["10Gi", "50Gi", "100Gi"]},
-          ]
+          "anyOf": [{ "pattern": ".*" }, { "enum": ["10Gi", "50Gi", "100Gi"] }]
         }
       }
     },
@@ -132,14 +137,27 @@ Based on the above parameters, this may be an example of a JSON Schema for WordP
               ]
             }
           }
-        },
+        }
       }
     },
-    "enableMetrics": { "type": "boolean", "title": "Enable Metrics", "form": "enableMetrics" },
-    "replicas": { "type": "integer", "title": "Number of Replicas", "form": "replicas" }
+    "enableMetrics": {
+      "type": "boolean",
+      "title": "Enable Metrics",
+      "form": "enableMetrics"
+    },
+    "replicas": {
+      "type": "integer",
+      "title": "Number of Replicas",
+      "form": "replicas"
+    }
   },
 
-  "required": ["wordpressUsername", "wordpressEmail", "persistence", "resources"],
+  "required": [
+    "wordpressUsername",
+    "wordpressEmail",
+    "persistence",
+    "resources"
+  ]
 }
 ```
 

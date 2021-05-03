@@ -70,7 +70,7 @@ In the case of Google we can use an OAuth 2.0 client ID. You can find more infor
 Login to VMware Cloud Services and select the organization which you want to use.
 
 1. Select View Organization (under Organization settings of the org menu),
-  ![Copying the bearer token](../img/csp-view-organization.png)
+   ![Copying the bearer token](../img/csp-view-organization.png)
 2. Click on the OAuth Apps tab,
 3. Click Create App, select Web App and continue,
 4. Enter a name and description for your OAuth app,
@@ -171,8 +171,8 @@ helm install kubeapps bitnami/kubeapps \
 Google Kubernetes Engine does not allow an OIDC IDToken to be used to authenticate requests to the managed API server, instead requiring the standard OAuth2 access token.
 For this reason, when deploying Kubeapps on GKE we need to ensure that
 
-* The scopes required by the user to interact with cloud platform are included, and
-* The Kubeapps frontend uses the OAuth2 `access_key` as the bearer token when communicating with the managed Kubernetes API
+- The scopes required by the user to interact with cloud platform are included, and
+- The Kubeapps frontend uses the OAuth2 `access_key` as the bearer token when communicating with the managed Kubernetes API
 
 Note that using the custom `google` provider here enables google to prompt the user for consent for the specific permissions requested in the scopes below, in a user-friendly way. You can also use the `oidc` provider but in this case the user is not prompted for the extra consent:
 
@@ -292,7 +292,7 @@ EOF
 
 ## Debugging auth failures when using OIDC
 
-If you find after configuring your OIDC/OAuth2 setup following the above instructions, that although you can successfully authenticate with your provider you are nonetheless unable to login to Kubeapps but instead see a 403 or 401 request in the browser's debugger, then you will need to investigate *why* the Kubernetes cluster is not accepting your credential.
+If you find after configuring your OIDC/OAuth2 setup following the above instructions, that although you can successfully authenticate with your provider you are nonetheless unable to login to Kubeapps but instead see a 403 or 401 request in the browser's debugger, then you will need to investigate _why_ the Kubernetes cluster is not accepting your credential.
 
 ### Viewing the JWT id token
 
@@ -307,7 +307,7 @@ Once the deployment runs a new container with the extra option, Kubeapps will th
 
 To view the token, in your browser debugger's Network tab, watch for the request to `/api/clusters/default` or similar which will have a 40X status. Click on this request to view the headers and in the Response headers look for the `Authorization` header. The bearer token of the value will be the base64-encoded `id_token`. Copy the token as shown:
 
-  ![Copying the bearer token](../img/oidc-debug-copy-bearer-token.png)
+![Copying the bearer token](../img/oidc-debug-copy-bearer-token.png)
 
 ### Testing the JWT Token directly with your Kubernetes cluster
 
@@ -333,7 +333,7 @@ You should see the same status that you saw in the browser (as Kubeapps is using
 ### Checking your Kubernetes cluster OIDC options
 
 Once you can reproduce the issue, there are a couple of possibilities for the cause which commonly trip people up.
-One common issue is that the Kubernetes cluster's api server is not configured for oidc (some people don't realise this is necessary). This is easy to check by grepping for `oidc` in the api server pod output, for example, if your cluster *is* configured for OpenID Connect, you should see something like:
+One common issue is that the Kubernetes cluster's api server is not configured for oidc (some people don't realise this is necessary). This is easy to check by grepping for `oidc` in the api server pod output, for example, if your cluster _is_ configured for OpenID Connect, you should see something like:
 
 ```bash
 $ kubectl -n kube-system get po -l component=kube-apiserver -o yaml | grep oidc

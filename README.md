@@ -13,15 +13,15 @@ Kubeapps is a web-based UI for deploying and managing applications in Kubernetes
 
 ## Quick Start
 
-Use the Helm chart to install the latest version of Kubeapps: 
+Use the Helm chart to install the latest version of Kubeapps:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
-``` 
+```
 
-***Note:*** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work. For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](./docs/user/getting-started.md).
+**_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work. For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](./docs/user/getting-started.md).
 
 > Please also take into account that Kubeapps is using the [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) as the official one. The chart inside this repository is only intended to be used for development purposes.
 
@@ -49,7 +49,6 @@ If you have followed the instructions for [installing Kubeapps](./docs/user/gett
 Whereas Kubeapps does not have yet a well-designed API, we still want to share the current status of the APIs used across the internal components. Check out the [latest API online documentation](https://app.swaggerhub.com/apis/kubeapps/Kubeapps) or download the Kubeapps [OpenAPI Specification yaml file](./dashboard/public/openapi.yaml) from the repository.
 
 Feel free to contribute using this guide on [how to update the API docs](./docs/developer/update-api-docs.md) and send us a PR if you find any errors.
-
 
 > This API documentation is subject to change in each Kubeapps version. If you are interested in the Kubeapps API, please [reach out to us](https://kubernetes.slack.com/messages/kubeapps) for further information.
 

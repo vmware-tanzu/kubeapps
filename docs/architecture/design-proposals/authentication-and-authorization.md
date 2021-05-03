@@ -21,18 +21,18 @@ As described above, this is a solved problem in Kubernetes through the use of Ku
 
 ## Goals and Non-Goals
 
-* Enable using user provided Kubernetes credentials to access Kubernetes APIs from the UI
-* Leverage existing Kubernetes RBAC roles to restrict unauthorized operations, providing a mechanism to restrict operations by namespaces or type (Helm, Kubeless, Service Catalog, etc.)
-* Support the ability to expose Kubeapps externally in a secure way, enabling easier access to Kubeapps without having to install the CLI
-* Avoid introducing a separate way to manage access and authorization to Kubernetes resources (e.g. Kubeapps internal user database)
-* Don't support every possible Kubernetes authentication provider & method
+- Enable using user provided Kubernetes credentials to access Kubernetes APIs from the UI
+- Leverage existing Kubernetes RBAC roles to restrict unauthorized operations, providing a mechanism to restrict operations by namespaces or type (Helm, Kubeless, Service Catalog, etc.)
+- Support the ability to expose Kubeapps externally in a secure way, enabling easier access to Kubeapps without having to install the CLI
+- Avoid introducing a separate way to manage access and authorization to Kubernetes resources (e.g. Kubeapps internal user database)
+- Don't support every possible Kubernetes authentication provider & method
 
 ## User Stories
 
-* As a cluster operator, I want to expose Kubeapps externally but only let authorized users perform certain operations
-* As a member of one engineering team in an organization, I want the ability to deploy and manage applications within my team's namespaces, but I don't want to have access to another team's applications
-* As an SRE, I want to provide my team access to view the state of running applications in the cluster, but I don't want to give out write access to create or delete applications
-* As an SRE, I want to restrict access to provision more expensive service plans from the Service Catalog
+- As a cluster operator, I want to expose Kubeapps externally but only let authorized users perform certain operations
+- As a member of one engineering team in an organization, I want the ability to deploy and manage applications within my team's namespaces, but I don't want to have access to another team's applications
+- As an SRE, I want to provide my team access to view the state of running applications in the cluster, but I don't want to give out write access to create or delete applications
+- As an SRE, I want to restrict access to provision more expensive service plans from the Service Catalog
 
 ## Methods of Authentication
 

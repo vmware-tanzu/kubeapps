@@ -14,18 +14,18 @@ The goal of this document is to propose a consistent error handling mechanism th
 
 ### Background
 
-Currently, error handling is managed per-case basis, via try/catch for rendering errors or by dispatching custom Redux actions. Then, these errors are handled and shown inside those specific components.  
+Currently, error handling is managed per-case basis, via try/catch for rendering errors or by dispatching custom Redux actions. Then, these errors are handled and shown inside those specific components.
 
 ## Overview
 
 We want to improve the error handling of both unexpected and expected/handled errors so we can achieve:
 
-* Unexpected errors are always handled and the user will be notified about them. They will not be masked in half-rendered or corrupted views.
-* There will always be a place where errors can be shown.
-* Error messages must be shown in the UI in a consistent way.
-* We will have a defined API to raise errors. Converging resource specific error actions.
-* Both unexpected and handled errors should be raised and shown via the same mechanism. This means that for example React Components and async Thunk Actions have a consistent way raising an error. 
-* Support showing more than one error. Important in our case because we rely on calling multiple API endpoints (create secret, create appRepository), in parallel for a single purpose (add new repository).
+- Unexpected errors are always handled and the user will be notified about them. They will not be masked in half-rendered or corrupted views.
+- There will always be a place where errors can be shown.
+- Error messages must be shown in the UI in a consistent way.
+- We will have a defined API to raise errors. Converging resource specific error actions.
+- Both unexpected and handled errors should be raised and shown via the same mechanism. This means that for example React Components and async Thunk Actions have a consistent way raising an error.
+- Support showing more than one error. Important in our case because we rely on calling multiple API endpoints (create secret, create appRepository), in parallel for a single purpose (add new repository).
 
 ## Detailed design
 
@@ -65,9 +65,9 @@ Currently, we are doing quite a good job on the way we expose specific errors to
 
 This approach is good, but it has some drawbacks:
 
-* The error render happens in every single component that calls the `ErrorSelector`, and this means that it is easy to miss consistency.
-* We require to have a error placeholder in every page, otherwise if an error is raised and captured in a page without error boundary it will not be shown.
-* By design, it does not support showing multiple errors at the same time, limiting its extensibility.
+- The error render happens in every single component that calls the `ErrorSelector`, and this means that it is easy to miss consistency.
+- We require to have a error placeholder in every page, otherwise if an error is raised and captured in a page without error boundary it will not be shown.
+- By design, it does not support showing multiple errors at the same time, limiting its extensibility.
 
 #### Implementation details: Single errorContainer connected to global Redux error namespace
 
@@ -89,8 +89,8 @@ There will be two ways to interact with errors, both of them implemented using p
 
 Different components or Thunk Actions will be able to "raise" an error by dispatching it and some of its properties as a generic "kubeapps@ERROR/SHOW" Redux action. Some functional requirements:
 
-* This action should contain in its payload enough properties for the ErrorSelector to be able to identify which error is and how to handle it.
-* `kubeapps@ERROR/SHOW` will replace current `ERROR_APPS`, `ERROR_CATALOG`, `ERROR_CHART`, `ERROR_README`, `ERROR_REPOS` and `AUTHENTICATION_ERROR`
+- This action should contain in its payload enough properties for the ErrorSelector to be able to identify which error is and how to handle it.
+- `kubeapps@ERROR/SHOW` will replace current `ERROR_APPS`, `ERROR_CATALOG`, `ERROR_CHART`, `ERROR_README`, `ERROR_REPOS` and `AUTHENTICATION_ERROR`
 
 2 - To clear all or a single error
 
@@ -99,7 +99,7 @@ There needs to be a way to remove a single error from the store or all of them a
 This error can be triggered in two scenarios.
 
 1. When the user changes the path, we capture LOCATION_CHANGE in the errors reducer and **clear all errors**.
-2. When the user click on the "close" link in the error, we **clear a single error** referenced by its ID. `{ Type: "ERROR/CLEAR", payload: { id: "errorID",  } }`.
+2. When the user click on the "close" link in the error, we **clear a single error** referenced by its ID. `{ Type: "ERROR/CLEAR", payload: { id: "errorID", } }`.
 
 ##### Reducer and store info
 
@@ -107,14 +107,14 @@ We will create a new reducer called `errors` which will be in charge of processi
 
 The store will be defined by following [this common](https://redux.js.org/recipes/structuringreducers/normalizingstateshape#designing-a-normalized-state) Redux denormalized pattern.
 
-|Property|Type|Description|
-|---|---|---|
-|byId|`{ [errorID: string]: KubeappsError }`|It will contain a map of the Kubeapps errors indexed by its ID|
-|allIds|string[]|Array with the IDs of the errors.|
+| Property | Type                                   | Description                                                    |
+| -------- | -------------------------------------- | -------------------------------------------------------------- |
+| byId     | `{ [errorID: string]: KubeappsError }` | It will contain a map of the Kubeapps errors indexed by its ID |
+| allIds   | string[]                               | Array with the IDs of the errors.                              |
 
 ById will be used to store the proper errors, those errors are generic Kubeapps errors with its properties. The ID will be generated during creation for example using [shortID](https://github.com/dylang/shortid).
 
-AllIds will contain the list of identifiers and will be used to indicate ordering. 
+AllIds will contain the list of identifiers and will be used to indicate ordering.
 
 In our case, this pattern can be seen as an overkill since we will not be updating resources, but it will help us with single error deletion and to not to rely on array positioning. It also creates a precedent on how we should start thinking about mapping our stores.
 
@@ -128,23 +128,23 @@ In our previous section [1 - Unexpected, unhandled errors](#1---unexpected-unhan
 
 ## Caveats
 
-* As mentioned, an errorBoundary [does not catch async errors](https://reactjs.org/docs/error-boundaries.html#how-about-event-handlers) happening in for example ThunkActions, that means that we will need to revisit our actions and be sure that we are dispatching `ERRORS/SHOW`.
-* This design does not cover the feature of clearing specific errors by type of error. This can be easily supported by extending `ERROR/CLEAR` i.e `{ Type: "ERROR/CLEAR", payload: { errorType: "NotFound" } }`.
+- As mentioned, an errorBoundary [does not catch async errors](https://reactjs.org/docs/error-boundaries.html#how-about-event-handlers) happening in for example ThunkActions, that means that we will need to revisit our actions and be sure that we are dispatching `ERRORS/SHOW`.
+- This design does not cover the feature of clearing specific errors by type of error. This can be easily supported by extending `ERROR/CLEAR` i.e `{ Type: "ERROR/CLEAR", payload: { errorType: "NotFound" } }`.
 
 ## Action plan
 
 This design can be implemented in multiple stages:
 
-* Stage 1: Implement error boundary for unexpected runtime rendering errors, reusing the `UnexpectedError` component. [#724](https://github.com/kubeapps/kubeapps/issues/724).
-* Stage 2: Implement an instance of ErrorSelector in the layout connected to the redux store, move a couple of ErrorSelector consumers to this new model [#725](https://github.com/kubeapps/kubeapps/issues/725).
-* Stage 3: Finish the migration of all these consumers from rendering the component to dispatch an error and remove those renders [#725](https://github.com/kubeapps/kubeapps/issues/725).
-* Stage 4: Change the errorBoundary component to rely on the connected errorSelector implemented in stage 2 and remove its own render [#726](https://github.com/kubeapps/kubeapps/issues/726).
-* Stage 5: Look into merging errorBoundary and errorSelector [#727](https://github.com/kubeapps/kubeapps/issues/727).
+- Stage 1: Implement error boundary for unexpected runtime rendering errors, reusing the `UnexpectedError` component. [#724](https://github.com/kubeapps/kubeapps/issues/724).
+- Stage 2: Implement an instance of ErrorSelector in the layout connected to the redux store, move a couple of ErrorSelector consumers to this new model [#725](https://github.com/kubeapps/kubeapps/issues/725).
+- Stage 3: Finish the migration of all these consumers from rendering the component to dispatch an error and remove those renders [#725](https://github.com/kubeapps/kubeapps/issues/725).
+- Stage 4: Change the errorBoundary component to rely on the connected errorSelector implemented in stage 2 and remove its own render [#726](https://github.com/kubeapps/kubeapps/issues/726).
+- Stage 5: Look into merging errorBoundary and errorSelector [#727](https://github.com/kubeapps/kubeapps/issues/727).
 
-My opinion is that in terms of priorities, what we really need in the short term is only Stage 1. The global error handling via Redux mechanism is nice to have but not strictly needed right now because the app is not growing much in terms of new views just yet. 
+My opinion is that in terms of priorities, what we really need in the short term is only Stage 1. The global error handling via Redux mechanism is nice to have but not strictly needed right now because the app is not growing much in terms of new views just yet.
 
 ## References
 
-* [Global error pattern examples](https://stackoverflow.com/questions/34403269/what-is-the-best-way-to-deal-with-a-fetch-error-in-react-redux/34403521#34403521)
-* [Redux state best practices](https://redux.js.org/recipes/structuringreducers/normalizingstateshape#designing-a-normalized-state)
-* [React Error boundaries](https://reactjs.org/docs/error-boundaries.html)
+- [Global error pattern examples](https://stackoverflow.com/questions/34403269/what-is-the-best-way-to-deal-with-a-fetch-error-in-react-redux/34403521#34403521)
+- [Redux state best practices](https://redux.js.org/recipes/structuringreducers/normalizingstateshape#designing-a-normalized-state)
+- [React Error boundaries](https://reactjs.org/docs/error-boundaries.html)

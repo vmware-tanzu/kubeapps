@@ -12,7 +12,7 @@ Kubeapps assumes a working Kubernetes cluster (v1.12+) and [`kubectl`](https://k
 
 Since Kubeapps 2.0, Operators are available by default. Once you access to the dashboard, if you click on the menu icon and select "Operators", you will see a message alerting that the OLM is not installed:
 
-  ![OLM Not Intalled](../img/OLM-not-installed.png)
+![OLM Not Intalled](../img/OLM-not-installed.png)
 
 Follow the instructions to install the latest OLM version. For example:
 
@@ -34,33 +34,33 @@ NOTE: replace the `kubeapps:kubeapps-operator` with the service account you are 
 
 After some minutes, you should be able to see the full list of Operators available:
 
-  ![Operators Available](../img/operators-available.png)
+![Operators Available](../img/operators-available.png)
 
 Let's deploy the "Akka Cluster Operator". When clicking on it, the information about the Operator is displayed:
 
-  ![Operators View](../img/operator-view.png)
+![Operators View](../img/operator-view.png)
 
 When clicking on the Deploy button, a form to deploy the operator will be displayed. There are two types of Operators: Global and namespaced. Namespaced Operators will be available in a single namespace while global Operators across the cluster. In this case, we are installing a global Operator:
 
-  ![Operator Deployment Form](../img/operator-deployment.png)
+![Operator Deployment Form](../img/operator-deployment.png)
 
 Once the Operator is installed it would be listed like that and after a minute or two, you can start deploy instances of that Operator:
 
-  ![Installed Operators](../img/installed-operators.png)
+![Installed Operators](../img/installed-operators.png)
 
 ## Step 3: Deploy Resources Managed by an Operator
 
 Now, available applications related to an Operator are listed in the Catalog along with the existing Helm Charts:
 
-  ![Operators Catalog](../img/operator-catalog.png)
+![Operators Catalog](../img/operator-catalog.png)
 
 You can filter out Charts and select the Akka Cluster example. That would render the YAML form in which you can modify any setting in order to deploy a custom instance:
 
-  ![Operator Form](../img/operator-form.png)
+![Operator Form](../img/operator-form.png)
 
 Finally, when the application or resource gets deployed, after some minutes, you will be able to inspect its status and resources:
 
-  ![Operator Instance View](../img/operator-instance-view.png)
+![Operator Instance View](../img/operator-instance-view.png)
 
 You can also click in the Update button to modify the instance or in the Delete button to remove it.
 

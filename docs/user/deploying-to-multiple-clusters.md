@@ -23,11 +23,11 @@ To use the multi-cluster support in Kubeapps, you must first setup your clusters
 The multi-cluster feature requires that each of your Kubernetes API servers trusts the same OpenID Connect provider, whether that be a specific commercial OAuth2 provider such as Google, Azure or Github, or an instance of [Dex](https://dexidp.io/docs/kubernetes/). After you have selected your OIDC provider you will need to configure at least one OAuth2 client to use. For example, if you are using Dex, you could use the following Dex configuration to create a single client id which can be used by your API servers:
 
 ```yaml
-  staticClients:
+staticClients:
   - id: kubeapps
     redirectURIs:
-    - 'https://localhost/oauth2/callback'
-    name: 'Kubeapps-Cluster'
+      - "https://localhost/oauth2/callback"
+    name: "Kubeapps-Cluster"
     secret: ABcdefGHIjklmnoPQRStuvw0
 ```
 
@@ -37,8 +37,8 @@ Certain multi-cluster environments, such as Tanzu Kubernetes Grid, have specific
 
 If you are testing the multi-cluster support on a local [Kubernetes-in-Docker cluster](https://kind.sigs.k8s.io/), you can view the example configuration files used for configuring two kind clusters in a local development environment:
 
-* [Kubeapps cluster API server config](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml)
-* An [additional cluster API server config](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
+- [Kubeapps cluster API server config](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml)
+- An [additional cluster API server config](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
 
 These are used with an instance of Dex running in the Kubeapps cluster with a [matching configuration](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps itself [configured with its own auth-proxy](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
 
@@ -76,22 +76,22 @@ The `clusters` option available in the Kubeapps' chart `values.yaml` is a list o
 
 ```yaml
 clusters:
- - name: default
- - name: team-sandbox
-   apiServiceURL: https://172.18.0.3:6443
-   certificateAuthorityData: aou...
-   serviceToken: hrnf...
- - name: customer-a
-   apiServiceURL: https://customer-a.example.com
-   serviceToken: ...
+  - name: default
+  - name: team-sandbox
+    apiServiceURL: https://172.18.0.3:6443
+    certificateAuthorityData: aou...
+    serviceToken: hrnf...
+  - name: customer-a
+    apiServiceURL: https://customer-a.example.com
+    serviceToken: ...
 ```
 
 `default` is the name you are assigning to the cluster on which Kubeapps is itself installed. You can only define at most one cluster without an `apiServiceURL` corresponding to the cluster on which Kubeapps is installed, or don't provide one at all if you don't want users targeting the cluster on which Kubeapps is installed. For each additional cluster the `name` and `apiServiceURL` are the only required items.
 
 Note that the apiServiceURL can be a public or internal URL, the only restrictions being that:
 
-* the URL is reachable from the pods of the Kubeapps installation.
-* the URL uses TLS (https protocol)
+- the URL is reachable from the pods of the Kubeapps installation.
+- the URL uses TLS (https protocol)
 
 If a private URL is used, as per the first cluster above (`team-sandbox`) you will need to additionally include the base64-encoded `certificateAuthorityData` for the cluster. You can get this directly from the kube config file with:
 
@@ -101,7 +101,7 @@ kubectl --kubeconfig ~/.kube/path-to-kube-confnig-file config view --raw -o json
 
 Alternatively, for a development with private API server URLs, you can omit the `certificateAuthorityData` and instead include the field `insecure: true` for a cluster and Kubeapps will not try to verify the secure connection.
 
-A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can  list those resources. You can refer to the [example used for a local development environment](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
+A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can list those resources. You can refer to the [example used for a local development environment](https://github.com/kubeapps/kubeapps/blob/master/docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
 
 Your Kubeapps installation will also need to be [configured to use OIDC for authentication](./using-an-OIDC-provider.md) with a client-id for your chosen provider.
 
@@ -125,8 +125,8 @@ The second part of the additional configuration is to ensure that when Kubeapps'
 
 Updating the value of the `clusters` chart option is just like updating any other helm chart value:
 
-* Edit your file with the values
-* Upgrade the Kubeapps release with the new values, being sure to leave the chart version unchanged
+- Edit your file with the values
+- Upgrade the Kubeapps release with the new values, being sure to leave the chart version unchanged
 
 So if you had originally installed Kubeapps with a command like:
 
@@ -136,9 +136,9 @@ helm install kubeapps bitnami/kubeapps --namespace kubeapps --values ./path/to/m
 
 then to modify the clusters configured for Kubeapps at some later point you will need to
 
-* edit the `./path/to/my/values.yaml`
-* find the exact chart version that you have installed with `helm list --namespace kubeapps`
-* "upgrade" to the new values with `helm upgrade kubeapps bitnami/kubeapps --version X.Y.Z --values ./path/to/my/values`, where the version `X.Y.Z` is the chart version found in the previous step.
+- edit the `./path/to/my/values.yaml`
+- find the exact chart version that you have installed with `helm list --namespace kubeapps`
+- "upgrade" to the new values with `helm upgrade kubeapps bitnami/kubeapps --version X.Y.Z --values ./path/to/my/values`, where the version `X.Y.Z` is the chart version found in the previous step.
 
 Once the pods have cycled, Kubeapps will be ready with your new configured clusters.
 
@@ -158,16 +158,16 @@ When the application finishes its upgrade, refresh the page to re-request the ne
 
 You can run Kubeapps locally in a multi-cluster development environment from a linux environment (untested in other environments) with the following tools available:
 
-* `apt install build-essential` (or otherwise have the `make` tool available)
-* [Docker](https://docs.docker.com/get-docker/)
-* [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
-* [mkcert](https://github.com/FiloSottile/mkcert)
+- `apt install build-essential` (or otherwise have the `make` tool available)
+- [Docker](https://docs.docker.com/get-docker/)
+- [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
+- [mkcert](https://github.com/FiloSottile/mkcert)
 
 Known limitations of the local development environment:
 
-* It assumes that the first docker container created will have the internal address 172.18.0.2 (ie. that it is the first docker container on the network). This is because Dex needs to be available on a URL that is resolveable both from pods within the cluster within the container as well as from the local host (so https://172.18.0.2:32000 is used)
-* Ports 80 and 443 are free. This is required to be able to use an ingress-controller with the local Kind cluster.
-* Dex currently runs with a CA cert shared from the first cluster (rather than created via mkcert) so you will see a warning when logging in to Dex.
+- It assumes that the first docker container created will have the internal address 172.18.0.2 (ie. that it is the first docker container on the network). This is because Dex needs to be available on a URL that is resolveable both from pods within the cluster within the container as well as from the local host (so https://172.18.0.2:32000 is used)
+- Ports 80 and 443 are free. This is required to be able to use an ingress-controller with the local Kind cluster.
+- Dex currently runs with a CA cert shared from the first cluster (rather than created via mkcert) so you will see a warning when logging in to Dex.
 
 From the top-level directory of a local copy of the Kubeapps git repository, run:
 
@@ -186,13 +186,13 @@ Once the kubeapps pods are all ready (check the pods in the `kubeapps` namespace
 
 When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of
 
-* kubeapps-operator@example.com:password
-* kubeapps-user@example.com:password
+- kubeapps-operator@example.com:password
+- kubeapps-user@example.com:password
 
 or with LDAP as either of
 
-* kubeapps-operator-ldap@example.org:password
-* kubeapps-user-ldap@example.org:password
+- kubeapps-operator-ldap@example.org:password
+- kubeapps-user-ldap@example.org:password
 
 to authenticate with the corresponding permissions.
 
@@ -200,7 +200,7 @@ to authenticate with the corresponding permissions.
 
 The following limitations exist when configuring Kubeapps with multiple clusters:
 
-* The configured clusters must all trust the same OIDC/OAuth2 provider.
-* The OIDC/OAuth2 provider must use TLS (https protocol).
-* The APIServers of each configured cluster must be routable from the pods of the Kubeapps installation.
-* Only AppRepositories installed for all namespaces (ie. AppRepositories in the same namespace as the Kubeapps installation) will be available in the catalog when targeting other clusters. There is no support for private AppRepositories on other clusters.
+- The configured clusters must all trust the same OIDC/OAuth2 provider.
+- The OIDC/OAuth2 provider must use TLS (https protocol).
+- The APIServers of each configured cluster must be routable from the pods of the Kubeapps installation.
+- Only AppRepositories installed for all namespaces (ie. AppRepositories in the same namespace as the Kubeapps installation) will be available in the catalog when targeting other clusters. There is no support for private AppRepositories on other clusters.
