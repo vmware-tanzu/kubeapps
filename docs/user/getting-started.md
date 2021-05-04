@@ -123,4 +123,4 @@ Learn more about Kubeapps with the links below:
 - [Detailed installation instructions](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md)
 - [Deploying Operators](./operators.md)
 - [Kubeapps Dashboard documentation](./dashboard.md)
-- [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
+- [Roadmap](https://github.com/kubeapps/kubeapps/milestones)
