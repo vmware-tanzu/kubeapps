@@ -3,8 +3,9 @@
 The main file is [Makefile](https://github.com/kubeapps/kubeapps/blob/master/Makefile), which will compile and prepare the production assets for then generating a set of Docker images. It is the starting point when you want to build the Kubeapps different components.
 
 For setting up the environment for running Kubeapps, we also provide (as is) makefile targets for:
-* Creating a multicluster environment with Kind ([cluster-kind.mk](https://github.com/kubeapps/kubeapps/blob/master/script/cluster-kind.mk))
-* Deploying and configuring the components for getting Kubeapps running with OIDC login using Dex ([deploy-dev.mk](https://github.com/kubeapps/kubeapps/blob/master/script/deploy-dev.mk)).
+
+- Creating a multicluster environment with Kind ([cluster-kind.mk](https://github.com/kubeapps/kubeapps/blob/master/script/cluster-kind.mk))
+- Deploying and configuring the components for getting Kubeapps running with OIDC login using Dex ([deploy-dev.mk](https://github.com/kubeapps/kubeapps/blob/master/script/deploy-dev.mk)).
 
 > Disclaimer: these files are not being actively maintained, as they are solely intended for helping Kubeapp developers to set up the environment. If you are a contributor and you are having troubles, please feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new).
 
@@ -14,7 +15,7 @@ For setting up the environment for running Kubeapps, we also provide (as is) mak
 
 Find below a list of the most used commands:
 
-``` bash
+```bash
 make # will make all the kubeapps images
 make kubeapps/dashboard
 make kubeapps/apprepository-controller
@@ -29,22 +30,24 @@ make kubeapps/asset-syncer
 
 ### Prerequisites
 
-* Install `mkcert`; you can get it from the [official repository](https://github.com/FiloSottile/mkcert/releases).
-* Get the Kind network IP and replace it when necessary.
-    * Retrieve the node's IP address on the kind bridge network so it can be used by Dex:
-    It is a requirement to discover the nodes IP address on the bridge network so that Dex can be reached both inside and outside the cluster at the same address. 
+- Install `mkcert`; you can get it from the [official repository](https://github.com/FiloSottile/mkcert/releases).
+- Get the Kind network IP and replace it when necessary.
+
+  - Retrieve the node's IP address on the kind bridge network so it can be used by Dex:
+    It is a requirement to discover the nodes IP address on the bridge network so that Dex can be reached both inside and outside the cluster at the same address.
     You can get this IP by inspecting the kind network (`docker network inspect kind`) and setting the value as **the next available IP on that network**
     (if you don't already have any kind clusters launched, this will be the first address after the gateway, ie. something like 172.x.0.2).
-    
+
         * Another way to do so is to start the environment with `make cluster-kind` and manually verify the IP address by executing `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but you will need to re-create the cluster after you've updated the config files (below) by executing `make delete-cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
 
-    * Then, replace `172.18.0.2` with the previous IP the following files:
-        * [script/deploy-dev.mk](../../script/deploy-dev.mk)
-        * [kubeapps-local-dev-additional-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
-        * [kubeapps-local-dev-additional-kind-cluster.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
-        * [kubeapps-local-dev-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-apiserver-config.yaml)
-        * [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
-        * [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
+  - Then, replace `172.18.0.2` with the previous IP the following files:
+    - [script/deploy-dev.mk](../../script/deploy-dev.mk)
+    - [kubeapps-local-dev-additional-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
+    - [kubeapps-local-dev-additional-kind-cluster.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
+    - [kubeapps-local-dev-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-apiserver-config.yaml)
+    - [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
+    - [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
+
 ### Commands
 
 ```bash
@@ -55,6 +58,6 @@ make multi-cluster-kind
 # Install dex (identity service using OIDC),
 # install openldap and add default users,
 # generate certs for tls,
-# and deploy kubeapps with the proper configuration 
+# and deploy kubeapps with the proper configuration
 make deploy-dev
 ```

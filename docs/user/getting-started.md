@@ -78,8 +78,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 ![Dashboard main page](../img/dashboard-home.png)
 
-***Note:*** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps)
-
+**_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps)
 
 ## Step 4: Deploy WordPress
 
@@ -103,7 +102,7 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
 To access your new WordPress site, you can run the commands in the "Notes" section to get the URLs or simply click a URL (HTTP and HTTPS) shown.
 
-***Note:*** Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
+**_Note:_** Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
 
 ![WordPress deployment notes](../img/wordpress-url.png)
 
@@ -112,6 +111,7 @@ To get the credentials for logging into your WordPress account, refer to the "No
 ![WordPress deployment notes](../img/wordpress-credentials.png)
 
 ## [Optional] Step 5: Uninstall/Delete WordPress
+
 If you want to uninstall/delete your WordPress application, you can do so by clicking the "Delete" button.
 
 ![WordPress uninstall](../img/wordpress-uninstall.png)

@@ -61,20 +61,16 @@ First of all, execute `docker network inspect kind | jq '.[0].IPAM.Config[0].Gat
 
 Next, follow the steps in [/docs/developer/using-makefiles.md](../developer/using-makefiles.md) to modify the proper yaml files by replacing with this value.
 
-Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next one) the following files:
-    - [script/deploy-dev.mk](../../script/deploy-dev.mk)
-    - [kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml)
-    - [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
-    - [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
+Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next one) the following files: - [script/deploy-dev.mk](../../script/deploy-dev.mk) - [kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) - [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml) - [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
 
 ### Launching the multi-cluster dev environment
 
- - Execute `make multi-cluster-kind-for-pinniped`.
- - Update [/docs/user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) copying the certificate-authority-data from the additional cluster (`~/.kube/kind-config-kubeapps-additional`) to the `certificate-authority-data` of the second cluster.
- - Execute `make deploy-dev-for-pinniped`.
- - Edit [/docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml](../user/manifests/kubeapps-pinniped-jwt-authenticator.yaml) with the `certificate-authority-data` from the main cluster (`~/.kube/kind-config-kubeapps`).
- - Execute `make add-pinniped-jwt-authenticator`.
- - Open https://localhost/ and login with `kubeapps-operator@example.com`/`password`
+- Execute `make multi-cluster-kind-for-pinniped`.
+- Update [/docs/user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) copying the certificate-authority-data from the additional cluster (`~/.kube/kind-config-kubeapps-additional`) to the `certificate-authority-data` of the second cluster.
+- Execute `make deploy-dev-for-pinniped`.
+- Edit [/docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml](../user/manifests/kubeapps-pinniped-jwt-authenticator.yaml) with the `certificate-authority-data` from the main cluster (`~/.kube/kind-config-kubeapps`).
+- Execute `make add-pinniped-jwt-authenticator`.
+- Open https://localhost/ and login with `kubeapps-operator@example.com`/`password`
 
 > Note: make sure you are really copying `certificate-authority-data` and not the `client-certificate-data` or ` client-certificate-data`. Otherwise, the setup will not work.
 
@@ -92,20 +88,23 @@ kubectl delete pod -n kubeapps -l app=kubeapps
 ### View logs
 
 Check the pinniped-proxy logs:
+
 ```bash
 kubectl logs deployment/kubeapps pinniped-proxy -n kubeapps -f
 ```
 
 Check the Pinnped logs:
+
 ```bash
 kubectl logs deployment/pinniped-concierge -n pinniped-concierge -f
 ```
 
 ### Troubleshooting
 
-Please have a look at the following guides: 
- - [Using an OIDC provider with Pinniped](../user/using-an-OIDC-provider-with-pinniped.md).
- - [Debugging auth failures when using OIDC](../user/using-an-OIDC-provider.md#debugging-auth-failures-when-using-oidc).
+Please have a look at the following guides:
+
+- [Using an OIDC provider with Pinniped](../user/using-an-OIDC-provider-with-pinniped.md).
+- [Debugging auth failures when using OIDC](../user/using-an-OIDC-provider.md#debugging-auth-failures-when-using-oidc).
 
 Also, please verify that you have modified the Kind node IP accordingly and the `certificate-authority-data` has been properly copied to the corresponding files.
 

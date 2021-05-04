@@ -123,12 +123,12 @@ Since the chart that we host in the Kubeapps repository is only intended for dev
 
 ## 2 - Select the commit to tag and perform a manual test
 
-Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch. 
+Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch.
 
-Even though the existing test base in our repository, we still  _should_ perform a manual review of the application as it is in the selected commit. To do so, follow these instructions:
+Even though the existing test base in our repository, we still _should_ perform a manual review of the application as it is in the selected commit. To do so, follow these instructions:
 
 - Perform a checkout of the chosen commit.
-- Install Kubeapps using the development chart: `helm install kubeapps ./chart/kubeapps/  -n kubeapps`
+- Install Kubeapps using the development chart: `helm install kubeapps ./chart/kubeapps/ -n kubeapps`
   - Note that if you are not using the latest commit in the main branch, you may have to locally build the container images so that the cluster uses the proper images.
 - Ensure the core functionality is working:
   - Add a repository
@@ -136,7 +136,6 @@ Even though the existing test base in our repository, we still  _should_ perform
   - Upgrade this application
   - Delete this application
   - Deploy an application in an additional cluster
-
 
 ## 3 - Create a git tag
 

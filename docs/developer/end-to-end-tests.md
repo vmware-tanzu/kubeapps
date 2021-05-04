@@ -1,6 +1,6 @@
 # End-to-end tests in the project
 
-In every CI build, a set of end-to-end tests are run to verify, as much as possible, that the changes don't include regressions from a user point of view. Please refer to the  [CI documentation](./ci.md) for further information.
+In every CI build, a set of end-to-end tests are run to verify, as much as possible, that the changes don't include regressions from a user point of view. Please refer to the [CI documentation](./ci.md) for further information.
 The current end-to-end tests are executed in two steps (or categories):
 
 - Chart tests
@@ -9,15 +9,15 @@ The current end-to-end tests are executed in two steps (or categories):
 These tests are executed by the script [script/e2e-test.sh](../../script/e2e-test.sh). Particularly, this script:
 
 1. Installs Kubeapps using the images built during the CI process (c.f., [CI config file](../../.circleci/config.yml)) by setting the proper args to the Helm command.
-    1. If the `USE_MULTICLUSTER_OIDC_ENV` is enabled, a set of flags will be passed to configure the Kubeapps installation in a multicluster environment.
+   1. If the `USE_MULTICLUSTER_OIDC_ENV` is enabled, a set of flags will be passed to configure the Kubeapps installation in a multicluster environment.
 2. Waits for:
-    1. the different deployments to be ready.
-    2. the bitnami repo sync job to be completed.
-3. Installs some dependencies: 
-    1.  Chart Museum.
-    2. Operator framework (not in GKE).
-3. Executes the [Helm tests](#chart-tests).
-4. Executes the [web browser tests](#web-browser-tests).
+   1. the different deployments to be ready.
+   2. the bitnami repo sync job to be completed.
+3. Installs some dependencies:
+   1. Chart Museum.
+   2. Operator framework (not in GKE).
+4. Executes the [Helm tests](#chart-tests).
+5. Executes the [web browser tests](#web-browser-tests).
 
 If all of the above succeeded, the control is returned to the CI with the proper exit code.
 
@@ -56,10 +56,10 @@ If a test happens to fail, apart from test execution logs a screenshot will be g
 
 ### Running browser tests in a pod
 
-Since the CI environment doesn't have the required dependencies and to provide a reproducible environment, it's possible to run the browser tests in a Kubernetes pod. 
+Since the CI environment doesn't have the required dependencies and to provide a reproducible environment, it's possible to run the browser tests in a Kubernetes pod.
 
 To do so, you can spin up an instance running the image [kubeapps/integration-tests](https://hub.docker.com/r/kubeapps/integration-tests).
-This image contains all the required dependencies and it waits forever so you can execute commands within it. 
+This image contains all the required dependencies and it waits forever so you can execute commands within it.
 We also provide a simple [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) for launching this container.
 
 The goal of this setup is that you can copy the latest tests to the image, run the tests and extract the screenshots in case of failure:
@@ -89,26 +89,24 @@ kubectl cp ${pod}:/app/reports ./reports
 
 Our CI system relies on the [kubeapps/integration-tests](https://hub.docker.com/r/kubeapps/integration-tests) image to run browser tests (c.f., [CI config file](../../.circleci/config.yml) and [CI documentation](./ci.md)). Consequently, this image should be properly versioned to avoid CI issues.
 
-
 The `kubeapps/integration-tests` image is built using this [Makefile](../../integration/Makefile). Manually edit this file to specify the proper version tag.
-
 
 ```bash
 cd integration
 # edit the Makefile with the proper version tag
 make build
 make push
-``` 
+```
 
 > It will build and push the image using this [Dockerfile](../../integration/Dockerfile) (we are using the base image as in the [Kubeapps Dashboard build image](../../dashboard/Dockerfile)).
-The dependencies of this image are defined in the [package.json](../../integration/package.json).
+> The dependencies of this image are defined in the [package.json](../../integration/package.json).
 
 Then, update the [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) to point to the version you have built and pushed.
 
 To sum up, whenever a change triggers a new `kubeapps/integration-tests` version (new NodeJS image, updating the integration dependencies, other changes, etc.), you will have to release a new version. This process involves:
 
-* Checking if the [integration Dockerfile](../../integration/Dockerfile) is using the proper base version.
-* Ensuring we are not using any deprecated dependency in the [package.json](../../integration/package.json).
-* Updating the [Makefile](../../integration/Makefile) with the new version tag.
-* Executing `make build && make push` to release a new image version.
-* Modifying the [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) with the new version.
+- Checking if the [integration Dockerfile](../../integration/Dockerfile) is using the proper base version.
+- Ensuring we are not using any deprecated dependency in the [package.json](../../integration/package.json).
+- Updating the [Makefile](../../integration/Makefile) with the new version tag.
+- Executing `make build && make push` to release a new image version.
+- Modifying the [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) with the new version.

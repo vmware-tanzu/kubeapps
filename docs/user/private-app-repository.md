@@ -182,12 +182,12 @@ Once you create the repository you can click on the link for the specific reposi
 
 It is possible to configure Harbor to use HTTP basic authentication:
 
-  - When creating a new project for serving as the helm chart repository in Harbor, set the `Access Level` of the project to non public. This enforces authentication to access the charts in the chart repository via Helm CLI or other clients.
-  - When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specify the username and password for Harbor.
+- When creating a new project for serving as the helm chart repository in Harbor, set the `Access Level` of the project to non public. This enforces authentication to access the charts in the chart repository via Helm CLI or other clients.
+- When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specify the username and password for Harbor.
 
 ## OCI Registry
 
-Since Helm v3, the project is pushing towards the idea that using an [OCI compliant registry](https://github.com/opencontainers/distribution-spec) to store Helm charts is the future. Since Kubeapps 2.2, it's also possible to use these registries to consume Helm charts. Cloud Providers like [Amazon ECR](https://aws.amazon.com/blogs/containers/oci-artifact-support-in-amazon-ecr/ ), [Google Artifact Registry](https://cloud.google.com/artifact-registry/docs/supported-formats ) or [Azure ACR](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-image-formats) have also added support for OCI artifacts. 
+Since Helm v3, the project is pushing towards the idea that using an [OCI compliant registry](https://github.com/opencontainers/distribution-spec) to store Helm charts is the future. Since Kubeapps 2.2, it's also possible to use these registries to consume Helm charts. Cloud Providers like [Amazon ECR](https://aws.amazon.com/blogs/containers/oci-artifact-support-in-amazon-ecr/), [Google Artifact Registry](https://cloud.google.com/artifact-registry/docs/supported-formats) or [Azure ACR](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-image-formats) have also added support for OCI artifacts.
 
 You can add an OCI registry like any other repository. For example, for a [Harbor registry](https://goharbor.io/docs/2.0.0/working-with-projects/working-with-images/managing-helm-charts/#manage-helm-charts-with-the-oci-compatible-registry-of-harbor):
 

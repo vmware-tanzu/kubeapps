@@ -10,6 +10,7 @@ If you are interested in the Kubeapps API, please [reach out to us](https://kube
 ## Using SwaggerHub
 
 The current public API documentation is available at [app.swaggerhub.com/apis/kubeapps/Kubeapps](https://app.swaggerhub.com/apis/kubeapps/Kubeapps). Note that a SwaggerHub account is required for editing or forking any API.
+
 > This guide assumes the changes are going to be performed by someone external to the Kubeapps organization. For developers, simply skip the fork stage.
 
 ### Forking the current API docs in SwaggerHub
@@ -35,7 +36,6 @@ Note that "pulling" from GitHub is a paid feature that users may don't have. In 
 
 > Kubeapps maintainers can compare directly against https://raw.githubusercontent.com/kubeapps/kubeapps/master/dashboard/public/openapi.yaml
 
-
 ### Sending a PR
 
 Finally, after pushing the changes in the desired branch of your fork, it is possible to send a PR. This way Kubeapps maintainers will eventually merge it and your changes will be published upstream.
@@ -46,4 +46,3 @@ Finally, after pushing the changes in the desired branch of your fork, it is pos
 
 Kubeapps API is still in a very initial stage and it likely subject to changes. Wherefore, for the sake of simplicity, we are not publishing new versions in SwaggerHub. Instead, we will keep just the latest version and will overwrite it with upcoming changes.
 Note that the [openapi.yaml](../../master/dashboard/public/openapi.yaml) file corresponding to each Kubeapps version can still be downloaded as part of the normal [Kubeapps releases page](https://github.com/kubeapps/kubeapps/releases).
-

@@ -55,7 +55,7 @@ In order to render a slider, there are some requirements and additional tags tha
 - The tag `sliderStep` identifies the step the slider will increment or decrement the value when moved.
 - The tag `sliderUnit` specifies the unit of the value to set. For example `Gi`.
 
- This is an example of a slider param:
+This is an example of a slider param:
 
 ```json
     "size": {
@@ -75,7 +75,7 @@ It's possible to render a component as a textArea instead of a single-line strin
 
 In order to render a component as a textArea, it's necessary to specify the tag `render` and set it to `textArea`.
 
- This is an example of a textArea param:
+This is an example of a textArea param:
 
 ```json
     "size": {
@@ -86,9 +86,10 @@ In order to render a component as a textArea, it's necessary to specify the tag 
       "render": "textArea"
     }
 ```
+
 ### Drop-down lists
 
-When a property defines an `enum` tag as constraint, it will be rendered as a drop-down list. 
+When a property defines an `enum` tag as constraint, it will be rendered as a drop-down list.
 
 This is an example:
 

@@ -16,4 +16,3 @@ ingress:
   enabled: true
   hostname: localhost
   tls: true
-

@@ -8,19 +8,19 @@ The following sections walk you through some common tasks with the Kubeapps Dash
 
 ### Deploy new applications using the Dashboard
 
-* Start with the Dashboard welcome page:
+- Start with the Dashboard welcome page:
 
   ![Dashboard main page](../img/dashboard-home.png)
 
-* Use the "Catalog" menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
+- Use the "Catalog" menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
 
   ![MariaDB chart](../img/mariadb-chart.png)
 
-* Click the "Deploy" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
+- Click the "Deploy" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
 
   ![MariaDB installation](../img/mariadb-installation.png)
 
-* Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
+- Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
 
   ![MariaDB deployment](../img/mariadb-deployment.png)
 
