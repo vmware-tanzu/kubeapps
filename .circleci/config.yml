@@ -24,6 +24,9 @@ parameters:
   KUBECTL_VERSION:
     type: "string"
     default: "v1.19.10"
+  GITHUB_VERSION:
+    type: "string"
+    default: "1.9.2"
   KIND_VERSION:
     type: "string"
     default: "v0.10.0"
@@ -89,6 +92,8 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+      - sync_chart_from_bitnami:
+          <<: *build_on_master
       - GKE_1_17_MASTER:
           <<: *build_on_master
           requires:
@@ -96,6 +101,8 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
+            - build_pinniped_proxy
+            - sync_chart_from_bitnami
       - GKE_1_17_LATEST_RELEASE:
           <<: *build_on_master
           requires:
@@ -103,6 +110,8 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
+            - build_pinniped_proxy
+            - sync_chart_from_bitnami
       - GKE_1_18_MASTER:
           <<: *build_on_master
           requires:
@@ -110,6 +119,8 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
+            - build_pinniped_proxy
+            - sync_chart_from_bitnami
       - GKE_1_18_LATEST_RELEASE:
           <<: *build_on_master
           requires:
@@ -117,8 +128,18 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
+            - build_pinniped_proxy
+            - sync_chart_from_bitnami
       - push_images:
           <<: *build_on_master
+          requires:
+            - local_e2e_tests
+            - GKE_1_17_MASTER
+            - GKE_1_17_LATEST_RELEASE
+            - GKE_1_18_MASTER
+            - GKE_1_18_LATEST_RELEASE
+      - sync_chart_to_bitnami:
+          <<: *build_on_tag
           requires:
             - local_e2e_tests
             - GKE_1_17_MASTER
@@ -142,6 +163,7 @@ common_envars: &common_envars
   K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
   KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
   KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
+  GITHUB_VERSION: << pipeline.parameters.GITHUB_VERSION >>
   MKCERT_VERSION: << pipeline.parameters.MKCERT_VERSION >>
   NODE_VERSION: << pipeline.parameters.NODE_VERSION >>
   OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
@@ -319,6 +341,18 @@ install_mkcert: &install_mkcert
       chmod +x "mkcert-${MKCERT_VERSION}-linux-amd64"
       sudo mv "mkcert-${MKCERT_VERSION}-linux-amd64" /usr/local/bin/mkcert
       mkcert -install
+install_github: &install_github
+  run:
+    # Assuming there is a personal access token created in GitHub granted with the scopes
+    # "repo:status", "public_repo" and "read:org"
+    # This token is passed as a GITHUB_TOKEN env var via CircleCI
+    name: "Install GitHub CLI"
+    command: |
+      cd /tmp
+      wget https://github.com/cli/cli/releases/download/v${GITHUB_VERSION}/gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+      tar zxf gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+      rm gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+      sudo mv gh_${GITHUB_VERSION}_linux_amd64/bin/gh /usr/local/bin/
 install_multicluster_deps: &install_multicluster_deps
   run:
     name: "Install multicluster deps"
@@ -572,6 +606,56 @@ jobs:
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
+  sync_chart_to_bitnami:
+    environment:
+      <<: *common_envars
+    docker:
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    steps:
+      - checkout
+      - <<: *install_github
+      - add_ssh_keys:
+          fingerprints:
+            # Deployment key uploaded to the bitnami/charts repository
+            - "ba:56:29:3b:70:d7:bb:14:a9:db:42:7b:73:42:23:e4"
+      - run:
+          # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
+          # public key uploaded to GitHub as a deploy key with write permissions in both kubeapps and bitnami/charts
+          # private key uploaded to CircleCI with hostname "github.com"
+          name: Start ssh-agent and configure the key
+          command: |
+            eval "$(ssh-agent -s)"
+            # the name is always "id_rsa_"+fingerprint without ":""
+            ssh-add ~/.ssh/id_rsa_ba56293b70d7bb14a9db427b734223e4
+      - run:
+          name: Execute the chart_sync script
+          command: |
+            ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
+  sync_chart_from_bitnami:
+    environment:
+      <<: *common_envars
+    docker:
+      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    steps:
+      - checkout
+      - <<: *install_github
+      - add_ssh_keys:
+          fingerprints:
+            # Deployment key uploaded to the kubeapps/kubeapps repository
+            - "60:9f:97:43:bc:e0:61:b1:76:8b:71:0f:00:cf:f7:69"
+      - run:
+          # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
+          # public key uploaded to GitHub as a deploy key with write permissions
+          # private key uploaded to CircleCI with hostname "github.com"
+          name: Start ssh-agent and configure the key
+          command: |
+            eval "$(ssh-agent -s)"
+            # the name is always "id_rsa_"+fingerprint without ":""
+            ssh-add ~/.ssh/id_rsa_609f9743bce061b1768b710f00cff769
+      - run:
+          name: Execute the check_upstream_chart script
+          command: |
+            ./script/chart_upstream_checker.sh kubernetes-bitnami kubernetes@bitnami.com
   push_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
