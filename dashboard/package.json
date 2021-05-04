@@ -58,7 +58,7 @@
     "react-redux": "^7.2.4",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
-    "react-router-hash-link": "^2.4.0",
+    "react-router-hash-link": "^2.4.1",
     "react-switch": "^6.0.0",
     "react-tabs": "^3.2.2",
     "react-test-renderer": "^16.2.0",
