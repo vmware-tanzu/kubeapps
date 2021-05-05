@@ -119,7 +119,7 @@ cargo update
 
 Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
 
-To this end, our CI system will automatically (in the `sync_chart_from_bitnami` workflow, as described in the [CI documentation](./ci.md).) send to send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
+To this end, our CI system will automatically (in the `sync_chart_from_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
 Once the PR has been created, wait for someone from the Bitnami team to review and accept it.
 
 > If the PR solely includes minor changes in the image versions, this wait can be safely skipped.

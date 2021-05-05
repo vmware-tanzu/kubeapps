@@ -1,6 +1,6 @@
 ### Description of the change
 
-This is an automatic PR for synchronizing the changes performed externally at the [bitnami/kubeapps](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) official chart.
+This is an automatic PR for synchronizing the changes performed externally at the [bitnami/kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) to the Kubeapps development version.
 
 ### Benefits
 
@@ -8,7 +8,7 @@ The Kubeapps [development chart](https://github.com/kubeapps/kubeapps/tree/maste
 
 ### Possible drawbacks
 
-Even unlikely, some changes implemented by the Bitnami team may not be 100% compatible with the current Kubeapps version.
+Although unlikely, some changes implemented by the Bitnami team may not be 100% compatible with the current Kubeapps version.
 
 ### Applicable issues
 
