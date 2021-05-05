@@ -23,7 +23,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Run the integration tests.
   - `sync_chart_from_bitnami` (on master): each time a new commit is pushed to the main branch, it brings the current changes in the upstream [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merge the changes. This step involves:
     - Checking if the chart versions differ.
-    - Deleting the local `chart/kubeapps` folder.may the 4th
+    - Deleting the local `chart/kubeapps` folder.
     - Pulling the latest version of the chart provided by Bitnami.
     - Renaming the production images (`bitnami/kubeapps-xxx`) by the development ones (`kubeapps/xxx`) with the `latest` tag.
     - Using `DEVEL` as the `appVersion`.
