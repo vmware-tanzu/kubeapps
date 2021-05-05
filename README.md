@@ -42,7 +42,8 @@ If you have followed the instructions for [installing Kubeapps](./docs/user/gett
 - [Detailed installation instructions](chart/kubeapps/README.md)
 - [Kubeapps Dashboard documentation](./docs/user/dashboard.md)
 - [Kubeapps components](./docs/architecture/overview.md)
-- [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
+- [Project board](https://github.com/kubeapps/kubeapps/projects/11)
+- [Roadmap](https://github.com/kubeapps/kubeapps/milestones)
 
 ## API documentation
 
