@@ -3,7 +3,7 @@ import { CdsControlMessage } from "@cds/react/forms";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import { CdsSelect } from "@cds/react/select";
 import Alert from "components/js/Alert";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LoadingWrapper from "../../../LoadingWrapper/LoadingWrapper";
 import "./RollbackDialog.css";
 
@@ -24,11 +24,13 @@ function RollbackDialog({
   onConfirm,
   closeModal,
 }: IRollbackDialogProps) {
-  const [targetRevision, setTargetRevision] = useState(currentRevision - 1);
+  const [targetRevision, setTargetRevision] = useState(currentRevision);
+  const [hasUserChanges, setHasUserChanges] = useState(false);
   const options: number[] = [];
   // If there are no revisions to rollback to, disable
   const disableRollback = currentRevision === 1;
   const selectRevision = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setHasUserChanges(true);
     setTargetRevision(Number(e.target.value));
   };
   const onClick = () => {
@@ -38,6 +40,12 @@ function RollbackDialog({
   for (let i = currentRevision - 1; i > 0; i--) {
     options.push(i);
   }
+
+  useEffect(() => {
+    if (!hasUserChanges) {
+      setTargetRevision(currentRevision - 1);
+    }
+  }, [hasUserChanges, currentRevision]);
 
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
@@ -52,9 +60,9 @@ function RollbackDialog({
                 <p>The application has not been upgraded, it's not possible to rollback.</p>
               ) : (
                 <>
-                  <CdsSelect layout="horizontal" id="revision-selector" onChange={selectRevision}>
+                  <CdsSelect layout="horizontal" id="revision-selector">
                     <label>Select the revision to which you want to rollback</label>
-                    <select>
+                    <select value={targetRevision} onChange={selectRevision}>
                       {options.map(o => (
                         <option key={o} value={o}>
                           {o}
