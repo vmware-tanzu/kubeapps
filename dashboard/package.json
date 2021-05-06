@@ -62,7 +62,7 @@
     "react-switch": "^6.0.0",
     "react-tabs": "^3.2.2",
     "react-test-renderer": "^16.2.0",
-    "react-tooltip": "^4.2.18",
+    "react-tooltip": "^4.2.19",
     "react-transition-group": "^4.4.1",
     "redux": "^4.1.0",
     "redux-devtools-extension": "^2.13.9",
