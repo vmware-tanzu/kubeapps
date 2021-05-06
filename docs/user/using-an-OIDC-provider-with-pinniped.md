@@ -86,15 +86,24 @@ But, what if this `kube-controller-manager` is not a normal pod on a schedulable
 
 In managed clusters, such as AKS, Pinniped cannot read the cluster's certificate and key. In this case, Pinniped will have a fallback mechanism: the [impersonation proxy](https://pinniped.dev/docs/background/architecture/). It simply creates a LoadBalancer service that proxies the actual Kubernetes API. For this reason, when using Kubeapps in managed clusters using Pinniped, you'll need to use the Impersonation Proxy URL (and CA certificate) instead of the usual k8s API server URL.
 
-Assuming you have successfully [installed Pinniped](#installing-pinniped) and configured the [JWTAuthenticator](#configure-pinniped-to-trust-your-oidc-identity-provider), you have to retrieve the Impersonation Proxy IP by executing this command:
+Assuming you have successfully [installed Pinniped](#installing-pinniped) and configured the [JWTAuthenticator](#configure-pinniped-to-trust-your-oidc-identity-provider), you have to retrieve the Impersonation Proxy URL and CA by inspecting the `CredentialIssuer` object. To do so, you can execute the following commands:
 
+Retrieving the Impersonation Proxy URL:
+
+```bash
+kubectl get credentialissuer -o json | jq -c '.items[].status.strategies[]  | select( .type | contains("ImpersonationProxy")).frontend.impersonationProxyInfo.endpoint'
 ```
+
+Retrieving the Impersonation Proxy CA:
+
+```bash
+kubectl get credentialissuer -o json | jq -c '.items[].status.strategies[]  | select( .type | contains("ImpersonationProxy")).frontend.impersonationProxyInfo.certificateAuthorityData'
+```
+
+> Alternatively, if you don't have access to the `CredentialIssuer` API object, you can still manually inspect the service and secret. For example:
+
+```bash
 kubectl get svc -n pinniped-concierge pinniped-concierge-impersonation-proxy-load-balancer -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
-```
-
-Then, retrieve the Impersonation Proxy CA cert by executing:
-
-```
 kubectl get secret pinniped-concierge-impersonation-proxy-ca-certificate -n pinniped-concierge  -o jsonpath="{.data.ca\\.crt}"
 ```
 
@@ -103,7 +112,7 @@ Finally, use a similar `clusters` configuration:
 ```yaml
 clusters:
   - name: your-managed-cluster
-    apiServiceURL: https://... # impersonation proxy IP
+    apiServiceURL: https://... # impersonation proxy URL
     certificateAuthorityData: ... #  impersonation proxy CA
     pinnipedConfig:
       enable: true
