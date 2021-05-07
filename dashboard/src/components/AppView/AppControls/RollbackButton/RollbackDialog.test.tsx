@@ -23,15 +23,20 @@ it("should render the form if it is not loading", () => {
 });
 
 it("should submit the current revision", () => {
+  const currentRevision = defaultProps.currentRevision;
   const onConfirm = jest.fn();
-  const wrapper = mount(<RollbackDialog {...defaultProps} onConfirm={onConfirm} />);
+  const wrapper = mount(
+    <RollbackDialog {...defaultProps} currentRevision={currentRevision} onConfirm={onConfirm} />,
+  );
   const submit = wrapper.find(CdsButton).filterWhere(b => b.text() === "Rollback");
   expect(submit).toExist();
+  expect(wrapper.find("option").at(0).prop("value")).toBe(1);
+  expect(wrapper.find("cds-control-message").text()).toBe("(current: 2)");
   act(() => {
     (submit.prop("onClick") as any)();
   });
   wrapper.update();
-  expect(onConfirm).toBeCalledWith(1);
+  expect(onConfirm).toBeCalledWith(currentRevision - 1);
 });
 
 it("should disable the rollback button if there are no revisions", () => {
