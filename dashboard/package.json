@@ -21,7 +21,7 @@
     "@types/react-copy-to-clipboard": "^5.0.0",
     "@types/react-jsonschema-form": "^1.7.4",
     "@types/react-router-dom": "^5.1.7",
-    "@types/react-router-hash-link": "^1.2.1",
+    "@types/react-router-hash-link": "^2.0.0",
     "@types/react-tabs": "^2.3.2",
     "@types/react-transition-group": "^4.4.1",
     "@types/semver": "^7.3.5",
