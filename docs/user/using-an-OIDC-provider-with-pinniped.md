@@ -120,7 +120,7 @@ clusters:
 
 ## Debugging auth failures when using OIDC
 
-For general OIDC issues, have a look at [this OIDC debugging guide](./using-an-OIDC-provider-with-pinniped.md#debugging-auth-failures-when-using-OIDC).
+For general OIDC issues, have a look at [this OIDC debugging guide](./using-an-OIDC-provider.md#debugging-auth-failures-when-using-OIDC).
 
 ### Pinniped not trusting your OIDC provider
 
