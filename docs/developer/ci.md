@@ -44,7 +44,7 @@ Also, note it is the Kubeapps team that is responsible for sending a PR to the [
 
 # Credentials
 
-Besides other usual credentials or secrets passed through environment variables via the CircleCI user interface, it is important to highlight how we grant commit and PR access to our robot account `kubernetes-bitnami <kubernetes@bitnami.com>`. The process is twofold:
+Besides other usual credentials or secrets passed through environment variables via the CircleCI user interface, it is important to highlight how we grant commit and PR access to our robot account `kubeapps-bot <tanzu-kubeapps-team@vmware.com>`. The process is twofold:
 
 - Create a [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with the robot account, granted, at least, with: `repo:status`, `public_repo` and `read:org`.
   - That will allow the GitHub CLI to create PRs from the command line on behalf of our robot account.

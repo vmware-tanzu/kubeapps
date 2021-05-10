@@ -57,8 +57,8 @@ replaceImage_latestToProduction() {
     echo "Replacing ${service}"...
 
     local curl_opts=()
-    if [[ $ACCESS_TOKEN != "" ]]; then
-        curl_opts=(-s -H "Authorization: token ${ACCESS_TOKEN}")
+    if [[ $GITHUB_TOKEN != "" ]]; then
+        curl_opts=(-s -H "Authorization: token ${GITHUB_TOKEN}")
     fi
 
     # Get the latest tag from the bitnami repository
@@ -165,7 +165,7 @@ commitAndSendExternalPR() {
     git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
     git push origin $targetBranch
-     git config --local "remote.origin.gh-resolved" ${CHARTS_REPO}
+    git config --local "remote.origin.gh-resolved" ${CHARTS_REPO}
     gh pr create -H $targetBranch -B master -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
     cd -
 }
@@ -190,7 +190,7 @@ commitAndSendInternalPR() {
     git checkout -b $targetBranch
     git add --all .
     git commit -m "bump chart version to $chartVersion"
-    # NOTE: This expecs to have a loaded SSH key
+    # NOTE: This expects to have a loaded SSH key
     git push origin $targetBranch
     git config --local "remote.origin.gh-resolved" ${KUBEAPPS_REPO}
     gh pr create -H $targetBranch -d -B master -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
