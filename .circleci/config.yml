@@ -27,6 +27,9 @@ parameters:
   GITHUB_VERSION:
     type: "string"
     default: "1.9.2"
+  SEMVER_VERSION:
+    type: "string"
+    default: "3.2.0"
   KIND_VERSION:
     type: "string"
     default: "v0.10.0"
@@ -173,6 +176,7 @@ common_envars: &common_envars
   KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
   KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
   GITHUB_VERSION: << pipeline.parameters.GITHUB_VERSION >>
+  SEMVER_VERSION: << pipeline.parameters.SEMVER_VERSION >>
   MKCERT_VERSION: << pipeline.parameters.MKCERT_VERSION >>
   NODE_VERSION: << pipeline.parameters.NODE_VERSION >>
   OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
@@ -362,6 +366,16 @@ install_github: &install_github
       tar zxf gh_${GITHUB_VERSION}_linux_amd64.tar.gz
       rm gh_${GITHUB_VERSION}_linux_amd64.tar.gz
       sudo mv gh_${GITHUB_VERSION}_linux_amd64/bin/gh /usr/local/bin/
+install_semver: &install_semver
+  run:
+    name: "Install semver bash tool"
+    command: |
+      cd /tmp
+      wget https://github.com/fsaintjacques/semver-tool/archive/refs/tags/${SEMVER_VERSION}.tar.gz
+      tar zxf ${SEMVER_VERSION}.tar.gz
+      rm ${SEMVER_VERSION}.tar.gz
+      cd semver-tool-${SEMVER_VERSION}
+      sudo make install
 setup_gpg: &setup_gpg
   run:
     name: "Install the GPG key"
@@ -641,6 +655,7 @@ jobs:
     steps:
       - checkout
       - <<: *install_github
+      - <<: *install_semver
       - <<: *setup_gpg
       - add_ssh_keys:
           fingerprints:
@@ -670,6 +685,7 @@ jobs:
     steps:
       - checkout
       - <<: *install_github
+      - <<: *install_semver
       - <<: *setup_gpg
       - add_ssh_keys:
           fingerprints:

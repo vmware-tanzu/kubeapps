@@ -33,8 +33,17 @@ latestReleaseTag() {
 changedVersion() {
     local currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep "version:")
     local externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO}/master/${CHART_REPO_PATH}/Chart.yaml | grep "version:")
-    # NOTE: If curl returns an error this will return always true
-    [[ "$currentVersion" != "$externalVersion" ]]
+    local semverCompare=$(semver compare "${currentVersion}" "${externalVersion}")
+    if [[ ${semverCompare} -lt 0 ]]; then
+        echo "Current chart version ("${currentVersion}") is less than the chart external version ("${externalVersion}")"
+        true
+    elif [[ ${semverCompare} -eq 0 ]]; then
+        echo "Both chart versions are equal"
+        false
+    else
+        echo "WARNING: the current chart version ("${currentVersion}") is greater than the chart external version ("${externalVersion}")."
+        false
+    fi
 }
 
 configUser() {
