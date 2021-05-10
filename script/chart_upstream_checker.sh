@@ -19,12 +19,13 @@ source $(dirname $0)/chart_sync_utils.sh
 
 user=${1:?}
 email=${2:?}
+gpg=${3:?}
 if changedVersion; then
     tempDir=$(mktemp -u)/charts
     mkdir -p $tempDir
     git clone https://github.com/${CHARTS_REPO} $tempDir  --depth 1 --no-single-branch 
-    configUser $tempDir $user $email
-    configUser $PROJECT_DIR $user $email
+    configUser $tempDir $user $email $gpg
+    configUser $PROJECT_DIR $user $email $gpg
     latestVersion=$(latestReleaseTag $PROJECT_DIR)
     updateRepoWithRemoteChanges $tempDir $latestVersion
     commitAndSendInternalPR ${PROJECT_DIR} "sync-chart-changes-${latestVersion}"

@@ -41,9 +41,13 @@ configUser() {
     local targetRepo=${1:?}
     local user=${2:?}
     local email=${3:?}
+    local gpg=${4:?}
     cd $targetRepo
     git config user.name "$user"
     git config user.email "$email"
+    git config user.signingkey "$gpg"
+    git config --global commit.gpgSign true
+    git config --global tag.gpgSign true
     cd -
 }
 
