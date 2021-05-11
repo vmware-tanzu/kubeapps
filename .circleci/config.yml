@@ -389,7 +389,7 @@ setup_gpg: &setup_gpg
       gpg --import --no-tty --batch --yes private.key
       
       # Trusting the imported GPG private key
-      (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "${GPG_KEY_ID}" trust
+      (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "<< pipeline.parameters.CI_BOT_GPG >>" trust
       
       # Listing the key to verify the import process succeeded
       gpg --list-secret-keys << pipeline.parameters.CI_BOT_EMAIL >>
