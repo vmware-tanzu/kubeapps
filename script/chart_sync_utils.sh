@@ -106,6 +106,9 @@ updateRepoWithLocalChanges() {
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
     fi
+    git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
+    git -C "${targetRepo}" pull upstream master
+    git -C "${targetRepo}" push origin master
     rm -rf "${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
     # Update Chart.yaml with new version
@@ -163,9 +166,6 @@ commitAndSendExternalPR() {
     sed -i.bk -e "s/<USER>/`git config user.name`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/`git config user.email`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     local chartVersion=$(grep -e '^version:' ${chartYaml} | awk '{print $2}')
-    git remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
-    git pull upstream master
-    git push origin master
     git checkout -b $targetBranch
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
@@ -197,5 +197,5 @@ commitAndSendInternalPR() {
     git commit -m "bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
     git push -u origin $targetBranch
-    gh pr create -B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
+    gh pr create -d-B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
 }
