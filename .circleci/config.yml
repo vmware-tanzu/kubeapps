@@ -381,12 +381,12 @@ setup_gpg: &setup_gpg
     name: "Install the GPG key"
     command: |
       # Creating the files from the GPG_KEY_PUBLIC and GPG_KEY_PRIVATE env vars
-      echo -e ${GPG_KEY_PUBLIC} > public.key
-      echo -e ${GPG_KEY_PRIVATE} > private.key
+      echo -e ${GPG_KEY_PUBLIC} > /tmp/public.key
+      echo -e ${GPG_KEY_PRIVATE} > /tmp/private.key
       
       # Importing the GPG keys
-      gpg --import public.key
-      gpg --import --no-tty --batch --yes private.key
+      gpg --import /tmp/public.key
+      gpg --import --no-tty --batch --yes /tmp/private.key
       
       # Trusting the imported GPG private key
       (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "<< pipeline.parameters.CI_BOT_GPG >>" trust
