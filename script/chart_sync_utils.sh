@@ -36,22 +36,6 @@ latestReleaseTag() {
     git -C "${targetRepo}/.git" describe --tags $(git rev-list --tags --max-count=1)
     }
 
-changedVersion() {
-    local currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep -oP '(?<=^version: ).*' )
-    local externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO}/master/${CHART_REPO_PATH}/Chart.yaml | grep -oP '(?<=^version: ).*' )
-    local semverCompare=$(semver compare "${currentVersion}" "${externalVersion}")
-    if [[ ${semverCompare} -lt 0 ]]; then
-        echo "Current chart version ("${currentVersion}") is less than the chart external version ("${externalVersion}")"
-        true
-    elif [[ ${semverCompare} -eq 0 ]]; then
-        echo "Both chart versions ("${currentVersion}") and ("${externalVersion}") are equal"
-        false
-    else
-        echo "Current current chart version ("${currentVersion}") is greater than the chart external version ("${externalVersion}")"
-        true
-    fi
-}
-
 configUser() {
     local targetRepo=${1:?}
     local user=${2:?}
@@ -179,13 +163,15 @@ commitAndSendExternalPR() {
     sed -i.bk -e "s/<USER>/`git config user.name`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/`git config user.email`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     local chartVersion=$(grep -e '^version:' ${chartYaml} | awk '{print $2}')
+    git remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
+    git pull upstream master
+    git push origin master
     git checkout -b $targetBranch
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
-    git push origin $targetBranch
-    git config --local "remote.origin.gh-resolved" ${CHARTS_REPO}
-    gh pr create -H $targetBranch -B master -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
+    git push -u origin $targetBranch
+    gh pr create -B master -R ${CHARTS_REPO_ORIGINAL} -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
     cd -
 }
 
@@ -210,8 +196,6 @@ commitAndSendInternalPR() {
     git add --all .
     git commit -m "bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
-    git push origin $targetBranch
-    git config --local "remote.origin.gh-resolved" ${KUBEAPPS_REPO}
-    gh pr create -H $targetBranch -d -B master -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
-    cd -
+    git push -u origin $targetBranch
+    gh pr create -B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
 }
