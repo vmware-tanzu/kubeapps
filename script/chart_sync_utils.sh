@@ -21,7 +21,7 @@ set -e
 ## the development chart repository (KUBEAPPS_REPO)
 CHARTS_REPO_ORIGINAL="bitnami/charts"
 CHARTS_REPO="kubeapps-bot/charts"
-KUBEAPPS_REPO="bitnami/kubeapps"
+KUBEAPPS_REPO="kubeapps/kubeapps"
 
 CHART_REPO_PATH="bitnami/kubeapps"
 PROJECT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
