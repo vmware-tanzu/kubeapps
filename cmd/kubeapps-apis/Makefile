@@ -1,4 +1,4 @@
-# Copyright 2021 the Kubeapps contributors. All Rights Reserved.
+# Copyright 2021 VMware. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 # Ensure the required version of cli tooling in tools/tools.go is installed.
