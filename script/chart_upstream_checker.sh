@@ -23,7 +23,9 @@ gpg=${3:?}
 if changedVersion; then
     tempDir=$(mktemp -u)/charts
     mkdir -p $tempDir
-    git clone https://github.com/${CHARTS_REPO} $tempDir  --depth 1 --no-single-branch 
+    git clone https://github.com/${CHARTS_REPO} $tempDir --depth 1 --no-single-branch
+    git remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
+    git pull upstream master
     configUser $tempDir $user $email $gpg
     configUser $PROJECT_DIR $user $email $gpg
     latestVersion=$(latestReleaseTag $PROJECT_DIR)

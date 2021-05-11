@@ -15,8 +15,14 @@
 
 set -e
 
-CHARTS_REPO="bitnami/charts"
+# Remote github repostories for:
+## the upstream chart repository fork (CHARTS_REPO)
+## the upstream chart original repository (CHARTS_REPO_ORIGINAL)
+## the development chart repository (KUBEAPPS_REPO)
+CHARTS_REPO_ORIGINAL="bitnami/charts"
+CHARTS_REPO="kubeapps-bot/charts"
 KUBEAPPS_REPO="bitnami/kubeapps"
+
 CHART_REPO_PATH="bitnami/kubeapps"
 PROJECT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
