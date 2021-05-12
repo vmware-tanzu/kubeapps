@@ -171,7 +171,7 @@ commitAndSendExternalPR() {
     git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
     git push -u origin $targetBranch
-    gh pr create -B master -R ${CHARTS_REPO_ORIGINAL} -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
+    gh pr create -d -B master -R ${CHARTS_REPO_ORIGINAL} -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
     cd -
 }
 
@@ -197,5 +197,5 @@ commitAndSendInternalPR() {
     git commit -m "bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
     git push -u origin $targetBranch
-    gh pr create -d-B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
+    gh pr create -d -B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
 }

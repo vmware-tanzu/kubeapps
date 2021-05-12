@@ -27,7 +27,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Pulling the latest version of the chart provided by Bitnami.
     - Renaming the production images (`bitnami/kubeapps-xxx`) by the development ones (`kubeapps/xxx`) with the `latest` tag.
     - Using `DEVEL` as the `appVersion`.
-    - Sending a PR in the Kubeapps repository with these changes (from a pushed branch in the Kubeapps repository).
+    - Sending a draft PR in the Kubeapps repository with these changes (from a pushed branch in the Kubeapps repository).
   - `GKE_X_XX_MASTER` and `GKE_X_XX_LATEST_RELEASE` (on master): there is a job for each [Kubernetes version supported by Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/release-notes) (GKE). It will run the e2e tests in a GKE cluster (version X.XX) using either the code in `master` or in the latest released version. If a change affecting the UI is pushed to the main branch, the e2e test might fail here. Use a try/catch block to temporarily work around this.
   - `push_images` (on master): the CI images (which have already been built) get re-tagged and pushed to the `kubeapps` account.
   - `sync_chart_to_bitnami` (on tag): when releasing, it will synchronize our development chart with the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merge the changes. This step involves:
@@ -36,12 +36,12 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Pulling the latest version of the chart provided by Kubeapps.
     - Renaming the development images (`kubeapps/xxx`) by the production ones (`bitnami/kubeapps-xxx`) with the `vX.X.X` tag.
     - Using `vX.X.X` as the `appVersion`.
-    - Sending a PR to the Bitnami Charts repository with these changes (from the robot account's personal fork)
+    - Sending a draft PR to the Bitnami Charts repository with these changes (from the robot account's personal fork)
   - `release` (on tag): it creates a GitHub release based on the current tag by executing the script [script/create_release.sh](../../script/create_release.sh).
 
 Note that this process is independent of the release of the official Bitnami images and chart. These Bitnami images will be created according to their internal process (so the Golang, Node or Rust versions we define here are not used by them. Manual coordination is expected here if a major version bump happens to occur).
 
-Also, note it is the Kubeapps team that is responsible for sending a PR to the [chart repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) each time a new chart version is to be released. Even this process is automatic (using the `sync_chart_to_bitnami` workflow), Kubeapps maintainers may decide to send a manual PR early.
+Also, note it is the Kubeapps team that is responsible for sending a PR to the [chart repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) each time a new chart version is to be released. Even this process is automatic (using the `sync_chart_to_bitnami` workflow), Kubeapps maintainers must manually review the draft PR and convert it into a normal one once it is ready for review.
 
 # Credentials
 
