@@ -21,8 +21,8 @@ keywords:
   - deployment
 maintainers:
   - email: containers@bitnami.com
-    name: Bitnami
+    name: Bitnami-LOCAL
 name: kubeapps
 sources:
   - https://github.com/kubeapps/kubeapps
-version: 6.1.2
+version: 9.9.9
