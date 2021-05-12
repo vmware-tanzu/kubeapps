@@ -22,7 +22,17 @@
 # 2. Run the this script from the apprepository-controller directory: ./hack/update-codegen.sh
 # 3. Move the newly generated files over the old ones:
 #    mv github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go ./pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go
-#    rm pkg/client -rf && mv github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client ./pkg
+#    rm -rf pkg/client && mv github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client ./pkg
+#
+# from slack: 
+# - what are the situations when one needs to run update-codegen.sh manually after modifying 
+# types.go in apprepository-controller?
+#  Michael Nelson: This is following the example from the Kubernetes repository for a sample
+# Kubernetes controller written in Go. From memory, whenever we update the client-go library 
+# (to a new K8s version) on which the sample depends (client-go provides "go clients for talking 
+# to a kubernetes cluster"), we've had to use the update-codegen.sh to get the versioned client 
+# sets for talking to the cluster.
+#
 set -o errexit
 set -o nounset
 set -o pipefail

@@ -617,6 +617,10 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 		}
 	}
 
+	if apprepo.Spec.Description != "" {
+		args = append(args, "--description="+apprepo.Spec.Description)
+	}
+
 	return args
 }
 

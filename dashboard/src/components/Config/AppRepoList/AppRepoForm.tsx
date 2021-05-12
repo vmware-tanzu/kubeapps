@@ -22,6 +22,7 @@ interface IAppRepoFormProps {
     name: string,
     url: string,
     type: string,
+    description: string,
     authHeader: string,
     dockerRegCreds: string,
     customCA: string,
@@ -57,6 +58,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [authHeader, setAuthHeader] = useState("");
   const [token, setToken] = useState("");
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [url, setURL] = useState("");
   const [customCA, setCustomCA] = useState("");
   const [syncJobPodTemplate, setSyncJobTemplate] = useState("");
@@ -97,6 +99,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setName(repo.metadata.name);
       setURL(repo.spec?.url || "");
       setType(repo.spec?.type || "");
+      setDescription(repo.spec?.description || "");
       setSyncJobTemplate(
         repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
       );
@@ -179,6 +182,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         actions.repos.validateRepo(
           finalURL,
           type,
+          description,
           finalHeader,
           dockerRegCreds,
           customCA,
@@ -197,6 +201,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         name,
         finalURL,
         type,
+        description,
         finalHeader,
         dockerRegCreds,
         customCA,
@@ -213,6 +218,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDescription(e.target.value);
+    setValidated(undefined);
+  };
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setURL(e.target.value);
     setValidated(undefined);
@@ -316,6 +325,17 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             value={url}
             onChange={handleURLChange}
             required={true}
+          />
+        </CdsInput>
+        <CdsInput>
+          <label> Description (optional)</label>
+          <input
+            id="kubeapps-repo-description"
+            type="text"
+            placeholder="Description of the repository"
+            value={description}
+            onChange={handleDescriptionChange}
+            required={false}
           />
         </CdsInput>
 

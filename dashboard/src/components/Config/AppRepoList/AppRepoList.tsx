@@ -20,6 +20,7 @@ import { AppRepoControl } from "./AppRepoControl";
 import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
 import "./AppRepoList.css";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
+import Tooltip from "components/js/Tooltip";
 
 function AppRepoList() {
   const dispatch = useDispatch();
@@ -112,16 +113,7 @@ function AppRepoList() {
   const getTableData = (targetRepos: IAppRepository[], disableControls: boolean) => {
     return targetRepos.map(repo => {
       return {
-        name: (
-          <Link
-            to={
-              app.catalog(cluster, repo.metadata.namespace) +
-              filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
-            }
-          >
-            {repo.metadata.name}
-          </Link>
-        ),
+        name: getRepoNameLinkAndTooltip(cluster, repo),
         url: repo.spec?.url,
         accessLevel: repo.spec?.auth?.header ? "Private" : "Public",
         namespace: repo.metadata.namespace,
@@ -242,6 +234,42 @@ function AppRepoList() {
         </div>
       )}
     </>
+  );
+}
+
+function getRepoNameLinkAndTooltip(cluster: string, repo: IAppRepository) {
+  return repo.spec?.description ? (
+    <div className="color-icon-info">
+      <span className="tooltip-wrapper">
+        <Link
+          to={
+            app.catalog(cluster, repo.metadata.namespace) +
+            filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
+          }
+        >
+          {repo.metadata.name}
+        </Link>
+        <Tooltip
+          label="pending-tooltip"
+          id={`${repo.metadata.name}-pending-tooltip`}
+          icon="info-circle"
+          position="bottom-left"
+          small={true}
+          iconProps={{ solid: true, size: "sm" }}
+        >
+          {repo.spec?.description}
+        </Tooltip>
+      </span>
+    </div>
+  ) : (
+    <Link
+      to={
+        app.catalog(cluster, repo.metadata.namespace) +
+        filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
+      }
+    >
+      {repo.metadata.name}
+    </Link>
   );
 }
 
