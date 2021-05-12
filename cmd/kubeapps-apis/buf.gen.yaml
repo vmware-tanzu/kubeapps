@@ -1,0 +1,18 @@
+version: v1beta1
+plugins:
+  - name: go
+    out: gen
+    opt:
+      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+  - name: go-grpc
+    out: gen
+    opt:
+      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+  - name: grpc-gateway
+    out: gen
+    opt:
+      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+    #   - generate_unbound_methods=true
+
+# So the question is whether to have the proto and generated code in the same folder (like a plugin)
+# or split into different folders.

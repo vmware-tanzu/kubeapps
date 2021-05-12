@@ -1,0 +1,22 @@
+syntax = "proto3";
+package kubeappsapis.core.v1;
+option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/v1";
+
+import "google/api/annotations.proto";
+
+// The Core API service provides generic functionality shared across all
+// plugins, such as querying for enabled plugins (which can be used as a
+// liveness check). There may be other general functionality for use by all
+// plugins in the future such as creating credentials.
+message RegisteredPluginsRequest {}
+message RegisteredPluginsResponse {
+  repeated string plugins = 1;
+}
+service CoreService {
+  // RegisteredPlugins returns a map of short and longnames for the configured plugins.
+  rpc RegisteredPlugins(RegisteredPluginsRequest) returns (RegisteredPluginsResponse) {
+    option (google.api.http) = {
+      get: "/core/v1/registered-plugins"
+    };
+  }
+}
