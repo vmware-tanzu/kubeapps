@@ -44,13 +44,22 @@ The versions used there _must_ match the ones used for building the container im
 
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
-#### 0.2.2 - CI integration image
+#### 0.2.2 - CI integration image and dependencies
 
-- The [integration/Dockerfile](../../integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e test.
+We use a separate integration image for running the e2e tests consisting of a simple Node image with a set of dependencies. Therefore, upgrading it includes:
 
-> As part of this release process, this image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR.
+- The [integration dependencies](../../dashboard/package.json) can be updated by running:
 
-> **Note**: this image is not being built automatically. Consequently, a [manual build process](./end-to-end-tests.md#building-the-"kubeapps/integration-tests"-image) _must_ be triggered if you happen to upgrade the integration image.
+```bash
+cd integration
+yarn upgrade
+```
+
+- The [integration/Dockerfile](../../integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
+
+> As part of this release process, this Node image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR. Analogously, its dependencies _may_ also be updated, but in case of a major change, it _should_ be tracked in a separate PR.
+
+> **Note**: this image is not being built automatically. Consequently, a [manual build process](./end-to-end-tests.md#building-the-"kubeapps/integration-tests"-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.
 
 ### 0.3 - Development chart
 
