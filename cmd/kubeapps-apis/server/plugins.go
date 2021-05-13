@@ -15,17 +15,17 @@ package server
 import (
 	"context"
 
-	core "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/v1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 )
 
 // coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
-type coreServer struct {
-	core.UnimplementedCoreServiceServer
+type pluginsServer struct {
+	plugins.UnimplementedPluginsServiceServer
 }
 
-func (s *coreServer) RegisteredPlugins(ctx context.Context, in *core.RegisteredPluginsRequest) (*core.RegisteredPluginsResponse, error) {
+func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
 
-	return &core.RegisteredPluginsResponse{
+	return &plugins.GetConfiguredPluginsResponse{
 		Plugins: []string{"foobar.package.v1"},
 	}, nil
 }

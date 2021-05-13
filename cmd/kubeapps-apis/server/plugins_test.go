@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	core "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/v1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 )
 
 func TestPluginsAvailable(t *testing.T) {
@@ -33,9 +33,9 @@ func TestPluginsAvailable(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cs := coreServer{}
+			ps := pluginsServer{}
 
-			resp, err := cs.PluginsAvailable(context.TODO(), &core.PluginsAvailableRequest{})
+			resp, err := ps.GetConfiguredPlugins(context.TODO(), &plugins.GetConfiguredPluginsRequest{})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}

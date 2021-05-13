@@ -22,7 +22,7 @@ import (
 	"net"
 	"net/http"
 
-	core "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/v1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/soheilhy/cmux"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -38,7 +38,7 @@ func Serve(port int, pluginDirs []string) {
 	// Create the grpc server, register the standard services (reflection and our core service).
 	grpcSrv := grpc.NewServer()
 	reflection.Register(grpcSrv)
-	core.RegisterCoreServiceServer(grpcSrv, &coreServer{})
+	plugins.RegisterPluginsServiceServer(grpcSrv, &pluginsServer{})
 
 	// Create the http server, register our core service followed by any plugins.
 	listenAddr := fmt.Sprintf(":%d", port)
@@ -50,7 +50,7 @@ func Serve(port int, pluginDirs []string) {
 		addr:        listenAddr,
 		dialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
-	err := core.RegisterCoreServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
+	err := plugins.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
 	if err != nil {
 		log.Fatalf("Failed to register core handler for gateway: %v", err)
 	}

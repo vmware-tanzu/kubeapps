@@ -34,7 +34,7 @@ You can then verify the (currently stubbed) registered plugins endpoint via http
 
 
 ```bash
-curl http://localhost:50051/core/v1/registered-plugins
+curl http://localhost:50051/core/plugins/v1alpha1/configured-plugins
 
 {"plugins":["foobar.package.v1"]}
 ```
@@ -42,7 +42,7 @@ curl http://localhost:50051/core/v1/registered-plugins
 or via gRPC (using the [grpcurl tool](https://github.com/fullstorydev/grpcurl)):
 
 ```bash
-grpcurl -plaintext localhost:50051 kubeappsapis.core.v1.CoreService.RegisteredPlugins
+grpcurl -plaintext localhost:50051 kubeappsapis.core.plugins.v1alpha1.PluginsService.GetConfiguredPlugins
 {
   "plugins": [
     "foobar.package.v1"
