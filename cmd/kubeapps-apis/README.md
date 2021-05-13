@@ -30,7 +30,7 @@ make run
 I0511 11:39:56.444553 4116647 server.go:25] Starting server on :50051
 ```
 
-You can then verify the (currently stubbed) registered plugins endpoint via http:
+You can then verify the (currently stubbed) configured plugins endpoint via http:
 
 
 ```bash
