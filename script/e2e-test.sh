@@ -163,7 +163,7 @@ pushChart() {
 installOrUpgradeKubeapps() {
     local chartSource=$1
     # Install Kubeapps
-    info "Installing Kubeapps..."
+    info "Installing Kubeapps from ${chartSource}..."
     kubectl -n kubeapps delete secret localhost-tls || true
 
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
@@ -228,6 +228,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ] ; then
     "--set" "ingress.enabled=true"
     "--set" "ingress.hostname=localhost"
     "--set" "ingress.tls=true"
+    "--set" "ingress.selfSigned=true"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
     "--set" "authProxy.clientID=default"
@@ -253,18 +254,22 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
 
-if [[ -n "${TEST_UPGRADE}" ]]; then
-  # To test the upgrade, first install the latest version published
-  info "Installing latest Kubeapps chart available"
-  installOrUpgradeKubeapps bitnami/kubeapps \
-    "--set" "apprepository.initialRepos=null"
+# TODO(agamez): uncomment this as soon as the local chart version is >=7.0.0
+# Currently, breaking changes in the chart prevent us to perform an automatic upgrade
+# https://github.com/kubeapps/kubeapps/pull/2795
 
-  info "Waiting for Kubeapps components to be ready..."
-  k8s_wait_for_deployment kubeapps kubeapps-ci
-fi
+# if [[ -n "${TEST_UPGRADE}" ]]; then
+#   # To test the upgrade, first install the latest version published
+#   info "Installing latest Kubeapps chart available"
+#   installOrUpgradeKubeapps bitnami/kubeapps \
+#     "--set" "apprepository.initialRepos=null"
+
+#   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
+#   k8s_wait_for_deployment kubeapps kubeapps-ci
+# fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
-info "Waiting for Kubeapps components to be ready..."
+info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password

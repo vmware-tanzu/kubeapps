@@ -44,13 +44,22 @@ The versions used there _must_ match the ones used for building the container im
 
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
-#### 0.2.2 - CI integration image
+#### 0.2.2 - CI integration image and dependencies
 
-- The [integration/Dockerfile](../../integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e test.
+We use a separate integration image for running the e2e tests consisting of a simple Node image with a set of dependencies. Therefore, upgrading it includes:
 
-> As part of this release process, this image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR.
+- The [integration dependencies](../../dashboard/package.json) can be updated by running:
 
-> **Note**: this image is not being built automatically. Consequently, a [manual build process](./end-to-end-tests.md#building-the-"kubeapps/integration-tests"-image) _must_ be triggered if you happen to upgrade the integration image.
+```bash
+cd integration
+yarn upgrade
+```
+
+- The [integration/Dockerfile](../../integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
+
+> As part of this release process, this Node image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR. Analogously, its dependencies _may_ also be updated, but in case of a major change, it _should_ be tracked in a separate PR.
+
+> **Note**: this image is not being built automatically. Consequently, a [manual build process](./end-to-end-tests.md#building-the-"kubeapps/integration-tests"-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.
 
 ### 0.3 - Development chart
 
@@ -58,7 +67,7 @@ Even though the official [Bitnami chart](https://github.com/bitnami/charts/tree/
 
 #### 0.3.1 - Chart images
 
-Currenty, the [values.yaml](../../chart/kubeapps/values.yaml) uses the following container images:
+Currently, the [values.yaml](../../chart/kubeapps/values.yaml) uses the following container images:
 
 - [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags)
 - [bitnami/kubectl](https://hub.docker.com/r/bitnami/kubectl/tags)
@@ -115,11 +124,14 @@ cargo update
 
 > As part of this release process, the dashboard deps _must_ be updated, the golang deps _should_ be updated, the rust deps _should_ be updated and the security check _must_ be performed.
 
-## 1 - Send a PR to the bitnami/chart repository
+## 1 - Wait until the PR to the bitnami/chart repository is accepted
 
-Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). To this end, we need to send a PR with the changes to their repository and wait until it gets accepted. Please note that the changes in both charts may involve additions and deletions, so we need to handle them properly (e.g., deleting the files first, performing a rsync, etc.).
+Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
 
-> This step is currently manual albeit prone to change shortly.
+To this end, our CI system will automatically (in the `sync_chart_from_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
+Once the PR has been created, wait for someone from the Bitnami team to review and accept it.
+
+> If the PR solely includes minor changes in the image versions, this wait can be safely skipped.
 
 ## 2 - Select the commit to tag and perform a manual test
 
