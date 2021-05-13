@@ -228,6 +228,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ] ; then
     "--set" "ingress.enabled=true"
     "--set" "ingress.hostname=localhost"
     "--set" "ingress.tls=true"
+    "--set" "ingress.selfSigned=true"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
     "--set" "authProxy.clientID=default"
