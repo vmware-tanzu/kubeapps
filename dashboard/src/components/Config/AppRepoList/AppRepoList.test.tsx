@@ -215,7 +215,7 @@ describe("global and namespaced repositories", () => {
     expect(
       wrapper.find("h3").filterWhere(h => h.text().includes("Namespace Repositories")),
     ).not.toExist();
-    // no tooltip for this repo
+    // no tooltip for the global repo as it does not have a description.
     expect(wrapper.find(Tooltip)).not.toExist();
   });
 

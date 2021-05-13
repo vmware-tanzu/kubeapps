@@ -115,7 +115,6 @@ export class AppRepository {
     namespace: string,
     repoURL: string,
     type: string,
-    description: string,
     authHeader: string,
     authRegCreds: string,
     customCA: string,
@@ -128,7 +127,6 @@ export class AppRepository {
         appRepository: {
           repoURL,
           type,
-          description,
           authHeader,
           authRegCreds,
           customCA,

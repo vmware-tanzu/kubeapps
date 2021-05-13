@@ -1050,7 +1050,7 @@ describe("validateRepo", () => {
     ];
 
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "", "auth", "", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(true);
@@ -1071,7 +1071,7 @@ describe("validateRepo", () => {
       },
     ];
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "", "auth", "", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
@@ -1095,7 +1095,7 @@ describe("validateRepo", () => {
       },
     ];
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "", "auth", "", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
@@ -1106,7 +1106,7 @@ describe("validateRepo", () => {
       code: 200,
     });
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "oci", "", "", "", "", ["apache", "jenkins"], false),
+      repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false),
     );
     expect(res).toBe(true);
     expect(AppRepository.validate).toHaveBeenCalledWith(
@@ -1114,7 +1114,6 @@ describe("validateRepo", () => {
       "kubeapps-namespace",
       "url",
       "oci",
-      "",
       "",
       "",
       "",

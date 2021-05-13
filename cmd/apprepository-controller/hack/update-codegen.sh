@@ -24,14 +24,19 @@
 #    mv github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go ./pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go
 #    rm -rf pkg/client && mv github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client ./pkg
 #
-# from slack: 
-# - what are the situations when one needs to run update-codegen.sh manually after modifying 
+# What are the situations when one needs to run update-codegen.sh manually after modifying 
 # types.go in apprepository-controller?
-#  Michael Nelson: This is following the example from the Kubernetes repository for a sample
-# Kubernetes controller written in Go. From memory, whenever we update the client-go library 
-# (to a new K8s version) on which the sample depends (client-go provides "go clients for talking 
-# to a kubernetes cluster"), we've had to use the update-codegen.sh to get the versioned client 
-# sets for talking to the cluster.
+# Generally if the generated client will change. This can happen for multiple reasons. If you
+# change to the `AppRepository.Spec` struct the updated struct is imported by the client (so
+# regeneration not needed necessarily) but if your change has a complex type (structs and 
+# pointers to structs) the generated client will need to be updated as it includes a deep copy
+# function. Another cause of your generated client changing is if you update the version of the
+# client.go library that your project uses.
+# Note that the generated client is generally stored in the repo so that other (external) projects
+# can import your client directly. You can see examples of generated clients in the sample-controller
+# for the the K8s org at:
+#  https://github.com/kubernetes/sample-controller/blob/master/pkg/generated/clientset/versioned/typed/samplecontroller/v1alpha1/samplecontroller_client.go
+# or any other controllers in the k8s project
 #
 set -o errexit
 set -o nounset

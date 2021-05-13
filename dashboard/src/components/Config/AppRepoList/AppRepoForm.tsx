@@ -182,7 +182,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         actions.repos.validateRepo(
           finalURL,
           type,
-          description,
           finalHeader,
           dockerRegCreds,
           customCA,
@@ -218,10 +217,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setDescription(e.target.value);
-    setValidated(undefined);
-  };
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setURL(e.target.value);
     setValidated(undefined);

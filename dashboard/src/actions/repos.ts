@@ -326,7 +326,6 @@ export const updateRepo = (
 export const validateRepo = (
   repoURL: string,
   type: string,
-  description: string,
   authHeader: string,
   authRegCreds: string,
   customCA: string,
@@ -345,7 +344,6 @@ export const validateRepo = (
         namespace,
         repoURL,
         type,
-        description,
         authHeader,
         authRegCreds,
         customCA,

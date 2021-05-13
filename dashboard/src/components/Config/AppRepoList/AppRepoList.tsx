@@ -238,17 +238,20 @@ function AppRepoList() {
 }
 
 function getRepoNameLinkAndTooltip(cluster: string, repo: IAppRepository) {
+  const linkObj = (
+    <Link
+      to={
+        app.catalog(cluster, repo.metadata.namespace) +
+        filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
+      }
+    >
+      {repo.metadata.name}
+    </Link>
+  );
   return repo.spec?.description ? (
     <div className="color-icon-info">
       <span className="tooltip-wrapper">
-        <Link
-          to={
-            app.catalog(cluster, repo.metadata.namespace) +
-            filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
-          }
-        >
-          {repo.metadata.name}
-        </Link>
+        {linkObj}
         <Tooltip
           label="pending-tooltip"
           id={`${repo.metadata.name}-pending-tooltip`}
@@ -262,14 +265,7 @@ function getRepoNameLinkAndTooltip(cluster: string, repo: IAppRepository) {
       </span>
     </div>
   ) : (
-    <Link
-      to={
-        app.catalog(cluster, repo.metadata.namespace) +
-        filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
-      }
-    >
-      {repo.metadata.name}
-    </Link>
+    linkObj
   );
 }
 
