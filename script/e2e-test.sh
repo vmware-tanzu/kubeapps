@@ -254,15 +254,19 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
 
-if [[ -n "${TEST_UPGRADE}" ]]; then
-  # To test the upgrade, first install the latest version published
-  info "Installing latest Kubeapps chart available"
-  installOrUpgradeKubeapps bitnami/kubeapps \
-    "--set" "apprepository.initialRepos=null"
+# TODO(agamez): uncomment this as soon as the local chart version is >=7.0.0
+# Currently, breaking changes in the chart prevent us to perform an automatic upgrade
+# https://github.com/kubeapps/kubeapps/pull/2795
 
-  info "Waiting for Kubeapps components to be ready (bitnami chart)..."
-  k8s_wait_for_deployment kubeapps kubeapps-ci
-fi
+# if [[ -n "${TEST_UPGRADE}" ]]; then
+#   # To test the upgrade, first install the latest version published
+#   info "Installing latest Kubeapps chart available"
+#   installOrUpgradeKubeapps bitnami/kubeapps \
+#     "--set" "apprepository.initialRepos=null"
+
+#   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
+#   k8s_wait_for_deployment kubeapps kubeapps-ci
+# fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 info "Waiting for Kubeapps components to be ready (local chart)..."
