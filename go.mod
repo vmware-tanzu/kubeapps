@@ -47,11 +47,10 @@ require (
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
 	github.com/bugsnag/bugsnag-go v1.5.0 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
-	github.com/containerd/containerd v1.4.4
+	github.com/containerd/containerd v1.5.1
 	github.com/deislabs/oras v0.11.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.7.1+incompatible
-	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/garyburd/redigo v1.6.0 // indirect
@@ -70,13 +69,13 @@ require (
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47
 	github.com/lib/pq v1.10.1
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.7.1 // indirect
+	github.com/spf13/viper v1.7.1
 	github.com/srwiley/oksvg v0.0.0-20210320200257-875f767ac39a
 	github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9
 	github.com/stretchr/testify v1.7.0
@@ -86,18 +85,18 @@ require (
 	github.com/yvasiyarov/gorelic v0.0.6 // indirect
 	github.com/yvasiyarov/newrelic_platform_go v0.0.0-20160601141957-9c099fbc30e9 // indirect
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6 // indirect
-	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
+	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/grpc v1.37.1
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.4
-	k8s.io/api v0.20.5
-	k8s.io/apimachinery v0.20.5
+	k8s.io/api v0.20.6
+	k8s.io/apimachinery v0.20.6
 	k8s.io/cli-runtime v0.20.5
-	k8s.io/client-go v0.20.5
+	k8s.io/client-go v0.20.6
 	k8s.io/helm v2.17.0+incompatible
-	k8s.io/klog/v2 v2.8.0 // indirect
+	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubernetes v1.20.5
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
