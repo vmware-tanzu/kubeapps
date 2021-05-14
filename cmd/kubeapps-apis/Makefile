@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Build the helm and kapp package plugins with the output in the devel directory.
+# TODO: currently this just rebuilds them every time.
+build-plugins:
+	go build -o devel/kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin plugins/kapp_controller/packages/v1alpha1/main.go
+
+
 # Ensure the required version of cli tooling in tools/tools.go is installed.
 # The versions are stored in ../go.mod as usual and this same approach is used in
 # both octant and pinniped for build tooling.
