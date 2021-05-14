@@ -13,9 +13,9 @@
 # limitations under the License.
 
 # Build the helm and kapp package plugins with the output in the devel directory.
-# TODO: currently this just rebuilds them every time.
 build-plugins:
 	go build -o devel/kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin plugins/kapp_controller/packages/v1alpha1/main.go
+	go build -o devel/helm-operator-packages-v1alpha1-plugin.so -buildmode=plugin plugins/helm_operator/packages/v1alpha1/main.go
 
 
 # Ensure the required version of cli tooling in tools/tools.go is installed.
@@ -39,10 +39,10 @@ cli-dependencies:
 generate:
 	buf generate
 
-run:
-	go run main.go
+run: build-plugins
+	go run main.go --plugin-dir devel/
 
 test:
 	go test ./...
 
-.PHONY: cli-dependencies generate run test
+.PHONY: build-plugins cli-dependencies generate run test
