@@ -2373,10 +2373,10 @@
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.0.tgz#7036640b4e21cc2f259ae826ce843d277dad8cff"
   integrity sha512-RJJrrySY7A8havqpGObOB4W92QXKJo63/jFLLgpvOtsGUqbQZ9Sbgl35KMm1DjC6j7AvmmU2bIno+3IyEaemaw==
 
-"@types/swagger-ui-react@^3.35.0":
-  version "3.35.0"
-  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-3.35.0.tgz#9d9328f274033587958f922854a1d94a200944fc"
-  integrity sha512-3whipjQ7aRMv+N7XAi9vy1n2CtSrcGkFKMvuYM16rimMFwyJ5Uro1e1oPrSVn3GOkYZokyozOkRR3sTt3CBaxQ==
+"@types/swagger-ui-react@^3.35.1":
+  version "3.35.1"
+  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-3.35.1.tgz#74623b7a8e0ee2b8df5e3eadea654b5eb3340de1"
+  integrity sha512-jQhfM9dHG596me/Js3hk8IjTvqXYjR9MGPcUQlUScHlPoKHoVY3ZrQW4UWlboqtKFORW9vnn9oqL7zeieJm/xg==
   dependencies:
     "@types/react" "*"
 

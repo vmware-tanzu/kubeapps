@@ -123,7 +123,7 @@
     "@types/react-router": "^5.1.14",
     "@types/react-test-renderer": "^17.0.1",
     "@types/redux-mock-store": "^1.0.2",
-    "@types/swagger-ui-react": "^3.35.0",
+    "@types/swagger-ui-react": "^3.35.1",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.2.0",
     "eslint-import-resolver-typescript": "^2.4.0",
