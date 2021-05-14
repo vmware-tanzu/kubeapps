@@ -77,7 +77,7 @@ type ClusterConfig struct {
 
 	// IsKubeappsCluster is an optional per-cluster configuration specifying
 	// that this cluster is the one in which Kubeapps is being installed.
-	// Often this is inferred as the cluster without an explicit APIServiceURL, but 
+	// Often this is inferred as the cluster without an explicit APIServiceURL, but
 	// if every cluster defines an APIServiceURL, we can no longer infer the cluster
 	// on which Kubeapps is installed.
 	IsKubeappsCluster bool `json:"isKubeappsCluster,omitempty"`
@@ -361,6 +361,7 @@ type appRepositoryRequestDetails struct {
 	OCIRepositories       []string                `json:"ociRepositories"`
 	TLSInsecureSkipVerify bool                    `json:"tlsInsecureSkipVerify"`
 	FilterRule            v1alpha1.FilterRuleSpec `json:"filterRule"`
+	Description           string                  `json:"description"`
 }
 
 // ErrGlobalRepositoryWithSecrets defines the error returned when an attempt is
@@ -794,6 +795,7 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 			OCIRepositories:       appRepo.OCIRepositories,
 			TLSInsecureSkipVerify: appRepo.TLSInsecureSkipVerify,
 			FilterRule:            appRepo.FilterRule,
+			Description:           appRepo.Description,
 		},
 	}
 }

@@ -314,6 +314,11 @@ func TestAppRepositoryCreate(t *testing.T) {
 			requestNamespace: "test-namespace",
 			requestData:      `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
 		},
+		{
+			name:             "it creates an app repo with a description",
+			requestNamespace: "test-namespace",
+			requestData:      `{"appRepository": {"name": "test-repo-2", "url": "http://example.com/test-repo", "description": "test-me"}}`,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -465,6 +470,14 @@ func TestAppRepositoryUpdate(t *testing.T) {
 				"default":  {secretStub{name: "apprepo-test-repo"}},
 			},
 			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
+		},
+		{
+			name:             "it updates a description for a repo",
+			requestNamespace: "default",
+			existingRepos: map[string][]repoStub{
+				"default": {repoStub{name: "test-repo"}},
+			},
+			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "description": "updated"}}`,
 		},
 	}
 
@@ -753,6 +766,25 @@ func TestAppRepositoryForRequest(t *testing.T) {
 					URL:             "http://example.com/test-repo",
 					Type:            "oci",
 					OCIRepositories: []string{"apache", "jenkins"},
+				},
+			},
+		},
+		{
+			name: "it creates an app repo with a description",
+			request: appRepositoryRequestDetails{
+				Name:        "test-repo",
+				Type:        "oci",
+				RepoURL:     "http://example.com/test-repo",
+				Description: "testing 1 2 3",
+			},
+			appRepo: v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: v1alpha1.AppRepositorySpec{
+					URL:         "http://example.com/test-repo",
+					Type:        "oci",
+					Description: "testing 1 2 3",
 				},
 			},
 		},
