@@ -16,6 +16,17 @@ Together, this enables the best of both worlds: a well known and used Interface 
 
 Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatability.
 
+## Plug-able
+
+The kubeapps-apis service uses the standard [go plugin package](https://golang.org/pkg/plugin/) to be able to load api plugins at run-time.
+
+Each plugin consists of 2 source files (and some generated files):
+
+* A `.proto` file defining the service that uses the messages defined in relevant part of kubeappsapis.core,
+* A `main.go` that compiles to an .so file for that plugin. This `main.go` has two public functions: one to register the plugin with a GRPC server and one to register the plugin for the http handler as well as the implementation for the server. This may be split into further modules as the complexity of the plugin grows.
+
+With this structure, the kubeapps-apis' main.go simply loads the `.so` files from the specified plugin dirs and register them when starting. You can see this in the [kubeapps-apis/server/server.go](server/server.go) file.
+
 ## CLI
 
 Similar to most go commands, we've used [Cobra](https://github.com/spf13/cobra) for the CLI interface. Currently there is only a root command to run server, but we may later add a `version` subcommand or a `new-plugin` subcommand, but even without these it provides a lot of useful defaults for config, env var support etc.
