@@ -27,11 +27,12 @@ You can run `make run` to run the currently stubbed service.
 ```bash
 make run
 
+I0514 14:14:52.969498 1932386 server.go:129] Successfully registered plugin "/home/michael/dev/vmware/kubeapps/cmd/kubeapps-apis/devel/helm-operator-packages-v1alpha1-plugin.so"
+I0514 14:14:52.975884 1932386 server.go:129] Successfully registered plugin "/home/michael/dev/vmware/kubeapps/cmd/kubeapps-apis/devel/kapp-controller-packages-v1alpha1-plugin.so"
 I0511 11:39:56.444553 4116647 server.go:25] Starting server on :50051
 ```
 
 You can then verify the (currently stubbed) configured plugins endpoint via http:
-
 
 ```bash
 curl http://localhost:50051/core/plugins/v1alpha1/configured-plugins
@@ -50,6 +51,15 @@ grpcurl -plaintext localhost:50051 kubeappsapis.core.plugins.v1alpha1.PluginsSer
 }
 ```
 
+The packages endpoints for the helm-operator and kapp-controller plugins are unimplemented:
+
+```bash
+curl http://localhost:50051/kapp_controller/packages/v1alpha1
+{"code":12, "message":"method GetAvailablePackages not implemented", "details":[]}
+
+curl http://localhost:50051/helm/packages/v1alpha1
+{"code":12, "message":"method GetAvailablePackages not implemented", "details":[]}
+```
 
 ## Hacking
 
