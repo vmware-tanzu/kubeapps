@@ -36,4 +36,7 @@ generate:
 run:
 	go run main.go
 
-.PHONY: cli-dependencies run generate-protobuf
+test:
+	go test ./...
+
+.PHONY: cli-dependencies generate run test
