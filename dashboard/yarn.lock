@@ -2256,10 +2256,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-jsonschema-form@^1.7.4":
-  version "1.7.4"
-  resolved "https://registry.yarnpkg.com/@types/react-jsonschema-form/-/react-jsonschema-form-1.7.4.tgz#b9dded80f830bce11a623107633b13964a143cca"
-  integrity sha512-TSsntIuB8bfheC/ZpjUmgB6+m5cLR4Gbh8rnqpSYB6T4e2TwzNICuKC5AykZI0XTxqLJmShyVsJxuo4aih64Gw==
+"@types/react-jsonschema-form@^1.7.5":
+  version "1.7.5"
+  resolved "https://registry.yarnpkg.com/@types/react-jsonschema-form/-/react-jsonschema-form-1.7.5.tgz#1b08327662afd610a93f28e33950e00e6e848581"
+  integrity sha512-Ovhmu9WOAHee0GNCncNiTRtUmrVZgj8vkdEwc3f0CgvkNIYss9ucQ1F6TNLuakXumAg25P1zGgeCqr37iJo5FQ==
   dependencies:
     "@types/json-schema" "*"
     "@types/react" "*"
@@ -2885,10 +2885,10 @@ ajv@^6.1.0, ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.3, ajv@^6.12.4, ajv@^6.12.5, ajv
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-ajv@^8.0.1, ajv@^8.3.0:
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.3.0.tgz#25ee7348e32cdc4a1dbb38256bf6bdc451dd577c"
-  integrity sha512-RYE7B5An83d7eWnDR8kbdaIFqmKCNsP16ay1hDbJEU+sa0e3H9SebskCt0Uufem6cfAVu7Col6ubcn/W+Sm8/Q==
+ajv@^8.0.1, ajv@^8.4.0:
+  version "8.4.0"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.4.0.tgz#48984fdb2ce225cab15795f0772a8d85669075e4"
+  integrity sha512-7QD2l6+KBSLwf+7MuYocbWvRPdOu63/trReTLu2KFwkgctnub1auoF+Y1WYcm09CTM7quuscrzqmASaLHC/K4Q==
   dependencies:
     fast-deep-equal "^3.1.1"
     json-schema-traverse "^1.0.0"
