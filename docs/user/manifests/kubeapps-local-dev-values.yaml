@@ -12,6 +12,8 @@ kubeops:
 postgresql:
   replication:
     enabled: false
+kubeappsapis:
+  replicaCount: 1
 ingress:
   enabled: true
   hostname: localhost
