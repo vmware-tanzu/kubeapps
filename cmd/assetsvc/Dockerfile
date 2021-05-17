@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:experimental
+# syntax = docker/dockerfile:1.2
 
 FROM bitnami/golang:1.16.3 as builder
 WORKDIR /go/src/github.com/kubeapps/kubeapps
