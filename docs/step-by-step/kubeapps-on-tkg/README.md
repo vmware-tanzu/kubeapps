@@ -15,7 +15,7 @@ This tutorial will specifically show you how to: i) successfully install Kubeapp
 
 This guide will assume henceforth that:
 
-- You have a Tanzu™ Kubernetes Grid v1.3.1 or later cluster. Check out the [VMware Tanzu™ Kubernetes Grid 1.3 Documentation](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) for more information.
+- You have a VMware Tanzu™ Kubernetes Grid v1.3.1 or later cluster. Check out the [VMware Tanzu™ Kubernetes Grid 1.3 Documentation](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) for more information.
 - You have access to the [VMWare Cloud Services Portal (CSP)](https://console.cloud.vmware.com/). If not, talk to your [VMware sales representative](https://www.vmware.com/company/contact_sales.html) to request access.
 - You have access to, at least, the Tanzu™ Application Catalog™ Demo environment. If not, reach out to your [VMware sales representative](https://www.vmware.com/company/contact_sales.html).
 - You have the _kubectl_ CLI and the Helm v3.x package manager installed. Learn how to [install kubectl and Helm v3.x](https://docs.bitnami.com/kubernetes/get-started-kubernetes/#step-3-install-kubectl-command-line).
@@ -34,7 +34,7 @@ This information is intended for administrators who want to install Kubeapps on 
 
 # What to Do Next
 
-Check out the [Useful Links](#useful-links) section to learn more about TKG, TAC and advanced features in Kubeapps.
+Check out the [Useful Links](#useful-links) section to learn more about TKG, TAC and other advanced features in Kubeapps.
 
 # Useful Links
 
@@ -42,4 +42,4 @@ Check out the [Useful Links](#useful-links) section to learn more about TKG, TAC
 - [Installing Kubeapps in airgapped environments](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md)
 - [Syncing app repositories using webhooks](https://github.com/kubeapps/kubeapps/blob/master/docs/user/syncing-apprepository-webhook.md)
 - [Using Kubeapps to deploy in multiple clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md)
-- [Using Operators in Kubeapps]https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md)
+- [Using Operators in Kubeapps](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md)
