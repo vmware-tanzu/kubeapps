@@ -1,4 +1,4 @@
-https://github.com/kubeapps/kubeapps/blob/master/docs/user/dashboard.md# Kubeapps on VMware Tanzu™ Kubernetes Grid
+# Kubeapps on VMware Tanzu™ Kubernetes Grid
 
 In this guide, we will walk you through performing a ready-to-use configuration and using Kubeapps on a VMware Tanzu™ Kubernetes cluster (TKC).
 
