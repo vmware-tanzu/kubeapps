@@ -141,6 +141,10 @@ dashboard:
     }
 ```
 
+This image depicts a customized version of Kubeapps applying the aforementioned styles and strings:
+
+![Customized Kubeapps](./img/step-2-1.png)
+
 Finally, the initial application repositories can be also customized. In the next steps, we will cover how to add different repositories. Notwithstanding, some users use to add the Bitnami open source catalog as follows:
 
 ```yaml
@@ -206,7 +210,7 @@ subjects:
 ## What to Do Next?
 
 At this point, you have a Kubeapps installation up and running. You have configured the authentication in the Kubeapps components as well as some look and feel details. Then, you have performed the installation and have granted the RBAC permissions to be able to use Kubepps.
-The next thing is to start adding application repositories to your Kubeapps instance as described in the [Step 3 (VMware Marketplace™)](./step-3.md) and [Step 4 (VMware Tanzu™ Application Catalog™)](./step-3.md).
+The next thing is to start adding application repositories to your Kubeapps instance as described in the [Step 4](./step-4.md).
 
 ## Additional References
 
