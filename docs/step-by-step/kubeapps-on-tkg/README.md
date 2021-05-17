@@ -1,4 +1,4 @@
-# Kubeapps on VMware Tanzu™ Kubernetes Grid
+https://github.com/kubeapps/kubeapps/blob/master/docs/user/dashboard.md# Kubeapps on VMware Tanzu™ Kubernetes Grid
 
 In this guide, we will walk you through performing a ready-to-use configuration and using Kubeapps on a VMware Tanzu™ Kubernetes cluster (TKC).
 
@@ -29,7 +29,7 @@ This information is intended for administrators who want to install Kubeapps on 
 1. [Step 1 - Configure an Identity Management Provider in your Cluster](./step-1.md)
 2. [Step 2 - Configure and Install Kubeapps](./step-2.md)
 3. [Step 3 - Add Application Repositories](./step-3.md)
-5. [Step 4 - Deploy an Application](./step-4.md)
+4. [Step 4 - Manage your Applications](./step-4.md)
 
 # What to Do Next
 
