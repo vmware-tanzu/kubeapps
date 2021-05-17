@@ -140,6 +140,7 @@ it("should call the install method with OCI information", async () => {
     "",
     "",
     "",
+    "",
     [],
     ["apache", "jenkins"],
     false,
@@ -166,6 +167,7 @@ it("should call the install skipping TLS verification", async () => {
     "",
     "https://helm.repo",
     "helm",
+    "",
     "",
     "",
     "",
@@ -200,6 +202,7 @@ describe("when using a filter", () => {
       "",
       "https://helm.repo",
       "helm",
+      "",
       "",
       "",
       "",
@@ -239,6 +242,7 @@ describe("when using a filter", () => {
       "",
       "",
       "",
+      "",
       [],
       [],
       false,
@@ -269,6 +273,42 @@ describe("when using a filter", () => {
       "",
       "https://oci.repo",
       "oci",
+      "",
+      "",
+      "",
+      "",
+      "",
+      [],
+      [],
+      false,
+      undefined,
+    );
+  });
+});
+
+describe("when using a description", () => {
+  it("should call the install method with a description", async () => {
+    const install = jest.fn().mockReturnValue(true);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <AppRepoForm {...defaultProps} onSubmit={install} />,
+    );
+    wrapper
+      .find("#kubeapps-repo-url")
+      .simulate("change", { target: { value: "https://helm.repo" } });
+    wrapper
+      .find("#kubeapps-repo-description")
+      .simulate("change", { target: { value: "description test" } });
+    const form = wrapper.find("form");
+    await act(async () => {
+      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+    });
+    wrapper.update();
+    expect(install).toHaveBeenCalledWith(
+      "",
+      "https://helm.repo",
+      "helm",
+      "description test",
       "",
       "",
       "",
@@ -336,6 +376,7 @@ it("should call the install method with the selected docker credentials", async 
     "http://test",
     "helm",
     "",
+    "",
     "repo-1",
     "",
     "",
@@ -382,6 +423,7 @@ it("should call the install reusing as auth the selected docker credentials", as
     "",
     "http://test",
     "helm",
+    "",
     "",
     "",
     "",

@@ -1,0 +1,13 @@
+version: v1beta1
+name: "buf.build/kubeapps/kubeapps"
+build:
+  roots:
+    - proto
+lint:
+  use:
+    - DEFAULT
+  except:
+    - RPC_REQUEST_RESPONSE_UNIQUE
+deps:
+  - buf.build/beta/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway

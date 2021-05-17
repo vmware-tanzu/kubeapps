@@ -52,6 +52,8 @@ type AppRepositorySpec struct {
 	TLSInsecureSkipVerify bool `json:"tlsInsecureSkipVerify,omitempty"`
 	// FilterRule allows to filter packages based on a JQuery
 	FilterRule FilterRuleSpec `json:"filterRule,omitempty"`
+	// (optional) description
+	Description string `json:"description,omitempty"`
 }
 
 // AppRepositoryAuth is the auth for an AppRepository resource

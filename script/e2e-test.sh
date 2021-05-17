@@ -163,7 +163,7 @@ pushChart() {
 installOrUpgradeKubeapps() {
     local chartSource=$1
     # Install Kubeapps
-    info "Installing Kubeapps..."
+    info "Installing Kubeapps from ${chartSource}..."
     kubectl -n kubeapps delete secret localhost-tls || true
 
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
@@ -228,6 +228,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ] ; then
     "--set" "ingress.enabled=true"
     "--set" "ingress.hostname=localhost"
     "--set" "ingress.tls=true"
+    "--set" "ingress.selfSigned=true"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
     "--set" "authProxy.clientID=default"
@@ -259,12 +260,12 @@ if [[ -n "${TEST_UPGRADE}" ]]; then
   installOrUpgradeKubeapps bitnami/kubeapps \
     "--set" "apprepository.initialRepos=null"
 
-  info "Waiting for Kubeapps components to be ready..."
+  info "Waiting for Kubeapps components to be ready (bitnami chart)..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
-info "Waiting for Kubeapps components to be ready..."
+info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password

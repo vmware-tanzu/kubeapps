@@ -437,6 +437,7 @@ export type IAppRepository = IK8sObject<
   {
     type: string;
     url: string;
+    description?: string;
     auth?: {
       header?: {
         secretKeyRef: {
