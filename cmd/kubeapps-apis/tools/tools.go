@@ -23,5 +23,8 @@ package tools
 // prevent tools from inspecting the imports.
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/spf13/cobra/cobra"
+	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
+	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
 )
