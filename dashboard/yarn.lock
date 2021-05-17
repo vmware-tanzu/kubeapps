@@ -11916,10 +11916,10 @@ react-router-dom@^5.2.0:
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
 
-react-router-hash-link@^2.4.1:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/react-router-hash-link/-/react-router-hash-link-2.4.1.tgz#91ccd904427f42e5ded684af0a20f45842ce0dc5"
-  integrity sha512-ac71RVRhGzr2DXHPDYW+DE7oH/jkbMefF3giSlAzF286EAHVc1t4wwr4sFNOYj9b2Flfq+FCv184Qi9MBP0KXw==
+react-router-hash-link@^2.4.3:
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/react-router-hash-link/-/react-router-hash-link-2.4.3.tgz#570824d53d6c35ce94d73a46c8e98673a127bf08"
+  integrity sha512-NU7GWc265m92xh/aYD79Vr1W+zAIXDWp3L2YZOYP4rCqPnJ6LI6vh3+rKgkidtYijozHclaEQTAHaAaMWPVI4A==
   dependencies:
     prop-types "^15.7.2"
 
