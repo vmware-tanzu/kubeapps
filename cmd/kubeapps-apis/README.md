@@ -22,8 +22,8 @@ The kubeapps-apis service uses the standard [go plugin package](https://golang.o
 
 Each plugin consists of 2 source files (and some generated files):
 
-* A `.proto` file defining the service that uses the messages defined in relevant part of kubeappsapis.core,
-* A `main.go` that compiles to an .so file for that plugin. This `main.go` has two public functions: one to register the plugin with a GRPC server and one to register the plugin for the http handler as well as the implementation for the server. This may be split into further modules as the complexity of the plugin grows.
+* A `.proto` file defining the service that uses the messages defined in relevant part of kubeappsapis.core, in `./proto/kubeappsapis/plugins/<plugin-name>`,
+* A `main.go` that compiles to an .so file for that plugin. This `main.go` has two public functions: one to register the plugin with a GRPC server and one to register the plugin for the http handler as well as the implementation for the server. This may be split into further modules as the complexity of the plugin grows. This file is under `./plugins/<plugin-name>`
 
 With this structure, the kubeapps-apis' main.go simply loads the `.so` files from the specified plugin dirs and register them when starting. You can see this in the [kubeapps-apis/server/server.go](server/server.go) file.
 
