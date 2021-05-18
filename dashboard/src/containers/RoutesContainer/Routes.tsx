@@ -28,19 +28,23 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps/:releaseName": AppView,
   "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgradeContainer,
   "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": AppNewContainer,
-  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:id/versions/:version": AppNewContainer,
+  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:id/versions/:version":
+    AppNewContainer,
   "/c/:cluster/ns/:namespace/catalog": CatalogContainer,
   "/c/:cluster/ns/:namespace/catalog/:repo": CatalogContainer,
   "/c/:cluster/ns/:namespace/charts/:repo/:id": ChartViewContainer,
   "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartViewContainer,
   "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartViewContainer,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version": ChartViewContainer,
+  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version":
+    ChartViewContainer,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
   "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,
   "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
-  "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
-  "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
+  "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName":
+    OperatorInstanceViewContainer,
+  "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update":
+    OperatorInstanceUpdateContainer,
   "/c/:cluster/ns/:namespace/config/repos": AppRepoList,
   "/docs": ApiDocs,
 } as const;

@@ -41,10 +41,12 @@ it("deletes an application", async () => {
   wrapper.update();
   expect(wrapper.find(ConfirmDialog).prop("modalIsOpen")).toBe(true);
   await act(async () => {
-    await (wrapper
-      .find(".btn")
-      .filterWhere(b => b.text() === "Delete")
-      .prop("onClick") as any)();
+    await (
+      wrapper
+        .find(".btn")
+        .filterWhere(b => b.text() === "Delete")
+        .prop("onClick") as any
+    )();
   });
   expect(deleteApp).toHaveBeenCalledWith(
     defaultProps.cluster,
