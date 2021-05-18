@@ -27,9 +27,12 @@ deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 	kubectl --kubeconfig=${CLUSTER_CONFIG} -n kubeapps create secret tls localhost-tls \
 		--key ./devel/localhost-key.pem \
 		--cert ./devel/localhost-cert.pem
+	kubectl --kubeconfig=${CLUSTER_CONFIG} -n kubeapps create secret generic postgresql-db \
+		--from-literal=postgresql-postgres-password=dev-only-fake-password \
+		--from-literal=postgresql-password=dev-only-fake-password
 
-deploy-dev-kubeapps: 
-	helm --kubeconfig=${CLUSTER_CONFIG} install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
+deploy-dev-kubeapps:
+	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
