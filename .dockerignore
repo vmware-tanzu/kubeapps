@@ -1,4 +1,4 @@
 dashboard/node_modules
 .git
 docs
-pinniped-proxy/target
+cmd/pinniped-proxy/target
