@@ -1,0 +1,14 @@
+version: v1beta1
+plugins:
+  - name: go
+    out: gen
+    opt:
+      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+  - name: go-grpc
+    out: gen
+    opt:
+      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+  - name: grpc-gateway
+    out: gen
+    opt:
+      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen

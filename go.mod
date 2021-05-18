@@ -57,24 +57,27 @@ require (
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/spec v0.19.4 // indirect
-	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
 	github.com/gorilla/handlers v1.4.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gregjones/httpcache v0.0.0-20181110185634-c63ab54fda8f // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/itchyny/gojq v0.12.3
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47
-	github.com/lib/pq v1.10.1
+	github.com/lib/pq v1.10.2
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
+	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.7.1
 	github.com/srwiley/oksvg v0.0.0-20210320200257-875f767ac39a
 	github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9
 	github.com/stretchr/testify v1.7.0
@@ -84,9 +87,11 @@ require (
 	github.com/yvasiyarov/gorelic v0.0.6 // indirect
 	github.com/yvasiyarov/newrelic_platform_go v0.0.0-20160601141957-9c099fbc30e9 // indirect
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6 // indirect
-	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
-	golang.org/x/text v0.3.5 // indirect
-	google.golang.org/grpc v1.37.0
+	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
+	google.golang.org/genproto v0.0.0-20210426193834-eac7f76ac494
+	google.golang.org/grpc v1.37.1
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.4
@@ -95,6 +100,7 @@ require (
 	k8s.io/cli-runtime v0.20.5
 	k8s.io/client-go v0.20.5
 	k8s.io/helm v2.17.0+incompatible
+	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubernetes v1.20.5
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0

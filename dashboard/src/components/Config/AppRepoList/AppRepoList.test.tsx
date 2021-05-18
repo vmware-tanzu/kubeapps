@@ -1,6 +1,7 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
+import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -137,7 +138,9 @@ describe("global and namespaced repositories", () => {
       name: "my-repo",
       namespace,
     },
-    spec: {},
+    spec: {
+      description: "my description 1 2 3 4",
+    },
   };
 
   it("shows a message if no global or namespaced repos exist", () => {
@@ -212,6 +215,8 @@ describe("global and namespaced repositories", () => {
     expect(
       wrapper.find("h3").filterWhere(h => h.text().includes("Namespace Repositories")),
     ).not.toExist();
+    // no tooltip for the global repo as it does not have a description.
+    expect(wrapper.find(Tooltip)).not.toExist();
   });
 
   it("shows global and namespaced repositories", () => {
@@ -249,6 +254,22 @@ describe("global and namespaced repositories", () => {
     expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
       `/c/${currentCluster}/ns/${namespacedRepo.metadata.namespace}/catalog?Repository=my-repo`,
     );
+  });
+
+  it("shows a tooltip for the repo", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        repos: {
+          repos: [namespacedRepo],
+        },
+      }),
+      <AppRepoList />,
+    );
+    act(() => {
+      wrapper.find("input[type='checkbox']").simulate("change");
+    });
+    const tooltipText = wrapper.find(Tooltip).html();
+    expect(tooltipText).toContain("my description 1 2 3 4");
   });
 
   it("use the correct namespace in the link when listing in all namespaces", () => {

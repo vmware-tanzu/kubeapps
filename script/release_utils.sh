@@ -41,9 +41,9 @@ function update_release_tag {
   local tag=${1:?}
   local repo_domain=${2:?}
   local repo_name=${3:?}
-  local release_id=$(curl -H "Authorization: token $ACCESS_TOKEN" -s https://api.github.com/repos/$repo_domain/$repo_name/releases | jq  --raw-output '.[0].id')
+  local release_id=$(curl -H "Authorization: token $GITHUB_TOKEN" -s https://api.github.com/repos/$repo_domain/$repo_name/releases | jq  --raw-output '.[0].id')
   local body=$(get_release_body $tag $repo_domain $repo_name)
-  local release=`curl -H "Authorization: token $ACCESS_TOKEN" -s --request PATCH --data $body  https://api.github.com/repos/$repo_domain/$repo_name/releases/$release_id`
+  local release=`curl -H "Authorization: token $GITHUB_TOKEN" -s --request PATCH --data $body  https://api.github.com/repos/$repo_domain/$repo_name/releases/$release_id`
   echo $release
 }
 
@@ -52,7 +52,7 @@ function release_tag {
   local repo_domain=${2:?}
   local repo_name=${3:?}
   local body=$(get_release_body $tag $repo_domain $repo_name)
-  local release=`curl -H "Authorization: token $ACCESS_TOKEN" -s --request POST --data "$body" https://api.github.com/repos/$repo_domain/$repo_name/releases`
+  local release=`curl -H "Authorization: token $GITHUB_TOKEN" -s --request POST --data "$body" https://api.github.com/repos/$repo_domain/$repo_name/releases`
   echo $release
 }
 
@@ -69,7 +69,7 @@ function upload_asset {
   else
     local content_type="application/octet-stream"
   fi
-  curl -H "Authorization: token $ACCESS_TOKEN" \
+  curl -H "Authorization: token $GITHUB_TOKEN" \
     -H "Content-Type: $content_type" \
     --data-binary @"$asset" \
     "https://uploads.github.com/repos/$repo_domain/$repo_name/releases/$release_id/assets?name=$filename"

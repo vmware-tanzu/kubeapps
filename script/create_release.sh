@@ -12,12 +12,12 @@ if [[ -z "$REPO_NAME" || -z "$REPO_DOMAIN" ]]; then
   exit 1
 fi
 
-if [[ -z "$ACCESS_TOKEN" ]]; then
+if [[ -z "$GITHUB_TOKEN" ]]; then
   echo "Unable to release: Github Token not specified" > /dev/stderr
   exit 1
 fi
 
-repo_check=`curl -H "Authorization: token $ACCESS_TOKEN" -s https://api.github.com/repos/$REPO_DOMAIN/$REPO_NAME`
+repo_check=`curl -H "Authorization: token $GITHUB_TOKEN" -s https://api.github.com/repos/$REPO_DOMAIN/$REPO_NAME`
 if [[ $repo_check == *"Not Found"* ]]; then
   echo "Not found a Github repository for $REPO_DOMAIN/$REPO_NAME, it is not possible to publish it" > /dev/stderr
   exit 1

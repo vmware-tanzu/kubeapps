@@ -1993,6 +1993,8 @@ components:
           type: string
         type:
           type: string
+        description:
+          type: string
         repoURL:
           type: string
         authHeader:
@@ -2093,6 +2095,8 @@ components:
             type: string
         tlsInsecureSkipVerify:
           type: boolean
+        description:
+          type: string
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepositoryStatus:
       type: object
