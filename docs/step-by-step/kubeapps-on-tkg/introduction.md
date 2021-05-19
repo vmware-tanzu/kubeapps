@@ -15,9 +15,15 @@ Kubeapps can be configured with public catalogs, such as the [VMware Marketplace
 
 This guide walks you through the process of configuring, deploying and using Kubeapps on a VMware Tanzu™ Kubernetes Grid cluster. It covers the following tasks:
 
-- Install Kubeapps with ready-to-use values, leveraging the existing identity management capabilities in TKG;
-- TODO
-- Configure two application repositories: the public [VMware Marketplace™](https://marketplace.cloud.vmware.com/) repository and your private [VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog) repository.
+- Configuring an identity management provider in the cluster
+- Integrating Kubeapps with the identity management provider
+- Adjusting the Kubeapps user interface
+- Configuring role-based access control in Kubeapps
+- Deploying Kubeapps in the cluster
+- Adding public and private repositories to Kubeapps: the public [VMware Marketplace™](https://marketplace.cloud.vmware.com/) repository and your private [VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog) repository
+- Deploying applications through Kubeapps
+- Listing, removing and managing applications through Kubeapps
+- Configure two application repositories:
 
 ## Intended Audience
 

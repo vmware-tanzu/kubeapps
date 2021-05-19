@@ -97,20 +97,20 @@ pinnipedProxy:
 
 - Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows.
 
-  - Replace the  `MY-OIDC-ISSUER-URL` with the _issuer_ URL of your OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
-  - Replace `MY-CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
-  - Replace `MY-CLIENT-SECRET` with the application secret obtained from the JSON file in the previous step.
-  - Replace `MY-COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string).
+  - Replace the `OIDC-ISSUER-URL` with the _issuer_ URL of your OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+  - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
+  - Replace `CLIENT-SECRET` with the application secret obtained from the JSON file in the previous step.
+  - Replace `COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string).
 
 ```yaml
 authProxy:
   enabled: true
   provider: oidc
-  clientID: MY-CLIENT-ID
-  clientSecret: MY-CLIENT-SECRET
-  cookieSecret: MY-COOKIE-SECRET
+  clientID: CLIENT-ID
+  clientSecret: CLIENT-SECRET
+  cookieSecret: COOKIE-SECRET
   additionalFlags:
-    - --oidc-issuer-url=MY-OIDC-ISSUER-URL
+    - --oidc-issuer-url=OIDC-ISSUER-URL
     - --scope=openid email groups
     - --set-authorization-header=true
     # - --insecure-oidc-skip-issuer-verification=true
@@ -175,7 +175,7 @@ Since Kubeapps is currently officially delivered as a Helm chart packaged by Bit
 >     type: LoadBalancer
 > ```
 
-Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`.
+Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`, so ensure this file exists before executing that command.
 
 ```bash
 # Install the Bitnami helm repository
