@@ -2,8 +2,6 @@
 
 The first step is to configure an OIDC provider (VMware CSP login in this example) in the VMware Tanzu™ Kubernetes Grid™ (TKG) cluster and configure Pinniped to trust this provider for authenticating Kubernetes API calls.
 
- Next, we will configure from scratch an OIDC provider (using VMware CSP as an example) and will make Pinniped trust this provider for authenticating the Kubernetes API calls. At the end of this guide, your TKG cluster will be ready to perform a Kubeapps installation.
-
 ### Step 1.1: Install a Recent Version of Pinniped
 
 **NOTE**: Skip this section if [the cluster is already attached or will be attached to VMware Tanzu™ Mission Control™ (TMC)](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html). When a cluster is attached to TMC a recent Pinniped version compatible with Kubeapps is automatically installed in your cluster.
