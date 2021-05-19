@@ -30,7 +30,6 @@ In order to install a recent Pinniped version in TKG (this guide uses v0.8.0), f
 2. Save the `yaml` file generated above.
 3. Apply this file to the cluster:
 
-
   ```bash
   kubectl apply -f pinniped-0.8-tmc.yaml
   ```
