@@ -1,29 +1,37 @@
 # Step 1 - Configure an Identity Management Provider in your Cluster
 
-In this step, we will XXXXX (TBD: depending on 1.1), next, we will configure from scratch an OIDC provider (VMware CSP login in the example) and will make Pinniped trust this provider for authenticating the Kubernetes API calls. At the end of this guide, your TKG cluster will be ready to perform a Kubeapps installation.
+In this step, we will install a more recent Pinniped version compatible with Kubeapps. Next, we will configure from scratch an OIDC provider (using VMware CSP as an example) and will make Pinniped trust this provider for authenticating the Kubernetes API calls. At the end of this guide, your TKG cluster will be ready to perform a Kubeapps installation.
 
-## 1.1 - TBD Install or use the existing Pinniped in TKG?
+## 1.1 - Install a recent Pinniped version
 
-<!--
+As per TKG 1.3.1, the built-in Pinniped version is pretty old (`0.4.1`) and it has some incompatibilities with the latest Kubeapps versions. Fortunately, Pinniped can be instaled multiple times as a standalone product (i.e., not as a TKG addon) in a separate namespace and using a different Kubernetes API group.
 
-This section depends upon the result of the issue https://github.com/kubeapps/kubeapps/issues/2764
+Specifically, Kubeapps require a Pinniped greater or equal to `0.6.0`, so in this subsection we will cover how to install a recent Pinniped version (e.g., `0.8.0`) in your TKG cluster without interferring your existing version provided as a TKG addon.
 
-Therefore three possible approaches are on the table:
+Alternatively, you can safely skip this section if you [attach the cluster to VMware Tanzu™ Mission Control™](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html). By attaching a cluster in TMC you will automatically get a recent Pinniped version installed in your cluster, ready to use along with Kubeapps.
 
-    a) TKG eventually will bundle a  Pinniped version >= 0.6: this step will just refer to the TKG official docs.
+> **NOTE**: Whereas users can install Pinniped in any namespace with any API group, due to current limitations in Kubeapps, the list of supported combination of namespace/API groups is limited to:
+>
+> - `*.pinniped-dev` resources in the `pinniped-concierge` namespace.
+> - `*.pinniped.tmc.cloud.vmware.com` in the `vmware-system-tmc` namespace.
+>   However, note that, even though the `tmc` name appears there, it is just a name required for technical reasons. There is no need of using TMC for running Kubeapps on TKG.
 
-    b) TKG has a Pinniped version < 0.6 AND we can install a newer Pinniped manually: this step will hold the information about how to install it manually OR via TMC.
+In order to install a recent Pinniped version in TKG (e.g., `0.8.0`), please follow these steps:
 
-    c) TKG has a Pinniped version < 0.6 AND we CANNOT install a newer Pinniped manually: we have a major issue here: we can either refer to the latest Kubeapps version working with Pinniped pre 0.6 OR perform a backport.
+1. Before applying any `yaml` file in yout cluster, you first need to change the API group and namespace with a supported one. There are a couple of options to do so:
+   - Use the provided file at [./manifests/pinniped-0.8-tmc.yaml](./manifests/pinniped-0.8-tmc.yaml) which will install Pinniped Concierge v0.8.0 deployed as `pinniped-concierge-0-8-0` in the `vmware-system-tmc` namespace with the `*.pinniped.tmc.cloud.vmware.com` API group.
+   - Follow the [official documentation](https://pinniped.dev/docs/howto/install-concierge/) and use the `ytt` tool from [Carvel](https://carvel.dev/) to generate a new `yaml` file to apply. Specify, you will need to edit:
+     - `app_name`: set it to `pinniped-concierge-0-8-0` (or any name of your choice).
+     - `namespace`: set it to `vmware-system-tmc`.
+     - `image_tag`: set it to `v0.8.0` (or any version, >= v0.6.0, of your choice).
+     - `api_group_suffix`: set it to `pinniped.tmc.cloud.vmware.com`.
+   - Download the [`v0.8.0` Piniped Concierge official release](https://github.com/vmware-tanzu/pinniped/releases/download/v0.8.0/install-pinniped-concierge.yaml) and manually edit the versions and namespaces accordingly (not recommended).
+     > **NOTE**: remember, even though you have to enter `tmc`, you do not need to have access to TMC whatsoever.
+2. Save the `yaml` file generated above; for instance, `pinniped-0.8-tmc.yaml`.
+3. Apply this file; for instance: `kubectl apply -f pinniped-0.8-tmc.yaml`
+4. Verify it has been installed and the image is correct: `kubectl get deploy/pinniped-concierge-0-8-0 -n pinniped-concierge-0-8-0 -oyaml | grep image`
 
-> The guide below assumes no TMC, but if we introduce it, API suffixes must be adapted.
-
--->
-
-- [Enabling Identity Management in Tanzu Kubernetes Grid](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html).
-- [Tanzu Kubernetes Grid 1.3 with Identity Management](https://liveandletlearn.net/post/kubeapps-on-tanzu-kubernetes-grid-13/)
-
-At this point, you will have a TKG cluster with Pinniped up and running. Next, the next section will guide you to configure Pinniped to trust your favorite OIDC provider.
+At this point, you will have a TKG cluster with a compatible Pinniped version (e.g., `0.8.0`) up and running. Next, the next section will guide you configuring it to trust your favorite OIDC provider.
 
 ## 1.2 - Configure an OIDC Provider
 
@@ -68,7 +76,7 @@ Since Pinniped is already hiding the complexity of this process, we just need to
 
 ```yaml
 ---
-apiVersion: authentication.concierge.pinniped.dev/v1alpha1
+apiVersion: authentication.concierge.pinniped.tmc.cloud.vmware.com/v1alpha1
 kind: JWTAuthenticator
 metadata:
   name: kubeapps-jwt-authenticator
@@ -77,8 +85,8 @@ spec:
   audience: my-client-id # modify this value accordingly
   claims:
     username: email
-  # tls:
-  # certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
+#   tls:
+#     certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
 ```
 
 2. Replace `my-oidc-issuer-url` with the _issuer_ URL of your OIDC provider. For CSP it is: `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
@@ -86,9 +94,11 @@ spec:
 4. Ignore the `tls` section unless your OIDC uses a self-signed certificate. If so, follow [this additional guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
 5. Perform a `kubectl apply -f kubeapps-jwt-authenticator.yaml` to install the JWTAuthenticator in your cluster.
 
+> **TIP**: If you are using more that one workload cluster, you should apply this `JWTAuthenticator` in every cluster.
+
 ## What to Do Next?
 
-Now you have a TKG cluster and a Pinniped instance fully configured to trust your OIDC provider, it is time to [configure and install Kubeapps as described in Step 2](./step-2.md).
+Now you have a TKG cluster with a recent Pinniped instance fully configured to trust your OIDC provider, it is time to [configure and install Kubeapps as described in Step 2](./step-2.md).
 
 ## Additional References
 

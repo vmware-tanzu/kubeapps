@@ -1,0 +1,975 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: jwtauthenticators.authentication.concierge.pinniped.tmc.cloud.vmware.com
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  group: authentication.concierge.pinniped.tmc.cloud.vmware.com
+  names:
+    categories:
+    - pinniped
+    - pinniped-authenticator
+    - pinniped-authenticators
+    kind: JWTAuthenticator
+    listKind: JWTAuthenticatorList
+    plural: jwtauthenticators
+    singular: jwtauthenticator
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.issuer
+      name: Issuer
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: "JWTAuthenticator describes the configuration of a JWT authenticator. \n Upon receiving a signed JWT, a JWTAuthenticator will performs some validation on it (e.g., valid signature, existence of claims, etc.) and extract the username and groups from the token."
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec for configuring the authenticator.
+            properties:
+              audience:
+                description: Audience is the required value of the "aud" JWT claim.
+                minLength: 1
+                type: string
+              claims:
+                description: Claims allows customization of the claims that will be mapped to user identity for Kubernetes access.
+                properties:
+                  groups:
+                    description: Groups is the name of the claim which should be read to extract the user's group membership from the JWT token. When not specified, it will default to "groups".
+                    type: string
+                  username:
+                    description: Username is the name of the claim which should be read to extract the username from the JWT token. When not specified, it will default to "username".
+                    type: string
+                type: object
+              issuer:
+                description: Issuer is the OIDC issuer URL that will be used to discover public signing keys. Issuer is also used to validate the "iss" JWT claim.
+                minLength: 1
+                pattern: ^https://
+                type: string
+              tls:
+                description: TLS configuration for communicating with the OIDC provider.
+                properties:
+                  certificateAuthorityData:
+                    description: X.509 Certificate Authority (base64-encoded PEM bundle). If omitted, a default set of system roots will be trusted.
+                    type: string
+                type: object
+            required:
+            - audience
+            - issuer
+            type: object
+          status:
+            description: Status of the authenticator.
+            properties:
+              conditions:
+                description: Represents the observations of the authenticator's current state.
+                items:
+                  description: Condition status of a resource (mirrored from the metav1.Condition type added in Kubernetes 1.19). In a future API version we can switch to using the upstream type. See https://github.com/kubernetes/apimachinery/blob/v0.19.0/pkg/apis/meta/v1/types.go#L1353-L1413.
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase. --- Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be useful (see .node.status.conditions), the ability to deconflict is important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: webhookauthenticators.authentication.concierge.pinniped.tmc.cloud.vmware.com
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  group: authentication.concierge.pinniped.tmc.cloud.vmware.com
+  names:
+    categories:
+    - pinniped
+    - pinniped-authenticator
+    - pinniped-authenticators
+    kind: WebhookAuthenticator
+    listKind: WebhookAuthenticatorList
+    plural: webhookauthenticators
+    singular: webhookauthenticator
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.endpoint
+      name: Endpoint
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: WebhookAuthenticator describes the configuration of a webhook authenticator.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec for configuring the authenticator.
+            properties:
+              endpoint:
+                description: Webhook server endpoint URL.
+                minLength: 1
+                pattern: ^https://
+                type: string
+              tls:
+                description: TLS configuration.
+                properties:
+                  certificateAuthorityData:
+                    description: X.509 Certificate Authority (base64-encoded PEM bundle). If omitted, a default set of system roots will be trusted.
+                    type: string
+                type: object
+            required:
+            - endpoint
+            type: object
+          status:
+            description: Status of the authenticator.
+            properties:
+              conditions:
+                description: Represents the observations of the authenticator's current state.
+                items:
+                  description: Condition status of a resource (mirrored from the metav1.Condition type added in Kubernetes 1.19). In a future API version we can switch to using the upstream type. See https://github.com/kubernetes/apimachinery/blob/v0.19.0/pkg/apis/meta/v1/types.go#L1353-L1413.
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase. --- Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be useful (see .node.status.conditions), the ability to deconflict is important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: credentialissuers.config.concierge.pinniped.tmc.cloud.vmware.com
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  group: config.concierge.pinniped.tmc.cloud.vmware.com
+  names:
+    categories:
+    - pinniped
+    kind: CredentialIssuer
+    listKind: CredentialIssuerList
+    plural: credentialissuers
+    singular: credentialissuer
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Describes the configuration status of a Pinniped credential issuer.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          status:
+            description: Status of the credential issuer.
+            properties:
+              kubeConfigInfo:
+                description: Information needed to form a valid Pinniped-based kubeconfig using this credential issuer. This field is deprecated and will be removed in a future version.
+                properties:
+                  certificateAuthorityData:
+                    description: The K8s API server CA bundle.
+                    minLength: 1
+                    type: string
+                  server:
+                    description: The K8s API server URL.
+                    minLength: 1
+                    pattern: ^https://|^http://
+                    type: string
+                required:
+                - certificateAuthorityData
+                - server
+                type: object
+              strategies:
+                description: List of integration strategies that were attempted by Pinniped.
+                items:
+                  description: Status of an integration strategy that was attempted by Pinniped.
+                  properties:
+                    frontend:
+                      description: Frontend describes how clients can connect using this strategy.
+                      properties:
+                        impersonationProxyInfo:
+                          description: ImpersonationProxyInfo describes the parameters for the impersonation proxy on this Concierge. This field is only set when Type is "ImpersonationProxy".
+                          properties:
+                            certificateAuthorityData:
+                              description: CertificateAuthorityData is the base64-encoded PEM CA bundle of the impersonation proxy.
+                              minLength: 1
+                              type: string
+                            endpoint:
+                              description: Endpoint is the HTTPS endpoint of the impersonation proxy.
+                              minLength: 1
+                              pattern: ^https://
+                              type: string
+                          required:
+                          - certificateAuthorityData
+                          - endpoint
+                          type: object
+                        tokenCredentialRequestInfo:
+                          description: TokenCredentialRequestAPIInfo describes the parameters for the TokenCredentialRequest API on this Concierge. This field is only set when Type is "TokenCredentialRequestAPI".
+                          properties:
+                            certificateAuthorityData:
+                              description: CertificateAuthorityData is the base64-encoded Kubernetes API server CA bundle.
+                              minLength: 1
+                              type: string
+                            server:
+                              description: Server is the Kubernetes API server URL.
+                              minLength: 1
+                              pattern: ^https://|^http://
+                              type: string
+                          required:
+                          - certificateAuthorityData
+                          - server
+                          type: object
+                        type:
+                          description: Type describes which frontend mechanism clients can use with a strategy.
+                          enum:
+                          - TokenCredentialRequestAPI
+                          - ImpersonationProxy
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    lastUpdateTime:
+                      description: When the status was last checked.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable description of the current status.
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: Reason for the current status.
+                      enum:
+                      - Listening
+                      - Pending
+                      - Disabled
+                      - ErrorDuringSetup
+                      - CouldNotFetchKey
+                      - CouldNotGetClusterInfo
+                      - FetchedKey
+                      type: string
+                    status:
+                      description: Status of the attempted integration strategy.
+                      enum:
+                      - Success
+                      - Error
+                      type: string
+                    type:
+                      description: Type of integration attempted.
+                      enum:
+                      - KubeClusterSigningCertificate
+                      - ImpersonationProxy
+                      type: string
+                  required:
+                  - lastUpdateTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+            required:
+            - strategies
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pinniped-concierge-0-8-0-kube-cert-agent
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pinniped-concierge-0-8-0-config
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+data:
+  pinniped.yaml: "discovery:\n  url: null\napi:\n  servingCertificate:\n    durationSeconds: 2592000\n    renewBeforeSeconds: 2160000\napiGroupSuffix: pinniped.tmc.cloud.vmware.com\nnames:\n  servingCertificateSecret: pinniped-concierge-0-8-0-api-tls-serving-certificate\n  credentialIssuer: pinniped-concierge-0-8-0-config\n  apiService: pinniped-concierge-0-8-0-api\n  impersonationConfigMap: pinniped-concierge-0-8-0-impersonation-proxy-config\n  impersonationLoadBalancerService: pinniped-concierge-0-8-0-impersonation-proxy-load-balancer\n  impersonationTLSCertificateSecret: pinniped-concierge-0-8-0-impersonation-proxy-tls-serving-certificate\n  impersonationCACertificateSecret: pinniped-concierge-0-8-0-impersonation-proxy-ca-certificate\n  impersonationSignerSecret: pinniped-concierge-0-8-0-impersonation-proxy-signer-ca-certificate\n  agentServiceAccount: pinniped-concierge-0-8-0-kube-cert-agent\nlabels: {\"app\":\"pinniped-concierge-0-8-0\"}\nkubeCertAgent:\n  namePrefix: pinniped-concierge-0-8-0-kube-cert-agent-\n  \n  \n  image: projects.registry.vmware.com/pinniped/pinniped-server:v0.8.0\n  \n  \n  \n\n"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pinniped-concierge-0-8-0
+  template:
+    metadata:
+      labels:
+        app: pinniped-concierge-0-8-0
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+      serviceAccountName: pinniped-concierge-0-8-0
+      containers:
+      - name: pinniped-concierge-0-8-0
+        image: projects.registry.vmware.com/pinniped/pinniped-server:v0.8.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        args:
+        - --config=/etc/config/pinniped.yaml
+        - --downward-api-path=/etc/podinfo
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        - name: podinfo
+          mountPath: /etc/podinfo
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 2
+          timeoutSeconds: 15
+          periodSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 2
+          timeoutSeconds: 3
+          periodSeconds: 10
+          failureThreshold: 3
+      volumes:
+      - name: config-volume
+        configMap:
+          name: pinniped-concierge-0-8-0-config
+      - name: podinfo
+        downwardAPI:
+          items:
+          - path: labels
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: name
+            fieldRef:
+              fieldPath: metadata.name
+          - path: namespace
+            fieldRef:
+              fieldPath: metadata.namespace
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: pinniped-concierge-0-8-0
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pinniped-concierge-0-8-0-api
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  type: ClusterIP
+  selector:
+    app: pinniped-concierge-0-8-0
+  ports:
+  - protocol: TCP
+    port: 443
+    targetPort: 8443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pinniped-concierge-0-8-0-proxy
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  type: ClusterIP
+  selector:
+    app: pinniped-concierge-0-8-0
+  ports:
+  - protocol: TCP
+    port: 443
+    targetPort: 8444
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.login.concierge.pinniped.tmc.cloud.vmware.com
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  version: v1alpha1
+  group: login.concierge.pinniped.tmc.cloud.vmware.com
+  groupPriorityMinimum: 9900
+  versionPriority: 15
+  service:
+    name: pinniped-concierge-0-8-0-api
+    namespace: vmware-system-tmc
+    port: 443
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.identity.concierge.pinniped.tmc.cloud.vmware.com
+  labels:
+    app: pinniped-concierge-0-8-0
+spec:
+  version: v1alpha1
+  group: identity.concierge.pinniped.tmc.cloud.vmware.com
+  groupPriorityMinimum: 9900
+  versionPriority: 15
+  service:
+    name: pinniped-concierge-0-8-0-api
+    namespace: vmware-system-tmc
+    port: 443
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pinniped-concierge-0-8-0-aggregated-api-server
+  labels:
+    app: pinniped-concierge-0-8-0
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apiregistration.k8s.io
+  resources:
+  - apiservices
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - flowcontrol.apiserver.k8s.io
+  resources:
+  - flowschemas
+  - prioritylevelconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use
+  resourceNames:
+  - nonroot
+- apiGroups:
+  - ""
+  resources:
+  - users
+  - groups
+  - serviceaccounts
+  verbs:
+  - impersonate
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - '*'
+  verbs:
+  - impersonate
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+- apiGroups:
+  - config.concierge.pinniped.tmc.cloud.vmware.com
+  resources:
+  - credentialissuers
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+- apiGroups:
+  - config.concierge.pinniped.tmc.cloud.vmware.com
+  resources:
+  - credentialissuers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - authentication.concierge.pinniped.tmc.cloud.vmware.com
+  resources:
+  - jwtauthenticators
+  - webhookauthenticators
+  verbs:
+  - get
+  - list
+  - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-aggregated-api-server
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: ServiceAccount
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+roleRef:
+  kind: ClusterRole
+  name: pinniped-concierge-0-8-0-aggregated-api-server
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pinniped-concierge-0-8-0-kube-cert-agent
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+rules:
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-kube-cert-agent
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: ServiceAccount
+  name: pinniped-concierge-0-8-0-kube-cert-agent
+  namespace: vmware-system-tmc
+roleRef:
+  kind: Role
+  name: pinniped-concierge-0-8-0-kube-cert-agent
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pinniped-concierge-0-8-0-aggregated-api-server
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - get
+  - watch
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-aggregated-api-server
+  namespace: vmware-system-tmc
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: ServiceAccount
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+roleRef:
+  kind: Role
+  name: pinniped-concierge-0-8-0-aggregated-api-server
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pinniped-concierge-0-8-0-kube-system-pod-read
+  namespace: kube-system
+  labels:
+    app: pinniped-concierge-0-8-0
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-kube-system-pod-read
+  namespace: kube-system
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: ServiceAccount
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+roleRef:
+  kind: Role
+  name: pinniped-concierge-0-8-0-kube-system-pod-read
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pinniped-concierge-0-8-0-pre-authn-apis
+  labels:
+    app: pinniped-concierge-0-8-0
+rules:
+- apiGroups:
+  - login.concierge.pinniped.tmc.cloud.vmware.com
+  resources:
+  - tokencredentialrequests
+  verbs:
+  - create
+  - list
+- apiGroups:
+  - identity.concierge.pinniped.tmc.cloud.vmware.com
+  resources:
+  - whoamirequests
+  verbs:
+  - create
+  - list
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-pre-authn-apis
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io
+- kind: Group
+  name: system:unauthenticated
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: pinniped-concierge-0-8-0-pre-authn-apis
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: ServiceAccount
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+roleRef:
+  kind: ClusterRole
+  name: system:auth-delegator
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-extension-apiserver-authentication-reader
+  namespace: kube-system
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: ServiceAccount
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+roleRef:
+  kind: Role
+  name: extension-apiserver-authentication-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-cluster-info-lister-watcher
+  namespace: kube-public
+  labels:
+    app: pinniped-concierge-0-8-0
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - watch
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pinniped-concierge-0-8-0-cluster-info-lister-watcher
+  namespace: kube-public
+  labels:
+    app: pinniped-concierge-0-8-0
+subjects:
+- kind: ServiceAccount
+  name: pinniped-concierge-0-8-0
+  namespace: vmware-system-tmc
+roleRef:
+  kind: Role
+  name: pinniped-concierge-0-8-0-cluster-info-lister-watcher
+  apiGroup: rbac.authorization.k8s.io

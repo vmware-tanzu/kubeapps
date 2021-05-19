@@ -83,7 +83,9 @@ Next, we must enable the _Pinniped Proxy_ component, so that the requests perfor
 ```yaml
 pinnipedProxy:
   enabled: true
-  defaultAuthenticatorName: kubeapps-jwt-authenticator
+  defaultAuthenticatorName: kubeapps-jwt-authenticator # this name must match the authenticator name previously created
+  defaultPinnipedNamespace: vmware-system-tmc
+  defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
 ```
 
 > **TIP**: the `defaultAuthenticatorName` must match the JWTAuthenticator name created in the [Step 1](./step-1.md).
