@@ -2283,10 +2283,10 @@
     "@types/react" "*"
     "@types/react-router" "*"
 
-"@types/react-router-hash-link@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@types/react-router-hash-link/-/react-router-hash-link-2.0.0.tgz#93189b39dcc4ac3f28616867aad134bbe7a41521"
-  integrity sha512-Y40Kjxu9IqpVFE7gUrRJvV23+iMkrM+gI8q4DCNfywG9Cv34lQ/rrO2uZJ6TjCF2faMy3Y9rizVue1jLFQzQYA==
+"@types/react-router-hash-link@^2.4.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@types/react-router-hash-link/-/react-router-hash-link-2.4.0.tgz#8d028a841075f06a60b502eeea251eddf39fd985"
+  integrity sha512-4IB72mosjRshMmoli6ktb0ltzEFBPWgOT/GjZwPEmcehwuacGdsTytIboPfFT9O8hgL1pgdPZMWPfMwCywjO0Q==
   dependencies:
     "@types/react" "*"
     "@types/react-router-dom" "*"
