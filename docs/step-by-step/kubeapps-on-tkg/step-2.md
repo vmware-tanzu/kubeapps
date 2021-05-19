@@ -130,7 +130,7 @@ The next step is to provide a rich user experience, aligned with corporate brand
 dashboard:
   customLocale:
     Kubeapps: VMware Tanzu™ Kubeapps
-    login-desc-oidc: Access to the VMware Tanzu Kubeapps using your My VMware account.
+    login-desc-oidc: Access to the VMware Tanzu™ Kubeapps using your My VMware account.
     login-oidc: Login via VMware Cloud Services
 ```
 
