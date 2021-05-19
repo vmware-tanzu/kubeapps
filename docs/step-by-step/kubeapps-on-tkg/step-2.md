@@ -1,12 +1,8 @@
-# Step 2 - Configure and Install Kubeapps
+## Step 2: Configure and Install Kubeapps
 
-Having configured our TKG cluster with Pinniped and the OIDC provider, the next step is to configure Kubeapps accordingly; that is, making Kubeapps proxy the request towards Pinniped, enabling the OIDC login and, optionally, configuring the look and feel.
+Once the VMware Tanzu™ Kubernetes Grid™ cluster has been configured to work with Pinniped and the OIDC provider, the next step is to configure Kubeapps. This involves a number of tasks, including making Kubeapps proxy requests to Pinniped, enabling the OIDC login and, optionally, configuring the look and feel of the Kubeapps user interface.
 
-## 2.1 - Understanding the Kubeapps Configuration
-
-Kubeapps is currently officially delivered as a Helm Chart packaged by Bitmami. Please always refer to the [Kubeapps Bitnami Chart Documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md) for further reference.
-
-This Helm Chart can be configured with plenty of different items in the [values.yaml](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml). A general overview is depicted below:
+Kubeapps is currently officially delivered as a Helm chart packaged by Bitnami. This Helm Chart offers a large number of configuration options in its [`values.yaml`](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml) file. A general overview of the key configuration parameters for a TKG cluster is shown below:
 
 ```yaml
 ## Values likely to be modified
@@ -17,9 +13,9 @@ clusters: # list of clusters that Kubeapps can target
 
 authProxy: # oauth2proxy configuration for setting up OIDC login
 
-pinnipedProxy:# pinniped-proxy configuration
+pinnipedProxy: # pinniped-proxy configuration
 
-  ### Look-and-feel-related params
+### Look-and-feel-related params
 
 dashboard: # dashboard configuration
   customStyle: # custom css to inject
@@ -35,21 +31,30 @@ kubeops: # main backend APIs configuration
 
 assetsvc: # asset service configuration
 
-frontend: # nginx configuration (used to serve the dashboard and proxying the users' requests to the backend)
+frontend: # NGINX configuration (used to serve the dashboard and proxying user requests to the backend)
 
-ingress: # if you have an ingress controller installed on your cluster, you can use it to expose Kubeapps.
+ingress: # ingress controller details to expose Kubeapps.
 
 postgresql: # database configuration
-
-# other top-level entries, but not likely to be modified
 ```
 
-In this step, we focus on two main categories of the [values.yaml](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml) file: authentication and look and feel.
+> **TIP**: Refer to the [Bitnami Kubeapps Helm chart documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md) for more information.
 
-- **Authentication** includes: i) `clusters` to define the list of clusters that Kubeapps can target and which of them will use Pinniped; ii) `pinnipedProxy`: to enable the _Pinniped Proxy_ component; iii) `authProxy`: to define the flags used by _OAuth2 Proxy_, the component for performing the actual OIDC login.
-- **Look and feel** comprises: i) `dashboard.customStyle` for injecting custom CSS; ii) `dashboard.customLocale` for customizing some supported strings; iii) `apprepository.initialRepos` for defining the repositories included by default during the installation.
+The two main configuration areas are authentication and user interface.
 
-> **TIP**: these values can be entered in two different ways:
+- Key authentication parameters are:
+
+i) `clusters` to define the list of clusters that Kubeapps can target and which of them will use Pinniped;
+ii) `pinnipedProxy` to enable the _Pinniped Proxy_ component;
+iii) `authProxy`: to define the flags used by _OAuth2 Proxy_, the component for performing the actual OIDC login.
+
+- Key user interface parameters are:
+
+i) `dashboard.customStyle` for injecting custom CSS;
+ii) `dashboard.customLocale` for customizing some supported strings;
+iii) `apprepository.initialRepos` for defining the repositories included by default during the installation.
+
+> **TIP**: These values can be entered in two different ways:
 >
 > a) As values passed via command line:
 >
@@ -57,19 +62,19 @@ In this step, we focus on two main categories of the [values.yaml](https://githu
 >   helm install kubeapps --namespace kubeapps --set ingress.enabled=true bitnami/kubeapps
 > ```
 >
-> b) Using a custom _values.yaml_ file
+> b) As values stored in a custom _values.yaml_ file read in during chart deployment:
 >
 > ```bash
 > helm install kubeapps --namespace kubeapps -f custom-values.yaml  bitnami/kubeapps
 > ```
 
-## 2.2. - Authentication
+### Step 2.1: Configure Authentication
 
-In this step, we have to configure `clusters`, `pinnipedProxy` and `authProxy` according to what we already set during the [Step 1](./step-1.md).
+The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` parameters to reflect the work done in [Step 1](./step-1.md). These parameters are discussed below:
 
-First of all, we must declare that the target cluster is using Pinniped by setting the `pinnipedConfig.enable=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) guide.
+- Declare that the target cluster is using Pinniped by setting the parameter `pinnipedConfig.enable=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) guide. Here is an example:
 
-> **TIP**: since the target cluster is the same as the cluster on which is installed, there is no need to set any URL. Also, the `name` field is not used but for using a display name in the dashboard.
+> **TIP**: Since the target cluster is the same as the cluster on which Kubeapps is installed, there is no need to set a URL. Note that the `name` field is used only to configure a display name in the Kubeapps dashboard.
 
 ```yaml
 clusters:
@@ -78,48 +83,48 @@ clusters:
       enable: true
 ```
 
-Next, we must enable the _Pinniped Proxy_ component, so that the requests performed by Kubepps can be proxied through Pinniped. To do so, just set `pinnipedProxy.enabled=true`:
+- Enable the _Pinniped Proxy_ component so that the requests performed by Kubeapps can be proxied through Pinniped, by setting the parameter `pinnipedProxy.enabled=true`.  Here is an example:
 
 ```yaml
 pinnipedProxy:
   enabled: true
-  defaultAuthenticatorName: kubeapps-jwt-authenticator
+  defaultAuthenticatorName: kubeapps-jwt-authenticator # this name must match the authenticator name previously created
+  defaultPinnipedNamespace: vmware-system-tmc
+  defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
 ```
 
-> **TIP**: the `defaultAuthenticatorName` must match the JWTAuthenticator name created in the [Step 1](./step-1.md).
+> **TIP**: The `defaultAuthenticatorName` must match the JWTAuthenticator resource name created in [Step 1](./step-1.md).
 
-Finally, we must enter the information gathered from the OIDC provider as in the [Step 1](./step-1.md) so that we configure the _OAuth2Proxy_ component. It will perform the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL.
+- Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows.
 
-Have a look at this example:
+  - Replace the  `MY-OIDC-ISSUER-URL` with the _issuer_ URL of your OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+  - Replace `MY-CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
+  - Replace `MY-CLIENT-SECRET` with the application secret obtained from the JSON file in the previous step.
+  - Replace `MY-COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string).
 
 ```yaml
 authProxy:
   enabled: true
   provider: oidc
-  clientID: my-client-id
-  clientSecret: my-client-secret
-  cookieSecret: my-cookie-secret
+  clientID: MY-CLIENT-ID
+  clientSecret: MY-CLIENT-SECRET
+  cookieSecret: MY-COOKIE-SECRET
   additionalFlags:
-    - --oidc-issuer-url=my-oidc-issuer-url
+    - --oidc-issuer-url=MY-OIDC-ISSUER-URL
     - --scope=openid email groups
     - --set-authorization-header=true
     # - --insecure-oidc-skip-issuer-verification=true
 ```
 
-1. Replace `my-oidc-issuer-url` with the _issuer_ URL of your OIDC provider. For CSP it is: `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
-2. Replace `my-client-id` with the _app id_ you got from your OIDC provider.
-3. Replace `my-client-secret` with the _app secret_ you got from your OIDC provider.
-4. Replace `my-cookie-secret`, a seed string for secure cookies, with a 16, 24, or 32 bytes string. For example: `echo "not-good-secret" | base64`.
+> **NOTE** In some providers whose _issuer URL_ does not match the _token URL_ (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` must be turned on. Beware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
 
-> **NOTE** In some providers whose _issuer URL_ does not match the _token URL_ (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` must be turned on. Beware of the security concerns of enabling this flag; please refer to the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/) for further details.
+At this point, Kubeapps is configured to use Pinniped for authentication.
 
-## 2.3 - Look and Feel (optional)
+### Step 2.2: Configure the User Interface (optional)
 
-In this step, we have to configure `dashboard` and `apprepository` for providing our users a rich experience, aligned with our branding policies.
+The next step is to provide a rich user experience, aligned with corporate branding policies. This is achieved by configuring the `dashboard` and `apprepository` parameters. These parameters are discussed below:
 
-We will customize the CSS and some strings according to this example: suppose that we want to change `Kubeapps` with any other name, for instance, `VMware Tanzu™ Kubeapps`.
-
-First, we need to change the string used by the dashboard. To do so, just set the `dashboard.customLocale` with the custom messages. Please refer to the [whole list of customizable strings](https://github.com/kubeapps/kubeapps/blob/master/dashboard/lang/en.json) for further reference. In this example, we will change _Kubeappps_ by _VMware Tanzu Kubeapps_:
+- Customize the interface strings and CSS rules  with the `dashboard.customLocale` and `dashboard.customStyle` parameters. A simple example is to change the displayed application name (`Kubeapps`) and replace it with a different name, the corporate name/brand (`VMware Tanzu™ Kubeapps`). To do this, just set the `dashboard.customLocale` parameters to the custom strings. Here is an example of replacing `Kubeapps` with `VMware Tanzu Kubeapps`:
 
 ```yaml
 dashboard:
@@ -129,7 +134,9 @@ dashboard:
     login-oidc: Login via VMware Cloud Services
 ```
 
-Next, add your custom style rules using your own CSS selectors. For instance, to change the Kubeapps logo, set the selector `.kubeapps__logo` with this property `background-image: url('data:image/png;base64...')` as in this example:
+> **TIP**: See the [complete list of customizable strings](https://github.com/kubeapps/kubeapps/blob/master/dashboard/lang/en.json).
+
+In a similar manner, add custom style rules using custom CSS selectors. For example, to change the Kubeapps logo, set the selector `.kubeapps__logo` to the property `background-image: url('data:image/png;base64...')` as shown in the example below. The long string shown is he Base64-encoded data for the new logo image.
 
 ```yaml
 dashboard:
@@ -141,11 +148,11 @@ dashboard:
     }
 ```
 
-This image depicts a customized version of Kubeapps applying the aforementioned styles and strings:
+This image depicts a customized version of Kubeapps applying the above styles and strings:
 
 ![Customized Kubeapps](./img/step-2-1.png)
 
-Finally, the initial application repositories can be also customized. In the next steps, we will cover how to add different repositories. Notwithstanding, some users use to add the Bitnami open source catalog as follows:
+- Customize the initial application repositories by setting `apprepository` parameter. Here is a simple example of adding the Bitnami open source catalog:
 
 ```yaml
 apprepository:
@@ -154,18 +161,21 @@ apprepository:
       url: https://charts.bitnami.com/bitnami
 ```
 
-## 2.4 - Installing Kubeapps in the Cluster
+At this point, Kubeapps is configured to use a custom interface.
 
-Since Kubeapps is currently officially delivered as a Helm Chart packaged by Bitmami, to install Kubeapps we need to install the Bitami repository in Helm and perform a usual installation.
-If you require to install it in an air-gapped environment, please follow the [Offline Installation Instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
+### Step 2.3: Install Kubeapps
 
-> **TIP**: Typically, you may want to make the dashboard externally accessible. To do so, just set `frontend.service.type=LoadBalancer` or use an Ingress. Please refer to [this section of the Kubeapps documentation](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally) for additional information.
+Since Kubeapps is currently officially delivered as a Helm chart packaged by Bitmami, the easiest way to install Kubeapps is to add the Bitami repository to Helm and install it via Helm. In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
+
+> **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally) for additional information.
 >
 > ```yaml
 > frontend:
 >   service:
 >     type: LoadBalancer
 > ```
+
+Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`.
 
 ```bash
 # Install the Bitnami helm repository
@@ -178,15 +188,15 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps -f custom-values.yaml
 ```
 
-## 2.5 - Setting the RBAC
+At this point, Kubeapps is installed in the cluster.
 
-Since Kubeapps delegates the authorization to the existing RBAC configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation on the [Kubeapps Access Control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) for further reference.
+### Step 2.4: Configure Role-Based Access
 
-> **NOTE:**: the RBAC configuration is something that will depend on your custom business requirements. The configuration used in this example is just intended for demo purposes. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
+Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) for more information.
 
-In this example, we create the `ClusterRoleBinding` `kubeapps-operator` with the `cluster-admin` role for the username `email@example.com`.
+> **NOTE:**: RBAC configuration depends on your custom business requirements. The configuration shown below is only an example and not meant for production use. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
 
-1. Create a file `kubeapps-rbac.yaml` with the following content:
+The configuration shown below demonstrates how to create a `ClusterRoleBinding` named `kubeapps-operator` with the `cluster-admin` role for a specified user. Replace the `USERNAME` placeholder with the username of the user, as specified in the OIDC provider.
 
 ```yaml
 ---
@@ -201,21 +211,13 @@ roleRef:
 subjects:
   - apiGroup: rbac.authorization.k8s.io
     kind: User
-    name: email@example.com
+    name: USERNAME
 ```
 
-2. Replace `email@example.com` with your actual username used in the OIDC provider.
-3. Perform a `kubectl apply -f kubeapps-rbac.yaml` to configure the RBAC in your cluster.
+Apply this configuration by executing the following command:
 
-## What to Do Next?
+```bash
+kubectl apply -f kubeapps-rbac.yaml
+```
 
-At this point, you have a Kubeapps installation up and running. You have configured the authentication in the Kubeapps components as well as some look and feel details. Then, you have performed the installation and have granted the RBAC permissions to be able to use Kubepps.
-The next thing is to start adding application repositories to your Kubeapps instance as described in the [Step 4](./step-4.md).
-
-## Additional References
-
-- [Using values.yaml files in Helm Charts](https://helm.sh/docs/chart_template_guide/values_files/)
-- [Configure Pinniped to trust the OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#configure-pinniped-to-trust-your-oidc-identity-provider)
-- [Configuring Kubeapps to proxy requests via Pinniped](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#configuring-kubeapps-to-proxy-requests-via-pinniped)
-- [Getting started with Kubeapps](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md)
-- [Adding new translations in Kubeapps](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/translate-kubeapps.md)
+At the end of this step, the Kubeapps installation is configured, customized and running in the cluster. The next step is to [add application repositories to Kubeapps](./step-3.md).
