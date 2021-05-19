@@ -16,9 +16,11 @@ metadata:
   {{- end }}
 rules:
   # TODO: Remove in favour of user's own creds used for request.
+  # While developing without user auth, add the required RBAC here for the CRD group
+  # you're dealing with.
   - apiGroups:
-      - ""
       - "package.carvel.dev"
+      - "install.package.carvel.dev"
     resources: ['*']
     verbs: ['*']
 ---
