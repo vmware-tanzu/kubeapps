@@ -129,10 +129,10 @@ Note that the user deploying the chart will need to be able to read secrets in t
 
 ## What to Do Next?
 
-At this point, you have learned how Application Repositories work in Kubeapps as you have added both public and private repositories. The next step is to deploy, upgrade, roll back and delete applications as described in the [Step 4](./step-4.md).
+At this point, you have learned how Application Repositories work in Kubeapps as you have added both public and private repositories. The next step is to deploy, upgrade, rollback and delete applications as described in the [Step 4](./step-4.md).
 
 ## Additional References
 
 - [Adding an public application repository](https://github.com/kubeapps/kubeapps/blob/master/docs/user/dashboard.md)
-- [Consume Tanzu Application Catalog Helm Charts using Kubeapps](https://docs.vmware.com/en/VMware-Tanzu-Application-Catalog/services/tac-docs/GUID-using-tac-consume-tac-kubeapps.html)
+- [Consume Tanzu™ Application Catalog™ Helm Charts using Kubeapps](https://docs.vmware.com/en/VMware-Tanzu-Application-Catalog/services/tac-docs/GUID-using-tac-consume-tac-kubeapps.html)
 - [Adding an private application repository](https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md)

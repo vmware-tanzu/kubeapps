@@ -22,7 +22,7 @@ This guide will assume henceforth that:
 
 ## Intended Audience
 
-This information is intended for administrators who want to install Kubeapps on a Tanzu Kubernetes Grid cluster and use it to deploy and manage applications from the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced. Besides, this content is also intended for application administrators and developers who want to use Kubeaps to deploy and manage modern apps in a Kubernetes architecture. Nonetheless, in-depth knowledge of Kubernetes is not required.
+This information is intended for administrators who want to install Kubeapps on a Tanzu™ Kubernetes Grid cluster and use it to deploy and manage applications from the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced. Besides, this content is also intended for application administrators and developers who want to use Kubeaps to deploy and manage modern apps in a Kubernetes architecture. Nonetheless, in-depth knowledge of Kubernetes is not required.
 
 ## Steps
 
@@ -37,7 +37,7 @@ Check out the [Useful Links](#useful-links) section to learn more about TKG, TAC
 
 # Useful Links
 
-- [Enabling Identity Management in Tanzu Kubernetes Grid](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html)
+- [Enabling Identity Management in Tanzu™ Kubernetes Grid](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html)
 - [Installing Kubeapps in airgapped environments](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md)
 - [Syncing app repositories using webhooks](https://github.com/kubeapps/kubeapps/blob/master/docs/user/syncing-apprepository-webhook.md)
 - [Using Kubeapps to deploy in multiple clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md)

@@ -88,7 +88,7 @@ pinnipedProxy:
   defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
 ```
 
-> **TIP**: the `defaultAuthenticatorName` must match the JWTAuthenticator name created in the [Step 1](./step-1.md).
+> **TIP**: the `defaultAuthenticatorName` must match the `JWTAuthenticator` name created in the [Step 1](./step-1.md).
 
 Finally, we must enter the information gathered from the OIDC provider as in the [Step 1](./step-1.md) so that we configure the _OAuth2Proxy_ component. It will perform the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL.
 
@@ -121,13 +121,13 @@ In this step, we have to configure `dashboard` and `apprepository` for providing
 
 We will customize the CSS and some strings according to this example: suppose that we want to change `Kubeapps` with any other name, for instance, `VMware Tanzu™ Kubeapps`.
 
-First, we need to change the string used by the dashboard. To do so, just set the `dashboard.customLocale` with the custom messages. Please refer to the [whole list of customizable strings](https://github.com/kubeapps/kubeapps/blob/master/dashboard/lang/en.json) for further reference. In this example, we will change _Kubeappps_ by _VMware Tanzu Kubeapps_:
+First, we need to change the string used by the dashboard. To do so, just set the `dashboard.customLocale` with the custom messages. Please refer to the [whole list of customizable strings](https://github.com/kubeapps/kubeapps/blob/master/dashboard/lang/en.json) for further reference. In this example, we will change _Kubeappps_ by _VMware Tanzu™ Kubeapps_:
 
 ```yaml
 dashboard:
   customLocale:
     Kubeapps: VMware Tanzu™ Kubeapps
-    login-desc-oidc: Access to the VMware Tanzu Kubeapps using your My VMware account.
+    login-desc-oidc: Access to the VMware Tanzu™ Kubeapps using your My VMware account.
     login-oidc: Login via VMware Cloud Services
 ```
 

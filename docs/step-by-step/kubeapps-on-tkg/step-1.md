@@ -68,7 +68,7 @@ At this point, you have the _app id_ and _app secret_ (also known as _client id_
 
 Once the OIDC provider has been fully configured, we need Pinniped to trust this provider, so that a successful authentication in the OIDC provider results in authentication in our TKG cluster.
 
-Since Pinniped is already hiding the complexity of this process, we just need to add a _JWTAuthenticator_ CustomResource in our cluster. To do so, simply edit the following excerpt accordingly and apply it to your TKG cluster.
+Since Pinniped is already hiding the complexity of this process, we just need to add a `JWTAuthenticator` CustomResource in our cluster. To do so, simply edit the following excerpt accordingly and apply it to your TKG cluster.
 
 > **TIP**: a look at [JWTAuthenticator official documentation](https://pinniped.dev/docs/howto/configure-concierge-jwt/) for further information.
 
@@ -92,7 +92,7 @@ spec:
 2. Replace `my-oidc-issuer-url` with the _issuer_ URL of your OIDC provider. For CSP it is: `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
 3. Replace `my-client-id` by the _app id_ you got in the previous section.
 4. Ignore the `tls` section unless your OIDC uses a self-signed certificate. If so, follow [this additional guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
-5. Perform a `kubectl apply -f kubeapps-jwt-authenticator.yaml` to install the JWTAuthenticator in your cluster.
+5. Perform a `kubectl apply -f kubeapps-jwt-authenticator.yaml` to install the `JWTAuthenticator` in your cluster.
 
 > **TIP**: If you are using more that one workload cluster, you should apply this `JWTAuthenticator` in every cluster.
 
@@ -102,5 +102,7 @@ Now you have a TKG cluster with a recent Pinniped instance fully configured to t
 
 ## Additional References
 
+- [Enabling Identity Management in Tanzu™ Kubernetes Grid](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html).
+- [Tanzu™ Kubernetes Grid 1.3 with Identity Management](https://liveandletlearn.net/post/kubeapps-on-tanzu-kubernetes-grid-13/)
 - [VMware Cloud Services as OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md#vmware-cloud-services)
 - [Using an OIDC provider with Pinniped](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md)
