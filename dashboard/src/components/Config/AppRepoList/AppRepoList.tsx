@@ -86,13 +86,9 @@ function AppRepoList() {
     Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "").then(allowed =>
       setCanSetAllNS(allowed),
     );
-    Kube.canI(
-      kubeappsCluster,
-      "kubeapps.com",
-      "apprepositories",
-      "update",
-      kubeappsNamespace,
-    ).then(allowed => setCanEditGlobalRepos(allowed));
+    Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", kubeappsNamespace).then(
+      allowed => setCanEditGlobalRepos(allowed),
+    );
   }, [cluster, kubeappsCluster, kubeappsNamespace]);
 
   const globalRepos: IAppRepository[] = [];

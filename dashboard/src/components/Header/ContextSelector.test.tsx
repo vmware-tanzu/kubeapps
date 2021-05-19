@@ -72,10 +72,12 @@ it("selects a different namespace", () => {
     .findWhere(s => s.prop("name") === "namespaces")
     .simulate("change", { target: { value: "other" } });
   act(() => {
-    (wrapper
-      .find(CdsButton)
-      .filterWhere(b => b.text() === "Change Context")
-      .prop("onClick") as any)();
+    (
+      wrapper
+        .find(CdsButton)
+        .filterWhere(b => b.text() === "Change Context")
+        .prop("onClick") as any
+    )();
   });
   expect(setNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "other");
 });
@@ -177,10 +179,12 @@ it("changes the location with the new namespace", () => {
     .findWhere(s => s.prop("name") === "namespaces")
     .simulate("change", { target: { value: "other" } });
   act(() => {
-    (wrapper
-      .find(CdsButton)
-      .filterWhere(b => b.text() === "Change Context")
-      .prop("onClick") as any)();
+    (
+      wrapper
+        .find(CdsButton)
+        .filterWhere(b => b.text() === "Change Context")
+        .prop("onClick") as any
+    )();
   });
   expect(push).toHaveBeenCalledWith("/c/default-cluster/ns/other/catalog");
 });
@@ -203,10 +207,12 @@ it("changes the location with the new cluster and namespace", () => {
     .findWhere(s => s.prop("name") === "namespaces")
     .simulate("change", { target: { value: "other" } });
   act(() => {
-    (wrapper
-      .find(CdsButton)
-      .filterWhere(b => b.text() === "Change Context")
-      .prop("onClick") as any)();
+    (
+      wrapper
+        .find(CdsButton)
+        .filterWhere(b => b.text() === "Change Context")
+        .prop("onClick") as any
+    )();
   });
   expect(push).toHaveBeenCalledWith("/c/second-cluster/ns/other/catalog");
 });
@@ -225,10 +231,12 @@ it("don't call push if the pathname is not recognized", () => {
     .findWhere(s => s.prop("name") === "namespaces")
     .simulate("change", { target: { value: "other" } });
   act(() => {
-    (wrapper
-      .find(CdsButton)
-      .filterWhere(b => b.text() === "Change Context")
-      .prop("onClick") as any)();
+    (
+      wrapper
+        .find(CdsButton)
+        .filterWhere(b => b.text() === "Change Context")
+        .prop("onClick") as any
+    )();
   });
   expect(push).not.toHaveBeenCalled();
 });
