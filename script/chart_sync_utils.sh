@@ -170,11 +170,11 @@ commitAndSendExternalPR() {
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
-    if [[ -n "$(git ls-remote origin $targetBranch  | wc -l)" ]]; then
-     echo "The remote branch '$targetBranch' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
-    else
+    if [[ $(git ls-remote origin $targetBranch  | wc -l) -eq 0 ]] ; then
         git push -u origin $targetBranch
         gh pr create -d -B master -R ${CHARTS_REPO_ORIGINAL} -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
+    else
+        echo "The remote branch '$targetBranch' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
     fi
     cd -
 }
@@ -200,11 +200,11 @@ commitAndSendInternalPR() {
     git add --all .
     git commit -m "bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
-    if [[ -n "$(git ls-remote origin $targetBranch  | wc -l)" ]]; then
-     echo "The remote branch '$targetBranch' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
-    else
+    if [[ $(git ls-remote origin $targetBranch  | wc -l) -eq 0 ]] ; then
         git push -u origin $targetBranch
         gh pr create -d -B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
+    else
+        echo "The remote branch '$targetBranch' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
     fi
     cd -
 }
