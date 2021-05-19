@@ -12,7 +12,14 @@ kubeops:
 postgresql:
   replication:
     enabled: false
+  existingSecret: postgresql-db
+kubeappsapis:
+  replicaCount: 1
 ingress:
   enabled: true
   hostname: localhost
   tls: true
+  extraTls:
+  - hosts:
+    - localhost
+    secretName: localhost-tls

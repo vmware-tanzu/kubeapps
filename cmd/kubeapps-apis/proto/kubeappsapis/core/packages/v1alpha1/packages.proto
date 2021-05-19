@@ -1,0 +1,57 @@
+syntax = "proto3";
+package kubeappsapis.core.packages.v1alpha1;
+option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
+
+// The core.packages defines the request and response types for API calls
+// interacting with packages.
+
+// Each packages v1alpha1 plugin must implement at least the following rpcs:
+//
+// service PackagesService {
+//   rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
+//     option (google.api.http) = {
+//       get: "/<plugin>/packages/v1alpha1/get-available-packages"
+//     };
+//   }
+// }
+//
+// Standard request and response messages for each required function are defined
+// below for import and re-use.
+
+message GetAvailablePackagesRequest {
+  // A cluster name can be provided if multiple clusters are configured,
+  // otherwise the current cluster will be assumed.
+  string cluster = 1;
+
+  // A namespace can be provided if the packages available for install in a
+  // specific namespace are required.
+  string namespace = 2;
+
+  // TODO: Add standard filters.
+}
+
+// An AvailablePackage defines a package available for installation.
+message AvailablePackage {
+  // The fully qualified name of the package.
+  string name = 1;
+
+  // The version of the package in the repository.
+  string version = 2;
+
+  // A url for an icon.
+  string icon_url = 3;
+
+  // A PackageRepository is identified by a fully qualified name and
+  // optionally a specific namespace.
+  message PackageRepositoryReference {
+    string name = 1;
+    string namespace = 2;
+  }
+  // An optional package repository reference where this package is located. Not
+  // all plugins may support this back reference (eg. kapp-controller)
+  PackageRepositoryReference repository = 4;
+}
+
+message GetAvailablePackagesResponse {
+    repeated AvailablePackage packages = 1;
+}

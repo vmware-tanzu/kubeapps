@@ -19,8 +19,13 @@ package server
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+	"plugin"
 
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/soheilhy/cmux"
@@ -29,6 +34,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	log "k8s.io/klog/v2"
+)
+
+const (
+	pluginRootDir           = "/"
+	grpcRegisterFunction    = "RegisterWithGRPCServer"
+	gatewayRegisterFunction = "RegisterHTTPHandlerFromEndpoint"
 )
 
 // Serve is the root command that is run when no other sub-commands are present.
@@ -56,6 +67,16 @@ func Serve(port int, pluginDirs []string) {
 	}
 	httpSrv := &http.Server{
 		Handler: gwArgs.mux,
+	}
+
+	// Find and register the plugins both for gRPC and the http gateway.
+	plugins, err := listSOFiles(os.DirFS(pluginRootDir), pluginDirs)
+	if err != nil {
+		log.Fatalf("failed to check for plugins: %v", err)
+	}
+	err = registerPlugins(plugins, grpcSrv, gwArgs)
+	if err != nil {
+		log.Fatalf("failed to register plugins: %v", err)
 	}
 
 	lis, err := net.Listen("tcp", listenAddr)
@@ -87,4 +108,89 @@ type gwHandlerArgs struct {
 	mux         *runtime.ServeMux
 	addr        string
 	dialOptions []grpc.DialOption
+}
+
+// registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
+func registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs) error {
+	for _, pluginPath := range pluginPaths {
+		p, err := plugin.Open(pluginPath)
+		if err != nil {
+			return fmt.Errorf("unable to open plugin %q: %w", pluginPath, err)
+		}
+
+		if err = registerGRPC(p, pluginPath, grpcReg); err != nil {
+			return err
+		}
+
+		if err = registerHTTP(p, pluginPath, gwArgs); err != nil {
+			return err
+		}
+
+		log.Infof("Successfully registered plugin %q", pluginPath)
+	}
+	return nil
+}
+
+// registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
+func registerGRPC(p *plugin.Plugin, pluginPath string, registrar grpc.ServiceRegistrar) error {
+	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
+	if err != nil {
+		return fmt.Errorf("unable to lookup %q for %q: %w", grpcRegisterFunction, pluginPath, err)
+	}
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar)
+	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
+	if !ok {
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar) {}
+		return fmt.Errorf("unable to use %q in plugin %q due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginPath, dummyFn, grpcRegFn)
+	}
+	grpcFn(registrar)
+	return nil
+}
+
+// registerHTTP finds and calls the required function for registering the plugin for the HTTP gateway server.
+func registerHTTP(p *plugin.Plugin, pluginPath string, gwArgs gwHandlerArgs) error {
+	gwRegFn, err := p.Lookup(gatewayRegisterFunction)
+	if err != nil {
+		return fmt.Errorf("unable to lookup %q for %q: %w", gatewayRegisterFunction, pluginPath, err)
+	}
+	type gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error
+	gwfn, ok := gwRegFn.(gatewayRegisterFunctionType)
+	if !ok {
+		// Create a dummyFn only so we can ensure the correct type is shown in case
+		// of an error.
+		var dummyFn gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error { return nil }
+		return fmt.Errorf("unable to use %q in plugin %q due to mismatched signature.\nwant: %T\ngot: %T", gatewayRegisterFunction, pluginPath, dummyFn, gwRegFn)
+	}
+	return gwfn(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
+}
+
+// listSOFiles returns the absolute paths of all .so files found in any of the provided plugin directories.
+//
+// pluginDirs can be relative to the current directory or absolute.
+func listSOFiles(fsys fs.FS, pluginDirs []string) ([]string, error) {
+	matches := []string{}
+
+	for _, pluginDir := range pluginDirs {
+		if !filepath.IsAbs(pluginDir) {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return nil, err
+			}
+			pluginDir = filepath.Join(cwd, pluginDir)
+		}
+		relPluginDir, err := filepath.Rel(pluginRootDir, pluginDir)
+		if err != nil {
+			return nil, err
+		}
+
+		m, err := fs.Glob(fsys, path.Join(relPluginDir, "/", "*.so"))
+		if err != nil {
+			return nil, err
+		}
+
+		for _, match := range m {
+			matches = append(matches, filepath.Join(pluginRootDir, match))
+		}
+	}
+	return matches, nil
 }
