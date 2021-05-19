@@ -1,96 +1,124 @@
-# Step 1 - Configure an Identity Management Provider in your Cluster
+## Step 1: Configure an Identity Management Provider in the Cluster
 
-In this step, we will XXXXX (TBD: depending on 1.1), next, we will configure from scratch an OIDC provider (VMware CSP login in the example) and will make Pinniped trust this provider for authenticating the Kubernetes API calls. At the end of this guide, your TKG cluster will be ready to perform a Kubeapps installation.
+The first step is to configure an OIDC provider (VMware CSP login in this example) in the VMware Tanzu™ Kubernetes Grid™ (TKG) cluster and configure Pinniped to trust this provider for authenticating Kubernetes API calls.
 
-## 1.1 - TBD Install or use the existing Pinniped in TKG?
+ Next, we will configure from scratch an OIDC provider (using VMware CSP as an example) and will make Pinniped trust this provider for authenticating the Kubernetes API calls. At the end of this guide, your TKG cluster will be ready to perform a Kubeapps installation.
 
-<!--
+### Step 1.1: Install a Recent Version of Pinniped
 
-This section depends upon the result of the issue https://github.com/kubeapps/kubeapps/issues/2764
+**NOTE**: Skip this section if [the cluster is already attached or will be attached to VMware Tanzu™ Mission Control™ (TMC)](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html). When a cluster is attached to TMC a recent Pinniped version compatible with Kubeapps is automatically installed in your cluster.
 
-Therefore three possible approaches are on the table:
+As per TKG v1.3.1, the built-in Pinniped version is relatively old (v0.4.1) and has some incompatibilities with the current Kubeapps releases. Specifically, Kubeapps requires Pinniped v0.6.0 or higher. However, Pinniped can be installed multiple times as a standalone product (not as a TKG addon) in separate namespaces and using different Kubernetes API groups.
 
-    a) TKG eventually will bundle a  Pinniped version >= 0.6: this step will just refer to the TKG official docs.
+> **NOTE**: Although users can install Pinniped in any namespace with any API group, due to current limitations in Kubeapps, the list of supported combination of namespace/API groups is limited to:
+>
+> - `*.pinniped-dev` resources in the `pinniped-concierge` namespace.
+> - `*.pinniped.tmc.cloud.vmware.com` in the `vmware-system-tmc` namespace.
+>   However, note that, even though the `tmc` name appears in the above namespace, it is only required for technical reasons. There is no requirement to use TMC when running Kubeapps on TKG.
 
-    b) TKG has a Pinniped version < 0.6 AND we can install a newer Pinniped manually: this step will hold the information about how to install it manually OR via TMC.
+In order to install a recent Pinniped version in TKG (this guide uses v0.8.0), follow the steps below:
 
-    c) TKG has a Pinniped version < 0.6 AND we CANNOT install a newer Pinniped manually: we have a major issue here: we can either refer to the latest Kubeapps version working with Pinniped pre 0.6 OR perform a backport.
+1. Change the Kubernetes API group and namespace to a supported one. This can be done in a number of different ways, described below:
+   - Use the provided file at [./manifests/pinniped-0.8-tmc.yaml](./manifests/pinniped-0.8-tmc.yaml) which will install Pinniped Concierge v0.8.0 deployed as `pinniped-concierge-0-8-0` in the `vmware-system-tmc` namespace with the `*.pinniped.tmc.cloud.vmware.com` API group.
+   - Follow the [official documentation](https://pinniped.dev/docs/howto/install-concierge/) and use the `ytt` tool from [Carvel](https://carvel.dev/) to generate a new `yaml` file to apply. Specify, you will need to edit the following parameters:
+     - `app_name`: Set it to `pinniped-concierge-0-8-0` (or any name of your choice).
+     - `namespace`: Set it to `vmware-system-tmc`.
+     - `image_tag`: Set it to `v0.8.0` (or any version, >= v0.6.0, of your choice).
+     - `api_group_suffix`: Set it to `pinniped.tmc.cloud.vmware.com`.
+   - Download the [v0.8.0 Piniped Concierge official release](https://github.com/vmware-tanzu/pinniped/releases/download/v0.8.0/install-pinniped-concierge.yaml) and manually edit the versions and namespaces accordingly (not recommended).
 
-> The guide below assumes no TMC, but if we introduce it, API suffixes must be adapted.
+    > **NOTE**: Although some of the options described above use namespaces or group names containing `tmc`, this is only required for technical reasons. There is no requirement to use TMC when running Kubeapps on TKG.
 
--->
+2. Save the `yaml` file generated above.
+3. Apply this file to the cluster:
 
-- [Enabling Identity Management in Tanzu Kubernetes Grid](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html).
-- [Tanzu Kubernetes Grid 1.3 with Identity Management](https://liveandletlearn.net/post/kubeapps-on-tanzu-kubernetes-grid-13/)
 
-At this point, you will have a TKG cluster with Pinniped up and running. Next, the next section will guide you to configure Pinniped to trust your favorite OIDC provider.
+  ```bash
+  kubectl apply -f pinniped-0.8-tmc.yaml
+  ```
 
-## 1.2 - Configure an OIDC Provider
+4. Confirm that Pinniped has been installed and the image is correct:
 
-In this section, we configure an OIDC provider that will authenticate users in our TKG cluster as well as in the Kubeapps dashboard. We will use the [VMware Cloud Services Platform (CSP)](https://console.cloud.vmware.com/) as the running example; nonetheless, any OIDC-compliant provider (such as Google Cloud, Azure Active Directory, Dex, Okta, etc. ) can be also configured.
-Please refer to the Kubeapps documentation on [using an OAth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md) for further information.
+```bash
+kubectl get deploy/pinniped-concierge-0-8-0 -n pinniped-concierge-0-8-0 -oyaml | grep image
+```
 
-### Create an OAuth2 Application inside CSP
+At this point, a TKG cluster with a compatible Pinniped version is up and running.
 
-We need to create an OAuth2 application in order to retrieve the information required by Pinniped and, later on, Kubeapps. To do so, follow the following steps:
+### Step 1.2: Configure an OIDC Provider
+
+The next step is to configure an OIDC provider and then configure Pinniped to trust the OIDC provider. The OIDC provider is responsible for authenticating users in the TKG cluster and the Kubeapps dashboard. The steps below use the [VMware Cloud Services Platform (CSP)](https://console.cloud.vmware.com/) as an example; however, a similar process applies to any other OIDC-compliant provider, including Google Cloud, Azure Active Directory, Dex, Okta, and others.
+
+> **TIP**: Learn more about [using an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md).
+
+#### Create an OAuth2 Application
+
+Begin by creating an OAuth2 application to retrieve the information required by Pinniped and, later on, Kubeapps. Follow the steps below:
 
 > **NOTE**: You must have _Developer_ access in the organization to perform these steps.
 
-1. Go to the CSP Console available at [https://console.cloud.vmware.com](https://console.cloud.vmware.com/).
-2. Under the _Organization_ settings of the right menu, click on _View Organization_
+1. Navigate to the CSP Console at [https://console.cloud.vmware.com](https://console.cloud.vmware.com/).
+2. Click the drop-down menu at the top-right corner.
+3. Under the _Organization_ settings, click _View Organization_
    ![View organization](./img/step-1-1.png)
-3. Click on the _OAuth Apps_ tab.
+4. Click the _OAuth Apps_ tab.
    ![OAuth Apps tab](./img/step-1-2.png)
-4. Select _Web app_ and click on _continue_.
+5. Select _Web app_ and click the _Continue_ button.
    ![OAuth Apps tab](./img/step-1-3.png)
-5. Enter a name and description for your OAuth app. Besides, add any URL as the _Redirect URIs_ as we will edit it once we install Kubeapps. For instance, enter `https://localhost/oauth2/callback`.
+6. Enter a name and description for the OAuth app. For the moment, enter the value `https://localhost/oauth2/callback` in the _Redirect URIs_ field (this will be updated after Kubeapps is installed).
    ![Add name and description](./img/step-1-4.png)
-6. Leave the rest of the options with the default values.
-7. Enable the _OpenID_ checkbox and click on _create_.
+7. Leave the rest of the options at their default values.
+8. Tick the _OpenID_ checkbox and click the _Create_ button.
    ![OpenID and create](./img/step-1-5.png)
-8. You will now see a dialog with the _app id_ and _app secret_. Click on the _Download JSON_ option as there is other useful info in the JSON.
-   ![Retrieve app id and secret](./img/step-1-6.png)
 
-At this point, you have the _app id_ and _app secret_ (also known as _client id_ and _client secret_). These values will be required in subsequent steps when configuring Pinniped and Kubeapps. Also, remember that we will need to edit the _Redirect URI_ once we install Kubeapps.
+The CSP Console displays a success screen with an auto-generated application ID and secret. Click the _Download JSON_ link to download these values.
+![Retrieve app id and secret](./img/step-1-6.png)
 
-> **TIP**: Any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) endpoint where you can find other useful and required information. It will allow just using the base URL to discover the rest of the URLs (`authorization`, `token`, `end session`, `jwks` and `issuer`) automatically.
-> That is, for CSP, we will use henceforth this one: `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+> **NOTE**: Store this file carefully as it contains important credentials which will be needed when configuring Pinniped and Kubeapps.
 
-### Make Pinniped Trust your OIDC Provider
+> **TIP**: Any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) endpoint where you can find other useful and required information. This endpoint allows using the base URL to discover the rest of the URLs (`authorization`, `token`, `end session`, `jwks` and `issuer`) automatically. For CSP, the endpoint is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
 
-Once the OIDC provider has been fully configured, we need Pinniped to trust this provider, so that a successful authentication in the OIDC provider results in authentication in our TKG cluster.
+At this point, an OAuth2 application is configured.
 
-Since Pinniped is already hiding the complexity of this process, we just need to add a _JWTAuthenticator_ CustomResource in our cluster. To do so, simply edit the following excerpt accordingly and apply it to your TKG cluster.
+### Configure Pinniped to Trust the OIDC Provider
 
-> **TIP**: a look at [JWTAuthenticator official documentation](https://pinniped.dev/docs/howto/configure-concierge-jwt/) for further information.
+Once the OIDC provider has been fully configured, the next step is to configure Pinniped to trust this provider. This implies that a successful authentication with the OIDC provider results in authentication with the TKG cluster.
 
-1. Create a file `kubeapps-jwt-authenticator.yaml` with the following content:
+Since Pinniped manages this process, the only requirement is to a _JWTAuthenticator_ CustomResource in the cluster. To do so, follow the steps below:
+
+> **TIP**: Learn more about [JWTAuthenticator](https://pinniped.dev/docs/howto/configure-concierge-jwt/).
+
+1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
+
+- Replace the  `MY-OIDC-ISSUER-URL` with the _issuer_ URL of your OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+- Replace `MY-CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
+- Replace `EMAIL-ADDRESS` with TODO
 
 ```yaml
 ---
-apiVersion: authentication.concierge.pinniped.dev/v1alpha1
+apiVersion: authentication.concierge.pinniped.tmc.cloud.vmware.com/v1alpha1
 kind: JWTAuthenticator
 metadata:
   name: kubeapps-jwt-authenticator
 spec:
-  issuer: my-oidc-issuer-url
-  audience: my-client-id # modify this value accordingly
+  issuer: MY-OIDC-ISSUER-URL
+  audience: MY-CLIENT-ID
   claims:
-    username: email
-  # tls:
-  # certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
+    username: EMAIL-ADDRESS
+#   tls:
+#     certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
 ```
 
-2. Replace `my-oidc-issuer-url` with the _issuer_ URL of your OIDC provider. For CSP it is: `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
-3. Replace `my-client-id` by the _app id_ you got in the previous section.
-4. Ignore the `tls` section unless your OIDC uses a self-signed certificate. If so, follow [this additional guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
-5. Perform a `kubectl apply -f kubeapps-jwt-authenticator.yaml` to install the JWTAuthenticator in your cluster.
+The `name` field specifies the name of the JWTAuthenticator resource, which will be required in the next step.
 
-## What to Do Next?
+> **NOTE**: Ignore the `tls` section of the configuration shown above unless your OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
 
-Now you have a TKG cluster and a Pinniped instance fully configured to trust your OIDC provider, it is time to [configure and install Kubeapps as described in Step 2](./step-2.md).
+2. Install the JWTAuthenticator in your cluster:
 
-## Additional References
+```bash
+kubectl apply -f kubeapps-jwt-authenticator.yaml
+```
 
-- [VMware Cloud Services as OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md#vmware-cloud-services)
-- [Using an OIDC provider with Pinniped](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md)
+> **TIP**: When using more than one workload cluster, apply this `JWTAuthenticator` in every cluster.
+
+At the end of this step, an identity management provider has been configured in the cluster. The next step is to [install Kubeapps](./step-2.md).
