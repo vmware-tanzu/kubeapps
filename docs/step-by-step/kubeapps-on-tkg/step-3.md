@@ -98,8 +98,6 @@ To grant a user permission to create `AppRepository` objects in a specific names
 kubectl -n CUSTOM-NAMESPACE create rolebinding USERNAME-apprepositories-read \
     --user USERNAME
     --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read
-
-    --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
 ```
 
 ```bash
