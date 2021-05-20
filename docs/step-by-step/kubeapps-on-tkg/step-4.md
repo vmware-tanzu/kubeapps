@@ -12,29 +12,29 @@ To deploy a new application, follow the steps below:
 
   ![Dashboard main page](./img/step-4-1.png)
 
-- Use the "Catalog" menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
+- Use the _Catalog_ menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
 
   ![MariaDB chart](./img/step-4-2.png)
 
-- Click the "Deploy" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
+- Click the _Deploy_ button. You will be prompted for the release name, cluster namespace and values for your application deployment.
 
   ![MariaDB installation](./img/step-4-3.png)
 
-- Click the "Submit" button.
+- Click the _Submit_ button.
 
-The application is deployed. The status of the deployment can be tracked directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
+The application is deployed. The status of the deployment can be tracked directly from the browser. The _Notes_ section of the deployment page contains important information to help you use the application.
 
   ![MariaDB deployment](./img/step-4-4.png)
 
 ### List all the applications running in your cluster
 
-The "Applications" page displays a list of the application deployments in your cluster.
+The _Applications_ page displays a list of the application deployments in your cluster.
 
 ![Deployment list](./img/step-4-5.png)
 
 ### Remove existing application deployments
 
-Running applications can be removed from the cluster by clicking the "Delete" button on the application's status page:
+Running applications can be removed from the cluster by clicking the _Delete_ button on the application's status page:
 
 ![Deployment removal](./img/step-4-6.png)
 

@@ -38,12 +38,12 @@ The following sections demonstrate the process of filling the _Add An App Reposi
 
 ### Add the VMware Marketplace™
 
-> **NOTE**: This repository is currently under heavy development. Therefore, the URL used below is is subject to change.
+> **NOTE**: This repository is currently under heavy development. Therefore, the URL used below is subject to change.
 
 The public content from the VMware Marketplace™ repository can be retrieved at `https://charts.market.csp.vmware.com/bitnami`. Since this is a public repository, it is only necessary to configure the following values in the _Add An App Repository_ form:
 
-- Name: Add a descriptive name, such as `vmware-marketplace`
-- URL: Use the endpoint URL `https://charts.market.csp.vmware.com/bitnami`
+- _Name_: Add a descriptive name, such as `vmware-marketplace`
+- _URL_: Use the endpoint URL `https://charts.market.csp.vmware.com/bitnami`
 
 ![Adding the public repository](./img/step-3-8.png)
 
@@ -60,17 +60,17 @@ The private content from the VMware Tanzu™ Application Catalog™ for Tanzu™
 
 Configure the following values in the _Add Repository_ form:
 
-- Name: Add a descriptive name, such as `tac-for-tanzu-advanced`
-- URL: Use the endpoint URL `https://registry.pivotal.io/tac-for-tanzu-advanced/charts/`
-- Repository Authorization: Set the value to to `Basic Auth`
+- _Name_: Add a descriptive name, such as `tac-for-tanzu-advanced`
+- _URL_: Use the endpoint URL `https://registry.pivotal.io/tac-for-tanzu-advanced/charts/`
+- _Repository Authorization_: Set the value to `Basic Auth`
    - Enter your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced username and token in the _Username_ and _Password_ fields respectively.
-- Repository Type: Set the value to `OCI Registry`
-- List of Repositories: Set the value to `kibana, kiam, mariadb, postgresql-ha, grafana-operator, nginx-ingress-controller, mongodb, minio, nginx, apache, ejbca, mongodb, elasticsearch, etcd, solr, kubewatch, tomcat, kong, rabbitmq, grafana, logstash, jenkins, postgresql, redis, kube-state-metrics, airflow, mariadb-galera, contour, influxdb, cassandra, wavefront, nats, aspnet-core, wordpress, tensorflow-resnet, spring-cloud-dataflow, fluentd, zookeeper, kafka, node-exporter, memcached, redis, parse, keycloak, external-dns, pytorch, mxnet, harbor, thanos, spark, consul, kubeapps, mysql, wildfly, metrics-server`
-- Associate Docker Registry Credentials:
-   - Secret Name: Set the value to `tac-for-tanzu-advanced`
-   - Server: Set the value to `https://registry.pivotal.io/tac-for-tanzu-advanced/`
-   - Username: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced username
-   - Password: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced token
+- _Repository Type_: Set the value to `OCI Registry`
+- _List of Repositories_: Set the value to `kibana, kiam, mariadb, postgresql-ha, grafana-operator, nginx-ingress-controller, mongodb, minio, nginx, apache, ejbca, mongodb, elasticsearch, etcd, solr, kubewatch, tomcat, kong, rabbitmq, grafana, logstash, jenkins, postgresql, redis, kube-state-metrics, airflow, mariadb-galera, contour, influxdb, cassandra, wavefront, nats, aspnet-core, wordpress, tensorflow-resnet, spring-cloud-dataflow, fluentd, zookeeper, kafka, node-exporter, memcached, redis, parse, keycloak, external-dns, pytorch, mxnet, harbor, thanos, spark, consul, kubeapps, mysql, wildfly, metrics-server`
+- _Associate Docker Registry Credentials_:
+   - _Secret Name_: Set the value to `tac-for-tanzu-advanced`
+   - _Server_: Set the value to `https://registry.pivotal.io/tac-for-tanzu-advanced/`
+   - _Username_: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced username
+   - _Password_: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced token
    - Click _Submit_ to create and save the secret.
 
 Once the secret has been created, it will appear in the list of _Associate Docker Registry Credentials_. Tick the checkbox for this newly-created `tac-for-tanzu-advanced` registry credential.
