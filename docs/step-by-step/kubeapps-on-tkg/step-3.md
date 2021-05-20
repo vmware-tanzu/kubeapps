@@ -15,16 +15,16 @@ The general procedure to add any repository is described below:
 
 5. Fill the _Add An App Repository_ form using the guidelines below:
 
-- The _Name_ field is a friendly display name for the repository
-- The _URL_ field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
-   ![App repositories modal part 1](./img/step-3-4.png)
-- The _Repository Type_ field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries. For the latter, it is necessary to also manually specify the list of artifacts to fetch in the _List of Repositories_ field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
-   ![App repositories modal part 2](./img/step-3-5.png)
-- The _Associate Docker Registry_ field specifies an `imagePullSecret` for images which are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
-   ![App repositories modal part 3](./img/step-3-6.png)
-- The _Custom CA Certificate_ field specifies a CA certificate to use (with an option to skip the TLS verification if required)
-- The _Custom Sync Job_ field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
-   ![App repositories modal part 4](./img/step-3-7.png)
+  - The _Name_ field is a friendly display name for the repository
+  - The _URL_ field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
+    ![App repositories modal part 1](./img/step-3-4.png)
+  - The _Repository Type_ field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries. For the latter, it is necessary to also manually specify the list of artifacts to fetch in the _List of Repositories_ field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
+    ![App repositories modal part 2](./img/step-3-5.png)
+  - The _Associate Docker Registry_ field specifies an `imagePullSecret` for images which are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
+    ![App repositories modal part 3](./img/step-3-6.png)
+  - The _Custom CA Certificate_ field specifies a CA certificate to use (with an option to skip the TLS verification if required).
+  - The _Custom Sync Job_ field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
+    ![App repositories modal part 4](./img/step-3-7.png)
 
 6. Click the _Install Repo_ button to finish the process and add the repository to Kubeapps.
 
