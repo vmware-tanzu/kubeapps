@@ -108,8 +108,3 @@ kubectl -n CUSTOM-NAMESPACE create rolebinding USERNAME-apprepositories-write \
     --user USERNAME \
     --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
 ```
-
-TODO
-Furthermore, when choosing or creating an `imagePullSecret` during the `AppRepository` creation, under the hood, it will check any referenced docker image within the chart is from a docker registry server matching one of the secrets associated with the `AppRepository`, then Kubeapps with Helm 3 will automatically append the corresponding imagePullSecret so that image can be pulled from the private registry.
-
-Note that the user deploying the chart will need to be able to read secrets in that namespace, which is usually the case when deploying to a namespace.
