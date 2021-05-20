@@ -74,14 +74,14 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
 
 1. Declare that the target cluster is using Pinniped by setting the parameter `pinnipedConfig.enable=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) guide. Here is an example:
 
-  > **TIP**: Since the target cluster is the same as the cluster on which Kubeapps is installed, there is no need to set a URL. Note that the `name` field is used only to configure a display name in the Kubeapps dashboard.
+    > **TIP**: Since the target cluster is the same as the cluster on which Kubeapps is installed, there is no need to set a URL. Note that the `name` field is used only to configure a display name in the Kubeapps dashboard.
 
-  ```yaml
-  clusters:
-    - name: my-tkg-cluster
-      pinnipedConfig:
-        enable: true
-  ```
+    ```yaml
+    clusters:
+      - name: my-tkg-cluster
+        pinnipedConfig:
+          enable: true
+    ```
 
 2. Enable the _Pinniped Proxy_ component so that the requests performed by Kubeapps can be proxied through Pinniped, by setting the parameter `pinnipedProxy.enabled=true`.  Here is an example:
 
