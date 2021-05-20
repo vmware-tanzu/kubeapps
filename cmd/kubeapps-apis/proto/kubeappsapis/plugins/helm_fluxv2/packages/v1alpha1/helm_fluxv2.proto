@@ -8,13 +8,13 @@ import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 service PackagesService {
   rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
     option (google.api.http) = {
-      get: "/helm-fluxv2/packages/v1alpha1"
+      get: "/plugins/helm_fluxv2/packages/v1alpha1/packages"
     };
   };
 
   rpc GetPackageRepositories(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse) {
     option (google.api.http) = {
-      get: "/helm-fluxv2/package-repositories/v1alpha1"
+      get: "/plugins/helm_fluxv2/packages/v1alpha1/packagerepositories"
     };
   };
 }

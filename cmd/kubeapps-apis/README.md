@@ -62,16 +62,53 @@ grpcurl -plaintext localhost:50051 kubeappsapis.core.plugins.v1alpha1.PluginsSer
 }
 ```
 
-The packages endpoints for the helm-operator and kapp-controller plugins are unimplemented:
+To test the packages endpoints for the helm_fluxv2 or kapp_controller plugins, you will currently need to build the image from the kubeapps root directory with:
 
 ```bash
-curl http://localhost:50051/kapp_controller/packages/v1alpha1
-{"code":12, "message":"method GetAvailablePackages not implemented", "details":[]}
-
-curl http://localhost:50051/helm/packages/v1alpha1
-{"code":12, "message":"method GetAvailablePackages not implemented", "details":[]}
+IMAGE_TAG=dev1 make kubeapps/kubeapps-apis
 ```
 
+and make that imageg available on your cluster somehow. If using kind, you can simply do:
+
+```bash
+kind load docker-image docker.io/kubeapps/kubeapps-apis:dev1 --name kubeapps
+```
+
+When you deploy or upgrade Kubeapps, be sure to include the values file at `docs/developer/manifests/values.kubeappsapis.yaml` which provides the configuration to include the kubeapps-apis deployment and service etc. You can edit that file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match.
+
+With the kubeapps-apis service running, you can then test the packages endpoints in cluster by port-forwarding the service in one terminal:
+
+```bash
+kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
+```
+
+and then curling or grpcurling in another:
+
+```bash
+$ curl -s http://localhost:8080/plugins/helm_fluxv2/packages/v1alpha1/packagerepositories | jq .
+{
+  "repositories": [
+    {
+      "name": "bitnami",
+      "namespace": "flux-system",
+      "url": "https://charts.bitnami.com/bitnami"
+    }
+  ]
+}
+
+$ curl -s http://localhost:8080/plugins/kapp_controller/packages/v1alpha1/packagerepositories | jq .
+{
+  "repositories": [
+    {
+      "name": "repo-name.example.com",
+      "namespace": "",
+      "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+    }
+  ]
+}
+```
+
+Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available in your cluster.
 ## Hacking
 
 A few extra tools will be needed to contribute to the development of this service.

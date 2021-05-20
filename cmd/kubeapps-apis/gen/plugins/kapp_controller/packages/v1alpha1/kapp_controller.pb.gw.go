@@ -241,9 +241,9 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_PackagesService_GetAvailablePackages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"kapp_controller", "packages", "v1alpha1"}, ""))
+	pattern_PackagesService_GetAvailablePackages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 2}, []string{"plugins", "kapp_controller", "packages", "v1alpha1"}, ""))
 
-	pattern_PackagesService_GetPackageRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"kapp_controller", "package-repositories", "v1alpha1"}, ""))
+	pattern_PackagesService_GetPackageRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "packagerepositories"}, ""))
 )
 
 var (
