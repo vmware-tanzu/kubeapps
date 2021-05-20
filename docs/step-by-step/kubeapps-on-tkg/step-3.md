@@ -53,7 +53,7 @@ Once complete, the public catalog will be visible in Kubeapps, as shown below:
 
 ### Add the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced
 
-The private content from the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced repository can be retrieved at `https://registry.pivotal.io/tac-for-tanzu-advanced/charts/.`. Since this is a private OCI registry, there are two key differences to note in the process:
+The private content from the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced repository can be retrieved at `https://registry.pivotal.io/tac-for-tanzu-advanced/charts/`. Since this is a private OCI registry, there are two key differences to note in the process:
 
 - It is necessary to specify repository authentication credentials using the `_Basic Auth` option and defining the correct username and password. If you do not have these credentials, please reach out to your [VMware sales representative](https://www.vmware.com/company/contact_sales.html).
 - As this is an OCI registry, it is necessary to manually add the list of artifacts to be retrieved in the _List of Repositories_ field.

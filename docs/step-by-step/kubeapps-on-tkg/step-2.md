@@ -184,7 +184,7 @@ Since Kubeapps delegates authorization to the existing Role-Based Access Control
 
 > **NOTE**: RBAC configuration depends on your custom business requirements. The configuration shown below is only an example and not meant for production use. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
 
-The configuration shown below demonstrates how to create a `ClusterRoleBinding` named `kubeapps-operator` with the `cluster-admin` role for a specified user. Replace the `USERNAME` placeholder with the username, as specified in the OIDC provider and name the file `kubeapps-rbac.yaml`.
+The configuration shown below demonstrates how to create a `ClusterRoleBinding` named `kubeapps-operator` with the `cluster-admin` role for a specified user. Replace the `EMAIL-ADDRESS` placeholder with the email address for the user, as specified in the OIDC provider and name the file `kubeapps-rbac.yaml`.
 
 ```yaml
 ---
@@ -199,7 +199,7 @@ roleRef:
 subjects:
   - apiGroup: rbac.authorization.k8s.io
     kind: User
-    name: USERNAME
+    name: EMAIL-ADDRESS
 ```
 
 Apply this configuration by executing the following command:
