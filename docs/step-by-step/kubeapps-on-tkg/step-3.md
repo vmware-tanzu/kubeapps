@@ -11,7 +11,7 @@ The general procedure to add any repository is described below:
    ![Right menu](./img/step-3-2.png)
 4. Add a new repository by clicking the _Add App Repository_ button.
 
-> **NOTE**: If no repositories were specified in the `initialRepos` chart parameter during the Kubeapps installation, no repositories will be shown on the _Application Repositories_ page.
+  > **NOTE**: If no repositories were specified in the `initialRepos` chart parameter during the Kubeapps installation, no repositories will be shown on the _Application Repositories_ page.
 
 5. Fill the _Add An App Repository_ form using the guidelines below:
 

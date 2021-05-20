@@ -83,7 +83,7 @@ Since Pinniped manages this process, the only requirement is to a _JWTAuthentica
 
 1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
 
-- Replace the  `OIDC-ISSUER-URL` with the _issuer_ URL of your OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+- Replace the  `OIDC-ISSUER-URL` with the _issuer_ URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
 - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
 - Replace `EMAIL-ADDRESS` with TODO
 
@@ -102,16 +102,16 @@ spec:
 #     certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
 ```
 
-The `name` field specifies the name of the JWTAuthenticator resource, which will be required in the next step.
+The `name` field specifies the name of the _JWTAuthenticator_ resource, which will be required in the next step.
 
-> **NOTE**: Ignore the `tls` section of the configuration shown above unless your OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
+> **NOTE**: Ignore the `tls` section of the configuration shown above unless the OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
 
-2. Install the JWTAuthenticator in your cluster:
+2. Install the _JWTAuthenticator_ resource in your cluster:
 
 ```bash
 kubectl apply -f kubeapps-jwt-authenticator.yaml
 ```
 
-> **TIP**: When using more than one workload cluster, apply this `JWTAuthenticator` in every cluster.
+> **TIP**: When using more than one workload cluster, apply this _JWTAuthenticator_ resource in every cluster.
 
 At the end of this step, an identity management provider has been configured in the cluster. The next step is to [install Kubeapps](./step-2.md).

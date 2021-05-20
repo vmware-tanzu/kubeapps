@@ -62,7 +62,7 @@ Key user interface parameters are:
 > helm install kubeapps --namespace kubeapps --set ingress.enabled=true bitnami/kubeapps
 > ```
 >
-> - As values stored in a custom _values.yaml_ file read in during chart deployment:
+> - As values stored in a custom `values.yaml` file read in during chart deployment:
 >
 > ```bash
 > helm install kubeapps --namespace kubeapps -f custom-values.yaml  bitnami/kubeapps
@@ -93,11 +93,11 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
     defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
   ```
 
-  > **TIP**: The `defaultAuthenticatorName` must match the JWTAuthenticator resource name created in [Step 1](./step-1.md).
+  > **TIP**: The `defaultAuthenticatorName` must match the _JWTAuthenticator_ resource name created in [Step 1](./step-1.md).
 
-- Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows.
+- Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows:
 
-  - Replace the `OIDC-ISSUER-URL` with the _issuer_ URL of your OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+  - Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
   - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
   - Replace `CLIENT-SECRET` with the application secret obtained from the JSON file in the previous step.
   - Replace `COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string).
@@ -116,7 +116,7 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
       # - --insecure-oidc-skip-issuer-verification=true
   ```
 
-  > **NOTE**: In some providers whose _issuer URL_ does not match the _token URL_ (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` must be turned on. Beware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
+  > **NOTE**: In some providers whose issuer URL does not match the token URL (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` must be turned on. Be aware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
 
 At this point, Kubeapps is configured to use Pinniped for authentication.
 
@@ -152,7 +152,7 @@ The next step is to provide a rich user experience, aligned with corporate brand
 
   ![Customized Kubeapps](./img/step-2-1.png)
 
-- Customize the initial application repositories by setting `apprepository` parameter. Here is a simple example of adding the Bitnami open source catalog:
+- Customize the initial application repositories by setting the `apprepository` parameter. Here is a simple example of adding the Bitnami open source catalog:
 
   ```yaml
   apprepository:
@@ -165,7 +165,7 @@ At this point, Kubeapps is configured to use a custom interface.
 
 ### Step 2.3: Install Kubeapps
 
-Since Kubeapps is currently officially delivered as a Helm chart packaged by Bitmami, the easiest way to install Kubeapps is to add the Bitami repository to Helm and install it via Helm. In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
+Since Kubeapps is currently officially delivered as a Helm chart packaged by Bitnami, the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm. In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
 
 > **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally) for additional information.
 >
@@ -194,9 +194,9 @@ At this point, Kubeapps is installed in the cluster.
 
 Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) for more information.
 
-> **NOTE:**: RBAC configuration depends on your custom business requirements. The configuration shown below is only an example and not meant for production use. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
+> **NOTE**: RBAC configuration depends on your custom business requirements. The configuration shown below is only an example and not meant for production use. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
 
-The configuration shown below demonstrates how to create a `ClusterRoleBinding` named `kubeapps-operator` with the `cluster-admin` role for a specified user. Replace the `USERNAME` placeholder with the username of the user, as specified in the OIDC provider.
+The configuration shown below demonstrates how to create a `ClusterRoleBinding` named `kubeapps-operator` with the `cluster-admin` role for a specified user. Replace the `USERNAME` placeholder with the username, as specified in the OIDC provider.
 
 ```yaml
 ---
