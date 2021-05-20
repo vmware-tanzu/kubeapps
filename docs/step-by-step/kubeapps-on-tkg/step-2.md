@@ -59,7 +59,7 @@ Key user interface parameters are:
 > - As values passed via command line:
 >
 > ```bash
->   helm install kubeapps --namespace kubeapps --set ingress.enabled=true bitnami/kubeapps
+> helm install kubeapps --namespace kubeapps --set ingress.enabled=true bitnami/kubeapps
 > ```
 >
 > - As values stored in a custom _values.yaml_ file read in during chart deployment:
@@ -74,26 +74,26 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
 
 - Declare that the target cluster is using Pinniped by setting the parameter `pinnipedConfig.enable=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) guide. Here is an example:
 
-> **TIP**: Since the target cluster is the same as the cluster on which Kubeapps is installed, there is no need to set a URL. Note that the `name` field is used only to configure a display name in the Kubeapps dashboard.
+  > **TIP**: Since the target cluster is the same as the cluster on which Kubeapps is installed, there is no need to set a URL. Note that the `name` field is used only to configure a display name in the Kubeapps dashboard.
 
-```yaml
-clusters:
-  - name: my-tkg-cluster
-    pinnipedConfig:
-      enable: true
-```
+  ```yaml
+  clusters:
+    - name: my-tkg-cluster
+      pinnipedConfig:
+        enable: true
+  ```
 
 - Enable the _Pinniped Proxy_ component so that the requests performed by Kubeapps can be proxied through Pinniped, by setting the parameter `pinnipedProxy.enabled=true`.  Here is an example:
 
-```yaml
-pinnipedProxy:
-  enabled: true
-  defaultAuthenticatorName: kubeapps-jwt-authenticator # this name must match the authenticator name previously created
-  defaultPinnipedNamespace: vmware-system-tmc
-  defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
-```
+  ```yaml
+  pinnipedProxy:
+    enabled: true
+    defaultAuthenticatorName: kubeapps-jwt-authenticator # this name must match the authenticator name previously created
+    defaultPinnipedNamespace: vmware-system-tmc
+    defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
+  ```
 
-> **TIP**: The `defaultAuthenticatorName` must match the JWTAuthenticator resource name created in [Step 1](./step-1.md).
+  > **TIP**: The `defaultAuthenticatorName` must match the JWTAuthenticator resource name created in [Step 1](./step-1.md).
 
 - Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows.
 
@@ -102,21 +102,21 @@ pinnipedProxy:
   - Replace `CLIENT-SECRET` with the application secret obtained from the JSON file in the previous step.
   - Replace `COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string).
 
-```yaml
-authProxy:
-  enabled: true
-  provider: oidc
-  clientID: CLIENT-ID
-  clientSecret: CLIENT-SECRET
-  cookieSecret: COOKIE-SECRET
-  additionalFlags:
-    - --oidc-issuer-url=OIDC-ISSUER-URL
-    - --scope=openid email groups
-    - --set-authorization-header=true
-    # - --insecure-oidc-skip-issuer-verification=true
-```
+  ```yaml
+  authProxy:
+    enabled: true
+    provider: oidc
+    clientID: CLIENT-ID
+    clientSecret: CLIENT-SECRET
+    cookieSecret: COOKIE-SECRET
+    additionalFlags:
+      - --oidc-issuer-url=OIDC-ISSUER-URL
+      - --scope=openid email groups
+      - --set-authorization-header=true
+      # - --insecure-oidc-skip-issuer-verification=true
+  ```
 
-> **NOTE** In some providers whose _issuer URL_ does not match the _token URL_ (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` must be turned on. Beware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
+  > **NOTE** In some providers whose _issuer URL_ does not match the _token URL_ (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` must be turned on. Beware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
 
 At this point, Kubeapps is configured to use Pinniped for authentication.
 
