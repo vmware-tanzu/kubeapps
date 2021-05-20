@@ -1,4 +1,4 @@
-# Deploy and Configure Kubeapps on VMware Tanzu™ Kubernetes Grid
+# Deploy and Configure Kubeapps on VMware Tanzu™ Kubernetes Grid™
 
 ## Introduction
 
@@ -13,7 +13,7 @@
 
 Kubeapps can be configured with public catalogs, such as the [VMware Marketplace™](https://marketplace.cloud.vmware.com/) catalog or the [Bitnami Application Catalog](https://bitnami.com/stacks/helm), or with private Helm repositories such as ChartMuseum or Harbor. It also integrates with [VMware Tanzu™ Application Catalog™ (TAC) for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog), which provides an enterprise-ready Helm chart catalog.
 
-This guide walks you through the process of configuring, deploying and using Kubeapps on a VMware Tanzu™ Kubernetes Grid cluster. It covers the following tasks:
+This guide walks you through the process of configuring, deploying and using Kubeapps on a VMware Tanzu™ Kubernetes Grid™ cluster. It covers the following tasks:
 
 - Configuring an identity management provider in the cluster
 - Integrating Kubeapps with the identity management provider
@@ -29,7 +29,7 @@ This guide walks you through the process of configuring, deploying and using Kub
 
 This guide is intended for the following user roles:
 
-- System administrators who want to install Kubeapps on a Tanzu Kubernetes Grid cluster and use it to deploy and manage applications from the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
+- System administrators who want to install Kubeapps on a VMware Tanzu™ Kubernetes Grid™ cluster and use it to deploy and manage applications from the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
 - Application administrators and developers who want to use Kubeapps to deploy and manage modern applications in a Kubernetes architecture.
 
 In-depth knowledge of Kubernetes is not required.
@@ -38,7 +38,7 @@ In-depth knowledge of Kubernetes is not required.
 
 This guide assumes that:
 
-- You have a VMware Tanzu™ Kubernetes Grid v1.3.1 or later cluster. Check the [VMware Tanzu™ Kubernetes Grid 1.3 Documentation](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) for more information.
+- You have a VMware Tanzu™ Kubernetes Grid™ v1.3.1 or later cluster. Check the [VMware Tanzu™ Kubernetes Grid™ 1.3 Documentation](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) for more information.
 - You have access to the [VMWare Cloud Services Portal (CSP)](https://console.cloud.vmware.com/). If not, talk to your [VMware sales representative](https://www.vmware.com/company/contact_sales.html) to request access.
 - You have access to, at a minimum, the Tanzu™ Application Catalog™ for Tanzu™ Advanced Demo environment. If not, reach out to your [VMware sales representative](https://www.vmware.com/company/contact_sales.html).
 - You have the _kubectl_ CLI and the Helm v3.x package manager installed. Learn how to [install _kubectl_ and Helm v3.x](https://docs.bitnami.com/kubernetes/get-started-kubernetes/#step-3-install-kubectl-command-line).

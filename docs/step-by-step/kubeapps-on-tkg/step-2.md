@@ -112,7 +112,7 @@ At this point, Kubeapps is configured to use Pinniped for authentication.
 
 The next step is to provide a rich user experience, aligned with corporate branding policies. This is achieved by configuring the `dashboard` and `apprepository` parameters. These parameters are discussed below:
 
-1. Customize the interface strings and CSS rules with the `dashboard.customLocale` and `dashboard.customStyle` parameters. A simple example is to change the displayed application name (`Kubeapps`) and replace it with a different name, the corporate name/brand (`VMware Tanzu™ Kubeapps`). To do this, just set the `dashboard.customLocale` parameters to the custom strings. Here is an example of replacing `Kubeapps` with `VMware Tanzu Kubeapps`:
+1. Customize the interface strings and CSS rules with the `dashboard.customLocale` and `dashboard.customStyle` parameters. A simple example is to change the displayed application name (`Kubeapps`) and replace it with a different name, the corporate name/brand (`VMware Tanzu™ Kubeapps`). To do this, just set the `dashboard.customLocale` parameters to the custom strings. Here is an example of replacing `Kubeapps` with `VMware Tanzu™ Kubeapps`:
 
    ```yaml
    dashboard:

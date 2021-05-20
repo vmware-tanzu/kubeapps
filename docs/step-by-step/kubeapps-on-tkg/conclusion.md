@@ -21,7 +21,7 @@ Learn more about the topics discussed in this guide using the links below.
 
 ### Background and Context
 
-- [Enabling Identity Management in Tanzu Kubernetes Grid](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html)
+- [Enabling Identity Management in VMware Tanzu™ Kubernetes Grid™](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html)
 - [Installing Kubeapps in airgapped environments](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md)
 - [Syncing app repositories using webhooks](https://github.com/kubeapps/kubeapps/blob/master/docs/user/syncing-apprepository-webhook.md)
 - [Using Kubeapps to deploy in multiple clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md)
@@ -45,7 +45,7 @@ Learn more about the topics discussed in this guide using the links below.
 ### Step 3: Add Application Repositories to Kubeapps
 
 - [Adding an public application repository](https://github.com/kubeapps/kubeapps/blob/master/docs/user/dashboard.md)
-- [Consume Tanzu Application Catalog Helm Charts using Kubeapps](https://docs.vmware.com/en/VMware-Tanzu-Application-Catalog/services/tac-docs/GUID-using-tac-consume-tac-kubeapps.html)
+- [Consume Tanzu™ Application Catalog™ Helm Charts using Kubeapps](https://docs.vmware.com/en/VMware-Tanzu-Application-Catalog/services/tac-docs/GUID-using-tac-consume-tac-kubeapps.html)
 - [Adding an private application repository](https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md)
 
 ### Step 4: Deploy and Manage Applications with Kubeapps
