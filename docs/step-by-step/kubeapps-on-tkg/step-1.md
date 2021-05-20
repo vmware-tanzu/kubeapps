@@ -83,9 +83,9 @@ Since Pinniped manages this process, the only requirement is to a _JWTAuthentica
 
 1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
 
-- Replace the  `OIDC-ISSUER-URL` with the _issuer_ URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+- Replace the  `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
 - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
-- Replace `EMAIL-ADDRESS` with TODO
+- Replace `EMAIL-ADDRESS` with the data (username or email address) to be requested from the CSP.
 
 ```yaml
 ---
