@@ -56,20 +56,24 @@ Begin by creating an OAuth2 application to retrieve the information required by 
 1. Navigate to the CSP Console at [https://console.cloud.vmware.com](https://console.cloud.vmware.com/).
 2. Click the drop-down menu in the top-right corner.
 3. Under the _Organization_ settings, click _View Organization_.
-   
+
    ![View organization](./img/csp-menu-organization.png)
-5. Click the _OAuth Apps_ tab.
-   
+
+4. Click the _OAuth Apps_ tab.
+
    ![OAuth Apps tab](./img/csp-oauth-initial.png)
+
 5. Select _Web app_ and click the _Continue_ button.
-   
+
    ![OAuth Apps tab](./img/csp-oauth-new.png)
+
 6. Enter a name and description for the OAuth app. For the moment, enter the value `https://localhost/oauth2/callback` in the _Redirect URIs_ field (this will be updated after Kubeapps is installed).
-   
+
    ![Add name and description](./img/csp-oauth-new-details-general.png)
+
 7. Leave the rest of the options at their default values.
 8. Tick the _OpenID_ checkbox and click the _Create_ button.
-   
+
    ![OpenID and create](./img/csp-oauth-new-details-scopes.png)
 
 The CSP Console displays a success screen with an auto-generated application ID and secret. Click the _Download JSON_ link to download these values.
