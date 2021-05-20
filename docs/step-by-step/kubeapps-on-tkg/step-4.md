@@ -8,19 +8,19 @@ The following sections discuss how to perform common tasks related to applicatio
 
 To deploy a new application, follow the steps below:
 
-- Log in to Kubeapps to arrive at the Dashboard welcome page:
+1. Log in to Kubeapps to arrive at the Dashboard welcome page:
 
   ![Dashboard main page](./img/step-4-1.png)
 
-- Use the _Catalog_ menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
+2. Use the _Catalog_ menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
 
   ![MariaDB chart](./img/step-4-2.png)
 
-- Click the _Deploy_ button. You will be prompted for the release name, cluster namespace and values for your application deployment.
+3. Click the _Deploy_ button. You will be prompted for the release name, cluster namespace and values for your application deployment.
 
   ![MariaDB installation](./img/step-4-3.png)
 
-- Click the _Submit_ button.
+4. Click the _Submit_ button.
 
 The application is deployed. The status of the deployment can be tracked directly from the browser. The _Notes_ section of the deployment page contains important information to help you use the application.
 
