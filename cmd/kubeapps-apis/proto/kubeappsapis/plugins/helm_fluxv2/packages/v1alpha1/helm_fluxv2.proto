@@ -11,4 +11,10 @@ service PackagesService {
       get: "/helm-fluxv2/packages/v1alpha1"
     };
   };
+
+  rpc GetPackageRepositories(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse) {
+    option (google.api.http) = {
+      get: "/helm-fluxv2/package-repositories/v1alpha1"
+    };
+  };
 }

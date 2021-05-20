@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PackagesServiceClient interface {
 	GetAvailablePackages(ctx context.Context, in *v1alpha1.GetAvailablePackagesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackagesResponse, error)
+	GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error)
 }
 
 type packagesServiceClient struct {
@@ -39,11 +40,21 @@ func (c *packagesServiceClient) GetAvailablePackages(ctx context.Context, in *v1
 	return out, nil
 }
 
+func (c *packagesServiceClient) GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+	out := new(v1alpha1.GetPackageRepositoriesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PackagesServiceServer is the server API for PackagesService service.
 // All implementations must embed UnimplementedPackagesServiceServer
 // for forward compatibility
 type PackagesServiceServer interface {
 	GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error)
+	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
 	mustEmbedUnimplementedPackagesServiceServer()
 }
 
@@ -53,6 +64,9 @@ type UnimplementedPackagesServiceServer struct {
 
 func (UnimplementedPackagesServiceServer) GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackages not implemented")
+}
+func (UnimplementedPackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
 func (UnimplementedPackagesServiceServer) mustEmbedUnimplementedPackagesServiceServer() {}
 
@@ -85,6 +99,24 @@ func _PackagesService_GetAvailablePackages_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetPackageRepositoriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackagesServiceServer).GetPackageRepositories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackagesServiceServer).GetPackageRepositories(ctx, req.(*v1alpha1.GetPackageRepositoriesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PackagesService_ServiceDesc is the grpc.ServiceDesc for PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -95,6 +127,10 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailablePackages",
 			Handler:    _PackagesService_GetAvailablePackages_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositories",
+			Handler:    _PackagesService_GetPackageRepositories_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

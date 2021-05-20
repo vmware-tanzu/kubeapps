@@ -203,6 +203,179 @@ func (x *GetAvailablePackagesResponse) GetPackages() []*AvailablePackage {
 	return nil
 }
 
+type GetPackageRepositoriesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// A cluster name can be provided if multiple clusters are configured,
+	// otherwise the current cluster will be assumed.
+	Cluster string `protobuf:"bytes,1,opt,name=cluster,proto3" json:"cluster,omitempty"`
+	// A namespace can be provided if the package repositories for a specific namespace
+	// are requested, when supported by the packaging format.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+}
+
+func (x *GetPackageRepositoriesRequest) Reset() {
+	*x = GetPackageRepositoriesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPackageRepositoriesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPackageRepositoriesRequest) ProtoMessage() {}
+
+func (x *GetPackageRepositoriesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPackageRepositoriesRequest.ProtoReflect.Descriptor instead.
+func (*GetPackageRepositoriesRequest) Descriptor() ([]byte, []int) {
+	return file_kubeappsapis_core_packages_v1alpha1_packages_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetPackageRepositoriesRequest) GetCluster() string {
+	if x != nil {
+		return x.Cluster
+	}
+	return ""
+}
+
+func (x *GetPackageRepositoriesRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+// A PackageRepository defines a repository of packages for installation.
+type PackageRepository struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The name identifying package repository on the cluster.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// An optional namespace for namespaced package repositories.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// A url identifying the package repository location.
+	Url string `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+}
+
+func (x *PackageRepository) Reset() {
+	*x = PackageRepository{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PackageRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackageRepository) ProtoMessage() {}
+
+func (x *PackageRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackageRepository.ProtoReflect.Descriptor instead.
+func (*PackageRepository) Descriptor() ([]byte, []int) {
+	return file_kubeappsapis_core_packages_v1alpha1_packages_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PackageRepository) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PackageRepository) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *PackageRepository) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type GetPackageRepositoriesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Repositories []*PackageRepository `protobuf:"bytes,1,rep,name=repositories,proto3" json:"repositories,omitempty"`
+}
+
+func (x *GetPackageRepositoriesResponse) Reset() {
+	*x = GetPackageRepositoriesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPackageRepositoriesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPackageRepositoriesResponse) ProtoMessage() {}
+
+func (x *GetPackageRepositoriesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPackageRepositoriesResponse.ProtoReflect.Descriptor instead.
+func (*GetPackageRepositoriesResponse) Descriptor() ([]byte, []int) {
+	return file_kubeappsapis_core_packages_v1alpha1_packages_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetPackageRepositoriesResponse) GetRepositories() []*PackageRepository {
+	if x != nil {
+		return x.Repositories
+	}
+	return nil
+}
+
 // A PackageRepository is identified by a fully qualified name and
 // optionally a specific namespace.
 type AvailablePackage_PackageRepositoryReference struct {
@@ -217,7 +390,7 @@ type AvailablePackage_PackageRepositoryReference struct {
 func (x *AvailablePackage_PackageRepositoryReference) Reset() {
 	*x = AvailablePackage_PackageRepositoryReference{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[3]
+		mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -230,7 +403,7 @@ func (x *AvailablePackage_PackageRepositoryReference) String() string {
 func (*AvailablePackage_PackageRepositoryReference) ProtoMessage() {}
 
 func (x *AvailablePackage_PackageRepositoryReference) ProtoReflect() protoreflect.Message {
-	mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[3]
+	mi := &file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -299,7 +472,26 @@ var file_kubeappsapis_core_packages_v1alpha1_packages_proto_rawDesc = []byte{
 	0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e,
 	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62,
 	0x6c, 0x65, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x08, 0x70, 0x61, 0x63, 0x6b, 0x61,
-	0x67, 0x65, 0x73, 0x42, 0x4b, 0x5a, 0x49, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x67, 0x65, 0x73, 0x22, 0x57, 0x0a, 0x1d, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x12, 0x1c,
+	0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x22, 0x57, 0x0a, 0x11,
+	0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x79, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70,
+	0x61, 0x63, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x75, 0x72, 0x6c, 0x22, 0x7c, 0x0a, 0x1e, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b,
+	0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5a, 0x0a, 0x0c, 0x72, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x36, 0x2e,
+	0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72,
+	0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x0c, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x69, 0x65, 0x73, 0x42, 0x4b, 0x5a, 0x49, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
 	0x6d, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61,
 	0x70, 0x70, 0x73, 0x2f, 0x63, 0x6d, 0x64, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73,
 	0x2d, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x63, 0x6f, 0x72, 0x65, 0x2f, 0x70,
@@ -319,21 +511,25 @@ func file_kubeappsapis_core_packages_v1alpha1_packages_proto_rawDescGZIP() []byt
 	return file_kubeappsapis_core_packages_v1alpha1_packages_proto_rawDescData
 }
 
-var file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_kubeappsapis_core_packages_v1alpha1_packages_proto_goTypes = []interface{}{
 	(*GetAvailablePackagesRequest)(nil),                 // 0: kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest
 	(*AvailablePackage)(nil),                            // 1: kubeappsapis.core.packages.v1alpha1.AvailablePackage
 	(*GetAvailablePackagesResponse)(nil),                // 2: kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse
-	(*AvailablePackage_PackageRepositoryReference)(nil), // 3: kubeappsapis.core.packages.v1alpha1.AvailablePackage.PackageRepositoryReference
+	(*GetPackageRepositoriesRequest)(nil),               // 3: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest
+	(*PackageRepository)(nil),                           // 4: kubeappsapis.core.packages.v1alpha1.PackageRepository
+	(*GetPackageRepositoriesResponse)(nil),              // 5: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse
+	(*AvailablePackage_PackageRepositoryReference)(nil), // 6: kubeappsapis.core.packages.v1alpha1.AvailablePackage.PackageRepositoryReference
 }
 var file_kubeappsapis_core_packages_v1alpha1_packages_proto_depIdxs = []int32{
-	3, // 0: kubeappsapis.core.packages.v1alpha1.AvailablePackage.repository:type_name -> kubeappsapis.core.packages.v1alpha1.AvailablePackage.PackageRepositoryReference
+	6, // 0: kubeappsapis.core.packages.v1alpha1.AvailablePackage.repository:type_name -> kubeappsapis.core.packages.v1alpha1.AvailablePackage.PackageRepositoryReference
 	1, // 1: kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse.packages:type_name -> kubeappsapis.core.packages.v1alpha1.AvailablePackage
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	4, // 2: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse.repositories:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepository
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_kubeappsapis_core_packages_v1alpha1_packages_proto_init() }
@@ -379,6 +575,42 @@ func file_kubeappsapis_core_packages_v1alpha1_packages_proto_init() {
 			}
 		}
 		file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetPackageRepositoriesRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PackageRepository); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetPackageRepositoriesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kubeappsapis_core_packages_v1alpha1_packages_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AvailablePackage_PackageRepositoryReference); i {
 			case 0:
 				return &v.state
@@ -397,7 +629,7 @@ func file_kubeappsapis_core_packages_v1alpha1_packages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_kubeappsapis_core_packages_v1alpha1_packages_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

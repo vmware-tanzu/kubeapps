@@ -31,8 +31,3 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	return v1alpha1.RegisterPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
-
-// Server implements the kapp-controller packages v1alpha1 interface.
-type Server struct {
-	v1alpha1.UnimplementedPackagesServiceServer
-}
