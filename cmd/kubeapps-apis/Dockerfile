@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
     -o /helm-operator-packages-v1alpha1-plugin.so -buildmode=plugin \
-    ./cmd/kubeapps-apis/plugins/helm_operator/packages/v1alpha1/*.go
+    ./cmd/kubeapps-apis/plugins/helm_fluxv2/packages/v1alpha1/*.go
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
 # are loaded using the dynamic linker.

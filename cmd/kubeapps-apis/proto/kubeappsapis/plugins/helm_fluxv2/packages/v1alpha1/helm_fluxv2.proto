@@ -1,6 +1,6 @@
 syntax = "proto3";
-package kubeappsapis.plugins.helm_operator.packages.v1alpha1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm_operator/packages/v1alpha1";
+package kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1;
+option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm_fluxv2/packages/v1alpha1";
 
 import "google/api/annotations.proto";
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";
@@ -8,7 +8,7 @@ import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 service PackagesService {
   rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
     option (google.api.http) = {
-      get: "/helm/packages/v1alpha1"
+      get: "/helm-fluxv2/packages/v1alpha1"
     };
   };
 }
