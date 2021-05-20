@@ -11,20 +11,20 @@ The general procedure to add any repository is described below:
    ![Right menu](./img/step-3-2.png)
 4. Add a new repository by clicking the _Add App Repository_ button.
 
-  > **NOTE**: If no repositories were specified in the `initialRepos` chart parameter during the Kubeapps installation, no repositories will be shown on the _Application Repositories_ page.
+> **NOTE**: If no repositories were specified in the `initialRepos` chart parameter during the Kubeapps installation, no repositories will be shown on the _Application Repositories_ page.
 
 5. Fill the _Add An App Repository_ form using the guidelines below:
 
-  - The _Name_ field is a friendly display name for the repository.
-  - The _URL_ field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
-    ![App repositories modal part 1](./img/step-3-4.png)
-  - The _Repository Type_ field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries. For the latter, it is necessary to also manually specify the list of artifacts to fetch in the _List of Repositories_ field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
-    ![App repositories modal part 2](./img/step-3-5.png)
-  - The _Associate Docker Registry_ field specifies an `imagePullSecret` for images which are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
-    ![App repositories modal part 3](./img/step-3-6.png)
-  - The _Custom CA Certificate_ field specifies a CA certificate to use (with an option to skip the TLS verification if required).
-  - The _Custom Sync Job_ field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
-    ![App repositories modal part 4](./img/step-3-7.png)
+- The _Name_ field is a friendly display name for the repository.
+- The _URL_ field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
+  ![App repositories modal part 1](./img/step-3-4.png)
+- The _Repository Type_ field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries. For the latter, it is necessary to also manually specify the list of artifacts to fetch in the _List of Repositories_ field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
+  ![App repositories modal part 2](./img/step-3-5.png)
+- The _Associate Docker Registry_ field specifies an `imagePullSecret` for images which are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
+  ![App repositories modal part 3](./img/step-3-6.png)
+- The _Custom CA Certificate_ field specifies a CA certificate to use (with an option to skip the TLS verification if required).
+- The _Custom Sync Job_ field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
+  ![App repositories modal part 4](./img/step-3-7.png)
 
 6. Click the _Install Repo_ button to finish the process and add the repository to Kubeapps.
 
@@ -63,15 +63,15 @@ Configure the following values in the _Add Repository_ form:
 - _Name_: Add a descriptive name, such as `tac-for-tanzu-advanced`.
 - _URL_: Use the endpoint URL `https://registry.pivotal.io/tac-for-tanzu-advanced/charts/`.
 - _Repository Authorization_: Set the value to `Basic Auth`.
-   - Enter your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced username and token in the _Username_ and _Password_ fields respectively.
+  - Enter your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced username and token in the _Username_ and _Password_ fields respectively.
 - _Repository Type_: Set the value to `OCI Registry`.
 - _List of Repositories_: Set the value to `kibana, kiam, mariadb, postgresql-ha, grafana-operator, nginx-ingress-controller, mongodb, minio, nginx, apache, ejbca, mongodb, elasticsearch, etcd, solr, kubewatch, tomcat, kong, rabbitmq, grafana, logstash, jenkins, postgresql, redis, kube-state-metrics, airflow, mariadb-galera, contour, influxdb, cassandra, wavefront, nats, aspnet-core, wordpress, tensorflow-resnet, spring-cloud-dataflow, fluentd, zookeeper, kafka, node-exporter, memcached, redis, parse, keycloak, external-dns, pytorch, mxnet, harbor, thanos, spark, consul, kubeapps, mysql, wildfly, metrics-server`.
 - _Associate Docker Registry Credentials_:
-   - _Secret Name_: Set the value to `tac-for-tanzu-advanced`.
-   - _Server_: Set the value to `https://registry.pivotal.io/tac-for-tanzu-advanced/`.
-   - _Username_: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced username.
-   - _Password_: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced token.
-   - Click _Submit_ to create and save the secret.
+  - _Secret Name_: Set the value to `tac-for-tanzu-advanced`.
+  - _Server_: Set the value to `https://registry.pivotal.io/tac-for-tanzu-advanced/`.
+  - _Username_: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced username.
+  - _Password_: Set the value to your VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced token.
+  - Click _Submit_ to create and save the secret.
 
 Once the secret has been created, it will appear in the list of _Associate Docker Registry Credentials_. Tick the checkbox for this newly-created `tac-for-tanzu-advanced` registry credential.
 
@@ -89,7 +89,7 @@ A Kubeapps application repository can be created by anyone with the required RBA
 
 Users with cluster-wide RBAC privileges for creating application repositories can still create an application repository whose charts will be available to users in all namespaces by selecting `All Namespaces` when creating the repository.
 
-To grant a user permission to create `AppRepository` objects in a specific namespace,  create `RoleBinding` objects associating `apprepositories-read` and `apprepositories-write` roles with that user, as shown below. Replace the `USERNAME` and `CUSTOM-NAMESPACE` placeholders with the corresponding username and namespace name.
+To grant a user permission to create `AppRepository` objects in a specific namespace, create `RoleBinding` objects associating `apprepositories-read` and `apprepositories-write` roles with that user, as shown below. Replace the `USERNAME` and `CUSTOM-NAMESPACE` placeholders with the corresponding username and namespace name.
 
 > **TIP**: If users only require permissions to deploy charts from application repositories in a specific namespace, it is sufficient to create only the `apprepositories-read` `RoleBinding` object.
 

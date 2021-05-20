@@ -17,6 +17,7 @@ As per TKG v1.3.1, the built-in Pinniped version is relatively old (v0.4.1) and 
 In order to install a recent Pinniped version in TKG (this guide uses v0.8.0), follow the steps below:
 
 1. Change the Kubernetes API group and namespace to a supported one. This can be done in a number of different ways, described below:
+
    - Use the provided file at [./manifests/pinniped-0.8-tmc.yaml](./manifests/pinniped-0.8-tmc.yaml) which will install Pinniped Concierge v0.8.0 deployed as `pinniped-concierge-0-8-0` in the `vmware-system-tmc` namespace with the `*.pinniped.tmc.cloud.vmware.com` API group.
    - Follow the [official documentation](https://pinniped.dev/docs/howto/install-concierge/) and use the `ytt` tool from [Carvel](https://carvel.dev/) to generate a new `yaml` file to apply. Specify, you will need to edit the following parameters:
      - `app_name`: Set it to `pinniped-concierge-0-8-0` (or any name of your choice).
@@ -25,14 +26,14 @@ In order to install a recent Pinniped version in TKG (this guide uses v0.8.0), f
      - `api_group_suffix`: Set it to `pinniped.tmc.cloud.vmware.com`.
    - Download the [v0.8.0 Piniped Concierge official release](https://github.com/vmware-tanzu/pinniped/releases/download/v0.8.0/install-pinniped-concierge.yaml) and manually edit the versions and namespaces accordingly (not recommended).
 
-    > **NOTE**: Although some of the options described above use namespaces or group names containing `tmc`, this is only required for technical reasons. There is no requirement to use TMC when running Kubeapps on TKG.
+   > **NOTE**: Although some of the options described above use namespaces or group names containing `tmc`, this is only required for technical reasons. There is no requirement to use TMC when running Kubeapps on TKG.
 
 2. Save the `yaml` file generated at the end of the previous step.
 3. Apply this file to the cluster:
 
-  ```bash
-  kubectl apply -f pinniped-0.8-tmc.yaml
-  ```
+```bash
+kubectl apply -f pinniped-0.8-tmc.yaml
+```
 
 4. Confirm that Pinniped has been installed and the image is correct:
 
@@ -83,7 +84,7 @@ Since Pinniped manages this process, the only requirement is to a _JWTAuthentica
 
 1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
 
-- Replace the  `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+- Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
 - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
 - Replace `EMAIL-ADDRESS` with the data (username or email address) to be requested from the CSP.
 
