@@ -33,7 +33,7 @@ func NewPackagesServiceClient(cc grpc.ClientConnInterface) PackagesServiceClient
 
 func (c *packagesServiceClient) GetAvailablePackages(ctx context.Context, in *v1alpha1.GetAvailablePackagesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackagesResponse, error) {
 	out := new(v1alpha1.GetAvailablePackagesResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1.PackagesService/GetAvailablePackages", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetAvailablePackages", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (c *packagesServiceClient) GetAvailablePackages(ctx context.Context, in *v1
 
 func (c *packagesServiceClient) GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	out := new(v1alpha1.GetPackageRepositoriesResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func _PackagesService_GetAvailablePackages_Handler(srv interface{}, ctx context.
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1.PackagesService/GetAvailablePackages",
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetAvailablePackages",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).GetAvailablePackages(ctx, req.(*v1alpha1.GetAvailablePackagesRequest))
@@ -109,7 +109,7 @@ func _PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories",
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).GetPackageRepositories(ctx, req.(*v1alpha1.GetPackageRepositoriesRequest))
@@ -121,7 +121,7 @@ func _PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PackagesService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "kubeappsapis.plugins.helm_fluxv2.packages.v1alpha1.PackagesService",
+	ServiceName: "kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService",
 	HandlerType: (*PackagesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -134,5 +134,5 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "kubeappsapis/plugins/helm_fluxv2/packages/v1alpha1/helm_fluxv2.proto",
+	Metadata: "kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2.proto",
 }

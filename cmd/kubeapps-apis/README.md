@@ -38,7 +38,7 @@ You can run `make run` to run the currently stubbed service.
 ```bash
 make run
 
-I0514 14:14:52.969498 1932386 server.go:129] Successfully registered plugin "/home/michael/dev/vmware/kubeapps/cmd/kubeapps-apis/devel/helm-operator-packages-v1alpha1-plugin.so"
+I0514 14:14:52.969498 1932386 server.go:129] Successfully registered plugin "/home/michael/dev/vmware/kubeapps/cmd/kubeapps-apis/devel/fluxv2-packages-v1alpha1-plugin.so"
 I0514 14:14:52.975884 1932386 server.go:129] Successfully registered plugin "/home/michael/dev/vmware/kubeapps/cmd/kubeapps-apis/devel/kapp-controller-packages-v1alpha1-plugin.so"
 I0511 11:39:56.444553 4116647 server.go:25] Starting server on :50051
 ```
@@ -62,7 +62,7 @@ grpcurl -plaintext localhost:50051 kubeappsapis.core.plugins.v1alpha1.PluginsSer
 }
 ```
 
-To test the packages endpoints for the helm_fluxv2 or kapp_controller plugins, you will currently need to build the image from the kubeapps root directory with:
+To test the packages endpoints for the fluxv2 or kapp_controller plugins, you will currently need to build the image from the kubeapps root directory with:
 
 ```bash
 IMAGE_TAG=dev1 make kubeapps/kubeapps-apis
@@ -85,7 +85,7 @@ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 and then curling or grpcurling in another:
 
 ```bash
-$ curl -s http://localhost:8080/plugins/helm_fluxv2/packages/v1alpha1/packagerepositories | jq .
+$ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories | jq .
 {
   "repositories": [
     {

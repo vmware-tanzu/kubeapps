@@ -19,8 +19,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
-    -o /helm-operator-packages-v1alpha1-plugin.so -buildmode=plugin \
-    ./cmd/kubeapps-apis/plugins/helm_fluxv2/packages/v1alpha1/*.go
+    -o /fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin \
+    ./cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/*.go
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
 # are loaded using the dynamic linker.
@@ -28,7 +28,7 @@ FROM bitnami/minideb:buster
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeapps-apis /kubeapps-apis
 COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/
-COPY --from=builder /helm-operator-packages-v1alpha1-plugin.so /plugins/
+COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/
 
 EXPOSE 50051
 USER 1001
