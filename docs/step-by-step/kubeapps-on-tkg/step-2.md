@@ -24,18 +24,6 @@ dashboard: # Dashboard configuration
 
 apprepository: # Apprepository controller configuration
   initialRepos: # Initial repositories to fetch
-
-## Other values
-
-kubeops: # Main backend APIs configuration
-
-assetsvc: # Asset service configuration
-
-frontend: # NGINX configuration (used to serve the dashboard and proxying user requests to the backend)
-
-ingress: # Ingress controller details to expose Kubeapps.
-
-postgresql: # Database configuration
 ```
 
 > **TIP**: Refer to the [Bitnami Kubeapps Helm chart documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md) for more information.
