@@ -134,7 +134,7 @@ The next step is to provide a rich user experience, aligned with corporate brand
 
    This image depicts a customized version of Kubeapps applying the above styles and strings:
 
-   ![Customized Kubeapps](./img/step-2-1.png)
+   ![Customized Kubeapps](./img/login-oidc-initial.png)
 
 2. Customize the initial application repositories by setting the `apprepository` parameter. Here is a simple example of adding the Bitnami open source catalog:
 
@@ -219,12 +219,15 @@ kubectl port-forward -n kubeapps svc/kubeapps 8080:80
 
 This will start an HTTP proxy for secure access to the Kubeapps dashboard. Go to [http://127.0.0.1:8080](http://127.0.0.1:8080) to open it.
 You will see the following login page. Click on the login button.
+
 ![OIDC login page](./img/login-oidc-initial.png)
 
 Then, you will get redirected to your OIDC provider, in our case, VMware Cloud Services Portal:
+
 ![OIDC login provider](./img/login-oidc-provider.png)
 
 If the login was successful, you will get redirected to the Kubeapps initial page:
+
 ![Kubeapps home](./img/kubeapps-applications-empty.png)
 
 At the end of this step, the Kubeapps installation is configured, customized and running in the cluster. The next step is to [add application repositories to Kubeapps](./step-3.md).
