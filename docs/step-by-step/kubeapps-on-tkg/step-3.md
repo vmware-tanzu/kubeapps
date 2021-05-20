@@ -6,9 +6,9 @@ The general procedure to add any repository is described below:
 
 1. Log in to Kubeapps.
 2. Click the menu button in the top right corner (dotted square).
-   ![Kubeapps home](./img/step-3-1.png)
+   ![Kubeapps home](./img/kubeapps-applications-empty.png)
 3. Click the _App Repositories_ button.
-   ![Right menu](./img/step-3-2.png)
+   ![Right menu](./img/kubeapps-menu-right.png)
 4. Add a new repository by clicking the _Add App Repository_ button.
 
 > **NOTE**: If no repositories were specified in the `initialRepos` chart parameter during the Kubeapps installation, no repositories will be shown on the _Application Repositories_ page.
@@ -17,14 +17,14 @@ The general procedure to add any repository is described below:
 
 - The _Name_ field is a friendly display name for the repository.
 - The _URL_ field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
-  ![App repositories modal part 1](./img/step-3-4.png)
+  ![App repositories modal part 1](./img/apprepository-detail-general.png)
 - The _Repository Type_ field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries. For the latter, it is necessary to also manually specify the list of artifacts to fetch in the _List of Repositories_ field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
-  ![App repositories modal part 2](./img/step-3-5.png)
-- The _Associate Docker Registry_ field specifies an `imagePullSecret` for images which are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
-  ![App repositories modal part 3](./img/step-3-6.png)
+  ![App repositories modal part 2](./img/apprepository-detail-types.png)
+- The _Associate Docker Registry_ field specifies an `imagePullSecret` for images that are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
+  ![App repositories modal part 3](./img/apprepository-detail-credentials.png)
 - The _Custom CA Certificate_ field specifies a CA certificate to use (with an option to skip the TLS verification if required).
 - The _Custom Sync Job_ field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
-  ![App repositories modal part 4](./img/step-3-7.png)
+  ![App repositories modal part 4](./img/apprepository-detail-advanced.png)
 
 6. Click the _Install Repo_ button to finish the process and add the repository to Kubeapps.
 
@@ -45,11 +45,11 @@ The public content from the VMware Marketplace™ repository can be retrieved at
 - _Name_: Add a descriptive name, such as `vmware-marketplace`.
 - _URL_: Use the endpoint URL `https://charts.market.csp.vmware.com/bitnami`.
 
-![Adding the public repository](./img/step-3-8.png)
+![Adding the public repository](./img/apprepository-example-marketplace.png)
 
 Once complete, the public catalog will be visible in Kubeapps, as shown below:
 
-![Catalog after adding the public repository](./img/step-3-9.png)
+![Catalog after adding the public repository](./img/kubeapps-catalog-marketplace.png)
 
 ### Add the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced
 
@@ -75,11 +75,17 @@ Configure the following values in the _Add Repository_ form:
 
 Once the secret has been created, it will appear in the list of _Associate Docker Registry Credentials_. Tick the checkbox for this newly-created `tac-for-tanzu-advanced` registry credential.
 
+![Adding the private repository](./img/apprepository-example-tac.png)
+
 > **NOTE**: To obtain the most current list of repositories, log in to the registry using the `oras` tool and execute the command below:
 >
 > ```bash
 > oras pull registry.pivotal.io/tac-for-tanzu-advanced/index:latest -a && cat asset-index.json | jq -r '.charts | map(.name) | join(",")'
 > ```
+
+Once complete, the private catalog will be visible in Kubeapps, as shown below:
+
+![Catalog after adding the public repository](./img/kubeapps-catalog-tac.png)
 
 At the end of this step, the Kubeapps installation is configured with one or more application repositories. The next step is to [start using Kubeapps](./step-4.md).
 

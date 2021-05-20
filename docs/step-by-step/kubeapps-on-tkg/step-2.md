@@ -8,15 +8,11 @@ Kubeapps is currently officially delivered as a Helm chart packaged by Bitnami. 
 ## Values likely to be modified
 
 ### Authentication-related parameters
-
 clusters: # List of clusters that Kubeapps can target
-
 authProxy: # Oauth2proxy configuration for setting up OIDC login
-
 pinnipedProxy: # Pinniped-proxy configuration
 
 ### Look-and-feel-related parameters
-
 dashboard: # Dashboard configuration
   customStyle: # Custom css to inject
   customComponents: # Custom components to inject
@@ -124,7 +120,7 @@ The next step is to provide a rich user experience, aligned with corporate brand
 
    > **TIP**: See the [complete list of customizable strings](https://github.com/kubeapps/kubeapps/blob/master/dashboard/lang/en.json).
 
-   In a similar manner, add custom style rules using custom CSS selectors. For example, to change the Kubeapps logo, set the selector `.kubeapps__logo` to the property `background-image: url('data:image/png;base64...')` as shown in the example below. The long string shown is he Base64-encoded data for the new logo image.
+   In a similar manner, add custom style rules using custom CSS selectors. For example, to change the Kubeapps logo, set the selector `.kubeapps__logo` to the property `background-image: url('data:image/png;base64...')` as shown in the example below. The long string shown is the Base64-encoded data for the new logo image.
 
    ```yaml
    dashboard:
@@ -153,7 +149,9 @@ At this point, Kubeapps is configured to use a custom interface.
 
 ### Step 2.3: Install Kubeapps
 
-Since Kubeapps is currently officially delivered as a Helm chart packaged by Bitnami, the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm. In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
+Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
+
+In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
 
 > **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally) for additional information.
 >
@@ -207,5 +205,26 @@ Apply this configuration by executing the following command:
 ```bash
 kubectl apply -f kubeapps-rbac.yaml
 ```
+
+At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-admin` access, so they will able to perform any desired action in the Kubeapps dashboard.
+
+### Step 2.5: Access Kubeapps and login with your OIDC provider
+
+Once you have installed Kubeapps and configured the RBAC, you can access the web dashboard.
+It will depend on how you have configured it; if you have [exposed the service externally](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally) access accordingly; if not, execute a _port forward_ to access locally:
+
+```bash
+kubectl port-forward -n kubeapps svc/kubeapps 8080:80
+```
+
+This will start an HTTP proxy for secure access to the Kubeapps dashboard. Go to [http://127.0.0.1:8080](http://127.0.0.1:8080) to open it.
+You will see the following login page. Click on the login button.
+![OIDC login page](./img/login-oidc-initial.png)
+
+Then, you will get redirected to your OIDC provider, in our case, VMware Cloud Services Portal:
+![OIDC login provider](./img/login-oidc-provider.png)
+
+If the login was successful, you will get redirected to the Kubeapps initial page:
+![Kubeapps home](./img/kubeapps-applications-empty.png)
 
 At the end of this step, the Kubeapps installation is configured, customized and running in the cluster. The next step is to [add application repositories to Kubeapps](./step-3.md).
