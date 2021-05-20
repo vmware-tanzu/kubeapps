@@ -24,7 +24,7 @@ To deploy a new application, follow the steps below:
 
 The application is deployed. The status of the deployment can be tracked directly from the browser. The _Notes_ section of the deployment page contains important information to help you use the application.
 
-    ![MariaDB deployment](./img/step-4-4.png)
+![MariaDB deployment](./img/step-4-4.png)
 
 ### List all the applications running in your cluster
 
