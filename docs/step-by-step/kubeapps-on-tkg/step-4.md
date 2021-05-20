@@ -1,45 +1,41 @@
-# Step 4 - Manage your Applications
+## Step 4: Deploy and Manage Applications with Kubeapps
 
-In this step, once you have installed Kubeapps and configured some Application Repositories, you can use the Dashboard to start managing and deploying applications in your cluster.
+Once Kubeapps has been configured with one or more application repositories, it can be used to manage and deploy applications in the cluster.
 
-The following sections walk you through some common tasks, namely: i) deploy an application; ii) listing all the applications; iii) deleting an application.
+The following sections discuss how to perform common tasks related to application management, including deploying an application, listing available applications and deleting applications.
 
-## Deploying a new application
+### Deploy a new application
 
-- Start with the Dashboard welcome page:
+To deploy a new application, follow the steps below:
 
-  ![Dashboard main page](./img/step-4-1.png)
+1. Log in to Kubeapps to arrive at the Dashboard welcome page:
 
-- Use the "Catalog" menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
+    ![Dashboard main page](./img/step-4-1.png)
 
-  ![MariaDB chart](./img/step-4-2.png)
+2. Use the _Catalog_ menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
 
-- Click the "Deploy" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
+    ![MariaDB chart](./img/step-4-2.png)
 
-  ![MariaDB installation](./img/step-4-3.png)
+3. Click the _Deploy_ button. You will be prompted for the release name, cluster namespace and values for your application deployment.
 
-- Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
+    ![MariaDB installation](./img/step-4-3.png)
 
-  ![MariaDB deployment](./img/step-4-4.png)
+4. Click the _Submit_ button.
+
+The application is deployed. The status of the deployment can be tracked directly from the browser. The _Notes_ section of the deployment page contains important information to help you use the application.
+
+![MariaDB deployment](./img/step-4-4.png)
 
 ### List all the applications running in your cluster
 
-The "Applications" page displays a list of the application deployments in your cluster.
+The _Applications_ page displays a list of the application deployments in your cluster.
 
 ![Deployment list](./img/step-4-5.png)
 
 ### Remove existing application deployments
 
-You can remove any of the applications from your cluster by clicking the "Delete" button on the application's status page:
+Running applications can be removed from the cluster by clicking the _Delete_ button on the application's status page:
 
 ![Deployment removal](./img/step-4-6.png)
 
-## What to Do Next?
-
-At this point, you have successfully installed Kuebapps allowing your users to log in to Kubeapps using your custom OIDC provider. Then, you have configured a public and a private Application Repository and, finally, you have installed and removed applications using Kubeapps.
-
-Reach the developers at [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps) (click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack). Please, feel free to [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new) if you face any problems or run into a bug.
-
-## Additional References
-
-- [Using the Dashboard](https://github.com/kubeapps/kubeapps/blob/master/docs/user/dashboard.md)
+At the end of this step, you should be able to use Kubeapps for common application management and deployment tasks. Continue reading for a collection of [useful links and references to help you maximize your usage of Kubeapps](./conclusion.md).
