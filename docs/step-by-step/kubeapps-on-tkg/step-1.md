@@ -1,12 +1,12 @@
 ## Step 1: Configure an Identity Management Provider in the Cluster
 
-The first step is to configure an OIDC provider (VMware CSP login in this example) in the VMware Tanzu™ Kubernetes Grid™ (TKG) cluster and configure Pinniped to trust this provider for authenticating Kubernetes API calls.
+The first step is to configure an OIDC provider ([VMware Cloud Service Portal (CSP)](https://console.cloud.vmware.com) login in this example) in the VMware Tanzu™ Kubernetes Grid™ (TKG) cluster and configure Pinniped to trust this provider for authenticating Kubernetes API calls.
 
 ### Step 1.1: Install a Recent Version of Pinniped
 
-**NOTE**: Skip this section if [the cluster is already attached or will be attached to VMware Tanzu™ Mission Control™ (TMC)](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html). When a cluster is attached to TMC a recent Pinniped version compatible with Kubeapps is automatically installed in your cluster.
+> **NOTE**: Skip this section if [the cluster is already attached or will be attached to VMware Tanzu™ Mission Control™ (TMC)](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html). When a cluster is attached to TMC a recent Pinniped version compatible with Kubeapps is automatically installed in your cluster.
 
-As per TKG v1.3.1, the built-in Pinniped version is relatively old (v0.4.1) and has some incompatibilities with the current Kubeapps releases. Specifically, Kubeapps requires Pinniped v0.6.0 or higher. However, Pinniped can be installed multiple times as a standalone product (not as a TKG addon) in separate namespaces and using different Kubernetes API groups.
+As per TKG v1.3.1, the built-in Pinniped version is relatively old (v0.4.1) and has some incompatibilities with the current Kubeapps releases. Specifically, Kubeapps requires Pinniped v0.6.0 or higher. However, Pinniped can be installed multiple times as a standalone product (not as a _TKG addon)_ in separate namespaces and using different Kubernetes API groups.
 
 > **NOTE**: Although users can install Pinniped in any namespace with any API group, due to current limitations in Kubeapps, the list of supported combination of namespace/API groups is limited to:
 >
@@ -86,7 +86,7 @@ Since Pinniped manages this process, the only requirement is to a _JWTAuthentica
 
 - Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
 - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
-- Replace `EMAIL-ADDRESS` with the data (username or email address) to be requested from the CSP.
+
 
 ```yaml
 ---
@@ -98,7 +98,7 @@ spec:
   issuer: OIDC-ISSUER-URL
   audience: CLIENT-ID
   claims:
-    username: EMAIL-ADDRESS
+    username: email
 #   tls:
 #     certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
 ```
