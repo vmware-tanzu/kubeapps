@@ -6,8 +6,10 @@ The general procedure to add any repository is described below:
 
 1. Log in to Kubeapps.
 2. Click the menu button in the top right corner (dotted square).
+
    ![Kubeapps home](./img/kubeapps-applications-empty.png)
 3. Click the _App Repositories_ button.
+
    ![Right menu](./img/kubeapps-menu-right.png)
 4. Add a new repository by clicking the _Add App Repository_ button.
 
@@ -17,13 +19,17 @@ The general procedure to add any repository is described below:
 
 - The _Name_ field is a friendly display name for the repository.
 - The _URL_ field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
+
   ![App repositories modal part 1](./img/apprepository-detail-general.png)
 - The _Repository Type_ field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries. For the latter, it is necessary to also manually specify the list of artifacts to fetch in the _List of Repositories_ field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
+
   ![App repositories modal part 2](./img/apprepository-detail-types.png)
 - The _Associate Docker Registry_ field specifies an `imagePullSecret` for images that are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
+
   ![App repositories modal part 3](./img/apprepository-detail-credentials.png)
 - The _Custom CA Certificate_ field specifies a CA certificate to use (with an option to skip the TLS verification if required).
 - The _Custom Sync Job_ field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
+
   ![App repositories modal part 4](./img/apprepository-detail-advanced.png)
 
 6. Click the _Install Repo_ button to finish the process and add the repository to Kubeapps.
