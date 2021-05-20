@@ -42,27 +42,27 @@ postgresql: # database configuration
 
 The two main configuration areas are authentication and user interface.
 
-- Key authentication parameters are:
+Key authentication parameters are:
 
-i) `clusters` to define the list of clusters that Kubeapps can target and which of them will use Pinniped;
-ii) `pinnipedProxy` to enable the _Pinniped Proxy_ component;
-iii) `authProxy`: to define the flags used by _OAuth2 Proxy_, the component for performing the actual OIDC login.
+  - `clusters` to define the list of clusters that Kubeapps can target and which of them will use Pinniped;
+  - `pinnipedProxy` to enable the _Pinniped Proxy_ component;
+  - `authProxy`: to define the flags used by _OAuth2 Proxy_, the component for performing the actual OIDC login.
 
-- Key user interface parameters are:
+Key user interface parameters are:
 
-i) `dashboard.customStyle` for injecting custom CSS;
-ii) `dashboard.customLocale` for customizing some supported strings;
-iii) `apprepository.initialRepos` for defining the repositories included by default during the installation.
+  - `dashboard.customStyle` for injecting custom CSS;
+  - `dashboard.customLocale` for customizing some supported strings;
+  - `apprepository.initialRepos` for defining the repositories included by default during the installation.
 
 > **TIP**: These values can be entered in two different ways:
 >
-> a) As values passed via command line:
+> - As values passed via command line:
 >
 > ```bash
 >   helm install kubeapps --namespace kubeapps --set ingress.enabled=true bitnami/kubeapps
 > ```
 >
-> b) As values stored in a custom _values.yaml_ file read in during chart deployment:
+> - As values stored in a custom _values.yaml_ file read in during chart deployment:
 >
 > ```bash
 > helm install kubeapps --namespace kubeapps -f custom-values.yaml  bitnami/kubeapps

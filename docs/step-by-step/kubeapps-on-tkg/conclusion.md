@@ -29,8 +29,10 @@ Learn more about the topics discussed in this guide using the links below.
 
 ### Step 1: Configure an Identity Management Provider in the Cluster
 
+- [Using an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)
 - [VMware Cloud Services as OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md#vmware-cloud-services)
 - [Using an OIDC provider with Pinniped](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md)
+- [JWTAuthenticator](https://pinniped.dev/docs/howto/configure-concierge-jwt/).
 
 ### Step 2: Configure and Install Kubeapps
 

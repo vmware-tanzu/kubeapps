@@ -27,7 +27,7 @@ In order to install a recent Pinniped version in TKG (this guide uses v0.8.0), f
 
     > **NOTE**: Although some of the options described above use namespaces or group names containing `tmc`, this is only required for technical reasons. There is no requirement to use TMC when running Kubeapps on TKG.
 
-2. Save the `yaml` file generated above.
+2. Save the `yaml` file generated at the end of the previous step.
 3. Apply this file to the cluster:
 
   ```bash
@@ -46,8 +46,6 @@ At this point, a TKG cluster with a compatible Pinniped version is up and runnin
 
 The next step is to configure an OIDC provider and then configure Pinniped to trust the OIDC provider. The OIDC provider is responsible for authenticating users in the TKG cluster and the Kubeapps dashboard. The steps below use the [VMware Cloud Services Platform (CSP)](https://console.cloud.vmware.com/) as an example; however, a similar process applies to any other OIDC-compliant provider, including Google Cloud, Azure Active Directory, Dex, Okta, and others.
 
-> **TIP**: Learn more about [using an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md).
-
 #### Create an OAuth2 Application
 
 Begin by creating an OAuth2 application to retrieve the information required by Pinniped and, later on, Kubeapps. Follow the steps below:
@@ -55,8 +53,8 @@ Begin by creating an OAuth2 application to retrieve the information required by 
 > **NOTE**: You must have _Developer_ access in the organization to perform these steps.
 
 1. Navigate to the CSP Console at [https://console.cloud.vmware.com](https://console.cloud.vmware.com/).
-2. Click the drop-down menu at the top-right corner.
-3. Under the _Organization_ settings, click _View Organization_
+2. Click the drop-down menu in the top-right corner.
+3. Under the _Organization_ settings, click _View Organization_.
    ![View organization](./img/step-1-1.png)
 4. Click the _OAuth Apps_ tab.
    ![OAuth Apps tab](./img/step-1-2.png)
@@ -82,8 +80,6 @@ At this point, an OAuth2 application is configured.
 Once the OIDC provider has been fully configured, the next step is to configure Pinniped to trust this provider. This implies that a successful authentication with the OIDC provider results in authentication with the TKG cluster.
 
 Since Pinniped manages this process, the only requirement is to a _JWTAuthenticator_ CustomResource in the cluster. To do so, follow the steps below:
-
-> **TIP**: Learn more about [JWTAuthenticator](https://pinniped.dev/docs/howto/configure-concierge-jwt/).
 
 1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
 
