@@ -7,35 +7,35 @@ Kubeapps is currently officially delivered as a Helm chart packaged by Bitnami. 
 ```yaml
 ## Values likely to be modified
 
-### Authentication-related params
+### Authentication-related parameters
 
-clusters: # list of clusters that Kubeapps can target
+clusters: # List of clusters that Kubeapps can target
 
-authProxy: # oauth2proxy configuration for setting up OIDC login
+authProxy: # Oauth2proxy configuration for setting up OIDC login
 
-pinnipedProxy: # pinniped-proxy configuration
+pinnipedProxy: # Pinniped-proxy configuration
 
-### Look-and-feel-related params
+### Look-and-feel-related parameters
 
-dashboard: # dashboard configuration
-  customStyle: # custom css to inject
-  customComponents: # custom components to inject
-  customLocale: # custom strings to inject
+dashboard: # Dashboard configuration
+  customStyle: # Custom css to inject
+  customComponents: # Custom components to inject
+  customLocale: # Custom strings to inject
 
-apprepository: # apprepository controller configuration
-  initialRepos: # initial repositories to fetch
+apprepository: # Apprepository controller configuration
+  initialRepos: # Initial repositories to fetch
 
 ## Other values
 
-kubeops: # main backend APIs configuration
+kubeops: # Main backend APIs configuration
 
-assetsvc: # asset service configuration
+assetsvc: # Asset service configuration
 
 frontend: # NGINX configuration (used to serve the dashboard and proxying user requests to the backend)
 
-ingress: # ingress controller details to expose Kubeapps.
+ingress: # Ingress controller details to expose Kubeapps.
 
-postgresql: # database configuration
+postgresql: # Database configuration
 ```
 
 > **TIP**: Refer to the [Bitnami Kubeapps Helm chart documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md) for more information.
