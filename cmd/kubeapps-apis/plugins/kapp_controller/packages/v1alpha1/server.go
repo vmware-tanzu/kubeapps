@@ -32,25 +32,52 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
 )
 
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedPackagesServiceServer
+
+	clientGetter func(context.Context) (dynamic.Interface, error)
 }
 
-// GetAvailablePackages streams the available packages based on the request.
-func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+// clientForRequestContext returns a k8s client for use during interactions with the cluster.
+// This will be updated to use the user credential from the request context but for now
+// simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
+func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
 	// TODO: replace incluster config with the user config using token from request meta.
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create incluster config: %w", err)
+		return nil, fmt.Errorf("unable to get client config: %w", err)
 	}
 
 	client, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+	}
+
+	return client, nil
+}
+
+// NewServer returns a Server automatically configured with a function to obtain
+// the k8s client config.
+func NewServer() *Server {
+	return &Server{
+		clientGetter: clientForRequestContext,
+	}
+}
+
+// GetAvailablePackages streams the available packages based on the request.
+func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+	if s.clientGetter == nil {
+		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+	}
+	client, err := s.clientGetter(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
 
 	packageResource := schema.GroupVersionResource{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}
