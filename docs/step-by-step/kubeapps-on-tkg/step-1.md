@@ -86,7 +86,7 @@ The CSP Console displays a success screen with an auto-generated application ID 
 
 At this point, an OAuth2 application is configured.
 
-### Configure Pinniped to Trust the OIDC Provider
+#### Configure Pinniped to Trust the OIDC Provider
 
 Once the OIDC provider has been fully configured, the next step is to configure Pinniped to trust this provider. This implies that a successful authentication with the OIDC provider results in authentication with the TKG cluster.
 

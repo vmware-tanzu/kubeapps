@@ -4,7 +4,7 @@ Once Kubeapps is up and running on the VMware Tanzu™ Kubernetes Grid™ cluste
 
 The general procedure to add any repository is described below:
 
-1. Log in to Kubeapps.
+1. Log in to Kubeapps as described in the previous step.
 2. Click the menu button in the top right corner (dotted square).
 
    ![Kubeapps home](./img/kubeapps-applications-empty.png)
