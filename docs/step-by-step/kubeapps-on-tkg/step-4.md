@@ -51,13 +51,13 @@ To upgrade an application with new values, follow the steps below:
 
    ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
 
-4. Perform the changes and click _Changes_ to see the differences with the installed version.
+4. Perform the changes and click the _Changes_ tab to see the differences with the installed version.
 
    ![MariaDB installation](./img/kubeapps-chart-mariadb-upgrade.png)
 
 5. Click the _Deploy_ button.
 
-The application is upgraded with the new values.
+The application is upgraded with the new values. The status of the deployment can be tracked directly from the browser.
 
 ### Rollback an Application
 
@@ -72,11 +72,11 @@ To rollback an application to a previous version, follow the steps below:
 
    ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
 
-4. Select the version to rollback to and click the _Rollback_ button.
+4. Select the version to rollback to and confirm the operation by clicking the _Rollback_ button in the confirmation dialog.
 
    ![MariaDB installation](./img/kubeapps-chart-mariadb-rollback.png)
 
-The application is rolled back to the desired version.
+The application is rolled back to the desired version. The status of the deployment can be tracked directly from the browser.
 
 ### Delete an Application
 
