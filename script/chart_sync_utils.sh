@@ -136,6 +136,7 @@ updateRepoWithRemoteChanges() {
     fi
     git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
     git -C "${targetRepo}" pull upstream master
+    git -C "${targetRepo}" push origin master
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
     # Update Chart.yaml with new version
