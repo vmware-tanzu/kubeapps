@@ -151,6 +151,7 @@ updateRepoWithRemoteChanges() {
 commitAndSendExternalPR() {
     local targetRepo=${1:?}
     local targetBranch=${2:-"master"}
+    local chartVersion=${3:?}
     local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
     if [ ! -f "${chartYaml}" ]; then
@@ -165,7 +166,6 @@ commitAndSendExternalPR() {
     fi 
     sed -i.bk -e "s/<USER>/`git config user.name`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/`git config user.email`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
-    local chartVersion=$(grep -e '^version:' ${chartYaml} | awk '{print $2}')
     git checkout -b $targetBranch
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
@@ -182,6 +182,7 @@ commitAndSendExternalPR() {
 commitAndSendInternalPR() {
     local targetRepo=${1:?}
     local targetBranch=${2:-"master"}
+    local chartVersion=${3:?}
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
 
@@ -195,7 +196,6 @@ commitAndSendInternalPR() {
         cd -
         return 1
     fi
-    local chartVersion=$(grep -e '^version:' ${localChartYaml} | awk '{print $2}')
     git checkout -b $targetBranch
     git add --all .
     git commit -m "bump chart version to $chartVersion"
