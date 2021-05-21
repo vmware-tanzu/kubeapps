@@ -32,7 +32,7 @@ The application is deployed. The status of the deployment can be tracked directl
 
 ![MariaDB deployment](./img/kubeapps-chart-mariadb-deployed.png)
 
-### List All the Applications
+### List All Applications
 
 The _Applications_ page displays a list of the application deployments in your cluster.
 
@@ -42,39 +42,41 @@ The _Applications_ page displays a list of the application deployments in your c
 
 To upgrade an application with new values, follow the steps below:
 
-1. Click on the application to see the details:
+1. Navigate to the _Applications_ page.
+2. Click the application you wish to upgrade.
 
    ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
 
-2. Click on _Upgrade_:
+3. Click the _Upgrade_ button.
 
    ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
 
-3. Perform the changes and click on _Changes_ to see the differences with the installed version:
+4. Perform the changes and click the _Changes_ tab to see the differences with the installed version.
 
    ![MariaDB installation](./img/kubeapps-chart-mariadb-upgrade.png)
 
-4. Click on _Deploy_
+5. Click the _Deploy_ button.
 
-The application is upgraded with the new values. As in the previous step, you can also check the new deployment status.
+The application is upgraded with the new values. The status of the deployment can be tracked directly from the browser.
 
 ### Rollback an Application
 
 To rollback an application to a previous version, follow the steps below:
 
-1. Click on the application to see the details:
+1. Navigate to the _Applications_ page.
+2. Click the application you wish to upgrade.
 
    ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
 
-2. Click on _Rollback_:
+3. Click the _Rollback_ button.
 
    ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
 
-3. Select the version you want to rollback to and click on _Rollback_:
+4. Select the version to rollback to and confirm the operation by clicking the _Rollback_ button in the confirmation dialog.
 
    ![MariaDB installation](./img/kubeapps-chart-mariadb-rollback.png)
 
-The application is rollback to the desired version. As in the previous step, you can also check the new deployment status.
+The application is rolled back to the desired version. The status of the deployment can be tracked directly from the browser.
 
 ### Delete an Application
 

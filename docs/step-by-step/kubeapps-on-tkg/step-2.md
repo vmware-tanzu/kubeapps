@@ -149,7 +149,7 @@ At this point, Kubeapps is configured to use a custom interface.
 
 ### Step 2.3: Install Kubeapps
 
-Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
+With the configuration out of the way, it's time to install Kubeapps. Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
 
 In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
 
@@ -178,7 +178,7 @@ At this point, Kubeapps is installed in the cluster.
 
 ### Step 2.4: Configure Role-Based Access
 
-Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) for more information.
+Once Kubeapps is installed, the next step is to configure access. Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) for more information.
 
 > **NOTE**: RBAC configuration depends on your custom business requirements. The configuration shown below is only an example and not meant for production use. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
 
@@ -206,28 +206,30 @@ Apply this configuration by executing the following command:
 kubectl apply -f kubeapps-rbac.yaml
 ```
 
-At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-admin` access, so they will able to perform any desired action in the Kubeapps dashboard.
+At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-admin` access and will be able to perform any desired action via the Kubeapps dashboard.
 
-### Step 2.5: Access Kubeapps and login with your OIDC provider
+### Step 2.5: Log in to Kubeapps with OIDC
 
-Once you have installed Kubeapps and configured the RBAC, you can access the web dashboard.
-It will depend on how you have configured it; if you have [exposed the service externally](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally) access accordingly; if not, execute a _port forward_ to access locally:
+Once Kubeapps is installed and configured, the next step is to log in and access the Kubeapps Web dashboard. The procedure to do this depends on how Kubeapps was configured.
 
-```bash
-kubectl port-forward -n kubeapps svc/kubeapps 8080:80
-```
+1. If [the service was exposed externally](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally), it may be accessed using a public IP address; if not, it can be accessed locally by forwarding the cluster port using the command below:
 
-This will start an HTTP proxy for secure access to the Kubeapps dashboard. Go to [http://127.0.0.1:8080](http://127.0.0.1:8080) to open it.
-You will see the following login page. Click on the login button.
+    ```bash
+    kubectl port-forward -n kubeapps svc/kubeapps 8080:80
+    ```
 
-![OIDC login page](./img/login-oidc-initial.png)
+    This will start an HTTP proxy for secure access to the Kubeapps dashboard.
 
-Then, you will get redirected to your OIDC provider, in our case, VMware Cloud Services Portal:
+2. Browse to [http://127.0.0.1:8080](http://127.0.0.1:8080) (when forwarding the port) or to the public IP address of the serevice (when exposing the service externally). You see the Kubeapps login page, as shown below:
 
-![OIDC login provider](./img/login-oidc-provider.png)
+    ![OIDC login page](./img/login-oidc-initial.png)
 
-If the login was successful, you will get redirected to the Kubeapps initial page:
+3. Click the _Login_ button. You are redirected to the OIDC provider (in this example, the VMware Cloud Services Portal).
 
-![Kubeapps home](./img/kubeapps-applications-empty.png)
+    ![OIDC login provider](./img/login-oidc-provider.png)
+
+4. Enter the necessary credentials. If the login is successful, you are redirected to the Kubeapps dashboard:
+
+    ![Kubeapps home](./img/kubeapps-applications-empty.png)
 
 At the end of this step, the Kubeapps installation is configured, customized and running in the cluster. The next step is to [add application repositories to Kubeapps](./step-3.md).
