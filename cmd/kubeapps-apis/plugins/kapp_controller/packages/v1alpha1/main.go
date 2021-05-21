@@ -31,33 +31,3 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	return v1alpha1.RegisterPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
-
-// Server implements the kapp-controller packages v1alpha1 interface.
-type Server struct {
-	v1alpha1.UnimplementedPackagesServiceServer
-}
-
-// func (s *Server) GetAvailablePackages(request *v1.GetAvailablePackagesRequest, stream PackageRepositoriesService_GetAvailablePackagesServer) error {
-// 	repo := &v1.PackageRepository{
-// 		Name:      "bitnami",
-// 		Namespace: "kubeapps",
-// 	}
-// 	availablePackages := []*v1.AvailablePackage{
-// 		{
-// 			Name:          "package-a",
-// 			LatestVersion: "1.2.0",
-// 			Repository:    repo,
-// 			IconUrl:       "http://example.com/package-a.jpg",
-// 		},
-// 		{
-// 			Name:          "package-b",
-// 			Repository:    repo,
-// 			LatestVersion: "1.4.0",
-// 			IconUrl:       "http://example.com/package-b.jpg",
-// 		},
-// 	}
-// 	for _, pkg := range availablePackages {
-// 		stream.Send(pkg)
-// 	}
-// 	return nil
-// }
