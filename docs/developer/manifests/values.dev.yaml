@@ -6,7 +6,7 @@
 ## KubeappsAPIs parameters
 ##
 featureFlags:
-  kubeappsAPIsServer: trusted
+  kubeappsAPIsServer: true
 
 kubeappsapis:
   ## Bitnami Kubeapps-APIs image
