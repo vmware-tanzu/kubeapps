@@ -224,7 +224,7 @@ Once Kubeapps is installed and configured, the next step is to log in and access
 
     ![OIDC login page](./img/login-oidc-initial.png)
 
-3. Click the _Login_ button. You are redirected to the OIDC provider (in this example, th eVMware Cloud Services Portal).
+3. Click the _Login_ button. You are redirected to the OIDC provider (in this example, the VMware Cloud Services Portal).
 
     ![OIDC login provider](./img/login-oidc-provider.png)
 
