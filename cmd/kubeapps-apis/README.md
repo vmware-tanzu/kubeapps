@@ -68,7 +68,7 @@ To test the packages endpoints for the fluxv2 or kapp_controller plugins, you wi
 IMAGE_TAG=dev1 make kubeapps/kubeapps-apis
 ```
 
-and make that imageg available on your cluster somehow. If using kind, you can simply do:
+and make that image available on your cluster somehow. If using kind, you can simply do:
 
 ```bash
 kind load docker-image docker.io/kubeapps/kubeapps-apis:dev1 --name kubeapps
