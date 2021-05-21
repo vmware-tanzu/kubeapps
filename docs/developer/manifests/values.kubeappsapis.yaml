@@ -5,6 +5,9 @@
 
 ## KubeappsAPIs parameters
 ##
+featureFlags:
+  kubeappsAPIsServer: true
+
 kubeappsapis:
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
@@ -31,7 +34,7 @@ kubeappsapis:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
-  replicaCount: 2
+  replicaCount: 1
   ## @param kubeappsapis.terminationGracePeriodSeconds The grace time period for sig term
   ## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
   ##

@@ -45,10 +45,12 @@ it("rolls back an application", async () => {
     .at(0)
     .simulate("change", { target: { value: "1" } });
   await act(async () => {
-    await (wrapper
-      .find(CdsButton)
-      .filterWhere(b => b.text() === "Rollback")
-      .prop("onClick") as any)();
+    await (
+      wrapper
+        .find(CdsButton)
+        .filterWhere(b => b.text() === "Rollback")
+        .prop("onClick") as any
+    )();
   });
   expect(rollbackApp).toHaveBeenCalledWith(
     defaultProps.cluster,

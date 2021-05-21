@@ -117,15 +117,8 @@ function OperatorInstance({
     services: [],
     secrets: [],
   } as IAppViewResourceRefs);
-  const {
-    services,
-    ingresses,
-    deployments,
-    statefulsets,
-    daemonsets,
-    secrets,
-    otherResources,
-  } = resourceRefs;
+  const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
+    resourceRefs;
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const closeModal = () => setModalIsOpen(false);
   const openModal = () => setModalIsOpen(true);

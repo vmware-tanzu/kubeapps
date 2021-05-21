@@ -208,8 +208,7 @@ describe("is403FromAuthProxy", () => {
     expect(
       Auth.is403FromAuthProxy({
         status: 403,
-        data:
-          'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+        data: 'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
       } as AxiosResponse<any>),
     ).toBe(false);
   });
@@ -220,8 +219,7 @@ describe("isAnonymous", () => {
     expect(
       Auth.isAnonymous({
         status: 403,
-        data:
-          '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
+        data: '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
       } as AxiosResponse<any>),
     ).toBe(true);
   });
@@ -240,8 +238,7 @@ describe("isAnonymous", () => {
     expect(
       Auth.isAnonymous({
         status: 403,
-        data:
-          'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+        data: 'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
       } as AxiosResponse<any>),
     ).toBe(false);
   });
