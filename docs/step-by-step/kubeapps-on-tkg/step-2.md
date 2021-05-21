@@ -214,11 +214,11 @@ Once Kubeapps is installed and configured, the next step is to log in and access
 
 1. If [the service was exposed externally](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally), it may be accessed using a public IP address; if not, it can be accessed locally by forwarding the cluster port using the command below:
 
-  ```bash
-  kubectl port-forward -n kubeapps svc/kubeapps 8080:80
-  ```
+    ```bash
+    kubectl port-forward -n kubeapps svc/kubeapps 8080:80
+    ```
 
-  This will start an HTTP proxy for secure access to the Kubeapps dashboard.
+    This will start an HTTP proxy for secure access to the Kubeapps dashboard.
 
 2. Browse to [http://127.0.0.1:8080](http://127.0.0.1:8080) (when forwarding the port) or to the public IP address of the serevice (when exposing the service externally). You see the Kubeapps login page, as shown below:
 
