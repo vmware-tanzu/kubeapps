@@ -1,3 +1,15 @@
+/*
+Copyright © 2021 VMware
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package main
 
 import (
@@ -66,5 +78,52 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	}
 	return &corev1.GetAvailablePackagesResponse{
 		Packages: responsePackages,
+	}, nil
+}
+
+// GetPackageRepositories returns the package repositories based on the request.
+func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
+	// TODO: replace incluster config with the user config using token from request meta.
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create incluster config: %w", err)
+	}
+
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+	}
+
+	repositoryResource := schema.GroupVersionResource{Group: "install.package.carvel.dev", Version: "v1alpha1", Resource: "packagerepositories"}
+
+	// Currently checks globally. Update to handle namespaced requests (?)
+	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("unable to list kapp-controller repositories: %w", err)
+	}
+
+	responseRepos := []*corev1.PackageRepository{}
+	for _, repoUnstructured := range repos.Items {
+		repo := &corev1.PackageRepository{}
+		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
+		if err != nil || !found {
+			return nil, fmt.Errorf("required field metadata.name not found on PackageRepository: %w:\n%v", err, repoUnstructured.Object)
+		}
+		repo.Name = name
+
+		// TODO(absoludity): kapp-controller may soon introduce namespaced packagerepositories
+
+		// TODO(absoludity): When able to add unit-tests using the fake dynamic client,
+		// write failing test for handling fetch types other than imgpkgBundle and fix.
+		url, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "fetch", "imgpkgBundle", "image")
+		if err != nil || !found {
+			return nil, fmt.Errorf("required field spec.url not found on PackageRepository: %w:\n%v", err, repoUnstructured.Object)
+		}
+		repo.Url = url
+
+		responseRepos = append(responseRepos, repo)
+	}
+	return &corev1.GetPackageRepositoriesResponse{
+		Repositories: responseRepos,
 	}, nil
 }

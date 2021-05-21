@@ -21,6 +21,7 @@ rules:
   - apiGroups:
       - "package.carvel.dev"
       - "install.package.carvel.dev"
+      - "source.toolkit.fluxcd.io"
     resources: ['*']
     verbs: ['*']
 ---

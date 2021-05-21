@@ -13,6 +13,11 @@ option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/pac
 //       get: "/<plugin>/packages/v1alpha1/get-available-packages"
 //     };
 //   }
+//   rpc GetPackageRepositories(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse) {
+//     option (google.api.http) = {
+//       get: "/<plugin>/packages/v1alpha1/get-available-packages"
+//     };
+//   }
 // }
 //
 // Standard request and response messages for each required function are defined
@@ -54,4 +59,34 @@ message AvailablePackage {
 
 message GetAvailablePackagesResponse {
     repeated AvailablePackage packages = 1;
+}
+
+message GetPackageRepositoriesRequest {
+  // A cluster name can be provided if multiple clusters are configured,
+  // otherwise the current cluster will be assumed.
+  string cluster = 1;
+
+  // A namespace can be provided if the package repositories for a specific namespace
+  // are requested, when supported by the packaging format.
+  string namespace = 2;
+
+  // TODO: Add standard filters.
+}
+
+// A PackageRepository defines a repository of packages for installation.
+message PackageRepository {
+  // The name identifying package repository on the cluster.
+  string name = 1;
+
+  // An optional namespace for namespaced package repositories.
+  string namespace = 2;
+
+  // A url identifying the package repository location.
+  string url = 3;
+
+  // TODO: Other fields such as type, status... TBD.
+}
+
+message GetPackageRepositoriesResponse {
+    repeated PackageRepository repositories = 1;
 }
