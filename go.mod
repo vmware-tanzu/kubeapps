@@ -47,11 +47,10 @@ require (
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
 	github.com/bugsnag/bugsnag-go v1.5.0 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
-	github.com/containerd/containerd v1.4.4
+	github.com/containerd/containerd v1.5.2
 	github.com/deislabs/oras v0.11.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.7.1+incompatible
-	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/garyburd/redigo v1.6.0 // indirect
@@ -95,10 +94,10 @@ require (
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.4
-	k8s.io/api v0.20.5
-	k8s.io/apimachinery v0.20.5
+	k8s.io/api v0.20.6
+	k8s.io/apimachinery v0.20.6
 	k8s.io/cli-runtime v0.20.5
-	k8s.io/client-go v0.20.5
+	k8s.io/client-go v0.20.6
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubernetes v1.20.5
