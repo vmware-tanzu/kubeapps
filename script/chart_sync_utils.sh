@@ -134,6 +134,8 @@ updateRepoWithRemoteChanges() {
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
     fi
+    git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
+    git -C "${targetRepo}" pull upstream master
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
     # Update Chart.yaml with new version
