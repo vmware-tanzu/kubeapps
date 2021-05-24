@@ -191,11 +191,14 @@ func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositor
 
 	responsePackages := []*corev1.AvailablePackage{}
 	for _, entry := range index.Entries {
-		// after SortEntires call, entry[0] should be the latest chart, e.g. mariadb 9.3.12
-		// while entry[1] might be mariadb 9.3.11, etc. For mariadb, bitnami catalog has almost
-		// 200 entries going all the way back to version 2.1.4. So for now let's just keep the latest,
-		// not to overwhelm the caller with all these old versions
-
+		// note that entry itself is an array of chart versions
+		// after index.SortEntires() call, it looks like there is only one entry per package,
+		// and entry[0] should be the most recent chart version, e.g. Name: "mariadb" Version: "9.3.12"
+		// while the rest of the elements in the entry array keep track of all chart versions, e.g.
+		// "mariadb" version "9.3.11", "9.3.10", etc. For entry "mariadb", bitnami catalog has
+		// almost 200 chart versions going all the way back many years to version "2.1.4".
+		// So for now, let's just keep track of the latest, not to overwhelm the caller with
+		// all these outdated versions
 		if entry[0].GetDeprecated() {
 			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
 			continue
