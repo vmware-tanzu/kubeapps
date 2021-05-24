@@ -94,6 +94,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
 		if err != nil || !found {
 			log.Errorf("required field metadata.name not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+			// just skip over to the next one
 			continue
 		}
 
@@ -130,7 +131,16 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		}
 
 		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
-		repoPackages, err := readPackagesFromRepoIndex(url)
+		repoRef := corev1.AvailablePackage_PackageRepositoryReference{
+			Name: name,
+		}
+		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
+		namespace, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "namespace")
+		if err == nil && found {
+			repoRef.Namespace = namespace
+		}
+
+		repoPackages, err := readPackagesFromRepoIndex(&repoRef, url)
 		if err != nil {
 			// just skip this repo
 			log.Errorf("Failed to read packages for repository [%s] due to %v", name, err)
@@ -168,20 +178,21 @@ func getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
 		// TODO: should we filter out those repos that don't have .status.condition.Ready == True?
 		// like we do in GetAvailablePackages()?
 		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
+		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
 	}
 }
 
-func readPackagesFromRepoIndex(indexURL string) ([]*corev1.AvailablePackage, error) {
-	//Get the response bytes from the url
+func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositoryReference, indexURL string) ([]*corev1.AvailablePackage, error) {
+	// Get the response bytes from the url
 	response, err := http.Get(indexURL)
 	if err != nil {
 		return nil, err
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("received non 200 response code: [%d]", response.StatusCode)
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non OK response code: [%d]", response.StatusCode)
 	}
 
 	contents, err := ioutil.ReadAll(response.Body)
@@ -196,17 +207,24 @@ func readPackagesFromRepoIndex(indexURL string) ([]*corev1.AvailablePackage, err
 	}
 
 	index.SortEntries()
+
 	responsePackages := []*corev1.AvailablePackage{}
 	for _, entry := range index.Entries {
+		// after SortEntires call, entry[0] should be the latest chart, e.g. mariadb 9.3.12
+		// while entry[1] might be mariadb 9.3.11, etc. For mariadb, bitnami catalog has almost
+		// 200 entries going all the way back to version 2.1.4. So for now let's just keep the latest,
+		// not to overwhelm the caller with all these old versions
+
 		if entry[0].GetDeprecated() {
 			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
 			continue
 		}
+
 		pkg := &corev1.AvailablePackage{
-			Name:    entry[0].Name,
-			Version: entry[0].Version,
-			// TODO icon URL
-			// TODD repo ref
+			Name:       entry[0].Name,
+			Version:    entry[0].Version,
+			IconUrl:    entry[0].Icon,
+			Repository: repoRef,
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
