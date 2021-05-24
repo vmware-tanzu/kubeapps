@@ -119,22 +119,23 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		}
 
 		if !ready {
-			log.Infof("Skipping packages for repository [%s] because it has not reached 'Ready' state:n%v", name, repoUnstructured.Object)
-		} else {
-			url, found, err := unstructured.NestedString(repoUnstructured.Object, "status", "url")
-			if err != nil || !found {
-				log.Infof("field status.url not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
-				continue
-			}
+			log.Infof("Skipping packages for repository [%s] because it is not in Ready state:n%v", name, repoUnstructured.Object)
+			continue
+		}
 
-			log.Infof("Found repository: [%s], index url: [%s]", name, url)
-			repoPackages, err := readPackagesFromRepoIndex(url)
-			if err != nil {
-				// just skip this repo
-				log.Errorf("Failed to read packages for repository [%s] due to %v", name, err)
-			} else {
-				responsePackages = append(responsePackages, repoPackages...)
-			}
+		url, found, err := unstructured.NestedString(repoUnstructured.Object, "status", "url")
+		if err != nil || !found {
+			log.Infof("expected field status.url not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+			continue
+		}
+
+		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
+		repoPackages, err := readPackagesFromRepoIndex(url)
+		if err != nil {
+			// just skip this repo
+			log.Errorf("Failed to read packages for repository [%s] due to %v", name, err)
+		} else {
+			responsePackages = append(responsePackages, repoPackages...)
 		}
 	}
 	return &corev1.GetAvailablePackagesResponse{
@@ -204,6 +205,8 @@ func readPackagesFromRepoIndex(indexURL string) ([]*corev1.AvailablePackage, err
 		pkg := &corev1.AvailablePackage{
 			Name:    entry[0].Name,
 			Version: entry[0].Version,
+			// TODO icon URL
+			// TODD repo ref
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
