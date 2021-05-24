@@ -38,10 +38,12 @@ import (
 )
 
 const (
+	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
 	packageGroup     = "package.carvel.dev"
 	packageVersion   = "v1alpha1"
 	packagesResource = "packages"
 
+	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 	installPackageGroup   = "install.package.carvel.dev"
 	installPackageVersion = "v1alpha1"
 	repositoriesResource  = "packagerepositories"
@@ -51,6 +53,9 @@ const (
 type Server struct {
 	v1alpha1.UnimplementedPackagesServiceServer
 
+	// clientGetter is a field so that it can be switched in tests for
+	// a fake client. NewServer() below sets this automatically with the
+	// non-test implementation.
 	clientGetter func(context.Context) (dynamic.Interface, error)
 }
 
