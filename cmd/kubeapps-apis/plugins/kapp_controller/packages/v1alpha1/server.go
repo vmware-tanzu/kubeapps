@@ -84,7 +84,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 
 	pkgs, err := client.Resource(packageResource).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("unable to list kapp-controller packages: %w", err)
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
 	}
 
 	responsePackages := []*corev1.AvailablePackage{}
@@ -92,13 +92,13 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		pkg := &corev1.AvailablePackage{}
 		name, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "publicName")
 		if err != nil || !found {
-			return nil, fmt.Errorf("required field publicName not found on kapp-controller package: %w:\n%v", err, pkgUnstructured.Object)
+			return nil, status.Errorf(codes.Internal, "required field publicName not found on kapp-controller package: %v:\n%v", err, pkgUnstructured.Object)
 		}
 		pkg.Name = name
 
 		version, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "version")
 		if err != nil || !found {
-			return nil, fmt.Errorf("required field version not found on kapp-controller package: %w:\n%v", err, pkgUnstructured.Object)
+			return nil, status.Errorf(codes.Internal, "required field version not found on kapp-controller package: %v:\n%v", err, pkgUnstructured.Object)
 		}
 		pkg.Version = version
 		responsePackages = append(responsePackages, pkg)

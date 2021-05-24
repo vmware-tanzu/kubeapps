@@ -29,23 +29,69 @@ import (
 	"k8s.io/client-go/dynamic/fake"
 )
 
-func TestGetAvailabelPackagesBadConfig(t *testing.T) {
+func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name         string
 		clientGetter func(context.Context) (dynamic.Interface, error)
 		statusCode   codes.Code
 	}{
 		{
-			name:         "returns internal error when no getter configured",
+			name:         "returns internal error status when no getter configured",
 			clientGetter: nil,
 			statusCode:   codes.Internal,
 		},
 		{
-			name: "returns unknown with the original error message when configGetter errors",
+			name: "returns failed-precondition when configGetter itself errors",
 			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
+		},
+		{
+			name: "returns an internal error status if response does not contain publicName",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
+					},
+					packageFromSpec(map[string]interface{}{
+						"version": "1.2.3",
+					}),
+				), nil
+			},
+			statusCode: codes.Internal,
+		},
+		{
+			name: "returns an internal error status if response does not contain version",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
+					},
+					packageFromSpec(map[string]interface{}{
+						"publicName": "someName",
+					}),
+				), nil
+			},
+			statusCode: codes.Internal,
+		},
+		{
+			name: "returns without error if items contain required fields",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
+					},
+					packageFromSpec(map[string]interface{}{
+						"publicName": "someName",
+						"version":    "1.2.3",
+					}),
+				), nil
+			},
+			statusCode: codes.OK,
 		},
 	}
 
@@ -55,7 +101,7 @@ func TestGetAvailabelPackagesBadConfig(t *testing.T) {
 
 			_, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
 
-			if err == nil {
+			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
 			}
 
@@ -80,8 +126,8 @@ func packageFromSpec(spec map[string]interface{}) *unstructured.Unstructured {
 	}
 }
 
-func packagesFromSpecs(specs []map[string]interface{}) []*unstructured.Unstructured {
-	pkgs := []*unstructured.Unstructured{}
+func packagesFromSpecs(specs []map[string]interface{}) []runtime.Object {
+	pkgs := []runtime.Object{}
 	for _, s := range specs {
 		pkgs = append(pkgs, packageFromSpec(s))
 	}
@@ -129,11 +175,7 @@ func TestGetAvailablePackages(t *testing.T) {
 						map[schema.GroupVersionResource]string{
 							{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
 						},
-						// TODO: Not clear why
-						// pkgs...
-						// won't work.
-						pkgs[0],
-						pkgs[1],
+						pkgs...,
 					), nil
 				},
 			}
