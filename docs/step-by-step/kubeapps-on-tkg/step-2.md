@@ -174,7 +174,15 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps -f custom-values.yaml
 ```
 
-At this point, Kubeapps is installed in the cluster.
+Finally, remember to replace the placeholder _Redirect URIs_ you entered when [creating the OAuth2 application during step 1](./step-1.md#create-an-oauth2-application) with the actual value.
+
+For instance, assuming Kubeapps is accessible at `https://kubeapps.example.com` replace `https://localhost/oauth2/callback` with `https://kubeapps.example.com/oauth2/callback`.
+
+> **TIP**: If you are serving Kubeapps from a subpath, for instance, `https://example.com/kubeapps`, you will need to slightly modify the `authProxy` configuration. Please follow [these instructions](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md#serving-kubeapps-in-a-subpath) for further details.
+
+![Add name and description](./img/csp-oauth-redirect.png)
+
+At this point, Kubeapps is installed in the cluster and the OIDC provider is fully configured.
 
 ### Step 2.4: Configure Role-Based Access
 
