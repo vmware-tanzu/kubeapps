@@ -1,10 +1,10 @@
 # Understanding the CircleCI configuration
 
-Kubeapps leverages CircleCI for running the tests (both unit and integration tests), pushing the images and syncing the chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). The following image depicts how a successful workflow looks like (after a push to the main branch).
+Kubeapps leverages CircleCI for running the tests (both unit and integration tests), pushing the images and syncing the chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). The following image depicts how a successful workflow looks like after pushing a commit to the main branch.
 
-![CircleCI workflow after pushing to the main branch](../img/ci-workflow-master.png "CircleCI workflow after pushing to the main branch")
+![CircleCI workflow after pushing to the main branch](../img/ci-workflow-release.png "CircleCI workflow after pushing to the main branch")
 
-The main configuration is located at this [CircleCI config file](../../.circleci/config.yml)). At a glance, it contains:
+The main configuration is located at this [CircleCI config file](../../.circleci/config.yml). At a glance, it contains:
 
 - **Build conditions**: `build_always`, `build_on_master` and `build_on_tag`. They will be added to each job to determine whether or not it should be executed. Whereas some should always be run, others only make sense when pushing to master or when a new tag has been created.
 - **Workflows**: we only use a single workflow named `kubeapps` with multiple jobs.
@@ -23,8 +23,9 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Run the integration tests.
   - `sync_chart_from_bitnami` (on master): each time a new commit is pushed to the main branch, it brings the current changes in the upstream [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merges the changes. This step involves:
     - Checking if the Bitnami chart version is greater than the Kubeapps development chart version. If not, abort.
-    - Deleting the local `chart/kubeapps` folder (note that the changes are already commited in git).
-    - Pulling the latest version of the chart provided by Bitnami.
+    - Deleting the local `chart/kubeapps` folder (note that the changes are already committed in git).
+    - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/master/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
+    - Retrieving the latest version of the chart provided by Bitnami.
     - Renaming the production images (`bitnami/kubeapps-xxx`) by the development ones (`kubeapps/xxx`) with the `latest` tag.
     - Using `DEVEL` as the `appVersion`.
     - Sending a draft PR in the Kubeapps repository with these changes (from a pushed branch in the Kubeapps repository).
@@ -32,8 +33,9 @@ The main configuration is located at this [CircleCI config file](../../.circleci
   - `push_images` (on master): the CI images (which have already been built) get re-tagged and pushed to the `kubeapps` account.
   - `sync_chart_to_bitnami` (on tag): when releasing, it will synchronize our development chart with the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merge the changes. This step involves:
     - Checking if the Kubeapps development chart version is greater than the Bitnami chart version. If not, abort.
-    - Deleting the local `bitnami/kubeapps` folder (note that the changes are already commited in git).
-    - Pulling the latest version of the chart provided by Kubeapps.
+    - Deleting the local `bitnami/kubeapps` folder (note that the changes are already committed in git).
+    - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/master/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
+    - Retrieving the latest version of the chart provided by Kubeapps.
     - Renaming the development images (`kubeapps/xxx`) by the production ones (`bitnami/kubeapps-xxx`) with the `vX.X.X` tag.
     - Using `vX.X.X` as the `appVersion`.
     - Sending a draft PR to the Bitnami Charts repository with these changes (from the robot account's personal fork)
@@ -50,7 +52,7 @@ Besides other usual credentials or secrets passed through environment variables 
 - Create a [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with the robot account, granted, at least, with: `repo:status`, `public_repo` and `read:org`. This token must be stored as the environment variable `GITHUB_TOKEN` (is where Github CLI will look for)
   - That will allow the GitHub CLI to create PRs from the command line on behalf of our robot account.
   - Also, this token will be used for performing authenticated GitHub API calls.
-- Add deployment keys to the repositories in which the CI will commit. Currently, they are `kubeapps/kubeapps` and `kubeapps-bot/charts`.
+- Add deployment keys to the repositories to which the CI will commit. Currently, they are `kubeapps/kubeapps` and `kubeapps-bot/charts`.
   - This step allows the robot account to push branches remotely. However, the CI will never push to the main branch as it always tries to create a pull request.
 - Add the robot account GPG key pair in the `GPG_KEY_PUBLIC` and `GPG_KEY_PRIVATE` environment variables.
   - The public key must be also uploaded in the robot account GPG settings in GitHub. It will be used for signing the commits and tags created by this account.
@@ -89,3 +91,15 @@ ssh-keygen -l -E md5 -f circleci-kubeapps-deploymentkey.pub
 echo "Charts deployment key (fingerprint) - edit 'sync_chart_to_bitnami'"
 ssh-keygen -l -E md5 -f circleci-charts-deploymentkey.pub
 ```
+
+## Debugging the CI errors
+
+As per the official [CircleCI documentation](https://circleci.com/docs/2.0/ssh-access-jobs/), one of the best ways to troubleshoot problems is to SSH into a job and inspect things like log files, running processes, and directory paths. For doing so, you have to:
+
+- Ensure that you have added an SSH key to your GitHub account.
+
+- Start a job with SSH enabled, that is, select the _Rerun job with SSH_ option from the _Rerun Workflow_ dropdown menu.
+
+  - To see the connection details, expand the _Enable SSH_ section in the job output where you will see the SSH command needed to connect.
+
+The build will remain available for an SSH connection for 10 minutes after the build finishes running and then automatically shut down. After you SSH into the build, the connection will remain open for two hours.
