@@ -71,10 +71,14 @@ IMAGE_TAG=dev1 make kubeapps/kubeapps-apis
 and make that image available on your cluster somehow. If using kind, you can simply do:
 
 ```bash
-kind load docker-image docker.io/kubeapps/kubeapps-apis:dev1 --name kubeapps
+kind load docker-image kubeapps/kubeapps-apis:dev1 --name kubeapps
 ```
 
-When you deploy or upgrade Kubeapps, be sure to include the values file at `docs/developer/manifests/values.kubeappsapis.yaml` which provides the configuration to include the kubeapps-apis deployment and service etc. You can edit that file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match.
+When you deploy or upgrade Kubeapps, be sure to include the values file at `docs/developer/manifests/values.kubeappsapis.yaml` which provides the configuration to include the kubeapps-apis deployment and service etc. You can edit that file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match, such as:
+
+```bash
+kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=kubeapps/kubeapps-apis:dev1 --record
+``` 
 
 With the kubeapps-apis service running, you can then test the packages endpoints in cluster by port-forwarding the service in one terminal:
 
