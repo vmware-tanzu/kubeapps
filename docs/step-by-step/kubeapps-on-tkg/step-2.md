@@ -100,7 +100,7 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
        # - --insecure-oidc-skip-issuer-verification=true
    ```
 
-   > **NOTE**: In some providers whose issuer URL does not match the token URL (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` must be turned on. Be aware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
+   > **NOTE**: In some providers whose issuer URL does not match the token URL (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` is currently required. Be aware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
 
 At this point, Kubeapps is configured to use Pinniped for authentication.
 
@@ -214,7 +214,7 @@ Apply this configuration by executing the following command:
 kubectl apply -f kubeapps-rbac.yaml
 ```
 
-At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-admin` access and will be able to perform any desired action via the Kubeapps dashboard.
+At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-admin` access and will be able to perform any desired action via the `kubectl` CLI or the Kubeapps dashboard.
 
 ### Step 2.5: Log in to Kubeapps with OIDC
 

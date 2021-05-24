@@ -23,7 +23,6 @@ This guide walks you through the process of configuring, deploying and using Kub
 - Adding public and private repositories to Kubeapps: the public [VMware Marketplace™](https://marketplace.cloud.vmware.com/) repository and your private [VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog) repository
 - Deploying applications through Kubeapps
 - Listing, removing and managing applications through Kubeapps
-- Configure two application repositories:
 
 ## Intended Audience
 
