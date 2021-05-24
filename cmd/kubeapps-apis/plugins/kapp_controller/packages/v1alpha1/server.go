@@ -37,6 +37,16 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const (
+	packageGroup     = "package.carvel.dev"
+	packageVersion   = "v1alpha1"
+	packagesResource = "packages"
+
+	installPackageGroup   = "install.package.carvel.dev"
+	installPackageVersion = "v1alpha1"
+	repositoriesResource  = "packagerepositories"
+)
+
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedPackagesServiceServer
@@ -80,7 +90,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
 
-	packageResource := schema.GroupVersionResource{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}
+	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
 
 	pkgs, err := client.Resource(packageResource).List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -121,7 +131,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 	}
 
-	repositoryResource := schema.GroupVersionResource{Group: "install.package.carvel.dev", Version: "v1alpha1", Resource: "packagerepositories"}
+	repositoryResource := schema.GroupVersionResource{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}
 
 	// Currently checks globally. Update to handle namespaced requests (?)
 	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})

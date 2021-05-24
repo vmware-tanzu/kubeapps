@@ -53,7 +53,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 					packageFromSpec(map[string]interface{}{
 						"version": "1.2.3",
@@ -68,7 +68,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 					packageFromSpec(map[string]interface{}{
 						"publicName": "someName",
@@ -83,7 +83,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 					packageFromSpec(map[string]interface{}{
 						"publicName": "someName",
@@ -116,7 +116,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 func packageFromSpec(spec map[string]interface{}) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "package.carvel.dev/v1alpha1",
+			"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
 			"kind":       "Package",
 			"metadata": map[string]interface{}{
 				"name": fmt.Sprintf("%s.%s", spec["publicName"], spec["version"]),
@@ -173,7 +173,7 @@ func TestGetAvailablePackages(t *testing.T) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}: "PackageList",
+							{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 						},
 						pkgs...,
 					), nil
