@@ -106,6 +106,7 @@ updateRepoWithLocalChanges() {
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
     fi
+    # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
     git -C "${targetRepo}" pull upstream master
     git -C "${targetRepo}" push origin master
@@ -126,6 +127,7 @@ updateRepoWithLocalChanges() {
 updateRepoWithRemoteChanges() {
     local targetRepo=${1:?}
     local targetTag=${2:?}
+    local forkSSHKeyFilename=${3:?}
     local targetTagWithoutV=${targetTag#v}
     local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
     local remoteChartYaml="${targetChartPath}/Chart.yaml"
@@ -134,9 +136,10 @@ updateRepoWithRemoteChanges() {
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
     fi
+    # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
     git -C "${targetRepo}" pull upstream master
-    git -C "${targetRepo}" push origin master
+    GIT_SSH_COMMAND="ssh -i ~/.ssh/${forkSSHKeyFilename}" git -C "${targetRepo}" push origin master
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
     # Update Chart.yaml with new version
