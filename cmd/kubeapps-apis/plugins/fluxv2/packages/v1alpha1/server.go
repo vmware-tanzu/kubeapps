@@ -184,29 +184,10 @@ func getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
 }
 
 func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositoryReference, indexURL string) ([]*corev1.AvailablePackage, error) {
-	// Get the response bytes from the url
-	response, err := http.Get(indexURL)
+	index, err := getHelmIndexFileFromURL(indexURL)
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non OK response code: [%d]", response.StatusCode)
-	}
-
-	contents, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var index helmrepo.IndexFile
-	err = yaml.Unmarshal(contents, &index)
-	if err != nil {
-		return nil, err
-	}
-
-	index.SortEntries()
 
 	responsePackages := []*corev1.AvailablePackage{}
 	for _, entry := range index.Entries {
@@ -229,4 +210,30 @@ func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositor
 		responsePackages = append(responsePackages, pkg)
 	}
 	return responsePackages, nil
+}
+
+func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
+	// Get the response bytes from the url
+	response, err := http.Get(indexURL)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non OK response code: [%d]", response.StatusCode)
+	}
+
+	contents, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var index helmrepo.IndexFile
+	err = yaml.Unmarshal(contents, &index)
+	if err != nil {
+		return nil, err
+	}
+	index.SortEntries()
+	return &index, nil
 }
