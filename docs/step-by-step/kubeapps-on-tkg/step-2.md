@@ -81,7 +81,7 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
 
 3. Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows:
 
-   - Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+   - Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api`.
    - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
    - Replace `CLIENT-SECRET` with the application secret obtained from the JSON file in the previous step.
    - Replace `COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string).

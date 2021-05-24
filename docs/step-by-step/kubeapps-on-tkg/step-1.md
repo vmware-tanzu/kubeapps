@@ -82,7 +82,7 @@ The CSP Console displays a success screen with an auto-generated application ID 
 
 > **NOTE**: Store this file carefully as it contains important credentials which will be needed when configuring Pinniped and Kubeapps.
 
-> **TIP**: Any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) endpoint where you can find other useful and required information. This endpoint allows using the base URL to discover the rest of the URLs (`authorization`, `token`, `end session`, `jwks` and `issuer`) automatically. For CSP, the endpoint is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+> **TIP**: Any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) endpoint where you can find other useful and required information. This endpoint allows using the base URL to discover the rest of the URLs (`authorization`, `token`, `end session`, `jwks` and `issuer`) automatically. For CSP, the endpoint is `https://console.cloud.vmware.com/csp/gateway/am/api`.
 
 At this point, an OAuth2 application is configured.
 
@@ -94,7 +94,7 @@ Since Pinniped manages this process, the only requirement is to a _JWTAuthentica
 
 1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
 
-- Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console-stg.cloud.vmware.com/csp/gateway/am/api`.
+- Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api`.
 - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
 
 ```yaml
