@@ -34,7 +34,7 @@ if [[ ${semverCompare} -lt 0 ]]; then
     configUser $PROJECT_DIR $user $email $gpg
     latestVersion=$(latestReleaseTag $PROJECT_DIR)
     updateRepoWithRemoteChanges $tempDir $latestVersion
-    commitAndSendInternalPR ${PROJECT_DIR} "sync-chart-changes-${externalVersion}"
+    commitAndSendInternalPR ${PROJECT_DIR} "sync-chart-changes-${externalVersion}" ${externalVersion}
 elif [[ ${semverCompare} -gt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version ("${currentVersion}") is greater than the chart external version ("${externalVersion}")"
 else

@@ -669,6 +669,7 @@ jobs:
           command: |
             eval "$(ssh-agent -s)"
             # the name is always "id_rsa_"+fingerprint without ":""
+            # Deployment key uploaded to the kubeapps-bot/charts repository
             ssh-add ~/.ssh/id_rsa_59812a95a654a746e515f537b34f6cad
       - run:
           # Assuming there is a personal access token created in GitHub granted with the scopes
@@ -691,6 +692,9 @@ jobs:
           fingerprints:
             # Deployment key uploaded to the kubeapps/kubeapps repository
             - "20:5e:d1:68:7c:10:67:c1:ab:e2:6e:33:e3:7a:64:6e"
+            # Deployment key uploaded to the kubeapps-bot/charts repository
+            - "59:81:2a:95:a6:54:a7:46:e5:15:f5:37:b3:4f:6c:ad"
+
       - run:
           # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
           # public key uploaded to GitHub as a deploy key with write permissions
@@ -699,7 +703,10 @@ jobs:
           command: |
             eval "$(ssh-agent -s)"
             # the name is always "id_rsa_"+fingerprint without ":""
+            # Deployment key uploaded to the kubeapps/kubeapps repository
             ssh-add ~/.ssh/id_rsa_205ed1687c1067c1abe26e33e37a646e
+            # Deployment key uploaded to the kubeapps-bot/charts repository
+            ssh-add ~/.ssh/id_rsa_59812a95a654a746e515f537b34f6cad
       - run:
           # Assuming there is a personal access token created in GitHub granted with the scopes
           # "repo:status", "public_repo" and "read:org"

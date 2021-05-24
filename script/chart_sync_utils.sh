@@ -134,6 +134,9 @@ updateRepoWithRemoteChanges() {
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
     fi
+    git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
+    git -C "${targetRepo}" pull upstream master
+    git -C "${targetRepo}" push origin master
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
     # Update Chart.yaml with new version
@@ -151,6 +154,7 @@ updateRepoWithRemoteChanges() {
 commitAndSendExternalPR() {
     local targetRepo=${1:?}
     local targetBranch=${2:-"master"}
+    local chartVersion=${3:?}
     local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
     if [ ! -f "${chartYaml}" ]; then
@@ -165,7 +169,6 @@ commitAndSendExternalPR() {
     fi 
     sed -i.bk -e "s/<USER>/`git config user.name`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/`git config user.email`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
-    local chartVersion=$(grep -e '^version:' ${chartYaml} | awk '{print $2}')
     git checkout -b $targetBranch
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
@@ -182,6 +185,7 @@ commitAndSendExternalPR() {
 commitAndSendInternalPR() {
     local targetRepo=${1:?}
     local targetBranch=${2:-"master"}
+    local chartVersion=${3:?}
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
 
@@ -195,7 +199,6 @@ commitAndSendInternalPR() {
         cd -
         return 1
     fi
-    local chartVersion=$(grep -e '^version:' ${localChartYaml} | awk '{print $2}')
     git checkout -b $targetBranch
     git add --all .
     git commit -m "bump chart version to $chartVersion"
