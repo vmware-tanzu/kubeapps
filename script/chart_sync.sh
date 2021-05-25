@@ -34,7 +34,7 @@ if [[ ${semverCompare} -gt 0 ]]; then
     configUser $PROJECT_DIR $user $email $gpg
     latestVersion=$(latestReleaseTag $PROJECT_DIR)
     updateRepoWithLocalChanges $tempDir $latestVersion
-    commitAndSendExternalPR $tempDir "kubeapps-bump-${currentVersion}"
+    commitAndSendExternalPR $tempDir "kubeapps-bump-${currentVersion}" ${currentVersion}
 elif [[ ${semverCompare} -lt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version ("${currentVersion}") is less than the chart external version ("${externalVersion}")"
 else

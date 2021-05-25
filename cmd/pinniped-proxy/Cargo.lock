@@ -623,9 +623,9 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.53.0"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38a92e9c744815d199c09b9a4799efb3efc1f2528a6a3c35fb38115b0d691f17"
+checksum = "43a7370e62dacd8f672231c59001ddf00b090648c81b3cde2600bfbfab7518fe"
 dependencies = [
  "base64",
  "bytes",
@@ -639,8 +639,7 @@ dependencies = [
  "hyper-tls",
  "jsonpath_lib",
  "k8s-openapi",
- "log",
- "once_cell",
+ "kube-core",
  "openssl",
  "pem",
  "pin-project 1.0.7",
@@ -658,10 +657,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "kube-derive"
-version = "0.53.0"
+name = "kube-core"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47c6bddeb174717fc806c11a56484d930d2ee9984195ba4c7b8ffa146ac5a770"
+checksum = "1a12871b580beae491ae6adeed43f261d85c3fb2bf97d53ab9cf9c1c9ffb32e5"
+dependencies = [
+ "http",
+ "k8s-openapi",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "kube-derive"
+version = "0.55.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "875af6c219be177d6c5cca8c82f026b6c338bffbefcfebd3ed454d78ed74b9f4"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -672,9 +686,9 @@ dependencies = [
 
 [[package]]
 name = "kube-runtime"
-version = "0.53.0"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49a005e33a497a96ab203f4aa567262df420e494023712d85339469e93e8135e"
+checksum = "975f4b3d7742d74ae5c15d3b460b68dea35ee622219e6ea1bc95f71e344ac061"
 dependencies = [
  "dashmap",
  "derivative",
@@ -1466,18 +1480,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.24"
+version = "1.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0f4a65597094d4483ddaed134f409b2cb7c1beccf25201a9f73c719254fa98e"
+checksum = "fa6f76457f59514c7eeb4e59d891395fab0b2fd1d40723ae737d64153392e9c6"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.24"
+version = "1.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7765189610d8241a44529806d6fd1f2e0a08734313a35d5b3a556f92b381f3c0"
+checksum = "8a36768c0fbf1bb15eca10defa29526bda730a2376c2ab4393ccfa16fb1a318d"
 dependencies = [
  "proc-macro2",
  "quote",

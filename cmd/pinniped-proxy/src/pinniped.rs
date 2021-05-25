@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
 use kube::{
-    api::{Api, PostParams}, Client, Config, Service
+    api::{Api, PostParams}, Client, Config
 };
 use kube_derive::CustomResource;
 use log::debug;
@@ -230,7 +230,7 @@ fn get_client_config(
     let der = x509.to_der().context("error creating der from x509")?;
     config.root_cert = Some(vec![der]);
 
-    Ok(Client::new(Service::try_from(config)?))
+    Ok(Client::try_from(config)?)
 }
 
 /// call_pinniped_exchange returns the resulting TokenCredentialRequest with Status after requesting a token credential exchange.

@@ -20,6 +20,7 @@ source $(dirname $0)/chart_sync_utils.sh
 user=${1:?}
 email=${2:?}
 gpg=${3:?}
+forkSSHKeyFilename=${4:?}
 
 currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep -oP '(?<=^version: ).*' )
 externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/master/${CHART_REPO_PATH}/Chart.yaml | grep -oP '(?<=^version: ).*' )
@@ -33,8 +34,8 @@ if [[ ${semverCompare} -lt 0 ]]; then
     configUser $tempDir $user $email $gpg
     configUser $PROJECT_DIR $user $email $gpg
     latestVersion=$(latestReleaseTag $PROJECT_DIR)
-    updateRepoWithRemoteChanges $tempDir $latestVersion
-    commitAndSendInternalPR ${PROJECT_DIR} "sync-chart-changes-${externalVersion}"
+    updateRepoWithRemoteChanges $tempDir $latestVersion $forkSSHKeyFilename
+    commitAndSendInternalPR ${PROJECT_DIR} "sync-chart-changes-${externalVersion}" ${externalVersion}
 elif [[ ${semverCompare} -gt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version ("${currentVersion}") is greater than the chart external version ("${externalVersion}")"
 else

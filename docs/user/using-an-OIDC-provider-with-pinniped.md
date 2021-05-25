@@ -128,7 +128,7 @@ If you are using a managed cluster (such as AKS), make sure you are using the Pi
 
 If not, note that there are some scenarios (e.g., TMC) in which the installed Pinniped version is not being bundled with the usual CA certificates. As a result, common OIDC providers (e.g., Google, VMware CSP login, etc.) are not trusted by default. Consequently, Pinniped and, as a result, the authentication in Kubeapps will always fail with a 401 status code.
 
-You can work around this issue by setting `spec.tls.certificateAuthorityData` in the `JWTAuthenticator` to match with the TLS CA used by the ODIC issuer.
+You can work around this issue by setting `spec.tls.certificateAuthorityData` in the `JWTAuthenticator` to match with the TLS CA used by the OIDC issuer.
 
 #### Example (command line): using Google as the OIDC provider
 
@@ -158,7 +158,7 @@ Next, use this `LS0tLS1CRUdJTiBDRVJUSU...` value as the `spec.tls.certificateAut
 
 #### Example (graphical): using VMware Cloud as the OIDC provider
 
-Also, you can use your browser to check the proper CA certificate you will need. In this example, we will use the [VMware Cloud ODIC discovery endpoint](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration). Access this URL and retrieve the `issuer` endpoint.
+Also, you can use your browser to check the proper CA certificate you will need. In this example, we will use the [VMware Cloud OIDC discovery endpoint](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration). Access this URL and retrieve the `issuer` endpoint.
 
 ```json
 {
