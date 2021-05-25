@@ -32,20 +32,41 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
+)
+
+const (
+	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
+	packageGroup     = "package.carvel.dev"
+	packageVersion   = "v1alpha1"
+	packagesResource = "packages"
+
+	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
+	installPackageGroup   = "install.package.carvel.dev"
+	installPackageVersion = "v1alpha1"
+	repositoriesResource  = "packagerepositories"
 )
 
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedPackagesServiceServer
+
+	// clientGetter is a field so that it can be switched in tests for
+	// a fake client. NewServer() below sets this automatically with the
+	// non-test implementation.
+	clientGetter func(context.Context) (dynamic.Interface, error)
 }
 
-// GetAvailablePackages streams the available packages based on the request.
-func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+// clientForRequestContext returns a k8s client for use during interactions with the cluster.
+// This will be updated to use the user credential from the request context but for now
+// simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
+func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
 	// TODO: replace incluster config with the user config using token from request meta.
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create incluster config: %w", err)
+		return nil, fmt.Errorf("unable to get client config: %w", err)
 	}
 
 	client, err := dynamic.NewForConfig(config)
@@ -53,11 +74,32 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 	}
 
-	packageResource := schema.GroupVersionResource{Group: "package.carvel.dev", Version: "v1alpha1", Resource: "packages"}
+	return client, nil
+}
+
+// NewServer returns a Server automatically configured with a function to obtain
+// the k8s client config.
+func NewServer() *Server {
+	return &Server{
+		clientGetter: clientForRequestContext,
+	}
+}
+
+// GetAvailablePackages streams the available packages based on the request.
+func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+	if s.clientGetter == nil {
+		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+	}
+	client, err := s.clientGetter(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+
+	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
 
 	pkgs, err := client.Resource(packageResource).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("unable to list kapp-controller packages: %w", err)
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
 	}
 
 	responsePackages := []*corev1.AvailablePackage{}
@@ -65,13 +107,13 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		pkg := &corev1.AvailablePackage{}
 		name, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "publicName")
 		if err != nil || !found {
-			return nil, fmt.Errorf("required field publicName not found on kapp-controller package: %w:\n%v", err, pkgUnstructured.Object)
+			return nil, status.Errorf(codes.Internal, "required field publicName not found on kapp-controller package: %v:\n%v", err, pkgUnstructured.Object)
 		}
 		pkg.Name = name
 
 		version, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "version")
 		if err != nil || !found {
-			return nil, fmt.Errorf("required field version not found on kapp-controller package: %w:\n%v", err, pkgUnstructured.Object)
+			return nil, status.Errorf(codes.Internal, "required field version not found on kapp-controller package: %v:\n%v", err, pkgUnstructured.Object)
 		}
 		pkg.Version = version
 		responsePackages = append(responsePackages, pkg)
@@ -94,7 +136,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 	}
 
-	repositoryResource := schema.GroupVersionResource{Group: "install.package.carvel.dev", Version: "v1alpha1", Resource: "packagerepositories"}
+	repositoryResource := schema.GroupVersionResource{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}
 
 	// Currently checks globally. Update to handle namespaced requests (?)
 	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})
