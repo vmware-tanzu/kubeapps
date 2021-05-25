@@ -26,6 +26,8 @@ import (
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
 	helmrepo "k8s.io/helm/pkg/repo"
 	log "k8s.io/klog/v2"
@@ -43,12 +45,25 @@ type Server struct {
 	v1alpha1.UnimplementedPackagesServiceServer
 }
 
+// ===== general note on error handling ========
+// using fmt.Errorf vs status.Errorf in functions exposed as grpc:
+//
+// grpc itself will transform any error into a grpc status code (which is
+// then translated into an http status via grpc gateway), so we'll need to
+// be using status.Errorf(...) here, rather than fmt.Errorf(...), the former
+// allowing you to specify a status code with the error which can be used
+// for grpc and translated or http. Without doing this, the grpc status will
+// be codes.Unknown which is translated to a 500. you might have a helper
+// function that returns an error, then your actual handler function handles
+// that error by returning a status.Errorf with the appropriate code
+
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
+	log.Infof("+GetPackageRepositories(namespace=[%s])", request.Namespace)
 
 	repos, err := getHelmRepos(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get repos : %v", err)
 	}
 
 	responseRepos := []*corev1.PackageRepository{}
@@ -56,21 +71,23 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		repo := &corev1.PackageRepository{}
 		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
 		if err != nil || !found {
-			return nil, fmt.Errorf("required field metadata.name not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
 		}
 		repo.Name = name
 
+		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "namespace")
+
 		// TODO(absoludity): When testing, write failing test for the case of a
 		// cluster-scoped object without a namespace, then fix.
-		if err != nil || !found {
-			return nil, fmt.Errorf("required field metadata.namespace not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+		if err == nil && found {
+			repo.Namespace = namespace
 		}
-		repo.Namespace = namespace
 
 		url, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
 		if err != nil || !found {
-			return nil, fmt.Errorf("required field spec.url not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+			return nil, status.Errorf(
+				codes.Internal, "required field spec.url not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
 		}
 		repo.Url = url
 
@@ -86,7 +103,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	log.Infof("+GetAvailablePackages(namespace=[%s])", request.Namespace)
 	repos, err := getHelmRepos(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get repos : %v", err)
 	}
 
 	responsePackages := []*corev1.AvailablePackage{}
@@ -120,7 +137,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		}
 
 		if !ready {
-			log.Infof("Skipping packages for repository [%s] because it is not in Ready state:n%v", name, repoUnstructured.Object)
+			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:n%v", name, repoUnstructured.Object)
 			continue
 		}
 
@@ -191,10 +208,10 @@ func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositor
 
 	responsePackages := []*corev1.AvailablePackage{}
 	for _, entry := range index.Entries {
-		// note that entry itself is an array of chart versions
+		// note that 'entry' itself is an array of chart versions
 		// after index.SortEntires() call, it looks like there is only one entry per package,
 		// and entry[0] should be the most recent chart version, e.g. Name: "mariadb" Version: "9.3.12"
-		// while the rest of the elements in the entry array keep track of all chart versions, e.g.
+		// while the rest of the elements in the entry array keep track of previous chart versions, e.g.
 		// "mariadb" version "9.3.11", "9.3.10", etc. For entry "mariadb", bitnami catalog has
 		// almost 200 chart versions going all the way back many years to version "2.1.4".
 		// So for now, let's just keep track of the latest, not to overwhelm the caller with
@@ -224,7 +241,7 @@ func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non OK response code: [%d]", response.StatusCode)
+		return nil, status.Errorf(codes.FailedPrecondition, "received non OK response code: [%d]", response.StatusCode)
 	}
 
 	contents, err := ioutil.ReadAll(response.Body)
