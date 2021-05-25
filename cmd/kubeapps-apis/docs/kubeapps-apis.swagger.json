@@ -1,0 +1,318 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "kubeappsapis/core/packages/v1alpha1/packages.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PluginsService"
+    },
+    {
+      "name": "PackagesService"
+    },
+    {
+      "name": "PackagesService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/core/plugins/v1alpha1/configured-plugins": {
+      "get": {
+        "summary": "GetConfiguredPlugins returns a map of short and longnames for the configured plugins.",
+        "operationId": "PluginsService_GetConfiguredPlugins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetConfiguredPluginsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PluginsService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/packagerepositories": {
+      "get": {
+        "operationId": "PackagesService_GetPackageRepositories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/packages": {
+      "get": {
+        "operationId": "PackagesService_GetAvailablePackages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/packagerepositories": {
+      "get": {
+        "operationId": "PackagesService_GetPackageRepositories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/packages": {
+      "get": {
+        "operationId": "PackagesService_GetAvailablePackages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AvailablePackagePackageRepositoryReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        }
+      },
+      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace."
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1alpha1AvailablePackage": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The fully qualified name of the package."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the package in the repository."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "A url for an icon."
+        },
+        "repository": {
+          "$ref": "#/definitions/AvailablePackagePackageRepositoryReference",
+          "title": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)"
+        }
+      },
+      "description": "An AvailablePackage defines a package available for installation."
+    },
+    "v1alpha1GetAvailablePackagesResponse": {
+      "type": "object",
+      "properties": {
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1AvailablePackage"
+          }
+        }
+      }
+    },
+    "v1alpha1GetConfiguredPluginsResponse": {
+      "type": "object",
+      "properties": {
+        "plugins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1alpha1GetPackageRepositoriesResponse": {
+      "type": "object",
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1PackageRepository"
+          }
+        }
+      }
+    },
+    "v1alpha1PackageRepository": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name identifying package repository on the cluster."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories."
+        },
+        "url": {
+          "type": "string",
+          "description": "A url identifying the package repository location."
+        }
+      },
+      "description": "A PackageRepository defines a repository of packages for installation."
+    }
+  }
+}
