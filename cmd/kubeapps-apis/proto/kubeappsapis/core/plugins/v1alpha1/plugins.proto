@@ -7,10 +7,21 @@ import "google/api/annotations.proto";
 // The Core API service provides generic functionality shared across all
 // plugins, such as querying for enabled plugins (which can be used as a
 // liveness check). There may be other general functionality for use by all
-// plugins in the future such as creating credentials.
+// plugins in the future such as checking authz to the k8s api server using
+// the callers token.
+
+// A plugin can implement multiple services and multiple versions of a service.
+message Plugin {
+  // The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+  string name = 1;
+
+  // The version of the plugin, such as v1alpha1
+  string version = 2;
+}
+
 message GetConfiguredPluginsRequest {}
 message GetConfiguredPluginsResponse {
-  repeated string plugins = 1;
+  repeated Plugin plugins = 1;
 }
 service PluginsService {
   // GetConfiguredPlugins returns a map of short and longnames for the configured plugins.
