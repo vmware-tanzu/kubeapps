@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 )
 
@@ -30,4 +31,12 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
 // handler to translate to the gRPC request.
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	return v1alpha1.RegisterPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+}
+
+// GetPluginDetail returns a core.plugins.Plugin describing itself.
+func GetPluginDetail() *plugins.Plugin {
+	return &plugins.Plugin{
+		Name:    "fluxv2.packages",
+		Version: "v1alpha1",
+	}
 }
