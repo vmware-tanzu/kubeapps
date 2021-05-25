@@ -71,7 +71,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		repo := &corev1.PackageRepository{}
 		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
 		if err != nil || !found {
-			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%v", err, repoUnstructured.Object)
 		}
 		repo.Name = name
 
@@ -87,7 +87,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		url, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
 		if err != nil || !found {
 			return nil, status.Errorf(
-				codes.Internal, "required field spec.url not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+				codes.Internal, "required field spec.url not found on HelmRepository: %v:\n%v", err, repoUnstructured.Object)
 		}
 		repo.Url = url
 
