@@ -58,7 +58,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					repoFromSpec("test", map[string]interface{}{}, map[string]interface{}{}),
+					newRepo("test", map[string]interface{}{}, map[string]interface{}{}),
 				), nil
 			},
 			statusCode: codes.OK,
@@ -71,7 +71,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					repoFromSpec("test", map[string]interface{}{}, map[string]interface{}{
+					newRepo("test", map[string]interface{}{}, map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
 								"type":   "Ready",
@@ -91,7 +91,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					repoFromSpec("test", map[string]interface{}{}, map[string]interface{}{
+					newRepo("test", map[string]interface{}{}, map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
 								"type":   "Ready",
@@ -122,7 +122,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 	}
 }
 
-func repoFromSpec(name string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+func newRepo(name string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
@@ -192,7 +192,7 @@ func TestGetAvailablePackages(t *testing.T) {
 				},
 				"url": ts.URL,
 			}
-			repo := repoFromSpec(tc.repoName, repoSpec, repoStatus)
+			repo := newRepo(tc.repoName, repoSpec, repoStatus)
 			s := Server{
 				clientGetter: func(context.Context) (dynamic.Interface, error) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
