@@ -145,22 +145,22 @@ func TestGetAvailablePackages(t *testing.T) {
 		expectedPackages []*corev1.AvailablePackage
 	}{
 		{
-			testName:  "it returns fluxv2 bitnami packages from the cluster",
-			repoName:  "bitnami",
-			repoUrl:   "https://charts.bitnami.com/bitnami",
+			testName:  "it returns a couple of fluxv2 packages from the cluster",
+			repoName:  "bitnami-1",
+			repoUrl:   "https://example.repo.com/charts",
 			repoIndex: "testdata/valid-index.yaml",
 			expectedPackages: []*corev1.AvailablePackage{
 				{
 					Name:       "acs-engine-autoscaler",
 					Version:    "2.1.1",
 					IconUrl:    "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{Name: "bitnami"},
+					Repository: &corev1.AvailablePackage_PackageRepositoryReference{Name: "bitnami-1"},
 				},
 				{
 					Name:       "wordpress",
 					Version:    "0.7.5",
 					IconUrl:    "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{Name: "bitnami"},
+					Repository: &corev1.AvailablePackage_PackageRepositoryReference{Name: "bitnami-1"},
 				},
 			},
 		},
