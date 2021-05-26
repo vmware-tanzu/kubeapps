@@ -97,7 +97,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 	return client, nil
 }
 
-// GetAvailablePackages streams the available packages based on the request.
+// GetAvailablePackages returns the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
 
 	client, err := s.GetClient(ctx)
