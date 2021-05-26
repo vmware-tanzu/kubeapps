@@ -35,14 +35,29 @@ import (
 
 const (
 	// see docs at https://fluxcd.io/docs/components/source/
-	fluxGroup            = "source.toolkit.fluxcd.io"
-	fluxVersion          = "v1beta1"
-	fluxHelmRepoResource = "helmrepositories"
+	fluxGroup              = "source.toolkit.fluxcd.io"
+	fluxVersion            = "v1beta1"
+	fluxHelmRepository     = "helmrepository"
+	fluxHelmRepositories   = "helmrepositories"
+	fluxHelmRepositoryList = "HelmRepositoryList"
 )
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedPackagesServiceServer
+
+	// clientGetter is a field so that it can be switched in tests for
+	// a fake client. NewServer() below sets this automatically with the
+	// non-test implementation.
+	clientGetter func(context.Context) (dynamic.Interface, error)
+}
+
+// NewServer returns a Server automatically configured with a function to obtain
+// the k8s client config.
+func NewServer() *Server {
+	return &Server{
+		clientGetter: clientForRequestContext,
+	}
 }
 
 // ===== general note on error handling ========
@@ -61,9 +76,9 @@ type Server struct {
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
 	log.Infof("+GetPackageRepositories(namespace=[%s])", request.Namespace)
 
-	repos, err := getHelmRepos(ctx)
+	repos, err := s.getHelmRepos(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get repos : %v", err)
+		return nil, err
 	}
 
 	responseRepos := []*corev1.PackageRepository{}
@@ -101,9 +116,9 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 // GetAvailablePackages streams the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
 	log.Infof("+GetAvailablePackages(namespace=[%s])", request.Namespace)
-	repos, err := getHelmRepos(ctx)
+	repos, err := s.getHelmRepos(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get repos : %v", err)
+		return nil, err
 	}
 
 	responsePackages := []*corev1.AvailablePackage{}
@@ -118,7 +133,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 		conditions, found, err := unstructured.NestedSlice(repoUnstructured.Object, "status", "conditions")
 		if err != nil || !found {
-			log.Infof("Skipping packages for repository [%s] because it has not reached 'Ready' state:%w\n%v", name, err, repoUnstructured.Object)
+			log.Infof("Skipping packages for repository [%s] because it has not reached 'Ready' state:%v\n%v", name, err, repoUnstructured.Object)
 			continue
 		}
 
@@ -127,6 +142,9 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 			if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
 				if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
 					if statusString, ok := conditionAsMap["status"]; ok && statusString == "True" {
+						// note that the current doc on https://fluxcd.io/docs/components/source/helmrepositories/
+						// incorrectly states the example status reason as "IndexationSucceeded".
+						// The actual string is "IndexationSucceed"
 						if reasonString, ok := conditionAsMap["reason"]; ok && reasonString == "IndexationSucceed" {
 							ready = true
 							break
@@ -137,13 +155,13 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		}
 
 		if !ready {
-			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:n%v", name, repoUnstructured.Object)
+			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state: %v", name, repoUnstructured.Object)
 			continue
 		}
 
 		url, found, err := unstructured.NestedString(repoUnstructured.Object, "status", "url")
 		if err != nil || !found {
-			log.Infof("expected field status.url not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+			log.Infof("expected field status.url not found on HelmRepository [%s]: %v:\n%v", name, err, repoUnstructured.Object)
 			continue
 		}
 
@@ -170,11 +188,14 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	}, nil
 }
 
-func getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
+// clientForRequestContext returns a k8s client for use during interactions with the cluster.
+// This will be updated to use the user credential from the request context but for now
+// simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
+func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
 	// TODO: replace incluster config with the user config using token from request meta.
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create incluster config: %w", err)
+		return nil, fmt.Errorf("unable to get client config: %w", err)
 	}
 
 	client, err := dynamic.NewForConfig(config)
@@ -182,15 +203,27 @@ func getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
 		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 	}
 
+	return client, nil
+}
+
+func (s *Server) getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
+	if s.clientGetter == nil {
+		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+	}
+	client, err := s.clientGetter(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client : %v", err)
+	}
+
 	repositoryResource := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
-		Resource: fluxHelmRepoResource}
+		Resource: fluxHelmRepositories}
 
 	// Currently checks globally. Update to handle namespaced requests (?)
 	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("unable to list fluxv2 helmrepositories: %w", err)
+		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
 		// TODO: should we filter out those repos that don't have .status.condition.Ready == True?
 		// like we do in GetAvailablePackages()?
