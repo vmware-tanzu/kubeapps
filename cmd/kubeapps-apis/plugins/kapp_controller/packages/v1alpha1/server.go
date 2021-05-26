@@ -85,14 +85,24 @@ func NewServer() *Server {
 	}
 }
 
-// GetAvailablePackages streams the available packages based on the request.
-func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+// getClient ensures a client getter is available and uses it to return the client.
+func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 	if s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
 	client, err := s.clientGetter(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+	return client, nil
+}
+
+// GetAvailablePackages streams the available packages based on the request.
+func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+
+	client, err := s.GetClient(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
@@ -104,18 +114,10 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 
 	responsePackages := []*corev1.AvailablePackage{}
 	for _, pkgUnstructured := range pkgs.Items {
-		pkg := &corev1.AvailablePackage{}
-		name, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "publicName")
-		if err != nil || !found {
-			return nil, status.Errorf(codes.Internal, "required field publicName not found on kapp-controller package: %v:\n%v", err, pkgUnstructured.Object)
+		pkg, err := availablePackageFromUnstructured(&pkgUnstructured)
+		if err != nil {
+			return nil, err
 		}
-		pkg.Name = name
-
-		version, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "version")
-		if err != nil || !found {
-			return nil, status.Errorf(codes.Internal, "required field version not found on kapp-controller package: %v:\n%v", err, pkgUnstructured.Object)
-		}
-		pkg.Version = version
 		responsePackages = append(responsePackages, pkg)
 	}
 	return &corev1.GetAvailablePackagesResponse{
@@ -123,17 +125,27 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	}, nil
 }
 
+func availablePackageFromUnstructured(ap *unstructured.Unstructured) (*corev1.AvailablePackage, error) {
+	pkg := &corev1.AvailablePackage{}
+	name, found, err := unstructured.NestedString(ap.Object, "spec", "publicName")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.Internal, "required field publicName not found on kapp-controller package: %v:\n%v", err, ap.Object)
+	}
+	pkg.Name = name
+
+	version, found, err := unstructured.NestedString(ap.Object, "spec", "version")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.Internal, "required field version not found on kapp-controller package: %v:\n%v", err, ap.Object)
+	}
+	pkg.Version = version
+	return pkg, nil
+}
+
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	// TODO: replace incluster config with the user config using token from request meta.
-	config, err := rest.InClusterConfig()
+	client, err := s.GetClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create incluster config: %w", err)
-	}
-
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+		return nil, err
 	}
 
 	repositoryResource := schema.GroupVersionResource{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}
@@ -146,26 +158,51 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 
 	responseRepos := []*corev1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
-		repo := &corev1.PackageRepository{}
-		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
-		if err != nil || !found {
-			return nil, fmt.Errorf("required field metadata.name not found on PackageRepository: %w:\n%v", err, repoUnstructured.Object)
+		repo, err := packageRepositoryFromUnstructured(&repoUnstructured)
+		if err != nil {
+			return nil, err
 		}
-		repo.Name = name
-
-		// TODO(absoludity): kapp-controller may soon introduce namespaced packagerepositories
-
-		// TODO(absoludity): When able to add unit-tests using the fake dynamic client,
-		// write failing test for handling fetch types other than imgpkgBundle and fix.
-		url, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "fetch", "imgpkgBundle", "image")
-		if err != nil || !found {
-			return nil, fmt.Errorf("required field spec.url not found on PackageRepository: %w:\n%v", err, repoUnstructured.Object)
-		}
-		repo.Url = url
-
 		responseRepos = append(responseRepos, repo)
 	}
 	return &corev1.GetPackageRepositoriesResponse{
 		Repositories: responseRepos,
 	}, nil
+}
+
+func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*corev1.PackageRepository, error) {
+	repo := &corev1.PackageRepository{}
+	name, found, err := unstructured.NestedString(pr.Object, "metadata", "name")
+	if err != nil || !found || name == "" {
+		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on PackageRepository: %v:\n%v", err, pr.Object)
+	}
+	repo.Name = name
+
+	// TODO(absoludity): kapp-controller may soon introduce namespaced packagerepositories
+
+	// See the PackageRepository CR at
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
+	valid_url_paths := [][]string{
+		{"spec", "fetch", "imgpkgBundle", "image"},
+		{"spec", "fetch", "image", "url"},
+		{"spec", "fetch", "http", "url"},
+		{"spec", "fetch", "git", "url"},
+	}
+
+	found = false
+	url := ""
+	for _, path := range valid_url_paths {
+		url, found, err = unstructured.NestedString(pr.Object, path...)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error fetching nested string %v from %v:\n%v", path, pr.Object, err)
+		}
+		if found {
+			break
+		}
+	}
+
+	if !found {
+		return nil, status.Errorf(codes.Internal, "packagerepository without fetch of one of imgpkgBundle, image, http or git: %v", pr.Object)
+	}
+	repo.Url = url
+	return repo, nil
 }
