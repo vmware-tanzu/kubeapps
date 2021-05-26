@@ -80,16 +80,16 @@ Login to VMware Cloud Services and select the organization which you want to use
 
 You will now see a dialog with the app id and secret. Click on the Download JSON option as there is other useful info in the JSON.
 
-Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](./using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the staging VMware cloud services issuer URL is used in the example below):
+Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](./using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the prodcution VMware cloud services issuer URL is used in the example below):
 
-```json
-    kind: ClusterConfiguration
-    apiServer:
-      extraArgs:
-        oidc-issuer-url: https://gaz-preview.csp-vidm-prod.com
-        oidc-client-id: <your client id from above>
-        oidc-username-claim: email
-        oidc-groups-claim: group_names
+```yaml
+kind: ClusterConfiguration
+apiServer:
+  extraArgs:
+    oidc-issuer-url: https://gaz.csp-vidm-prod.com # the staging endpoint is 'https://gaz.csp-vidm-prod.com'
+    oidc-client-id: <your client id from above>
+    oidc-username-claim: email
+    oidc-groups-claim: group_names
 ```
 
 Once your cluster is running, you can then deploy Kubeapps with the following additional values:
@@ -102,14 +102,20 @@ authProxy:
   clientSecret: <your app secret>
   cookieSecret: <your random seed string for secure cookies>
   additionalFlags:
-    # For staging VMware Cloud Services issuer url is https://console-stg.cloud.vmware.com/csp/gateway/am/api
-    # For production, use https://console.cloud.vmware.com/csp/gateway/am/api
-    - --oidc-issuer-url=https://console-stg.cloud.vmware.com/csp/gateway/am/api
+    # VMware Cloud Services has different endpoints for production and staging:
+    # To use the staging endpoints, replace:
+    # 'gaz.csp-vidm-prod.com' with 'gaz-preview.csp-vidm-prod.com'
+    # 'console.cloud.vmware.com' with 'console-stg.cloud.vmware.com/'
     - --scope=openid email group_names
-    - --insecure-oidc-skip-issuer-verification
+    - --skip-oidc-discovery=true
+    - --oidc-issuer-url=https://gaz.csp-vidm-prod.com
+    - --login-url=https://console.cloud.vmware.com/csp/gateway/discovery
+    - --redeem-url=https://console.cloud.vmware.com/csp/gateway/am/api/auth/token
+    - --oidc-jwks-url=https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks
 ```
 
-Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration`](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://gaz-preview.csp-vidm-prod.com`. It is for this reason that the `--insecure-oidc-skip-issuer-verification` option is required above. For the same reason, the OIDC `id_token`s that are minted specify the parent issuer as well, which is why the Kubernetes API server config above uses that.
+Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration`](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://https://gaz.csp-vidm-prod.com`.
+It is for this reason that the `--skip-oidc-discovery=true` option is required above and we need to manually set each `oidc-issuer`, `login-url`, `redeem-url` and `oidc-jwks-url` instead of relying on the automatic discovery.
 
 Once deployed, if you experience issues logging in, please refer to the [Debugging auth failures when using OIDC](#debugging-auth-failures-when-using-oidc) section below.
 
