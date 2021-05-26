@@ -43,12 +43,22 @@ I0514 14:14:52.975884 1932386 server.go:129] Successfully registered plugin "/ho
 I0511 11:39:56.444553 4116647 server.go:25] Starting server on :50051
 ```
 
-You can then verify the (currently stubbed) configured plugins endpoint via http:
+You can then verify the configured plugins endpoint via http:
 
 ```bash
-curl http://localhost:50051/core/plugins/v1alpha1/configured-plugins
-
-{"plugins":["foobar.package.v1"]}
+curl -s http://localhost:50051/core/plugins/v1alpha1/configured-plugins | jq .
+{
+  "plugins": [
+    {
+      "name": "fluxv2.packages",
+      "version": "v1alpha1"
+    },
+    {
+      "name": "kapp_controller.packages",
+      "version": "v1alpha1"
+    }
+  ]
+}
 ```
 
 or via gRPC (using the [grpcurl tool](https://github.com/fullstorydev/grpcurl)):
@@ -57,7 +67,14 @@ or via gRPC (using the [grpcurl tool](https://github.com/fullstorydev/grpcurl)):
 grpcurl -plaintext localhost:50051 kubeappsapis.core.plugins.v1alpha1.PluginsService.GetConfiguredPlugins
 {
   "plugins": [
-    "foobar.package.v1"
+    {
+      "name": "fluxv2.packages",
+      "version": "v1alpha1"
+    },
+    {
+      "name": "kapp_controller.packages",
+      "version": "v1alpha1"
+    }
   ]
 }
 ```
