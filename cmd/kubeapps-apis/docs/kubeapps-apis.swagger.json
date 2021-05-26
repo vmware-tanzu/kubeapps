@@ -1,8 +1,14 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "kubeappsapis/core/packages/v1alpha1/packages.proto",
-    "version": "version not set"
+    "title": "Kubeapps API",
+    "description": "[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)\n \n [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).\n - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
+    "termsOfService": "https://github.com/kubeapps/kubeapps/blob/master/LICENSE",
+    "version": "0.1.0",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
   },
   "tags": [
     {
@@ -14,6 +20,11 @@
     {
       "name": "PackagesService"
     }
+  ],
+  "host": "127.0.0.1:8080",
+  "basePath": "/",
+  "schemes": [
+    "http"
   ],
   "consumes": [
     "application/json"
@@ -47,7 +58,8 @@
     },
     "/plugins/fluxv2/packages/v1alpha1/packagerepositories": {
       "get": {
-        "operationId": "PackagesService_GetPackageRepositories",
+        "summary": "GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin",
+        "operationId": "Fluxv2_PackagesService_GetPackageRepositories",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -79,13 +91,14 @@
           }
         ],
         "tags": [
-          "PackagesService"
+          "Fluxv2_PackagesService"
         ]
       }
     },
     "/plugins/fluxv2/packages/v1alpha1/packages": {
       "get": {
-        "operationId": "PackagesService_GetAvailablePackages",
+        "summary": "GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin",
+        "operationId": "Fluxv2_PackagesService_GetAvailablePackages",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -117,13 +130,14 @@
           }
         ],
         "tags": [
-          "PackagesService"
+          "Fluxv2_PackagesService"
         ]
       }
     },
     "/plugins/kapp_controller/packages/v1alpha1/packagerepositories": {
       "get": {
-        "operationId": "PackagesService_GetPackageRepositories",
+        "summary": "GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin",
+        "operationId": "kappController_PackagesService_GetPackageRepositories",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -155,13 +169,14 @@
           }
         ],
         "tags": [
-          "PackagesService"
+          "kappController_PackagesService"
         ]
       }
     },
     "/plugins/kapp_controller/packages/v1alpha1/packages": {
       "get": {
-        "operationId": "PackagesService_GetAvailablePackages",
+        "summary": "GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin",
+        "operationId": "kappController_PackagesService_GetAvailablePackages",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -193,7 +208,7 @@
           }
         ],
         "tags": [
-          "PackagesService"
+          "kappController_PackagesService"
         ]
       }
     }
@@ -203,10 +218,14 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The fully qualified name of the package repository.",
+          "title": "Package repository name"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
         }
       },
       "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace."
@@ -243,18 +262,26 @@
     },
     "v1alpha1AvailablePackage": {
       "type": "object",
+      "example": {
+        "name": "app1.example.com",
+        "version": "9.10.09",
+        "iconUrl": ""
+      },
       "properties": {
         "name": {
           "type": "string",
-          "description": "The fully qualified name of the package."
+          "description": "The fully qualified name of the package.",
+          "title": "Available package name"
         },
         "version": {
           "type": "string",
-          "description": "The version of the package in the repository."
+          "description": "The version of the package in the repository.",
+          "title": "Available package version"
         },
         "iconUrl": {
           "type": "string",
-          "description": "A url for an icon."
+          "description": "A url for an icon.",
+          "title": "Available package icon"
         },
         "repository": {
           "$ref": "#/definitions/AvailablePackagePackageRepositoryReference",
@@ -265,54 +292,122 @@
     },
     "v1alpha1GetAvailablePackagesResponse": {
       "type": "object",
+      "example": {
+        "packages": [
+          {
+            "name": "app1.example.com",
+            "version": "9.10.09",
+            "iconUrl": ""
+          }
+        ]
+      },
       "properties": {
         "packages": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1alpha1AvailablePackage"
-          }
+          },
+          "title": "List of AvailablePackage"
         }
-      }
+      },
+      "description": "Response for GetAvailablePackages",
+      "title": "GetAvailablePackages"
     },
     "v1alpha1GetConfiguredPluginsResponse": {
       "type": "object",
+      "example": {
+        "plugins": [
+          {
+            "name": "kapp_controller.packages",
+            "version": "v1alpha1"
+          }
+        ]
+      },
       "properties": {
         "plugins": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "$ref": "#/definitions/v1alpha1Plugin"
+          },
+          "title": "List of Plugin"
         }
-      }
+      },
+      "description": "Response for GetConfiguredPlugins",
+      "title": "GetConfiguredPluginsResponse"
     },
     "v1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
+      "example": {
+        "repositories": [
+          {
+            "name": "repo-name.example.com",
+            "namespace": "",
+            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+          }
+        ]
+      },
       "properties": {
         "repositories": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1alpha1PackageRepository"
-          }
+          },
+          "title": "List of PackageRepository"
         }
-      }
+      },
+      "description": "Response for GetPackageRepositories",
+      "title": "GetPackageRepositories"
     },
     "v1alpha1PackageRepository": {
       "type": "object",
+      "example": {
+        "name": "repo-name.example.com",
+        "namespace": "",
+        "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+      },
       "properties": {
         "name": {
           "type": "string",
-          "description": "The name identifying package repository on the cluster."
+          "description": "The name identifying package repository on the cluster.",
+          "title": "Package repository name"
         },
         "namespace": {
           "type": "string",
-          "description": "An optional namespace for namespaced package repositories."
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
         },
         "url": {
           "type": "string",
-          "description": "A url identifying the package repository location."
+          "description": "A url identifying the package repository location.",
+          "title": "Package repository URL"
         }
       },
       "description": "A PackageRepository defines a repository of packages for installation."
+    },
+    "v1alpha1Plugin": {
+      "type": "object",
+      "example": {
+        "name": "kapp_controller.packages",
+        "version": "v1alpha1"
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+          "title": "Plugin name"
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the plugin, such as v1alpha1",
+          "title": "Plugin version"
+        }
+      },
+      "description": "A plugin can implement multiple services and multiple versions of a service.",
+      "title": "Plugin"
     }
+  },
+  "externalDocs": {
+    "description": "Kuebapps GitHub repository",
+    "url": "https://github.com/kubeapps/kubeapps"
   }
 }

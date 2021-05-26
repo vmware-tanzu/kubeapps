@@ -19,7 +19,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PackagesServiceClient interface {
+	// GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin
 	GetAvailablePackages(ctx context.Context, in *v1alpha1.GetAvailablePackagesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackagesResponse, error)
+	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
 	GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error)
 }
 
@@ -53,7 +55,9 @@ func (c *packagesServiceClient) GetPackageRepositories(ctx context.Context, in *
 // All implementations must embed UnimplementedPackagesServiceServer
 // for forward compatibility
 type PackagesServiceServer interface {
+	// GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin
 	GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error)
+	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
 	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
 	mustEmbedUnimplementedPackagesServiceServer()
 }
