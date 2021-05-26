@@ -109,7 +109,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			_, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			response, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -117,6 +117,14 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
+
+				if got == codes.OK {
+					if len(response.Packages) != 0 {
+						t.Errorf("unexpected response: %v", response)
+					} else if response != nil {
+						t.Errorf("unexpected response: %v", response)
+					}
+				}
 			}
 		})
 	}
