@@ -114,7 +114,7 @@ authProxy:
     - --oidc-jwks-url=https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks
 ```
 
-Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration`](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://https://gaz.csp-vidm-prod.com`.
+Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration`](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://gaz.csp-vidm-prod.com`.
 It is for this reason that the `--skip-oidc-discovery=true` option is required above and we need to manually set each `oidc-issuer`, `login-url`, `redeem-url` and `oidc-jwks-url` instead of relying on the automatic discovery.
 
 Once deployed, if you experience issues logging in, please refer to the [Debugging auth failures when using OIDC](#debugging-auth-failures-when-using-oidc) section below.
