@@ -130,32 +130,9 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 			continue
 		}
 
-		// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
-		conditions, found, err := unstructured.NestedSlice(repoUnstructured.Object, "status", "conditions")
-		if err != nil || !found {
-			log.Infof("Skipping packages for repository [%s] because it has not reached 'Ready' state:%v\n%v", name, err, repoUnstructured.Object)
-			continue
-		}
-
-		ready := false
-		for _, conditionUnstructured := range conditions {
-			if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-				if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-					if statusString, ok := conditionAsMap["status"]; ok && statusString == "True" {
-						// note that the current doc on https://fluxcd.io/docs/components/source/helmrepositories/
-						// incorrectly states the example status reason as "IndexationSucceeded".
-						// The actual string is "IndexationSucceed"
-						if reasonString, ok := conditionAsMap["reason"]; ok && reasonString == "IndexationSucceed" {
-							ready = true
-							break
-						}
-					}
-				}
-			}
-		}
-
-		if !ready {
-			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state: %v", name, repoUnstructured.Object)
+		ready, err := isRepoReady(&repoUnstructured)
+		if err != nil || !ready {
+			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%v", name, err, repoUnstructured.Object)
 			continue
 		}
 
@@ -231,6 +208,32 @@ func (s *Server) getHelmRepos(ctx context.Context) (*unstructured.UnstructuredLi
 		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
 	}
+}
+
+func isRepoReady(repoUnstructured *unstructured.Unstructured) (bool, error) {
+	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
+	conditions, found, err := unstructured.NestedSlice(repoUnstructured.Object, "status", "conditions")
+	if err != nil {
+		return false, err
+	} else if !found {
+		return false, nil
+	}
+
+	for _, conditionUnstructured := range conditions {
+		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
+			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
+				if statusString, ok := conditionAsMap["status"]; ok && statusString == "True" {
+					// note that the current doc on https://fluxcd.io/docs/components/source/helmrepositories/
+					// incorrectly states the example status reason as "IndexationSucceeded".
+					// The actual string is "IndexationSucceed"
+					if reasonString, ok := conditionAsMap["reason"]; ok && reasonString == "IndexationSucceed" {
+						return true, nil
+					}
+				}
+			}
+		}
+	}
+	return false, nil
 }
 
 func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositoryReference, indexURL string) ([]*corev1.AvailablePackage, error) {

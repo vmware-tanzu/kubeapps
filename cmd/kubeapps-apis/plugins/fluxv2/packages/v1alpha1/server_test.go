@@ -72,7 +72,11 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					newRepo("test", map[string]interface{}{}, map[string]interface{}{}),
+					newRepo("test", map[string]interface{}{
+						"foo": "bar",
+					}, map[string]interface{}{
+						"zot": "xyz",
+					}),
 				), nil
 			},
 			statusCode: codes.OK,
