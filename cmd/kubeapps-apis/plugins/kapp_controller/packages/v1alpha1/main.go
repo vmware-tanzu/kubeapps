@@ -22,6 +22,17 @@ import (
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 )
 
+// Set the pluginDetail once during a module init function so the single struct
+// can be used throughout the plugin.
+var pluginDetail plugins.Plugin
+
+func init() {
+	pluginDetail = plugins.Plugin{
+		Name:    "kapp_controller.packages",
+		Version: "v1alpha1",
+	}
+}
+
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
 	v1alpha1.RegisterPackagesServiceServer(s, NewServer())
@@ -35,8 +46,5 @@ func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux,
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
 func GetPluginDetail() *plugins.Plugin {
-	return &plugins.Plugin{
-		Name:    "kapp_controller.packages",
-		Version: "v1alpha1",
-	}
+	return &pluginDetail
 }

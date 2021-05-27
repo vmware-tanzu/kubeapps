@@ -28,6 +28,7 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 	log "k8s.io/klog/v2"
 )
 
@@ -45,7 +46,7 @@ func Serve(port int, pluginDirs []string) {
 	defer cancel()
 	gwArgs := gwHandlerArgs{
 		ctx:         ctx,
-		mux:         runtime.NewServeMux(),
+		mux:         gatewayMux(),
 		addr:        listenAddr,
 		dialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
@@ -94,4 +95,18 @@ type gwHandlerArgs struct {
 	mux         *runtime.ServeMux
 	addr        string
 	dialOptions []grpc.DialOption
+}
+
+// Create a gateway mux that does not emit unpopulated fields.
+func gatewayMux() *runtime.ServeMux {
+	return runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				EmitUnpopulated: false,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		}),
+	)
 }
