@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1alpha1_1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1_0 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -32,54 +32,62 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-var (
-	filter_PackagesService_GetAvailablePackages_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
-func request_PackagesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackagesRequest
+func request_KappControllerPackagesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	stream, err := client.GetAvailablePackages(ctx)
+	if err != nil {
+		grpclog.Infof("Failed to start streaming: %v", err)
+		return nil, metadata, err
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PackagesService_GetAvailablePackages_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	dec := marshaler.NewDecoder(req.Body)
+	for {
+		var protoReq v1alpha1_0.GetAvailablePackagesRequest
+		err = dec.Decode(&protoReq)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			grpclog.Infof("Failed to decode request: %v", err)
+			return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+		}
+		if err = stream.Send(&protoReq); err != nil {
+			if err == io.EOF {
+				break
+			}
+			grpclog.Infof("Failed to send request: %v", err)
+			return nil, metadata, err
+		}
 	}
 
-	msg, err := client.GetAvailablePackages(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	if err := stream.CloseSend(); err != nil {
+		grpclog.Infof("Failed to terminate client stream: %v", err)
+		return nil, metadata, err
+	}
+	header, err := stream.Header()
+	if err != nil {
+		grpclog.Infof("Failed to get header from client: %v", err)
+		return nil, metadata, err
+	}
+	metadata.HeaderMD = header
+
+	msg, err := stream.CloseAndRecv()
+	metadata.TrailerMD = stream.Trailer()
 	return msg, metadata, err
 
 }
 
-func local_request_PackagesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, server PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackagesRequest
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PackagesService_GetAvailablePackages_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.GetAvailablePackages(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
 var (
-	filter_PackagesService_GetPackageRepositories_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_KappControllerPackagesService_GetPackageRepositories_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_PackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetPackageRepositoriesRequest
+func request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq v1alpha1_0.GetPackageRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PackagesService_GetPackageRepositories_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_KappControllerPackagesService_GetPackageRepositories_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -88,14 +96,14 @@ func request_PackagesService_GetPackageRepositories_0(ctx context.Context, marsh
 
 }
 
-func local_request_PackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetPackageRepositoriesRequest
+func local_request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq v1alpha1_0.GetPackageRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PackagesService_GetPackageRepositories_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_KappControllerPackagesService_GetPackageRepositories_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -104,47 +112,31 @@ func local_request_PackagesService_GetPackageRepositories_0(ctx context.Context,
 
 }
 
-// RegisterPackagesServiceHandlerServer registers the http handlers for service PackagesService to "mux".
-// UnaryRPC     :call PackagesServiceServer directly.
+// RegisterKappControllerPackagesServiceHandlerServer registers the http handlers for service KappControllerPackagesService to "mux".
+// UnaryRPC     :call KappControllerPackagesServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterPackagesServiceHandlerFromEndpoint instead.
-func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server PackagesServiceServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterKappControllerPackagesServiceHandlerFromEndpoint instead.
+func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server KappControllerPackagesServiceServer) error {
 
-	mux.Handle("GET", pattern_PackagesService_GetAvailablePackages_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackagesService/GetAvailablePackages")
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_PackagesService_GetAvailablePackages_0(rctx, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_PackagesService_GetAvailablePackages_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
+	mux.Handle("GET", pattern_KappControllerPackagesService_GetAvailablePackages_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
+		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+		return
 	})
 
-	mux.Handle("GET", pattern_PackagesService_GetPackageRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_KappControllerPackagesService_GetPackageRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackagesService/GetPackageRepositories")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_GetPackageRepositories_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetPackageRepositories_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -152,16 +144,16 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_PackagesService_GetPackageRepositories_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_KappControllerPackagesService_GetPackageRepositories_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterPackagesServiceHandlerFromEndpoint is same as RegisterPackagesServiceHandler but
+// RegisterKappControllerPackagesServiceHandlerFromEndpoint is same as RegisterKappControllerPackagesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterPackagesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterKappControllerPackagesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -181,59 +173,59 @@ func RegisterPackagesServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		}()
 	}()
 
-	return RegisterPackagesServiceHandler(ctx, mux, conn)
+	return RegisterKappControllerPackagesServiceHandler(ctx, mux, conn)
 }
 
-// RegisterPackagesServiceHandler registers the http handlers for service PackagesService to "mux".
+// RegisterKappControllerPackagesServiceHandler registers the http handlers for service KappControllerPackagesService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterPackagesServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterPackagesServiceHandlerClient(ctx, mux, NewPackagesServiceClient(conn))
+func RegisterKappControllerPackagesServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterKappControllerPackagesServiceHandlerClient(ctx, mux, NewKappControllerPackagesServiceClient(conn))
 }
 
-// RegisterPackagesServiceHandlerClient registers the http handlers for service PackagesService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "PackagesServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "PackagesServiceClient"
+// RegisterKappControllerPackagesServiceHandlerClient registers the http handlers for service KappControllerPackagesService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "KappControllerPackagesServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "KappControllerPackagesServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "PackagesServiceClient" to call the correct interceptors.
-func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client PackagesServiceClient) error {
+// "KappControllerPackagesServiceClient" to call the correct interceptors.
+func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client KappControllerPackagesServiceClient) error {
 
-	mux.Handle("GET", pattern_PackagesService_GetAvailablePackages_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_KappControllerPackagesService_GetAvailablePackages_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackagesService/GetAvailablePackages")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackages")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetAvailablePackages_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetAvailablePackages_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PackagesService_GetAvailablePackages_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_KappControllerPackagesService_GetAvailablePackages_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PackagesService_GetPackageRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_KappControllerPackagesService_GetPackageRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackagesService/GetPackageRepositories")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetPackageRepositories_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetPackageRepositories_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PackagesService_GetPackageRepositories_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_KappControllerPackagesService_GetPackageRepositories_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -241,13 +233,13 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_PackagesService_GetAvailablePackages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 2}, []string{"plugins", "kapp_controller", "packages", "v1alpha1"}, ""))
+	pattern_KappControllerPackagesService_GetAvailablePackages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 2}, []string{"plugins", "kapp_controller", "packages", "v1alpha1"}, ""))
 
-	pattern_PackagesService_GetPackageRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "packagerepositories"}, ""))
+	pattern_KappControllerPackagesService_GetPackageRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "packagerepositories"}, ""))
 )
 
 var (
-	forward_PackagesService_GetAvailablePackages_0 = runtime.ForwardResponseMessage
+	forward_KappControllerPackagesService_GetAvailablePackages_0 = runtime.ForwardResponseMessage
 
-	forward_PackagesService_GetPackageRepositories_0 = runtime.ForwardResponseMessage
+	forward_KappControllerPackagesService_GetPackageRepositories_0 = runtime.ForwardResponseMessage
 )

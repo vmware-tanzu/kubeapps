@@ -15,10 +15,10 @@
       "name": "PluginsService"
     },
     {
-      "name": "PackagesService"
+      "name": "FluxV2PackagesService"
     },
     {
-      "name": "PackagesService"
+      "name": "KappControllerPackagesService"
     }
   ],
   "host": "127.0.0.1:8080",
@@ -59,7 +59,7 @@
     "/plugins/fluxv2/packages/v1alpha1/packagerepositories": {
       "get": {
         "summary": "GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin",
-        "operationId": "Fluxv2_PackagesService_GetPackageRepositories",
+        "operationId": "FluxV2PackagesService_GetPackageRepositories",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -91,14 +91,14 @@
           }
         ],
         "tags": [
-          "Fluxv2_PackagesService"
+          "FluxV2PackagesService"
         ]
       }
     },
     "/plugins/fluxv2/packages/v1alpha1/packages": {
       "get": {
         "summary": "GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin",
-        "operationId": "Fluxv2_PackagesService_GetAvailablePackages",
+        "operationId": "FluxV2PackagesService_GetAvailablePackages",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -130,14 +130,14 @@
           }
         ],
         "tags": [
-          "Fluxv2_PackagesService"
+          "FluxV2PackagesService"
         ]
       }
     },
     "/plugins/kapp_controller/packages/v1alpha1/packagerepositories": {
       "get": {
         "summary": "GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin",
-        "operationId": "kappController_PackagesService_GetPackageRepositories",
+        "operationId": "KappControllerPackagesService_GetPackageRepositories",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -169,14 +169,14 @@
           }
         ],
         "tags": [
-          "kappController_PackagesService"
+          "KappControllerPackagesService"
         ]
       }
     },
     "/plugins/kapp_controller/packages/v1alpha1/packages": {
       "get": {
         "summary": "GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin",
-        "operationId": "kappController_PackagesService_GetAvailablePackages",
+        "operationId": "KappControllerPackagesService_GetAvailablePackages",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -208,7 +208,7 @@
           }
         ],
         "tags": [
-          "kappController_PackagesService"
+          "KappControllerPackagesService"
         ]
       }
     }

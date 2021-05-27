@@ -6,15 +6,9 @@ import "google/api/annotations.proto";
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-service PackagesService {
+service KappControllerPackagesService {
   // GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin
-  rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      operation_id: "kappController_PackagesService_GetAvailablePackages";
-      tags: [
-        "kappController_PackagesService"
-      ];
-    };
+  rpc GetAvailablePackages(stream kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
     option (google.api.http) = {
       get: "/plugins/kapp_controller/packages/v1alpha1/packages"
     };
@@ -22,12 +16,6 @@ service PackagesService {
   
   // GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
   rpc GetPackageRepositories(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse) {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      operation_id: "kappController_PackagesService_GetPackageRepositories";
-      tags: [
-        "kappController_PackagesService"
-      ];
-    };
     option (google.api.http) = {
       get: "/plugins/kapp_controller/packages/v1alpha1/packagerepositories"
     };
