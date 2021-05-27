@@ -51,7 +51,7 @@ const (
 
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
-	v1alpha1.UnimplementedPackagesServiceServer
+	v1alpha1.UnimplementedKappControllerPackagesServiceServer
 
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
