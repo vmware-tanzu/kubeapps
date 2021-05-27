@@ -286,6 +286,10 @@
         "repository": {
           "$ref": "#/definitions/AvailablePackagePackageRepositoryReference",
           "title": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository."
         }
       },
       "description": "An AvailablePackage defines a package available for installation."
@@ -380,6 +384,10 @@
           "type": "string",
           "description": "A url identifying the package repository location.",
           "title": "Package repository URL"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository."
         }
       },
       "description": "A PackageRepository defines a repository of packages for installation."
