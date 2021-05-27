@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -49,6 +50,19 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
+		},
+		{
+			name: "returns without error if response status does not contain conditions",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+					},
+					newRepo("test", nil, nil),
+				), nil
+			},
+			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if response status does not contain conditions",
@@ -91,7 +105,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					newRepo("test", map[string]interface{}{}, map[string]interface{}{
+					newRepo("test", nil, map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
 								"type":   "Ready",
@@ -131,17 +145,34 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 }
 
 func newRepo(name string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-			"kind":       fluxHelmRepository,
-			"metadata": map[string]interface{}{
-				"name": name,
-			},
-			"spec":   spec,
-			"status": status,
+	obj := map[string]interface{}{
+		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+		"kind":       fluxHelmRepository,
+		"metadata": map[string]interface{}{
+			"name": name,
 		},
 	}
+
+	if spec != nil {
+		obj["spec"] = spec
+	}
+
+	if status != nil {
+		obj["status"] = status
+	}
+
+	return &unstructured.Unstructured{
+		Object: obj,
+	}
+}
+
+// repositoryFromSpecs takes a map of specs keyed by object name converting them to runtime objects.
+func newRepos(specs map[string]map[string]interface{}) []runtime.Object {
+	repos := []runtime.Object{}
+	for name, spec := range specs {
+		repos = append(repos, newRepo(name, spec, nil))
+	}
+	return repos
 }
 
 func TestGetAvailablePackages(t *testing.T) {
@@ -218,13 +249,87 @@ func TestGetAvailablePackages(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, cmp.Comparer(pkgEqual)) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmp.Comparer(pkgEqual)))
+			cmpOption := cmpopts.IgnoreUnexported(corev1.AvailablePackage{}, corev1.AvailablePackage_PackageRepositoryReference{})
+			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, cmpOption) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOption))
 			}
 		})
 	}
 }
 
-func pkgEqual(a, b *corev1.AvailablePackage) bool {
-	return a.Name == b.Name && a.Version == b.Version && a.IconUrl == b.IconUrl && a.Repository.Name == b.Repository.Name
+func TestGetPackageRepositories(t *testing.T) {
+	testCases := []struct {
+		name                        string
+		request                     *corev1.GetPackageRepositoriesRequest
+		repoSpecs                   map[string]map[string]interface{}
+		expectedPackageRepositories []*corev1.PackageRepository
+		statusCode                  codes.Code
+	}{
+		{
+			name:    "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
+			request: &corev1.GetPackageRepositoriesRequest{},
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"foo": "bar",
+				},
+			},
+			statusCode: codes.Internal,
+		},
+		{
+			name:    "returns expected repositories",
+			request: &corev1.GetPackageRepositoriesRequest{},
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"url": "https://charts.bitnami.com/bitnami",
+				},
+				"repo-2": {
+					"url": "https://charts.helm.sh/stable",
+				},
+			},
+			expectedPackageRepositories: []*corev1.PackageRepository{
+				{
+					Name: "repo-1",
+					Url:  "https://charts.bitnami.com/bitnami",
+				},
+				{
+					Name: "repo-2",
+					Url:  "https://charts.helm.sh/stable",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := Server{
+				clientGetter: func(context.Context) (dynamic.Interface, error) {
+					return fake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+						},
+						newRepos(tc.repoSpecs)...,
+					), nil
+				},
+			}
+
+			response, err := s.GetPackageRepositories(context.Background(), &corev1.GetPackageRepositoriesRequest{})
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// Only check the response for OK status.
+			if tc.statusCode == codes.OK {
+				if response == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					cmpOption := cmpopts.IgnoreUnexported(corev1.PackageRepository{})
+					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, cmpOption) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOption))
+					}
+				}
+			}
+		})
+	}
 }
