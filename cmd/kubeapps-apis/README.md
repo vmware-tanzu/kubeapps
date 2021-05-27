@@ -95,7 +95,7 @@ When you deploy or upgrade Kubeapps, be sure to include the values file at `docs
 
 ```bash
 kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=kubeapps/kubeapps-apis:dev1 --record
-``` 
+```
 
 With the kubeapps-apis service running, you can then test the packages endpoints in cluster by port-forwarding the service in one terminal:
 
@@ -122,7 +122,6 @@ $ curl -s http://localhost:8080/plugins/kapp_controller/packages/v1alpha1/packag
   "repositories": [
     {
       "name": "repo-name.example.com",
-      "namespace": "",
       "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
     }
   ]

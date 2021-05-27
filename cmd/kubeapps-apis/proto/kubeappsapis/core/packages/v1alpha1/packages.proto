@@ -2,6 +2,8 @@ syntax = "proto3";
 package kubeappsapis.core.packages.v1alpha1;
 option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
 
+import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
+
 // The core.packages defines the request and response types for API calls
 // interacting with packages.
 
@@ -55,6 +57,9 @@ message AvailablePackage {
   // An optional package repository reference where this package is located. Not
   // all plugins may support this back reference (eg. kapp-controller)
   PackageRepositoryReference repository = 4;
+
+  // The plugin used to interact with this package repository.
+  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 5;
 }
 
 message GetAvailablePackagesResponse {
@@ -70,7 +75,7 @@ message GetPackageRepositoriesRequest {
   // are requested, when supported by the packaging format.
   string namespace = 2;
 
-  // TODO: Add standard filters.
+  // TODO: Add standard filters. Potentially filter by plugin.
 }
 
 // A PackageRepository defines a repository of packages for installation.
@@ -83,6 +88,9 @@ message PackageRepository {
 
   // A url identifying the package repository location.
   string url = 3;
+
+  // The plugin used to interact with this package repository.
+  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 4;
 
   // TODO: Other fields such as type, status... TBD.
 }
