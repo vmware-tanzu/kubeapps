@@ -24,7 +24,7 @@ import (
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
-	v1alpha1.RegisterPackagesServiceServer(s, &Server{})
+	v1alpha1.RegisterPackagesServiceServer(s, NewServer())
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
