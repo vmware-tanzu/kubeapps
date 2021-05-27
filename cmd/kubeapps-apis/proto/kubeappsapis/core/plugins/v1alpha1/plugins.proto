@@ -41,6 +41,8 @@ message GetConfiguredPluginsResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     example: '{"plugins": [{"name": "kapp_controller.packages", "version": "v1alpha1"}]}'
   };
+  // Plugins
+  //
   // List of Plugin
   repeated Plugin plugins = 1;
 }

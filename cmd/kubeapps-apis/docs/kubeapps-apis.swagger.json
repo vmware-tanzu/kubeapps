@@ -228,7 +228,8 @@
           "title": "Package repository namespace"
         }
       },
-      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace."
+      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace.",
+      "title": "PackageRepositoryReference"
     },
     "protobufAny": {
       "type": "object",
@@ -285,14 +286,17 @@
         },
         "repository": {
           "$ref": "#/definitions/AvailablePackagePackageRepositoryReference",
-          "title": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)"
+          "description": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)",
+          "title": "Package repository reference"
         },
         "plugin": {
           "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository."
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
         }
       },
-      "description": "An AvailablePackage defines a package available for installation."
+      "description": "An AvailablePackage defines a package available for installation.",
+      "title": "AvailablePackage"
     },
     "v1alpha1GetAvailablePackagesResponse": {
       "type": "object",
@@ -333,7 +337,8 @@
           "items": {
             "$ref": "#/definitions/v1alpha1Plugin"
           },
-          "title": "List of Plugin"
+          "description": "List of Plugin",
+          "title": "Plugins"
         }
       },
       "description": "Response for GetConfiguredPlugins",
@@ -356,7 +361,8 @@
           "items": {
             "$ref": "#/definitions/v1alpha1PackageRepository"
           },
-          "title": "List of PackageRepository"
+          "description": "List of PackageRepository",
+          "title": "Repositories"
         }
       },
       "description": "Response for GetPackageRepositories",
@@ -387,10 +393,12 @@
         },
         "plugin": {
           "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository."
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
         }
       },
-      "description": "A PackageRepository defines a repository of packages for installation."
+      "description": "A PackageRepository defines a repository of packages for installation.",
+      "title": "PackageRepository"
     },
     "v1alpha1Plugin": {
       "type": "object",

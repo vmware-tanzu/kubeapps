@@ -3,8 +3,8 @@ package kubeappsapis.core.packages.v1alpha1;
 option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
 
 import "google/api/annotations.proto";
-import "protoc-gen-openapiv2/options/annotations.proto";
 import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 // The core.packages defines the request and response types for API calls
 // interacting with packages.
@@ -42,6 +42,8 @@ message GetAvailablePackagesRequest {
   // TODO: Add standard filters.
 }
 
+// AvailablePackage
+// 
 // An AvailablePackage defines a package available for installation.
 message AvailablePackage {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -62,7 +64,9 @@ message AvailablePackage {
   //
   // A url for an icon.
   string icon_url = 3;
-
+  
+  // PackageRepositoryReference
+  //
   // A PackageRepository is identified by a fully qualified name and
   // optionally a specific namespace.
   message PackageRepositoryReference {
@@ -76,10 +80,14 @@ message AvailablePackage {
     // An optional namespace for namespaced package repositories.
     string namespace = 2;
   }
+  // Package repository reference
+  //
   // An optional package repository reference where this package is located. Not
   // all plugins may support this back reference (eg. kapp-controller)
   PackageRepositoryReference repository = 4;
 
+  // Package repository plugin
+  //
   // The plugin used to interact with this package repository.
   kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 5;
 }
@@ -102,7 +110,7 @@ message GetPackageRepositoriesRequest {
   // A cluster name can be provided if multiple clusters are configured,
   // otherwise the current cluster will be assumed.
   string cluster = 1;
-  
+
   // A namespace can be provided if the package repositories for a specific namespace
   // are requested, when supported by the packaging format.
   string namespace = 2;
@@ -110,6 +118,8 @@ message GetPackageRepositoriesRequest {
   // TODO: Add standard filters. Potentially filter by plugin.
 }
 
+// PackageRepository
+//
 // A PackageRepository defines a repository of packages for installation.
 message PackageRepository {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -131,6 +141,8 @@ message PackageRepository {
   // A url identifying the package repository location.
   string url = 3;
 
+  // Package repository plugin
+  //
   // The plugin used to interact with this package repository.
   kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 4;
 
@@ -144,7 +156,8 @@ message GetPackageRepositoriesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     example: '{"repositories": [{"name": "repo-name.example.com", "namespace": "", "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"}]}'
   };
-
+  // Repositories
+  //
   // List of PackageRepository
   repeated PackageRepository repositories = 1;
 }

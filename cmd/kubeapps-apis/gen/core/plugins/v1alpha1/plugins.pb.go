@@ -135,6 +135,8 @@ type GetConfiguredPluginsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Plugins
+	//
 	// List of Plugin
 	Plugins []*Plugin `protobuf:"bytes,1,rep,name=plugins,proto3" json:"plugins,omitempty"`
 }
