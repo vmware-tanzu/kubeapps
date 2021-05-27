@@ -49,13 +49,6 @@ func TestGetClient(t *testing.T) {
 			statusCode: codes.FailedPrecondition,
 		},
 		{
-			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return nil, fmt.Errorf("Bang!")
-			},
-			statusCode: codes.FailedPrecondition,
-		},
-		{
 			name: "returns client without error when configured correctly",
 			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
