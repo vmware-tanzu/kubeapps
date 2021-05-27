@@ -107,6 +107,7 @@ authProxy:
     # 'gaz.csp-vidm-prod.com' with 'gaz-preview.csp-vidm-prod.com'
     # 'console.cloud.vmware.com' with 'console-stg.cloud.vmware.com/'
     - --scope=openid email group_names
+    - --cookie-refresh=2m
     - --skip-oidc-discovery=true
     - --oidc-issuer-url=https://gaz.csp-vidm-prod.com
     - --login-url=https://console.cloud.vmware.com/csp/gateway/discovery
@@ -232,6 +233,7 @@ spec:
         - -client-secret=$AUTH_PROXY_CLIENT_SECRET
         - -oidc-issuer-url=$AUTH_PROXY_DISCOVERY_URL
         - -cookie-secret=$AUTH_PROXY_COOKIE_SECRET
+        - -cookie-refresh=2m
         - -upstream=http://localhost:8080/
         - -http-address=0.0.0.0:3000
         - -email-domain="*"
@@ -359,3 +361,11 @@ Another common point of confusion is the `--oidc-username-prefix` option specifi
 ### Checking the logs of your Kubernetes API server
 
 Finally, if none of the above are relevant to your issue, you can check the logs of the Kubernetes API server deployment for OIDC-related lines at the time of your login attempt. These may show a configuration issue with the API server itself.
+
+### User automatically logged out from Kubeapps Console
+
+When using the default auth proxy, some users may experience the behavior where they are automatically logged out from the console.
+The default auth proxy is not configured to refresh the access/openid token and the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5mn.
+
+To avoid this issue, add the option `--cookie-refresh=2m` to `authProxy.additionalFlags` in your values file. The duration for the refresh must be lesser than the access/openid expiration time configured in the OAuth2/OIDC provider.
+OAuth2 Proxy has some limitations regarding which providers support this option, see [OAuth2 Proxy Configuration Overview](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#footnote1).
