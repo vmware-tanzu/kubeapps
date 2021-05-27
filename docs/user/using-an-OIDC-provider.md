@@ -86,7 +86,7 @@ Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthen
 kind: ClusterConfiguration
 apiServer:
   extraArgs:
-    oidc-issuer-url: https://gaz.csp-vidm-prod.com # the staging endpoint is 'https://gaz.csp-vidm-prod.com'
+    oidc-issuer-url: https://gaz.csp-vidm-prod.com # the staging endpoint is 'https://gaz-preview.csp-vidm-prod.com'
     oidc-client-id: <your client id from above>
     oidc-username-claim: email
     oidc-groups-claim: group_names
