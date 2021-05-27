@@ -10,7 +10,6 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 // It holds API metainformation, security definitions, formtas and default responses to be added to each endpoint.
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	host: "127.0.0.1:8080"
-	base_path: "/"
 	info: {
 		title: "Kubeapps API";
 		version: "0.1.0";
@@ -29,7 +28,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	// schemes: HTTPS;
 	consumes: "application/json";
 	produces: "application/json";
-	
+
 	// TODO(agamez): enable after https://github.com/kubeapps/kubeapps/issues/2851
 	// security: {
 	// 	security_requirement: {
