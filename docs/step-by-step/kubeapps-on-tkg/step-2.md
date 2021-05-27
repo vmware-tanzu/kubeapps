@@ -81,10 +81,15 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
 
 3. Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows:
 
-   - Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api`.
    - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
    - Replace `CLIENT-SECRET` with the application secret obtained from the JSON file in the previous step.
-   - Replace `COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string).
+   - Replace `COOKIE-SECRET` with a seed string for secure cookies (should be a 16-, 24-, or 32-byte string). Have a look at the [OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#generating-a-cookie-secret) for additional information.
+   - Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://gaz.csp-vidm-prod.com`.
+   - Replace the `OIDC-LOGIN-URL` with the login URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/discovery`.
+   - Replace the `OIDC-REDEEM-URL` with the token redeem URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token`.
+   - Replace the `OIDC-JWKS-URL` with the JSON Web Key Set URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks`.
+
+  > **TIP**: Remember that any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([CSP example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) where you will able to find the required endpoints in this step.
 
    ```yaml
    authProxy:
@@ -94,13 +99,16 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
      clientSecret: CLIENT-SECRET
      cookieSecret: COOKIE-SECRET
      additionalFlags:
-       - --oidc-issuer-url=OIDC-ISSUER-URL
        - --scope=openid email groups
        - --set-authorization-header=true
-       # - --insecure-oidc-skip-issuer-verification=true
+       - --skip-oidc-discovery=true
+       - --oidc-issuer-url=OIDC-ISSUER-URL # In CSP: https://gaz.csp-vidm-prod.com
+       - --login-url=OIDC-LOGIN-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/discovery
+       - --redeem-url=OIDC-REDEEM-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/am/api/auth/token
+       - --oidc-jwks-url=OIDC-JWKS-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks
    ```
 
-   > **NOTE**: In some providers whose issuer URL does not match the token URL (such as VMware CSP), the flag `--insecure-oidc-skip-issuer-verification=true` is currently required. Be aware of the security concerns of enabling this flag, which are discussed in the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
+   > **TIP**: In some providers whose issuer URL does match the token URL, the flag `--skip-oidc-discovery=true` can be removed. Instead, just setting the `oidc-issuer-url` will perform the automatic discovery of the rest of the endpoints. Further information at the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
 
 At this point, Kubeapps is configured to use Pinniped for authentication.
 
