@@ -24,7 +24,6 @@ import (
 	"sort"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	// packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 
@@ -163,7 +162,7 @@ func (s *pluginsServer) registerPluginsSatisfyingCoreAPIs(pluginSrv interface{},
 			plugin: pluginDetail,
 			server: pkgsSrv,
 		})
-		log.Errorf("Plugin %v implements core.packages.v1alpha1. Registered for aggregation.", pluginDetail)
+		log.Infof("Plugin %v implements core.packages.v1alpha1. Registered for aggregation.", pluginDetail)
 	}
 	return nil
 }
