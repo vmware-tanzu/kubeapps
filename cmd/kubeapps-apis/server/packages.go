@@ -36,6 +36,7 @@ func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
 // GetAvailablePackages returns the packages based on the request.
 func (s packagesServer) GetAvailablePackages(ctx context.Context, request *packages.GetAvailablePackagesRequest) (*packages.GetAvailablePackagesResponse, error) {
 	pkgs := []*packages.AvailablePackage{}
+	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.plugins {
 		response, err := p.server.GetAvailablePackages(ctx, request)
 		if err != nil {
@@ -60,6 +61,7 @@ func (s packagesServer) GetAvailablePackages(ctx context.Context, request *packa
 // GetPackageRepositories returns the package repositories based on the request.
 func (s packagesServer) GetPackageRepositories(ctx context.Context, request *packages.GetPackageRepositoriesRequest) (*packages.GetPackageRepositoriesResponse, error) {
 	repos := []*packages.PackageRepository{}
+	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.plugins {
 		response, err := p.server.GetPackageRepositories(ctx, request)
 		if err != nil {
