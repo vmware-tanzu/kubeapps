@@ -35,13 +35,13 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
-	v1alpha1.RegisterPackagesServiceServer(s, NewServer())
+	v1alpha1.RegisterKappControllerPackagesServiceServer(s, NewServer())
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-	return v1alpha1.RegisterPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	return v1alpha1.RegisterKappControllerPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.

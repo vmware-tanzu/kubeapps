@@ -15,122 +15,126 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// PackagesServiceClient is the client API for PackagesService service.
+// FluxV2PackagesServiceClient is the client API for FluxV2PackagesService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PackagesServiceClient interface {
+type FluxV2PackagesServiceClient interface {
+	// GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin
 	GetAvailablePackages(ctx context.Context, in *v1alpha1.GetAvailablePackagesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackagesResponse, error)
+	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error)
 }
 
-type packagesServiceClient struct {
+type fluxV2PackagesServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPackagesServiceClient(cc grpc.ClientConnInterface) PackagesServiceClient {
-	return &packagesServiceClient{cc}
+func NewFluxV2PackagesServiceClient(cc grpc.ClientConnInterface) FluxV2PackagesServiceClient {
+	return &fluxV2PackagesServiceClient{cc}
 }
 
-func (c *packagesServiceClient) GetAvailablePackages(ctx context.Context, in *v1alpha1.GetAvailablePackagesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackagesResponse, error) {
+func (c *fluxV2PackagesServiceClient) GetAvailablePackages(ctx context.Context, in *v1alpha1.GetAvailablePackagesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackagesResponse, error) {
 	out := new(v1alpha1.GetAvailablePackagesResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetAvailablePackages", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackages", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *packagesServiceClient) GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+func (c *fluxV2PackagesServiceClient) GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	out := new(v1alpha1.GetPackageRepositoriesResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageRepositories", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PackagesServiceServer is the server API for PackagesService service.
-// All implementations must embed UnimplementedPackagesServiceServer
+// FluxV2PackagesServiceServer is the server API for FluxV2PackagesService service.
+// All implementations must embed UnimplementedFluxV2PackagesServiceServer
 // for forward compatibility
-type PackagesServiceServer interface {
+type FluxV2PackagesServiceServer interface {
+	// GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin
 	GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error)
+	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
-	mustEmbedUnimplementedPackagesServiceServer()
+	mustEmbedUnimplementedFluxV2PackagesServiceServer()
 }
 
-// UnimplementedPackagesServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedPackagesServiceServer struct {
+// UnimplementedFluxV2PackagesServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedFluxV2PackagesServiceServer struct {
 }
 
-func (UnimplementedPackagesServiceServer) GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error) {
+func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackages not implemented")
 }
-func (UnimplementedPackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
-func (UnimplementedPackagesServiceServer) mustEmbedUnimplementedPackagesServiceServer() {}
+func (UnimplementedFluxV2PackagesServiceServer) mustEmbedUnimplementedFluxV2PackagesServiceServer() {}
 
-// UnsafePackagesServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PackagesServiceServer will
+// UnsafeFluxV2PackagesServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FluxV2PackagesServiceServer will
 // result in compilation errors.
-type UnsafePackagesServiceServer interface {
-	mustEmbedUnimplementedPackagesServiceServer()
+type UnsafeFluxV2PackagesServiceServer interface {
+	mustEmbedUnimplementedFluxV2PackagesServiceServer()
 }
 
-func RegisterPackagesServiceServer(s grpc.ServiceRegistrar, srv PackagesServiceServer) {
-	s.RegisterService(&PackagesService_ServiceDesc, srv)
+func RegisterFluxV2PackagesServiceServer(s grpc.ServiceRegistrar, srv FluxV2PackagesServiceServer) {
+	s.RegisterService(&FluxV2PackagesService_ServiceDesc, srv)
 }
 
-func _PackagesService_GetAvailablePackages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FluxV2PackagesService_GetAvailablePackages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1alpha1.GetAvailablePackagesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackagesServiceServer).GetAvailablePackages(ctx, in)
+		return srv.(FluxV2PackagesServiceServer).GetAvailablePackages(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetAvailablePackages",
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackages",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).GetAvailablePackages(ctx, req.(*v1alpha1.GetAvailablePackagesRequest))
+		return srv.(FluxV2PackagesServiceServer).GetAvailablePackages(ctx, req.(*v1alpha1.GetAvailablePackagesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FluxV2PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1alpha1.GetPackageRepositoriesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackagesServiceServer).GetPackageRepositories(ctx, in)
+		return srv.(FluxV2PackagesServiceServer).GetPackageRepositories(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService/GetPackageRepositories",
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageRepositories",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).GetPackageRepositories(ctx, req.(*v1alpha1.GetPackageRepositoriesRequest))
+		return srv.(FluxV2PackagesServiceServer).GetPackageRepositories(ctx, req.(*v1alpha1.GetPackageRepositoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// PackagesService_ServiceDesc is the grpc.ServiceDesc for PackagesService service.
+// FluxV2PackagesService_ServiceDesc is the grpc.ServiceDesc for FluxV2PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var PackagesService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "kubeappsapis.plugins.fluxv2.packages.v1alpha1.PackagesService",
-	HandlerType: (*PackagesServiceServer)(nil),
+var FluxV2PackagesService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService",
+	HandlerType: (*FluxV2PackagesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetAvailablePackages",
-			Handler:    _PackagesService_GetAvailablePackages_Handler,
+			Handler:    _FluxV2PackagesService_GetAvailablePackages_Handler,
 		},
 		{
 			MethodName: "GetPackageRepositories",
-			Handler:    _PackagesService_GetPackageRepositories_Handler,
+			Handler:    _FluxV2PackagesService_GetPackageRepositories_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
