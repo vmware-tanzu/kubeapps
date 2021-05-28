@@ -1,0 +1,64 @@
+syntax = "proto3";
+package kubeappsapis.apidocs;
+option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen";
+
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+
+// This option is just holding the global information for generating the OpenAPI Specification document
+//
+// It holds API metainformation, security definitions, formtas and default responses to be added to each endpoint.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+	host: "127.0.0.1:8080"
+	info: {
+		title: "Kubeapps API";
+		version: "0.1.0";
+		description: "[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)\n \n [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).\n - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n";
+		terms_of_service: "https://github.com/kubeapps/kubeapps/blob/master/LICENSE";
+		license: {
+			name: "Apache 2.0";
+			url: "http://www.apache.org/licenses/LICENSE-2.0.html";
+		};
+	};
+	external_docs: {
+		description: "Kuebapps GitHub repository";
+		url: "https://github.com/kubeapps/kubeapps";
+	}
+	schemes: HTTP;
+	// schemes: HTTPS;
+	consumes: "application/json";
+	produces: "application/json";
+
+	// TODO(agamez): enable after https://github.com/kubeapps/kubeapps/issues/2851
+	// security: {
+	// 	security_requirement: {
+	// 		key: "ApiKeyAuth";
+	// 		value: {};
+	// 	}
+	// }
+	// security_definitions: {
+	// 	security: {
+	// 		key: "ApiKeyAuth";
+	// 		value: {
+	// 			type: TYPE_API_KEY;
+	// 			in: IN_HEADER;
+	// 			name: "Authorization";
+	// 		}
+	// 	}
+	// }
+
+	// TODO(agamez): add the most significant ones from:
+	// 	https://github.com/grpc-ecosystem/grpc-gateway/blob/master/runtime/errors.go#L36
+	// 	https://github.com/grpc-ecosystem/grpc-gateway/blob/master/runtime/errors.go#L165
+	// responses: {
+	// 	key: "401";
+	// 	value: {
+	// 		description: "Returned when the user does not have permission to access the resource.";
+	// 		schema: {
+	// 			json_schema: {
+	// 				type: STRING;
+	// 			}
+	// 		}
+	// 	}
+	// }
+};

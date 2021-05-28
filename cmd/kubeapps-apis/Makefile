@@ -26,7 +26,8 @@ cli-dependencies:
 	go get \
 		github.com/spf13/cobra/cobra \
 		google.golang.org/grpc/cmd/protoc-gen-go-grpc \
-		google.golang.org/protobuf/cmd/protoc-gen-go
+		google.golang.org/protobuf/cmd/protoc-gen-go \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 
 
 # Not sure if it's worth having targets for buf, but at least the targets can
 # be tooling agnostic.
