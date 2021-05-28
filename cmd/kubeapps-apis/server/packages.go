@@ -33,6 +33,30 @@ func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
 	}
 }
 
+// GetAvailablePackages returns the packages based on the request.
+func (s packagesServer) GetAvailablePackages(ctx context.Context, request *packages.GetAvailablePackagesRequest) (*packages.GetAvailablePackagesResponse, error) {
+	pkgs := []*packages.AvailablePackage{}
+	for _, p := range s.plugins {
+		response, err := p.server.GetAvailablePackages(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add the plugin for the pkgs
+		pluginPkgs := response.Packages
+		for _, r := range pluginPkgs {
+			r.Plugin = p.plugin
+		}
+
+		pkgs = append(pkgs, pluginPkgs...)
+	}
+
+	// TODO: Sort via default sort order or that specified in request.
+	return &packages.GetAvailablePackagesResponse{
+		Packages: pkgs,
+	}, nil
+}
+
 // GetPackageRepositories returns the package repositories based on the request.
 func (s packagesServer) GetPackageRepositories(ctx context.Context, request *packages.GetPackageRepositoriesRequest) (*packages.GetPackageRepositoriesResponse, error) {
 	repos := []*packages.PackageRepository{}

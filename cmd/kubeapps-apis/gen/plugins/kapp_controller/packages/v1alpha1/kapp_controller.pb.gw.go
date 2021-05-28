@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1_0 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackagesRequest
+	var protoReq v1alpha1_0.GetAvailablePackagesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_KappControllerPackagesService_GetAvailablePackages_0(ctx context.Co
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackagesRequest
+	var protoReq v1alpha1_0.GetAvailablePackagesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetPackageRepositoriesRequest
+	var protoReq v1alpha1_0.GetPackageRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -89,7 +89,7 @@ func request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetPackageRepositoriesRequest
+	var protoReq v1alpha1_0.GetPackageRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
