@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -26,7 +27,9 @@ import (
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
 	helmrepo "k8s.io/helm/pkg/repo"
@@ -170,27 +173,56 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 // This will be updated to use the user credential from the request context but for now
 // simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
 func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
-	// TODO: replace incluster config with the user config using token from request meta.
-	config, err := rest.InClusterConfig()
+	token, err := extractToken(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get client config: %w", err)
+		return nil, err
 	}
 
-	client, err := dynamic.NewForConfig(config)
+	inClusterConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+	}
+
+	// FIXME: EXTRACT TO A READFILE FROM ENNVAR
+	config := kube.ClustersConfig{
+		KubeappsClusterName: "default",
+		Clusters: map[string]kube.ClusterConfig{
+			"default": {
+				Name:          "default",
+				APIServiceURL: "",
+				PinnipedConfig: kube.PinnipedConciergeConfig{
+					Enable:            true,
+					Namespace:         "pinniped-concierge",
+					AuthenticatorType: "JWTAuthenticator",
+					AuthenticatorName: "jwt-authenticator",
+				},
+				IsKubeappsCluster: true,
+			},
+		},
+		PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
+	}
+
+	restConfig, err := kube.NewClusterConfig(inClusterConfig, token, "default", config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
+	}
+
+	client, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 	}
+	// log.Info(fmt.Errorf("GOT token: %v", token))
+	// log.Info(fmt.Errorf("GOT restConfig.Host: %v", restConfig.Host))
+	// log.Info(fmt.Errorf("GOT restConfig: %v", restConfig))
+	// log.Info(fmt.Errorf("GOT client: %v", client))
 
 	return client, nil
 }
 
 func (s *Server) getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
-	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
-	}
-	client, err := s.clientGetter(ctx)
+	client, err := s.GetClient(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client : %v", err)
+		return nil, err
 	}
 
 	repositoryResource := schema.GroupVersionResource{
@@ -293,4 +325,31 @@ func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
 	}
 	index.SortEntries()
 	return &index, nil
+}
+
+// getClient ensures a client getter is available and uses it to return the client.
+func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
+
+	if s.clientGetter == nil {
+		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+	}
+	client, err := s.clientGetter(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+	return client, nil
+}
+
+// extractToken returns the token passed through the gRPC request in the "authorization" metadata
+// It is equivalent to the A"uthorization" usual HTTP 1 header
+// For instance: authorization="Bearer abc" will return "abc"
+func extractToken(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Errorf(codes.Unauthenticated, "no authorization metadata found")
+	}
+	if len(md["authorization"]) > 0 && strings.HasPrefix(md["authorization"][0], "Bearer ") {
+		return strings.TrimPrefix(md["authorization"][0], "Bearer "), nil
+	}
+	return "", status.Errorf(codes.Unauthenticated, "malformed authorization metadata")
 }
