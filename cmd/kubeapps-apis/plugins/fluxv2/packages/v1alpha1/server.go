@@ -74,7 +74,7 @@ func NewServer() *Server {
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(namespace=[%s])", request.Namespace)
+	log.Infof("+GetPackageRepositories(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
 
 	repos, err := s.getHelmRepos(ctx)
 	if err != nil {
@@ -115,7 +115,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 
 // GetAvailablePackages streams the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
-	log.Infof("+GetAvailablePackages(namespace=[%s])", request.Namespace)
+	log.Infof("+GetAvailablePackages(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
+
 	repos, err := s.getHelmRepos(ctx)
 	if err != nil {
 		return nil, err

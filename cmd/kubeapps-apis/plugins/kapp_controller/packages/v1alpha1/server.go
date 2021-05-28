@@ -99,6 +99,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 
 // GetAvailablePackages returns the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+	log.Infof("+GetAvailablePackages(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -143,6 +144,8 @@ func availablePackageFromUnstructured(ap *unstructured.Unstructured) (*corev1.Av
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
+	log.Infof("+GetPackageRepositories(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
+
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
