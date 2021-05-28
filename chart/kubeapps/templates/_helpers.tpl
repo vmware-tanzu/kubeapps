@@ -73,6 +73,13 @@ http://{{ include "kubeapps.kubeops.fullname" . }}:{{ .Values.kubeops.service.po
 {{- end -}}
 
 {{/*
+Create proxy_pass for the kubeappsapis
+*/}}
+{{- define "kubeapps.kubeappsapis.proxy_pass" -}}
+http://{{ include "kubeapps.kubeappsapis.fullname" . }}:{{ .Values.kubeappsapis.service.port }}
+{{- end -}}
+
+{{/*
 Create name for kubeappsapis based on the fullname
 */}}
 {{- define "kubeapps.kubeappsapis.fullname" -}}
