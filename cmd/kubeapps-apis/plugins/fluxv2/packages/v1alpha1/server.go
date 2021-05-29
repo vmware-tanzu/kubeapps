@@ -74,9 +74,9 @@ func NewServer() *Server {
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(namespace=[%s])", request.Namespace)
+	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
 
-	repos, err := s.getHelmRepos(ctx)
+	repos, err := s.getHelmRepos(ctx, request.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +115,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 
 // GetAvailablePackages streams the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
-	log.Infof("+GetAvailablePackages(namespace=[%s])", request.Namespace)
-	repos, err := s.getHelmRepos(ctx)
+	log.Infof("+GetAvailablePackages(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
+	repos, err := s.getHelmRepos(ctx, request.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
 	return client, nil
 }
 
-func (s *Server) getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
+func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	if s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
@@ -197,8 +197,12 @@ func (s *Server) getHelmRepos(ctx context.Context) (*unstructured.UnstructuredLi
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories}
 
-	// Currently checks globally. Update to handle namespaced requests (?)
-	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})
+	var resource dynamic.NamespaceableResourceInterface = client.Resource(repositoryResource)
+	var resourceIfc dynamic.ResourceInterface = resource
+	if namespace != "" {
+		resourceIfc = resource.Namespace(namespace)
+	}
+	repos, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
