@@ -1,0 +1,428 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Kubeapps API",
+    "description": "[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)\n \n [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).\n - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
+    "termsOfService": "https://github.com/kubeapps/kubeapps/blob/master/LICENSE",
+    "version": "0.1.0",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "tags": [
+    {
+      "name": "PluginsService"
+    },
+    {
+      "name": "FluxV2PackagesService"
+    },
+    {
+      "name": "KappControllerPackagesService"
+    }
+  ],
+  "host": "127.0.0.1:8080",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/core/plugins/v1alpha1/configured-plugins": {
+      "get": {
+        "summary": "GetConfiguredPlugins returns a map of short and longnames for the configured plugins.",
+        "operationId": "PluginsService_GetConfiguredPlugins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetConfiguredPluginsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PluginsService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/packagerepositories": {
+      "get": {
+        "summary": "GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetPackageRepositories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/packages": {
+      "get": {
+        "summary": "GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetAvailablePackages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/packagerepositories": {
+      "get": {
+        "summary": "GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetPackageRepositories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/packages": {
+      "get": {
+        "summary": "GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetAvailablePackages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AvailablePackagePackageRepositoryReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The fully qualified name of the package repository.",
+          "title": "Package repository name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
+        }
+      },
+      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace.",
+      "title": "PackageRepositoryReference"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1alpha1AvailablePackage": {
+      "type": "object",
+      "example": {
+        "name": "app1.example.com",
+        "version": "9.10.09",
+        "iconUrl": ""
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The fully qualified name of the package.",
+          "title": "Available package name"
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the package in the repository.",
+          "title": "Available package version"
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "A url for an icon.",
+          "title": "Available package icon"
+        },
+        "repository": {
+          "$ref": "#/definitions/AvailablePackagePackageRepositoryReference",
+          "description": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)",
+          "title": "Package repository reference"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
+        }
+      },
+      "description": "An AvailablePackage defines a package available for installation.",
+      "title": "AvailablePackage"
+    },
+    "v1alpha1GetAvailablePackagesResponse": {
+      "type": "object",
+      "example": {
+        "packages": [
+          {
+            "name": "app1.example.com",
+            "version": "9.10.09",
+            "iconUrl": ""
+          }
+        ]
+      },
+      "properties": {
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1AvailablePackage"
+          },
+          "title": "List of AvailablePackage"
+        }
+      },
+      "description": "Response for GetAvailablePackages",
+      "title": "GetAvailablePackages"
+    },
+    "v1alpha1GetConfiguredPluginsResponse": {
+      "type": "object",
+      "example": {
+        "plugins": [
+          {
+            "name": "kapp_controller.packages",
+            "version": "v1alpha1"
+          }
+        ]
+      },
+      "properties": {
+        "plugins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1Plugin"
+          },
+          "description": "List of Plugin",
+          "title": "Plugins"
+        }
+      },
+      "description": "Response for GetConfiguredPlugins",
+      "title": "GetConfiguredPluginsResponse"
+    },
+    "v1alpha1GetPackageRepositoriesResponse": {
+      "type": "object",
+      "example": {
+        "repositories": [
+          {
+            "name": "repo-name.example.com",
+            "namespace": "",
+            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+          }
+        ]
+      },
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1PackageRepository"
+          },
+          "description": "List of PackageRepository",
+          "title": "Repositories"
+        }
+      },
+      "description": "Response for GetPackageRepositories",
+      "title": "GetPackageRepositories"
+    },
+    "v1alpha1PackageRepository": {
+      "type": "object",
+      "example": {
+        "name": "repo-name.example.com",
+        "namespace": "",
+        "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name identifying package repository on the cluster.",
+          "title": "Package repository name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
+        },
+        "url": {
+          "type": "string",
+          "description": "A url identifying the package repository location.",
+          "title": "Package repository URL"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
+        }
+      },
+      "description": "A PackageRepository defines a repository of packages for installation.",
+      "title": "PackageRepository"
+    },
+    "v1alpha1Plugin": {
+      "type": "object",
+      "example": {
+        "name": "kapp_controller.packages",
+        "version": "v1alpha1"
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+          "title": "Plugin name"
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the plugin, such as v1alpha1",
+          "title": "Plugin version"
+        }
+      },
+      "description": "A plugin can implement multiple services and multiple versions of a service.",
+      "title": "Plugin"
+    }
+  },
+  "externalDocs": {
+    "description": "Kuebapps GitHub repository",
+    "url": "https://github.com/kubeapps/kubeapps"
+  }
+}
