@@ -75,6 +75,9 @@ func NewServer() *Server {
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
 	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
+	if request.Cluster != "" {
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+	}
 
 	repos, err := s.getHelmRepos(ctx, request.Namespace)
 	if err != nil {
@@ -116,6 +119,10 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 // GetAvailablePackages streams the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
 	log.Infof("+GetAvailablePackages(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
+	if request.Cluster != "" {
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+	}
+
 	repos, err := s.getHelmRepos(ctx, request.Namespace)
 	if err != nil {
 		return nil, err
