@@ -101,13 +101,12 @@ authProxy:
   clientID: <your app id>
   clientSecret: <your app secret>
   cookieSecret: <your random seed string for secure cookies>
+  scope: openid email group_names
   additionalFlags:
     # VMware Cloud Services has different endpoints for production and staging:
     # To use the staging endpoints, replace:
     # 'gaz.csp-vidm-prod.com' with 'gaz-preview.csp-vidm-prod.com'
     # 'console.cloud.vmware.com' with 'console-stg.cloud.vmware.com/'
-    - --scope=openid email group_names
-    - --cookie-refresh=2m
     - --skip-oidc-discovery=true
     - --oidc-issuer-url=https://gaz.csp-vidm-prod.com
     - --login-url=https://console.cloud.vmware.com/csp/gateway/discovery
@@ -191,7 +190,8 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.clientID=my-client-id.apps.googleusercontent.com \
   --set authProxy.clientSecret=my-client-secret \
   --set authProxy.cookieSecret=$(echo "not-good-secret" | base64) \
-  --set authProxy.additionalFlags="{--cookie-secure=false,--scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform}" \
+  --set authProxy.scope="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform" \
+  --set authProxy.additionalFlags="{--cookie-secure=false}" \
   --set frontend.proxypassAccessTokenAsBearer=true
 ```
 
@@ -365,7 +365,12 @@ Finally, if none of the above are relevant to your issue, you can check the logs
 ### User automatically logged out from Kubeapps Console
 
 When using the default auth proxy, some users may experience the behavior where they are automatically logged out from the console.
-The default auth proxy is not configured to refresh the access/openid token and the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5mn.
+The default auth proxy (prior to version 7.0.5) is not configured to refresh the access/openid token and the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5mn.
 
-To avoid this issue, add the option `--cookie-refresh=2m` to `authProxy.additionalFlags` in your values file. The duration for the refresh must be lesser than the access/openid expiration time configured in the OAuth2/OIDC provider.
-OAuth2 Proxy has some limitations regarding which providers support this option, see [OAuth2 Proxy Configuration Overview](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#footnote1).
+To avoid this issue, you can do one of the following:
+ - upgrade Kubeapps to version 7.0.5+
+ - update Kubeapps by adding the option `--cookie-refresh=2m` to `authProxy.additionalFlags`.
+
+The duration for the refresh must be lesser than the access/openid expiration time configured in the OAuth2/OIDC provider.
+
+**Note**: The issue may still occur even after setting the cookie-refresh option. OAuth2 Proxy does not support cookie-refresh for all providers, see [OAuth2 Proxy Configuration Overview](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#footnote1) for the list of supported providers.
