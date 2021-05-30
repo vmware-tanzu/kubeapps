@@ -66,6 +66,13 @@ Create name for the kubeops config based on the fullname
 {{- end -}}
 
 {{/*
+Create name for the kubeappsapis config based on the fullname
+*/}}
+{{- define "kubeapps.kubeappsapis-config.fullname" -}}
+{{- printf "%s-kubeappsapis-config" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
 Create proxy_pass for the frontend config
 */}}
 {{- define "kubeapps.frontend-config.proxy_pass" -}}

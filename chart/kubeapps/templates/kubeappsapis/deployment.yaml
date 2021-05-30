@@ -74,6 +74,14 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.kubeappsapis.containerPort | quote }}
+            {{- if .Values.clusters }}
+            - name: CLUSTERS_CONFIG_PATH
+              value: /config/clusters.conf
+            {{- end }}
+            {{- if .Values.pinnipedProxy.enabled }}
+            - name: PINNIPED_PROXY_URL
+              value: http://{{ template "kubeapps.pinniped-proxy.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.pinnipedProxy.containerPort }}
+            {{- end }}
             {{- if .Values.kubeappsapis.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -104,4 +112,19 @@ spec:
           {{- if .Values.kubeappsapis.resources }}
           resources: {{- toYaml .Values.kubeappsapis.resources | nindent 12 }}
           {{- end }}
+          {{- if .Values.clusters }}
+          volumeMounts:
+            - name: kubeappsapis-config
+              mountPath: /config
+            - name: ca-certs
+              mountPath: /etc/additional-clusters-cafiles
+          {{- end }}
+      {{- if .Values.clusters }}
+      volumes:
+        - name: kubeappsapis-config
+          configMap:
+            name: {{ template "kubeapps.kubeappsapis-config.fullname" . }}
+        - name: ca-certs
+          emptyDir: {}
+      {{- end }}
 {{- end }}
