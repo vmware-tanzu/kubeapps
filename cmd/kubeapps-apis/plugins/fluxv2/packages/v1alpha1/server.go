@@ -40,6 +40,8 @@ const (
 	fluxHelmRepository     = "helmrepository"
 	fluxHelmRepositories   = "helmrepositories"
 	fluxHelmRepositoryList = "HelmRepositoryList"
+	fluxHelmChart          = "HelmChart"
+	fluxHelmCharts         = "helmcharts"
 )
 
 // Server implements the fluxv2 packages v1alpha1 interface.
@@ -58,6 +60,18 @@ func NewServer() *Server {
 	return &Server{
 		clientGetter: clientForRequestContext,
 	}
+}
+
+// getClient ensures a client getter is available and uses it to return the client.
+func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
+	if s.clientGetter == nil {
+		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+	}
+	client, err := s.clientGetter(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+	return client, nil
 }
 
 // ===== general note on error handling ========
@@ -172,6 +186,61 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	}, nil
 }
 
+// GetPackageMeta streams the package metadata based on the request.
+func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageMetaRequest) (*corev1.GetPackageMetaResponse, error) {
+	log.Infof("+GetPackageMeta(%v)", ctx)
+
+	client, err := s.GetClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	chartsResource := schema.GroupVersionResource{
+		Group:    "source.toolkit.fluxcd.io", //fluxGroup,
+		Version:  "v1beta1",                  //fluxVersion,
+		Resource: "helmcharts"}               //fluxHelmCharts}
+
+	unstructuredChart := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "source.toolkit.fluxcd.io/v1beta1", //fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+			"kind":       "HelmChart",                        //fluxHelmChart,
+			"metadata": map[string]interface{}{
+				"generateName": "redis-",
+			},
+			"spec": map[string]interface{}{
+				"chart":   "redis",
+				"version": "10.5.x",
+				"sourceRef": map[string]interface{}{
+					"name": "bitnami",
+					"kind": "HelmRepository",
+				},
+				"interval": "10m",
+			},
+		},
+	}
+
+	/*
+		log.Infof("helm charts:")
+		chartList, err := client.Resource(chartsResource).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+		for _, chartUnstructured := range chartList.Items {
+			log.Infof("%v", chartUnstructured.Object)
+		}
+	*/
+
+	newChart, err := client.Resource(chartsResource).Create(ctx, &unstructuredChart, metav1.CreateOptions{})
+	if err != nil {
+		log.Errorf("error creating chart: %v\n%v", err, unstructuredChart)
+		return nil, err
+	}
+
+	log.Infof("created chart: [%v]", newChart)
+
+	return nil, status.Errorf(codes.Unimplemented, "not implemented yet")
+}
+
 // clientForRequestContext returns a k8s client for use during interactions with the cluster.
 // This will be updated to use the user credential from the request context but for now
 // simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
@@ -191,12 +260,9 @@ func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
 }
 
 func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
-	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
-	}
-	client, err := s.clientGetter(ctx)
+	client, err := s.GetClient(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client : %v", err)
+		return nil, err
 	}
 
 	repositoryResource := schema.GroupVersionResource{
@@ -280,6 +346,7 @@ func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositor
 }
 
 func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
+	log.Infof("+getHelmIndexFileFromURL(%s) 1", indexURL)
 	// Get the response bytes from the url
 	response, err := http.Get(indexURL)
 	if err != nil {
@@ -302,5 +369,6 @@ func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
 		return nil, err
 	}
 	index.SortEntries()
+	log.Infof("-getHelmIndexFileFromURL(%s)", indexURL)
 	return &index, nil
 }
