@@ -14,13 +14,9 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,14 +52,18 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter func(context.Context) (dynamic.Interface, error)
+	clientGetter    func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error)
+	clustersConfig  kube.ClustersConfig
+	unsafeUseDemoSA bool
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer() *Server {
+func NewServer(config kube.ClustersConfig, useSA bool) *Server {
 	return &Server{
-		clientGetter: clientForRequestContext,
+		clientGetter:    clientForRequestContext,
+		clustersConfig:  config,
+		unsafeUseDemoSA: useSA,
 	}
 }
 
@@ -176,7 +176,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 // clientForRequestContext returns a k8s client for use during interactions with the cluster.
 // This will be updated to use the user credential from the request context but for now
 // simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
-func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
+func clientForRequestContext(ctx context.Context, config kube.ClustersConfig, unsafeUseDemoSA bool) (dynamic.Interface, error) {
 	token, err := extractToken(ctx)
 	if err != nil {
 		return nil, err
@@ -186,41 +186,22 @@ func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
 	}
-
-	clustersConfigPath := os.Getenv("CLUSTERS_CONFIG_PATH")
-	if clustersConfigPath == "" {
-		log.Fatal("CLUSTERS_CONFIG_PATH should be defined")
-	}
-
-	const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
-
-	pinnipedProxyURL := os.Getenv("PINNIPED_PROXY_URL")
-	if pinnipedProxyURL == "" {
-		log.Fatal("PINNIPED_PROXY_URL should be defined")
-	}
-
-	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
-	config := kube.ClustersConfig{KubeappsClusterName: "default"}
-	if clustersConfigPath != "" {
-		var err error
-		var cleanupCAFiles func()
-		config, cleanupCAFiles, err = parseClusterConfig(clustersConfigPath, clustersCAFilesPrefix, pinnipedProxyURL)
+	var client dynamic.Interface
+	if !unsafeUseDemoSA {
+		restConfig, err := kube.NewClusterConfig(inClusterConfig, token, "default", config)
 		if err != nil {
-			log.Fatalf("unable to parse additional clusters config: %+v", err)
+			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 		}
-		defer cleanupCAFiles()
+		client, err = dynamic.NewForConfig(restConfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+		}
+	} else {
+		client, err = dynamic.NewForConfig(inClusterConfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+		}
 	}
-
-	restConfig, err := kube.NewClusterConfig(inClusterConfig, token, "default", config)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
-	}
-
-	client, err := dynamic.NewForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
-	}
-
 	return client, nil
 }
 
@@ -338,7 +319,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 	if s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	client, err := s.clientGetter(ctx)
+	client, err := s.clientGetter(ctx, s.clustersConfig, s.unsafeUseDemoSA)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
@@ -351,62 +332,16 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 func extractToken(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", status.Errorf(codes.Unauthenticated, "no authorization metadata found")
+		return "", status.Errorf(codes.Unauthenticated, "error reading request metadata/headers")
 	}
-	if len(md["authorization"]) > 0 && strings.HasPrefix(md["authorization"][0], "Bearer ") {
-		return strings.TrimPrefix(md["authorization"][0], "Bearer "), nil
-	}
-	return "", status.Errorf(codes.Unauthenticated, "malformed authorization metadata")
-}
-
-func parseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL string) (kube.ClustersConfig, func(), error) {
-	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
-	if err != nil {
-		return kube.ClustersConfig{}, func() {}, err
-	}
-	deferFn := func() { os.RemoveAll(caFilesDir) }
-	content, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return kube.ClustersConfig{}, deferFn, err
-	}
-
-	var clusterConfigs []kube.ClusterConfig
-	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
-		return kube.ClustersConfig{}, deferFn, err
-	}
-
-	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
-	configs.PinnipedProxyURL = pinnipedProxyURL
-	for _, c := range clusterConfigs {
-		// Select the cluster in which Kubeapps in installed. We look for either
-		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
-		isKubeappsClusterCandidate := c.IsKubeappsCluster || c.APIServiceURL == ""
-		if isKubeappsClusterCandidate {
-			if configs.KubeappsClusterName == "" {
-				configs.KubeappsClusterName = c.Name
-			} else {
-				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
-			}
+	if len(md["authorization"]) > 0 {
+		if strings.HasPrefix(md["authorization"][0], "Bearer ") {
+			return strings.TrimPrefix(md["authorization"][0], "Bearer "), nil
+		} else {
+			return "", status.Errorf(codes.Unauthenticated, "malformed authorization metadata")
 		}
-
-		// We need to decode the base64-encoded cadata from the input.
-		if c.CertificateAuthorityData != "" {
-			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
-			if err != nil {
-				return kube.ClustersConfig{}, deferFn, err
-			}
-			c.CertificateAuthorityDataDecoded = string(decodedCAData)
-
-			// We also need a CAFile field because Helm uses the genericclioptions.ConfigFlags
-			// struct which does not support CAData.
-			// https://github.com/kubernetes/cli-runtime/issues/8
-			c.CAFile = filepath.Join(caFilesDir, c.Name)
-			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
-			if err != nil {
-				return kube.ClustersConfig{}, deferFn, err
-			}
-		}
-		configs.Clusters[c.Name] = c
+	} else {
+		// No authorization header found, no error here, we will delegate it to the RBAC
+		return "", nil
 	}
-	return configs, deferFn, nil
 }

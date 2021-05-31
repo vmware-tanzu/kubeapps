@@ -14,8 +14,11 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -24,6 +27,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	"google.golang.org/grpc"
 	log "k8s.io/klog/v2"
 )
@@ -37,6 +41,7 @@ const (
 	grpcRegisterFunction    = "RegisterWithGRPCServer"
 	gatewayRegisterFunction = "RegisterHTTPHandlerFromEndpoint"
 	pluginDetailFunction    = "GetPluginDetail"
+	clustersCAFilesPrefix   = "/etc/additional-clusters-cafiles"
 )
 
 // coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
@@ -47,14 +52,14 @@ type pluginsServer struct {
 	plugins []*plugins.Plugin
 }
 
-func NewPluginsServer(pluginDirs []string, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*pluginsServer, error) {
+func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*pluginsServer, error) {
 	// Find all .so plugins in the specified plugins directory.
-	pluginPaths, err := listSOFiles(os.DirFS(pluginRootDir), pluginDirs)
+	pluginPaths, err := listSOFiles(os.DirFS(pluginRootDir), serveOpts.PluginDirs)
 	if err != nil {
 		log.Fatalf("failed to check for plugins: %v", err)
 	}
 
-	pluginDetails, err := registerPlugins(pluginPaths, registrar, gwArgs)
+	pluginDetails, err := registerPlugins(pluginPaths, serveOpts, registrar, gwArgs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register plugins: %w", err)
 	}
@@ -82,7 +87,7 @@ func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.Ge
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
-func registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs) ([]*plugins.Plugin, error) {
+func registerPlugins(pluginPaths []string, serveOpts ServeOptions, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs) ([]*plugins.Plugin, error) {
 	pluginDetails := []*plugins.Plugin{}
 	for _, pluginPath := range pluginPaths {
 		p, err := plugin.Open(pluginPath)
@@ -90,7 +95,7 @@ func registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs
 			return nil, fmt.Errorf("unable to open plugin %q: %w", pluginPath, err)
 		}
 
-		if err = registerGRPC(p, pluginPath, grpcReg); err != nil {
+		if err = registerGRPC(p, pluginPath, serveOpts, grpcReg); err != nil {
 			return nil, err
 		}
 
@@ -110,18 +115,31 @@ func registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func registerGRPC(p *plugin.Plugin, pluginPath string, registrar grpc.ServiceRegistrar) error {
+func registerGRPC(p *plugin.Plugin, pluginPath string, serveOpts ServeOptions, registrar grpc.ServiceRegistrar) error {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %q: %w", grpcRegisterFunction, pluginPath, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar)
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, kube.ClustersConfig, bool)
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar) {}
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, kube.ClustersConfig, bool) {}
 		return fmt.Errorf("unable to use %q in plugin %q due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginPath, dummyFn, grpcRegFn)
 	}
-	grpcFn(registrar)
+
+	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
+	config := kube.ClustersConfig{KubeappsClusterName: "default"}
+	if serveOpts.ClustersConfigPath != "" {
+		var err error
+		var cleanupCAFiles func()
+		config, cleanupCAFiles, err = parseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+		if err != nil {
+			log.Fatalf("unable to parse additional clusters config: %+v", err)
+		}
+		defer cleanupCAFiles()
+	}
+
+	grpcFn(registrar, config, serveOpts.UnsafeUseDemoSA)
 
 	return nil
 }
@@ -190,4 +208,58 @@ func listSOFiles(fsys fs.FS, pluginDirs []string) ([]string, error) {
 		}
 	}
 	return matches, nil
+}
+
+// parseClusterConfig returns a kube.ClustersConfig struct after parsing the raw `clusters` object provided by the user
+// TODO(agamez): this fn is the same as in kubeapps/cmd/kubeops/main.go, export it and use it instead
+func parseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL string) (kube.ClustersConfig, func(), error) {
+	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
+	if err != nil {
+		return kube.ClustersConfig{}, func() {}, err
+	}
+	deferFn := func() { os.RemoveAll(caFilesDir) }
+	content, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return kube.ClustersConfig{}, deferFn, err
+	}
+
+	var clusterConfigs []kube.ClusterConfig
+	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
+		return kube.ClustersConfig{}, deferFn, err
+	}
+
+	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
+	configs.PinnipedProxyURL = pinnipedProxyURL
+	for _, c := range clusterConfigs {
+		// Select the cluster in which Kubeapps in installed. We look for either
+		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
+		isKubeappsClusterCandidate := c.IsKubeappsCluster || c.APIServiceURL == ""
+		if isKubeappsClusterCandidate {
+			if configs.KubeappsClusterName == "" {
+				configs.KubeappsClusterName = c.Name
+			} else {
+				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
+			}
+		}
+
+		// We need to decode the base64-encoded cadata from the input.
+		if c.CertificateAuthorityData != "" {
+			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
+			if err != nil {
+				return kube.ClustersConfig{}, deferFn, err
+			}
+			c.CertificateAuthorityDataDecoded = string(decodedCAData)
+
+			// We also need a CAFile field because Helm uses the genericclioptions.ConfigFlags
+			// struct which does not support CAData.
+			// https://github.com/kubernetes/cli-runtime/issues/8
+			c.CAFile = filepath.Join(caFilesDir, c.Name)
+			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
+			if err != nil {
+				return kube.ClustersConfig{}, deferFn, err
+			}
+		}
+		configs.Clusters[c.Name] = c
+	}
+	return configs, deferFn, nil
 }
