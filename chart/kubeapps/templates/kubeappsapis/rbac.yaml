@@ -24,6 +24,7 @@ rules:
       - "source.toolkit.fluxcd.io"
     resources: ['*']
     verbs: ['*']
+{{- if .Values.kubeappsapis.unsafeUseDemoSA }}
 ---
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRoleBinding
@@ -46,5 +47,6 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "kubeapps.kubeappsapis.fullname" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
 {{- end }}
