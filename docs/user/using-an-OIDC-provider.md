@@ -368,7 +368,7 @@ When using the default auth proxy, some users may experience the behavior where 
 Prior to Kubeapps 7.0.5, the auth proxy configuration did not include a default `--cookie-refresh` value to refresh the access/openid token and so the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5m.
 
 To avoid this issue, you can do one of the following:
- - upgrade Kubeapps to version 7.0.5+
+ - upgrade Kubeapps to version 7.0.5+ which sets a default of `--cookie-refresh=2m` and exposes the value in the chart values as `authProxy.cookieRefresh`.
  - update Kubeapps by adding the option `--cookie-refresh=2m` to `authProxy.additionalFlags`.
 
 The duration for the refresh must be lesser than the access/openid expiration time configured in the OAuth2/OIDC provider.
