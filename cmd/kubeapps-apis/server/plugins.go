@@ -24,11 +24,17 @@ import (
 	"path/filepath"
 	"plugin"
 	"sort"
+	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	log "k8s.io/klog/v2"
 )
 
@@ -42,6 +48,13 @@ const (
 	gatewayRegisterFunction = "RegisterHTTPHandlerFromEndpoint"
 	pluginDetailFunction    = "GetPluginDetail"
 	clustersCAFilesPrefix   = "/etc/additional-clusters-cafiles"
+)
+
+var (
+	clustersConfigPath string
+	pinnipedProxyURL   string
+	//temporary flag while this component in under heavy development
+	unsafeUseDemoSA bool
 )
 
 // coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
@@ -120,26 +133,19 @@ func registerGRPC(p *plugin.Plugin, pluginPath string, serveOpts ServeOptions, r
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %q: %w", grpcRegisterFunction, pluginPath, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, kube.ClustersConfig, bool)
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, func(context.Context) (dynamic.Interface, error))
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, kube.ClustersConfig, bool) {}
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, func(context.Context) (dynamic.Interface, error)) {}
 		return fmt.Errorf("unable to use %q in plugin %q due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginPath, dummyFn, grpcRegFn)
 	}
 
-	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
-	config := kube.ClustersConfig{KubeappsClusterName: "default"}
-	if serveOpts.ClustersConfigPath != "" {
-		var err error
-		var cleanupCAFiles func()
-		config, cleanupCAFiles, err = parseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
-		if err != nil {
-			log.Fatalf("unable to parse additional clusters config: %+v", err)
-		}
-		defer cleanupCAFiles()
-	}
+	// setting these globals vars so tht they are accesible by the 'dynClientGetterForContext' function
+	clustersConfigPath = serveOpts.ClustersConfigPath
+	pinnipedProxyURL = serveOpts.PinnipedProxyURL
+	unsafeUseDemoSA = serveOpts.UnsafeUseDemoSA
 
-	grpcFn(registrar, config, serveOpts.UnsafeUseDemoSA)
+	grpcFn(registrar, dynClientGetterForContext)
 
 	return nil
 }
@@ -262,4 +268,68 @@ func parseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 		configs.Clusters[c.Name] = c
 	}
 	return configs, deferFn, nil
+}
+
+// dynClientGetterForContext returns a k8s client for use during interactions with the cluster.
+// It utilizes the user credential from the request context. The plugins just have to call this function
+// passing the context in order to retrieve the configured k8s client
+func dynClientGetterForContext(ctx context.Context) (dynamic.Interface, error) {
+	token, err := extractToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
+	config := kube.ClustersConfig{KubeappsClusterName: "default"}
+	if clustersConfigPath != "" {
+		var err error
+		var cleanupCAFiles func()
+		config, cleanupCAFiles, err = parseClusterConfig(clustersConfigPath, clustersCAFilesPrefix, pinnipedProxyURL)
+		if err != nil {
+			log.Fatalf("unable to parse additional clusters config: %+v", err)
+		}
+		defer cleanupCAFiles()
+	}
+
+	inClusterConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+	}
+	var client dynamic.Interface
+	if !unsafeUseDemoSA {
+		restConfig, err := kube.NewClusterConfig(inClusterConfig, token, "default", config)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
+		}
+		client, err = dynamic.NewForConfig(restConfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+		}
+	} else {
+		client, err = dynamic.NewForConfig(inClusterConfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+		}
+	}
+	return client, nil
+}
+
+// extractToken returns the token passed through the gRPC request in the "authorization" metadata
+// It is equivalent to the A"uthorization" usual HTTP 1 header
+// For instance: authorization="Bearer abc" will return "abc"
+func extractToken(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Errorf(codes.Unauthenticated, "error reading request metadata/headers")
+	}
+	if len(md["authorization"]) > 0 {
+		if strings.HasPrefix(md["authorization"][0], "Bearer ") {
+			return strings.TrimPrefix(md["authorization"][0], "Bearer "), nil
+		} else {
+			return "", status.Errorf(codes.Unauthenticated, "malformed authorization metadata")
+		}
+	} else {
+		// No authorization header found, no error here, we will delegate it to the RBAC
+		return "", nil
+	}
 }
