@@ -16,11 +16,11 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -35,8 +35,8 @@ func init() {
 }
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, config kube.ClustersConfig, unsafeUseDemoSA bool) {
-	v1alpha1.RegisterKappControllerPackagesServiceServer(s, NewServer(config, unsafeUseDemoSA))
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, dynClientGetterForContext func(context.Context) (dynamic.Interface, error)) {
+	v1alpha1.RegisterKappControllerPackagesServiceServer(s, NewServer(dynClientGetterForContext))
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
