@@ -188,7 +188,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 
 // GetPackageMeta streams the package metadata based on the request.
 func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageMetaRequest) (*corev1.GetPackageMetaResponse, error) {
-	log.Infof("+GetPackageMeta(%v)", ctx)
+	log.Infof("+GetPackageMeta()")
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -199,6 +199,15 @@ func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageM
 		Group:    "source.toolkit.fluxcd.io", //fluxGroup,
 		Version:  "v1beta1",                  //fluxVersion,
 		Resource: "helmcharts"}               //fluxHelmCharts}
+
+	log.Infof("helm charts:")
+	chartList, err := client.Resource(chartsResource).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, chartUnstructured := range chartList.Items {
+		log.Infof("%v", chartUnstructured.Object)
+	}
 
 	unstructuredChart := unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -218,17 +227,6 @@ func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageM
 			},
 		},
 	}
-
-	/*
-		log.Infof("helm charts:")
-		chartList, err := client.Resource(chartsResource).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		for _, chartUnstructured := range chartList.Items {
-			log.Infof("%v", chartUnstructured.Object)
-		}
-	*/
 
 	newChart, err := client.Resource(chartsResource).Create(ctx, &unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
