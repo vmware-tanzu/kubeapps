@@ -15,6 +15,9 @@
       "name": "PluginsService"
     },
     {
+      "name": "PackagesService"
+    },
+    {
       "name": "FluxV2PackagesService"
     },
     {
@@ -32,6 +35,82 @@
     "application/json"
   ],
   "paths": {
+    "/core/packages/v1alpha1/packagerepositories": {
+      "get": {
+        "operationId": "PackagesService_GetPackageRepositories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
+    "/core/packages/v1alpha1/packages": {
+      "get": {
+        "operationId": "PackagesService_GetAvailablePackages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/plugins/v1alpha1/configured-plugins": {
       "get": {
         "summary": "GetConfiguredPlugins returns a map of short and longnames for the configured plugins.",
