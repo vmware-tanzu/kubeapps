@@ -40,22 +40,20 @@ func (c *pluginsServiceClient) GetConfiguredPlugins(ctx context.Context, in *Get
 }
 
 // PluginsServiceServer is the server API for PluginsService service.
-// All implementations must embed UnimplementedPluginsServiceServer
+// All implementations should embed UnimplementedPluginsServiceServer
 // for forward compatibility
 type PluginsServiceServer interface {
 	// GetConfiguredPlugins returns a map of short and longnames for the configured plugins.
 	GetConfiguredPlugins(context.Context, *GetConfiguredPluginsRequest) (*GetConfiguredPluginsResponse, error)
-	mustEmbedUnimplementedPluginsServiceServer()
 }
 
-// UnimplementedPluginsServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedPluginsServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedPluginsServiceServer struct {
 }
 
 func (UnimplementedPluginsServiceServer) GetConfiguredPlugins(context.Context, *GetConfiguredPluginsRequest) (*GetConfiguredPluginsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetConfiguredPlugins not implemented")
 }
-func (UnimplementedPluginsServiceServer) mustEmbedUnimplementedPluginsServiceServer() {}
 
 // UnsafePluginsServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to PluginsServiceServer will

@@ -52,17 +52,16 @@ func (c *kappControllerPackagesServiceClient) GetPackageRepositories(ctx context
 }
 
 // KappControllerPackagesServiceServer is the server API for KappControllerPackagesService service.
-// All implementations must embed UnimplementedKappControllerPackagesServiceServer
+// All implementations should embed UnimplementedKappControllerPackagesServiceServer
 // for forward compatibility
 type KappControllerPackagesServiceServer interface {
 	// GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin
 	GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
 	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
-	mustEmbedUnimplementedKappControllerPackagesServiceServer()
 }
 
-// UnimplementedKappControllerPackagesServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedKappControllerPackagesServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedKappControllerPackagesServiceServer struct {
 }
 
@@ -71,8 +70,6 @@ func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackages(con
 }
 func (UnimplementedKappControllerPackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
-}
-func (UnimplementedKappControllerPackagesServiceServer) mustEmbedUnimplementedKappControllerPackagesServiceServer() {
 }
 
 // UnsafeKappControllerPackagesServiceServer may be embedded to opt out of forward compatibility for this service.

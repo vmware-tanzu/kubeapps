@@ -33,9 +33,12 @@ func init() {
 	}
 }
 
-// RegisterWithGRPCServer enables a plugin to register with a gRPC server.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar) {
-	v1alpha1.RegisterKappControllerPackagesServiceServer(s, NewServer())
+// RegisterWithGRPCServer enables a plugin to register with a gRPC server,
+// returning the server implementation.
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar) interface{} {
+	svr := NewServer()
+	v1alpha1.RegisterKappControllerPackagesServiceServer(s, svr)
+	return svr
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
