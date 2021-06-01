@@ -70,6 +70,8 @@ type FluxV2PackagesServiceServer interface {
 	GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
+	// GetPackageMeta returns the package metadata managed by the 'fluxv2' plugin
+	GetPackageMeta(context.Context, *v1alpha1.GetPackageMetaRequest) (*v1alpha1.GetPackageMetaResponse, error)
 }
 
 // UnimplementedFluxV2PackagesServiceServer should be embedded to have forward compatible implementations.
@@ -81,6 +83,9 @@ func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackages(context.Con
 }
 func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
+}
+func (UnimplementedFluxV2PackagesServiceServer) GetPackageMeta(context.Context, *v1alpha1.GetPackageMetaRequest) (*v1alpha1.GetPackageMetaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageMeta not implemented")
 }
 
 // UnsafeFluxV2PackagesServiceServer may be embedded to opt out of forward compatibility for this service.

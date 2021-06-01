@@ -22,6 +22,11 @@ service PackagesService {
       get: "/core/packages/v1alpha1/packagerepositories"
     };
   }
+  rpc GetPackageMeta(kubeappsapis.core.packages.v1alpha1.GetPackageMetaRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageMetaResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/packagemeta"
+    };
+  }
 }
 //
 // Standard request and response messages for each required function are defined

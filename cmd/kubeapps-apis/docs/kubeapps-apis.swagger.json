@@ -35,6 +35,49 @@
     "application/json"
   ],
   "paths": {
+    "/core/packages/v1alpha1/packagemeta": {
+      "get": {
+        "operationId": "PackagesService_GetPackageMeta",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageMetaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "package.name",
+            "description": "required package name should be unique within the scope of specified repository, if specified.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "package.repository.name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "package.repository.namespace",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/packages/v1alpha1/packagerepositories": {
       "get": {
         "operationId": "PackagesService_GetPackageRepositories",
