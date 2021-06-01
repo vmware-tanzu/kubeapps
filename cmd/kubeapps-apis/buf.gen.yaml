@@ -22,7 +22,7 @@ plugins:
       # unexposed method) can satisfy the interface. We explicitly want plugins
       # defined in other packages to be able to satisfy a generic gRPC server
       # interface.
-      # TODO: create upstream issue about this.
+      # Created https://github.com/grpc/grpc-go/issues/4500 to discuss upstream.
       - require_unimplemented_servers=false
   - name: grpc-gateway
     out: gen

@@ -147,7 +147,7 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 // if it implements a core api (such as `packages.v1alpha1`) and if so,
 // keeps a (typed) reference to the implementation for use on aggregate APIs.
 func (s *pluginsServer) registerPluginsSatisfyingCoreAPIs(pluginSrv interface{}, pluginDetail *plugins.Plugin) error {
-	// The following heck if the service implements an interface is what
+	// The following check if the service implements an interface is what
 	// grpc-go itself does, see:
 	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
 	serverType := reflect.TypeOf(pluginSrv)
