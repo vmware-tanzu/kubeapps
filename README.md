@@ -2,69 +2,58 @@
 
 [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
 
-Kubeapps is a web-based UI for deploying and managing applications in Kubernetes clusters. Kubeapps allows you to:
+## Overview
+Kubeapps is an in-cluster web-based application that enables users with a one-time installation to deploy, manage, and upgrade applications on a Kubernetes cluster. 
 
+With Kubeapps you can: 
+
+- Customize deployments through an intuitive, form-based user interface 
+- Inspect, upgrade and delete applications installed in the cluster
 - Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
-- Inspect, upgrade and delete Helm-based applications installed in the cluster
-- Add custom and private chart repositories (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
-- Browse and deploy [Kubernetes Operators](https://operatorhub.io/).
-- Secure authentication to Kubeapps using an [OAuth2/OIDC provider](./docs/user/using-an-OIDC-provider.md)
-- Secure authorization based on Kubernetes [Role-Based Access Control](./docs/user/access-control.md)
+- Browse and deploy from public or private chart repositories (including VMware Marketplace ™ and Bitnami Application Catalog)
+- Browse and deploy [Kubernetes Operators](https://operatorhub.io/)
+- Secure authentication to Kubeapps using an [OAuth2/OIDC provider](./docs/user/using-an-OIDC-provider.md) 
+- secure authorization based on Kubernetes [Role-Based Access Control](./docs/user/access-control.md)
 
-## Quick Start
+**_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work.
+## Getting started with Kubeapps
 
-Use the Helm chart to install the latest version of Kubeapps:
+Installing Kubeapss is as simple as:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ```
+See the [Getting Started Guide](./docs/user/getting-started.md) for detailed instructions on how to install and use Kubeapps.
 
-**_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work. For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](./docs/user/getting-started.md).
+> Kubeapps is using the [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) as the official one. The chart inside this repository is only intended to be used for development purposes.
 
-> Please also take into account that Kubeapps is using the [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) as the official one. The chart inside this repository is only intended to be used for development purposes.
-
-## Developer Documentation
+## Documentation
 
 Please refer to:
 
-- The [Kubeapps Build Guide](./docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
-- The [Kubeapps Developer Documentation](./docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
-
-## Next Steps
-
-If you have followed the instructions for [installing Kubeapps](./docs/user/getting-started.md) check how to [use Kubeapps](./docs/user/dashboard.md) to easily manage your applications running in your cluster, or [look under the hood to see what's included in Kubeapps](./docs/architecture/overview.md).
-
-## Useful Resources
-
-- [Walkthrough for first-time users](./docs/user/getting-started.md)
+- [Getting started guide](./docs/user/getting-started.md)
 - [Detailed installation instructions](chart/kubeapps/README.md)
-- [Kubeapps Dashboard documentation](./docs/user/dashboard.md)
-- [Kubeapps components](./docs/architecture/overview.md)
-- [Project board](https://github.com/kubeapps/kubeapps/projects/11)
-- [Roadmap](https://github.com/kubeapps/kubeapps/milestones)
+- [Kubeapps user guide](./docs/user/dashboard.md) to easily manage your applications running in your cluster.
+- [Kubeapps build guide](./docs/developer/build.md) for setting up the build environment and building Kubeapps from source.
+- [Kubeapps developer guide](./docs/developer/README.md) for setting up the developer environment.
+- [Kubeapps architecture](./docs/architecture/overview.md)
+- [Kubeapps FAQs](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md#faq).
 
-## API documentation
+See how to deploy and configure [Kubeapps on VMware Tanzu™ Kubernetes Grid™](./docs/step-by-step/kubeapps-on-tkg/README.md)
 
-Whereas Kubeapps does not have yet a well-designed API, we still want to share the current status of the APIs used across the internal components. Check out the [latest API online documentation](https://app.swaggerhub.com/apis/kubeapps/Kubeapps) or download the Kubeapps [OpenAPI Specification yaml file](./dashboard/public/openapi.yaml) from the repository.
+## Troubleshooting
 
-Feel free to contribute using this guide on [how to update the API docs](./docs/developer/update-api-docs.md) and send us a PR if you find any errors.
+If you encounter issues, review the [troubleshooting docs](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md#troubleshooting), [file an issue](https://github.com/kubeapps/kubeapps/issues), or talk to us on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) on the Kubernetes Slack server. 
 
-> This API documentation is subject to change in each Kubeapps version. If you are interested in the Kubeapps API, please [reach out to us](https://kubernetes.slack.com/messages/kubeapps) for further information.
+- Click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack org.
 
-## Differences from Monocular
+- Review our FAQs section on the [Kubeapps chart README](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md#faq).
+## Contributing
 
-The [Monocular](https://github.com/helm/monocular) project was designed to run a public search and discovery website for Helm repositories (e.g. https://hub.kubeapps.com). Following its 1.0 release, Monocular is focused on delivering the experience for the Helm Hub.
+If you are ready to jump in and test, add code, or help with documentation, follow the instructions on our [Start contributing](./CONTRIBUTING.md) documentation for guidance on how to setup Kubeapps for development.
 
-Versions of Monocular 0.7 and older include a basic ability to install, view and delete Helm releases in a Kubernetes cluster. To focus on the Helm Hub experience, these [features have been removed](https://github.com/helm/monocular#looking-for-an-in-cluster-application-management-ui) since the 1.0 release and are no longer supported. We recommend users of Monocular's in-cluster features try Kubeapps as it provides a more featured, robust and secure solution to managing Helm applications in your cluster.
+## Changelog
 
-## Community
-
-- [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps)
-
-Click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack org.
-
-## FAQ
-
-We maintain a section for frequently asked questions on the [Kubeapps chart README](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md#faq).
+See the list of [releases](https://github.com/kubeapps/kubeapps/releases) to find out about feature changes.
