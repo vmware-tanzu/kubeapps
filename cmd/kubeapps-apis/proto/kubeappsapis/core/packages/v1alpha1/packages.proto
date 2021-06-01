@@ -182,10 +182,14 @@ message PackageReference {
   PackageRepositoryReference repository = 2;
 }
 
+//
+// Request for GetPackageMeta
 message GetPackageMetaRequest {
   PackageReference package = 1;
 }
 
+//
+// Response for GetPackageMeta
 message GetPackageMetaResponse {
   message PackageMeta {
     string readme = 1;

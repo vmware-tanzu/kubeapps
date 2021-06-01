@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/ghodss/yaml"
@@ -42,6 +43,20 @@ const (
 	fluxHelmRepositoryList = "HelmRepositoryList"
 	fluxHelmChart          = "HelmChart"
 	fluxHelmCharts         = "helmcharts"
+)
+
+// these should be constants but alas go does not allow const structs
+var (
+	repositoriesResource = schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories}
+
+	chartsResource = schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmCharts,
+	}
 )
 
 // Server implements the fluxv2 packages v1alpha1 interface.
@@ -100,15 +115,16 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 
 	responseRepos := []*corev1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
+		obj := repoUnstructured.Object
 		repo := &corev1.PackageRepository{}
-		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
+		name, found, err := unstructured.NestedString(obj, "metadata", "name")
 		if err != nil || !found {
-			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%v", err, repoUnstructured.Object)
+			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%v", err, obj)
 		}
 		repo.Name = name
 
 		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
-		namespace, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "namespace")
+		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
 
 		// TODO(absoludity): When testing, write failing test for the case of a
 		// cluster-scoped object without a namespace, then fix.
@@ -116,10 +132,10 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 			repo.Namespace = namespace
 		}
 
-		url, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
+		url, found, err := unstructured.NestedString(obj, "spec", "url")
 		if err != nil || !found {
 			return nil, status.Errorf(
-				codes.Internal, "required field spec.url not found on HelmRepository: %v:\n%v", err, repoUnstructured.Object)
+				codes.Internal, "required field spec.url not found on HelmRepository: %v:\n%v", err, obj)
 		}
 		repo.Url = url
 
@@ -143,23 +159,24 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	}
 
 	responsePackages := []*corev1.AvailablePackage{}
-	for _, repoUnstructured := range repos.Items {
-		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
+	for _, unstructuredRepo := range repos.Items {
+		obj := unstructuredRepo.Object
+		name, found, err := unstructured.NestedString(obj, "metadata", "name")
 		if err != nil || !found {
-			log.Errorf("required field metadata.name not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
+			log.Errorf("required field metadata.name not found on HelmRepository: %w:\n%v", err, obj)
 			// just skip over to the next one
 			continue
 		}
 
-		ready, err := isRepoReady(&repoUnstructured)
+		ready, err := isRepoReady(obj)
 		if err != nil || !ready {
-			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%v", name, err, repoUnstructured.Object)
+			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%v", name, err, obj)
 			continue
 		}
 
-		url, found, err := unstructured.NestedString(repoUnstructured.Object, "status", "url")
+		url, found, err := unstructured.NestedString(obj, "status", "url")
 		if err != nil || !found {
-			log.Infof("expected field status.url not found on HelmRepository [%s]: %v:\n%v", name, err, repoUnstructured.Object)
+			log.Infof("expected field status.url not found on HelmRepository [%s]: %v:\n%v", name, err, obj)
 			continue
 		}
 
@@ -168,7 +185,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 			Name: name,
 		}
 		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
-		namespace, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "namespace")
+		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
 		if err == nil && found {
 			repoRef.Namespace = namespace
 		}
@@ -190,29 +207,10 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageMetaRequest) (*corev1.GetPackageMetaResponse, error) {
 	log.Infof("+GetPackageMeta()")
 
-	client, err := s.GetClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	chartsResource := schema.GroupVersionResource{
-		Group:    "source.toolkit.fluxcd.io", //fluxGroup,
-		Version:  "v1beta1",                  //fluxVersion,
-		Resource: "helmcharts"}               //fluxHelmCharts}
-
-	log.Infof("helm charts:")
-	chartList, err := client.Resource(chartsResource).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	for _, chartUnstructured := range chartList.Items {
-		log.Infof("%v", chartUnstructured.Object)
-	}
-
 	unstructuredChart := unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "source.toolkit.fluxcd.io/v1beta1", //fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-			"kind":       "HelmChart",                        //fluxHelmChart,
+			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+			"kind":       fluxHelmChart,
 			"metadata": map[string]interface{}{
 				"generateName": "redis-",
 			},
@@ -228,7 +226,24 @@ func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageM
 		},
 	}
 
-	newChart, err := client.Resource(chartsResource).Create(ctx, &unstructuredChart, metav1.CreateOptions{})
+	url, err := s.createAndPullChart(ctx, &unstructuredChart)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("Found chart url: [%s]", *url)
+
+	return nil, status.Errorf(codes.Unimplemented, "not implemented yet")
+}
+
+func (s *Server) createAndPullChart(ctx context.Context, unstructuredChart *unstructured.Unstructured) (*string, error) {
+	client, err := s.GetClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resourceIfc := client.Resource(chartsResource).Namespace("default")
+
+	newChart, err := resourceIfc.Create(ctx, unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
 		log.Errorf("error creating chart: %v\n%v", err, unstructuredChart)
 		return nil, err
@@ -236,7 +251,45 @@ func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageM
 
 	log.Infof("created chart: [%v]", newChart)
 
-	return nil, status.Errorf(codes.Unimplemented, "not implemented yet")
+	// wait until flux reconciles
+	watcher, err := resourceIfc.Watch(ctx, metav1.ListOptions{
+		ResourceVersion: newChart.GetResourceVersion(),
+	})
+	if err != nil {
+		log.Errorf("error creating watch: %v\n%v", err, unstructuredChart)
+		return nil, err
+	}
+
+	return waitUntilChartPullComplete(watcher)
+}
+
+func waitUntilChartPullComplete(watcher watch.Interface) (*string, error) {
+	ch := watcher.ResultChan()
+	// LISTEN TO CHANNEL
+	for {
+		event := <-ch
+		// check if ready=True
+		if event.Type == watch.Modified {
+			unstructuredChart, ok := event.Object.(*unstructured.Unstructured)
+			if !ok {
+				return nil, status.Errorf(codes.Internal, "Could not cast to unstructured.Unstructured")
+			}
+
+			done, err := isChartPullComplete(unstructuredChart)
+			if err != nil {
+				return nil, err
+			} else if done {
+				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+				if err != nil || !found {
+					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+				}
+				return &url, nil
+			}
+		} else {
+			// TODO handle other kinds of events
+			return nil, status.Errorf(codes.Internal, "got unexpected event: %v", event)
+		}
+	}
 }
 
 // clientForRequestContext returns a k8s client for use during interactions with the cluster.
@@ -263,12 +316,7 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 		return nil, err
 	}
 
-	repositoryResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmRepositories}
-
-	var resource dynamic.NamespaceableResourceInterface = client.Resource(repositoryResource)
+	var resource dynamic.NamespaceableResourceInterface = client.Resource(repositoriesResource)
 	var resourceIfc dynamic.ResourceInterface = resource
 	if namespace != "" {
 		resourceIfc = resource.Namespace(namespace)
@@ -285,9 +333,9 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 	}
 }
 
-func isRepoReady(repoUnstructured *unstructured.Unstructured) (bool, error) {
+func isRepoReady(obj map[string]interface{}) (bool, error) {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
-	conditions, found, err := unstructured.NestedSlice(repoUnstructured.Object, "status", "conditions")
+	conditions, found, err := unstructured.NestedSlice(obj, "status", "conditions")
 	if err != nil {
 		return false, err
 	} else if !found {
@@ -305,6 +353,33 @@ func isRepoReady(repoUnstructured *unstructured.Unstructured) (bool, error) {
 						return true, nil
 					}
 				}
+			}
+		}
+	}
+	return false, nil
+}
+
+//
+// TODO the semantics of this really should be do we need to keep polling or not
+//
+func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
+	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
+	conditions, found, err := unstructured.NestedSlice(unstructuredChart.Object, "status", "conditions")
+	if err != nil {
+		return false, err
+	} else if !found {
+		return false, nil
+	}
+
+	for _, conditionUnstructured := range conditions {
+		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
+			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
+				if statusString, ok := conditionAsMap["status"]; ok && statusString == "True" {
+					if reasonString, ok := conditionAsMap["reason"]; ok && reasonString == "ChartPullSucceeded" {
+						return true, nil
+					}
+				}
+				// TODO handle the case when chart pull fails
 			}
 		}
 	}
