@@ -73,20 +73,6 @@ http://{{ include "kubeapps.kubeops.fullname" . }}:{{ .Values.kubeops.service.po
 {{- end -}}
 
 {{/*
-Create proxy_pass for the kubeappsapis
-*/}}
-{{- define "kubeapps.kubeappsapis.proxy_pass" -}}
-http://{{ include "kubeapps.kubeappsapis.fullname" . }}:{{ .Values.kubeappsapis.service.port }}
-{{- end -}}
-
-{{/*
-Create name for kubeappsapis based on the fullname
-*/}}
-{{- define "kubeapps.kubeappsapis.fullname" -}}
-{{- printf "%s-internal-kubeappsapis" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{/*
 Create name for the secrets related to oauth2_proxy
 */}}
 {{- define "kubeapps.oauth2_proxy-secret.name" -}}
