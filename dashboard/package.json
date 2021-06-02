@@ -51,7 +51,7 @@
     "react-diff-viewer": "^3.1.1",
     "react-dom": "^16.13.0",
     "react-helmet": "^6.1.0",
-    "react-intl": "^5.18.1",
+    "react-intl": "^5.18.3",
     "react-jsonschema-form": "^1.0.3",
     "react-markdown": "^6.0.2",
     "react-minimal-pie-chart": "^8.2.0",
