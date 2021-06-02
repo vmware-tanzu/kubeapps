@@ -52,17 +52,16 @@ func (c *fluxV2PackagesServiceClient) GetPackageRepositories(ctx context.Context
 }
 
 // FluxV2PackagesServiceServer is the server API for FluxV2PackagesService service.
-// All implementations must embed UnimplementedFluxV2PackagesServiceServer
+// All implementations should embed UnimplementedFluxV2PackagesServiceServer
 // for forward compatibility
 type FluxV2PackagesServiceServer interface {
 	// GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin
 	GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
-	mustEmbedUnimplementedFluxV2PackagesServiceServer()
 }
 
-// UnimplementedFluxV2PackagesServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedFluxV2PackagesServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedFluxV2PackagesServiceServer struct {
 }
 
@@ -72,7 +71,6 @@ func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackages(context.Con
 func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
-func (UnimplementedFluxV2PackagesServiceServer) mustEmbedUnimplementedFluxV2PackagesServiceServer() {}
 
 // UnsafeFluxV2PackagesServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to FluxV2PackagesServiceServer will

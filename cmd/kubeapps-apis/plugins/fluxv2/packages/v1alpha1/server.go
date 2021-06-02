@@ -44,6 +44,7 @@ const (
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
+
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
@@ -72,9 +73,12 @@ func NewServer(dynClientGetterForContext func(context.Context) (dynamic.Interfac
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
+	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
+	if request.Cluster != "" {
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+	}
 
-	repos, err := s.getHelmRepos(ctx)
+	repos, err := s.getHelmRepos(ctx, request.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -113,9 +117,12 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 
 // GetAvailablePackages streams the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
-	log.Infof("+GetAvailablePackages(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
+	log.Infof("+GetAvailablePackages(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
+	if request.Cluster != "" {
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+	}
 
-	repos, err := s.getHelmRepos(ctx)
+	repos, err := s.getHelmRepos(ctx, request.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +171,7 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	}, nil
 }
 
-func (s *Server) getHelmRepos(ctx context.Context) (*unstructured.UnstructuredList, error) {
+func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -175,8 +182,12 @@ func (s *Server) getHelmRepos(ctx context.Context) (*unstructured.UnstructuredLi
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories}
 
-	// Currently checks globally. Update to handle namespaced requests (?)
-	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})
+	var resource dynamic.NamespaceableResourceInterface = client.Resource(repositoryResource)
+	var resourceIfc dynamic.ResourceInterface = resource
+	if namespace != "" {
+		resourceIfc = resource.Namespace(namespace)
+	}
+	repos, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
@@ -274,7 +285,6 @@ func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
 
 // getClient ensures a client getter is available and uses it to return the client.
 func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
-
 	if s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}

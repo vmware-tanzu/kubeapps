@@ -38,7 +38,7 @@ func init() {
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, dynClientGetterForContext func(context.Context) (dynamic.Interface, error)) interface{} {
 	svr := NewServer(dynClientGetterForContext)
-	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
+	v1alpha1.RegisterKappControllerPackagesServiceServer(s, svr)
 	return svr
 }
 

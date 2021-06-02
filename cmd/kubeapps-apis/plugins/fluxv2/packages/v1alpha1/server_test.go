@@ -59,7 +59,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					newRepo("test", nil, nil),
+					newRepo("test", "", nil, nil),
 				), nil
 			},
 			statusCode: codes.OK,
@@ -72,7 +72,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					newRepo("test", map[string]interface{}{
+					newRepo("test", "", map[string]interface{}{
 						"foo": "bar",
 					}, map[string]interface{}{
 						"zot": "xyz",
@@ -89,7 +89,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					newRepo("test", map[string]interface{}{}, map[string]interface{}{
+					newRepo("test", "", map[string]interface{}{}, map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
 								"type":   "Ready",
@@ -109,7 +109,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 					},
-					newRepo("test", nil, map[string]interface{}{
+					newRepo("test", "", nil, map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
 								"type":   "Ready",
@@ -148,13 +148,18 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 	}
 }
 
-func newRepo(name string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"name": name,
+	}
+	if namespace != "" {
+		metadata["namespace"] = namespace
+	}
+
 	obj := map[string]interface{}{
 		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 		"kind":       fluxHelmRepository,
-		"metadata": map[string]interface{}{
-			"name": name,
-		},
+		"metadata":   metadata,
 	}
 
 	if spec != nil {
@@ -171,10 +176,11 @@ func newRepo(name string, spec map[string]interface{}, status map[string]interfa
 }
 
 // repositoryFromSpecs takes a map of specs keyed by object name converting them to runtime objects.
-func newRepos(specs map[string]map[string]interface{}) []runtime.Object {
+func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
 	repos := []runtime.Object{}
 	for name, spec := range specs {
-		repos = append(repos, newRepo(name, spec, nil))
+		repo := newRepo(name, namespace, spec, nil)
+		repos = append(repos, repo)
 	}
 	return repos
 }
@@ -182,16 +188,20 @@ func newRepos(specs map[string]map[string]interface{}) []runtime.Object {
 func TestGetAvailablePackages(t *testing.T) {
 	testCases := []struct {
 		testName         string
+		request          *corev1.GetAvailablePackagesRequest
 		repoName         string
+		repoNamespace    string
 		repoUrl          string
 		repoIndex        string
 		expectedPackages []*corev1.AvailablePackage
 	}{
 		{
-			testName:  "it returns a couple of fluxv2 packages from the cluster",
-			repoName:  "bitnami-1",
-			repoUrl:   "https://example.repo.com/charts",
-			repoIndex: "testdata/valid-index.yaml",
+			testName:      "it returns a couple of fluxv2 packages from the cluster",
+			repoName:      "bitnami-1",
+			repoNamespace: "",
+			request:       &corev1.GetAvailablePackagesRequest{},
+			repoUrl:       "https://example.repo.com/charts",
+			repoIndex:     "testdata/valid-index.yaml",
 			expectedPackages: []*corev1.AvailablePackage{
 				{
 					Name:       "acs-engine-autoscaler",
@@ -206,6 +216,75 @@ func TestGetAvailablePackages(t *testing.T) {
 					Repository: &corev1.AvailablePackage_PackageRepositoryReference{Name: "bitnami-1"},
 				},
 			},
+		},
+		{
+			testName:      "it returns all of fluxv2 packages from the cluster when request does not specify ns",
+			repoName:      "bitnami-2",
+			repoNamespace: "non-default",
+			request:       &corev1.GetAvailablePackagesRequest{},
+			repoUrl:       "https://example.repo.com/charts",
+			repoIndex:     "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackage{
+				{
+					Name:    "acs-engine-autoscaler",
+					Version: "2.1.1",
+					IconUrl: "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
+						Name:      "bitnami-2",
+						Namespace: "non-default",
+					},
+				},
+				{
+					Name:    "wordpress",
+					Version: "0.7.5",
+					IconUrl: "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
+						Name:      "bitnami-2",
+						Namespace: "non-default",
+					},
+				},
+			},
+		},
+		{
+			testName:      "it returns all of fluxv2 packages from the cluster that match request ns",
+			repoName:      "bitnami-3",
+			repoNamespace: "non-default",
+			request: &corev1.GetAvailablePackagesRequest{
+				Namespace: "non-default",
+			},
+			repoUrl:   "https://example.repo.com/charts",
+			repoIndex: "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackage{
+				{
+					Name:    "acs-engine-autoscaler",
+					Version: "2.1.1",
+					IconUrl: "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
+						Name:      "bitnami-3",
+						Namespace: "non-default",
+					},
+				},
+				{
+					Name:    "wordpress",
+					Version: "0.7.5",
+					IconUrl: "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
+						Name:      "bitnami-3",
+						Namespace: "non-default",
+					},
+				},
+			},
+		},
+		{
+			testName:      "it returns none of fluxv2 packages from the cluster that don't match request ns",
+			repoName:      "bitnami-4",
+			repoNamespace: "default",
+			request: &corev1.GetAvailablePackagesRequest{
+				Namespace: "non-default",
+			},
+			repoUrl:          "https://example.repo.com/charts",
+			repoIndex:        "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackage{},
 		},
 	}
 
@@ -223,7 +302,8 @@ func TestGetAvailablePackages(t *testing.T) {
 			defer ts.Close()
 
 			repoSpec := map[string]interface{}{
-				"name": tc.repoName,
+				"url":      tc.repoUrl,
+				"interval": "1m0s",
 			}
 			repoStatus := map[string]interface{}{
 				"conditions": []interface{}{
@@ -235,7 +315,7 @@ func TestGetAvailablePackages(t *testing.T) {
 				},
 				"url": ts.URL,
 			}
-			repo := newRepo(tc.repoName, repoSpec, repoStatus)
+			repo := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
 			s := Server{
 				clientGetter: func(context.Context) (dynamic.Interface, error) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
@@ -248,14 +328,15 @@ func TestGetAvailablePackages(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			response, err := s.GetAvailablePackages(context.Background(), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			cmpOption := cmpopts.IgnoreUnexported(corev1.AvailablePackage{}, corev1.AvailablePackage_PackageRepositoryReference{})
-			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, cmpOption) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOption))
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackage{}, corev1.AvailablePackage_PackageRepositoryReference{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 			}
 		})
 	}
@@ -265,13 +346,15 @@ func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
 		request                     *corev1.GetPackageRepositoriesRequest
+		repoNamespace               string
 		repoSpecs                   map[string]map[string]interface{}
 		expectedPackageRepositories []*corev1.PackageRepository
 		statusCode                  codes.Code
 	}{
 		{
-			name:    "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			name:          "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
+			request:       &corev1.GetPackageRepositoriesRequest{},
+			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
 					"foo": "bar",
@@ -280,8 +363,9 @@ func TestGetPackageRepositories(t *testing.T) {
 			statusCode: codes.Internal,
 		},
 		{
-			name:    "returns expected repositories",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			name:          "returns expected repositories",
+			request:       &corev1.GetPackageRepositoriesRequest{},
+			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
 					"url": "https://charts.bitnami.com/bitnami",
@@ -301,6 +385,49 @@ func TestGetPackageRepositories(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "returns expected repositories in specific namespace",
+			request: &corev1.GetPackageRepositoriesRequest{
+				Namespace: "default",
+			},
+			repoNamespace: "non-default",
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"url": "https://charts.bitnami.com/bitnami",
+				},
+				"repo-2": {
+					"url": "https://charts.helm.sh/stable",
+				},
+			},
+			expectedPackageRepositories: []*corev1.PackageRepository{},
+		},
+		{
+			name: "returns expected repositories in specific namespace",
+			request: &corev1.GetPackageRepositoriesRequest{
+				Namespace: "default",
+			},
+			repoNamespace: "default",
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"url": "https://charts.bitnami.com/bitnami",
+				},
+				"repo-2": {
+					"url": "https://charts.helm.sh/stable",
+				},
+			},
+			expectedPackageRepositories: []*corev1.PackageRepository{
+				{
+					Name:      "repo-1",
+					Namespace: "default",
+					Url:       "https://charts.bitnami.com/bitnami",
+				},
+				{
+					Name:      "repo-2",
+					Namespace: "default",
+					Url:       "https://charts.helm.sh/stable",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -312,12 +439,12 @@ func TestGetPackageRepositories(t *testing.T) {
 						map[schema.GroupVersionResource]string{
 							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 						},
-						newRepos(tc.repoSpecs)...,
+						newRepos(tc.repoSpecs, tc.repoNamespace)...,
 					), nil
 				},
 			}
 
-			response, err := s.GetPackageRepositories(context.Background(), &corev1.GetPackageRepositoriesRequest{})
+			response, err := s.GetPackageRepositories(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -328,12 +455,22 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					cmpOption := cmpopts.IgnoreUnexported(corev1.PackageRepository{})
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, cmpOption) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOption))
+					opt1 := cmpopts.IgnoreUnexported(corev1.PackageRepository{})
+					opt2 := cmpopts.SortSlices(lessPackageRepositoryFunc)
+					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1, opt2) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 					}
 				}
 			}
 		})
 	}
+}
+
+// these are helpers to compare slices ignoring order
+func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackage) bool {
+	return p1.Name < p2.Name
+}
+
+func lessPackageRepositoryFunc(p1, p2 *corev1.PackageRepository) bool {
+	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }
