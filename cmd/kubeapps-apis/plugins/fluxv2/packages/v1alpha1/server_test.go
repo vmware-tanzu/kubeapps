@@ -24,7 +24,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,7 +36,7 @@ import (
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error)
+		clientGetter func(context.Context) (dynamic.Interface, error)
 		statusCode   codes.Code
 	}{
 		{
@@ -47,14 +46,14 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error) {
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
 		{
 			name: "returns without error if response status does not contain conditions",
-			clientGetter: func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error) {
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
@@ -67,7 +66,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns without error if response status does not contain conditions",
-			clientGetter: func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error) {
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
@@ -84,7 +83,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns without error if response does not contain ready repos",
-			clientGetter: func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error) {
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
@@ -104,7 +103,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns without error if response does not contain status url",
-			clientGetter: func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error) {
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
@@ -238,7 +237,7 @@ func TestGetAvailablePackages(t *testing.T) {
 			}
 			repo := newRepo(tc.repoName, repoSpec, repoStatus)
 			s := Server{
-				clientGetter: func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error) {
+				clientGetter: func(context.Context) (dynamic.Interface, error) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
@@ -307,7 +306,7 @@ func TestGetPackageRepositories(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{
-				clientGetter: func(context.Context, kube.ClustersConfig, bool) (dynamic.Interface, error) {
+				clientGetter: func(context.Context) (dynamic.Interface, error) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
