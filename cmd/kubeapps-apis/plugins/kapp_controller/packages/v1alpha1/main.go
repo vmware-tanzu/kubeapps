@@ -34,9 +34,12 @@ func init() {
 	}
 }
 
-// RegisterWithGRPCServer enables a plugin to register with a gRPC server.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, dynClientGetterForContext func(context.Context) (dynamic.Interface, error)) {
-	v1alpha1.RegisterKappControllerPackagesServiceServer(s, NewServer(dynClientGetterForContext))
+// RegisterWithGRPCServer enables a plugin to register with a gRPC server
+// returning the server implementation.
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, dynClientGetterForContext func(context.Context) (dynamic.Interface, error)) interface{} {
+	svr := NewServer(dynClientGetterForContext)
+	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
+	return svr
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http

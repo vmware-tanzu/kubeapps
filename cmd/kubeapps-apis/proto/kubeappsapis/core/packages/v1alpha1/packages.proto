@@ -7,22 +7,22 @@ import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 // The core.packages defines the request and response types for API calls
-// interacting with packages.
+// interacting with packages, as well as the PackagesService to be implemented.
 
 // Each packages v1alpha1 plugin must implement at least the following rpcs:
 //
-// service PackagesService {
-//   rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
-//     option (google.api.http) = {
-//       get: "/<plugin>/packages/v1alpha1/get-available-packages"
-//     };
-//   }
-//   rpc GetPackageRepositories(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse) {
-//     option (google.api.http) = {
-//       get: "/<plugin>/packages/v1alpha1/get-available-packages"
-//     };
-//   }
-// }
+service PackagesService {
+  rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/packages"
+    };
+  }
+  rpc GetPackageRepositories(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/packagerepositories"
+    };
+  }
+}
 //
 // Standard request and response messages for each required function are defined
 // below for import and re-use.

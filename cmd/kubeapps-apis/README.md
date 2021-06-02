@@ -27,6 +27,10 @@ Each plugin consists of 2 source files (and some generated files):
 
 With this structure, the kubeapps-apis' main.go simply loads the `.so` files from the specified plugin dirs and register them when starting. You can see this in the [kubeapps-apis/server/server.go](server/server.go) file.
 
+## Aggregated
+
+When plugins are registered, they are also checked to see if they implement a core API (currently the only one is core.packages.v1alpha1). If they do, they are registered for use by the corresponding core API for aggregating results across plugins. See below for an example.
+
 ## CLI
 
 Similar to most go commands, we've used [Cobra](https://github.com/spf13/cobra) for the CLI interface. Currently there is only a root command to run server, but we may later add a `version` subcommand or a `new-plugin` subcommand, but even without these it provides a lot of useful defaults for config, env var support etc.
@@ -123,6 +127,33 @@ $ curl -s http://localhost:8080/plugins/kapp_controller/packages/v1alpha1/packag
     {
       "name": "repo-name.example.com",
       "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+    }
+  ]
+}
+```
+
+Or you can query the core API to get an aggregation of all package repositories (or packages) across the relevant plugins. This output will include the additional plugin field for each item:
+
+```bash
+curl -s http://localhost:8080/core/packages/v1alpha1/packagerepositories | jq .
+{
+  "repositories": [
+    {
+      "name": "bitnami",
+      "namespace": "flux-system",
+      "url": "https://charts.bitnami.com/bitnami",
+      "plugin": {
+        "name": "fluxv2.packages",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "name": "demo-package-repository",
+      "url": "k8slt/corp-com-pkg-repo:1.0.0",
+      "plugin": {
+        "name": "kapp_controller.packages",
+        "version": "v1alpha1"
+      }
     }
   ]
 }

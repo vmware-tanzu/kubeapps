@@ -25,6 +25,7 @@ import (
 	"github.com/soheilhy/cmux"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -73,6 +74,13 @@ func Serve(serveOpts ServeOptions) {
 	err = plugins.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
 	if err != nil {
 		log.Fatalf("failed to register core.plugins handler for gateway: %v", err)
+	}
+
+	// Create the core.packages server and register it for both grpc and http.
+	packages.RegisterPackagesServiceServer(grpcSrv, NewPackagesServer(pluginsServer.packagesPlugins))
+	err = packages.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
+	if err != nil {
+		log.Fatalf("failed to register core.packages handler for gateway: %v", err)
 	}
 
 	lis, err := net.Listen("tcp", listenAddr)
