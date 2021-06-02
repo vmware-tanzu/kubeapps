@@ -21,6 +21,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/kube"
+	"google.golang.org/grpc/metadata"
+	"k8s.io/client-go/rest"
 )
 
 func TestPluginsAvailable(t *testing.T) {
@@ -239,4 +242,121 @@ func createTestFS(t *testing.T, filenames []string) fstest.MapFS {
 		}
 	}
 	return fs
+}
+
+func TestExtractToken(t *testing.T) {
+	testCases := []struct {
+		name          string
+		contextKey    string
+		contextValue  string
+		expectedToken string
+		expectedErr   string
+	}{
+		{
+			name:          "Good token",
+			contextKey:    "authorization",
+			contextValue:  "Bearer abc",
+			expectedToken: "abc",
+			expectedErr:   "",
+		},
+		{
+			name:          "Malformed bearer token",
+			contextKey:    "authorization",
+			contextValue:  "Bla",
+			expectedToken: "",
+			expectedErr:   "rpc error: code = Unauthenticated desc = malformed authorization metadata",
+		},
+		{
+			name:          "No metadata/header",
+			contextKey:    "",
+			contextValue:  "",
+			expectedToken: "",
+			expectedErr:   "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			context := context.Background()
+			context = metadata.NewIncomingContext(context, metadata.New(map[string]string{
+				tc.contextKey: tc.contextValue,
+			}))
+
+			token, err := extractToken(context)
+
+			if tc.expectedErr != "" && err != nil {
+				if got, want := err.Error(), tc.expectedErr; !cmp.Equal(want, got) {
+					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
+				}
+			} else if err != nil {
+				t.Fatalf("in %s: %+v", tc.name, err)
+			}
+
+			if got, want := token, tc.expectedToken; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestDynClientGetterForContext(t *testing.T) {
+	testCases := []struct {
+		name         string
+		contextKey   string
+		contextValue string
+		shouldCreate bool
+	}{
+		{
+			name:         "Good token",
+			contextKey:   "authorization",
+			contextValue: "Bearer abc",
+			shouldCreate: true,
+		},
+		{
+			name:         "Malformed bearer token",
+			contextKey:   "authorization",
+			contextValue: "Bla",
+			shouldCreate: false,
+		},
+		{
+			name:         "No metadata/header",
+			contextKey:   "",
+			contextValue: "",
+			shouldCreate: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			context := context.Background()
+			context = metadata.NewIncomingContext(context, metadata.New(map[string]string{
+				tc.contextKey: tc.contextValue,
+			}))
+
+			inClusterConfig := &rest.Config{}
+			serveOpts := ServeOptions{
+				ClustersConfigPath: "/config.yaml",
+				PinnipedProxyURL:   "http://example.com",
+				UnsafeUseDemoSA:    true,
+			}
+			config := kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				PinnipedProxyURL:    serveOpts.PinnipedProxyURL,
+				Clusters: map[string]kube.ClusterConfig{
+					"default": {
+						Name: "default",
+						PinnipedConfig: kube.PinnipedConciergeConfig{
+							Enable: true,
+						},
+						IsKubeappsCluster: true,
+					},
+				},
+			}
+			dynamicInterface, err := dynClientGetterForContextWithConfig(context, inClusterConfig, serveOpts, config)
+
+			if tc.shouldCreate != (dynamicInterface != nil) {
+				t.Fatalf("in %s: Unexpected dynamicInterface result:  %+v", tc.name, err)
+			}
+		})
+	}
 }
