@@ -15,8 +15,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,13 +22,11 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
-	helmrepo "k8s.io/helm/pkg/repo"
 	log "k8s.io/klog/v2"
 )
 
@@ -45,12 +41,14 @@ const (
 	fluxHelmCharts         = "helmcharts"
 )
 
-// these should be constants but alas go does not allow const structs
+// these should really be constants, rather than global vars
+// but alas, go does not allow const structs (why???)
 var (
 	repositoriesResource = schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
-		Resource: fluxHelmRepositories}
+		Resource: fluxHelmRepositories,
+	}
 
 	chartsResource = schema.GroupVersionResource{
 		Group:    fluxGroup,
@@ -207,35 +205,26 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageMetaRequest) (*corev1.GetPackageMetaResponse, error) {
 	log.Infof("+GetPackageMeta()")
 
-	unstructuredChart := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-			"kind":       fluxHelmChart,
-			"metadata": map[string]interface{}{
-				"generateName": "redis-",
-			},
-			"spec": map[string]interface{}{
-				"chart":   "redis",
-				"version": "10.5.x",
-				"sourceRef": map[string]interface{}{
-					"name": "bitnami",
-					"kind": "HelmRepository",
-				},
-				"interval": "10m",
-			},
-		},
-	}
-
-	url, err := s.createAndPullChart(ctx, &unstructuredChart)
+	url, err := s.pullChartTarball(ctx, request.Package)
 	if err != nil {
 		return nil, err
 	}
 	log.Infof("Found chart url: [%s]", *url)
 
-	return nil, status.Errorf(codes.Unimplemented, "not implemented yet")
+	// unzip and untar .tgz file
+	meta, err := fetchMetaFromChartTarball(request.Package.Name, *url)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetPackageMetaResponse{
+		Meta: &corev1.GetPackageMetaResponse_PackageMeta{
+			Readme: meta[readme],
+		},
+	}, nil
 }
 
-func (s *Server) createAndPullChart(ctx context.Context, unstructuredChart *unstructured.Unstructured) (*string, error) {
+func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.PackageReference) (*string, error) {
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -243,7 +232,52 @@ func (s *Server) createAndPullChart(ctx context.Context, unstructuredChart *unst
 
 	resourceIfc := client.Resource(chartsResource).Namespace("default")
 
-	newChart, err := resourceIfc.Create(ctx, unstructuredChart, metav1.CreateOptions{})
+	// see if we the chart already exists
+	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO it'd be better if we could filter on server-side
+	for _, unstructuredChart := range chartList.Items {
+		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
+		if err == nil && found && chartName == packageRef.Name {
+			done, err := isChartPullComplete(&unstructuredChart)
+			if err != nil {
+				return nil, err
+			} else if done {
+				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+				if err != nil || !found {
+					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+				}
+				log.Infof("Found existing HelmChart for: [%s]", packageRef.Name)
+				return &url, nil
+			}
+			// TODO waitUntilChartPullComplete
+		}
+	}
+
+	// did not find the chart, need to create
+	// see https://fluxcd.io/docs/components/source/helmcharts/
+	unstructuredChart := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+			"kind":       fluxHelmChart,
+			"metadata": map[string]interface{}{
+				"generateName": fmt.Sprintf("%s-", packageRef.Name),
+			},
+			"spec": map[string]interface{}{
+				"chart": packageRef.Name,
+				"sourceRef": map[string]interface{}{
+					"name": packageRef.Repository.Name,
+					"kind": "HelmRepository",
+				},
+				"interval": "10m",
+			},
+		},
+	}
+
+	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
 		log.Errorf("error creating chart: %v\n%v", err, unstructuredChart)
 		return nil, err
@@ -268,7 +302,6 @@ func waitUntilChartPullComplete(watcher watch.Interface) (*string, error) {
 	// LISTEN TO CHANNEL
 	for {
 		event := <-ch
-		// check if ready=True
 		if event.Type == watch.Modified {
 			unstructuredChart, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
@@ -371,6 +404,7 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 		return false, nil
 	}
 
+	// check if ready=True
 	for _, conditionUnstructured := range conditions {
 		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
 			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
@@ -416,32 +450,4 @@ func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositor
 		responsePackages = append(responsePackages, pkg)
 	}
 	return responsePackages, nil
-}
-
-func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
-	log.Infof("+getHelmIndexFileFromURL(%s) 1", indexURL)
-	// Get the response bytes from the url
-	response, err := http.Get(indexURL)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return nil, status.Errorf(codes.FailedPrecondition, "received non OK response code: [%d]", response.StatusCode)
-	}
-
-	contents, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var index helmrepo.IndexFile
-	err = yaml.Unmarshal(contents, &index)
-	if err != nil {
-		return nil, err
-	}
-	index.SortEntries()
-	log.Infof("-getHelmIndexFileFromURL(%s)", indexURL)
-	return &index, nil
 }
