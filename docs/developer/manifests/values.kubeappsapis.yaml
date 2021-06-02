@@ -9,6 +9,8 @@ featureFlags:
   kubeappsAPIsServer: true
 
 kubeappsapis:
+  ## @param kubeappsapis.unsafeUseDemoSA If true, replace the user's credentials by a full-granted demo service account. Just intented for development purposes.
+  unsafeUseDemoSA: false
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
