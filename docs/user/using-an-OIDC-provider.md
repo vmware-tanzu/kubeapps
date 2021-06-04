@@ -365,7 +365,7 @@ Finally, if none of the above are relevant to your issue, you can check the logs
 ### User automatically logged out from Kubeapps Console
 
 When using the default auth proxy, some users may experience the behavior where they are automatically logged out from the console.
-Prior to Kubeapps 7.0.5, the auth proxy configuration did not include a default `--cookie-refresh` value to refresh the access/openid token and so the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5m.
+Prior to the Kubeapps chart version 7.1.0, the auth proxy configuration did not include a default `--cookie-refresh` value to refresh the access/openid token and so the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5m.
 
 To avoid this issue, you can do one of the following:
  - upgrade Kubeapps to version 7.0.5+ which sets a default of `--cookie-refresh=2m` and exposes the value in the chart values as `authProxy.cookieRefresh`.
