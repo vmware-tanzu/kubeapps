@@ -38,24 +38,28 @@ k8s_wait_for_deployment() {
     namespace=${1:?namespace is missing}
     deployment=${2:?deployment name is missing}
     local -i exit_code=0
-    
+    local -i attempts=0
+
+    local extraAttempts=3
+    local extraAttemptsWait=10
+
+    local rolloutCmd="silence kubectl rollout status --namespace "$namespace" deployment "$deployment" -w --timeout=60s"
+
     debug "Waiting for deployment ${deployment} to be successfully rolled out..."
     # Avoid to exit the function if the rollout fails
-    silence kubectl rollout status --namespace "$namespace" deployment "$deployment" -w --timeout=60s || exit_code=$?
+    $rolloutCmd || exit_code=$?
     debug "Rollout exit code: '${exit_code}'"
     if [ ${exit_code} -ne 0 ]
     then
-      info "Rollout exit code: '${exit_code}'"
-      exit_code=0;
-      info "Retrying after 10s..."
+      info "Rollout failed, attempting $extraAttempts times more"
       kubectl get pods --namespace "$namespace"
-      sleep 10
-      silence kubectl rollout status --namespace "$namespace" deployment "$deployment" -w --timeout=60s || exit_code=$?
-      if [ ${exit_code} -ne 0 ]
-      then
-        info "Rollout exit code: '${exit_code}'"
-        kubectl get pods --namespace "$namespace"
-      fi
+      exit_code=0;
+      until $rolloutCmd || [ $attempts -eq $extraAttempts ]; do
+        $rolloutCmd 
+        extraAttempts=$((attempts + 1))
+        info "Retrying after $extraAttemptsWait..."
+        sleep $extraAttemptsWait
+      done
     fi
     return $exit_code
 }
