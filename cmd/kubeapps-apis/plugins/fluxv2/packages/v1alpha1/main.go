@@ -25,8 +25,8 @@ import (
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, dynClientGetterForContext func(context.Context) (dynamic.Interface, error)) interface{} {
-	svr := NewServer(dynClientGetterForContext)
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter func(context.Context) (dynamic.Interface, error)) interface{} {
+	svr := NewServer(clientGetter)
 	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
 	return svr
 }

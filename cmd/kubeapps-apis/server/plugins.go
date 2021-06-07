@@ -52,11 +52,6 @@ const (
 	clustersCAFilesPrefix   = "/etc/additional-clusters-cafiles"
 )
 
-var (
-	pluginsServeOpts ServeOptions
-	inClusterConfig  *rest.Config
-)
-
 // pkgsPluginWithServer stores the plugin detail together with its implementation.
 type pkgsPluginWithServer struct {
 	plugin *plugins.Plugin
@@ -79,7 +74,6 @@ type pluginsServer struct {
 
 func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*pluginsServer, error) {
 	// Store the serveOptions in the global 'pluginsServeOpts' variable
-	pluginsServeOpts = serveOpts
 
 	// Find all .so plugins in the specified plugins directory.
 	pluginPaths, err := listSOFiles(os.DirFS(pluginRootDir), serveOpts.PluginDirs)
@@ -89,7 +83,7 @@ func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, g
 
 	ps := &pluginsServer{}
 
-	pluginDetails, err := ps.registerPlugins(pluginPaths, registrar, gwArgs)
+	pluginDetails, err := ps.registerPlugins(pluginPaths, registrar, gwArgs, serveOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register plugins: %w", err)
 	}
@@ -117,8 +111,14 @@ func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.Ge
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
-func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs) ([]*plugins.Plugin, error) {
+func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs, serveOpts ServeOptions) ([]*plugins.Plugin, error) {
 	pluginDetails := []*plugins.Plugin{}
+
+	clientGetter, err := createClientGetter(serveOpts)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create a ClientGetter: %w", err)
+	}
+
 	for _, pluginPath := range pluginPaths {
 		p, err := plugin.Open(pluginPath)
 		if err != nil {
@@ -132,7 +132,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			pluginDetails = append(pluginDetails, pluginDetail)
 		}
 
-		if err = s.registerGRPC(p, pluginDetail, grpcReg); err != nil {
+		if err = s.registerGRPC(p, pluginDetail, grpcReg, clientGetter); err != nil {
 			return nil, err
 		}
 
@@ -146,7 +146,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar) error {
+func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar, clientGetter func(context.Context) (dynamic.Interface, error)) error {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
@@ -159,7 +159,7 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
 
-	server := grpcFn(registrar, dynClientGetterForContext)
+	server := grpcFn(registrar, clientGetter)
 
 	return s.registerPluginsSatisfyingCoreAPIs(server, pluginDetail)
 }
@@ -308,65 +308,75 @@ func parseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 	return configs, deferFn, nil
 }
 
-// dynClientGetterForContextWithConfig returns a k8s client for use during interactions with the cluster.
-// It is invoked by dynClientGetterForContext and unit tests passing the appropriate configuration
-func dynClientGetterForContextWithConfig(ctx context.Context, inClusterConfig *rest.Config, serveOpts ServeOptions, config kube.ClustersConfig) (dynamic.Interface, error) {
-	var err error
-	token, err := extractToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var client dynamic.Interface
-	if !serveOpts.UnsafeUseDemoSA {
-		restConfig, err := kube.NewClusterConfig(inClusterConfig, token, "default", config)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
-		}
-		client, err = dynamic.NewForConfig(restConfig)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create dynamic client: %w", err)
-		}
-	} else {
-		client, err = dynamic.NewForConfig(inClusterConfig)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create dynamic client: %w", err)
-		}
-	}
-	return client, nil
-}
-
-// dynClientGetterForContext returns a k8s client for use during interactions with the cluster.
-// It utilizes the user credential from the request context. The plugins just have to call this function
-// passing the context in order to retrieve the configured k8s client
-func dynClientGetterForContext(ctx context.Context) (dynamic.Interface, error) {
-	var err error
-	inClusterConfig, err = rest.InClusterConfig()
+// createClientGetter returns a function closure for creating the k8s client to interact with the cluster.
+// The returned function utilizes the user credential present in the request context.
+// The plugins just have to call this function passing the context in order to retrieve the configured k8s client
+func createClientGetter(serveOpts ServeOptions) (func(context.Context) (dynamic.Interface, error), error) {
+	// get the default rest incluster config for the kube.NewClusterConfig function
+	var inClusterConfig, err = rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
 	}
 
-	config, err := getClustersConfigFromServeOpts(pluginsServeOpts)
+	// get the parsed kube.ClustersConfig from the serveOpts
+	config, err := getClustersConfigFromServeOpts(serveOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	return dynClientGetterForContextWithConfig(ctx, inClusterConfig, pluginsServeOpts, config)
+	// return the closure fuction that takes the context, but preserving the required scope,
+	// 'inClusterConfig' and 'config'
+	return createClientGetterWithParams(inClusterConfig, serveOpts, config)
 }
 
-// extractToken returns the token passed through the gRPC request in the "authorization" metadata
-// It is equivalent to the A"uthorization" usual HTTP 1 header
+// createClientGetter takes the required params and returns the closure fuction.
+// it's splitted for testing this fn separately
+func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, config kube.ClustersConfig) (func(context.Context) (dynamic.Interface, error), error) {
+
+	// return the closure fuction that takes the context, but preserving the required scope,
+	// 'inClusterConfig' and 'config'
+	return func(ctx context.Context) (dynamic.Interface, error) {
+		var err error
+		token, err := extractToken(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
+		}
+
+		var client dynamic.Interface
+		if !serveOpts.UnsafeUseDemoSA {
+			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, "default", config)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
+			}
+			client, err = dynamic.NewForConfig(restConfig)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+			}
+		} else {
+			client, err = dynamic.NewForConfig(inClusterConfig)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+			}
+		}
+		return client, nil
+	}, nil
+}
+
+// extractToken returns the token passed through the gRPC request in the "authorization" metadata in the context
+// It is equivalent to the "Authorization" usual HTTP 1 header
 // For instance: authorization="Bearer abc" will return "abc"
 func extractToken(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", status.Errorf(codes.Unauthenticated, "error reading request metadata/headers")
+		return "", fmt.Errorf("error reading request metadata/headers")
 	}
+
+	// metadata is always lowercased
 	if len(md["authorization"]) > 0 {
 		if strings.HasPrefix(md["authorization"][0], "Bearer ") {
 			return strings.TrimPrefix(md["authorization"][0], "Bearer "), nil
 		} else {
-			return "", status.Errorf(codes.Unauthenticated, "malformed authorization metadata")
+			return "", fmt.Errorf("malformed authorization metadata")
 		}
 	} else {
 		// No authorization header found, no error here, we will delegate it to the RBAC

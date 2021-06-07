@@ -14,6 +14,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"testing"
@@ -22,7 +23,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/kube"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
 )
 
@@ -250,28 +253,28 @@ func TestExtractToken(t *testing.T) {
 		contextKey    string
 		contextValue  string
 		expectedToken string
-		expectedErr   string
+		expectedErr   error
 	}{
 		{
-			name:          "Good token",
+			name:          "it returns the expected token without error for a valid 'authorization' metadata value",
 			contextKey:    "authorization",
 			contextValue:  "Bearer abc",
 			expectedToken: "abc",
-			expectedErr:   "",
+			expectedErr:   nil,
 		},
 		{
-			name:          "Malformed bearer token",
+			name:          "it returns no token with an error if the 'authorization' metadata value is invalid",
 			contextKey:    "authorization",
 			contextValue:  "Bla",
 			expectedToken: "",
-			expectedErr:   "rpc error: code = Unauthenticated desc = malformed authorization metadata",
+			expectedErr:   fmt.Errorf("malformed authorization metadata"),
 		},
 		{
-			name:          "No metadata/header",
+			name:          "it returns no token and no error if the 'authorization' is empty",
 			contextKey:    "",
 			contextValue:  "",
 			expectedToken: "",
-			expectedErr:   "",
+			expectedErr:   nil,
 		},
 	}
 
@@ -284,8 +287,8 @@ func TestExtractToken(t *testing.T) {
 
 			token, err := extractToken(context)
 
-			if tc.expectedErr != "" && err != nil {
-				if got, want := err.Error(), tc.expectedErr; !cmp.Equal(want, got) {
+			if tc.expectedErr != nil && err != nil {
+				if got, want := err.Error(), tc.expectedErr.Error(); !cmp.Equal(want, got) {
 					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
 				}
 			} else if err != nil {
@@ -299,37 +302,45 @@ func TestExtractToken(t *testing.T) {
 	}
 }
 
-func TestDynClientGetterForContext(t *testing.T) {
+// TODO(agamez): this test is just testing the dynamicInterface is created, but nothing else.
+// As per the PR #2908' comments, we could:
+// use the http_test package to create a fake http server and use it's address as the endpoint you expect,
+// then you could actually use the client to request something (anything),
+// and verify that the token was sent with the request to the expected address
+func TestCreateClientGetterWithParams(t *testing.T) {
 	testCases := []struct {
-		name         string
-		contextKey   string
-		contextValue string
-		shouldCreate bool
+		name           string
+		contextKey     string
+		contextValue   string
+		shouldCreate   bool
+		expectedErrMsg error
 	}{
 		{
-			name:         "Good token",
-			contextKey:   "authorization",
-			contextValue: "Bearer abc",
-			shouldCreate: true,
+			name:           "it creates the dynamicInterface when passing a valid value for the authorization metadata",
+			contextKey:     "authorization",
+			contextValue:   "Bearer abc",
+			shouldCreate:   true,
+			expectedErrMsg: nil,
 		},
 		{
-			name:         "Malformed bearer token",
-			contextKey:   "authorization",
-			contextValue: "Bla",
-			shouldCreate: false,
+			name:           "it doesn't create the dynamicInterface and throws a grpc error when passing an invalid authorization metadata",
+			contextKey:     "authorization",
+			contextValue:   "Bla",
+			shouldCreate:   false,
+			expectedErrMsg: status.Errorf(codes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
 		},
 		{
-			name:         "No metadata/header",
-			contextKey:   "",
-			contextValue: "",
-			shouldCreate: true,
+			name:           "it creates the dynamicInterface when no authorization metadata is passed",
+			contextKey:     "",
+			contextValue:   "",
+			shouldCreate:   true,
+			expectedErrMsg: nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			context := context.Background()
-			context = metadata.NewIncomingContext(context, metadata.New(map[string]string{
+			contx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
 				tc.contextKey: tc.contextValue,
 			}))
 
@@ -352,7 +363,19 @@ func TestDynClientGetterForContext(t *testing.T) {
 					},
 				},
 			}
-			dynamicInterface, err := dynClientGetterForContextWithConfig(context, inClusterConfig, serveOpts, config)
+			clientGetter, err := createClientGetterWithParams(inClusterConfig, serveOpts, config)
+			if err != nil {
+				t.Fatalf("in %s: fail creating the clientGetter:  %+v", tc.name, err)
+			}
+
+			dynamicInterface, err := clientGetter(contx)
+			if tc.expectedErrMsg != nil && err != nil {
+				if got, want := err.Error(), tc.expectedErrMsg.Error(); !cmp.Equal(want, got) {
+					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
+				}
+			} else if err != nil {
+				t.Fatalf("in %s: %+v", tc.name, err)
+			}
 
 			if tc.shouldCreate != (dynamicInterface != nil) {
 				t.Fatalf("in %s: Unexpected dynamicInterface result:  %+v", tc.name, err)

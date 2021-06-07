@@ -61,9 +61,9 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(dynClientGetterForContext func(context.Context) (dynamic.Interface, error)) *Server {
+func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *Server {
 	return &Server{
-		clientGetter: dynClientGetterForContext,
+		clientGetter: clientGetter,
 	}
 }
 
