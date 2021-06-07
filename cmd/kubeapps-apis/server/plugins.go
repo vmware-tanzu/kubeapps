@@ -308,7 +308,7 @@ func parseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 	return configs, deferFn, nil
 }
 
-// dynClientGetterForContext returns a k8s client for use during interactions with the cluster.
+// dynClientGetterForContextWithConfig returns a k8s client for use during interactions with the cluster.
 // It is invoked by dynClientGetterForContext and unit tests passing the appropriate configuration
 func dynClientGetterForContextWithConfig(ctx context.Context, inClusterConfig *rest.Config, serveOpts ServeOptions, config kube.ClustersConfig) (dynamic.Interface, error) {
 	var err error
