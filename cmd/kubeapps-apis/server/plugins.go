@@ -344,7 +344,9 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 
 		var client dynamic.Interface
 		if !serveOpts.UnsafeUseDemoSA {
-			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, "default", config)
+			// We are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
+			// we should pass the cluster name instead
+			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, config.KubeappsClusterName, config)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 			}
@@ -352,6 +354,7 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 			if err != nil {
 				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 			}
+			// Just ussing the created SA, no user account is used
 		} else {
 			client, err = dynamic.NewForConfig(inClusterConfig)
 			if err != nil {
@@ -387,16 +390,14 @@ func extractToken(ctx context.Context) (string, error) {
 // getClustersConfigFromServeOpts get the serveOptions and calls parseClusterConfig with the proper values
 // returning a kube.ClustersConfig
 func getClustersConfigFromServeOpts(serveOpts ServeOptions) (kube.ClustersConfig, error) {
-	var err error
-	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
-	config := kube.ClustersConfig{KubeappsClusterName: "default"}
-	if serveOpts.ClustersConfigPath != "" {
-		var cleanupCAFiles func()
-		config, cleanupCAFiles, err = parseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
-		if err != nil {
-			return kube.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
-		}
-		defer cleanupCAFiles()
+	if serveOpts.ClustersConfigPath == "" {
+		return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
 	}
+	var cleanupCAFiles func()
+	config, cleanupCAFiles, err := parseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+	if err != nil {
+		return kube.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
+	}
+	defer cleanupCAFiles()
 	return config, nil
 }
