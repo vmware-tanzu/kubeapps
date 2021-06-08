@@ -22,6 +22,11 @@ service PackagesService {
       get: "/core/packages/v1alpha1/packagerepositories"
     };
   }
+  rpc GetPackageMeta(kubeappsapis.core.packages.v1alpha1.GetPackageMetaRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageMetaResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/packagemeta"
+    };
+  }
 }
 //
 // Standard request and response messages for each required function are defined
@@ -160,4 +165,34 @@ message GetPackageRepositoriesResponse {
   //
   // List of PackageRepository
   repeated PackageRepository repositories = 1;
+}
+
+message PackageReference {
+  // required package name should be unique within the scope of specified repository, if specified
+  string name = 1; 
+
+  // A PackageRepository is identified by a fully qualified name and
+  // optionally a specific namespace.
+  message PackageRepositoryReference {
+    string name = 1;
+    string namespace = 2;
+  }
+  // An optional package repository reference where this package is located. Not
+  // all plugins may support this back reference (eg. kapp-controller)
+  PackageRepositoryReference repository = 2;
+}
+
+//
+// Request for GetPackageMeta
+message GetPackageMetaRequest {
+  PackageReference package = 1;
+}
+
+//
+// Response for GetPackageMeta
+message GetPackageMetaResponse {
+  message PackageMeta {
+    string readme = 1;
+  }
+  PackageMeta meta = 1;
 }
