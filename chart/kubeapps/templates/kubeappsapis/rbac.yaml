@@ -1,6 +1,5 @@
 {{- if .Values.featureFlags.kubeappsAPIsServer }}
 {{- if .Values.rbac.create -}}
-# Dev-only RBAC for experimental APIs server until user auth added.
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRole
 metadata:
@@ -15,15 +14,14 @@ metadata:
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
 rules:
-  # TODO: Remove in favour of user's own creds used for request.
-  # While developing without user auth, add the required RBAC here for the CRD group
-  # you're dealing with.
   - apiGroups:
       - "package.carvel.dev"
       - "install.package.carvel.dev"
       - "source.toolkit.fluxcd.io"
     resources: ['*']
     verbs: ['*']
+{{- if .Values.kubeappsapis.unsafeUseDemoSA }}
+# Dev-only ClusterRoleBinding to the ServiceAccount
 ---
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRoleBinding
@@ -46,5 +44,6 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "kubeapps.kubeappsapis.fullname" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
 {{- end }}

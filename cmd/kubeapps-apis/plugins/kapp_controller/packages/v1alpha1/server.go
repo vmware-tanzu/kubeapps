@@ -30,11 +30,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	log "k8s.io/klog/v2"
+
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/client-go/rest"
 )
 
 const (
@@ -52,36 +53,17 @@ const (
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedKappControllerPackagesServiceServer
-
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
 	clientGetter func(context.Context) (dynamic.Interface, error)
 }
 
-// clientForRequestContext returns a k8s client for use during interactions with the cluster.
-// This will be updated to use the user credential from the request context but for now
-// simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
-func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
-	// TODO: replace incluster config with the user config using token from request meta.
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get client config: %w", err)
-	}
-
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
-	}
-
-	return client, nil
-}
-
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer() *Server {
+func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *Server {
 	return &Server{
-		clientGetter: clientForRequestContext,
+		clientGetter: clientGetter,
 	}
 }
 
@@ -99,6 +81,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 
 // GetAvailablePackages returns the available packages based on the request.
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
+	log.Infof("+GetAvailablePackages(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -143,6 +126,8 @@ func availablePackageFromUnstructured(ap *unstructured.Unstructured) (*corev1.Av
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
+	log.Infof("+GetPackageRepositories(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
+
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
