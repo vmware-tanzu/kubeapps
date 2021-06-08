@@ -19,4 +19,11 @@ service FluxV2PackagesService {
       get: "/plugins/fluxv2/packages/v1alpha1/packagerepositories"
     };
   };
+    // GetPackageMeta returns the package metadata managed by the 'fluxv2' plugin
+    rpc GetPackageMeta(kubeappsapis.core.packages.v1alpha1.GetPackageMetaRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageMetaResponse) {
+      option (google.api.http) = {
+        get: "/plugins/fluxv2/packages/v1alpha1/packagemeta"
+      };
+    };
+  
 }

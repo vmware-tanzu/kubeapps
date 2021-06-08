@@ -164,6 +164,14 @@ Of course, you will need to have the appropriate Flux HelmRepository or Carvel P
 
 A few extra tools will be needed to contribute to the development of this service.
 
+### GOPATH env variable 
+
+Make sure your GOPATH environment variable is set. 
+You can use the value of command
+```bash
+go env GOPATH
+```
+
 ### Install go cli deps
 
 You should be able to install the exact versions of the various go CLI dependencies into your $GOPATH/bin with the following, after ensuring `$GOPATH/bin` is included in your `$PATH`:

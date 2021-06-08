@@ -35,6 +35,49 @@
     "application/json"
   ],
   "paths": {
+    "/core/packages/v1alpha1/packagemeta": {
+      "get": {
+        "operationId": "PackagesService_GetPackageMeta",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageMetaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "package.name",
+            "description": "required package name should be unique within the scope of specified repository, if specified.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "package.repository.name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "package.repository.namespace",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/packages/v1alpha1/packagerepositories": {
       "get": {
         "operationId": "PackagesService_GetPackageRepositories",
@@ -131,6 +174,50 @@
         },
         "tags": [
           "PluginsService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/packagemeta": {
+      "get": {
+        "summary": "GetPackageMeta returns the package metadata managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetPackageMeta",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageMetaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "package.name",
+            "description": "required package name should be unique within the scope of specified repository, if specified.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "package.repository.name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "package.repository.namespace",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
         ]
       }
     },
@@ -292,22 +379,13 @@
     }
   },
   "definitions": {
-    "AvailablePackagePackageRepositoryReference": {
+    "GetPackageMetaResponsePackageMeta": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "The fully qualified name of the package repository.",
-          "title": "Package repository name"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "An optional namespace for namespaced package repositories.",
-          "title": "Package repository namespace"
+        "readme": {
+          "type": "string"
         }
-      },
-      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace.",
-      "title": "PackageRepositoryReference"
+      }
     },
     "protobufAny": {
       "type": "object",
@@ -363,7 +441,7 @@
           "title": "Available package icon"
         },
         "repository": {
-          "$ref": "#/definitions/AvailablePackagePackageRepositoryReference",
+          "$ref": "#/definitions/v1alpha1AvailablePackagePackageRepositoryReference",
           "description": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)",
           "title": "Package repository reference"
         },
@@ -375,6 +453,23 @@
       },
       "description": "An AvailablePackage defines a package available for installation.",
       "title": "AvailablePackage"
+    },
+    "v1alpha1AvailablePackagePackageRepositoryReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The fully qualified name of the package repository.",
+          "title": "Package repository name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
+        }
+      },
+      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace.",
+      "title": "PackageRepositoryReference"
     },
     "v1alpha1GetAvailablePackagesResponse": {
       "type": "object",
@@ -422,6 +517,14 @@
       "description": "Response for GetConfiguredPlugins",
       "title": "GetConfiguredPluginsResponse"
     },
+    "v1alpha1GetPackageMetaResponse": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/GetPackageMetaResponsePackageMeta"
+        }
+      }
+    },
     "v1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
       "example": {
@@ -445,6 +548,31 @@
       },
       "description": "Response for GetPackageRepositories",
       "title": "GetPackageRepositories"
+    },
+    "v1alpha1PackageReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "required package name should be unique within the scope of specified repository, if specified"
+        },
+        "repository": {
+          "$ref": "#/definitions/v1alpha1PackageReferencePackageRepositoryReference",
+          "title": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)"
+        }
+      }
+    },
+    "v1alpha1PackageReferencePackageRepositoryReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        }
+      },
+      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace."
     },
     "v1alpha1PackageRepository": {
       "type": "object",
