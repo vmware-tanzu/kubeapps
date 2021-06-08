@@ -120,7 +120,7 @@
     "@types/react-dom": "^17.0.6",
     "@types/react-helmet": "^6.1.1",
     "@types/react-redux": "^7.1.16",
-    "@types/react-router": "^5.1.14",
+    "@types/react-router": "^5.1.15",
     "@types/react-test-renderer": "^17.0.1",
     "@types/redux-mock-store": "^1.0.2",
     "@types/swagger-ui-react": "^3.35.1",
