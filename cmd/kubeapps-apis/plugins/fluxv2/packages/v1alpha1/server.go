@@ -41,22 +41,6 @@ const (
 	fluxHelmCharts         = "helmcharts"
 )
 
-// these should really be constants, rather than global vars
-// but alas, go does not allow const structs (why???)
-var (
-	repositoriesResource = schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmRepositories,
-	}
-
-	chartsResource = schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmCharts,
-	}
-)
-
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
@@ -230,9 +214,20 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Packag
 		return nil, err
 	}
 
+	chartsResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmCharts,
+	}
+
 	resourceIfc := client.Resource(chartsResource).Namespace("default")
 
 	// see if we the chart already exists
+	// TODO You should be able to use the metav1.ListOptions{} above to specify
+	// filtering using the FieldSelector. More info at
+	// https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/.
+	// You may even be able to specify that the pull should be complete to be included (ie.
+	// that status conditions ready is true), not sure, but that'd be nice.
 	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -349,6 +344,12 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 		return nil, err
 	}
 
+	repositoriesResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
+	}
+
 	var resource dynamic.NamespaceableResourceInterface = client.Resource(repositoriesResource)
 	var resourceIfc dynamic.ResourceInterface = resource
 	if namespace != "" {
@@ -392,9 +393,6 @@ func isRepoReady(obj map[string]interface{}) (bool, error) {
 	return false, nil
 }
 
-//
-// TODO the semantics of this really should be do we need to keep polling or not
-//
 func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
 	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
 	conditions, found, err := unstructured.NestedSlice(unstructuredChart.Object, "status", "conditions")

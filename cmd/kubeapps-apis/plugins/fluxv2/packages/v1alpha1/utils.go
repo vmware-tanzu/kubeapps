@@ -34,6 +34,10 @@ const (
 	readme = "readme"
 )
 
+//
+// TODO some of this functionality already exists in asset-syncer but is private
+// so it needs to be re-packaged so that it can be re-used
+//
 func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
 	log.Infof("+getHelmIndexFileFromURL(%s) 1", indexURL)
 	// Get the response bytes from the url
