@@ -56,8 +56,8 @@ k8s_wait_for_deployment() {
       exit_code=0;
       until $rolloutCmd || [ $attempts -eq $extraAttempts ]; do
         $rolloutCmd 
-        extraAttempts=$((attempts + 1))
-        info "Retrying after $extraAttemptsWait..."
+        attempts=$((attempts + 1))
+        info "$attempts/$extraAttempts - Retrying after $extraAttemptsWait s..."
         sleep $extraAttemptsWait
       done
     fi
