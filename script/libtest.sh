@@ -51,11 +51,11 @@ k8s_wait_for_deployment() {
         sleep $retriesWait
         retries=$((retries - 1))
     done
-  if [ $retries == 0 ]; then
-      info "Error while rolling out deployment ${deployment} in ns ${namespace}"
-      exit 1
-  fi
-   return $exit_code
+    if [ $retries == 0 ]; then
+        info "Error while rolling out deployment ${deployment} in ns ${namespace}"
+        exit 1
+    fi
+    return $exit_code
 }
 
 ########################
