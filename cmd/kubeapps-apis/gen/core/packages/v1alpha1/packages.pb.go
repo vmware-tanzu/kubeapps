@@ -840,7 +840,7 @@ type AvailablePackageReference struct {
 	// An optional package repository reference where this package is located. Not
 	// all plugins may support this back reference (eg. kapp-controller)
 	Repository *PackageRepositoryReference `protobuf:"bytes,3,opt,name=repository,proto3" json:"repository,omitempty"`
-	// Available package lugin
+	// Available package plugin
 	//
 	// The plugin used to interact with this available package.
 	// This field should be omitted when the request is in the context of a specific plugin.

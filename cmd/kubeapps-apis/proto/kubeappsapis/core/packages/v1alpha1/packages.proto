@@ -350,7 +350,7 @@ message AvailablePackageReference {
   // all plugins may support this back reference (eg. kapp-controller)
   PackageRepositoryReference repository = 3;
 
-  // Available package lugin
+  // Available package plugin
   //
   // The plugin used to interact with this available package.
   // This field should be omitted when the request is in the context of a specific plugin.
