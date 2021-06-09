@@ -7,10 +7,10 @@ import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 service KappControllerPackagesService {
-  // GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin
-  rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
+  // GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
+  rpc GetAvailablePackageSummaries(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse) {
     option (google.api.http) = {
-      get: "/plugins/kapp_controller/packages/v1alpha1/packages"
+      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackagesummaries"
     };
   };
   

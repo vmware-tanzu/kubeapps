@@ -7,10 +7,16 @@ import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 service FluxV2PackagesService {
-  // GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin
-  rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
+  // GetAvailablePackageSummaries returns the available packages managed by the 'fluxv2' plugin
+  rpc GetAvailablePackageSummaries(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse) {
     option (google.api.http) = {
-      get: "/plugins/fluxv2/packages/v1alpha1/packages"
+      get: "/plugins/fluxv2/packages/v1alpha1/availablepackagesummaries"
+    };
+  };
+  // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
+  rpc GetAvailablePackageDetail(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/fluxv2/packages/v1alpha1/availablepackagedetails"
     };
   };
   // GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
@@ -19,11 +25,5 @@ service FluxV2PackagesService {
       get: "/plugins/fluxv2/packages/v1alpha1/packagerepositories"
     };
   };
-    // GetPackageMeta returns the package metadata managed by the 'fluxv2' plugin
-    rpc GetPackageMeta(kubeappsapis.core.packages.v1alpha1.GetPackageMetaRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageMetaResponse) {
-      option (google.api.http) = {
-        get: "/plugins/fluxv2/packages/v1alpha1/packagemeta"
-      };
-    };
   
 }
