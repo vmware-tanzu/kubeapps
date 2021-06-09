@@ -140,7 +140,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			_, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			_, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -175,11 +175,11 @@ func packagesFromSpecs(specs []map[string]interface{}) []runtime.Object {
 	return pkgs
 }
 
-func TestGetAvailablePackages(t *testing.T) {
+func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name             string
 		packageSpecs     []map[string]interface{}
-		expectedPackages []*corev1.AvailablePackage
+		expectedPackages []*corev1.AvailablePackageSummary
 	}{
 		{
 			name: "it returns carvel packages from the cluster",
@@ -193,14 +193,14 @@ func TestGetAvailablePackages(t *testing.T) {
 					"version":    "1.2.5",
 				},
 			},
-			expectedPackages: []*corev1.AvailablePackage{
+			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					Name:    "another.foo.example.com",
-					Version: "1.2.5",
+					DisplayName:   "another.foo.example.com",
+					LatestVersion: "1.2.5",
 				},
 				{
-					Name:    "tetris.foo.example.com",
-					Version: "1.2.3",
+					DisplayName:   "tetris.foo.example.com",
+					LatestVersion: "1.2.3",
 				},
 			},
 		},
@@ -221,13 +221,13 @@ func TestGetAvailablePackages(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.AvailablePackage{})) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.AvailablePackage{})))
+			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{})) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{})))
 			}
 		})
 	}

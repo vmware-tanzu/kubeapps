@@ -85,12 +85,12 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
-	if request.Cluster != "" {
+	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Context.Namespace, request.Context.Cluster)
+	if request.Context.Cluster != "" {
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Namespace)
+	repos, err := s.getHelmRepos(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -128,19 +128,19 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 	}, nil
 }
 
-// GetAvailablePackages streams the available packages based on the request.
-func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
-	log.Infof("+GetAvailablePackages(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
-	if request.Cluster != "" {
+// GetAvailablePackageSummaries streams the available packages based on the request.
+func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
+	log.Infof("+GetAvailablePackageSummaries(namespace=[%s], cluster=[%s])", request.Context.Namespace, request.Context.Cluster)
+	if request.Context.Cluster != "" {
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Namespace)
+	repos, err := s.getHelmRepos(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackages := []*corev1.AvailablePackage{}
+	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, unstructuredRepo := range repos.Items {
 		obj := unstructuredRepo.Object
 		name, found, err := unstructured.NestedString(obj, "metadata", "name")
@@ -163,13 +163,13 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		}
 
 		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
-		repoRef := corev1.AvailablePackage_PackageRepositoryReference{
+		repoRef := corev1.AvailablePackageReference{
 			Name: name,
 		}
 		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
 		if err == nil && found {
-			repoRef.Namespace = namespace
+			repoRef.Context.Namespace = namespace
 		}
 
 		repoPackages, err := readPackagesFromRepoIndex(&repoRef, url)
@@ -180,35 +180,35 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 			responsePackages = append(responsePackages, repoPackages...)
 		}
 	}
-	return &corev1.GetAvailablePackagesResponse{
-		Packages: responsePackages,
+	return &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackagesSummaries: responsePackages,
 	}, nil
 }
 
 // GetPackageMeta streams the package metadata based on the request.
-func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageMetaRequest) (*corev1.GetPackageMetaResponse, error) {
+func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
 	log.Infof("+GetPackageMeta()")
 
-	url, err := s.pullChartTarball(ctx, request.Package)
+	url, err := s.pullChartTarball(ctx, request.AvailablePackageRef)
 	if err != nil {
 		return nil, err
 	}
 	log.Infof("Found chart url: [%s]", *url)
 
 	// unzip and untar .tgz file
-	meta, err := fetchMetaFromChartTarball(request.Package.Name, *url)
+	meta, err := fetchMetaFromChartTarball(request.AvailablePackageRef.Name, *url)
 	if err != nil {
 		return nil, err
 	}
 
-	return &corev1.GetPackageMetaResponse{
-		Meta: &corev1.GetPackageMetaResponse_PackageMeta{
-			Readme: meta[readme],
+	return &corev1.GetAvailablePackageDetailResponse{
+		AvailablePackageDetail: &corev1.AvailablePackageDetail{
+			LongDescription: meta[readme],
 		},
 	}, nil
 }
 
-func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.PackageReference) (*string, error) {
+func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.AvailablePackageReference) (*string, error) {
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -360,7 +360,7 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
 		// TODO: should we filter out those repos that don't have .status.condition.Ready == True?
-		// like we do in GetAvailablePackages()?
+		// like we do in GetAvailablePackageSummaries()?
 		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
 		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
@@ -418,13 +418,13 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 	return false, nil
 }
 
-func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositoryReference, indexURL string) ([]*corev1.AvailablePackage, error) {
+func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackageReference, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
 	index, err := getHelmIndexFileFromURL(indexURL)
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackages := []*corev1.AvailablePackage{}
+	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, entry := range index.Entries {
 		// note that 'entry' itself is an array of chart versions
 		// after index.SortEntires() call, it looks like there is only one entry per package,
@@ -439,11 +439,11 @@ func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositor
 			continue
 		}
 
-		pkg := &corev1.AvailablePackage{
-			Name:       entry[0].Name,
-			Version:    entry[0].Version,
-			IconUrl:    entry[0].Icon,
-			Repository: repoRef,
+		pkg := &corev1.AvailablePackageSummary{
+			DisplayName:         entry[0].Name,
+			LatestVersion:       entry[0].Version,
+			IconUrl:             entry[0].Icon,
+			AvailablePackageRef: repoRef,
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
