@@ -24,7 +24,7 @@ type FluxV2PackagesServiceClient interface {
 	// GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
-	GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error)
+	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
 }
 
 type fluxV2PackagesServiceClient struct {
@@ -53,8 +53,8 @@ func (c *fluxV2PackagesServiceClient) GetAvailablePackageDetail(ctx context.Cont
 	return out, nil
 }
 
-func (c *fluxV2PackagesServiceClient) GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	out := new(v1alpha1.GetPackageRepositoriesResponse)
+func (c *fluxV2PackagesServiceClient) GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error) {
+	out := new(GetPackageRepositoriesResponse)
 	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageRepositories", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ type FluxV2PackagesServiceServer interface {
 	// GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
-	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
+	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
 }
 
 // UnimplementedFluxV2PackagesServiceServer should be embedded to have forward compatible implementations.
@@ -84,7 +84,7 @@ func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackageSummaries(con
 func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageDetail not implemented")
 }
-func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
 
@@ -136,7 +136,7 @@ func _FluxV2PackagesService_GetAvailablePackageDetail_Handler(srv interface{}, c
 }
 
 func _FluxV2PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.GetPackageRepositoriesRequest)
+	in := new(GetPackageRepositoriesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func _FluxV2PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx 
 		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageRepositories",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FluxV2PackagesServiceServer).GetPackageRepositories(ctx, req.(*v1alpha1.GetPackageRepositoriesRequest))
+		return srv.(FluxV2PackagesServiceServer).GetPackageRepositories(ctx, req.(*GetPackageRepositoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -22,11 +22,6 @@ service PackagesService {
       get: "/core/packages/v1alpha1/availablepackagedetails"
     };
   }
-  rpc GetPackageRepositories(GetPackageRepositoriesRequest) returns (GetPackageRepositoriesResponse) {
-    option (google.api.http) = {
-      get: "/core/packages/v1alpha1/packagerepositories"
-    };
-  }
 
   // TODO: remaining operations yet to be defined
 
@@ -90,15 +85,6 @@ message GetAvailablePackageDetailRequest {
   string version = 2;
 }
 
-// GetPackageRepositories
-//
-// Request for GetPackageRepositories
-message GetPackageRepositoriesRequest {
-  // The context (cluster/namespace) for the request
-  Context context = 1;
-  // TODO: Add standard filters.
-}
-
 // -- Start definitions of the response messages -- 
 
 // GetAvailablePackageSummariesResponse
@@ -131,20 +117,6 @@ message GetAvailablePackageDetailResponse {
   AvailablePackageDetail available_package_detail = 1;
 }
 
-// GetPackageRepositories
-//
-// Response for GetPackageRepositories
-message GetPackageRepositoriesResponse {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: '{"repositories": [{"name": "repo-name.example.com", "namespace": "", "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"}]}'
-  };
-
-  // Repositories
-  //
-  // List of PackageRepository
-  repeated PackageRepository repositories = 1;
-}
-
 // -- Start definitions used in the responses  -- 
 
 // AvailablePackageSummary
@@ -161,27 +133,32 @@ message AvailablePackageSummary {
   //
   // A reference uniquely identifying the package.
   AvailablePackageReference available_package_ref = 1;
-  
+
+  // Available package name
+  //
+  // The name of the available package
+  string name = 2;
+
   // Latest available package version
   //
   // The latest version available for this package. Often expected when viewing
   // a summary of many available packages.
-  string latest_version = 2;
+  string latest_version = 3;
   
   // Available package Icon URL
   //
   // A url for an icon.
-  string icon_url = 3;
+  string icon_url = 4;
   
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 4;
+  string display_name = 5;
   
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 5;
+  string short_description = 6;
 }
 
 // AvailablePackageDetail
@@ -198,85 +175,58 @@ message AvailablePackageDetail {
   //
   // A reference uniquely identifying the package.
   AvailablePackageReference package_ref = 1;
+
+  // Available package name
+  //
+  // The name of the available package
+  string name = 2;
   
   // Available package version
   //
   // TODO: add description
-  string version = 2;
+  string version = 3;
   
   // Available package icon URL
   //
   // A url for an icon.
-  string icon_url = 3;
+  string icon_url = 4;
   
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 4;
+  string display_name = 5;
   
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 5;
+  string short_description = 6;
   
   // Available package long description
   //
   // A long description of the package, such as a README formatted with Markdown.
-  string long_description = 6;
+  string long_description = 7;
   
   // Available package default values
   //
   // An example of default values used during package templating that can serve
   // as documentation or a starting point for user customization.
-  string default_values = 7;
+  string default_values = 8;
   
   // Available package values schema
   //
   // An optional openapi/json schema that can be used to validate a user-provided values.
-  string values_schema = 8;
+  string values_schema = 9;
   
   // Available package maintainers
   //
   // List of Maintainer
-  repeated Maintainer maintainers = 9;
+  repeated Maintainer maintainers = 10;
   
   // Available package opaque data
   //
   // A plugin can define further key-values for data which does not (yet) fit
   // with the core.packaging.AvailablePackageDetail.
-  map<string, bytes> opaque_data = 10;
-}
-
-// PackageRepository
-//
-// A PackageRepository defines a repository of packages for installation.
-message PackageRepository {
-  // TODO: add example for API docs
-  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-  //   example: '{}'
-  // };
-
-  // Package repository name
-  //
-  // The name identifying package repository on the cluster.
-  string name = 1;
-  
-  // Package repository namespace
-  //
-  // An optional namespace for namespaced package repositories.
-  string namespace = 2;
-  
-  // Package repository URL
-  //
-  // A url identifying the package repository location.
-  string url = 3;
-
-  // Package repository plugin
-  //
-  // The plugin used to interact with this package repository.
-  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 4;
-
-  // TODO: Other fields such as type, status... TBD.
+  map<string, bytes> opaque_data = 11;
 }
 
 // -- Start other definitions  -- 
@@ -302,27 +252,6 @@ message Context {
   string namespace = 2;
 }
 
-// PackageRepositoryReference
-//
-// A PackageRepository is identified by a fully qualified name and
-// optionally a specific namespace.
-message PackageRepositoryReference {
-  // TODO: add example for API docs
-  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-  //   example: '{}'
-  // };
-
-  // Package repository name
-  //
-  // The fully qualified name of the package repository.
-  string name = 1;
-  
-  // Package repository namespace
-  //
-  // An optional namespace for namespaced package repositories.
-  string namespace = 2;
-}
-
 // AvailablePackageReference
 //
 // An AvailablePackageReference has the minimum information required to uniquely
@@ -339,22 +268,25 @@ message AvailablePackageReference {
   // The context (cluster/namespace) for the package.
   Context context = 1;
 
-  // Available package name
+  // Available package identifier
   //
-  // The fully qualified name of the package (ie. a unique name in context).
-  string name = 2;
+  // The fully qualified identifier for the available package
+  // (ie. a unique name for the context). For some packaging systems
+  // (particularly those where an available package is backed by a CR) this
+  // will just be the name, but for others such as those where an available
+  // package is not backed by a CR (eg. standard helm) it may be necessary
+  // to include the repository in the name or even the repo namespace
+  // to ensure this is unique. 
+  // For example two helm repositories can define
+  // an "apache" chart that is available globally, the names would need to
+  // encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+  string identifier = 2;
 
-  // Available package repository reference
-  //
-  // An optional package repository reference where this package is located. Not
-  // all plugins may support this back reference (eg. kapp-controller)
-  PackageRepositoryReference repository = 3;
-
-  // Available package plugin
+  // Plugin for the available package
   //
   // The plugin used to interact with this available package.
   // This field should be omitted when the request is in the context of a specific plugin.
-  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 4;
+  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 3;
 }
 
 // Maintainer

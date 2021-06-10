@@ -22,7 +22,7 @@ type KappControllerPackagesServiceClient interface {
 	// GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
 	GetAvailablePackageSummaries(ctx context.Context, in *v1alpha1.GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
-	GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error)
+	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
 }
 
 type kappControllerPackagesServiceClient struct {
@@ -42,8 +42,8 @@ func (c *kappControllerPackagesServiceClient) GetAvailablePackageSummaries(ctx c
 	return out, nil
 }
 
-func (c *kappControllerPackagesServiceClient) GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	out := new(v1alpha1.GetPackageRepositoriesResponse)
+func (c *kappControllerPackagesServiceClient) GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error) {
+	out := new(GetPackageRepositoriesResponse)
 	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ type KappControllerPackagesServiceServer interface {
 	// GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
 	GetAvailablePackageSummaries(context.Context, *v1alpha1.GetAvailablePackageSummariesRequest) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
-	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
+	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
 }
 
 // UnimplementedKappControllerPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -68,7 +68,7 @@ type UnimplementedKappControllerPackagesServiceServer struct {
 func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageSummaries(context.Context, *v1alpha1.GetAvailablePackageSummariesRequest) (*v1alpha1.GetAvailablePackageSummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageSummaries not implemented")
 }
-func (UnimplementedKappControllerPackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+func (UnimplementedKappControllerPackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
 
@@ -102,7 +102,7 @@ func _KappControllerPackagesService_GetAvailablePackageSummaries_Handler(srv int
 }
 
 func _KappControllerPackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.GetPackageRepositoriesRequest)
+	in := new(GetPackageRepositoriesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func _KappControllerPackagesService_GetPackageRepositories_Handler(srv interface
 		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KappControllerPackagesServiceServer).GetPackageRepositories(ctx, req.(*v1alpha1.GetPackageRepositoriesRequest))
+		return srv.(KappControllerPackagesServiceServer).GetPackageRepositories(ctx, req.(*GetPackageRepositoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
