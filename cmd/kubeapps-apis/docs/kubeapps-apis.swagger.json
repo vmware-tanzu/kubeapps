@@ -638,7 +638,7 @@
         "plugin": {
           "$ref": "#/definitions/v1alpha1Plugin",
           "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a specific plugin.",
-          "title": "Available package plugin"
+          "title": "Plugin for the available package"
         }
       },
       "description": "An AvailablePackageReference has the minimum information required to uniquely\nidentify an available package. This is re-used on the summary and details of an\navailable package.",

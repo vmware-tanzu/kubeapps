@@ -611,7 +611,7 @@ type AvailablePackageReference struct {
 	// an "apache" chart that is available globally, the names would need to
 	// encode that to be unique (ie. "repoA:apache" and "repoB:apache").
 	Identifier string `protobuf:"bytes,2,opt,name=identifier,proto3" json:"identifier,omitempty"`
-	// Available package plugin
+	// Plugin for the available package
 	//
 	// The plugin used to interact with this available package.
 	// This field should be omitted when the request is in the context of a specific plugin.

@@ -282,7 +282,7 @@ message AvailablePackageReference {
   // encode that to be unique (ie. "repoA:apache" and "repoB:apache").
   string identifier = 2;
 
-  // Available package plugin
+  // Plugin for the available package
   //
   // The plugin used to interact with this available package.
   // This field should be omitted when the request is in the context of a specific plugin.
