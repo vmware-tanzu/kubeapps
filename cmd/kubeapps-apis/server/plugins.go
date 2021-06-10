@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,6 +35,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	log "k8s.io/klog/v2"
 )
 
@@ -258,13 +260,35 @@ func createClientGetter(serveOpts ServeOptions) (func(context.Context) (dynamic.
 	// get the default rest incluster config for the kube.NewClusterConfig function
 	var inClusterConfig, err = rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+		if !serveOpts.UnsafeUseDemoSA {
+			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+		} else {
+			// Temporary fallback mechanism to use the local kubeconfig file when using passing '--unsafe-use-demo-sa'
+			// it assumes you are developing changes and it will use your kubeconfig file.
+			// TODO(agamez): this behavior should be removed or even moved to a new flag.
+			log.Warningf("Unable to get inClusterConfig, assuming a local dev setup as you passed --unsafe-use-demo-sa=true")
+			log.Warningf("Fallback mode: using the local kubeconfig configuration (in KUBECONFIG='%s' envar)", os.Getenv("KUBECONFIG"))
+			kubeconfigBytes, err := ioutil.ReadFile(os.Getenv("KUBECONFIG"))
+			if err != nil {
+				return nil, fmt.Errorf("unable to read the file in KUBECONFIG envar: %w", err)
+			}
+			inClusterConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get local KUBECONFIG='%s' file: %w", os.Getenv("KUBECONFIG"), err)
+			}
+		}
 	}
 
-	// get the parsed kube.ClustersConfig from the serveOpts
-	config, err := getClustersConfigFromServeOpts(serveOpts)
-	if err != nil {
-		return nil, err
+	var clustersConfig kube.ClustersConfig
+	if !serveOpts.UnsafeUseDemoSA {
+		// get the parsed kube.ClustersConfig from the serveOpts
+		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Just using the created SA, no user account nor clustersConfig is used here
+		clustersConfig = kube.ClustersConfig{}
 	}
 
 	// return the closure fuction that takes the context, but preserving the required scope,
