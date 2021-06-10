@@ -73,7 +73,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetPackageRepositoriesRequest
+	var protoReq GetPackageRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -89,7 +89,7 @@ func request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetPackageRepositoriesRequest
+	var protoReq GetPackageRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
