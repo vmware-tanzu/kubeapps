@@ -2,16 +2,11 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -75,7 +70,7 @@ func main() {
 	if clustersConfigPath != "" {
 		var err error
 		var cleanupCAFiles func()
-		clustersConfig, cleanupCAFiles, err = parseClusterConfig(clustersConfigPath, clustersCAFilesPrefix)
+		clustersConfig, cleanupCAFiles, err = kube.ParseClusterConfig(clustersConfigPath, clustersCAFilesPrefix, pinnipedProxyURL)
 		if err != nil {
 			log.Fatalf("unable to parse additional clusters config: %+v", err)
 		}
@@ -186,56 +181,4 @@ func main() {
 	srv.Shutdown(ctx)
 	log.Info("All requests have been served. Exiting")
 	os.Exit(0)
-}
-
-func parseClusterConfig(configPath, caFilesPrefix string) (kube.ClustersConfig, func(), error) {
-	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
-	if err != nil {
-		return kube.ClustersConfig{}, func() {}, err
-	}
-	deferFn := func() { os.RemoveAll(caFilesDir) }
-	content, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return kube.ClustersConfig{}, deferFn, err
-	}
-
-	var clusterConfigs []kube.ClusterConfig
-	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
-		return kube.ClustersConfig{}, deferFn, err
-	}
-
-	configs := kube.ClustersConfig{Clusters: map[string]kube.ClusterConfig{}}
-	configs.PinnipedProxyURL = pinnipedProxyURL
-	for _, c := range clusterConfigs {
-		// Select the cluster in which Kubeapps in installed. We look for either
-		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
-		isKubeappsClusterCandidate := c.IsKubeappsCluster || c.APIServiceURL == ""
-		if isKubeappsClusterCandidate {
-			if configs.KubeappsClusterName == "" {
-				configs.KubeappsClusterName = c.Name
-			} else {
-				return kube.ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
-			}
-		}
-
-		// We need to decode the base64-encoded cadata from the input.
-		if c.CertificateAuthorityData != "" {
-			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
-			if err != nil {
-				return kube.ClustersConfig{}, deferFn, err
-			}
-			c.CertificateAuthorityDataDecoded = string(decodedCAData)
-
-			// We also need a CAFile field because Helm uses the genericclioptions.ConfigFlags
-			// struct which does not support CAData.
-			// https://github.com/kubernetes/cli-runtime/issues/8
-			c.CAFile = filepath.Join(caFilesDir, c.Name)
-			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
-			if err != nil {
-				return kube.ClustersConfig{}, deferFn, err
-			}
-		}
-		configs.Clusters[c.Name] = c
-	}
-	return configs, deferFn, nil
 }
