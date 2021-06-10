@@ -47,6 +47,7 @@ import (
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
+	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
@@ -299,7 +300,7 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 		schema: schemaFileName,
 	}
 
-	files, err := extractFilesFromTarball(filenames, tarf)
+	files, err := tarutil.ExtractFilesFromTarball(filenames, tarf)
 	if err != nil {
 		return nil, err
 	}
@@ -826,29 +827,6 @@ func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models
 	c.ID = fmt.Sprintf("%s/%s", r.Name, c.Name)
 	c.Category = entry[0].Annotations["category"]
 	return c
-}
-
-func extractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map[string]string, error) {
-	ret := make(map[string]string)
-	for {
-		header, err := tarf.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return ret, err
-		}
-
-		for id, f := range filenames {
-			if strings.EqualFold(header.Name, f) {
-				var b bytes.Buffer
-				io.Copy(&b, tarf)
-				ret[id] = string(b.Bytes())
-				break
-			}
-		}
-	}
-	return ret, nil
 }
 
 func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {

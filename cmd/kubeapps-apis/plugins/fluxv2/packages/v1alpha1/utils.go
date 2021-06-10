@@ -14,16 +14,14 @@ package main
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	helmrepo "k8s.io/helm/pkg/repo"
@@ -104,7 +102,7 @@ func fetchMetaFromChartTarball(name string, chartTarballURL string) (map[string]
 		readme: fixedName + "/README.md",
 	}
 
-	files, err := extractFilesFromTarball(filenames, tarf)
+	files, err := tarutil.ExtractFilesFromTarball(filenames, tarf)
 	if err != nil {
 		return nil, err
 	}
@@ -112,27 +110,4 @@ func fetchMetaFromChartTarball(name string, chartTarballURL string) (map[string]
 	return map[string]string{
 		readme: files[readme],
 	}, nil
-}
-
-func extractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map[string]string, error) {
-	ret := make(map[string]string)
-	for {
-		header, err := tarf.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return ret, err
-		}
-
-		for id, f := range filenames {
-			if strings.EqualFold(header.Name, f) {
-				var b bytes.Buffer
-				io.Copy(&b, tarf)
-				ret[id] = b.String()
-				break
-			}
-		}
-	}
-	return ret, nil
 }

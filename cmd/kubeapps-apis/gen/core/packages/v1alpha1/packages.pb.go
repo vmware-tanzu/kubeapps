@@ -493,6 +493,8 @@ func (x *PackageReference) GetRepository() *PackageReference_PackageRepositoryRe
 	return nil
 }
 
+//
+// Request for GetPackageMeta
 type GetPackageMetaRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -540,6 +542,8 @@ func (x *GetPackageMetaRequest) GetPackage() *PackageReference {
 	return nil
 }
 
+//
+// Response for GetPackageMeta
 type GetPackageMetaResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

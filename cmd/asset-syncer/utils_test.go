@@ -17,10 +17,8 @@ limitations under the License.
 package main
 
 import (
-	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"image"
@@ -43,14 +41,13 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
+	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
 var validRepoIndexYAML = string(validRepoIndexYAMLBytes)
-
-var invalidRepoIndexYAML = "invalid"
 
 type badHTTPClient struct {
 	errMsg string
@@ -147,17 +144,17 @@ var testChartSchema = `{"properties": {}}`
 func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 	gzw := gzip.NewWriter(w)
-	files := []tarballFile{{h.c.Name + "/Chart.yaml", "should be a Chart.yaml here..."}}
+	files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
 	if !h.skipValues {
-		files = append(files, tarballFile{h.c.Name + "/values.yaml", testChartValues})
+		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
 	}
 	if !h.skipReadme {
-		files = append(files, tarballFile{h.c.Name + "/README.md", testChartReadme})
+		files = append(files, tartest.TarballFile{Name: h.c.Name + "/README.md", Body: testChartReadme})
 	}
 	if !h.skipSchema {
-		files = append(files, tarballFile{h.c.Name + "/values.schema.json", testChartSchema})
+		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.schema.json", Body: testChartSchema})
 	}
-	createTestTarball(gzw, files)
+	tartest.CreateTestTarball(gzw, files)
 	gzw.Flush()
 	return w.Result(), nil
 }
@@ -174,11 +171,11 @@ func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, erro
 		w.WriteHeader(500)
 	} else {
 		gzw := gzip.NewWriter(w)
-		files := []tarballFile{{h.c.Name + "/Chart.yaml", "should be a Chart.yaml here..."}}
-		files = append(files, tarballFile{h.c.Name + "/values.yaml", testChartValues})
-		files = append(files, tarballFile{h.c.Name + "/README.md", testChartReadme})
-		files = append(files, tarballFile{h.c.Name + "/values.schema.json", testChartSchema})
-		createTestTarball(gzw, files)
+		files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
+		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
+		files = append(files, tartest.TarballFile{Name: h.c.Name + "/README.md", Body: testChartReadme})
+		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.schema.json", Body: testChartSchema})
+		tartest.CreateTestTarball(gzw, files)
 		gzw.Flush()
 	}
 	return w.Result(), nil
@@ -362,95 +359,6 @@ func Test_chartTarballURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, chartTarballURL(r, tt.cv), tt.wanted, "url")
 		})
-	}
-}
-
-func Test_extractFilesFromTarball(t *testing.T) {
-	tests := []struct {
-		name     string
-		files    []tarballFile
-		filename string
-		want     string
-	}{
-		{"file", []tarballFile{{"file.txt", "best file ever"}}, "file.txt", "best file ever"},
-		{"multiple file tarball", []tarballFile{{"file.txt", "best file ever"}, {"file2.txt", "worst file ever"}}, "file2.txt", "worst file ever"},
-		{"file in dir", []tarballFile{{"file.txt", "best file ever"}, {"test/file2.txt", "worst file ever"}}, "test/file2.txt", "worst file ever"},
-		{"filename ignore case", []tarballFile{{"Readme.md", "# readme for chart"}, {"values.yaml", "key: value"}}, "README.md", "# readme for chart"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var b bytes.Buffer
-			createTestTarball(&b, tt.files)
-			r := bytes.NewReader(b.Bytes())
-			tarf := tar.NewReader(r)
-			files, err := extractFilesFromTarball(map[string]string{tt.filename: tt.filename}, tarf)
-			assert.NoErr(t, err)
-			assert.Equal(t, files[tt.filename], tt.want, "file body")
-		})
-	}
-
-	t.Run("extract multiple files", func(t *testing.T) {
-		var b bytes.Buffer
-		tFiles := []tarballFile{{"file.txt", "best file ever"}, {"file2.txt", "worst file ever"}}
-		createTestTarball(&b, tFiles)
-		r := bytes.NewReader(b.Bytes())
-		tarf := tar.NewReader(r)
-		files, err := extractFilesFromTarball(map[string]string{tFiles[0].Name: tFiles[0].Name, tFiles[1].Name: tFiles[1].Name}, tarf)
-		assert.NoErr(t, err)
-		assert.Equal(t, len(files), 2, "matches")
-		for _, f := range tFiles {
-			assert.Equal(t, files[f.Name], f.Body, "file body")
-		}
-	})
-
-	t.Run("file not found", func(t *testing.T) {
-		var b bytes.Buffer
-		createTestTarball(&b, []tarballFile{{"file.txt", "best file ever"}})
-		r := bytes.NewReader(b.Bytes())
-		tarf := tar.NewReader(r)
-		name := "file2.txt"
-		files, err := extractFilesFromTarball(map[string]string{name: name}, tarf)
-		assert.NoErr(t, err)
-		assert.Equal(t, files[name], "", "file body")
-	})
-
-	t.Run("not a tarball", func(t *testing.T) {
-		b := make([]byte, 4)
-		rand.Read(b)
-		r := bytes.NewReader(b)
-		tarf := tar.NewReader(r)
-		files, err := extractFilesFromTarball(map[string]string{values: "file2.txt"}, tarf)
-		assert.Err(t, io.ErrUnexpectedEOF, err)
-		assert.Equal(t, len(files), 0, "file body")
-	})
-}
-
-type tarballFile struct {
-	Name, Body string
-}
-
-func createTestTarball(w io.Writer, files []tarballFile) {
-	// Create a new tar archive.
-	tarw := tar.NewWriter(w)
-
-	// Add files to the archive.
-	for _, file := range files {
-		hdr := &tar.Header{
-			Name: file.Name,
-			Mode: 0600,
-			Size: int64(len(file.Body)),
-		}
-		if err := tarw.WriteHeader(hdr); err != nil {
-			log.Fatalln(err)
-		}
-		if _, err := tarw.Write([]byte(file.Body)); err != nil {
-			log.Fatalln(err)
-		}
-	}
-	// Make sure to check the error on Close.
-	if err := tarw.Close(); err != nil {
-		log.Fatal(err)
 	}
 }
 
@@ -966,7 +874,7 @@ version: 1.0.0
 	tests := []struct {
 		description      string
 		chartName        string
-		ociArtifactFiles []tarballFile
+		ociArtifactFiles []tartest.TarballFile
 		tags             []string
 		expected         []models.Chart
 		shallow          bool
@@ -974,7 +882,7 @@ version: 1.0.0
 		{
 			"Retrieve chart metadata",
 			"kubeapps",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "Chart.yaml", Body: chartYAML},
 			},
 			[]string{"1.0.0"},
@@ -1005,7 +913,7 @@ version: 1.0.0
 		{
 			"Retrieve other files",
 			"kubeapps",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1032,7 +940,7 @@ version: 1.0.0
 		{
 			"A chart with a /",
 			"repo/kubeapps",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1059,7 +967,7 @@ version: 1.0.0
 		{
 			"Multiple chart versions",
 			"repo/kubeapps",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1092,7 +1000,7 @@ version: 1.0.0
 		{
 			"Single chart version for a shallow run",
 			"repo/kubeapps",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1125,7 +1033,7 @@ version: 1.0.0
 			for _, tag := range tt.tags {
 				recorder := httptest.NewRecorder()
 				gzw := gzip.NewWriter(recorder)
-				createTestTarball(gzw, tt.ociArtifactFiles)
+				tartest.CreateTestTarball(gzw, tt.ociArtifactFiles)
 				gzw.Flush()
 				w[tag] = recorder
 				content[tag] = recorder.Body
@@ -1181,12 +1089,12 @@ version: 1.0.0
 func Test_extractFilesFromBuffer(t *testing.T) {
 	tests := []struct {
 		description string
-		files       []tarballFile
+		files       []tartest.TarballFile
 		expected    *artifactFiles
 	}{
 		{
 			"It should extract the important files",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "Chart.yaml", Body: "chart yaml"},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
@@ -1201,7 +1109,7 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 		},
 		{
 			"It should ignore letter case",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "Readme.md", Body: "chart readme"},
 			},
 			&artifactFiles{
@@ -1210,7 +1118,7 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 		},
 		{
 			"It should ignore other files",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "other.yaml", Body: "other content"},
 			},
@@ -1220,7 +1128,7 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 		},
 		{
 			"It should handle large files",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				// 1MB file
 				{Name: "README.md", Body: string(make([]byte, 1048577))},
 			},
@@ -1230,7 +1138,7 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 		},
 		{
 			"It should ignore nested files",
-			[]tarballFile{
+			[]tartest.TarballFile{
 				{Name: "other/README.md", Body: "bad"},
 				{Name: "README.md", Body: "good"},
 			},
@@ -1243,7 +1151,7 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 		t.Run(tt.description, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			gzw := gzip.NewWriter(w)
-			createTestTarball(gzw, tt.files)
+			tartest.CreateTestTarball(gzw, tt.files)
 			gzw.Flush()
 
 			r, err := extractFilesFromBuffer(w.Body)

@@ -523,7 +523,8 @@
         "meta": {
           "$ref": "#/definitions/GetPackageMetaResponsePackageMeta"
         }
-      }
+      },
+      "title": "Response for GetPackageMeta"
     },
     "v1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
