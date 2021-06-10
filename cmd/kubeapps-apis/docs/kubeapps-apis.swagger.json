@@ -25,8 +25,10 @@
     }
   ],
   "host": "127.0.0.1:8080",
+  "basePath": "/apis",
   "schemes": [
-    "http"
+    "http",
+    "https"
   ],
   "consumes": [
     "application/json"
@@ -44,6 +46,10 @@
             "schema": {
               "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -111,6 +117,10 @@
               "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
             }
           },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -150,6 +160,10 @@
               "$ref": "#/definitions/v1alpha1GetConfiguredPluginsResponse"
             }
           },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -172,6 +186,10 @@
             "schema": {
               "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -240,6 +258,10 @@
               "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
             }
           },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -278,6 +300,10 @@
             "schema": {
               "$ref": "#/definitions/pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -318,6 +344,10 @@
               "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
             }
           },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -356,6 +386,10 @@
             "schema": {
               "$ref": "#/definitions/pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -753,6 +787,18 @@
       "title": "Plugin"
     }
   },
+  "securityDefinitions": {
+    "ApiKeyAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "externalDocs": {
     "description": "Kuebapps GitHub repository",
     "url": "https://github.com/kubeapps/kubeapps"
