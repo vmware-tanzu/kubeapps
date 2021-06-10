@@ -68,22 +68,8 @@
             "type": "string"
           },
           {
-            "name": "availablePackageRef.name",
-            "description": "Available package name. The fully qualified name of the package (ie. a unique name in context).",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "availablePackageRef.repository.name",
-            "description": "Package repository name. The fully qualified name of the package repository.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "availablePackageRef.repository.namespace",
-            "description": "Package repository namespace. An optional namespace for namespaced package repositories.",
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "query",
             "required": false,
             "type": "string"
@@ -123,44 +109,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.namespace",
-            "description": "Namespace. A namespace can be provided if the packaging system allows namespaced packages.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "PackagesService"
-        ]
-      }
-    },
-    "/core/packages/v1alpha1/packagerepositories": {
-      "get": {
-        "operationId": "PackagesService_GetPackageRepositories",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
             }
           },
           "default": {
@@ -248,22 +196,8 @@
             "type": "string"
           },
           {
-            "name": "availablePackageRef.name",
-            "description": "Available package name. The fully qualified name of the package (ie. a unique name in context).",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "availablePackageRef.repository.name",
-            "description": "Package repository name. The fully qualified name of the package repository.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "availablePackageRef.repository.namespace",
-            "description": "Package repository namespace. An optional namespace for namespaced package repositories.",
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "query",
             "required": false,
             "type": "string"
@@ -342,7 +276,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+              "$ref": "#/definitions/pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse"
             }
           },
           "default": {
@@ -420,7 +354,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+              "$ref": "#/definitions/pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse"
             }
           },
           "default": {
@@ -453,6 +387,108 @@
     }
   },
   "definitions": {
+    "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
+      "type": "object",
+      "example": {
+        "repositories": [
+          {
+            "name": "repo-name.example.com",
+            "namespace": "",
+            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+          }
+        ]
+      },
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pluginsfluxv2packagesv1alpha1PackageRepository"
+          },
+          "description": "List of PackageRepository",
+          "title": "Repositories"
+        }
+      },
+      "description": "Response for GetPackageRepositories",
+      "title": "GetPackageRepositories"
+    },
+    "pluginsfluxv2packagesv1alpha1PackageRepository": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name identifying package repository on the cluster.",
+          "title": "Package repository name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
+        },
+        "url": {
+          "type": "string",
+          "description": "A url identifying the package repository location.",
+          "title": "Package repository URL"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
+        }
+      },
+      "description": "A PackageRepository defines a repository of packages for installation.",
+      "title": "PackageRepository"
+    },
+    "pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse": {
+      "type": "object",
+      "example": {
+        "repositories": [
+          {
+            "name": "repo-name.example.com",
+            "namespace": "",
+            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+          }
+        ]
+      },
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pluginskapp_controllerpackagesv1alpha1PackageRepository"
+          },
+          "description": "List of PackageRepository",
+          "title": "Repositories"
+        }
+      },
+      "description": "Response for GetPackageRepositories",
+      "title": "GetPackageRepositories"
+    },
+    "pluginskapp_controllerpackagesv1alpha1PackageRepository": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name identifying package repository on the cluster.",
+          "title": "Package repository name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
+        },
+        "url": {
+          "type": "string",
+          "description": "A url identifying the package repository location.",
+          "title": "Package repository URL"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
+        }
+      },
+      "description": "A PackageRepository defines a repository of packages for installation.",
+      "title": "PackageRepository"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -490,6 +526,11 @@
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
           "description": "A reference uniquely identifying the package.",
           "title": "Available package reference"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the available package",
+          "title": "Available package name"
         },
         "version": {
           "type": "string",
@@ -555,15 +596,10 @@
           "description": "The context (cluster/namespace) for the package.",
           "title": "Available package context"
         },
-        "name": {
+        "identifier": {
           "type": "string",
-          "description": "The fully qualified name of the package (ie. a unique name in context).",
-          "title": "Available package name"
-        },
-        "repository": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
-          "description": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)",
-          "title": "Available package repository reference"
+          "description": "The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+          "title": "Available package identifier"
         },
         "plugin": {
           "$ref": "#/definitions/v1alpha1Plugin",
@@ -581,6 +617,11 @@
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
           "description": "A reference uniquely identifying the package.",
           "title": "Available package reference"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the available package",
+          "title": "Available package name"
         },
         "latestVersion": {
           "type": "string",
@@ -673,30 +714,6 @@
       "description": "Response for GetConfiguredPlugins",
       "title": "GetConfiguredPluginsResponse"
     },
-    "v1alpha1GetPackageRepositoriesResponse": {
-      "type": "object",
-      "example": {
-        "repositories": [
-          {
-            "name": "repo-name.example.com",
-            "namespace": "",
-            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
-          }
-        ]
-      },
-      "properties": {
-        "repositories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1alpha1PackageRepository"
-          },
-          "description": "List of PackageRepository",
-          "title": "Repositories"
-        }
-      },
-      "description": "Response for GetPackageRepositories",
-      "title": "GetPackageRepositories"
-    },
     "v1alpha1Maintainer": {
       "type": "object",
       "properties": {
@@ -713,50 +730,6 @@
       },
       "description": "Maintainers for the package.",
       "title": "Maintainer"
-    },
-    "v1alpha1PackageRepository": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name identifying package repository on the cluster.",
-          "title": "Package repository name"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "An optional namespace for namespaced package repositories.",
-          "title": "Package repository namespace"
-        },
-        "url": {
-          "type": "string",
-          "description": "A url identifying the package repository location.",
-          "title": "Package repository URL"
-        },
-        "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository.",
-          "title": "Package repository plugin"
-        }
-      },
-      "description": "A PackageRepository defines a repository of packages for installation.",
-      "title": "PackageRepository"
-    },
-    "v1alpha1PackageRepositoryReference": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The fully qualified name of the package repository.",
-          "title": "Package repository name"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "An optional namespace for namespaced package repositories.",
-          "title": "Package repository namespace"
-        }
-      },
-      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace.",
-      "title": "PackageRepositoryReference"
     },
     "v1alpha1Plugin": {
       "type": "object",
