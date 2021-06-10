@@ -24,6 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -208,7 +209,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "2.1.1",
 					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Name: "bitnami-1",
+						Identifier: "bitnami-1",
 					},
 				},
 				{
@@ -216,7 +217,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "0.7.5",
 					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Name: "bitnami-1",
+						Identifier: "bitnami-1",
 					},
 				},
 			},
@@ -234,7 +235,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "2.1.1",
 					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Name: "bitnami-2",
+						Identifier: "bitnami-2",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -245,7 +246,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "0.7.5",
 					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Name: "bitnami-2",
+						Identifier: "bitnami-2",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -270,7 +271,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "2.1.1",
 					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Name: "bitnami-3",
+						Identifier: "bitnami-3",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -281,7 +282,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "0.7.5",
 					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Name: "bitnami-3",
+						Identifier: "bitnami-3",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -361,15 +362,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
-		request                     *corev1.GetPackageRepositoriesRequest
+		request                     *v1alpha1.GetPackageRepositoriesRequest
 		repoNamespace               string
 		repoSpecs                   map[string]map[string]interface{}
-		expectedPackageRepositories []*corev1.PackageRepository
+		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
 		{
-			name:          "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
-			request:       &corev1.GetPackageRepositoriesRequest{},
+			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
+			request:       &v1alpha1.GetPackageRepositoriesRequest{},
 			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
@@ -380,7 +381,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name:          "returns expected repositories",
-			request:       &corev1.GetPackageRepositoriesRequest{},
+			request:       &v1alpha1.GetPackageRepositoriesRequest{},
 			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
@@ -390,7 +391,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
 					Name: "repo-1",
 					Url:  "https://charts.bitnami.com/bitnami",
@@ -403,7 +404,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name: "returns expected repositories in specific namespace",
-			request: &corev1.GetPackageRepositoriesRequest{
+			request: &v1alpha1.GetPackageRepositoriesRequest{
 				Context: &corev1.Context{
 					Namespace: "default",
 				},
@@ -417,11 +418,11 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{},
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
 		},
 		{
 			name: "returns expected repositories in specific namespace",
-			request: &corev1.GetPackageRepositoriesRequest{
+			request: &v1alpha1.GetPackageRepositoriesRequest{
 				Context: &corev1.Context{
 					Namespace: "default",
 				},
@@ -435,7 +436,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
 					Name:      "repo-1",
 					Namespace: "default",
@@ -475,7 +476,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(corev1.PackageRepository{})
+					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})
 					opt2 := cmpopts.SortSlices(lessPackageRepositoryFunc)
 					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1, opt2) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -491,6 +492,6 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 	return p1.DisplayName < p2.DisplayName
 }
 
-func lessPackageRepositoryFunc(p1, p2 *corev1.PackageRepository) bool {
+func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }

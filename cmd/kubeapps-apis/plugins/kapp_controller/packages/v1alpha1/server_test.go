@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -263,14 +264,14 @@ func repositoriesFromSpecs(specs map[string]spec) []runtime.Object {
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
-		request                     *corev1.GetPackageRepositoriesRequest
+		request                     *v1alpha1.GetPackageRepositoriesRequest
 		repoSpecs                   map[string]spec
-		expectedPackageRepositories []*corev1.PackageRepository
+		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
 		{
-			name:    "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			name:    "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
+			request: &v1alpha1.GetPackageRepositoriesRequest{},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": "unexpected",
@@ -280,7 +281,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name:    "returns expected repositories",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			request: &v1alpha1.GetPackageRepositoriesRequest{},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": map[string]interface{}{
@@ -297,7 +298,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					},
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
 					Name: "repo-1",
 					Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
@@ -324,7 +325,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetPackageRepositories(context.Background(), &corev1.GetPackageRepositoriesRequest{})
+			response, err := s.GetPackageRepositories(context.Background(), &v1alpha1.GetPackageRepositoriesRequest{})
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -335,8 +336,8 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.PackageRepository{})) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.PackageRepository{})))
+					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})))
 					}
 				}
 			}
@@ -358,7 +359,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         *unstructured.Unstructured
-		expected   *corev1.PackageRepository
+		expected   *v1alpha1.PackageRepository
 		statusCode codes.Code
 	}{
 		{
@@ -374,7 +375,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 		{
 			name: "returns a repo for an imgpkgBundle type",
 			in:   repositoryFromSpec("valid-name", validSpec),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
 			},
@@ -388,7 +389,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "host.com/username/image:v0.1.0",
 			},
@@ -402,7 +403,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "https://host.com/archive.tgz",
 			},
@@ -416,7 +417,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "https://github.com/k14s/k8s-simple-app-example",
 			},
@@ -432,8 +433,8 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := repo, tc.expected; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.PackageRepository{})) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.PackageRepository{})))
+				if got, want := repo, tc.expected; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})))
 				}
 			}
 		})

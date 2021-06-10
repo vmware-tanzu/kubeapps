@@ -33,7 +33,7 @@ import (
 	log "k8s.io/klog/v2"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -125,7 +125,7 @@ func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*co
 }
 
 // GetPackageRepositories returns the package repositories based on the request.
-func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
+func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	log.Infof("+GetPackageRepositories(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
 
 	client, err := s.GetClient(ctx)
@@ -141,7 +141,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		return nil, fmt.Errorf("unable to list kapp-controller repositories: %w", err)
 	}
 
-	responseRepos := []*corev1.PackageRepository{}
+	responseRepos := []*v1alpha1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
 		repo, err := packageRepositoryFromUnstructured(&repoUnstructured)
 		if err != nil {
@@ -149,13 +149,13 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		}
 		responseRepos = append(responseRepos, repo)
 	}
-	return &corev1.GetPackageRepositoriesResponse{
+	return &v1alpha1.GetPackageRepositoriesResponse{
 		Repositories: responseRepos,
 	}, nil
 }
 
-func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*corev1.PackageRepository, error) {
-	repo := &corev1.PackageRepository{}
+func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*v1alpha1.PackageRepository, error) {
+	repo := &v1alpha1.PackageRepository{}
 	name, found, err := unstructured.NestedString(pr.Object, "metadata", "name")
 	if err != nil || !found || name == "" {
 		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on PackageRepository: %v:\n%v", err, pr.Object)

@@ -23,7 +23,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
@@ -84,7 +84,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 // that error by returning a status.Errorf with the appropriate code
 
 // GetPackageRepositories returns the package repositories based on the request.
-func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
+func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Context.Namespace, request.Context.Cluster)
 	if request.Context.Cluster != "" {
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
@@ -95,10 +95,10 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		return nil, err
 	}
 
-	responseRepos := []*corev1.PackageRepository{}
+	responseRepos := []*v1alpha1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
 		obj := repoUnstructured.Object
-		repo := &corev1.PackageRepository{}
+		repo := &v1alpha1.PackageRepository{}
 		name, found, err := unstructured.NestedString(obj, "metadata", "name")
 		if err != nil || !found {
 			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%v", err, obj)
@@ -123,7 +123,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 
 		responseRepos = append(responseRepos, repo)
 	}
-	return &corev1.GetPackageRepositoriesResponse{
+	return &v1alpha1.GetPackageRepositoriesResponse{
 		Repositories: responseRepos,
 	}, nil
 }
@@ -164,7 +164,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
 		repoRef := corev1.AvailablePackageReference{
-			Name: name,
+			Identifier: name,
 		}
 		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
@@ -196,7 +196,7 @@ func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetAvailabl
 	log.Infof("Found chart url: [%s]", *url)
 
 	// unzip and untar .tgz file
-	meta, err := fetchMetaFromChartTarball(request.AvailablePackageRef.Name, *url)
+	meta, err := fetchMetaFromChartTarball(request.AvailablePackageRef.Identifier, *url)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	// TODO it'd be better if we could filter on server-side
 	for _, unstructuredChart := range chartList.Items {
 		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
-		if err == nil && found && chartName == packageRef.Name {
+		if err == nil && found && chartName == packageRef.Identifier {
 			done, err := isChartPullComplete(&unstructuredChart)
 			if err != nil {
 				return nil, err
@@ -245,7 +245,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 				if err != nil || !found {
 					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
 				}
-				log.Infof("Found existing HelmChart for: [%s]", packageRef.Name)
+				log.Infof("Found existing HelmChart for: [%s]", packageRef.Identifier)
 				return &url, nil
 			}
 			// TODO waitUntilChartPullComplete
@@ -259,12 +259,12 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 			"kind":       fluxHelmChart,
 			"metadata": map[string]interface{}{
-				"generateName": fmt.Sprintf("%s-", packageRef.Name),
+				"generateName": fmt.Sprintf("%s-", packageRef.Identifier),
 			},
 			"spec": map[string]interface{}{
-				"chart": packageRef.Name,
+				"chart": packageRef.Identifier,
 				"sourceRef": map[string]interface{}{
-					"name": packageRef.Repository.Name,
+					"name": packageRef.Identifier,
 					"kind": "HelmRepository",
 				},
 				"interval": "10m",
