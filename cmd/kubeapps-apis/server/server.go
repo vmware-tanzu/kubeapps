@@ -38,8 +38,9 @@ type ServeOptions struct {
 	PluginDirs         []string
 	ClustersConfigPath string
 	PinnipedProxyURL   string
-	//temporary flag while this component in under heavy development
-	UnsafeUseDemoSA bool
+	//temporary flags while this component in under heavy development
+	UnsafeUseDemoSA          bool
+	UnsafeLocalDevKubeconfig bool
 }
 
 // Serve is the root command that is run when no other sub-commands are present.

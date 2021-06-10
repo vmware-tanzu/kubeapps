@@ -61,7 +61,8 @@ func init() {
 
 	rootCmd.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	rootCmd.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
-	rootCmd.Flags().BoolVar(&serveOpts.UnsafeUseDemoSA, "unsafe-use-demo-sa", false, "internal url to be used for requests to clusters configured for credential proxying via pinniped")
+	rootCmd.Flags().BoolVar(&serveOpts.UnsafeUseDemoSA, "unsafe-use-demo-sa", false, "if true, it will create and use a privileged Service Account for interacting with the resources instead of acting on a user's behalf.")
+	rootCmd.Flags().BoolVar(&serveOpts.UnsafeLocalDevKubeconfig, "unsafe-local-dev-kubeconfig", false, "if true, it will use the local kubeconfig at the KUBECONFIG env var instead of using the inCluster configuration.")
 }
 
 // initConfig reads in config file and ENV variables if set.
