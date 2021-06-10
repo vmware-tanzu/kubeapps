@@ -40,88 +40,88 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		clientGetter func(context.Context) (dynamic.Interface, error)
 		statusCode   codes.Code
 	}{
-		// {
-		// 	name:         "returns internal error status when no getter configured",
-		// 	clientGetter: nil,
-		// 	statusCode:   codes.Internal,
-		// },
-		// {
-		// 	name: "returns failed-precondition when configGetter itself errors",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return nil, fmt.Errorf("Bang!")
-		// 	},
-		// 	statusCode: codes.FailedPrecondition,
-		// },
-		// {
-		// 	name: "returns without error if response status does not contain conditions",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return fake.NewSimpleDynamicClientWithCustomListKinds(
-		// 			runtime.NewScheme(),
-		// 			map[schema.GroupVersionResource]string{
-		// 				{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-		// 			},
-		// 			newRepo("test", "", nil, nil),
-		// 		), nil
-		// 	},
-		// 	statusCode: codes.OK,
-		// },
-		// {
-		// 	name: "returns without error if response status does not contain conditions",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return fake.NewSimpleDynamicClientWithCustomListKinds(
-		// 			runtime.NewScheme(),
-		// 			map[schema.GroupVersionResource]string{
-		// 				{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-		// 			},
-		// 			newRepo("test", "", map[string]interface{}{
-		// 				"foo": "bar",
-		// 			}, map[string]interface{}{
-		// 				"zot": "xyz",
-		// 			}),
-		// 		), nil
-		// 	},
-		// 	statusCode: codes.OK,
-		// },
-		// {
-		// 	name: "returns without error if response does not contain ready repos",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return fake.NewSimpleDynamicClientWithCustomListKinds(
-		// 			runtime.NewScheme(),
-		// 			map[schema.GroupVersionResource]string{
-		// 				{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-		// 			},
-		// 			newRepo("test", "", map[string]interface{}{}, map[string]interface{}{
-		// 				"conditions": []interface{}{
-		// 					map[string]interface{}{
-		// 						"type":   "Ready",
-		// 						"status": "False",
-		// 						"reason": "IndexationFailed",
-		// 					},
-		// 				}}),
-		// 		), nil
-		// 	},
-		// 	statusCode: codes.OK,
-		// },
-		// {
-		// 	name: "returns without error if response does not contain status url",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return fake.NewSimpleDynamicClientWithCustomListKinds(
-		// 			runtime.NewScheme(),
-		// 			map[schema.GroupVersionResource]string{
-		// 				{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-		// 			},
-		// 			newRepo("test", "", nil, map[string]interface{}{
-		// 				"conditions": []interface{}{
-		// 					map[string]interface{}{
-		// 						"type":   "Ready",
-		// 						"status": "True",
-		// 						"reason": "IndexationSucceed",
-		// 					},
-		// 				}}),
-		// 		), nil
-		// 	},
-		// 	statusCode: codes.OK,
-		// },
+		{
+			name:         "returns internal error status when no getter configured",
+			clientGetter: nil,
+			statusCode:   codes.Internal,
+		},
+		{
+			name: "returns failed-precondition when configGetter itself errors",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return nil, fmt.Errorf("Bang!")
+			},
+			statusCode: codes.FailedPrecondition,
+		},
+		{
+			name: "returns without error if response status does not contain conditions",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+					},
+					newRepo("test", "", nil, nil),
+				), nil
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response status does not contain conditions",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+					},
+					newRepo("test", "", map[string]interface{}{
+						"foo": "bar",
+					}, map[string]interface{}{
+						"zot": "xyz",
+					}),
+				), nil
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response does not contain ready repos",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+					},
+					newRepo("test", "", map[string]interface{}{}, map[string]interface{}{
+						"conditions": []interface{}{
+							map[string]interface{}{
+								"type":   "Ready",
+								"status": "False",
+								"reason": "IndexationFailed",
+							},
+						}}),
+				), nil
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response does not contain status url",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+					},
+					newRepo("test", "", nil, map[string]interface{}{
+						"conditions": []interface{}{
+							map[string]interface{}{
+								"type":   "Ready",
+								"status": "True",
+								"reason": "IndexationSucceed",
+							},
+						}}),
+				), nil
+			},
+			statusCode: codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -196,113 +196,113 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		repoIndex        string
 		expectedPackages []*corev1.AvailablePackageSummary
 	}{
-		// {
-		// 	testName:      "it returns a couple of fluxv2 packages from the cluster",
-		// 	repoName:      "bitnami-1",
-		// 	repoNamespace: "",
-		// 	request:       &corev1.GetAvailablePackageSummariesRequest{},
-		// 	repoUrl:       "https://example.repo.com/charts",
-		// 	repoIndex:     "testdata/valid-index.yaml",
-		// 	expectedPackages: []*corev1.AvailablePackageSummary{
-		// 		{
-		// 			DisplayName:   "acs-engine-autoscaler",
-		// 			LatestVersion: "2.1.1",
-		// 			IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-		// 			AvailablePackageRef: &corev1.AvailablePackageReference{
-		// 				Identifier: "bitnami-1",
-		// 			},
-		// 		},
-		// 		{
-		// 			DisplayName:   "wordpress",
-		// 			LatestVersion: "0.7.5",
-		// 			IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-		// 			AvailablePackageRef: &corev1.AvailablePackageReference{
-		// 				Identifier: "bitnami-1",
-		// 			},
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	testName:      "it returns all of fluxv2 packages from the cluster when request does not specify ns",
-		// 	repoName:      "bitnami-2",
-		// 	repoNamespace: "non-default",
-		// 	request:       &corev1.GetAvailablePackageSummariesRequest{},
-		// 	repoUrl:       "https://example.repo.com/charts",
-		// 	repoIndex:     "testdata/valid-index.yaml",
-		// 	expectedPackages: []*corev1.AvailablePackageSummary{
-		// 		{
-		// 			DisplayName:   "acs-engine-autoscaler",
-		// 			LatestVersion: "2.1.1",
-		// 			IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-		// 			AvailablePackageRef: &corev1.AvailablePackageReference{
-		// 				Identifier: "bitnami-2",
-		// 				Context: &corev1.Context{
-		// 					Namespace: "non-default",
-		// 				},
-		// 			},
-		// 		},
-		// 		{
-		// 			DisplayName:   "wordpress",
-		// 			LatestVersion: "0.7.5",
-		// 			IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-		// 			AvailablePackageRef: &corev1.AvailablePackageReference{
-		// 				Identifier: "bitnami-2",
-		// 				Context: &corev1.Context{
-		// 					Namespace: "non-default",
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	testName:      "it returns all of fluxv2 packages from the cluster that match request ns",
-		// 	repoName:      "bitnami-3",
-		// 	repoNamespace: "non-default",
-		// 	request: &corev1.GetAvailablePackageSummariesRequest{
-		// 		Context: &corev1.Context{
-		// 			Namespace: "non-default",
-		// 		},
-		// 	},
-		// 	repoUrl:   "https://example.repo.com/charts",
-		// 	repoIndex: "testdata/valid-index.yaml",
-		// 	expectedPackages: []*corev1.AvailablePackageSummary{
-		// 		{
-		// 			DisplayName:   "acs-engine-autoscaler",
-		// 			LatestVersion: "2.1.1",
-		// 			IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-		// 			AvailablePackageRef: &corev1.AvailablePackageReference{
-		// 				Identifier: "bitnami-3",
-		// 				Context: &corev1.Context{
-		// 					Namespace: "non-default",
-		// 				},
-		// 			},
-		// 		},
-		// 		{
-		// 			DisplayName:   "wordpress",
-		// 			LatestVersion: "0.7.5",
-		// 			IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-		// 			AvailablePackageRef: &corev1.AvailablePackageReference{
-		// 				Identifier: "bitnami-3",
-		// 				Context: &corev1.Context{
-		// 					Namespace: "non-default",
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	testName:      "it returns none of fluxv2 packages from the cluster that don't match request ns",
-		// 	repoName:      "bitnami-4",
-		// 	repoNamespace: "default",
-		// 	request: &corev1.GetAvailablePackageSummariesRequest{
-		// 		Context: &corev1.Context{
-		// 			Namespace: "non-default",
-		// 		},
-		// 	},
-		// 	repoUrl:          "https://example.repo.com/charts",
-		// 	repoIndex:        "testdata/valid-index.yaml",
-		// 	expectedPackages: []*corev1.AvailablePackageSummary{},
-		// },
+		{
+			testName:      "it returns a couple of fluxv2 packages from the cluster",
+			repoName:      "bitnami-1",
+			repoNamespace: "",
+			request:       &corev1.GetAvailablePackageSummariesRequest{},
+			repoUrl:       "https://example.repo.com/charts",
+			repoIndex:     "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1",
+					},
+				},
+				{
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1",
+					},
+				},
+			},
+		},
+		{
+			testName:      "it returns all of fluxv2 packages from the cluster when request does not specify ns",
+			repoName:      "bitnami-2",
+			repoNamespace: "non-default",
+			request:       &corev1.GetAvailablePackageSummariesRequest{},
+			repoUrl:       "https://example.repo.com/charts",
+			repoIndex:     "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-2",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
+					},
+				},
+				{
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-2",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
+					},
+				},
+			},
+		},
+		{
+			testName:      "it returns all of fluxv2 packages from the cluster that match request ns",
+			repoName:      "bitnami-3",
+			repoNamespace: "non-default",
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "non-default",
+				},
+			},
+			repoUrl:   "https://example.repo.com/charts",
+			repoIndex: "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-3",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
+					},
+				},
+				{
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-3",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
+					},
+				},
+			},
+		},
+		{
+			testName:      "it returns none of fluxv2 packages from the cluster that don't match request ns",
+			repoName:      "bitnami-4",
+			repoNamespace: "default",
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "non-default",
+				},
+			},
+			repoUrl:          "https://example.repo.com/charts",
+			repoIndex:        "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -368,87 +368,87 @@ func TestGetPackageRepositories(t *testing.T) {
 		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
-		// {
-		// 	name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-		// 	request:       &v1alpha1.GetPackageRepositoriesRequest{},
-		// 	repoNamespace: "",
-		// 	repoSpecs: map[string]map[string]interface{}{
-		// 		"repo-1": {
-		// 			"foo": "bar",
-		// 		},
-		// 	},
-		// 	statusCode: codes.Internal,
-		// },
-		// {
-		// 	name:          "returns expected repositories",
-		// 	request:       &v1alpha1.GetPackageRepositoriesRequest{},
-		// 	repoNamespace: "",
-		// 	repoSpecs: map[string]map[string]interface{}{
-		// 		"repo-1": {
-		// 			"url": "https://charts.bitnami.com/bitnami",
-		// 		},
-		// 		"repo-2": {
-		// 			"url": "https://charts.helm.sh/stable",
-		// 		},
-		// 	},
-		// 	expectedPackageRepositories: []*v1alpha1.PackageRepository{
-		// 		{
-		// 			Name: "repo-1",
-		// 			Url:  "https://charts.bitnami.com/bitnami",
-		// 		},
-		// 		{
-		// 			Name: "repo-2",
-		// 			Url:  "https://charts.helm.sh/stable",
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "returns expected repositories in specific namespace",
-		// 	request: &v1alpha1.GetPackageRepositoriesRequest{
-		// 		Context: &corev1.Context{
-		// 			Namespace: "default",
-		// 		},
-		// 	},
-		// 	repoNamespace: "non-default",
-		// 	repoSpecs: map[string]map[string]interface{}{
-		// 		"repo-1": {
-		// 			"url": "https://charts.bitnami.com/bitnami",
-		// 		},
-		// 		"repo-2": {
-		// 			"url": "https://charts.helm.sh/stable",
-		// 		},
-		// 	},
-		// 	expectedPackageRepositories: []*v1alpha1.PackageRepository{},
-		// },
-		// {
-		// 	name: "returns expected repositories in specific namespace",
-		// 	request: &v1alpha1.GetPackageRepositoriesRequest{
-		// 		Context: &corev1.Context{
-		// 			Namespace: "default",
-		// 		},
-		// 	},
-		// 	repoNamespace: "default",
-		// 	repoSpecs: map[string]map[string]interface{}{
-		// 		"repo-1": {
-		// 			"url": "https://charts.bitnami.com/bitnami",
-		// 		},
-		// 		"repo-2": {
-		// 			"url": "https://charts.helm.sh/stable",
-		// 		},
-		// 	},
-		// 	expectedPackageRepositories: []*v1alpha1.PackageRepository{
-		// 		{
-		// 			Name:      "repo-1",
-		// 			Namespace: "default",
-		// 			Url:       "https://charts.bitnami.com/bitnami",
-		// 		},
-		// 		{
-		// 			Name:      "repo-2",
-		// 			Namespace: "default",
-		// 			Url:       "https://charts.helm.sh/stable",
-		// 		},
-		// 	},
-		// },
+		{
+			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
+			request:       &v1alpha1.GetPackageRepositoriesRequest{},
+			repoNamespace: "",
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"foo": "bar",
+				},
+			},
+			statusCode: codes.Internal,
+		},
+		{
+			name:          "returns expected repositories",
+			request:       &v1alpha1.GetPackageRepositoriesRequest{},
+			repoNamespace: "",
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"url": "https://charts.bitnami.com/bitnami",
+				},
+				"repo-2": {
+					"url": "https://charts.helm.sh/stable",
+				},
+			},
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
+				{
+					Name: "repo-1",
+					Url:  "https://charts.bitnami.com/bitnami",
+				},
+				{
+					Name: "repo-2",
+					Url:  "https://charts.helm.sh/stable",
+				},
+			},
+		},
+		{
+			name: "returns expected repositories in specific namespace",
+			request: &v1alpha1.GetPackageRepositoriesRequest{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
+			},
+			repoNamespace: "non-default",
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"url": "https://charts.bitnami.com/bitnami",
+				},
+				"repo-2": {
+					"url": "https://charts.helm.sh/stable",
+				},
+			},
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
+		},
+		{
+			name: "returns expected repositories in specific namespace",
+			request: &v1alpha1.GetPackageRepositoriesRequest{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
+			},
+			repoNamespace: "default",
+			repoSpecs: map[string]map[string]interface{}{
+				"repo-1": {
+					"url": "https://charts.bitnami.com/bitnami",
+				},
+				"repo-2": {
+					"url": "https://charts.helm.sh/stable",
+				},
+			},
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
+				{
+					Name:      "repo-1",
+					Namespace: "default",
+					Url:       "https://charts.bitnami.com/bitnami",
+				},
+				{
+					Name:      "repo-2",
+					Namespace: "default",
+					Url:       "https://charts.helm.sh/stable",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

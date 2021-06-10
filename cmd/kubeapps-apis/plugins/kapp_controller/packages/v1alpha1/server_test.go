@@ -89,52 +89,52 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		clientGetter func(context.Context) (dynamic.Interface, error)
 		statusCode   codes.Code
 	}{
-		// {
-		// 	name: "returns an internal error status if response does not contain publicName",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return fake.NewSimpleDynamicClientWithCustomListKinds(
-		// 			runtime.NewScheme(),
-		// 			map[schema.GroupVersionResource]string{
-		// 				{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
-		// 			},
-		// 			packageFromSpec(map[string]interface{}{
-		// 				"version": "1.2.3",
-		// 			}),
-		// 		), nil
-		// 	},
-		// 	statusCode: codes.Internal,
-		// },
-		// {
-		// 	name: "returns an internal error status if response does not contain version",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return fake.NewSimpleDynamicClientWithCustomListKinds(
-		// 			runtime.NewScheme(),
-		// 			map[schema.GroupVersionResource]string{
-		// 				{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
-		// 			},
-		// 			packageFromSpec(map[string]interface{}{
-		// 				"publicName": "someName",
-		// 			}),
-		// 		), nil
-		// 	},
-		// 	statusCode: codes.Internal,
-		// },
-		// {
-		// 	name: "returns OK status if items contain required fields",
-		// 	clientGetter: func(context.Context) (dynamic.Interface, error) {
-		// 		return fake.NewSimpleDynamicClientWithCustomListKinds(
-		// 			runtime.NewScheme(),
-		// 			map[schema.GroupVersionResource]string{
-		// 				{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
-		// 			},
-		// 			packageFromSpec(map[string]interface{}{
-		// 				"publicName": "someName",
-		// 				"version":    "1.2.3",
-		// 			}),
-		// 		), nil
-		// 	},
-		// 	statusCode: codes.OK,
-		// },
+		{
+			name: "returns an internal error status if response does not contain publicName",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+					},
+					packageFromSpec(map[string]interface{}{
+						"version": "1.2.3",
+					}),
+				), nil
+			},
+			statusCode: codes.Internal,
+		},
+		{
+			name: "returns an internal error status if response does not contain version",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+					},
+					packageFromSpec(map[string]interface{}{
+						"publicName": "someName",
+					}),
+				), nil
+			},
+			statusCode: codes.Internal,
+		},
+		{
+			name: "returns OK status if items contain required fields",
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return fake.NewSimpleDynamicClientWithCustomListKinds(
+					runtime.NewScheme(),
+					map[schema.GroupVersionResource]string{
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+					},
+					packageFromSpec(map[string]interface{}{
+						"publicName": "someName",
+						"version":    "1.2.3",
+					}),
+				), nil
+			},
+			statusCode: codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -182,29 +182,29 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		packageSpecs     []map[string]interface{}
 		expectedPackages []*corev1.AvailablePackageSummary
 	}{
-		// {
-		// 	name: "it returns carvel packages from the cluster",
-		// 	packageSpecs: []map[string]interface{}{
-		// 		{
-		// 			"publicName": "tetris.foo.example.com",
-		// 			"version":    "1.2.3",
-		// 		},
-		// 		{
-		// 			"publicName": "another.foo.example.com",
-		// 			"version":    "1.2.5",
-		// 		},
-		// 	},
-		// 	expectedPackages: []*corev1.AvailablePackageSummary{
-		// 		{
-		// 			DisplayName:   "another.foo.example.com",
-		// 			LatestVersion: "1.2.5",
-		// 		},
-		// 		{
-		// 			DisplayName:   "tetris.foo.example.com",
-		// 			LatestVersion: "1.2.3",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "it returns carvel packages from the cluster",
+			packageSpecs: []map[string]interface{}{
+				{
+					"publicName": "tetris.foo.example.com",
+					"version":    "1.2.3",
+				},
+				{
+					"publicName": "another.foo.example.com",
+					"version":    "1.2.5",
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:   "another.foo.example.com",
+					LatestVersion: "1.2.5",
+				},
+				{
+					DisplayName:   "tetris.foo.example.com",
+					LatestVersion: "1.2.3",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -269,46 +269,46 @@ func TestGetPackageRepositories(t *testing.T) {
 		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
-		// {
-		// 	name:    "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-		// 	request: &v1alpha1.GetPackageRepositoriesRequest{},
-		// 	repoSpecs: map[string]spec{
-		// 		"repo-1": {
-		// 			"fetch": "unexpected",
-		// 		},
-		// 	},
-		// 	statusCode: codes.Internal,
-		// },
-		// {
-		// 	name:    "returns expected repositories",
-		// 	request: &v1alpha1.GetPackageRepositoriesRequest{},
-		// 	repoSpecs: map[string]spec{
-		// 		"repo-1": {
-		// 			"fetch": map[string]interface{}{
-		// 				"imgpkgBundle": map[string]interface{}{
-		// 					"image": "projects.registry.example.com/repo-1/main@sha256:abcd",
-		// 				},
-		// 			},
-		// 		},
-		// 		"repo-2": {
-		// 			"fetch": map[string]interface{}{
-		// 				"imgpkgBundle": map[string]interface{}{
-		// 					"image": "projects.registry.example.com/repo-2/main@sha256:abcd",
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedPackageRepositories: []*v1alpha1.PackageRepository{
-		// 		{
-		// 			Name: "repo-1",
-		// 			Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
-		// 		},
-		// 		{
-		// 			Name: "repo-2",
-		// 			Url:  "projects.registry.example.com/repo-2/main@sha256:abcd",
-		// 		},
-		// 	},
-		// },
+		{
+			name:    "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
+			request: &v1alpha1.GetPackageRepositoriesRequest{},
+			repoSpecs: map[string]spec{
+				"repo-1": {
+					"fetch": "unexpected",
+				},
+			},
+			statusCode: codes.Internal,
+		},
+		{
+			name:    "returns expected repositories",
+			request: &v1alpha1.GetPackageRepositoriesRequest{},
+			repoSpecs: map[string]spec{
+				"repo-1": {
+					"fetch": map[string]interface{}{
+						"imgpkgBundle": map[string]interface{}{
+							"image": "projects.registry.example.com/repo-1/main@sha256:abcd",
+						},
+					},
+				},
+				"repo-2": {
+					"fetch": map[string]interface{}{
+						"imgpkgBundle": map[string]interface{}{
+							"image": "projects.registry.example.com/repo-2/main@sha256:abcd",
+						},
+					},
+				},
+			},
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
+				{
+					Name: "repo-1",
+					Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				},
+				{
+					Name: "repo-2",
+					Url:  "projects.registry.example.com/repo-2/main@sha256:abcd",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
