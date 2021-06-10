@@ -101,12 +101,12 @@ authProxy:
   clientID: <your app id>
   clientSecret: <your app secret>
   cookieSecret: <your random seed string for secure cookies>
+  scope: openid email group_names
   additionalFlags:
     # VMware Cloud Services has different endpoints for production and staging:
     # To use the staging endpoints, replace:
     # 'gaz.csp-vidm-prod.com' with 'gaz-preview.csp-vidm-prod.com'
     # 'console.cloud.vmware.com' with 'console-stg.cloud.vmware.com/'
-    - --scope=openid email group_names
     - --skip-oidc-discovery=true
     - --oidc-issuer-url=https://gaz.csp-vidm-prod.com
     - --login-url=https://console.cloud.vmware.com/csp/gateway/discovery
@@ -190,7 +190,8 @@ helm install kubeapps bitnami/kubeapps \
   --set authProxy.clientID=my-client-id.apps.googleusercontent.com \
   --set authProxy.clientSecret=my-client-secret \
   --set authProxy.cookieSecret=$(echo "not-good-secret" | base64) \
-  --set authProxy.additionalFlags="{--cookie-secure=false,--scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform}" \
+  --set authProxy.scope="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform" \
+  --set authProxy.additionalFlags="{--cookie-secure=false}" \
   --set frontend.proxypassAccessTokenAsBearer=true
 ```
 
@@ -232,6 +233,7 @@ spec:
         - -client-secret=$AUTH_PROXY_CLIENT_SECRET
         - -oidc-issuer-url=$AUTH_PROXY_DISCOVERY_URL
         - -cookie-secret=$AUTH_PROXY_COOKIE_SECRET
+        - -cookie-refresh=2m
         - -upstream=http://localhost:8080/
         - -http-address=0.0.0.0:3000
         - -email-domain="*"
@@ -359,3 +361,16 @@ Another common point of confusion is the `--oidc-username-prefix` option specifi
 ### Checking the logs of your Kubernetes API server
 
 Finally, if none of the above are relevant to your issue, you can check the logs of the Kubernetes API server deployment for OIDC-related lines at the time of your login attempt. These may show a configuration issue with the API server itself.
+
+### User automatically logged out from Kubeapps Console
+
+When using the default auth proxy, some users may experience the behavior where they are automatically logged out from the console.
+Prior to the Kubeapps chart version 7.1.0, the auth proxy configuration did not include a default `--cookie-refresh` value to refresh the access/openid token and so the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5m.
+
+To avoid this issue, you can do one of the following:
+ - upgrade the Kubeapps chart to version 7.1.0+ which sets a default of `--cookie-refresh=2m` and exposes the value in the chart values as `authProxy.cookieRefresh`.
+ - update Kubeapps by adding the option `--cookie-refresh=2m` to `authProxy.additionalFlags`.
+
+The duration for the refresh must be less than the access/openid expiration time configured in the OAuth2/OIDC provider.
+
+**Note**: If you have configured a provider other than `oidc` for oauth2-proxy, the issue may still occur even after upgrading or updating Kubeapps as OAuth2 Proxy does not support cookie-refresh for all providers. See [OAuth2 Proxy Configuration Overview](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#footnote1) for the list of supported providers.
