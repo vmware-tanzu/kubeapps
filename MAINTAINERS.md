@@ -4,10 +4,10 @@
 
 | Maintainer | GitHub ID | Affiliation |
 | --------------- | --------- | -----------: |
-| Michael Nelson | [absoludity](https://github.com/absoludity) | [VMware](https://www.github.com/vmware/) |
 | Antonio Gámez Díaz | [antgamdia](https://github.com/antgamdia) | [VMware](https://www.github.com/vmware/) |
-| Greg Fichtenholtz| [gfichtenholt](https://github.com/gfichtenholt) | [VMware](https://www.github.com/vmware/) |
 | Dimitri Laloue | [dlaloue-vmware](https://github.com/dlaloue-vmware) | [VMware](https://www.github.com/vmware/) |
+| Greg Fichtenholtz| [gfichtenholt](https://github.com/gfichtenholt) | [VMware](https://www.github.com/vmware/) |
+| Michael Nelson | [absoludity](https://github.com/absoludity) | [VMware](https://www.github.com/vmware/) |
 | Pepe Baena | [ppbaena](https://github.com/ppbaena) | [VMware](https://www.github.com/vmware/) |
 
 ## Emeritus Maintainers
