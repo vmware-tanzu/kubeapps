@@ -12,187 +12,299 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 // Each packages v1alpha1 plugin must implement at least the following rpcs:
 //
 service PackagesService {
-  rpc GetAvailablePackages(kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackagesResponse) {
+  rpc GetAvailablePackageSummaries(GetAvailablePackageSummariesRequest) returns (GetAvailablePackageSummariesResponse) {
+     option (google.api.http) = {
+       get: "/core/packages/v1alpha1/availablepackagesummaries"
+     };
+   }
+  rpc GetAvailablePackageDetail(GetAvailablePackageDetailRequest) returns (GetAvailablePackageDetailResponse) {
     option (google.api.http) = {
-      get: "/core/packages/v1alpha1/packages"
+      get: "/core/packages/v1alpha1/availablepackagedetails"
     };
   }
-  rpc GetPackageRepositories(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoriesResponse) {
-    option (google.api.http) = {
-      get: "/core/packages/v1alpha1/packagerepositories"
-    };
-  }
-  rpc GetPackageMeta(kubeappsapis.core.packages.v1alpha1.GetPackageMetaRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageMetaResponse) {
-    option (google.api.http) = {
-      get: "/core/packages/v1alpha1/packagemeta"
-    };
-  }
+
+  // TODO: remaining operations yet to be defined
+
+  // rpc GetAvailablePackageVersions(GetAvailablePackageVersionsRequest) returns (GetAvailablePackageVersionsResponse) {
+  //   option (google.api.http) = {
+  //     get: "/core/packages/v1alpha1/availablepackageversions"
+  //   };
+  // }
+  // rpc GetInstalledPackageSummaries(GetInstalledPackageSummariesRequest) returns (GetInstalledPackageSummariesResponse) {
+  //   option (google.api.http) = {
+  //     get: "/core/packages/v1alpha1/installedpackagesummaries"
+  //   };
+  // }
+  // rpc GetInstalledPackageDetail(GetInstalledPackageDetailRequest) returns (GetInstalledPackageDetailResponse) {
+  //   option (google.api.http) = {
+  //     get: "/core/packages/v1alpha1/installedpackagedetails"
+  //   };
+  // }
+  // rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
+  //   option (google.api.http) = {
+  //     post: "/core/packages/v1alpha1/installedpackages"
+  //   };
+  // }
+  // rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
+  //   option (google.api.http) = {
+  //     put: "/core/packages/v1alpha1/installedpackages"
+  //   };
+  // }
+  // rpc DeleteInstalledPackage(DeleteInstalledPackageRequest) returns (DeleteInstalledPackageResponse) {
+  //   option (google.api.http) = {
+  //     delete: "/core/packages/v1alpha1/installedpackages"
+  //   };
+  // }
 }
-//
+
 // Standard request and response messages for each required function are defined
 // below for import and re-use.
 
-// GetAvailablePackages
+// -- Start definitions of the request messages -- 
+
+// GetAvailablePackageSummariesRequest
 //
-// Request for GetAvailablePackages
-message GetAvailablePackagesRequest {
-  // A cluster name can be provided if multiple clusters are configured,
-  // otherwise the current cluster will be assumed.
-  string cluster = 1;
-
-  // A namespace can be provided if the packages available for install in a
-  // specific namespace are required.
-  string namespace = 2;
-
+// Request for GetAvailablePackageSummaries
+message GetAvailablePackageSummariesRequest {
+  // The context (cluster/namespace) for the request
+  Context context = 1;
   // TODO: Add standard filters.
 }
 
-// AvailablePackage
-// 
-// An AvailablePackage defines a package available for installation.
-message AvailablePackage {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: '{"name": "app1.example.com", "version": "9.10.09", "iconUrl": ""}'
-  };
+// GetAvailablePackageDetailRequest
+//
+// Request for GetAvailablePackageDetail
+message GetAvailablePackageDetailRequest {
+  // The information required to uniquely
+  // identify an available package
+  AvailablePackageReference available_package_ref = 1;
+
+  // Optional specific version (or version reference) to request.
+  // By default the latest version (or latest version matching the reference)
+  // will be returned.
+  string version = 2;
+}
+
+// -- Start definitions of the response messages -- 
+
+// GetAvailablePackageSummariesResponse
+//
+// Response for GetAvailablePackageSummaries
+message GetAvailablePackageSummariesResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"available_packages_summaries": [{}]}'
+  // };
+
+  // Available packages summaries
+  //
+  // List of AvailablePackageSummary
+  repeated AvailablePackageSummary available_packages_summaries = 1;
+}
+
+// GetAvailablePackageDetailResponse
+//
+// Response for GetAvailablePackageDetail
+message GetAvailablePackageDetailResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"available_package_detail": [{}]}'
+  // };
+  
+  // Available package detail
+  //
+  // List of AvailablePackageDetail
+  AvailablePackageDetail available_package_detail = 1;
+}
+
+// -- Start definitions used in the responses  -- 
+
+// AvailablePackageSummary
+//
+// An AvailablePackageSummary provides a summary of a package available for installation
+// useful when aggregating many available packages.
+message AvailablePackageSummary {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+
+  // Available package reference
+  //
+  // A reference uniquely identifying the package.
+  AvailablePackageReference available_package_ref = 1;
 
   // Available package name
   //
-  // The fully qualified name of the package.
-  string name = 1;
+  // The name of the available package
+  string name = 2;
 
-  // Available package version
+  // Latest available package version
   //
-  // The version of the package in the repository.
-  string version = 2;
-
-  // Available package icon
+  // The latest version available for this package. Often expected when viewing
+  // a summary of many available packages.
+  string latest_version = 3;
+  
+  // Available package Icon URL
   //
   // A url for an icon.
-  string icon_url = 3;
+  string icon_url = 4;
   
-  // PackageRepositoryReference
+  // Available package display name
   //
-  // A PackageRepository is identified by a fully qualified name and
-  // optionally a specific namespace.
-  message PackageRepositoryReference {
-    // Package repository name
-    //
-    // The fully qualified name of the package repository.
-    string name = 1;
-
-    // Package repository namespace
-    //
-    // An optional namespace for namespaced package repositories.
-    string namespace = 2;
-  }
-  // Package repository reference
+  // A name as displayed to users
+  string display_name = 5;
+  
+  // Available package short description
   //
-  // An optional package repository reference where this package is located. Not
-  // all plugins may support this back reference (eg. kapp-controller)
-  PackageRepositoryReference repository = 4;
-
-  // Package repository plugin
-  //
-  // The plugin used to interact with this package repository.
-  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 5;
+  // A short description of the app provided by the package
+  string short_description = 6;
 }
 
-// GetAvailablePackages
+// AvailablePackageDetail
 //
-// Response for GetAvailablePackages
-message GetAvailablePackagesResponse {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: '{"packages": [{"name": "app1.example.com", "version": "9.10.09", "iconUrl": ""}]}'
-  };
-  // List of AvailablePackage
-  repeated AvailablePackage packages = 1;
+// An AvailablePackageDetail provides additional details required when
+// inspecting an individual package.
+message AvailablePackageDetail {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+
+  // Available package reference
+  //
+  // A reference uniquely identifying the package.
+  AvailablePackageReference package_ref = 1;
+
+  // Available package name
+  //
+  // The name of the available package
+  string name = 2;
+  
+  // Available package version
+  //
+  // TODO: add description
+  string version = 3;
+  
+  // Available package icon URL
+  //
+  // A url for an icon.
+  string icon_url = 4;
+  
+  // Available package display name
+  //
+  // A name as displayed to users
+  string display_name = 5;
+  
+  // Available package short description
+  //
+  // A short description of the app provided by the package
+  string short_description = 6;
+  
+  // Available package long description
+  //
+  // A long description of the package, such as a README formatted with Markdown.
+  string long_description = 7;
+  
+  // Available package default values
+  //
+  // An example of default values used during package templating that can serve
+  // as documentation or a starting point for user customization.
+  string default_values = 8;
+  
+  // Available package values schema
+  //
+  // An optional openapi/json schema that can be used to validate a user-provided values.
+  string values_schema = 9;
+  
+  // Available package maintainers
+  //
+  // List of Maintainer
+  repeated Maintainer maintainers = 10;
+  
+  // Available package opaque data
+  //
+  // A plugin can define further key-values for data which does not (yet) fit
+  // with the core.packaging.AvailablePackageDetail.
+  map<string, bytes> opaque_data = 11;
 }
 
-// GetPackageRepositories
+// -- Start other definitions  -- 
+
+// Context
 //
-// Request for GetPackageRepositories
-message GetPackageRepositoriesRequest {
-  // A cluster name can be provided if multiple clusters are configured,
-  // otherwise the current cluster will be assumed.
+// A Context specifies the context of the message
+message Context {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+  
+  // Cluster
+  //
+  // A cluster name can be provided to target a specific cluster if multiple
+  // clusters are configured, otherwise all clusters will be assumed.
   string cluster = 1;
 
-  // A namespace can be provided if the package repositories for a specific namespace
-  // are requested, when supported by the packaging format.
+  // Namespace
+  //
+  // A namespace can be provided if the packaging system allows namespaced packages.
   string namespace = 2;
-
-  // TODO: Add standard filters. Potentially filter by plugin.
 }
 
-// PackageRepository
+// AvailablePackageReference
 //
-// A PackageRepository defines a repository of packages for installation.
-message PackageRepository {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: '{"name": "repo-name.example.com", "namespace": "", "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"}'
-  };
+// An AvailablePackageReference has the minimum information required to uniquely
+// identify an available package. This is re-used on the summary and details of an
+// available package.
+message AvailablePackageReference {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
 
-  // Package repository name
+  // Available package context
   //
-  // The name identifying package repository on the cluster.
+  // The context (cluster/namespace) for the package.
+  Context context = 1;
+
+  // Available package identifier
+  //
+  // The fully qualified identifier for the available package
+  // (ie. a unique name for the context). For some packaging systems
+  // (particularly those where an available package is backed by a CR) this
+  // will just be the name, but for others such as those where an available
+  // package is not backed by a CR (eg. standard helm) it may be necessary
+  // to include the repository in the name or even the repo namespace
+  // to ensure this is unique. 
+  // For example two helm repositories can define
+  // an "apache" chart that is available globally, the names would need to
+  // encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+  string identifier = 2;
+
+  // Plugin for the available package
+  //
+  // The plugin used to interact with this available package.
+  // This field should be omitted when the request is in the context of a specific plugin.
+  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 3;
+}
+
+// Maintainer
+//
+// Maintainers for the package.
+message Maintainer {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+  
+  // Maintainer name
+  //
+  // A maintainer name
   string name = 1;
-  
-  // Package repository namespace
+
+  // Maintainer email
   //
-  // An optional namespace for namespaced package repositories.
-  string namespace = 2;
-  
-  // Package repository URL
-  //
-  // A url identifying the package repository location.
-  string url = 3;
-
-  // Package repository plugin
-  //
-  // The plugin used to interact with this package repository.
-  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 4;
-
-  // TODO: Other fields such as type, status... TBD.
-}
-
-// GetPackageRepositories
-//
-// Response for GetPackageRepositories
-message GetPackageRepositoriesResponse {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: '{"repositories": [{"name": "repo-name.example.com", "namespace": "", "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"}]}'
-  };
-  // Repositories
-  //
-  // List of PackageRepository
-  repeated PackageRepository repositories = 1;
-}
-
-message PackageReference {
-  // required package name should be unique within the scope of specified repository, if specified
-  string name = 1; 
-
-  // A PackageRepository is identified by a fully qualified name and
-  // optionally a specific namespace.
-  message PackageRepositoryReference {
-    string name = 1;
-    string namespace = 2;
+  // A maintainer email
+  string email = 2;
   }
-  // An optional package repository reference where this package is located. Not
-  // all plugins may support this back reference (eg. kapp-controller)
-  PackageRepositoryReference repository = 2;
-}
-
-//
-// Request for GetPackageMeta
-message GetPackageMetaRequest {
-  PackageReference package = 1;
-}
-
-//
-// Response for GetPackageMeta
-message GetPackageMetaResponse {
-  message PackageMeta {
-    string readme = 1;
-  }
-  PackageMeta meta = 1;
-}
