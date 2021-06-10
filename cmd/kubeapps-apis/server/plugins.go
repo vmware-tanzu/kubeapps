@@ -269,12 +269,12 @@ func createClientGetter(serveOpts ServeOptions) (func(context.Context) (dynamic.
 
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return createClientGetterWithParams(inClusterConfig, serveOpts, config)
+	return createClientGetterWithParams(inClusterConfig, serveOpts, clustersConfig)
 }
 
 // createClientGetter takes the required params and returns the closure fuction.
 // it's splitted for testing this fn separately
-func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, config kube.ClustersConfig) (func(context.Context) (dynamic.Interface, error), error) {
+func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (func(context.Context) (dynamic.Interface, error), error) {
 
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
@@ -289,7 +289,7 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 		if !serveOpts.UnsafeUseDemoSA {
 			// We are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
 			// we should pass the cluster name instead
-			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, config.KubeappsClusterName, config)
+			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 			}
@@ -297,8 +297,8 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 			if err != nil {
 				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 			}
-			// Just ussing the created SA, no user account is used
 		} else {
+			// Just using the created SA, no user account is used
 			client, err = dynamic.NewForConfig(inClusterConfig)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
