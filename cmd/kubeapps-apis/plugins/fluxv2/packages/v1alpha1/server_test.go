@@ -24,6 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -127,7 +128,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			response, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -137,7 +138,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				t.Errorf("got: %+v, want: %+v", got, want)
 
 				if got == codes.OK {
-					if len(response.Packages) != 0 {
+					if len(response.AvailablePackagesSummaries) != 0 {
 						t.Errorf("unexpected response: %v", response)
 					} else if response != nil {
 						t.Errorf("unexpected response: %v", response)
@@ -185,35 +186,39 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
-func TestGetAvailablePackages(t *testing.T) {
+func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		testName         string
-		request          *corev1.GetAvailablePackagesRequest
+		request          *corev1.GetAvailablePackageSummariesRequest
 		repoName         string
 		repoNamespace    string
 		repoUrl          string
 		repoIndex        string
-		expectedPackages []*corev1.AvailablePackage
+		expectedPackages []*corev1.AvailablePackageSummary
 	}{
 		{
 			testName:      "it returns a couple of fluxv2 packages from the cluster",
 			repoName:      "bitnami-1",
 			repoNamespace: "",
-			request:       &corev1.GetAvailablePackagesRequest{},
+			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			repoUrl:       "https://example.repo.com/charts",
 			repoIndex:     "testdata/valid-index.yaml",
-			expectedPackages: []*corev1.AvailablePackage{
+			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					Name:       "acs-engine-autoscaler",
-					Version:    "2.1.1",
-					IconUrl:    "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{Name: "bitnami-1"},
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1",
+					},
 				},
 				{
-					Name:       "wordpress",
-					Version:    "0.7.5",
-					IconUrl:    "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{Name: "bitnami-1"},
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1",
+					},
 				},
 			},
 		},
@@ -221,26 +226,30 @@ func TestGetAvailablePackages(t *testing.T) {
 			testName:      "it returns all of fluxv2 packages from the cluster when request does not specify ns",
 			repoName:      "bitnami-2",
 			repoNamespace: "non-default",
-			request:       &corev1.GetAvailablePackagesRequest{},
+			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			repoUrl:       "https://example.repo.com/charts",
 			repoIndex:     "testdata/valid-index.yaml",
-			expectedPackages: []*corev1.AvailablePackage{
+			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					Name:    "acs-engine-autoscaler",
-					Version: "2.1.1",
-					IconUrl: "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
-						Name:      "bitnami-2",
-						Namespace: "non-default",
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-2",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
 					},
 				},
 				{
-					Name:    "wordpress",
-					Version: "0.7.5",
-					IconUrl: "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
-						Name:      "bitnami-2",
-						Namespace: "non-default",
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-2",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
 					},
 				},
 			},
@@ -249,28 +258,34 @@ func TestGetAvailablePackages(t *testing.T) {
 			testName:      "it returns all of fluxv2 packages from the cluster that match request ns",
 			repoName:      "bitnami-3",
 			repoNamespace: "non-default",
-			request: &corev1.GetAvailablePackagesRequest{
-				Namespace: "non-default",
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "non-default",
+				},
 			},
 			repoUrl:   "https://example.repo.com/charts",
 			repoIndex: "testdata/valid-index.yaml",
-			expectedPackages: []*corev1.AvailablePackage{
+			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					Name:    "acs-engine-autoscaler",
-					Version: "2.1.1",
-					IconUrl: "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
-						Name:      "bitnami-3",
-						Namespace: "non-default",
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-3",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
 					},
 				},
 				{
-					Name:    "wordpress",
-					Version: "0.7.5",
-					IconUrl: "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					Repository: &corev1.AvailablePackage_PackageRepositoryReference{
-						Name:      "bitnami-3",
-						Namespace: "non-default",
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-3",
+						Context: &corev1.Context{
+							Namespace: "non-default",
+						},
 					},
 				},
 			},
@@ -279,12 +294,14 @@ func TestGetAvailablePackages(t *testing.T) {
 			testName:      "it returns none of fluxv2 packages from the cluster that don't match request ns",
 			repoName:      "bitnami-4",
 			repoNamespace: "default",
-			request: &corev1.GetAvailablePackagesRequest{
-				Namespace: "non-default",
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "non-default",
+				},
 			},
 			repoUrl:          "https://example.repo.com/charts",
 			repoIndex:        "testdata/valid-index.yaml",
-			expectedPackages: []*corev1.AvailablePackage{},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
 		},
 	}
 
@@ -328,14 +345,14 @@ func TestGetAvailablePackages(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetAvailablePackages(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackage{}, corev1.AvailablePackage_PackageRepositoryReference{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
+			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 			}
 		})
@@ -345,15 +362,15 @@ func TestGetAvailablePackages(t *testing.T) {
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
-		request                     *corev1.GetPackageRepositoriesRequest
+		request                     *v1alpha1.GetPackageRepositoriesRequest
 		repoNamespace               string
 		repoSpecs                   map[string]map[string]interface{}
-		expectedPackageRepositories []*corev1.PackageRepository
+		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
 		{
-			name:          "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
-			request:       &corev1.GetPackageRepositoriesRequest{},
+			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
+			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
@@ -364,7 +381,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name:          "returns expected repositories",
-			request:       &corev1.GetPackageRepositoriesRequest{},
+			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
@@ -374,7 +391,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
 					Name: "repo-1",
 					Url:  "https://charts.bitnami.com/bitnami",
@@ -387,8 +404,10 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name: "returns expected repositories in specific namespace",
-			request: &corev1.GetPackageRepositoriesRequest{
-				Namespace: "default",
+			request: &v1alpha1.GetPackageRepositoriesRequest{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
 			},
 			repoNamespace: "non-default",
 			repoSpecs: map[string]map[string]interface{}{
@@ -399,12 +418,14 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{},
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
 		},
 		{
 			name: "returns expected repositories in specific namespace",
-			request: &corev1.GetPackageRepositoriesRequest{
-				Namespace: "default",
+			request: &v1alpha1.GetPackageRepositoriesRequest{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
 			},
 			repoNamespace: "default",
 			repoSpecs: map[string]map[string]interface{}{
@@ -415,7 +436,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
 					Name:      "repo-1",
 					Namespace: "default",
@@ -455,7 +476,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(corev1.PackageRepository{})
+					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
 					opt2 := cmpopts.SortSlices(lessPackageRepositoryFunc)
 					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1, opt2) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -467,10 +488,10 @@ func TestGetPackageRepositories(t *testing.T) {
 }
 
 // these are helpers to compare slices ignoring order
-func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackage) bool {
-	return p1.Name < p2.Name
+func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
+	return p1.DisplayName < p2.DisplayName
 }
 
-func lessPackageRepositoryFunc(p1, p2 *corev1.PackageRepository) bool {
+func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }

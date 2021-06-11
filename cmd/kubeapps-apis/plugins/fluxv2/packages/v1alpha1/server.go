@@ -86,24 +86,34 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 // that error by returning a status.Errorf with the appropriate code
 
 // GetPackageRepositories returns the package repositories based on the request.
-func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
-	if request.Cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: cluster: [%s]", request.Cluster)
+func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+	log.Infof("+GetPackageRepositories(ctx: [%v], request: [%v])", ctx, request)
+
+	if request == nil || request.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Namespace)
+	if request.Context.Cluster != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"Not supported yet: request.Context.Cluster: [%v]",
+			request.Context.Cluster)
+	}
+
+	repos, err := s.getHelmRepos(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	responseRepos := []*corev1.PackageRepository{}
+	responseRepos := []*v1alpha1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
 		obj := repoUnstructured.Object
-		repo := &corev1.PackageRepository{}
+		repo := &v1alpha1.PackageRepository{}
 		name, found, err := unstructured.NestedString(obj, "metadata", "name")
 		if err != nil || !found {
-			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%v", err, obj)
+			return nil, status.Errorf(
+				codes.Internal,
+				"required field metadata.name not found on HelmRepository: %v:\n%v", err, obj)
 		}
 		repo.Name = name
 
@@ -125,24 +135,32 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 
 		responseRepos = append(responseRepos, repo)
 	}
-	return &corev1.GetPackageRepositoriesResponse{
+	return &v1alpha1.GetPackageRepositoriesResponse{
 		Repositories: responseRepos,
 	}, nil
 }
 
-// GetAvailablePackages streams the available packages based on the request.
-func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
-	log.Infof("+GetAvailablePackages(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
-	if request.Cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: cluster: [%s]", request.Cluster)
+// GetAvailablePackageSummaries streams the available packages based on the request.
+func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
+	log.Infof("+GetAvailablePackageSummaries(ctx: [%v], request: [%v])", ctx, request)
+
+	if request == nil || request.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Namespace)
+	if request.Context.Cluster != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"Not supported yet: request.Context.Cluster: [%v]",
+			request.Context.Cluster)
+	}
+
+	repos, err := s.getHelmRepos(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackages := []*corev1.AvailablePackage{}
+	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, unstructuredRepo := range repos.Items {
 		obj := unstructuredRepo.Object
 		name, found, err := unstructured.NestedString(obj, "metadata", "name")
@@ -165,13 +183,13 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		}
 
 		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
-		repoRef := corev1.AvailablePackage_PackageRepositoryReference{
-			Name: name,
+		repoRef := corev1.AvailablePackageReference{
+			Identifier: name,
 		}
 		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
 		if err == nil && found {
-			repoRef.Namespace = namespace
+			repoRef.Context = &corev1.Context{Namespace: namespace}
 		}
 
 		repoPackages, err := readPackagesFromRepoIndex(&repoRef, url)
@@ -182,19 +200,27 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 			responsePackages = append(responsePackages, repoPackages...)
 		}
 	}
-	return &corev1.GetAvailablePackagesResponse{
-		Packages: responsePackages,
+	return &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackagesSummaries: responsePackages,
 	}, nil
 }
 
-// GetAvailablePackageDetail streams the package details based on the request.
+// GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	log.Infof("+GetAvailablePackageDetail(package name=[%s])", request.Package.Name)
-	if request.Package.Repository != nil {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: package repository [%v]", request.Package.Repository)
+	log.Infof("+GetAvailablePackageDetail(ctx: [%v], request: [%v])", ctx, request)
+
+	if request == nil || request.AvailablePackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
 	}
 
-	url, err := s.pullChartTarball(ctx, request.Package)
+	if request.Version != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"Not supported yet: version: [%v]",
+			request.Version)
+	}
+
+	url, err := s.pullChartTarball(ctx, request.AvailablePackageRef)
 	if err != nil {
 		return nil, err
 	}
@@ -203,19 +229,19 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// unzip and untar .tgz file
 	// TODO: userAgent, authz and netClient w/TLS config similar to asset-syncer utils.initNetClient(),
 	// see if we can re-factor code to reuse in both places
-	detail, err := tarutil.FetchDetailFromTarball(request.Package.Name, *url, "", "", &http.Client{})
+	detail, err := tarutil.FetchDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", &http.Client{})
 	if err != nil {
 		return nil, err
 	}
 
 	return &corev1.GetAvailablePackageDetailResponse{
-		Detail: &corev1.GetAvailablePackageDetailResponse_PackageDetail{
-			Readme: detail[chart.ReadmeKey],
+		AvailablePackageDetail: &corev1.AvailablePackageDetail{
+			LongDescription: detail[chart.ReadmeKey],
 		},
 	}, nil
 }
 
-func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.PackageReference) (*string, error) {
+func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.AvailablePackageReference) (*string, error) {
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -227,6 +253,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Packag
 		Resource: fluxHelmCharts,
 	}
 
+	// TODO: use the namespace from the request
 	resourceIfc := client.Resource(chartsResource).Namespace("default")
 
 	// see if we the chart already exists
@@ -243,7 +270,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Packag
 	// TODO it'd be better if we could filter on server-side
 	for _, unstructuredChart := range chartList.Items {
 		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
-		if err == nil && found && chartName == packageRef.Name {
+		if err == nil && found && chartName == packageRef.Identifier {
 			done, err := isChartPullComplete(&unstructuredChart)
 			if err != nil {
 				return nil, err
@@ -252,7 +279,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Packag
 				if err != nil || !found {
 					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
 				}
-				log.Infof("Found existing HelmChart for: [%s]", packageRef.Name)
+				log.Infof("Found existing HelmChart for: [%s]", packageRef.Identifier)
 				return &url, nil
 			}
 			// TODO waitUntilChartPullComplete
@@ -266,12 +293,12 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Packag
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 			"kind":       fluxHelmChart,
 			"metadata": map[string]interface{}{
-				"generateName": fmt.Sprintf("%s-", packageRef.Name),
+				"generateName": fmt.Sprintf("%s-", packageRef.Identifier),
 			},
 			"spec": map[string]interface{}{
-				"chart": packageRef.Name,
+				"chart": packageRef.Identifier,
 				"sourceRef": map[string]interface{}{
-					"name": packageRef.Repository.Name,
+					"name": packageRef.Identifier,
 					"kind": "HelmRepository",
 				},
 				"interval": "10m",
@@ -349,7 +376,7 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
 		// TODO: should we filter out those repos that don't have .status.condition.Ready == True?
-		// like we do in GetAvailablePackages()?
+		// like we do in GetAvailablePackageSummaries()?
 		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
 		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
@@ -407,13 +434,13 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 	return false, nil
 }
 
-func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositoryReference, indexURL string) ([]*corev1.AvailablePackage, error) {
+func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackageReference, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
 	index, err := getHelmIndexFileFromURL(indexURL)
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackages := []*corev1.AvailablePackage{}
+	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, entry := range index.Entries {
 		// note that 'entry' itself is an array of chart versions
 		// after index.SortEntires() call, it looks like there is only one entry per package,
@@ -428,11 +455,11 @@ func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositor
 			continue
 		}
 
-		pkg := &corev1.AvailablePackage{
-			Name:       entry[0].Name,
-			Version:    entry[0].Version,
-			IconUrl:    entry[0].Icon,
-			Repository: repoRef,
+		pkg := &corev1.AvailablePackageSummary{
+			DisplayName:         entry[0].Name,
+			LatestVersion:       entry[0].Version,
+			IconUrl:             entry[0].Icon,
+			AvailablePackageRef: repoRef,
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
