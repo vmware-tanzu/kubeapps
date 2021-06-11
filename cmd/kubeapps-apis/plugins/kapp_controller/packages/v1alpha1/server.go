@@ -81,7 +81,11 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	log.Infof("+GetAvailablePackageSummaries(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	contextMsg := ""
+	if request.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	}
+	log.Infof("+GetAvailablePackageSummaries %s", contextMsg)
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -126,7 +130,11 @@ func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*co
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	contextMsg := ""
+	if request.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	}
+	log.Infof("+GetPackageRepositories %s", contextMsg)
 
 	client, err := s.GetClient(ctx)
 	if err != nil {

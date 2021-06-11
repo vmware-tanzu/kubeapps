@@ -85,7 +85,16 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Context.Namespace, request.Context.Cluster)
+	contextMsg := ""
+	if request.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	}
+	log.Infof("+GetPackageRepositories %s", contextMsg)
+
+	if request.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
+	}
+
 	if request.Context.Cluster != "" {
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
 	}
@@ -130,7 +139,16 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 // GetAvailablePackageSummaries streams the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	log.Infof("+GetAvailablePackageSummaries(namespace=[%s], cluster=[%s])", request.Context.Namespace, request.Context.Cluster)
+	contextMsg := ""
+	if request.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	}
+	log.Infof("+GetAvailablePackageSummaries %s", contextMsg)
+
+	if request.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
+	}
+
 	if request.Context.Cluster != "" {
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
 	}
@@ -169,7 +187,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
 		if err == nil && found {
-			repoRef.Context.Namespace = namespace
+			repoRef.Context = &corev1.Context{Namespace: namespace}
 		}
 
 		repoPackages, err := readPackagesFromRepoIndex(&repoRef, url)
