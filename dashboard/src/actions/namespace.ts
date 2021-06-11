@@ -55,7 +55,11 @@ export function fetchNamespaces(
   return async dispatch => {
     try {
       const namespaceList = await Namespace.list(cluster);
-      const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
+
+      const namespaceStrings =
+        namespaceList.namespaces === undefined
+          ? []
+          : namespaceList.namespaces.map((n: IResource) => n.metadata.name);
       if (namespaceStrings.length === 0) {
         dispatch(
           errorNamespaces(
