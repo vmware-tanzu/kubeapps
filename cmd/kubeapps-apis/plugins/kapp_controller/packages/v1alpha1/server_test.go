@@ -141,7 +141,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			_, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{})
+			_, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -222,13 +222,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{})
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{})) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{})))
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{})
+			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 			}
 		})
 	}
@@ -271,7 +272,7 @@ func TestGetPackageRepositories(t *testing.T) {
 	}{
 		{
 			name:    "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-			request: &v1alpha1.GetPackageRepositoriesRequest{},
+			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": "unexpected",
@@ -281,7 +282,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name:    "returns expected repositories",
-			request: &v1alpha1.GetPackageRepositoriesRequest{},
+			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": map[string]interface{}{
@@ -325,7 +326,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetPackageRepositories(context.Background(), &v1alpha1.GetPackageRepositoriesRequest{})
+			response, err := s.GetPackageRepositories(context.Background(), &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}})
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -336,8 +337,9 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})))
+					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
+					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
 			}
@@ -433,8 +435,9 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := repo, tc.expected; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})))
+				opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
+				if got, want := repo, tc.expected; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
 		})

@@ -128,7 +128,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{})
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -200,7 +200,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			testName:      "it returns a couple of fluxv2 packages from the cluster",
 			repoName:      "bitnami-1",
 			repoNamespace: "",
-			request:       &corev1.GetAvailablePackageSummariesRequest{},
+			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			repoUrl:       "https://example.repo.com/charts",
 			repoIndex:     "testdata/valid-index.yaml",
 			expectedPackages: []*corev1.AvailablePackageSummary{
@@ -226,7 +226,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			testName:      "it returns all of fluxv2 packages from the cluster when request does not specify ns",
 			repoName:      "bitnami-2",
 			repoNamespace: "non-default",
-			request:       &corev1.GetAvailablePackageSummariesRequest{},
+			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			repoUrl:       "https://example.repo.com/charts",
 			repoIndex:     "testdata/valid-index.yaml",
 			expectedPackages: []*corev1.AvailablePackageSummary{
@@ -350,7 +350,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -370,7 +370,7 @@ func TestGetPackageRepositories(t *testing.T) {
 	}{
 		{
 			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{},
+			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
@@ -381,7 +381,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name:          "returns expected repositories",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{},
+			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoNamespace: "",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
@@ -476,7 +476,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{})
+					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
 					opt2 := cmpopts.SortSlices(lessPackageRepositoryFunc)
 					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1, opt2) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
