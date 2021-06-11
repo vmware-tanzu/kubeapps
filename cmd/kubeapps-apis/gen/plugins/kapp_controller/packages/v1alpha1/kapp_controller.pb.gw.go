@@ -36,13 +36,8 @@ var (
 	filter_KappControllerPackagesService_GetAvailablePackageSummaries_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-<<<<<<< HEAD
-func request_KappControllerPackagesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackagesRequest
-=======
 func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
->>>>>>> master
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -57,13 +52,8 @@ func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx co
 
 }
 
-<<<<<<< HEAD
-func local_request_KappControllerPackagesService_GetAvailablePackages_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackagesRequest
-=======
 func local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
->>>>>>> master
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -83,11 +73,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-<<<<<<< HEAD
-	var protoReq v1alpha1_0.GetPackageRepositoriesRequest
-=======
 	var protoReq GetPackageRepositoriesRequest
->>>>>>> master
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -103,11 +89,7 @@ func request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_GetPackageRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-<<<<<<< HEAD
-	var protoReq v1alpha1_0.GetPackageRepositoriesRequest
-=======
 	var protoReq GetPackageRepositoriesRequest
->>>>>>> master
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {

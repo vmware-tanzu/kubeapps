@@ -18,12 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PackagesServiceClient interface {
-<<<<<<< HEAD
-	GetAvailablePackages(ctx context.Context, in *GetAvailablePackagesRequest, opts ...grpc.CallOption) (*GetAvailablePackagesResponse, error)
-	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
-=======
 	GetAvailablePackageSummaries(ctx context.Context, in *GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*GetAvailablePackageSummariesResponse, error)
->>>>>>> master
 	GetAvailablePackageDetail(ctx context.Context, in *GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*GetAvailablePackageDetailResponse, error)
 }
 
@@ -44,18 +39,6 @@ func (c *packagesServiceClient) GetAvailablePackageSummaries(ctx context.Context
 	return out, nil
 }
 
-<<<<<<< HEAD
-func (c *packagesServiceClient) GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error) {
-	out := new(GetPackageRepositoriesResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetPackageRepositories", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-=======
->>>>>>> master
 func (c *packagesServiceClient) GetAvailablePackageDetail(ctx context.Context, in *GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*GetAvailablePackageDetailResponse, error) {
 	out := new(GetAvailablePackageDetailResponse)
 	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail", in, out, opts...)
@@ -69,12 +52,7 @@ func (c *packagesServiceClient) GetAvailablePackageDetail(ctx context.Context, i
 // All implementations should embed UnimplementedPackagesServiceServer
 // for forward compatibility
 type PackagesServiceServer interface {
-<<<<<<< HEAD
-	GetAvailablePackages(context.Context, *GetAvailablePackagesRequest) (*GetAvailablePackagesResponse, error)
-	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
-=======
 	GetAvailablePackageSummaries(context.Context, *GetAvailablePackageSummariesRequest) (*GetAvailablePackageSummariesResponse, error)
->>>>>>> master
 	GetAvailablePackageDetail(context.Context, *GetAvailablePackageDetailRequest) (*GetAvailablePackageDetailResponse, error)
 }
 
@@ -85,12 +63,6 @@ type UnimplementedPackagesServiceServer struct {
 func (UnimplementedPackagesServiceServer) GetAvailablePackageSummaries(context.Context, *GetAvailablePackageSummariesRequest) (*GetAvailablePackageSummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageSummaries not implemented")
 }
-<<<<<<< HEAD
-func (UnimplementedPackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
-}
-=======
->>>>>>> master
 func (UnimplementedPackagesServiceServer) GetAvailablePackageDetail(context.Context, *GetAvailablePackageDetailRequest) (*GetAvailablePackageDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageDetail not implemented")
 }

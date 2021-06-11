@@ -37,11 +37,7 @@
     "application/json"
   ],
   "paths": {
-<<<<<<< HEAD
-    "/core/packages/v1alpha1/packagedetail": {
-=======
     "/core/packages/v1alpha1/availablepackagedetails": {
->>>>>>> master
       "get": {
         "operationId": "PackagesService_GetAvailablePackageDetail",
         "responses": {
@@ -180,15 +176,9 @@
         ]
       }
     },
-<<<<<<< HEAD
-    "/plugins/fluxv2/packages/v1alpha1/packagedetail": {
-      "get": {
-        "summary": "GetAvailablePackageDetail returns the details of the package managed by the 'fluxv2' plugin",
-=======
     "/plugins/fluxv2/packages/v1alpha1/availablepackagedetails": {
       "get": {
         "summary": "GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin",
->>>>>>> master
         "operationId": "FluxV2PackagesService_GetAvailablePackageDetail",
         "responses": {
           "200": {
@@ -431,9 +421,6 @@
     }
   },
   "definitions": {
-<<<<<<< HEAD
-    "GetAvailablePackageDetailResponsePackageDetail": {
-=======
     "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
       "example": {
@@ -459,7 +446,6 @@
       "title": "GetPackageRepositories"
     },
     "pluginsfluxv2packagesv1alpha1PackageRepository": {
->>>>>>> master
       "type": "object",
       "properties": {
         "name": {
@@ -713,18 +699,6 @@
       "title": "Context"
     },
     "v1alpha1GetAvailablePackageDetailResponse": {
-<<<<<<< HEAD
-      "type": "object",
-      "properties": {
-        "detail": {
-          "$ref": "#/definitions/GetAvailablePackageDetailResponsePackageDetail"
-        }
-      },
-      "title": "Response for GetAvailablePackageDetail"
-    },
-    "v1alpha1GetAvailablePackagesResponse": {
-=======
->>>>>>> master
       "type": "object",
       "properties": {
         "availablePackageDetail": {
@@ -774,60 +748,7 @@
       "description": "Response for GetConfiguredPlugins",
       "title": "GetConfiguredPluginsResponse"
     },
-<<<<<<< HEAD
-    "v1alpha1GetPackageRepositoriesResponse": {
-      "type": "object",
-      "example": {
-        "repositories": [
-          {
-            "name": "repo-name.example.com",
-            "namespace": "",
-            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
-          }
-        ]
-      },
-      "properties": {
-        "repositories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1alpha1PackageRepository"
-          },
-          "description": "List of PackageRepository",
-          "title": "Repositories"
-        }
-      },
-      "description": "Response for GetPackageRepositories",
-      "title": "GetPackageRepositories"
-    },
-    "v1alpha1PackageReference": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "required package name should be unique within the scope of specified repository, if specified"
-        },
-        "repository": {
-          "$ref": "#/definitions/v1alpha1PackageReferencePackageRepositoryReference",
-          "title": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)"
-        }
-      }
-    },
-    "v1alpha1PackageReferencePackageRepositoryReference": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "namespace": {
-          "type": "string"
-        }
-      },
-      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace."
-    },
-    "v1alpha1PackageRepository": {
-=======
     "v1alpha1Maintainer": {
->>>>>>> master
       "type": "object",
       "properties": {
         "name": {
