@@ -1,5 +1,5 @@
 syntax = "proto3";
-package kubeappsapis.apidocs;
+package kubeappsapis.apidocs.v1alpha1;
 option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen";
 
 import "protoc-gen-openapiv2/options/annotations.proto";
@@ -10,6 +10,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 // It holds API metainformation, security definitions, formtas and default responses to be added to each endpoint.
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	host: "127.0.0.1:8080"
+	base_path: "/apis"
 	info: {
 		title: "Kubeapps API";
 		version: "0.1.0";
@@ -25,40 +26,34 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 		url: "https://github.com/kubeapps/kubeapps";
 	}
 	schemes: HTTP;
-	// schemes: HTTPS;
+	schemes: HTTPS;
 	consumes: "application/json";
 	produces: "application/json";
 
-	// TODO(agamez): enable after https://github.com/kubeapps/kubeapps/issues/2851
-	// security: {
-	// 	security_requirement: {
-	// 		key: "ApiKeyAuth";
-	// 		value: {};
-	// 	}
-	// }
-	// security_definitions: {
-	// 	security: {
-	// 		key: "ApiKeyAuth";
-	// 		value: {
-	// 			type: TYPE_API_KEY;
-	// 			in: IN_HEADER;
-	// 			name: "Authorization";
-	// 		}
-	// 	}
-	// }
+	security: {
+		security_requirement: {
+			key: "ApiKeyAuth";
+			value: {};
+		}
+	}
+	security_definitions: {
+		security: {
+			key: "ApiKeyAuth";
+			value: {
+				type: TYPE_API_KEY;
+				in: IN_HEADER;
+				name: "Authorization";
+			}
+		}
+	}
 
 	// TODO(agamez): add the most significant ones from:
 	// 	https://github.com/grpc-ecosystem/grpc-gateway/blob/master/runtime/errors.go#L36
 	// 	https://github.com/grpc-ecosystem/grpc-gateway/blob/master/runtime/errors.go#L165
-	// responses: {
-	// 	key: "401";
-	// 	value: {
-	// 		description: "Returned when the user does not have permission to access the resource.";
-	// 		schema: {
-	// 			json_schema: {
-	// 				type: STRING;
-	// 			}
-	// 		}
-	// 	}
-	// }
+	responses: {
+		key: "401";
+		value: {
+			description: "Returned when the user does not have permission to access the resource.";
+		}
+	}
 };

@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,6 +35,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	log "k8s.io/klog/v2"
 )
 
@@ -255,26 +257,48 @@ func listSOFiles(fsys fs.FS, pluginDirs []string) ([]string, error) {
 // The returned function utilizes the user credential present in the request context.
 // The plugins just have to call this function passing the context in order to retrieve the configured k8s client
 func createClientGetter(serveOpts ServeOptions) (func(context.Context) (dynamic.Interface, error), error) {
-	// get the default rest incluster config for the kube.NewClusterConfig function
-	var inClusterConfig, err = rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+	var restConfig *rest.Config
+	var clustersConfig kube.ClustersConfig
+	var err error
+
+	if !serveOpts.UnsafeLocalDevKubeconfig {
+		// get the default rest inCluster config for the kube.NewClusterConfig function
+		restConfig, err = rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+		}
+	} else {
+		// using the local kubeconfig instead of the inCluster config
+		log.Warningf("Using the local kubeconfig configuration (in KUBECONFIG='%s' envar) since you passed --unsafe-local-dev-kubeconfig=true", os.Getenv("KUBECONFIG"))
+		kubeconfigBytes, err := ioutil.ReadFile(os.Getenv("KUBECONFIG"))
+		if err != nil {
+			return nil, fmt.Errorf("unable to read the file in KUBECONFIG envar: %w", err)
+		}
+		restConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get local KUBECONFIG='%s' file: %w", os.Getenv("KUBECONFIG"), err)
+		}
 	}
 
-	// get the parsed kube.ClustersConfig from the serveOpts
-	config, err := getClustersConfigFromServeOpts(serveOpts)
-	if err != nil {
-		return nil, err
+	if !serveOpts.UnsafeUseDemoSA {
+		// get the parsed kube.ClustersConfig from the serveOpts
+		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Just using the created SA, no user account nor clustersConfig is used here
+		clustersConfig = kube.ClustersConfig{}
 	}
 
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return createClientGetterWithParams(inClusterConfig, serveOpts, config)
+	return createClientGetterWithParams(restConfig, serveOpts, clustersConfig)
 }
 
 // createClientGetter takes the required params and returns the closure fuction.
 // it's splitted for testing this fn separately
-func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, config kube.ClustersConfig) (func(context.Context) (dynamic.Interface, error), error) {
+func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (func(context.Context) (dynamic.Interface, error), error) {
 
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
@@ -289,7 +313,7 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 		if !serveOpts.UnsafeUseDemoSA {
 			// We are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
 			// we should pass the cluster name instead
-			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, config.KubeappsClusterName, config)
+			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 			}
@@ -297,8 +321,8 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 			if err != nil {
 				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
 			}
-			// Just ussing the created SA, no user account is used
 		} else {
+			// Just using the created SA, no user account is used
 			client, err = dynamic.NewForConfig(inClusterConfig)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create dynamic client: %w", err)

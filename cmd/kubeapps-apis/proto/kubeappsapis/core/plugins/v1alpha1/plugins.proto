@@ -11,23 +11,16 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 // plugins in the future such as checking authz to the k8s api server using
 // the callers token.
 
-// Plugin
-//
-// A plugin can implement multiple services and multiple versions of a service.
-message Plugin {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: '{"name": "kapp_controller.packages", "version": "v1alpha1"}'
-  };
-  // Plugin name
-  //
-  // The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
-  string name = 1;
-
-  // Plugin version
-  // 
-  // The version of the plugin, such as v1alpha1
-  string version = 2;
+service PluginsService {
+  // GetConfiguredPlugins returns a map of short and longnames for the configured plugins.
+  rpc GetConfiguredPlugins(GetConfiguredPluginsRequest) returns (GetConfiguredPluginsResponse) {
+    option (google.api.http) = {
+      get: "/core/plugins/v1alpha1/configured-plugins"
+    };
+  }
 }
+
+// Standard request and response messages for each required function are defined below
 
 // GetConfiguredPluginsRequest
 //
@@ -41,17 +34,29 @@ message GetConfiguredPluginsResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     example: '{"plugins": [{"name": "kapp_controller.packages", "version": "v1alpha1"}]}'
   };
+  
   // Plugins
   //
   // List of Plugin
   repeated Plugin plugins = 1;
 }
 
-service PluginsService {
-  // GetConfiguredPlugins returns a map of short and longnames for the configured plugins.
-  rpc GetConfiguredPlugins(GetConfiguredPluginsRequest) returns (GetConfiguredPluginsResponse) {
-    option (google.api.http) = {
-      get: "/core/plugins/v1alpha1/configured-plugins"
-    };
-  }
+// Plugin
+//
+// A plugin can implement multiple services and multiple versions of a service.
+message Plugin {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    example: '{"name": "kapp_controller.packages", "version": "v1alpha1"}'
+  };
+
+  // Plugin name
+  //
+  // The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+  string name = 1;
+  
+  // Plugin version
+  //
+  // The version of the plugin, such as v1alpha1
+  string version = 2;
 }
+
