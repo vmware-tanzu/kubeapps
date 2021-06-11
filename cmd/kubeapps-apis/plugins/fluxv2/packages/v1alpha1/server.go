@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,9 +25,10 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/client-go/rest"
 	log "k8s.io/klog/v2"
 )
 
@@ -87,7 +89,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
 	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
 	if request.Cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: cluster: [%s]", request.Cluster)
 	}
 
 	repos, err := s.getHelmRepos(ctx, request.Namespace)
@@ -132,7 +134,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
 	log.Infof("+GetAvailablePackages(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
 	if request.Cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: cluster: [%s]", request.Cluster)
 	}
 
 	repos, err := s.getHelmRepos(ctx, request.Namespace)
@@ -185,9 +187,12 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 	}, nil
 }
 
-// GetPackageMeta streams the package metadata based on the request.
-func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageMetaRequest) (*corev1.GetPackageMetaResponse, error) {
-	log.Infof("+GetPackageMeta()")
+// GetAvailablePackageDetail streams the package details based on the request.
+func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
+	log.Infof("+GetAvailablePackageDetail(package name=[%s])", request.Package.Name)
+	if request.Package.Repository != nil {
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: package repository [%v]", request.Package.Repository)
+	}
 
 	url, err := s.pullChartTarball(ctx, request.Package)
 	if err != nil {
@@ -196,14 +201,16 @@ func (s *Server) GetPackageMeta(ctx context.Context, request *corev1.GetPackageM
 	log.Infof("Found chart url: [%s]", *url)
 
 	// unzip and untar .tgz file
-	meta, err := fetchMetaFromChartTarball(request.Package.Name, *url)
+	// TODO: userAgent, authz and netClient w/TLS config similar to asset-syncer utils.initNetClient(),
+	// see if we can re-factor code to reuse in both places
+	detail, err := tarutil.FetchDetailFromTarball(request.Package.Name, *url, "", "", &http.Client{})
 	if err != nil {
 		return nil, err
 	}
 
-	return &corev1.GetPackageMetaResponse{
-		Meta: &corev1.GetPackageMetaResponse_PackageMeta{
-			Readme: meta[readme],
+	return &corev1.GetAvailablePackageDetailResponse{
+		Detail: &corev1.GetAvailablePackageDetailResponse_PackageDetail{
+			Readme: detail[chart.ReadmeKey],
 		},
 	}, nil
 }
@@ -318,24 +325,6 @@ func waitUntilChartPullComplete(watcher watch.Interface) (*string, error) {
 			return nil, status.Errorf(codes.Internal, "got unexpected event: %v", event)
 		}
 	}
-}
-
-// clientForRequestContext returns a k8s client for use during interactions with the cluster.
-// This will be updated to use the user credential from the request context but for now
-// simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
-func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
-	// TODO: replace incluster config with the user config using token from request meta.
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get client config: %w", err)
-	}
-
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
-	}
-
-	return client, nil
 }
 
 func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {

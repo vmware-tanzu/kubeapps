@@ -35,14 +35,14 @@
     "application/json"
   ],
   "paths": {
-    "/core/packages/v1alpha1/packagemeta": {
+    "/core/packages/v1alpha1/packagedetail": {
       "get": {
-        "operationId": "PackagesService_GetPackageMeta",
+        "operationId": "PackagesService_GetAvailablePackageDetail",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageMetaResponse"
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
             }
           },
           "default": {
@@ -177,15 +177,15 @@
         ]
       }
     },
-    "/plugins/fluxv2/packages/v1alpha1/packagemeta": {
+    "/plugins/fluxv2/packages/v1alpha1/packagedetail": {
       "get": {
-        "summary": "GetPackageMeta returns the package metadata managed by the 'fluxv2' plugin",
-        "operationId": "FluxV2PackagesService_GetPackageMeta",
+        "summary": "GetAvailablePackageDetail returns the details of the package managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetAvailablePackageDetail",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageMetaResponse"
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
             }
           },
           "default": {
@@ -379,7 +379,7 @@
     }
   },
   "definitions": {
-    "GetPackageMetaResponsePackageMeta": {
+    "GetAvailablePackageDetailResponsePackageDetail": {
       "type": "object",
       "properties": {
         "readme": {
@@ -471,6 +471,15 @@
       "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace.",
       "title": "PackageRepositoryReference"
     },
+    "v1alpha1GetAvailablePackageDetailResponse": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "$ref": "#/definitions/GetAvailablePackageDetailResponsePackageDetail"
+        }
+      },
+      "title": "Response for GetAvailablePackageDetail"
+    },
     "v1alpha1GetAvailablePackagesResponse": {
       "type": "object",
       "example": {
@@ -516,15 +525,6 @@
       },
       "description": "Response for GetConfiguredPlugins",
       "title": "GetConfiguredPluginsResponse"
-    },
-    "v1alpha1GetPackageMetaResponse": {
-      "type": "object",
-      "properties": {
-        "meta": {
-          "$ref": "#/definitions/GetPackageMetaResponsePackageMeta"
-        }
-      },
-      "title": "Response for GetPackageMeta"
     },
     "v1alpha1GetPackageRepositoriesResponse": {
       "type": "object",

@@ -89,10 +89,6 @@ type checkTagResult struct {
 	Error       error
 }
 
-type httpClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
 func parseRepoURL(repoURL string) (*url.URL, error) {
 	repoURL = strings.TrimSpace(repoURL)
 	return url.ParseRequestURI(repoURL)
@@ -137,7 +133,7 @@ type Repo interface {
 type HelmRepo struct {
 	content []byte
 	*models.RepoInternal
-	netClient httpClient
+	netClient tarutil.HttpClient
 	filter    *apprepov1alpha1.FilterRuleSpec
 }
 
@@ -245,71 +241,14 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	return filterCharts(charts, r.filter)
 }
 
-const (
-	readme = "readme"
-	values = "values"
-	schema = "schema"
-)
-
 // FetchFiles retrieves the important files of a chart and version from the repo
 func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
-	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
-	req, err := http.NewRequest("GET", chartTarballURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", userAgent())
-	if len(r.AuthorizationHeader) > 0 {
-		req.Header.Set("Authorization", r.AuthorizationHeader)
-	}
-
-	res, err := r.netClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	// We read the whole chart into memory, this should be okay since the chart
-	// tarball needs to be small enough to fit into a GRPC call (Tiller
-	// requirement)
-	gzf, err := gzip.NewReader(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer gzf.Close()
-
-	tarf := tar.NewReader(gzf)
-
-	// decode escaped characters
-	// ie., "foo%2Fbar" should return "foo/bar"
-	decodedName, err := url.PathUnescape(name)
-	if err != nil {
-		log.Errorf("Cannot decode %s", name)
-		return nil, err
-	}
-
-	// get last part of the name
-	// ie., "foo/bar" should return "bar"
-	fixedName := path.Base(decodedName)
-	readmeFileName := fixedName + "/README.md"
-	valuesFileName := fixedName + "/values.yaml"
-	schemaFileName := fixedName + "/values.schema.json"
-	filenames := map[string]string{
-		values: valuesFileName,
-		readme: readmeFileName,
-		schema: schemaFileName,
-	}
-
-	files, err := tarutil.ExtractFilesFromTarball(filenames, tarf)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]string{
-		values: files[values],
-		readme: files[readme],
-		schema: files[schema],
-	}, nil
+	return tarutil.FetchDetailFromTarball(
+		name,
+		chartTarballURL(r.RepoInternal, cv),
+		userAgent(),
+		r.AuthorizationHeader,
+		r.netClient)
 }
 
 // TagList represents a list of tags as specified at
@@ -329,7 +268,7 @@ type OCIRegistry struct {
 	filter *apprepov1alpha1.FilterRuleSpec
 }
 
-func doReq(url string, cli httpClient, headers map[string]string) ([]byte, error) {
+func doReq(url string, cli tarutil.HttpClient, headers map[string]string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -381,7 +320,7 @@ type ociAPI interface {
 type ociAPICli struct {
 	authHeader string
 	url        *url.URL
-	netClient  httpClient
+	netClient  tarutil.HttpClient
 }
 
 // TagList retrieves the list of tags for an asset
@@ -716,9 +655,9 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
 func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
 	return map[string]string{
-		values: cv.Values,
-		readme: cv.Readme,
-		schema: cv.Schema,
+		models.ValuesKey: cv.Values,
+		models.ReadmeKey: cv.Readme,
+		models.SchemaKey: cv.Schema,
 	}, nil
 }
 
@@ -733,7 +672,7 @@ func parseFilters(filters string) (*apprepov1alpha1.FilterRuleSpec, error) {
 	return filterSpec, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpClient) (Repo, error) {
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient tarutil.HttpClient) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -779,7 +718,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 	}, nil
 }
 
-func fetchRepoIndex(url, authHeader string, cli httpClient) ([]byte, error) {
+func fetchRepoIndex(url, authHeader string, cli tarutil.HttpClient) ([]byte, error) {
 	indexURL, err := parseRepoURL(url)
 	if err != nil {
 		log.WithFields(log.Fields{"url": url}).WithError(err).Error("failed to parse URL")
@@ -877,7 +816,7 @@ func initNetClient(additionalCA string, skipTLS bool) (*http.Client, error) {
 
 type fileImporter struct {
 	manager   assetManager
-	netClient httpClient
+	netClient tarutil.HttpClient
 }
 
 func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo) {
@@ -1017,17 +956,17 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	}
 
 	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, Namespace: r.Namespace, URL: r.URL}, Digest: cv.Digest}
-	if v, ok := files[readme]; ok {
+	if v, ok := files[models.ReadmeKey]; ok {
 		chartFiles.Readme = v
 	} else {
 		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("README.md not found")
 	}
-	if v, ok := files[values]; ok {
+	if v, ok := files[models.ValuesKey]; ok {
 		chartFiles.Values = v
 	} else {
 		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.yaml not found")
 	}
-	if v, ok := files[schema]; ok {
+	if v, ok := files[models.SchemaKey]; ok {
 		chartFiles.Schema = v
 	} else {
 		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.schema.json not found")

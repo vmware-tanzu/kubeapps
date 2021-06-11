@@ -15,9 +15,87 @@ package tarutil
 import (
 	"archive/tar"
 	"bytes"
+	"compress/gzip"
+	"fmt"
 	"io"
+	"net/http"
+	"net/url"
+	"path"
 	"strings"
+
+	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
 )
+
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+func FetchDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient HttpClient) (map[string]string, error) {
+	req, err := http.NewRequest("GET", chartTarballURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(userAgent) > 0 {
+		req.Header.Set("User-Agent", userAgent)
+	}
+
+	if len(authz) > 0 {
+		req.Header.Set("Authorization", authz)
+	}
+
+	res, err := netClient.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non OK response code: [%d]", res.StatusCode)
+	}
+
+	// We read the whole chart into memory, this should be okay since the chart
+	// tarball needs to be small enough to fit into a GRPC call (Tiller
+	// requirement)
+	gzf, err := gzip.NewReader(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer gzf.Close()
+
+	tarf := tar.NewReader(gzf)
+
+	// decode escaped characters
+	// ie., "foo%2Fbar" should return "foo/bar"
+	decodedName, err := url.PathUnescape(name)
+	if err != nil {
+		return nil, err
+	}
+
+	// get last part of the name
+	// ie., "foo/bar" should return "bar"
+	fixedName := path.Base(decodedName)
+	readmeFileName := fixedName + "/README.md"
+	valuesFileName := fixedName + "/values.yaml"
+	schemaFileName := fixedName + "/values.schema.json"
+	filenames := map[string]string{
+		chart.ValuesKey: valuesFileName,
+		chart.ReadmeKey: readmeFileName,
+		chart.SchemaKey: schemaFileName,
+	}
+
+	files, err := ExtractFilesFromTarball(filenames, tarf)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		chart.ValuesKey: files[chart.ValuesKey],
+		chart.ReadmeKey: files[chart.ReadmeKey],
+		chart.SchemaKey: files[chart.SchemaKey],
+	}, nil
+}
 
 func ExtractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map[string]string, error) {
 	ret := make(map[string]string)

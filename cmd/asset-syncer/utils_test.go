@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -525,9 +524,9 @@ func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
 
 func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
 	return map[string]string{
-		values: r.chartFiles.Values,
-		readme: r.chartFiles.Readme,
-		schema: r.chartFiles.Schema,
+		models.ValuesKey: r.chartFiles.Values,
+		models.ReadmeKey: r.chartFiles.Readme,
+		models.SchemaKey: r.chartFiles.Schema,
 	}, nil
 }
 
@@ -566,7 +565,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
-		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion))
+		assert.Err(t, fmt.Errorf("received non OK response code: [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -1071,9 +1070,9 @@ version: 1.0.0
 
 	t.Run("FetchFiles - It returns the stored files", func(t *testing.T) {
 		files := map[string]string{
-			values: "values text",
-			readme: "readme text",
-			schema: "schema text",
+			models.ValuesKey: "values text",
+			models.ReadmeKey: "readme text",
+			models.SchemaKey: "schema text",
 		}
 		repo := OCIRegistry{}
 		result, err := repo.FetchFiles("", models.ChartVersion{

@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type PackagesServiceClient interface {
 	GetAvailablePackages(ctx context.Context, in *GetAvailablePackagesRequest, opts ...grpc.CallOption) (*GetAvailablePackagesResponse, error)
 	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
-	GetPackageMeta(ctx context.Context, in *GetPackageMetaRequest, opts ...grpc.CallOption) (*GetPackageMetaResponse, error)
+	GetAvailablePackageDetail(ctx context.Context, in *GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*GetAvailablePackageDetailResponse, error)
 }
 
 type packagesServiceClient struct {
@@ -49,9 +49,9 @@ func (c *packagesServiceClient) GetPackageRepositories(ctx context.Context, in *
 	return out, nil
 }
 
-func (c *packagesServiceClient) GetPackageMeta(ctx context.Context, in *GetPackageMetaRequest, opts ...grpc.CallOption) (*GetPackageMetaResponse, error) {
-	out := new(GetPackageMetaResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetPackageMeta", in, out, opts...)
+func (c *packagesServiceClient) GetAvailablePackageDetail(ctx context.Context, in *GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*GetAvailablePackageDetailResponse, error) {
+	out := new(GetAvailablePackageDetailResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *packagesServiceClient) GetPackageMeta(ctx context.Context, in *GetPacka
 type PackagesServiceServer interface {
 	GetAvailablePackages(context.Context, *GetAvailablePackagesRequest) (*GetAvailablePackagesResponse, error)
 	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
-	GetPackageMeta(context.Context, *GetPackageMetaRequest) (*GetPackageMetaResponse, error)
+	GetAvailablePackageDetail(context.Context, *GetAvailablePackageDetailRequest) (*GetAvailablePackageDetailResponse, error)
 }
 
 // UnimplementedPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -77,8 +77,8 @@ func (UnimplementedPackagesServiceServer) GetAvailablePackages(context.Context, 
 func (UnimplementedPackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
-func (UnimplementedPackagesServiceServer) GetPackageMeta(context.Context, *GetPackageMetaRequest) (*GetPackageMetaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackageMeta not implemented")
+func (UnimplementedPackagesServiceServer) GetAvailablePackageDetail(context.Context, *GetAvailablePackageDetailRequest) (*GetAvailablePackageDetailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageDetail not implemented")
 }
 
 // UnsafePackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -128,20 +128,20 @@ func _PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PackagesService_GetPackageMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPackageMetaRequest)
+func _PackagesService_GetAvailablePackageDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAvailablePackageDetailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackagesServiceServer).GetPackageMeta(ctx, in)
+		return srv.(PackagesServiceServer).GetAvailablePackageDetail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetPackageMeta",
+		FullMethod: "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).GetPackageMeta(ctx, req.(*GetPackageMetaRequest))
+		return srv.(PackagesServiceServer).GetAvailablePackageDetail(ctx, req.(*GetAvailablePackageDetailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -162,8 +162,8 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PackagesService_GetPackageRepositories_Handler,
 		},
 		{
-			MethodName: "GetPackageMeta",
-			Handler:    _PackagesService_GetPackageMeta_Handler,
+			MethodName: "GetAvailablePackageDetail",
+			Handler:    _PackagesService_GetAvailablePackageDetail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -22,9 +22,9 @@ service PackagesService {
       get: "/core/packages/v1alpha1/packagerepositories"
     };
   }
-  rpc GetPackageMeta(kubeappsapis.core.packages.v1alpha1.GetPackageMetaRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageMetaResponse) {
+  rpc GetAvailablePackageDetail(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse) {
     option (google.api.http) = {
-      get: "/core/packages/v1alpha1/packagemeta"
+      get: "/core/packages/v1alpha1/packagedetail"
     };
   }
 }
@@ -183,16 +183,16 @@ message PackageReference {
 }
 
 //
-// Request for GetPackageMeta
-message GetPackageMetaRequest {
+// Request for GetAvailablePackageDetail
+message GetAvailablePackageDetailRequest {
   PackageReference package = 1;
 }
 
 //
-// Response for GetPackageMeta
-message GetPackageMetaResponse {
-  message PackageMeta {
+// Response for GetAvailablePackageDetail
+message GetAvailablePackageDetailResponse {
+  message PackageDetail {
     string readme = 1;
   }
-  PackageMeta meta = 1;
+  PackageDetail detail = 1;
 }

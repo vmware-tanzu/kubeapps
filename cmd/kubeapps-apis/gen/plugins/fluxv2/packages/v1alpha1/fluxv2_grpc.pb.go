@@ -23,8 +23,8 @@ type FluxV2PackagesServiceClient interface {
 	GetAvailablePackages(ctx context.Context, in *v1alpha1.GetAvailablePackagesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackagesResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(ctx context.Context, in *v1alpha1.GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoriesResponse, error)
-	// GetPackageMeta returns the package metadata managed by the 'fluxv2' plugin
-	GetPackageMeta(ctx context.Context, in *v1alpha1.GetPackageMetaRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageMetaResponse, error)
+	// GetAvailablePackageDetail returns the details of the package managed by the 'fluxv2' plugin
+	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 }
 
 type fluxV2PackagesServiceClient struct {
@@ -53,9 +53,9 @@ func (c *fluxV2PackagesServiceClient) GetPackageRepositories(ctx context.Context
 	return out, nil
 }
 
-func (c *fluxV2PackagesServiceClient) GetPackageMeta(ctx context.Context, in *v1alpha1.GetPackageMetaRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageMetaResponse, error) {
-	out := new(v1alpha1.GetPackageMetaResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageMeta", in, out, opts...)
+func (c *fluxV2PackagesServiceClient) GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
+	out := new(v1alpha1.GetAvailablePackageDetailResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageDetail", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +70,8 @@ type FluxV2PackagesServiceServer interface {
 	GetAvailablePackages(context.Context, *v1alpha1.GetAvailablePackagesRequest) (*v1alpha1.GetAvailablePackagesResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error)
-	// GetPackageMeta returns the package metadata managed by the 'fluxv2' plugin
-	GetPackageMeta(context.Context, *v1alpha1.GetPackageMetaRequest) (*v1alpha1.GetPackageMetaResponse, error)
+	// GetAvailablePackageDetail returns the details of the package managed by the 'fluxv2' plugin
+	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 }
 
 // UnimplementedFluxV2PackagesServiceServer should be embedded to have forward compatible implementations.
@@ -84,8 +84,8 @@ func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackages(context.Con
 func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
-func (UnimplementedFluxV2PackagesServiceServer) GetPackageMeta(context.Context, *v1alpha1.GetPackageMetaRequest) (*v1alpha1.GetPackageMetaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackageMeta not implemented")
+func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageDetail not implemented")
 }
 
 // UnsafeFluxV2PackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -135,20 +135,20 @@ func _FluxV2PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FluxV2PackagesService_GetPackageMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.GetPackageMetaRequest)
+func _FluxV2PackagesService_GetAvailablePackageDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetAvailablePackageDetailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FluxV2PackagesServiceServer).GetPackageMeta(ctx, in)
+		return srv.(FluxV2PackagesServiceServer).GetAvailablePackageDetail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageMeta",
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageDetail",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FluxV2PackagesServiceServer).GetPackageMeta(ctx, req.(*v1alpha1.GetPackageMetaRequest))
+		return srv.(FluxV2PackagesServiceServer).GetAvailablePackageDetail(ctx, req.(*v1alpha1.GetAvailablePackageDetailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -169,8 +169,8 @@ var FluxV2PackagesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FluxV2PackagesService_GetPackageRepositories_Handler,
 		},
 		{
-			MethodName: "GetPackageMeta",
-			Handler:    _FluxV2PackagesService_GetPackageMeta_Handler,
+			MethodName: "GetAvailablePackageDetail",
+			Handler:    _FluxV2PackagesService_GetAvailablePackageDetail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
