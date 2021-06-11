@@ -21,7 +21,7 @@ kube = { version = "0.55.0" }
 # https://github.com/Arnavion/k8s-openapi/issues/86
 # is sorted. AFAICT, the openapi json schema is only required when creating a
 # CRD (which we're not).
-kube-derive = { version = "0.55.0", default-features = false}
+kube-derive = { version = "0.56.0", default-features = false}
 kube-runtime = "0.55.0"
 k8s-openapi = { version = "0.11.0", default-features = false, features = ["v1_17"] }
 log = "0.4"
