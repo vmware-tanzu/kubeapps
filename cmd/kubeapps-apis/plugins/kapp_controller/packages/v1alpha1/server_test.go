@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -140,7 +141,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			_, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			_, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -175,11 +176,11 @@ func packagesFromSpecs(specs []map[string]interface{}) []runtime.Object {
 	return pkgs
 }
 
-func TestGetAvailablePackages(t *testing.T) {
+func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name             string
 		packageSpecs     []map[string]interface{}
-		expectedPackages []*corev1.AvailablePackage
+		expectedPackages []*corev1.AvailablePackageSummary
 	}{
 		{
 			name: "it returns carvel packages from the cluster",
@@ -193,14 +194,14 @@ func TestGetAvailablePackages(t *testing.T) {
 					"version":    "1.2.5",
 				},
 			},
-			expectedPackages: []*corev1.AvailablePackage{
+			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					Name:    "another.foo.example.com",
-					Version: "1.2.5",
+					DisplayName:   "another.foo.example.com",
+					LatestVersion: "1.2.5",
 				},
 				{
-					Name:    "tetris.foo.example.com",
-					Version: "1.2.3",
+					DisplayName:   "tetris.foo.example.com",
+					LatestVersion: "1.2.3",
 				},
 			},
 		},
@@ -221,13 +222,14 @@ func TestGetAvailablePackages(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.AvailablePackage{})) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.AvailablePackage{})))
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{})
+			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 			}
 		})
 	}
@@ -263,14 +265,14 @@ func repositoriesFromSpecs(specs map[string]spec) []runtime.Object {
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
-		request                     *corev1.GetPackageRepositoriesRequest
+		request                     *v1alpha1.GetPackageRepositoriesRequest
 		repoSpecs                   map[string]spec
-		expectedPackageRepositories []*corev1.PackageRepository
+		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
 		{
-			name:    "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			name:    "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
+			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": "unexpected",
@@ -280,7 +282,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name:    "returns expected repositories",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": map[string]interface{}{
@@ -297,7 +299,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					},
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
 					Name: "repo-1",
 					Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
@@ -324,7 +326,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetPackageRepositories(context.Background(), &corev1.GetPackageRepositoriesRequest{})
+			response, err := s.GetPackageRepositories(context.Background(), &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}})
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -335,8 +337,9 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.PackageRepository{})) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.PackageRepository{})))
+					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
+					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
 			}
@@ -358,7 +361,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         *unstructured.Unstructured
-		expected   *corev1.PackageRepository
+		expected   *v1alpha1.PackageRepository
 		statusCode codes.Code
 	}{
 		{
@@ -374,7 +377,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 		{
 			name: "returns a repo for an imgpkgBundle type",
 			in:   repositoryFromSpec("valid-name", validSpec),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
 			},
@@ -388,7 +391,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "host.com/username/image:v0.1.0",
 			},
@@ -402,7 +405,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "https://host.com/archive.tgz",
 			},
@@ -416,7 +419,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
+			expected: &v1alpha1.PackageRepository{
 				Name: "valid-name",
 				Url:  "https://github.com/k14s/k8s-simple-app-example",
 			},
@@ -432,8 +435,9 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := repo, tc.expected; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.PackageRepository{})) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.PackageRepository{})))
+				opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
+				if got, want := repo, tc.expected; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
 		})

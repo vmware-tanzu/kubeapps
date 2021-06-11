@@ -34,51 +34,26 @@ func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
 }
 
 // GetAvailablePackages returns the packages based on the request.
-func (s packagesServer) GetAvailablePackages(ctx context.Context, request *packages.GetAvailablePackagesRequest) (*packages.GetAvailablePackagesResponse, error) {
-	pkgs := []*packages.AvailablePackage{}
+func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
+	pkgs := []*packages.AvailablePackageSummary{}
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.plugins {
-		response, err := p.server.GetAvailablePackages(ctx, request)
+		response, err := p.server.GetAvailablePackageSummaries(ctx, request)
 		if err != nil {
 			return nil, err
 		}
 
 		// Add the plugin for the pkgs
-		pluginPkgs := response.Packages
+		pluginPkgs := response.AvailablePackagesSummaries
 		for _, r := range pluginPkgs {
-			r.Plugin = p.plugin
+			r.AvailablePackageRef.Plugin = p.plugin
 		}
 
 		pkgs = append(pkgs, pluginPkgs...)
 	}
 
 	// TODO: Sort via default sort order or that specified in request.
-	return &packages.GetAvailablePackagesResponse{
-		Packages: pkgs,
-	}, nil
-}
-
-// GetPackageRepositories returns the package repositories based on the request.
-func (s packagesServer) GetPackageRepositories(ctx context.Context, request *packages.GetPackageRepositoriesRequest) (*packages.GetPackageRepositoriesResponse, error) {
-	repos := []*packages.PackageRepository{}
-	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.plugins {
-		response, err := p.server.GetPackageRepositories(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		// Add the plugin for the repos
-		pluginRepos := response.Repositories
-		for _, r := range pluginRepos {
-			r.Plugin = p.plugin
-		}
-
-		repos = append(repos, pluginRepos...)
-	}
-
-	// TODO: Sort via default sort order or that specified in request.
-	return &packages.GetPackageRepositoriesResponse{
-		Repositories: repos,
+	return &packages.GetAvailablePackageSummariesResponse{
+		AvailablePackagesSummaries: pkgs,
 	}, nil
 }

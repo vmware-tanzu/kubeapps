@@ -79,9 +79,13 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 	return client, nil
 }
 
-// GetAvailablePackages returns the available packages based on the request.
-func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
-	log.Infof("+GetAvailablePackages(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
+// GetAvailablePackageSummaries returns the available packages based on the request.
+func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
+	contextMsg := ""
+	if request.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	}
+	log.Infof("+GetAvailablePackageSummaries %s", contextMsg)
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -95,38 +99,42 @@ func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAv
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
 	}
 
-	responsePackages := []*corev1.AvailablePackage{}
+	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, pkgUnstructured := range pkgs.Items {
-		pkg, err := availablePackageFromUnstructured(&pkgUnstructured)
+		pkg, err := AvailablePackageSummaryFromUnstructured(&pkgUnstructured)
 		if err != nil {
 			return nil, err
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
-	return &corev1.GetAvailablePackagesResponse{
-		Packages: responsePackages,
+	return &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackagesSummaries: responsePackages,
 	}, nil
 }
 
-func availablePackageFromUnstructured(ap *unstructured.Unstructured) (*corev1.AvailablePackage, error) {
-	pkg := &corev1.AvailablePackage{}
+func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*corev1.AvailablePackageSummary, error) {
+	pkg := &corev1.AvailablePackageSummary{}
 	name, found, err := unstructured.NestedString(ap.Object, "spec", "publicName")
 	if err != nil || !found {
 		return nil, status.Errorf(codes.Internal, "required field publicName not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
-	pkg.Name = name
+	pkg.DisplayName = name
 
 	version, found, err := unstructured.NestedString(ap.Object, "spec", "version")
 	if err != nil || !found {
 		return nil, status.Errorf(codes.Internal, "required field version not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
-	pkg.Version = version
+	pkg.LatestVersion = version
 	return pkg, nil
 }
 
 // GetPackageRepositories returns the package repositories based on the request.
-func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(cluster=[%s], namespace=[%s])", request.Cluster, request.Namespace)
+func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+	contextMsg := ""
+	if request.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	}
+	log.Infof("+GetPackageRepositories %s", contextMsg)
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -141,7 +149,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		return nil, fmt.Errorf("unable to list kapp-controller repositories: %w", err)
 	}
 
-	responseRepos := []*corev1.PackageRepository{}
+	responseRepos := []*v1alpha1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
 		repo, err := packageRepositoryFromUnstructured(&repoUnstructured)
 		if err != nil {
@@ -149,13 +157,13 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.Get
 		}
 		responseRepos = append(responseRepos, repo)
 	}
-	return &corev1.GetPackageRepositoriesResponse{
+	return &v1alpha1.GetPackageRepositoriesResponse{
 		Repositories: responseRepos,
 	}, nil
 }
 
-func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*corev1.PackageRepository, error) {
-	repo := &corev1.PackageRepository{}
+func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*v1alpha1.PackageRepository, error) {
+	repo := &v1alpha1.PackageRepository{}
 	name, found, err := unstructured.NestedString(pr.Object, "metadata", "name")
 	if err != nil || !found || name == "" {
 		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on PackageRepository: %v:\n%v", err, pr.Object)
