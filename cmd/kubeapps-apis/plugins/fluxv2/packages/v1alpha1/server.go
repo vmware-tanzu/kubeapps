@@ -25,7 +25,11 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+
+	"github.com/kubeapps/kubeapps/pkg/helm"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -87,7 +91,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(ctx: [%v], request: [%v])", ctx, request)
+	log.Infof("+GetPackageRepositories(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
@@ -142,7 +146,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 // GetAvailablePackageSummaries streams the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	log.Infof("+GetAvailablePackageSummaries(ctx: [%v], request: [%v])", ctx, request)
+	log.Infof("+GetAvailablePackageSummaries(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
@@ -183,16 +187,16 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		}
 
 		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
-		repoRef := corev1.AvailablePackageReference{
-			Identifier: name,
+		repo := v1alpha1.PackageRepository{
+			Name: name,
 		}
 		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
 		if err == nil && found {
-			repoRef.Context = &corev1.Context{Namespace: namespace}
+			repo.Namespace = namespace
 		}
 
-		repoPackages, err := readPackagesFromRepoIndex(&repoRef, url)
+		repoPackages, err := readPackagesFromRepoIndex(&repo, url)
 		if err != nil {
 			// just skip this repo
 			log.Errorf("Failed to read packages for repository [%s] due to %v", name, err)
@@ -207,7 +211,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	log.Infof("+GetAvailablePackageDetail(ctx: [%v], request: [%v])", ctx, request)
+	log.Infof("+GetAvailablePackageDetail(request: [%v])", request)
 
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
@@ -434,32 +438,35 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 	return false, nil
 }
 
-func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackageReference, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
-	index, err := getHelmIndexFileFromURL(indexURL)
+func readPackagesFromRepoIndex(repo *v1alpha1.PackageRepository, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
+	// todo set up httpClient properly with userAgent and TLS config
+	// similar to what is done in asset syncer
+	bytes, err := httpclient.Get(indexURL, &http.Client{}, map[string]string{})
+	if err != nil {
+		return nil, err
+	}
+
+	modelRepo := &models.Repo{
+		Namespace: repo.Namespace,
+		Name:      repo.Name,
+		URL:       repo.Url,
+		Type:      "helm",
+	}
+	charts, err := helm.ChartsFromIndex(bytes, modelRepo, true)
 	if err != nil {
 		return nil, err
 	}
 
 	responsePackages := []*corev1.AvailablePackageSummary{}
-	for _, entry := range index.Entries {
-		// note that 'entry' itself is an array of chart versions
-		// after index.SortEntires() call, it looks like there is only one entry per package,
-		// and entry[0] should be the most recent chart version, e.g. Name: "mariadb" Version: "9.3.12"
-		// while the rest of the elements in the entry array keep track of previous chart versions, e.g.
-		// "mariadb" version "9.3.11", "9.3.10", etc. For entry "mariadb", bitnami catalog has
-		// almost 200 chart versions going all the way back many years to version "2.1.4".
-		// So for now, let's just keep track of the latest, not to overwhelm the caller with
-		// all these outdated versions
-		if entry[0].GetDeprecated() {
-			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
-			continue
-		}
-
+	for _, chart := range charts {
 		pkg := &corev1.AvailablePackageSummary{
-			DisplayName:         entry[0].Name,
-			LatestVersion:       entry[0].Version,
-			IconUrl:             entry[0].Icon,
-			AvailablePackageRef: repoRef,
+			DisplayName:   chart.Name,
+			LatestVersion: chart.ChartVersions[0].Version,
+			IconUrl:       chart.Icon,
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Context:    &corev1.Context{Namespace: repo.Namespace},
+				Identifier: chart.ID,
+			},
 		}
 		responsePackages = append(responsePackages, pkg)
 	}

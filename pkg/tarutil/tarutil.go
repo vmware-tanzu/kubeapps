@@ -24,13 +24,10 @@ import (
 	"strings"
 
 	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 )
 
-type HttpClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-func FetchDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient HttpClient) (map[string]string, error) {
+func FetchDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
 	req, err := http.NewRequest("GET", chartTarballURL, nil)
 	if err != nil {
 		return nil, err

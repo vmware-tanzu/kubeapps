@@ -42,18 +42,17 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
 	"github.com/itchyny/gojq"
-	"github.com/jinzhu/copier"
 	"github.com/kubeapps/common/datastore"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
 	h3chart "helm.sh/helm/v3/pkg/chart"
 	"k8s.io/helm/pkg/proto/hapi/chart"
-	helmrepo "k8s.io/helm/pkg/repo"
 )
 
 const (
@@ -133,7 +132,7 @@ type Repo interface {
 type HelmRepo struct {
 	content []byte
 	*models.RepoInternal
-	netClient tarutil.HttpClient
+	netClient httpclient.Client
 	filter    *apprepov1alpha1.FilterRuleSpec
 }
 
@@ -222,18 +221,16 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 
 // Charts retrieve the list of charts exposed in the repo
 func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
-	index, err := parseRepoIndex(r.content)
-	if err != nil {
-		return []models.Chart{}, err
-	}
-
 	repo := &models.Repo{
 		Namespace: r.Namespace,
 		Name:      r.Name,
 		URL:       r.URL,
 		Type:      r.Type,
 	}
-	charts := chartsFromIndex(index, repo, fetchLatestOnly)
+	charts, err := helm.ChartsFromIndex(r.content, repo, fetchLatestOnly)
+	if err != nil {
+		return []models.Chart{}, err
+	}
 	if len(charts) == 0 {
 		return []models.Chart{}, fmt.Errorf("no charts in repository index")
 	}
@@ -268,34 +265,9 @@ type OCIRegistry struct {
 	filter *apprepov1alpha1.FilterRuleSpec
 }
 
-func doReq(url string, cli tarutil.HttpClient, headers map[string]string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("User-Agent", userAgent())
-	for header, content := range headers {
-		req.Header.Set(header, content)
-	}
-
-	res, err := cli.Do(req)
-	if res != nil {
-		defer res.Body.Close()
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		errC, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read error content: %v", err)
-		}
-		return nil, fmt.Errorf("request failed: %v", string(errC))
-	}
-
-	return ioutil.ReadAll(res.Body)
+func doReq(url string, cli httpclient.Client, headers map[string]string) ([]byte, error) {
+	headers["User-Agent"] = userAgent()
+	return httpclient.Get(url, cli, headers)
 }
 
 // OCILayer represents a single OCI layer
@@ -320,7 +292,7 @@ type ociAPI interface {
 type ociAPICli struct {
 	authHeader string
 	url        *url.URL
-	netClient  tarutil.HttpClient
+	netClient  httpclient.Client
 }
 
 // TagList retrieves the list of tags for an asset
@@ -672,7 +644,7 @@ func parseFilters(filters string) (*apprepov1alpha1.FilterRuleSpec, error) {
 	return filterSpec, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient tarutil.HttpClient) (Repo, error) {
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpclient.Client) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -718,7 +690,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 	}, nil
 }
 
-func fetchRepoIndex(url, authHeader string, cli tarutil.HttpClient) ([]byte, error) {
+func fetchRepoIndex(url, authHeader string, cli httpclient.Client) ([]byte, error) {
 	indexURL, err := parseRepoURL(url)
 	if err != nil {
 		log.WithFields(log.Fields{"url": url}).WithError(err).Error("failed to parse URL")
@@ -726,46 +698,6 @@ func fetchRepoIndex(url, authHeader string, cli tarutil.HttpClient) ([]byte, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
 	return doReq(indexURL.String(), cli, map[string]string{"Authorization": authHeader})
-}
-
-func parseRepoIndex(body []byte) (*helmrepo.IndexFile, error) {
-	var index helmrepo.IndexFile
-	err := yaml.Unmarshal(body, &index)
-	if err != nil {
-		return nil, err
-	}
-	index.SortEntries()
-	return &index, nil
-}
-
-func chartsFromIndex(index *helmrepo.IndexFile, r *models.Repo, shallow bool) []models.Chart {
-	var charts []models.Chart
-	for _, entry := range index.Entries {
-		if entry[0].GetDeprecated() {
-			log.WithFields(log.Fields{"name": entry[0].GetName()}).Info("skipping deprecated chart")
-			continue
-		}
-		charts = append(charts, newChart(entry, r, shallow))
-	}
-	sort.Slice(charts, func(i, j int) bool { return charts[i].ID < charts[j].ID })
-	return charts
-}
-
-// Takes an entry from the index and constructs a database representation of the
-// object.
-func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
-	var c models.Chart
-	copier.Copy(&c, entry[0])
-	if shallow {
-		copier.Copy(&c.ChartVersions, []helmrepo.ChartVersion{*entry[0]})
-	} else {
-		copier.Copy(&c.ChartVersions, entry)
-	}
-	c.Repo = r
-	c.Name = url.PathEscape(c.Name) // escaped chart name eg. foo/bar becomes foo%2Fbar
-	c.ID = fmt.Sprintf("%s/%s", r.Name, c.Name)
-	c.Category = entry[0].Annotations["category"]
-	return c
 }
 
 func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
@@ -816,7 +748,7 @@ func initNetClient(additionalCA string, skipTLS bool) (*http.Client, error) {
 
 type fileImporter struct {
 	manager   assetManager
-	netClient tarutil.HttpClient
+	netClient httpclient.Client
 }
 
 func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo) {

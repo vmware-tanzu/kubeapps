@@ -38,6 +38,7 @@ import (
 	"github.com/kubeapps/common/datastore"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/helm"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
@@ -285,64 +286,6 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 	}
 }
 
-func Test_parseRepoIndex(t *testing.T) {
-	tests := []struct {
-		name     string
-		repoYAML string
-	}{
-		{"invalid", "invalid"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseRepoIndex([]byte(tt.repoYAML))
-			assert.ExistsErr(t, err, tt.name)
-		})
-	}
-
-	t.Run("valid", func(t *testing.T) {
-		index, err := parseRepoIndex([]byte(validRepoIndexYAML))
-		assert.NoErr(t, err)
-		assert.Equal(t, len(index.Entries), 2, "number of charts")
-		assert.Equal(t, index.Entries["acs-engine-autoscaler"][0].GetName(), "acs-engine-autoscaler", "chart version populated")
-	})
-}
-
-func Test_chartsFromIndex(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, r, false)
-	assert.Equal(t, len(charts), 2, "number of charts")
-
-	indexWithDeprecated := validRepoIndexYAML + `
-  deprecated-chart:
-  - name: deprecated-chart
-    deprecated: true`
-	index2, err := parseRepoIndex([]byte(indexWithDeprecated))
-	assert.NoErr(t, err)
-	charts = chartsFromIndex(index2, r, false)
-	assert.Equal(t, len(charts), 2, "number of charts")
-	assert.Equal(t, len(charts[1].ChartVersions), 2, "number of versions")
-}
-
-func Test_shallowChartsFromIndex(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, r, true)
-	assert.Equal(t, len(charts), 2, "number of charts")
-	assert.Equal(t, len(charts[1].ChartVersions), 1, "number of versions")
-}
-
-func Test_newChart(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	c := newChart(index.Entries["wordpress"], r, false)
-	assert.Equal(t, c.Name, "wordpress", "correctly built")
-	assert.Equal(t, len(c.ChartVersions), 2, "correctly built")
-	assert.Equal(t, c.Description, "new description!", "takes chart fields from latest entry")
-	assert.Equal(t, c.Repo, r, "repo set")
-	assert.Equal(t, c.ID, "test/wordpress", "id set")
-}
-
 func Test_chartTarballURL(t *testing.T) {
 	r := &models.RepoInternal{Name: "test", URL: "http://testrepo.com"}
 	tests := []struct {
@@ -448,8 +391,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
 	})
 
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
 
 	t.Run("failed download", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
@@ -531,9 +473,8 @@ func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	charts := chartsFromIndex(index, &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
 	chartVersion := charts[0].ChartVersions[0]
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
