@@ -45,6 +45,7 @@ const (
 	fluxHelmRepositoryList = "HelmRepositoryList"
 	fluxHelmChart          = "HelmChart"
 	fluxHelmCharts         = "helmcharts"
+	fluxHelmChartList      = "HelmChartList"
 )
 
 // Server implements the fluxv2 packages v1alpha1 interface.
@@ -261,11 +262,17 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	resourceIfc := client.Resource(chartsResource).Namespace("default")
 
 	// see if we the chart already exists
-	// TODO You should be able to use the metav1.ListOptions{} above to specify
-	// filtering using the FieldSelector. More info at
-	// https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/.
+	// TODO:
+	// https://github.com/kubeapps/kubeapps/pull/2915
+	// @minelson says: You should be able to use the metav1.ListOptions{} above
+	// to specify filtering using the FieldSelector.
+	// More info at https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/ .
 	// You may even be able to specify that the pull should be complete to be included (ie.
 	// that status conditions ready is true), not sure, but that'd be nice.
+	// @gfichtenholt As I remember I did try a few things here. The problem is the set of supported
+	// fields in FieldSelector is very small. things like spec.chart are certainly not supported.
+	// see kubernetes/client-go#713 and https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b/// HOOKS.md#fieldselector. Nevertheless, I made a TODO comment here just as you suggested to see
+	// if I can improve later
 	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -274,6 +281,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	// TODO it'd be better if we could filter on server-side
 	for _, unstructuredChart := range chartList.Items {
 		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
+		// TODO compare chart versions too
 		if err == nil && found && chartName == packageRef.Identifier {
 			done, err := isChartPullComplete(&unstructuredChart)
 			if err != nil {
@@ -330,6 +338,16 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	return waitUntilChartPullComplete(watcher)
 }
 
+// TODO:
+// https://github.com/kubeapps/kubeapps/pull/2915
+// @minelson says Nice - great use of both channel and the watcher to handle the
+// async request. Note that this effectively makes pullChartTarball a blocking call,
+// which is fine in it's current use (where it's only called in a context of one chart).
+// Not for now, but in the future you might instead want to consider something like
+// passing a results channel (of string urls) to pullChartTarball, so it returns
+// immediately and you wait on the results channel at the call-site, which would mean
+// you could call it for 20 different charts and just wait for the results to come in
+//  whatever order they happen to take, rather than serially.
 func waitUntilChartPullComplete(watcher watch.Interface) (*string, error) {
 	ch := watcher.ResultChan()
 	// LISTEN TO CHANNEL
@@ -413,6 +431,7 @@ func isRepoReady(obj map[string]interface{}) (bool, error) {
 	return false, nil
 }
 
+// TODO: As above, hopefully this fn isn't required if we can only list charts that we know are ready.
 func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
 	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
 	conditions, found, err := unstructured.NestedSlice(unstructuredChart.Object, "status", "conditions")
