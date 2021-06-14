@@ -240,7 +240,7 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 
 // FetchFiles retrieves the important files of a chart and version from the repo
 func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
-	return tarutil.FetchDetailFromTarball(
+	return tarutil.FetchChartDetailFromTarball(
 		name,
 		chartTarballURL(r.RepoInternal, cv),
 		userAgent(),

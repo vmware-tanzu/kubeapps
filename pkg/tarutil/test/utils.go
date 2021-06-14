@@ -23,6 +23,9 @@ type TarballFile struct {
 	Name, Body string
 }
 
+//
+// utility used by unit test code to create tarball files from specified array of name/contents pairs
+//
 func CreateTestTarball(w io.Writer, files []TarballFile) {
 	// Create a new tar archive.
 	tarw := tar.NewWriter(w)

@@ -22,6 +22,11 @@ type Client interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+//
+// performs an HTTP GET request using provided client, URL and request headers.
+// returns response body, as bytes on successful status, or error body,
+// if applicable on error status
+//
 func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

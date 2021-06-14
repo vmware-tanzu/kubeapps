@@ -30,7 +30,7 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 
 	"github.com/kubeapps/kubeapps/pkg/helm"
-	"github.com/kubeapps/kubeapps/pkg/tarutil"
+	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -234,7 +234,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// unzip and untar .tgz file
 	// TODO: userAgent, authz and netClient w/TLS config similar to asset-syncer utils.initNetClient(),
 	// see if we can re-factor code to reuse in both places
-	detail, err := tarutil.FetchDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", &http.Client{})
+	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", &http.Client{})
 	if err != nil {
 		return nil, err
 	}

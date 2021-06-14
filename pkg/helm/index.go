@@ -51,6 +51,11 @@ func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models
 	return c
 }
 
+//
+// given a an array of bytes containg the contents of index.yaml from a helm repo it will return
+// all Chart models. shallow flag controls whether only the latest version of the charts is kept
+// or all versions
+//
 func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Chart, error) {
 	var charts []models.Chart
 	index, err := parseRepoIndex(contents)

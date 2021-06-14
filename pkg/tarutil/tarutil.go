@@ -27,7 +27,10 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 )
 
-func FetchDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
+//
+// Fetches helm chart details from a gzipped tarball
+//
+func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
 	req, err := http.NewRequest("GET", chartTarballURL, nil)
 	if err != nil {
 		return nil, err
