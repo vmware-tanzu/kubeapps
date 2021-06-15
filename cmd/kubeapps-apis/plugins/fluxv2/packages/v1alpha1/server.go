@@ -232,7 +232,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	log.Infof("Found chart url: [%s]", *url)
 
 	// unzip and untar .tgz file
-	// TODO: userAgent, authz and netClient w/TLS config similar to asset-syncer utils.initNetClient(),
+	// TODO (gfichtenholt): userAgent, authz and netClient w/TLS config similar to asset-syncer utils.initNetClient(),
 	// see if we can re-factor code to reuse in both places
 	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", &http.Client{})
 	if err != nil {
@@ -258,18 +258,14 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		Resource: fluxHelmCharts,
 	}
 
-	// TODO: use the namespace from the request
+	// TODO (gfichtenholt): use the namespace from the request
 	resourceIfc := client.Resource(chartsResource).Namespace("default")
 
 	// see if we the chart already exists
-	// TODO:
-	// https://github.com/kubeapps/kubeapps/pull/2915
-	// @minelson says: You should be able to use the metav1.ListOptions{} above
-	// to specify filtering using the FieldSelector.
-	// More info at https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/ .
-	// You may even be able to specify that the pull should be complete to be included (ie.
-	// that status conditions ready is true), not sure, but that'd be nice.
-	// @gfichtenholt As I remember I did try a few things here. The problem is the set of supported
+	// TODO (gfichtenholt):
+	// see https://github.com/kubeapps/kubeapps/pull/2915
+	// for context
+	// The problem is the set of supported
 	// fields in FieldSelector is very small. things like spec.chart are certainly not supported.
 	// see kubernetes/client-go#713 and https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b/// HOOKS.md#fieldselector. Nevertheless, I made a TODO comment here just as you suggested to see
 	// if I can improve later
@@ -278,10 +274,10 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		return nil, err
 	}
 
-	// TODO it'd be better if we could filter on server-side
+	// TODO (gfichtenholt) it'd be better if we could filter on server-side
 	for _, unstructuredChart := range chartList.Items {
 		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
-		// TODO compare chart versions too
+		// TODO (gfichtenholt) compare chart versions too
 		if err == nil && found && chartName == packageRef.Identifier {
 			done, err := isChartPullComplete(&unstructuredChart)
 			if err != nil {
@@ -294,7 +290,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 				log.Infof("Found existing HelmChart for: [%s]", packageRef.Identifier)
 				return &url, nil
 			}
-			// TODO waitUntilChartPullComplete
+			// TODO (gfichtenholt) waitUntilChartPullComplete?
 		}
 	}
 
@@ -338,12 +334,9 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	return waitUntilChartPullComplete(watcher)
 }
 
-// TODO:
-// https://github.com/kubeapps/kubeapps/pull/2915
-// @minelson says Nice - great use of both channel and the watcher to handle the
-// async request. Note that this effectively makes pullChartTarball a blocking call,
-// which is fine in it's current use (where it's only called in a context of one chart).
-// Not for now, but in the future you might instead want to consider something like
+// TODO (gfichtenholt):
+// see https://github.com/kubeapps/kubeapps/pull/2915 for context
+// In the future you might instead want to consider something like
 // passing a results channel (of string urls) to pullChartTarball, so it returns
 // immediately and you wait on the results channel at the call-site, which would mean
 // you could call it for 20 different charts and just wait for the results to come in
@@ -397,7 +390,7 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
-		// TODO: should we filter out those repos that don't have .status.condition.Ready == True?
+		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
 		// like we do in GetAvailablePackageSummaries()?
 		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
 		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
@@ -431,7 +424,7 @@ func isRepoReady(obj map[string]interface{}) (bool, error) {
 	return false, nil
 }
 
-// TODO: As above, hopefully this fn isn't required if we can only list charts that we know are ready.
+// TODO (gfichtenholt): As above, hopefully this fn isn't required if we can only list charts that we know are ready.
 func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
 	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
 	conditions, found, err := unstructured.NestedSlice(unstructuredChart.Object, "status", "conditions")
@@ -458,7 +451,7 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 }
 
 func readPackagesFromRepoIndex(repo *v1alpha1.PackageRepository, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
-	// todo set up httpClient properly with userAgent and TLS config
+	// TODO (gfichtenholt) set up httpClient properly with userAgent and TLS config
 	// similar to what is done in asset syncer
 	bytes, err := httpclient.Get(indexURL, &http.Client{}, map[string]string{})
 	if err != nil {

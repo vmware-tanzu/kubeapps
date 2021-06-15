@@ -34,7 +34,7 @@ func parseRepoIndex(contents []byte) (*helmrepo.IndexFile, error) {
 	return &index, nil
 }
 
-// Takes an entry from the index and constructs a database representation of the
+// Takes an entry from the index and constructs a model representation of the
 // object.
 func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
 	var c models.Chart
@@ -52,8 +52,8 @@ func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models
 }
 
 //
-// given a an array of bytes containg the contents of index.yaml from a helm repo it will return
-// all Chart models. shallow flag controls whether only the latest version of the charts is kept
+// ChartsFromIndex receives an array of bytes containing the contents of index.yaml from a helm repo and returns
+// all Chart models from that index. The shallow flag controls whether only the latest version of the charts is returned
 // or all versions
 //
 func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Chart, error) {
