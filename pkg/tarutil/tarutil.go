@@ -10,78 +10,55 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package tarutil
 
 import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
-	"github.com/ghodss/yaml"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	helmrepo "k8s.io/helm/pkg/repo"
-	log "k8s.io/klog/v2"
-)
-
-const (
-	readme = "readme"
+	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 )
 
 //
-// TODO some of this functionality already exists in asset-syncer but is private
-// so it needs to be re-packaged so that it can be re-used
+// Fetches helm chart details from a gzipped tarball
 //
-func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
-	log.Infof("+getHelmIndexFileFromURL(%s) 1", indexURL)
-	// Get the response bytes from the url
-	response, err := http.Get(indexURL)
+func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
+	req, err := http.NewRequest("GET", chartTarballURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return nil, status.Errorf(codes.FailedPrecondition, "received non OK response code: [%d]", response.StatusCode)
+	if len(userAgent) > 0 {
+		req.Header.Set("User-Agent", userAgent)
 	}
 
-	contents, err := ioutil.ReadAll(response.Body)
+	if len(authz) > 0 {
+		req.Header.Set("Authorization", authz)
+	}
+
+	res, err := netClient.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	var index helmrepo.IndexFile
-	err = yaml.Unmarshal(contents, &index)
-	if err != nil {
-		return nil, err
-	}
-	index.SortEntries()
-	log.Infof("-getHelmIndexFileFromURL(%s)", indexURL)
-	return &index, nil
-}
-
-func fetchMetaFromChartTarball(name string, chartTarballURL string) (map[string]string, error) {
-	// Get the response bytes from the url
-	response, err := http.Get(chartTarballURL)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return nil, status.Errorf(codes.FailedPrecondition, "received non OK response code: [%d]", response.StatusCode)
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non OK response code: [%d]", res.StatusCode)
 	}
 
 	// We read the whole chart into memory, this should be okay since the chart
 	// tarball needs to be small enough to fit into a GRPC call (Tiller
 	// requirement)
-	gzf, err := gzip.NewReader(response.Body)
+	gzf, err := gzip.NewReader(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -99,22 +76,28 @@ func fetchMetaFromChartTarball(name string, chartTarballURL string) (map[string]
 	// get last part of the name
 	// ie., "foo/bar" should return "bar"
 	fixedName := path.Base(decodedName)
-
+	readmeFileName := fixedName + "/README.md"
+	valuesFileName := fixedName + "/values.yaml"
+	schemaFileName := fixedName + "/values.schema.json"
 	filenames := map[string]string{
-		readme: fixedName + "/README.md",
+		chart.ValuesKey: valuesFileName,
+		chart.ReadmeKey: readmeFileName,
+		chart.SchemaKey: schemaFileName,
 	}
 
-	files, err := extractFilesFromTarball(filenames, tarf)
+	files, err := ExtractFilesFromTarball(filenames, tarf)
 	if err != nil {
 		return nil, err
 	}
 
 	return map[string]string{
-		readme: files[readme],
+		chart.ValuesKey: files[chart.ValuesKey],
+		chart.ReadmeKey: files[chart.ReadmeKey],
+		chart.SchemaKey: files[chart.SchemaKey],
 	}, nil
 }
 
-func extractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map[string]string, error) {
+func ExtractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map[string]string, error) {
 	ret := make(map[string]string)
 	for {
 		header, err := tarf.Next()

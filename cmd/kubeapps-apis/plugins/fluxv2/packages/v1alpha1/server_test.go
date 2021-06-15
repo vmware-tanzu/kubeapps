@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -176,7 +177,7 @@ func newRepo(name string, namespace string, spec map[string]interface{}, status 
 	}
 }
 
-// repositoryFromSpecs takes a map of specs keyed by object name converting them to runtime objects.
+// newRepos takes a map of specs keyed by object name converting them to runtime objects.
 func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
 	repos := []runtime.Object{}
 	for name, spec := range specs {
@@ -209,7 +210,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "2.1.1",
 					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1",
+						Identifier: "bitnami-1/acs-engine-autoscaler",
+						Context:    &corev1.Context{},
 					},
 				},
 				{
@@ -217,7 +219,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "0.7.5",
 					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1",
+						Identifier: "bitnami-1/wordpress",
+						Context:    &corev1.Context{},
 					},
 				},
 			},
@@ -235,7 +238,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "2.1.1",
 					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-2",
+						Identifier: "bitnami-2/acs-engine-autoscaler",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -246,7 +249,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "0.7.5",
 					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-2",
+						Identifier: "bitnami-2/wordpress",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -271,7 +274,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "2.1.1",
 					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-3",
+						Identifier: "bitnami-3/acs-engine-autoscaler",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -282,7 +285,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					LatestVersion: "0.7.5",
 					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-3",
+						Identifier: "bitnami-3/wordpress",
 						Context: &corev1.Context{
 							Namespace: "non-default",
 						},
@@ -482,6 +485,121 @@ func TestGetPackageRepositories(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 					}
 				}
+			}
+		})
+	}
+}
+
+func newChart(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"name": name,
+	}
+	if namespace != "" {
+		metadata["namespace"] = namespace
+	}
+
+	obj := map[string]interface{}{
+		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+		"kind":       fluxHelmChart,
+		"metadata":   metadata,
+	}
+
+	if spec != nil {
+		obj["spec"] = spec
+	}
+
+	if status != nil {
+		obj["status"] = status
+	}
+
+	return &unstructured.Unstructured{
+		Object: obj,
+	}
+}
+
+func TestGetAvailablePackageDetail(t *testing.T) {
+	testCases := []struct {
+		testName              string
+		request               *corev1.GetAvailablePackageDetailRequest
+		repoName              string
+		repoNamespace         string
+		chartName             string
+		chartTarGz            string
+		expectedPackageDetail *corev1.AvailablePackageDetail
+	}{
+		{
+			testName:      "it returns details about the redis package in bitnami repo",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			request:       &corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: &corev1.AvailablePackageReference{Identifier: "redis"}},
+			chartName:     "redis",
+			chartTarGz:    "testdata/redis-14.4.0.tgz",
+			expectedPackageDetail: &corev1.AvailablePackageDetail{
+				// TODO (gfichtenholt) other fields
+				LongDescription: "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
+			},
+		},
+		// TODO (gfichtenholt) specific version
+		// TODO (gfichtenholt) negative test
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			tarGzBytes, err := ioutil.ReadFile(tc.chartTarGz)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			// stand up an http server just for the duration of this test
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(200)
+				w.Write(tarGzBytes)
+			}))
+			defer ts.Close()
+
+			chartSpec := map[string]interface{}{
+				"chart": tc.chartName,
+				"sourceRef": map[string]interface{}{
+					"name": "does-not-matter-for-now",
+					"kind": "HelmRepository",
+				},
+				"interval": "10m",
+			}
+			chartStatus := map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Ready",
+						"status": "True",
+						"reason": "ChartPullSucceeded",
+					},
+				},
+				"url": ts.URL,
+			}
+			repo := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
+			s := Server{
+				clientGetter: func(context.Context) (dynamic.Interface, error) {
+					return fake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
+						},
+						repo,
+					), nil
+				},
+			}
+
+			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{})
+			opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "LongDescription")
+			if got, want := response.AvailablePackageDetail, tc.expectedPackageDetail; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+			if !strings.Contains(response.AvailablePackageDetail.LongDescription, tc.expectedPackageDetail.LongDescription) {
+				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.LongDescription, response.AvailablePackageDetail.LongDescription)
 			}
 		})
 	}
