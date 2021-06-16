@@ -9,7 +9,7 @@ For a complete worked example of this process on a specific Kubernetes environme
 
 ## Pre-requisites
 
-For this guide we assume that you have a Kubernetes cluster that is properly configured to use an OIDC Identity Provider (IdP) to handle the authentication to your cluster. You can read [more information about the Kubernetes API server's configuration options for OIDC](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This allows that the Kubernetes API server itself to trust tokens from the identity provider. Some hosted Kubernetes services are already configured to accept accept access_tokens from their identity provider as bearer tokens (see GKE below). Alternatively, if you do not have access to configure your cluster's API server, you can [install and configure Pinniped in your cluster to trust your identity provider and configure Kubeapps to proxy requests via Pinniped](./using-an-OIDC-provider-with-pinniped.md).
+For this guide, we assume that you have a Kubernetes cluster that is properly configured to use an OIDC Identity Provider (IdP) to handle the authentication to your cluster. You can read [more information about the Kubernetes API server's configuration options for OIDC](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This allows that the Kubernetes API server itself to trust tokens from the identity provider. Some hosted Kubernetes services are already configured to accept access_tokens from their identity provider as bearer tokens (see GKE below). Alternatively, if you do not have access to configure your cluster's API server, you can [install and configure Pinniped in your cluster to trust your identity provider and configure Kubeapps to proxy requests via Pinniped](./using-an-OIDC-provider-with-pinniped.md).
 
 There are several Identity Providers (IdP) that can be used in a Kubernetes cluster. The steps of this guide have been validated using the following providers:
 
@@ -80,7 +80,7 @@ Login to VMware Cloud Services and select the organization which you want to use
 
 You will now see a dialog with the app id and secret. Click on the Download JSON option as there is other useful info in the JSON.
 
-Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](./using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the prodcution VMware cloud services issuer URL is used in the example below):
+Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](./using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the production VMware cloud services issuer URL is used in the example below):
 
 ```yaml
 kind: ClusterConfiguration
@@ -368,8 +368,9 @@ When using the default auth proxy, some users may experience the behavior where 
 Prior to the Kubeapps chart version 7.1.0, the auth proxy configuration did not include a default `--cookie-refresh` value to refresh the access/openid token and so the console will logout once the token expires. In the case of Keycloak for example, this can happen quickly as the default access token expiration is 5m.
 
 To avoid this issue, you can do one of the following:
- - upgrade the Kubeapps chart to version 7.1.0+ which sets a default of `--cookie-refresh=2m` and exposes the value in the chart values as `authProxy.cookieRefresh`.
- - update Kubeapps by adding the option `--cookie-refresh=2m` to `authProxy.additionalFlags`.
+
+- upgrade the Kubeapps chart to version 7.1.0+ which sets a default of `--cookie-refresh=2m` and exposes the value in the chart values as `authProxy.cookieRefresh`.
+- update Kubeapps by adding the option `--cookie-refresh=2m` to `authProxy.additionalFlags`.
 
 The duration for the refresh must be less than the access/openid expiration time configured in the OAuth2/OIDC provider.
 
