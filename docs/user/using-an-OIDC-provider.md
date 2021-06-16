@@ -61,7 +61,7 @@ First, you need to verify that you have `AKS-managed Azure Active Directory: Ena
 
 ![Enabled AKS-managed Azure Active Directory](../img/azure-00.png)
 
-Then, you have to register an application. Go to `App registrations and click on `Register an application. Enter a `Name` (any name is ok) and a `Redirect URI` (it should be `https://<your_kubeapps_domain/>oauth2/callback` unless you have manually changed it).
+Then, you have to register an application. Go to `App registrations` and click on `Register an application`. Enter a `Name` (any name is ok) and a `Redirect URI` (it should be `https://<your_kubeapps_domain/>oauth2/callback` unless you have manually changed it).
 
 ![Registering an application](../img/azure-01.png)
 
@@ -85,7 +85,7 @@ The following step is to define the permissions that the application will need. 
 
 ![Add permissions screen](../img/azure-06.png)
 
-Then, in the `APIs my organization uses` enter this value `6dae42f8-4368-4678-94ff-3960e28e3630` (this is the ID corresponding to the AKS AAD server).
+Then, in the `APIs my organization uses` enter this value `6dae42f8-4368-4678-94ff-3960e28e3630`. This is a special ID corresponding to the global Azure Kubernetes Service AAD server.
 
 ![Selecting the permissions](../img/azure-07.png)
 
@@ -105,8 +105,8 @@ At the end of these steps, you will have created an application, granted it with
 
 The next step is just configuring Kubeapps to use all these values. We highlight here:
 
-- The issuer is `https://login.microsoftonline.com/my-tenant/v2.0` (replacing `my-tenant` with your own value), since we are using v2 tokens.
-- The scope is exactly `openid 6dae42f8-4368-4678-94ff-3960e28e3630/user.read`, this way, you will able to get the user's email as well as get access to the protected resource that is AKS.
+- The issuer is `https://login.microsoftonline.com/my-tenant/v2.0` (replacing `my-tenant` with your own `Directory (tenant) ID`), since we are using v2 tokens.
+- The scope is exactly `openid 6dae42f8-4368-4678-94ff-3960e28e3630/user.read`, using the ID of the global AKS AAD server. This way, you will able to get the user's email as well as get access to the protected resource that is AKS.
 
 > In v1 tokens, you had to pass this value as part of the `--resource=6dae42f8-4368-4678-94ff-3960e28e3630` flag, but in v2 tokens, this claim is performed just using the scope.
 
@@ -121,7 +121,7 @@ authProxy:
   clientSecret: my-secret
   additionalFlags:
     - --oidc-issuer-url=https://login.microsoftonline.com/my-tenant/v2.0 # required for azure
-    - --scope=openid 6dae42f8-4368-4678-94ff-3960e28e3630/user.read # required for azure, exactly this string, neither '6dae42f8-4368-4678-94ff-3960e28e3630' nor 'user.read'
+    - --scope=openid 6dae42f8-4368-4678-94ff-3960e28e3630/user.read # required for azure, exactly this string without modification
 ```
 
 > Subsitute `my-application-id`,`my-secret` and `my-tenant` with your values.
