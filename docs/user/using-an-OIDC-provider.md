@@ -113,9 +113,9 @@ If any pop-up appears asking for also granting permissions for the Microsoft Gra
 
 At the end of these steps, you will have created an application, generated a secret, granted it with `user.read` permissions, changed the token version to v2 and ask it for providing an `email`optional claim in the id_token. You also will have the following information:
 
-- `Application (client) ID`, for instance, `my-application-id`.
-- `Application secret`, for instance, `my-secret`.
-- `Directory (tenant) ID`, for instance, `my-tenant-id`.
+- `Application (client) ID`, for instance, `<MY-APPLICATION-ID>`.
+- `Application secret`, for instance, `<MY-SECRET>`.
+- `Directory (tenant) ID`, for instance, `<MY-TENANT-ID>`.
 
 The next step is just configuring Kubeapps to use all these values. We highlight here:
 
@@ -129,16 +129,16 @@ frontend:
   proxypassAccessTokenAsBearer: true # required to pass the access_token instead of the id_token
 authProxy:
   enabled: true
-  cookieSecret: redacted
+  cookieSecret: <MY-COOKIE-SECRET> # See https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#generating-a-cookie-secret
   provider: oidc
-  clientID: my-application-id
-  clientSecret: my-secret
+  clientID: <MY-APPLICATION-ID>
+  clientSecret: <MY-SECRET>
   additionalFlags:
-    - --oidc-issuer-url=https://login.microsoftonline.com/my-tenant/v2.0 # required for azure
+    - --oidc-issuer-url=https://login.microsoftonline.com/<MY-TENANT-ID>/v2.0 # required for azure
     - --scope=openid 6dae42f8-4368-4678-94ff-3960e28e3630/user.read # required for azure, exactly this string without modification
 ```
 
-> Subsitute `my-application-id`,`my-secret` and `my-tenant` with your values.
+> Subsitute `<MY-COOKIE-SECRET>`, `<MY-APPLICATION-ID>`,`<MY-SECRET>` and `<MY-TENANT-ID>` with your values.
 
 #### Azure Active Directory integration (legacy)
 
