@@ -49,7 +49,86 @@ For Dex, you can find the parameters that you need to set in the configuration (
 
 ### Azure Active Directory
 
-For setting up an Azure Kubernetes cluster (aks) with Azure Active Directory you can follow [this guide](https://docs.microsoft.com/en-us/azure/aks/aad-integration). At the end of the tutorial you should have an Active Directory Application (Server). That's the Application from which we will get the needed parameters.
+#### AKS-managed Azure Active Directory
+
+This setup assumes that you are using the [AKS-managed Azure AD integration](https://docs.microsoft.com/en-us/azure/aks/managed-aad). Note that this is incompatible with the legacy AAD. We will use the v2 token version instead of v1.
+
+> If you really need to use v1 tokens, please let drop us an issue and let us know your use case.
+
+Please refer to the official docs in case of doubt, here we just highlight some important steps during the configuration that will be required in Kubeapps.
+
+First, you need to verify that you have `AKS-managed Azure Active Directory: Enabled`.
+
+![Enabled AKS-managed Azure Active Directory](../img/azure-00.png)
+
+Then, you have to register an application. Go to `App registrations and click on `Register an application. Enter a `Name` (any name is ok) and a `Redirect URI` (it should be `https://<your_kubeapps_domain/>oauth2/callback` unless you have manually changed it).
+
+![Registering an application](../img/azure-01.png)
+
+Once you got your application created, click `Overview` to see the `Application (client) ID` and the `Directory (tenant) ID`. You will need these values later.
+
+![Application overview](../img/azure-02.png)
+
+The next step is to create a secret for the application. Click on `Certificates & secrets` and then on `New client secret`.
+
+![Creating secret screen](../img/azure-03.png)
+
+Fill the `Description` and `Expires` fields according to your preferences.
+
+![Creating the secret](../img/azure-04.png)
+
+Next, the `Value` of the secret will appear and you will be able to copy it. You will need this value later.
+
+![Retrieving the secret value](../img/azure-05.png)
+
+The following step is to define the permissions that the application will need. To do so, go to `API permissions` and click `Add a permission`.
+
+![Add permissions screen](../img/azure-06.png)
+
+Then, in the `APIs my organization uses` enter this value `6dae42f8-4368-4678-94ff-3960e28e3630` (this is the ID corresponding to the AKS AAD server).
+
+![Selecting the permissions](../img/azure-07.png)
+
+Next, select the `user.read` permission and click `Add permissions`.
+
+![Selecting user.read permission](../img/azure-08.png)
+
+Then, go to `Manifest` and change `accessTokenAcceptedVersion` from `null` to `2`. It will make the application generate v2 tokens instead of v1.
+
+![Editing the manifest](../img/azure-09.png)
+
+At the end of these steps, you will have created an application, granted it with `user.read` permissions and changed the token version to v2. You also will have this information.
+
+- `Application (client) ID`, for instance, `my-application-id`.
+- `Application secret`, for instance, `my-secret`.
+- `Directory (tenant) ID`, for instance, `my-tenant-id`.
+
+The next step is just configuring Kubeapps to use all these values. We highlight here:
+
+- The issuer is `https://login.microsoftonline.com/my-tenant/v2.0` (replacing `my-tenant` with your own value), since we are using v2 tokens.
+- The scope is exactly `openid 6dae42f8-4368-4678-94ff-3960e28e3630/user.read`, this way, you will able to get the user's email as well as get access to the protected resource that is AKS.
+
+> In v1 tokens, you had to pass this value as part of the `--resource=6dae42f8-4368-4678-94ff-3960e28e3630` flag, but in v2 tokens, this claim is performed just using the scope.
+
+```yaml
+frontend:
+  proxypassAccessTokenAsBearer: true # required to pass the access_token instead of the id_token
+authProxy:
+  enabled: true
+  cookieSecret: redacted
+  provider: oidc
+  clientID: my-application-id
+  clientSecret: my-secret
+  additionalFlags:
+    - --oidc-issuer-url=https://login.microsoftonline.com/my-tenant/v2.0 # required for azure
+    - --scope=openid 6dae42f8-4368-4678-94ff-3960e28e3630/user.read # required for azure, exactly this string, neither '6dae42f8-4368-4678-94ff-3960e28e3630' nor 'user.read'
+```
+
+> Subsitute `my-application-id`,`my-secret` and `my-tenant` with your values.
+
+#### Azure Active Directory integration (legacy)
+
+For setting up an Azure Kubernetes cluster (aks) with Azure Active Directory (legacy) you can follow [this guide](https://docs.microsoft.com/en-us/azure/aks/azure-ad-integration-cli). At the end of the tutorial you should have an Active Directory Application (Server). That's the Application from which we will get the needed parameters.
 
 - Client-ID: Azure Active Directory server Application ID.
 - Client-secret: A "Password" Key of the server Application.
