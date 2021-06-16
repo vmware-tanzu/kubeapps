@@ -67,6 +67,8 @@ In the case of Google we can use an OAuth 2.0 client ID. You can find more infor
 
 ### VMware Cloud Services
 
+Note: there is a [more detailed guide on how to use VMware Cloud Services in this document](../step-by-step/kubeapps-on-tkg/step-1.md#step-12-configure-an-oidc-provider).
+
 Login to VMware Cloud Services and select the organization which you want to use.
 
 1. Select View Organization (under Organization settings of the org menu),
