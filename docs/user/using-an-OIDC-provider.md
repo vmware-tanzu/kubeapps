@@ -99,7 +99,19 @@ Then, go to `Manifest` and change `accessTokenAcceptedVersion` from `null` to `2
 
 ![Editing the manifest](../img/azure-09.png)
 
-At the end of these steps, you will have created an application, granted it with `user.read` permissions and changed the token version to v2. You also will have this information.
+Next, we need to ask this Application to return the email as part of the token as an [optional claim](https://go.microsoft.com/fwlink/?linkid=2108879). To do so, go to `Token configuration` and click `Add optional claim`.
+
+![Token configuration screen](../img/azure-10.png)
+
+Then, as `Token type` select `ID`. Also, select the `email` claim and click `Add`.
+
+![Adding the email optional claim](../img/azure-11.png)
+
+If any pop-up appears asking for also granting permissions for the Microsoft Graph API, select the checkbox and click `Add`.
+
+![Adding Microsoft Graph permissions](../img/azure-12.png)
+
+At the end of these steps, you will have created an application, generated a secret, granted it with `user.read` permissions, changed the token version to v2 and ask it for providing an `email`optional claim in the id_token. You also will have the following information:
 
 - `Application (client) ID`, for instance, `my-application-id`.
 - `Application secret`, for instance, `my-secret`.
