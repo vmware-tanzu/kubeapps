@@ -40,12 +40,12 @@ import (
 
 const (
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	packageGroup     = "package.carvel.dev"
+	packageGroup     = "packaging.carvel.dev"
 	packageVersion   = "v1alpha1"
-	packagesResource = "packages"
+	packagesResource = "packageinstalls"
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
-	installPackageGroup   = "install.package.carvel.dev"
+	installPackageGroup   = "packaging.carvel.dev"
 	installPackageVersion = "v1alpha1"
 	repositoriesResource  = "packagerepositories"
 )
@@ -114,15 +114,18 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*corev1.AvailablePackageSummary, error) {
 	pkg := &corev1.AvailablePackageSummary{}
-	name, found, err := unstructured.NestedString(ap.Object, "spec", "publicName")
+
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
+	name, found, err := unstructured.NestedString(ap.Object, "spec", "packageRef", "refName")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field publicName not found on kapp-controller package: %v:\n%v", err, ap.Object)
+		return nil, status.Errorf(codes.Internal, "required field spec.packageRef.refName not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
 	pkg.DisplayName = name
 
-	version, found, err := unstructured.NestedString(ap.Object, "spec", "version")
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
+	version, found, err := unstructured.NestedString(ap.Object, "status", "version")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field version not found on kapp-controller package: %v:\n%v", err, ap.Object)
+		return nil, status.Errorf(codes.Internal, "required field status.version not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
 	pkg.LatestVersion = version
 	return pkg, nil
@@ -165,6 +168,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*v1alpha1.PackageRepository, error) {
 	repo := &v1alpha1.PackageRepository{}
+
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 	name, found, err := unstructured.NestedString(pr.Object, "metadata", "name")
 	if err != nil || !found || name == "" {
 		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on PackageRepository: %v:\n%v", err, pr.Object)
