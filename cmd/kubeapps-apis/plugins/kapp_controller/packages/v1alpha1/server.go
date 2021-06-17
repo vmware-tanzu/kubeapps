@@ -48,6 +48,8 @@ const (
 	installPackageGroup   = "packaging.carvel.dev"
 	installPackageVersion = "v1alpha1"
 	repositoriesResource  = "packagerepositories"
+
+	globalPackagingNamespace = "kapp-controller-packaging-global"
 )
 
 // Server implements the kapp-controller packages v1alpha1 interface.
@@ -87,6 +89,17 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	log.Infof("+kapp_controller GetAvailablePackageSummaries %s", contextMsg)
+
+	namespace := ""
+	if request.Context != nil {
+		if request.Context.Cluster != "" {
+			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
+		}
+		if request.Context.Namespace != "" {
+			namespace = request.Context.Namespace
+		}
+	}
+
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -94,7 +107,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
 
-	pkgs, err := client.Resource(packageResource).List(ctx, metav1.ListOptions{})
+	pkgs, err := client.Resource(packageResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
 	}
@@ -140,6 +153,16 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 	log.Infof("+kapp_controller GetPackageRepositories %s", contextMsg)
 
+	namespace := globalPackagingNamespace
+	if request.Context != nil {
+		if request.Context.Cluster != "" {
+			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
+		}
+		if request.Context.Namespace != "" {
+			namespace = request.Context.Namespace
+		}
+	}
+
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -148,7 +171,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	repositoryResource := schema.GroupVersionResource{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}
 
 	// Currently checks globally. Update to handle namespaced requests (?)
-	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})
+	repos, err := client.Resource(repositoryResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to list kapp-controller repositories: %w", err)
 	}
@@ -176,7 +199,12 @@ func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*v1alpha1
 	}
 	repo.Name = name
 
-	// TODO(absoludity): kapp-controller may soon introduce namespaced packagerepositories
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
+	namespace, found, err := unstructured.NestedString(pr.Object, "metadata", "namespace")
+	if err != nil || !found || namespace == "" {
+		return nil, status.Errorf(codes.Internal, "required field metadata.namespace not found on PackageRepository: %v:\n%v", err, pr.Object)
+	}
+	repo.Namespace = namespace
 
 	// See the PackageRepository CR at
 	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
