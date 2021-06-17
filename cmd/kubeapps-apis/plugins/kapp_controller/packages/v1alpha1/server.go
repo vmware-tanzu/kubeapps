@@ -85,8 +85,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if request.Context != nil {
 		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
 	}
-	log.Infof("+GetAvailablePackageSummaries %s", contextMsg)
 
+	log.Infof("+kapp_controller GetAvailablePackageSummaries %s", contextMsg)
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	if request.Context != nil {
 		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
 	}
-	log.Infof("+GetPackageRepositories %s", contextMsg)
+
+	log.Infof("+kapp_controller GetPackageRepositories %s", contextMsg)
 
 	client, err := s.GetClient(ctx)
 	if err != nil {

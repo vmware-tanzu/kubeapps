@@ -92,7 +92,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(request: [%v])", request)
+	log.Infof("+fluxv2 GetPackageRepositories(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
@@ -147,7 +147,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 // GetAvailablePackageSummaries streams the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	log.Infof("+GetAvailablePackageSummaries(request: [%v])", request)
+	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
@@ -212,7 +212,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	log.Infof("+GetAvailablePackageDetail(request: [%v])", request)
+	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
 
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
