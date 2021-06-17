@@ -42,11 +42,13 @@ const (
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
 	packageGroup     = "packaging.carvel.dev"
 	packageVersion   = "v1alpha1"
+	packageResource  = "PackageInstall"
 	packagesResource = "packageinstalls"
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 	installPackageGroup   = "packaging.carvel.dev"
 	installPackageVersion = "v1alpha1"
+	repositoryResource    = "PackageRepository"
 	repositoriesResource  = "packagerepositories"
 
 	globalPackagingNamespace = "kapp-controller-packaging-global"
