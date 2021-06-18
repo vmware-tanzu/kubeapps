@@ -16,16 +16,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 
@@ -40,7 +39,7 @@ const (
 	// see docs at https://fluxcd.io/docs/components/source/
 	fluxGroup              = "source.toolkit.fluxcd.io"
 	fluxVersion            = "v1beta1"
-	fluxHelmRepository     = "helmrepository"
+	fluxHelmRepository     = "HelmRepository"
 	fluxHelmRepositories   = "helmrepositories"
 	fluxHelmRepositoryList = "HelmRepositoryList"
 	fluxHelmChart          = "HelmChart"
@@ -91,6 +90,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 // that error by returning a status.Errorf with the appropriate code
 
 // GetPackageRepositories returns the package repositories based on the request.
+// note that this func currently returns ALL repositories, not just those in 'ready' state
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	log.Infof("+GetPackageRepositories(request: [%v])", request)
 
@@ -146,11 +146,17 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 }
 
 // GetAvailablePackageSummaries streams the available packages based on the request.
+// note that as now, packages from only those repos in 'Ready' state will be returned, which is
+// different semantics from how GetPackageRepository
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+GetAvailablePackageSummaries(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
+	}
+
+	if len(request.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "required argument 'namespace' is missing")
 	}
 
 	if request.Context.Cluster != "" {
@@ -247,6 +253,15 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 }
 
 func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.AvailablePackageReference) (*string, error) {
+	// flux CRDs require a namespace, cluster-wide resources are not supported
+	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
+	}
+	packageRefIdParts := strings.Split(packageRef.Identifier, "/")
+	if len(packageRefIdParts) != 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
+	}
+
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -258,27 +273,28 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		Resource: fluxHelmCharts,
 	}
 
-	// TODO (gfichtenholt): use the namespace from the request
-	resourceIfc := client.Resource(chartsResource).Namespace("default")
+	resourceIfc := client.Resource(chartsResource).Namespace(packageRef.Context.Namespace)
 
 	// see if we the chart already exists
 	// TODO (gfichtenholt):
 	// see https://github.com/kubeapps/kubeapps/pull/2915
-	// for context
-	// The problem is the set of supported
-	// fields in FieldSelector is very small. things like spec.chart are certainly not supported.
-	// see kubernetes/client-go#713 and https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b/// HOOKS.md#fieldselector. Nevertheless, I made a TODO comment here just as you suggested to see
-	// if I can improve later
+	// for context. It'd be better if we could filter on server-side. The problem is the set of supported
+	// fields in FieldSelector is very small. things like "spec.chart" are certainly not supported.
+	// see
+	//  - kubernetes/client-go#713 and
+	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
+	//  - https://github.com/kubernetes/kubernetes/issues/53459
 	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO (gfichtenholt) it'd be better if we could filter on server-side
 	for _, unstructuredChart := range chartList.Items {
 		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
+		repoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
+
 		// TODO (gfichtenholt) compare chart versions too
-		if err == nil && found && chartName == packageRef.Identifier {
+		if err == nil && err2 == nil && found && found2 && repoName == packageRefIdParts[0] && chartName == packageRefIdParts[1] {
 			done, err := isChartPullComplete(&unstructuredChart)
 			if err != nil {
 				return nil, err
@@ -301,13 +317,13 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 			"kind":       fluxHelmChart,
 			"metadata": map[string]interface{}{
-				"generateName": fmt.Sprintf("%s-", packageRef.Identifier),
+				"generateName": fmt.Sprintf("%s-", packageRefIdParts[1]),
 			},
 			"spec": map[string]interface{}{
-				"chart": packageRef.Identifier,
+				"chart": packageRefIdParts[1],
 				"sourceRef": map[string]interface{}{
-					"name": packageRef.Identifier,
-					"kind": "HelmRepository",
+					"name": packageRefIdParts[0],
+					"kind": fluxHelmRepository,
 				},
 				"interval": "10m",
 			},
@@ -334,41 +350,6 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	return waitUntilChartPullComplete(watcher)
 }
 
-// TODO (gfichtenholt):
-// see https://github.com/kubeapps/kubeapps/pull/2915 for context
-// In the future you might instead want to consider something like
-// passing a results channel (of string urls) to pullChartTarball, so it returns
-// immediately and you wait on the results channel at the call-site, which would mean
-// you could call it for 20 different charts and just wait for the results to come in
-//  whatever order they happen to take, rather than serially.
-func waitUntilChartPullComplete(watcher watch.Interface) (*string, error) {
-	ch := watcher.ResultChan()
-	// LISTEN TO CHANNEL
-	for {
-		event := <-ch
-		if event.Type == watch.Modified {
-			unstructuredChart, ok := event.Object.(*unstructured.Unstructured)
-			if !ok {
-				return nil, status.Errorf(codes.Internal, "Could not cast to unstructured.Unstructured")
-			}
-
-			done, err := isChartPullComplete(unstructuredChart)
-			if err != nil {
-				return nil, err
-			} else if done {
-				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
-				if err != nil || !found {
-					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
-				}
-				return &url, nil
-			}
-		} else {
-			// TODO handle other kinds of events
-			return nil, status.Errorf(codes.Internal, "got unexpected event: %v", event)
-		}
-	}
-}
-
 func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -381,12 +362,7 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 		Resource: fluxHelmRepositories,
 	}
 
-	var resource dynamic.NamespaceableResourceInterface = client.Resource(repositoriesResource)
-	var resourceIfc dynamic.ResourceInterface = resource
-	if namespace != "" {
-		resourceIfc = resource.Namespace(namespace)
-	}
-	repos, err := resourceIfc.List(ctx, metav1.ListOptions{})
+	repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
@@ -398,58 +374,6 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 	}
 }
 
-func isRepoReady(obj map[string]interface{}) (bool, error) {
-	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
-	conditions, found, err := unstructured.NestedSlice(obj, "status", "conditions")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				if statusString, ok := conditionAsMap["status"]; ok && statusString == "True" {
-					// note that the current doc on https://fluxcd.io/docs/components/source/helmrepositories/
-					// incorrectly states the example status reason as "IndexationSucceeded".
-					// The actual string is "IndexationSucceed"
-					if reasonString, ok := conditionAsMap["reason"]; ok && reasonString == "IndexationSucceed" {
-						return true, nil
-					}
-				}
-			}
-		}
-	}
-	return false, nil
-}
-
-// TODO (gfichtenholt): As above, hopefully this fn isn't required if we can only list charts that we know are ready.
-func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
-	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
-	conditions, found, err := unstructured.NestedSlice(unstructuredChart.Object, "status", "conditions")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-
-	// check if ready=True
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				if statusString, ok := conditionAsMap["status"]; ok && statusString == "True" {
-					if reasonString, ok := conditionAsMap["reason"]; ok && reasonString == "ChartPullSucceeded" {
-						return true, nil
-					}
-				}
-				// TODO handle the case when chart pull fails
-			}
-		}
-	}
-	return false, nil
-}
-
 func readPackagesFromRepoIndex(repo *v1alpha1.PackageRepository, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
 	// TODO (gfichtenholt) set up httpClient properly with userAgent and TLS config
 	// similar to what is done in asset syncer
@@ -458,7 +382,7 @@ func readPackagesFromRepoIndex(repo *v1alpha1.PackageRepository, indexURL string
 		return nil, err
 	}
 
-	modelRepo := &models.Repo{
+	modelRepo := &chart.Repo{
 		Namespace: repo.Namespace,
 		Name:      repo.Name,
 		URL:       repo.Url,

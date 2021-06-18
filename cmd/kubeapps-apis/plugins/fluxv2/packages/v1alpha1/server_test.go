@@ -129,7 +129,9 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			response, err := s.GetAvailablePackageSummaries(
+				context.Background(),
+				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -152,12 +154,12 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
-		"name": name,
+		"name":       name,
+		"generation": int64(1),
 	}
 	if namespace != "" {
 		metadata["namespace"] = namespace
 	}
-
 	obj := map[string]interface{}{
 		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 		"kind":       fluxHelmRepository,
@@ -169,6 +171,7 @@ func newRepo(name string, namespace string, spec map[string]interface{}, status 
 	}
 
 	if status != nil {
+		status["observedGeneration"] = int64(1)
 		obj["status"] = status
 	}
 
@@ -200,8 +203,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		{
 			testName:      "it returns a couple of fluxv2 packages from the cluster",
 			repoName:      "bitnami-1",
-			repoNamespace: "",
-			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			repoNamespace: "default",
+			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			repoUrl:       "https://example.repo.com/charts",
 			repoIndex:     "testdata/valid-index.yaml",
 			expectedPackages: []*corev1.AvailablePackageSummary{
@@ -211,7 +214,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
-						Context:    &corev1.Context{},
+						Context:    &corev1.Context{Namespace: "default"},
 					},
 				},
 				{
@@ -220,75 +223,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/wordpress",
-						Context:    &corev1.Context{},
-					},
-				},
-			},
-		},
-		{
-			testName:      "it returns all of fluxv2 packages from the cluster when request does not specify ns",
-			repoName:      "bitnami-2",
-			repoNamespace: "non-default",
-			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
-			repoUrl:       "https://example.repo.com/charts",
-			repoIndex:     "testdata/valid-index.yaml",
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					DisplayName:   "acs-engine-autoscaler",
-					LatestVersion: "2.1.1",
-					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-2/acs-engine-autoscaler",
-						Context: &corev1.Context{
-							Namespace: "non-default",
-						},
-					},
-				},
-				{
-					DisplayName:   "wordpress",
-					LatestVersion: "0.7.5",
-					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-2/wordpress",
-						Context: &corev1.Context{
-							Namespace: "non-default",
-						},
-					},
-				},
-			},
-		},
-		{
-			testName:      "it returns all of fluxv2 packages from the cluster that match request ns",
-			repoName:      "bitnami-3",
-			repoNamespace: "non-default",
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
-					Namespace: "non-default",
-				},
-			},
-			repoUrl:   "https://example.repo.com/charts",
-			repoIndex: "testdata/valid-index.yaml",
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					DisplayName:   "acs-engine-autoscaler",
-					LatestVersion: "2.1.1",
-					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-3/acs-engine-autoscaler",
-						Context: &corev1.Context{
-							Namespace: "non-default",
-						},
-					},
-				},
-				{
-					DisplayName:   "wordpress",
-					LatestVersion: "0.7.5",
-					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-3/wordpress",
-						Context: &corev1.Context{
-							Namespace: "non-default",
-						},
+						Context:    &corev1.Context{Namespace: "default"},
 					},
 				},
 			},
@@ -492,7 +427,8 @@ func TestGetPackageRepositories(t *testing.T) {
 
 func newChart(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
-		"name": name,
+		"name":       name,
+		"generation": int64(1),
 	}
 	if namespace != "" {
 		metadata["namespace"] = namespace
@@ -509,6 +445,7 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 	}
 
 	if status != nil {
+		status["observedGeneration"] = int64(1)
 		obj["status"] = status
 	}
 
@@ -531,9 +468,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			testName:      "it returns details about the redis package in bitnami repo",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			request:       &corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: &corev1.AvailablePackageReference{Identifier: "redis"}},
-			chartName:     "redis",
-			chartTarGz:    "testdata/redis-14.4.0.tgz",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				}},
+			chartName:  "redis",
+			chartTarGz: "testdata/redis-14.4.0.tgz",
 			expectedPackageDetail: &corev1.AvailablePackageDetail{
 				// TODO (gfichtenholt) other fields
 				LongDescription: "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
@@ -560,8 +503,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			chartSpec := map[string]interface{}{
 				"chart": tc.chartName,
 				"sourceRef": map[string]interface{}{
-					"name": "does-not-matter-for-now",
-					"kind": "HelmRepository",
+					"name": tc.repoName,
+					"kind": fluxHelmRepository,
 				},
 				"interval": "10m",
 			}
@@ -600,6 +543,70 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			if !strings.Contains(response.AvailablePackageDetail.LongDescription, tc.expectedPackageDetail.LongDescription) {
 				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.LongDescription, response.AvailablePackageDetail.LongDescription)
+			}
+		})
+	}
+
+	negativeTestCases := []struct {
+		testName      string
+		request       *corev1.GetAvailablePackageDetailRequest
+		repoName      string
+		repoNamespace string
+		chartName     string
+		statusCode    codes.Code
+	}{
+		{
+			testName:      "it fails if request is missing namespace",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "redis",
+				}},
+			chartName:  "redis",
+			statusCode: codes.InvalidArgument,
+		},
+	}
+
+	for _, tc := range negativeTestCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			chartSpec := map[string]interface{}{
+				"chart": tc.chartName,
+				"sourceRef": map[string]interface{}{
+					"name": "does-not-matter-for-now",
+					"kind": "HelmRepository",
+				},
+				"interval": "10m",
+			}
+			chartStatus := map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Ready",
+						"status": "True",
+						"reason": "ChartPullSucceeded",
+					},
+				},
+				"url": "does-not-matter",
+			}
+			repo := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
+			s := Server{
+				clientGetter: func(context.Context) (dynamic.Interface, error) {
+					return fake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
+						},
+						repo,
+					), nil
+				},
+			}
+
+			_, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			if err == nil {
+				t.Fatalf("got nil, want error")
+			}
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 		})
 	}
