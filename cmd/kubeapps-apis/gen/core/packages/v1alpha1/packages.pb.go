@@ -534,7 +534,8 @@ type Context struct {
 	Cluster string `protobuf:"bytes,1,opt,name=cluster,proto3" json:"cluster,omitempty"`
 	// Namespace
 	//
-	// A namespace can be provided if the packaging system allows namespaced packages.
+	// A namespace must be provided if the context of the operation is for a resource
+	// or resources in a particular namespace.
 	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 }
 
