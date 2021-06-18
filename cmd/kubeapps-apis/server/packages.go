@@ -55,9 +55,11 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		// Add the plugin for the pkgs
 		pluginPkgs := response.AvailablePackagesSummaries
 		for _, r := range pluginPkgs {
+			if r.AvailablePackageRef == nil {
+				r.AvailablePackageRef = &packages.AvailablePackageReference{}
+			}
 			r.AvailablePackageRef.Plugin = p.plugin
 		}
-
 		pkgs = append(pkgs, pluginPkgs...)
 	}
 
