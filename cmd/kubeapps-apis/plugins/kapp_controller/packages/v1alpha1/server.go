@@ -54,6 +54,9 @@ const (
 	globalPackagingNamespace = "kapp-controller-packaging-global"
 )
 
+// Compile-time statement to ensure this service implementation satisfies the core packaging API
+var _ corev1.PackagesServiceServer = (*Server)(nil)
+
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedKappControllerPackagesServiceServer

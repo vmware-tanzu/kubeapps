@@ -48,6 +48,9 @@ const (
 	fluxHelmChartList      = "HelmChartList"
 )
 
+// Compile-time statement to ensure this service implementation satisfies the core packaging API
+var _ corev1.PackagesServiceServer = (*Server)(nil)
+
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
