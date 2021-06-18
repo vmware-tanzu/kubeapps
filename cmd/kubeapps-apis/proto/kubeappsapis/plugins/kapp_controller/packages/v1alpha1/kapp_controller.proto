@@ -14,6 +14,13 @@ service KappControllerPackagesService {
       get: "/plugins/kapp_controller/packages/v1alpha1/availablepackagesummaries"
     };
   };
+
+  // GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin
+  rpc GetAvailablePackageDetail(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackagedetails"
+    };
+  }
   
   // GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
   rpc GetPackageRepositories(GetPackageRepositoriesRequest) returns (GetPackageRepositoriesResponse) {

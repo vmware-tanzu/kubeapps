@@ -21,6 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 type KappControllerPackagesServiceClient interface {
 	// GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
 	GetAvailablePackageSummaries(ctx context.Context, in *v1alpha1.GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
+	// GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin
+	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
 	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
 }
@@ -42,6 +44,15 @@ func (c *kappControllerPackagesServiceClient) GetAvailablePackageSummaries(ctx c
 	return out, nil
 }
 
+func (c *kappControllerPackagesServiceClient) GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
+	out := new(v1alpha1.GetAvailablePackageDetailResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *kappControllerPackagesServiceClient) GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error) {
 	out := new(GetPackageRepositoriesResponse)
 	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories", in, out, opts...)
@@ -57,6 +68,8 @@ func (c *kappControllerPackagesServiceClient) GetPackageRepositories(ctx context
 type KappControllerPackagesServiceServer interface {
 	// GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
 	GetAvailablePackageSummaries(context.Context, *v1alpha1.GetAvailablePackageSummariesRequest) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
+	// GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin
+	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
 	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
 }
@@ -67,6 +80,9 @@ type UnimplementedKappControllerPackagesServiceServer struct {
 
 func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageSummaries(context.Context, *v1alpha1.GetAvailablePackageSummariesRequest) (*v1alpha1.GetAvailablePackageSummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageSummaries not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageDetail not implemented")
 }
 func (UnimplementedKappControllerPackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
@@ -101,6 +117,24 @@ func _KappControllerPackagesService_GetAvailablePackageSummaries_Handler(srv int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KappControllerPackagesService_GetAvailablePackageDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetAvailablePackageDetailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).GetAvailablePackageDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).GetAvailablePackageDetail(ctx, req.(*v1alpha1.GetAvailablePackageDetailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _KappControllerPackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPackageRepositoriesRequest)
 	if err := dec(in); err != nil {
@@ -129,6 +163,10 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailablePackageSummaries",
 			Handler:    _KappControllerPackagesService_GetAvailablePackageSummaries_Handler,
+		},
+		{
+			MethodName: "GetAvailablePackageDetail",
+			Handler:    _KappControllerPackagesService_GetAvailablePackageDetail_Handler,
 		},
 		{
 			MethodName: "GetPackageRepositories",
