@@ -39,14 +39,14 @@ import (
 )
 
 const (
+	packagingGroup = "packaging.carvel.dev"
+
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	packageGroup     = "packaging.carvel.dev"
 	packageVersion   = "v1alpha1"
 	packageResource  = "PackageInstall"
 	packagesResource = "packageinstalls"
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
-	installPackageGroup   = "packaging.carvel.dev"
 	installPackageVersion = "v1alpha1"
 	repositoryResource    = "PackageRepository"
 	repositoriesResource  = "packagerepositories"
@@ -107,7 +107,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
+	packageResource := schema.GroupVersionResource{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}
 
 	pkgs, err := client.Resource(packageResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -170,7 +170,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 		return nil, err
 	}
 
-	repositoryResource := schema.GroupVersionResource{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}
+	repositoryResource := schema.GroupVersionResource{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}
 
 	// Currently checks globally. Update to handle namespaced requests (?)
 	repos, err := client.Resource(repositoryResource).Namespace(namespace).List(ctx, metav1.ListOptions{})

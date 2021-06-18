@@ -55,7 +55,7 @@ func TestGetClient(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 				), nil
 			},
@@ -95,7 +95,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 					packageFromSpec("1.2.3", map[string]interface{}{
 						"packageRef": map[string]interface{}{},
@@ -110,7 +110,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 					packageFromSpec(nil, map[string]interface{}{
 						"packageRef": map[string]interface{}{
@@ -127,7 +127,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 					packageFromSpec("1.2.3", map[string]interface{}{
 						"packageRef": map[string]interface{}{
@@ -161,7 +161,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 func packageFromSpec(version interface{}, spec map[string]interface{}) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
+			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, packageVersion),
 			"kind":       packageResource,
 			"metadata": map[string]interface{}{
 				"name": fmt.Sprintf("%s.%s", spec["packageRef"].(map[string]interface{})["refName"], version),
@@ -229,7 +229,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+							{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 						},
 						pkgs...,
 					), nil
@@ -253,7 +253,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 func repositoryFromSpec(name string, spec map[string]interface{}) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", installPackageGroup, installPackageVersion),
+			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, installPackageVersion),
 			"kind":       repositoryResource,
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -336,7 +336,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",
+							{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",
 						},
 						repositoriesFromSpecs(tc.repoSpecs)...,
 					), nil
