@@ -99,7 +99,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					},
 					packageFromSpec("1.2.3", map[string]interface{}{
 						"packageRef": map[string]interface{}{},
-					}),
+					}, t),
 				), nil
 			},
 			statusCode: codes.Internal,
@@ -116,7 +116,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 						"packageRef": map[string]interface{}{
 							"refName": "someName",
 						},
-					}),
+					}, t),
 				), nil
 			},
 			statusCode: codes.Internal,
@@ -133,7 +133,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 						"packageRef": map[string]interface{}{
 							"refName": "someName",
 						},
-					}),
+					}, t),
 				), nil
 			},
 			statusCode: codes.OK,
@@ -158,13 +158,17 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 }
 
-func packageFromSpec(version interface{}, spec map[string]interface{}) *unstructured.Unstructured {
+func packageFromSpec(version interface{}, spec map[string]interface{}, t *testing.T) *unstructured.Unstructured {
+	pkgRef, ok := spec["packageRef"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("unable to convert %+v to a map[string]interface{}", spec["packageRef"])
+	}
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, packageVersion),
 			"kind":       packageResource,
 			"metadata": map[string]interface{}{
-				"name": fmt.Sprintf("%s.%s", spec["packageRef"].(map[string]interface{})["refName"], version),
+				"name": fmt.Sprintf("%s.%s", pkgRef["refName"], version),
 			},
 			"spec": spec,
 			"status": map[string]interface{}{
@@ -174,10 +178,14 @@ func packageFromSpec(version interface{}, spec map[string]interface{}) *unstruct
 	}
 }
 
-func packagesFromSpecs(specs []map[string]interface{}) []runtime.Object {
+func packagesFromSpecs(specs []map[string]interface{}, t *testing.T) []runtime.Object {
 	pkgs := []runtime.Object{}
 	for _, s := range specs {
-		pkgs = append(pkgs, packageFromSpec(s["version"], s["spec"].(map[string]interface{})))
+		pkgSpec, ok := s["spec"].(map[string]interface{})
+		if !ok {
+			t.Fatalf("unable to convert %+v to a map[string]interface{}", s["spec"])
+		}
+		pkgs = append(pkgs, packageFromSpec(s["version"], pkgSpec, t))
 	}
 	return pkgs
 }
@@ -223,7 +231,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgs := packagesFromSpecs(tc.packageSpecs)
+			pkgs := packagesFromSpecs(tc.packageSpecs, t)
 			s := Server{
 				clientGetter: func(context.Context) (dynamic.Interface, error) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
