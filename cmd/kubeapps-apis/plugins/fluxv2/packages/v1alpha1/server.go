@@ -15,7 +15,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -90,7 +89,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 // that error by returning a status.Errorf with the appropriate code
 
 // GetPackageRepositories returns the package repositories based on the request.
-// note that this func currently returns ALL repositories, not just those in 'ready' state
+// note that this func currently returns ALL repositories, not just those in 'ready' (reconciled) state
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	log.Infof("+GetPackageRepositories(request: [%v])", request)
 
@@ -122,19 +121,19 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 		}
 		repo.Name = name
 
-		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
-
-		// TODO(absoludity): When testing, write failing test for the case of a
-		// cluster-scoped object without a namespace, then fix.
-		if err == nil && found {
-			repo.Namespace = namespace
+		if err != nil || !found {
+			return nil, status.Errorf(
+				codes.Internal,
+				"field metadata.namespace not found on HelmRepository: %v:\n%v", err, obj)
 		}
+		repo.Namespace = namespace
 
 		url, found, err := unstructured.NestedString(obj, "spec", "url")
 		if err != nil || !found {
 			return nil, status.Errorf(
-				codes.Internal, "required field spec.url not found on HelmRepository: %v:\n%v", err, obj)
+				codes.Internal,
+				"required field spec.url not found on HelmRepository: %v:\n%v", err, obj)
 		}
 		repo.Url = url
 
@@ -197,11 +196,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		repo := v1alpha1.PackageRepository{
 			Name: name,
 		}
-		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
 		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
-		if err == nil && found {
-			repo.Namespace = namespace
+		if err != nil || !found {
+			// should not happen in reality
+			log.Errorf("field metadata.namespace not found on HelmRepository: %w:\n%v", err, obj)
+			// just skip over to the next one
+			continue
 		}
+		repo.Namespace = namespace
 
 		repoPackages, err := readPackagesFromRepoIndex(&repo, url)
 		if err != nil {
@@ -238,9 +240,10 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	log.Infof("Found chart url: [%s]", *url)
 
 	// unzip and untar .tgz file
-	// TODO (gfichtenholt): userAgent, authz and netClient w/TLS config similar to asset-syncer utils.initNetClient(),
-	// see if we can re-factor code to reuse in both places
-	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", &http.Client{})
+	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
+	// local cluster, not remote repo. Flux does the hard work of pulling the bits from remote repo
+	// based on secretRef associated with HelmRepository, if applicable
+	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", httpclient.New())
 	if err != nil {
 		return nil, err
 	}
@@ -375,9 +378,10 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 }
 
 func readPackagesFromRepoIndex(repo *v1alpha1.PackageRepository, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
-	// TODO (gfichtenholt) set up httpClient properly with userAgent and TLS config
-	// similar to what is done in asset syncer
-	bytes, err := httpclient.Get(indexURL, &http.Client{}, map[string]string{})
+	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
+	// local cluster, not some remote repo. Flux does the hard work of pulling the index file from remote repo
+	// into local cluster based on secretRef associated with HelmRepository, if applicable
+	bytes, err := httpclient.Get(indexURL, httpclient.New(), map[string]string{})
 	if err != nil {
 		return nil, err
 	}

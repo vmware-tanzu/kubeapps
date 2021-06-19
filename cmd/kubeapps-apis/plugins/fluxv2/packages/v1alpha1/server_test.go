@@ -309,7 +309,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		{
 			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
 			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoNamespace: "",
+			repoNamespace: "default",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
 					"foo": "bar",
@@ -320,7 +320,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		{
 			name:          "returns expected repositories",
 			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoNamespace: "",
+			repoNamespace: "default",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
 					"url": "https://charts.bitnami.com/bitnami",
@@ -331,12 +331,14 @@ func TestGetPackageRepositories(t *testing.T) {
 			},
 			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
-					Name: "repo-1",
-					Url:  "https://charts.bitnami.com/bitnami",
+					Name:      "repo-1",
+					Namespace: "default",
+					Url:       "https://charts.bitnami.com/bitnami",
 				},
 				{
-					Name: "repo-2",
-					Url:  "https://charts.helm.sh/stable",
+					Name:      "repo-2",
+					Namespace: "default",
+					Url:       "https://charts.helm.sh/stable",
 				},
 			},
 		},
@@ -562,6 +564,20 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "redis",
+				}},
+			chartName:  "redis",
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			testName:      "it fails if request has invalid identifier",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
 				}},
 			chartName:  "redis",
 			statusCode: codes.InvalidArgument,

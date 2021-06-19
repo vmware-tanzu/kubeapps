@@ -41,6 +41,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -337,21 +338,10 @@ h251U/Daz6NiQBM9AxyAw6EHm8XAZBvCuebfzyrT
 		t.Error(err)
 	}
 
-	_, err = initNetClient(otherCA, false)
+	_, err = httpclient.NewWithCertFile(otherCA, false)
 	if err != nil {
 		t.Error(err)
 	}
-}
-
-var emptyRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/empty-repo-index.yaml")
-var emptyRepoIndexYAML = string(emptyRepoIndexYAMLBytes)
-
-type emptyChartRepoHTTPClient struct{}
-
-func (h *emptyChartRepoHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	w.Write([]byte(emptyRepoIndexYAML))
-	return w.Result(), nil
 }
 
 func Test_getSha256(t *testing.T) {

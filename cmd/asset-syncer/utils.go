@@ -21,8 +21,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -30,7 +28,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"sort"
 	"strings"
@@ -56,9 +53,8 @@ import (
 )
 
 const (
-	defaultTimeoutSeconds = 10
-	additionalCAFile      = "/usr/local/share/ca-certificates/ca.crt"
-	numWorkers            = 10
+	additionalCAFile = "/usr/local/share/ca-certificates/ca.crt"
+	numWorkers       = 10
 )
 
 type importChartFilesJob struct {
@@ -711,39 +707,6 @@ func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
 		return u.String()
 	}
 	return source
-}
-
-func initNetClient(additionalCA string, skipTLS bool) (*http.Client, error) {
-	// Get the SystemCertPool, continue with an empty pool on error
-	caCertPool, _ := x509.SystemCertPool()
-	if caCertPool == nil {
-		caCertPool = x509.NewCertPool()
-	}
-
-	// If additionalCA exists, load it
-	if _, err := os.Stat(additionalCA); !os.IsNotExist(err) {
-		certs, err := ioutil.ReadFile(additionalCA)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to append %s to RootCAs: %v", additionalCA, err)
-		}
-
-		// Append our cert to the system pool
-		if ok := caCertPool.AppendCertsFromPEM(certs); !ok {
-			return nil, fmt.Errorf("Failed to append %s to RootCAs", additionalCA)
-		}
-	}
-
-	// Return Transport for testing purposes
-	return &http.Client{
-		Timeout: time.Second * defaultTimeoutSeconds,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: skipTLS,
-				RootCAs:            caCertPool,
-			},
-			Proxy: http.ProxyFromEnvironment,
-		},
-	}, nil
 }
 
 type fileImporter struct {

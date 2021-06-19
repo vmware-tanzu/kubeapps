@@ -13,13 +13,83 @@ limitations under the License.
 package httpclient
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"time"
+)
+
+const (
+	defaultTimeoutSeconds = 10
 )
 
 type Client interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+
+//
+// creates a new instance of Client, given a path to addtional certificates
+// certFile may be empty string, which means no additional certs will be used
+//
+func New() *http.Client {
+	// Return Transport for testing purposes
+	return &http.Client{
+		Timeout: time.Second * defaultTimeoutSeconds,
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
+}
+
+//
+// creates a new instance of Client, given a path to addtional certificates
+// certFile may be empty string, which means no additional certs will be used
+//
+func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
+	// If additionalCA exists, load it
+	if _, err := os.Stat(certFile); !os.IsNotExist(err) {
+		certs, err := ioutil.ReadFile(certFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to append %s to RootCAs: %v", certFile, err)
+		}
+		return NewWithCertBytes(certs, skipTLS)
+	}
+
+	// Return Transport for testing purposes
+	client := New()
+	client.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: skipTLS,
+		}}
+	return client, nil
+}
+
+//
+// creates a new instance of Client, given bytes for addtional certificates
+//
+func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
+	// Get the SystemCertPool, continue with an empty pool on error
+	caCertPool, _ := x509.SystemCertPool()
+	if caCertPool == nil {
+		caCertPool = x509.NewCertPool()
+	}
+
+	// Append our cert to the system pool
+	if ok := caCertPool.AppendCertsFromPEM(certs); !ok {
+		return nil, fmt.Errorf("failed to append bytes to RootCAs")
+	}
+
+	// Return Transport for testing purposes
+	client := New()
+	client.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: skipTLS,
+			RootCAs:            caCertPool,
+		}}
+	return client, nil
 }
 
 //
