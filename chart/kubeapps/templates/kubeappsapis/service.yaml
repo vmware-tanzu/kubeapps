@@ -22,9 +22,9 @@ spec:
   type: ClusterIP
   ports:
     - port: {{ .Values.kubeappsapis.service.port }}
-      targetPort: grpc_http
+      targetPort: grpc-http
       protocol: TCP
-      name: grpc_http
+      name: grpc-http
   selector: {{- include "common.labels.matchLabels" . | nindent 4 }}
     app.kubernetes.io/component: kubeappsapis
 {{- end }}
