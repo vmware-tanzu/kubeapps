@@ -16,6 +16,7 @@
 build-plugins:
 	go build -o devel/kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin plugins/kapp_controller/packages/v1alpha1/*.go
 	go build -o devel/fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin plugins/fluxv2/packages/v1alpha1/*.go
+	go build -o devel/helm-packages-v1alpha1-plugin.so -buildmode=plugin plugins/helm/packages/v1alpha1/*.go
 
 
 # Ensure the required version of cli tooling in tools/tools.go is installed.

@@ -248,7 +248,8 @@ message Context {
 
   // Namespace
   //
-  // A namespace can be provided if the packaging system allows namespaced packages.
+  // A namespace must be provided if the context of the operation is for a resource
+	// or resources in a particular namespace.
   string namespace = 2;
 }
 
