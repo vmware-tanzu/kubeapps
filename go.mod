@@ -98,7 +98,7 @@ require (
 	k8s.io/api v0.20.5
 	k8s.io/apimachinery v0.20.5
 	k8s.io/cli-runtime v0.20.5
-	k8s.io/client-go v0.20.5
+	k8s.io/client-go v0.21.2
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/kubernetes v1.20.5
