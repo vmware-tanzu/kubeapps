@@ -12,3 +12,11 @@ limitations under the License.
 */
 
 package main
+
+import (
+	"testing"
+)
+
+func TestGetAvailablePackageSummaries(t *testing.T) {
+	// TODO
+}
