@@ -55,7 +55,7 @@ func TestGetClient(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 				), nil
 			},
@@ -90,16 +90,16 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		statusCode   codes.Code
 	}{
 		{
-			name: "returns an internal error status if response does not contain publicName",
+			name: "returns an internal error status if response does not contain packageRef.refName",
 			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec(map[string]interface{}{
-						"version": "1.2.3",
-					}),
+					packageFromSpec("1.2.3", map[string]interface{}{
+						"packageRef": map[string]interface{}{},
+					}, t),
 				), nil
 			},
 			statusCode: codes.Internal,
@@ -110,11 +110,13 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec(map[string]interface{}{
-						"publicName": "someName",
-					}),
+					packageFromSpec(nil, map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "someName",
+						},
+					}, t),
 				), nil
 			},
 			statusCode: codes.Internal,
@@ -125,12 +127,13 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				return fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec(map[string]interface{}{
-						"publicName": "someName",
-						"version":    "1.2.3",
-					}),
+					packageFromSpec("1.2.3", map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "someName",
+						},
+					}, t),
 				), nil
 			},
 			statusCode: codes.OK,
@@ -155,23 +158,34 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 }
 
-func packageFromSpec(spec map[string]interface{}) *unstructured.Unstructured {
+func packageFromSpec(version interface{}, spec map[string]interface{}, t *testing.T) *unstructured.Unstructured {
+	pkgRef, ok := spec["packageRef"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("unable to convert %+v to a map[string]interface{}", spec["packageRef"])
+	}
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
-			"kind":       "Package",
+			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, packageVersion),
+			"kind":       packageResource,
 			"metadata": map[string]interface{}{
-				"name": fmt.Sprintf("%s.%s", spec["publicName"], spec["version"]),
+				"name": fmt.Sprintf("%s.%s", pkgRef["refName"], version),
 			},
 			"spec": spec,
+			"status": map[string]interface{}{
+				"version": version,
+			},
 		},
 	}
 }
 
-func packagesFromSpecs(specs []map[string]interface{}) []runtime.Object {
+func packagesFromSpecs(specs []map[string]interface{}, t *testing.T) []runtime.Object {
 	pkgs := []runtime.Object{}
 	for _, s := range specs {
-		pkgs = append(pkgs, packageFromSpec(s))
+		pkgSpec, ok := s["spec"].(map[string]interface{})
+		if !ok {
+			t.Fatalf("unable to convert %+v to a map[string]interface{}", s["spec"])
+		}
+		pkgs = append(pkgs, packageFromSpec(s["version"], pkgSpec, t))
 	}
 	return pkgs
 }
@@ -186,12 +200,20 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			name: "it returns carvel packages from the cluster",
 			packageSpecs: []map[string]interface{}{
 				{
-					"publicName": "tetris.foo.example.com",
-					"version":    "1.2.3",
+					"spec": map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "tetris.foo.example.com",
+						},
+					},
+					"version": "1.2.3",
 				},
 				{
-					"publicName": "another.foo.example.com",
-					"version":    "1.2.5",
+					"spec": map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "another.foo.example.com",
+						},
+					},
+					"version": "1.2.5",
 				},
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
@@ -209,13 +231,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgs := packagesFromSpecs(tc.packageSpecs)
+			pkgs := packagesFromSpecs(tc.packageSpecs, t)
 			s := Server{
 				clientGetter: func(context.Context) (dynamic.Interface, error) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+							{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 						},
 						pkgs...,
 					), nil
@@ -239,10 +261,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 func repositoryFromSpec(name string, spec map[string]interface{}) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", installPackageGroup, installPackageVersion),
-			"kind":       "PackageRepository",
+			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, installPackageVersion),
+			"kind":       repositoryResource,
 			"metadata": map[string]interface{}{
-				"name": name,
+				"name":      name,
+				"namespace": globalPackagingNamespace,
 			},
 			"spec": spec,
 		},
@@ -301,12 +324,14 @@ func TestGetPackageRepositories(t *testing.T) {
 			},
 			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
-					Name: "repo-1",
-					Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+					Name:      "repo-1",
+					Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
+					Namespace: globalPackagingNamespace,
 				},
 				{
-					Name: "repo-2",
-					Url:  "projects.registry.example.com/repo-2/main@sha256:abcd",
+					Name:      "repo-2",
+					Url:       "projects.registry.example.com/repo-2/main@sha256:abcd",
+					Namespace: globalPackagingNamespace,
 				},
 			},
 		},
@@ -319,7 +344,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",
+							{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",
 						},
 						repositoriesFromSpecs(tc.repoSpecs)...,
 					), nil
@@ -378,8 +403,9 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 			name: "returns a repo for an imgpkgBundle type",
 			in:   repositoryFromSpec("valid-name", validSpec),
 			expected: &v1alpha1.PackageRepository{
-				Name: "valid-name",
-				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Name:      "valid-name",
+				Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 		{
@@ -392,8 +418,9 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 				},
 			}),
 			expected: &v1alpha1.PackageRepository{
-				Name: "valid-name",
-				Url:  "host.com/username/image:v0.1.0",
+				Name:      "valid-name",
+				Url:       "host.com/username/image:v0.1.0",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 		{
@@ -406,8 +433,9 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 				},
 			}),
 			expected: &v1alpha1.PackageRepository{
-				Name: "valid-name",
-				Url:  "https://host.com/archive.tgz",
+				Name:      "valid-name",
+				Url:       "https://host.com/archive.tgz",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 		{
@@ -420,8 +448,9 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 				},
 			}),
 			expected: &v1alpha1.PackageRepository{
-				Name: "valid-name",
-				Url:  "https://github.com/k14s/k8s-simple-app-example",
+				Name:      "valid-name",
+				Url:       "https://github.com/k14s/k8s-simple-app-example",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 	}

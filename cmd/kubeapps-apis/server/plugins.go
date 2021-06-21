@@ -103,7 +103,7 @@ func sortPlugins(p []*plugins.Plugin) {
 
 // GetConfiguredPlugins returns details for each configured plugin.
 func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
-	log.Infof("+GetConfiguredPlugins")
+	log.Infof("+core GetConfiguredPlugins")
 	return &plugins.GetConfiguredPluginsResponse{
 		Plugins: s.plugins,
 	}, nil

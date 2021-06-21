@@ -14,8 +14,10 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	log "k8s.io/klog/v2"
 )
 
 // packagesServer implements the API defined in proto/kubeappsapis/core/packages/v1alpha1/packages.proto
@@ -35,6 +37,13 @@ func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
 
 // GetAvailablePackages returns the packages based on the request.
 func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
+	contextMsg := ""
+	if request.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+	}
+
+	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
+
 	pkgs := []*packages.AvailablePackageSummary{}
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.plugins {
@@ -46,9 +55,11 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		// Add the plugin for the pkgs
 		pluginPkgs := response.AvailablePackagesSummaries
 		for _, r := range pluginPkgs {
+			if r.AvailablePackageRef == nil {
+				r.AvailablePackageRef = &packages.AvailablePackageReference{}
+			}
 			r.AvailablePackageRef.Plugin = p.plugin
 		}
-
 		pkgs = append(pkgs, pluginPkgs...)
 	}
 
