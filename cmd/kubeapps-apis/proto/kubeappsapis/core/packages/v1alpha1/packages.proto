@@ -249,7 +249,7 @@ message Context {
   // Namespace
   //
   // A namespace must be provided if the context of the operation is for a resource
-	// or resources in a particular namespace.
+  // or resources in a particular namespace.
   string namespace = 2;
 }
 
