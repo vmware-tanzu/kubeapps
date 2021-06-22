@@ -10,17 +10,27 @@ COPY cmd cmd
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build ./cmd/kubeapps-apis
-# Build the current standard plugins
+
+# Build 'kapp-controller' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
     -o /kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/kapp_controller/packages/v1alpha1/*.go
+
+## Build 'fluxv2' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
     -o /fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/*.go
+
+## Build 'helm' plugin, version 'v1alpha1'
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go build \
+    -o /helm-packages-v1alpha1-plugin.so -buildmode=plugin \
+    ./cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/*.go
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
 # are loaded using the dynamic linker.
@@ -29,6 +39,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeapps-apis /kubeapps-apis
 COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/
 COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/
+COPY --from=builder /helm-packages-v1alpha1-plugin.so /plugins/
 
 EXPOSE 50051
 USER 1001
