@@ -96,10 +96,10 @@ spec:
             - name: ASSET_SYNCER_DB_USERNAME
               value: postgres
             - name: ASSET_SYNCER_DB_USERPASSWORD
-                valueFrom:
-                  secretKeyRef:
-                    key: postgresql-password
-                    name: {{ include "kubeapps.postgresql.secretName" . }}
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-password
+                  name: {{ include "kubeapps.postgresql.secretName" . }}
             {{- if .Values.kubeappsapis.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
