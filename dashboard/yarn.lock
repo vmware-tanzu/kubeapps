@@ -1300,13 +1300,13 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@formatjs/cli@^4.2.20":
-  version "4.2.20"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.2.20.tgz#c46f45b150b4164b8a0d3f6c7df5c2ea276e8987"
-  integrity sha512-KPJZP/1QvjK3juuEuQ96ETB7uhP9SGxT0L1VoeYu464KvLk5LLVd05D09m4b3mrAztfQ1KImHndfGFlfKhzv+Q==
+"@formatjs/cli@^4.2.21":
+  version "4.2.21"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.2.21.tgz#94df0830ebb4afdf7fd243a027dd8f4b4509980e"
+  integrity sha512-6F5ih85ROyhPkXKTNmgHdQ/LemfRYXgyZtv5AOXQ47OIOOKSn0ZaTMC7cUvVS0cga0Rmg2OByaiyzIj5FV21Rw==
   dependencies:
     "@formatjs/icu-messageformat-parser" "2.0.6"
-    "@formatjs/ts-transformer" "3.4.2"
+    "@formatjs/ts-transformer" "3.4.3"
     "@types/json-stable-stringify" "^1.0.32"
     "@types/lodash" "^4.14.150"
     "@types/node" "14"
@@ -1380,14 +1380,13 @@
     intl-messageformat "9.6.18"
     tslib "^2.1.0"
 
-"@formatjs/ts-transformer@3.4.2":
-  version "3.4.2"
-  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.4.2.tgz#4ccb662f8b549b1f83565b2a1b94c81f26bdf4cc"
-  integrity sha512-mESlb/dMi8hEjiPvUyrHFlA41aJY0cR1BlS0rTKCrqdwjgM9xl8u6hxn4Z2xPEfBW1pw+bwbam8QsvduEEbgRQ==
+"@formatjs/ts-transformer@3.4.3":
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.4.3.tgz#bc2397bd380fb3abc6be94a709d452e37ed3a9c0"
+  integrity sha512-CmsE+0rpGucWfK/cdVJ4oUfO7LbFJflGwJ6/U122wZhxRs59xcThUIRBBX7HU7Hx1BhtPa3LSW9QJc41D73tpQ==
   dependencies:
     "@formatjs/icu-messageformat-parser" "2.0.6"
     tslib "^2.1.0"
-    typescript "^4.0"
 
 "@hapi/address@2.x.x":
   version "2.1.4"
