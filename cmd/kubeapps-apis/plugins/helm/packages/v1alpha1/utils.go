@@ -20,11 +20,11 @@ import (
 	"math"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
+	log "k8s.io/klog/v2"
 )
 
 // TODO(agamez): logic temporaryly extracted from:
