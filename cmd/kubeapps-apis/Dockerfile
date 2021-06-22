@@ -5,17 +5,32 @@ WORKDIR /go/src/github.com/kubeapps/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
 COPY cmd cmd
+
+ARG BUF_VERSION="0.43.2"
+RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
+
 # With the trick below, Go's build cache is kept between builds.
 # https://github.com/golang/go/issues/27719#issuecomment-514747274
+RUN --mount=type=cache,target=/go/pkg/mod  \
+    --mount=type=cache,target=/root/.cache/go-build \ 
+    go mod download
+
+# Lint the proto files to detect errors at build time
+RUN /tmp/buf lint ./cmd/kubeapps-apis
+
+# Build the main grpc server
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build ./cmd/kubeapps-apis
-# Build the current standard plugins
+
+# Build 'kapp-controller' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
     -o /kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/kapp_controller/packages/v1alpha1/*.go
+
+## Build 'fluxv2' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
