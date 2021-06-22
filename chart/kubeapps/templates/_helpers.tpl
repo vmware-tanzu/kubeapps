@@ -59,10 +59,10 @@ Create name for kubeops based on the fullname
 {{- end -}}
 
 {{/*
-Create name for the kubeops config based on the fullname
+Create name for the clusters config based on the fullname
 */}}
-{{- define "kubeapps.kubeops-config.fullname" -}}
-{{- printf "%s-kubeops-config" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- define "kubeapps.clusters-config.fullname" -}}
+{{- printf "%s-clusters-config" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -70,6 +70,20 @@ Create proxy_pass for the frontend config
 */}}
 {{- define "kubeapps.frontend-config.proxy_pass" -}}
 http://{{ include "kubeapps.kubeops.fullname" . }}:{{ .Values.kubeops.service.port }}
+{{- end -}}
+
+{{/*
+Create proxy_pass for the kubeappsapis
+*/}}
+{{- define "kubeapps.kubeappsapis.proxy_pass" -}}
+http://{{ include "kubeapps.kubeappsapis.fullname" . }}:{{ .Values.kubeappsapis.service.port }}
+{{- end -}}
+
+{{/*
+Create name for kubeappsapis based on the fullname
+*/}}
+{{- define "kubeapps.kubeappsapis.fullname" -}}
+{{- printf "%s-internal-kubeappsapis" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
