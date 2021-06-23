@@ -18,7 +18,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/common/datastore"
+	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -113,4 +117,77 @@ func TestGetClient(t *testing.T) {
 		})
 	}
 
+}
+
+func TestAvailablePackageSummaryFromChart(t *testing.T) {
+	chartOK := &models.Chart{
+		Name:        "foo",
+		ID:          "foo",
+		Category:    "cat1",
+		Description: "best chart",
+		Icon:        "foo.bar/icon.svg",
+		Repo: &models.Repo{
+			Name:      "bar",
+			Namespace: "my-ns",
+		},
+		ChartVersions: []models.ChartVersion{
+			{Version: "1.0.0", AppVersion: "0.1.0"},
+			{Version: "1.0.0", AppVersion: "whatever"},
+			{Version: "whatever", AppVersion: "1.0.0"},
+		},
+	}
+
+	availablePackageSummaryOK := &corev1.AvailablePackageSummary{
+		DisplayName:      "foo",
+		LatestVersion:    "1.0.0",
+		IconUrl:          "foo.bar/icon.svg",
+		ShortDescription: "best chart",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Context:    &corev1.Context{Namespace: "my-ns"},
+			Identifier: "foo",
+		},
+	}
+
+	invalidChart := &models.Chart{Name: "foo"}
+
+	testCases := []struct {
+		name       string
+		in         *models.Chart
+		expected   *corev1.AvailablePackageSummary
+		statusCode codes.Code
+	}{
+		{
+			name:       "returns AvailablePackageSummary if the chart is correct",
+			in:         chartOK,
+			expected:   availablePackageSummaryOK,
+			statusCode: codes.OK,
+		},
+		{
+			name:       "returns internal error if empty chart",
+			in:         &models.Chart{},
+			statusCode: codes.Internal,
+		},
+		{
+			name:       "returns internal error if chart is invalid",
+			in:         invalidChart,
+			statusCode: codes.Internal,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			availablePackageSummary, err := AvailablePackageSummaryFromChart(tc.in)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				}
+			}
+		})
+	}
 }
