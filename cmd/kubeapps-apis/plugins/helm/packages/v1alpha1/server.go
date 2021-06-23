@@ -109,6 +109,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	// TODO: add more filters in the context?
 	cq := ChartQuery{
+		// TODO(agamez): verify that not including a namespace means that we return everything you can read
 		namespace: namespace,
 	}
 
