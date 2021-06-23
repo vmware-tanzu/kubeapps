@@ -66,7 +66,7 @@ func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *S
 	}
 }
 
-// getClient ensures a client getter is available and uses it to return the client.
+// GetClient ensures a client getter is available and uses it to return the client.
 func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 	if s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
@@ -76,6 +76,15 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
 	return client, nil
+}
+
+// GetManager ensures a manager is available and uses it to return the client.
+func (s *Server) GetManager() (assetManager, error) {
+	if s.manager == nil {
+		return nil, status.Errorf(codes.Internal, "server not configured with manager")
+	}
+	manager := s.manager
+	return manager, nil
 }
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
