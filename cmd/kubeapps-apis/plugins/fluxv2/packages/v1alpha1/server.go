@@ -148,10 +148,10 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 }
 
 // GetAvailablePackageSummaries streams the available packages based on the request.
-// note that as now, packages from only those repos in 'Ready' state will be returned, which is
-// different semantics from how GetPackageRepositories
-// for fluxv2 plug-in request context namespace is not relevant. Available packages may come
-// from any namespace accessible to the user
+// Note that currently packages are returned only from repos that are in a 'Ready'
+// state. For the fluxv2 plugin, the request context namespace (the target
+// namespace) is not relevant since charts from a repository in any namespace
+//  accessible to the user are available to be installed in the target namespace.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 
