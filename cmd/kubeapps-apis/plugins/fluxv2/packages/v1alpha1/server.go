@@ -27,7 +27,6 @@ import (
 	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 
-	"github.com/kubeapps/kubeapps/pkg/helm"
 	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -114,32 +113,10 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 	responseRepos := []*v1alpha1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
-		obj := repoUnstructured.Object
-		repo := &v1alpha1.PackageRepository{}
-		name, found, err := unstructured.NestedString(obj, "metadata", "name")
-		if err != nil || !found {
-			return nil, status.Errorf(
-				codes.Internal,
-				"required field metadata.name not found on HelmRepository: %v:\n%v", err, obj)
+		repo, err := newPackageRepository(repoUnstructured.Object)
+		if err != nil {
+			return nil, err
 		}
-		repo.Name = name
-
-		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
-		if err != nil || !found {
-			return nil, status.Errorf(
-				codes.Internal,
-				"field metadata.namespace not found on HelmRepository: %v:\n%v", err, obj)
-		}
-		repo.Namespace = namespace
-
-		url, found, err := unstructured.NestedString(obj, "spec", "url")
-		if err != nil || !found {
-			return nil, status.Errorf(
-				codes.Internal,
-				"required field spec.url not found on HelmRepository: %v:\n%v", err, obj)
-		}
-		repo.Url = url
-
 		responseRepos = append(responseRepos, repo)
 	}
 	return &v1alpha1.GetPackageRepositoriesResponse{
@@ -147,7 +124,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	}, nil
 }
 
-// GetAvailablePackageSummaries streams the available packages based on the request.
+// GetAvailablePackageSummaries returns the available packages based on the request.
 // Note that currently packages are returned only from repos that are in a 'Ready'
 // state. For the fluxv2 plugin, the request context namespace (the target
 // namespace) is not relevant since charts from a repository in any namespace
@@ -171,50 +148,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	// TODO each repo should be read in a separate go routine
-	responsePackages := []*corev1.AvailablePackageSummary{}
-	for _, unstructuredRepo := range repos.Items {
-		obj := unstructuredRepo.Object
-		name, found, err := unstructured.NestedString(obj, "metadata", "name")
-		if err != nil || !found {
-			log.Errorf("required field metadata.name not found on HelmRepository: %w:\n%v", err, obj)
-			// just skip over to the next one
-			continue
-		}
-
-		ready, err := isRepoReady(obj)
-		if err != nil || !ready {
-			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%v", name, err, obj)
-			continue
-		}
-
-		url, found, err := unstructured.NestedString(obj, "status", "url")
-		if err != nil || !found {
-			log.Infof("expected field status.url not found on HelmRepository [%s]: %v:\n%v", name, err, obj)
-			continue
-		}
-
-		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
-		repo := v1alpha1.PackageRepository{
-			Name: name,
-		}
-		namespace, found, err := unstructured.NestedString(obj, "metadata", "namespace")
-		if err != nil || !found {
-			// should not happen in reality
-			log.Errorf("field metadata.namespace not found on HelmRepository: %w:\n%v", err, obj)
-			// just skip over to the next one
-			continue
-		}
-		repo.Namespace = namespace
-
-		repoPackages, err := readPackagesFromRepoIndex(&repo, url)
-		if err != nil {
-			// just skip this repo
-			log.Errorf("Failed to read packages for repository [%s] due to %v", name, err)
-		} else {
-			responsePackages = append(responsePackages, repoPackages...)
-		}
+	responsePackages, err := readPackageSummariesFromRepoList(repos.Items)
+	if err != nil {
+		return nil, err
 	}
+
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackagesSummaries: responsePackages,
 	}, nil
@@ -380,42 +318,4 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
 	}
-}
-
-func readPackagesFromRepoIndex(repo *v1alpha1.PackageRepository, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
-	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
-	// local cluster, not some remote repo.
-	// e.g. http://source-controller.flux-system.svc.cluster.local./helmrepository/default/bitnami/index.yaml
-	// Flux does the hard work of pulling the index file from remote repo
-	// into local cluster based on secretRef associated with HelmRepository, if applicable
-	bytes, err := httpclient.Get(indexURL, httpclient.New(), map[string]string{})
-	if err != nil {
-		return nil, err
-	}
-
-	modelRepo := &chart.Repo{
-		Namespace: repo.Namespace,
-		Name:      repo.Name,
-		URL:       repo.Url,
-		Type:      "helm",
-	}
-	charts, err := helm.ChartsFromIndex(bytes, modelRepo, true)
-	if err != nil {
-		return nil, err
-	}
-
-	responsePackages := []*corev1.AvailablePackageSummary{}
-	for _, chart := range charts {
-		pkg := &corev1.AvailablePackageSummary{
-			DisplayName:   chart.Name,
-			LatestVersion: chart.ChartVersions[0].Version,
-			IconUrl:       chart.Icon,
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Context:    &corev1.Context{Namespace: repo.Namespace},
-				Identifier: chart.ID,
-			},
-		}
-		responsePackages = append(responsePackages, pkg)
-	}
-	return responsePackages, nil
 }
