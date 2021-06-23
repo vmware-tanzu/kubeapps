@@ -131,7 +131,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 			response, err := s.GetAvailablePackageSummaries(
 				context.Background(),
-				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}})
+				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -201,7 +201,35 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		expectedPackages []*corev1.AvailablePackageSummary
 	}{
 		{
-			testName:      "it returns a couple of fluxv2 packages from the cluster",
+			testName:      "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			repoUrl:       "https://example.repo.com/charts",
+			repoIndex:     "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1/acs-engine-autoscaler",
+						Context:    &corev1.Context{Namespace: "default"},
+					},
+				},
+				{
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1/wordpress",
+						Context:    &corev1.Context{Namespace: "default"},
+					},
+				},
+			},
+		},
+		{
+			testName:      "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
@@ -229,20 +257,34 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName:      "it returns none of fluxv2 packages from the cluster that don't match request ns",
-			repoName:      "bitnami-4",
+			testName:      "it returns a couple of fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
+			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
-					Namespace: "non-default",
+			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
+			repoUrl:       "https://example.repo.com/charts",
+			repoIndex:     "testdata/valid-index.yaml",
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1/acs-engine-autoscaler",
+						Context:    &corev1.Context{Namespace: "default"},
+					},
+				},
+				{
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1/wordpress",
+						Context:    &corev1.Context{Namespace: "default"},
+					},
 				},
 			},
-			repoUrl:          "https://example.repo.com/charts",
-			repoIndex:        "testdata/valid-index.yaml",
-			expectedPackages: []*corev1.AvailablePackageSummary{},
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			indexYAMLBytes, err := ioutil.ReadFile(tc.repoIndex)

@@ -146,16 +146,14 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 // GetAvailablePackageSummaries streams the available packages based on the request.
 // note that as now, packages from only those repos in 'Ready' state will be returned, which is
-// different semantics from how GetPackageRepository
+// different semantics from how GetPackageRepositories
+// for fluxv2 plug-in request context namespace is not relevant. Available packages may come
+// from any namespace accessible to the user
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+GetAvailablePackageSummaries(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
-	}
-
-	if len(request.Context.Namespace) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "required argument 'namespace' is missing")
 	}
 
 	if request.Context.Cluster != "" {
@@ -165,7 +163,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.Context.Cluster)
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Context.Namespace)
+	repos, err := s.getHelmRepos(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +239,9 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	// unzip and untar .tgz file
 	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
-	// local cluster, not remote repo. Flux does the hard work of pulling the bits from remote repo
+	// local cluster, not remote repo.
+	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
+	// Flux does the hard work of pulling the bits from remote repo
 	// based on secretRef associated with HelmRepository, if applicable
 	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", httpclient.New())
 	if err != nil {
@@ -353,6 +353,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	return waitUntilChartPullComplete(watcher)
 }
 
+// namespace maybe "", in which case repositories from all namespaces are returned
 func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	client, err := s.GetClient(ctx)
 	if err != nil {
@@ -379,7 +380,9 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 
 func readPackagesFromRepoIndex(repo *v1alpha1.PackageRepository, indexURL string) ([]*corev1.AvailablePackageSummary, error) {
 	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
-	// local cluster, not some remote repo. Flux does the hard work of pulling the index file from remote repo
+	// local cluster, not some remote repo.
+	// e.g. http://source-controller.flux-system.svc.cluster.local./helmrepository/default/bitnami/index.yaml
+	// Flux does the hard work of pulling the index file from remote repo
 	// into local cluster based on secretRef associated with HelmRepository, if applicable
 	bytes, err := httpclient.Get(indexURL, httpclient.New(), map[string]string{})
 	if err != nil {
