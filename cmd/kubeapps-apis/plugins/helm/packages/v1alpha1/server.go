@@ -122,8 +122,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	for _, chart := range charts {
 		pkg, err := AvailablePackageSummaryFromChart(chart)
 		if err != nil {
-			log.Fatalf("%s", err)
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
