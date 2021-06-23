@@ -190,23 +190,31 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
+type testRepoStruct struct {
+	name      string
+	namespace string
+	url       string
+	index     string
+}
+
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		testName         string
 		request          *corev1.GetAvailablePackageSummariesRequest
-		repoName         string
-		repoNamespace    string
-		repoUrl          string
-		repoIndex        string
+		testRepos        []testRepoStruct
 		expectedPackages []*corev1.AvailablePackageSummary
 	}{
 		{
-			testName:      "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
-			repoName:      "bitnami-1",
-			repoNamespace: "default",
-			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
-			repoUrl:       "https://example.repo.com/charts",
-			repoIndex:     "testdata/valid-index.yaml",
+			testName: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					DisplayName:   "acs-engine-autoscaler",
@@ -229,12 +237,16 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName:      "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
-			repoName:      "bitnami-1",
-			repoNamespace: "default",
-			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
-			repoUrl:       "https://example.repo.com/charts",
-			repoIndex:     "testdata/valid-index.yaml",
+			testName: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					DisplayName:   "acs-engine-autoscaler",
@@ -257,12 +269,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName:      "it returns a couple of fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
-			repoName:      "bitnami-1",
-			repoNamespace: "default",
-			request:       &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
-			repoUrl:       "https://example.repo.com/charts",
-			repoIndex:     "testdata/valid-index.yaml",
+			testName: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     "testdata/jetstack-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					DisplayName:   "acs-engine-autoscaler",
@@ -271,6 +293,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
 						Context:    &corev1.Context{Namespace: "default"},
+					},
+				},
+				{
+					DisplayName:   "cert-manager",
+					LatestVersion: "v1.4.0",
+					IconUrl:       "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "jetstack-1/cert-manager",
+						Context:    &corev1.Context{Namespace: "ns1"},
 					},
 				},
 				{
@@ -287,32 +318,35 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			indexYAMLBytes, err := ioutil.ReadFile(tc.repoIndex)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
+			repos := []runtime.Object{}
+			for _, rs := range tc.testRepos {
+				indexYAMLBytes, err := ioutil.ReadFile(rs.index)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 
-			// stand up an http server just for the duration of this test
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, string(indexYAMLBytes))
-			}))
-			defer ts.Close()
+				// stand up an http server just for the duration of this test
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					fmt.Fprintln(w, string(indexYAMLBytes))
+				}))
+				defer ts.Close()
 
-			repoSpec := map[string]interface{}{
-				"url":      tc.repoUrl,
-				"interval": "1m0s",
-			}
-			repoStatus := map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
+				repoSpec := map[string]interface{}{
+					"url":      rs.url,
+					"interval": "1m0s",
+				}
+				repoStatus := map[string]interface{}{
+					"conditions": []interface{}{
+						map[string]interface{}{
+							"type":   "Ready",
+							"status": "True",
+							"reason": "IndexationSucceed",
+						},
 					},
-				},
-				"url": ts.URL,
+					"url": ts.URL,
+				}
+				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
-			repo := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
 			s := Server{
 				clientGetter: func(context.Context) (dynamic.Interface, error) {
 					return fake.NewSimpleDynamicClientWithCustomListKinds(
@@ -320,7 +354,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						map[schema.GroupVersionResource]string{
 							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 						},
-						repo,
+						repos...,
 					), nil
 				},
 			}
