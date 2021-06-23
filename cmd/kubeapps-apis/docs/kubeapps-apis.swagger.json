@@ -747,7 +747,7 @@
     "v1alpha1AvailablePackageDetail": {
       "type": "object",
       "properties": {
-        "packageRef": {
+        "availablePackageRef": {
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
           "description": "A reference uniquely identifying the package.",
           "title": "Available package reference"
