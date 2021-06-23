@@ -160,7 +160,7 @@ curl -s http://localhost:8080/core/packages/v1alpha1/packagerepositories | jq .
 }
 ```
 
-Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available in your cluster.
+Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available ([example](https://github.com/vmware-tanzu/carvel-kapp-controller/tree/develop/examples/packaging-with-repo)) in your cluster.
 ## Hacking
 
 A few extra tools will be needed to contribute to the development of this service.

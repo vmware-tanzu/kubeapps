@@ -46,6 +46,9 @@ const (
 	fluxHelmChartList      = "HelmChartList"
 )
 
+// Compile-time statement to ensure this service implementation satisfies the core packaging API
+var _ corev1.PackagesServiceServer = (*Server)(nil)
+
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
@@ -91,7 +94,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 // GetPackageRepositories returns the package repositories based on the request.
 // note that this func currently returns ALL repositories, not just those in 'ready' (reconciled) state
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(request: [%v])", request)
+	log.Infof("+fluxv2 GetPackageRepositories(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
@@ -150,7 +153,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 // for fluxv2 plug-in request context namespace is not relevant. Available packages may come
 // from any namespace accessible to the user
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	log.Infof("+GetAvailablePackageSummaries(request: [%v])", request)
+	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
@@ -218,7 +221,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	log.Infof("+GetAvailablePackageDetail(request: [%v])", request)
+	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
 
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")

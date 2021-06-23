@@ -15,8 +15,8 @@ metadata:
   {{- end }}
 rules:
   - apiGroups:
-      - "package.carvel.dev"
-      - "install.package.carvel.dev"
+      - "packageinstalls.packaging.carvel.dev"
+      - "packagerepositories.packaging.carvel.dev"
       - "source.toolkit.fluxcd.io"
     resources: ['*']
     verbs: ['*']

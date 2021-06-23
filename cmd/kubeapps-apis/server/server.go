@@ -121,7 +121,7 @@ type gwHandlerArgs struct {
 
 // Create a gateway mux that does not emit unpopulated fields.
 func gatewayMux() *runtime.ServeMux {
-	return runtime.NewServeMux(
+	gwmux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				EmitUnpopulated: false,
@@ -131,4 +131,23 @@ func gatewayMux() *runtime.ServeMux {
 			},
 		}),
 	)
+
+	// TODO(agamez): remove these '/openapi.json' and '/docs' paths. They are serving a
+	// static 'swagger-ui' dashboard with hardcoded values just intended for develoment purposes.
+	// This docs will eventually converge into the docs already (properly) served by the dashboard
+	err := gwmux.HandlePath(http.MethodGet, "/openapi.json", runtime.HandlerFunc(func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		http.ServeFile(w, r, "docs/kubeapps-apis.swagger.json")
+	}))
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
+	err = gwmux.HandlePath(http.MethodGet, "/docs", runtime.HandlerFunc(func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		http.ServeFile(w, r, "docs/index.html")
+	}))
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
+	return gwmux
 }

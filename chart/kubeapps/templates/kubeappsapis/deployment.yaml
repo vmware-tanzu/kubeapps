@@ -100,7 +100,7 @@ spec:
             {{- end }}
           {{- end }}
           ports:
-            - name: grpc_http
+            - name: grpc-http
               containerPort: {{ .Values.kubeappsapis.containerPort }}
           {{- if .Values.kubeappsapis.livenessProbe.enabled }}
           livenessProbe: {{- omit .Values.kubeappsapis.livenessProbe "enabled" | toYaml | nindent 12 }}

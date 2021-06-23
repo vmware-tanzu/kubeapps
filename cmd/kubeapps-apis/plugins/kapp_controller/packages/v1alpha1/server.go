@@ -39,16 +39,23 @@ import (
 )
 
 const (
+	packagingGroup = "packaging.carvel.dev"
+
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	packageGroup     = "package.carvel.dev"
 	packageVersion   = "v1alpha1"
-	packagesResource = "packages"
+	packageResource  = "PackageInstall"
+	packagesResource = "packageinstalls"
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
-	installPackageGroup   = "install.package.carvel.dev"
 	installPackageVersion = "v1alpha1"
+	repositoryResource    = "PackageRepository"
 	repositoriesResource  = "packagerepositories"
+
+	globalPackagingNamespace = "kapp-controller-packaging-global"
 )
+
+// Compile-time statement to ensure this service implementation satisfies the core packaging API
+var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
@@ -85,16 +92,27 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if request.Context != nil {
 		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
 	}
-	log.Infof("+GetAvailablePackageSummaries %s", contextMsg)
+
+	log.Infof("+kapp_controller GetAvailablePackageSummaries %s", contextMsg)
+
+	namespace := ""
+	if request.Context != nil {
+		if request.Context.Cluster != "" {
+			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
+		}
+		if request.Context.Namespace != "" {
+			namespace = request.Context.Namespace
+		}
+	}
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
+	packageResource := schema.GroupVersionResource{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}
 
-	pkgs, err := client.Resource(packageResource).List(ctx, metav1.ListOptions{})
+	pkgs, err := client.Resource(packageResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
 	}
@@ -114,15 +132,18 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*corev1.AvailablePackageSummary, error) {
 	pkg := &corev1.AvailablePackageSummary{}
-	name, found, err := unstructured.NestedString(ap.Object, "spec", "publicName")
+
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
+	name, found, err := unstructured.NestedString(ap.Object, "spec", "packageRef", "refName")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field publicName not found on kapp-controller package: %v:\n%v", err, ap.Object)
+		return nil, status.Errorf(codes.Internal, "required field spec.packageRef.refName not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
 	pkg.DisplayName = name
 
-	version, found, err := unstructured.NestedString(ap.Object, "spec", "version")
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
+	version, found, err := unstructured.NestedString(ap.Object, "status", "version")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field version not found on kapp-controller package: %v:\n%v", err, ap.Object)
+		return nil, status.Errorf(codes.Internal, "required field status.version not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
 	pkg.LatestVersion = version
 	return pkg, nil
@@ -134,17 +155,28 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	if request.Context != nil {
 		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
 	}
-	log.Infof("+GetPackageRepositories %s", contextMsg)
+
+	log.Infof("+kapp_controller GetPackageRepositories %s", contextMsg)
+
+	namespace := globalPackagingNamespace
+	if request.Context != nil {
+		if request.Context.Cluster != "" {
+			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
+		}
+		if request.Context.Namespace != "" {
+			namespace = request.Context.Namespace
+		}
+	}
 
 	client, err := s.GetClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	repositoryResource := schema.GroupVersionResource{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}
+	repositoryResource := schema.GroupVersionResource{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}
 
 	// Currently checks globally. Update to handle namespaced requests (?)
-	repos, err := client.Resource(repositoryResource).List(ctx, metav1.ListOptions{})
+	repos, err := client.Resource(repositoryResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to list kapp-controller repositories: %w", err)
 	}
@@ -164,13 +196,20 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 func packageRepositoryFromUnstructured(pr *unstructured.Unstructured) (*v1alpha1.PackageRepository, error) {
 	repo := &v1alpha1.PackageRepository{}
+
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 	name, found, err := unstructured.NestedString(pr.Object, "metadata", "name")
 	if err != nil || !found || name == "" {
 		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on PackageRepository: %v:\n%v", err, pr.Object)
 	}
 	repo.Name = name
 
-	// TODO(absoludity): kapp-controller may soon introduce namespaced packagerepositories
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
+	namespace, found, err := unstructured.NestedString(pr.Object, "metadata", "namespace")
+	if err != nil || !found || namespace == "" {
+		return nil, status.Errorf(codes.Internal, "required field metadata.namespace not found on PackageRepository: %v:\n%v", err, pr.Object)
+	}
+	repo.Namespace = namespace
 
 	// See the PackageRepository CR at
 	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
