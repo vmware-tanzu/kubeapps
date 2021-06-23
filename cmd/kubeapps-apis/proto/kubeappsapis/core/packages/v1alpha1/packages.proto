@@ -175,7 +175,7 @@ message AvailablePackageDetail {
   // Available package reference
   //
   // A reference uniquely identifying the package.
-  AvailablePackageReference package_ref = 1;
+  AvailablePackageReference available_package_ref = 1;
 
   // Available package name
   //
