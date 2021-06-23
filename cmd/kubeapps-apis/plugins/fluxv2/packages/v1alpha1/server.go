@@ -171,6 +171,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
+	// TODO each repo should be read in a separate go routine
 	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, unstructuredRepo := range repos.Items {
 		obj := unstructuredRepo.Object
