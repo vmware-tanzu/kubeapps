@@ -15,14 +15,17 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/common/datastore"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +34,16 @@ import (
 	"k8s.io/client-go/dynamic/fake"
 	log "k8s.io/klog/v2"
 )
+
+func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), assetManager) {
+	var manager assetManager
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	manager = &postgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeappsNamespace"}}
+	return mock, func() { db.Close() }, manager
+}
 
 func TestGetClient(t *testing.T) {
 	kubeappsNamespace := "kubeapps"
@@ -56,28 +69,28 @@ func TestGetClient(t *testing.T) {
 		statusCodeManager codes.Code
 	}{
 		{
-			name:              "returns internal error status when no getter configured",
+			name:              "it returns internal error status when no getter configured",
 			manager:           manager,
 			clientGetter:      nil,
 			statusCodeClient:  codes.Internal,
 			statusCodeManager: codes.OK,
 		},
 		{
-			name:              "returns internal error status when no manager configured",
+			name:              "it returns internal error status when no manager configured",
 			manager:           nil,
 			clientGetter:      getter,
 			statusCodeClient:  codes.OK,
 			statusCodeManager: codes.Internal,
 		},
 		{
-			name:              "returns internal error status when no getter/manager configured",
+			name:              "it returns internal error status when no getter/manager configured",
 			manager:           nil,
 			clientGetter:      nil,
 			statusCodeClient:  codes.Internal,
 			statusCodeManager: codes.Internal,
 		},
 		{
-			name:    "returns failed-precondition when configGetter itself errors",
+			name:    "it returns failed-precondition when configGetter itself errors",
 			manager: manager,
 			clientGetter: func(context.Context) (dynamic.Interface, error) {
 				return nil, fmt.Errorf("Bang!")
@@ -86,7 +99,7 @@ func TestGetClient(t *testing.T) {
 			statusCodeManager: codes.OK,
 		},
 		{
-			name:         "returns client without error when configured correctly",
+			name:         "it returns client without error when configured correctly",
 			manager:      manager,
 			clientGetter: getter,
 		},
@@ -157,18 +170,18 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 		statusCode codes.Code
 	}{
 		{
-			name:       "returns AvailablePackageSummary if the chart is correct",
+			name:       "it returns AvailablePackageSummary if the chart is correct",
 			in:         chartOK,
 			expected:   availablePackageSummaryOK,
 			statusCode: codes.OK,
 		},
 		{
-			name:       "returns internal error if empty chart",
+			name:       "it returns internal error if empty chart",
 			in:         &models.Chart{},
 			statusCode: codes.Internal,
 		},
 		{
-			name:       "returns internal error if chart is invalid",
+			name:       "it returns internal error if chart is invalid",
 			in:         invalidChart,
 			statusCode: codes.Internal,
 		},
@@ -190,4 +203,101 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAvailablePackageSummaries(t *testing.T) {
+	getter := func(context.Context) (dynamic.Interface, error) {
+		return fake.NewSimpleDynamicClientWithCustomListKinds(
+			runtime.NewScheme(),
+			map[schema.GroupVersionResource]string{
+				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
+			},
+		), nil
+	}
+	chartOK := &models.Chart{
+		Name:        "foo",
+		ID:          "foo",
+		Category:    "cat1",
+		Description: "best chart",
+		Icon:        "foo.bar/icon.svg",
+		Repo: &models.Repo{
+			Name:      "bar",
+			Namespace: "my-ns",
+		},
+		ChartVersions: []models.ChartVersion{
+			{Version: "1.0.0", AppVersion: "0.1.0"},
+			{Version: "1.0.0", AppVersion: "whatever"},
+			{Version: "whatever", AppVersion: "1.0.0"},
+		},
+	}
+	availablePackageSummaryOK := &corev1.AvailablePackageSummary{
+		DisplayName:      "foo",
+		LatestVersion:    "1.0.0",
+		IconUrl:          "foo.bar/icon.svg",
+		ShortDescription: "best chart",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Context:    &corev1.Context{Namespace: "my-ns"},
+			Identifier: "foo",
+		},
+	}
+	testCases := []struct {
+		name             string
+		charts           []*models.Chart
+		expectedPackages []*corev1.AvailablePackageSummary
+		statusCode       codes.Code
+	}{
+		{
+			name:             "it returns a set of availablePackageSummary from the database",
+			charts:           []*models.Chart{chartOK},
+			expectedPackages: []*corev1.AvailablePackageSummary{availablePackageSummaryOK},
+			statusCode:       codes.OK,
+		},
+		{
+			name:             "it returns an internal error status if response does not contain version",
+			charts:           []*models.Chart{{Name: "foo"}},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+			statusCode:       codes.Internal,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mock, cleanup, manager := setMockManager(t)
+			defer cleanup()
+			s := Server{
+				clientGetter: getter,
+				manager:      manager,
+			}
+
+			rows := sqlmock.NewRows([]string{"info"})
+			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tc.charts))
+
+			for _, chart := range tc.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
+			}
+			mock.ExpectQuery("SELECT info FROM").
+				WillReturnRows(rows)
+
+			mock.ExpectQuery("^SELECT count(.+) FROM").
+				WillReturnRows(rowCount)
+
+			availablePackageSummaries, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+				if got, want := availablePackageSummaries.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				}
+			}
+		})
+	}
+
 }
