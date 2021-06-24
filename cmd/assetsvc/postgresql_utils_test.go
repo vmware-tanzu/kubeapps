@@ -40,7 +40,7 @@ func getMockManager(t *testing.T) (*postgresAssetManager, sqlmock.Sqlmock, func(
 	return pgManager, mock, func() { db.Close() }
 }
 
-func Test_PGgetChart(t *testing.T) {
+func Test_PGGetChart(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -58,7 +58,7 @@ func Test_PGgetChart(t *testing.T) {
 		WithArgs("namespace", "foo").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(dbChartJSON)))
 
-	chart, err := pgManager.getChart("namespace", "foo")
+	chart, err := pgManager.GetChart("namespace", "foo")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -71,7 +71,7 @@ func Test_PGgetChart(t *testing.T) {
 	}
 }
 
-func Test_PGgetChartVersion(t *testing.T) {
+func Test_PGGetChartVersion(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -90,7 +90,7 @@ func Test_PGgetChartVersion(t *testing.T) {
 		WithArgs("namespace", "foo").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(dbChartJSON)))
 
-	chart, err := pgManager.getChartVersion("namespace", "foo", "1.0.0")
+	chart, err := pgManager.GetChartVersion("namespace", "foo", "1.0.0")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -105,7 +105,7 @@ func Test_PGgetChartVersion(t *testing.T) {
 	}
 }
 
-func Test_getChartFiles(t *testing.T) {
+func Test_GetChartFiles(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -118,7 +118,7 @@ func Test_getChartFiles(t *testing.T) {
 		WithArgs("namespace", "foo").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(filesJSON)))
 
-	files, err := pgManager.getChartFiles("namespace", "foo")
+	files, err := pgManager.GetChartFiles("namespace", "foo")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -127,7 +127,7 @@ func Test_getChartFiles(t *testing.T) {
 	}
 }
 
-func Test_getChartFiles_withSlashes(t *testing.T) {
+func Test_GetChartFiles_withSlashes(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -140,7 +140,7 @@ func Test_getChartFiles_withSlashes(t *testing.T) {
 		WithArgs("namespace", "fo%2Fo").
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(string(filesJSON)))
 
-	files, err := pgManager.getChartFiles("namespace", "fo%2Fo")
+	files, err := pgManager.GetChartFiles("namespace", "fo%2Fo")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -149,7 +149,7 @@ func Test_getChartFiles_withSlashes(t *testing.T) {
 	}
 }
 
-func Test_getChartsWithFilters(t *testing.T) {
+func Test_GetChartsWithFilters(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -173,7 +173,7 @@ func Test_getChartsWithFilters(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "foo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "foo", version: version, appVersion: appVersion}, 1, 0)
+	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "foo", version: version, appVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -189,7 +189,7 @@ func Test_getChartsWithFilters(t *testing.T) {
 	}
 }
 
-func Test_getChartsWithFilters_withSlashes(t *testing.T) {
+func Test_GetChartsWithFilters_withSlashes(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
@@ -213,7 +213,7 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "fo%2Fo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "fo%2Fo", version: version, appVersion: appVersion}, 1, 0)
+	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "fo%2Fo", version: version, appVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -229,7 +229,7 @@ func Test_getChartsWithFilters_withSlashes(t *testing.T) {
 	}
 }
 
-func Test_getAllChartCategories(t *testing.T) {
+func Test_GetAllChartCategories(t *testing.T) {
 
 	tests := []struct {
 		name                    string
@@ -276,7 +276,7 @@ func Test_getAllChartCategories(t *testing.T) {
 				WithArgs(expectedParams...).
 				WillReturnRows(rows)
 
-			chartCategories, err := pgManager.getAllChartCategories(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}})
+			chartCategories, err := pgManager.GetAllChartCategories(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}})
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}
@@ -286,7 +286,7 @@ func Test_getAllChartCategories(t *testing.T) {
 		})
 	}
 }
-func Test_getPaginatedChartList(t *testing.T) {
+func Test_GetPaginatedChartList(t *testing.T) {
 	availableCharts := []*models.Chart{
 		{ID: "bar", ChartVersions: []models.ChartVersion{{Digest: "456"}}},
 		{ID: "copyFoo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
@@ -424,7 +424,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 			mock.ExpectQuery("^SELECT count(.+) FROM").
 				WillReturnRows(rowCount)
 
-			charts, totalPages, err := pgManager.getPaginatedChartListWithFilters(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}}, tt.pageNumber, tt.pageSize)
+			charts, totalPages, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}}, tt.pageNumber, tt.pageSize)
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}
@@ -443,7 +443,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 	}
 }
 
-func Test_generateWhereClause(t *testing.T) {
+func Test_GenerateWhereClause(t *testing.T) {
 	tests := []struct {
 		name           string
 		namespace      string
@@ -663,7 +663,7 @@ func Test_generateWhereClause(t *testing.T) {
 				repos:       tt.repos,
 				categories:  tt.categories,
 			}
-			whereQuery, whereQueryParams := pgManager.generateWhereClause(cq)
+			whereQuery, whereQueryParams := pgManager.GenerateWhereClause(cq)
 
 			if tt.expectedClause != whereQuery {
 				t.Errorf("Expecting query:\n'%s'\nreceived query:\n'%s'\nin '%s'", tt.expectedClause, whereQuery, tt.name)

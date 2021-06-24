@@ -39,7 +39,7 @@ type postgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
 }
 
-func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
+func NewPGManager(config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
 	m, err := dbutils.NewPGManager(config, kubeappsNamespace)
 	if err != nil {
 		return nil, err
@@ -47,8 +47,8 @@ func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManag
 	return &postgresAssetManager{m}, nil
 }
 
-func (m *postgresAssetManager) getAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error) {
-	whereQuery, whereQueryParams := m.generateWhereClause(cq)
+func (m *postgresAssetManager) GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error) {
+	whereQuery, whereQueryParams := m.GenerateWhereClause(cq)
 	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, whereQuery)
 
 	chartsCategories, err := m.QueryAllChartCategories(dbQuery, whereQueryParams...)
@@ -58,7 +58,7 @@ func (m *postgresAssetManager) getAllChartCategories(cq ChartQuery) ([]*models.C
 	return chartsCategories, nil
 }
 
-func (m *postgresAssetManager) getPaginatedChartList(whereQuery string, whereQueryParams []interface{}, pageNumber, pageSize int) ([]*models.Chart, int, error) {
+func (m *postgresAssetManager) GetPaginatedChartList(whereQuery string, whereQueryParams []interface{}, pageNumber, pageSize int) ([]*models.Chart, int, error) {
 	// Default (pageNumber,pageSize) = (1, 0) as in the handler.go
 	if pageNumber <= 0 {
 		pageNumber = 1
@@ -88,11 +88,11 @@ func (m *postgresAssetManager) getPaginatedChartList(whereQuery string, whereQue
 	return charts, numPages, nil
 }
 
-func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
-	return m.getChartWithFallback(namespace, chartID, enableFallbackQueryMode)
+func (m *postgresAssetManager) GetChart(namespace, chartID string) (models.Chart, error) {
+	return m.GetChartWithFallback(namespace, chartID, enableFallbackQueryMode)
 }
 
-func (m *postgresAssetManager) getChartWithFallback(namespace, chartID string, withFallback bool) (models.Chart, error) {
+func (m *postgresAssetManager) GetChartWithFallback(namespace, chartID string, withFallback bool) (models.Chart, error) {
 	var chart models.ChartIconString
 
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
@@ -135,11 +135,11 @@ func (m *postgresAssetManager) getChartWithFallback(namespace, chartID string, w
 	}, nil
 }
 
-func (m *postgresAssetManager) getChartVersion(namespace, chartID, version string) (models.Chart, error) {
-	return m.getChartVersionWithFallback(namespace, chartID, version, enableFallbackQueryMode)
+func (m *postgresAssetManager) GetChartVersion(namespace, chartID, version string) (models.Chart, error) {
+	return m.GetChartVersionWithFallback(namespace, chartID, version, enableFallbackQueryMode)
 }
 
-func (m *postgresAssetManager) getChartVersionWithFallback(namespace, chartID, version string, withFallback bool) (models.Chart, error) {
+func (m *postgresAssetManager) GetChartVersionWithFallback(namespace, chartID, version string, withFallback bool) (models.Chart, error) {
 
 	var chart models.Chart
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
@@ -173,11 +173,11 @@ func (m *postgresAssetManager) getChartVersionWithFallback(namespace, chartID, v
 	return chart, nil
 }
 
-func (m *postgresAssetManager) getChartFiles(namespace, filesID string) (models.ChartFiles, error) {
-	return m.getChartFilesWithFallback(namespace, filesID, enableFallbackQueryMode)
+func (m *postgresAssetManager) GetChartFiles(namespace, filesID string) (models.ChartFiles, error) {
+	return m.GetChartFilesWithFallback(namespace, filesID, enableFallbackQueryMode)
 }
 
-func (m *postgresAssetManager) getChartFilesWithFallback(namespace, filesID string, withFallback bool) (models.ChartFiles, error) {
+func (m *postgresAssetManager) GetChartFilesWithFallback(namespace, filesID string, withFallback bool) (models.ChartFiles, error) {
 	var chartFiles models.ChartFiles
 	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
@@ -199,16 +199,16 @@ func (m *postgresAssetManager) getChartFilesWithFallback(namespace, filesID stri
 	return chartFiles, nil
 }
 
-func (m *postgresAssetManager) getPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error) {
-	whereQuery, whereQueryParams := m.generateWhereClause(cq)
-	charts, numPages, err := m.getPaginatedChartList(whereQuery, whereQueryParams, pageNumber, pageSize)
+func (m *postgresAssetManager) GetPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error) {
+	whereQuery, whereQueryParams := m.GenerateWhereClause(cq)
+	charts, numPages, err := m.GetPaginatedChartList(whereQuery, whereQueryParams, pageNumber, pageSize)
 	if err != nil {
 		return []*models.Chart{}, 0, err
 	}
 	return charts, numPages, nil
 }
 
-func (m *postgresAssetManager) generateWhereClause(cq ChartQuery) (string, []interface{}) {
+func (m *postgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []interface{}) {
 	whereClauses := []string{}
 	whereQueryParams := []interface{}{}
 	whereQuery := ""
