@@ -116,7 +116,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if request.FilterOptions != nil {
 		cq.Categories = request.FilterOptions.Categories
 		cq.SearchQuery = request.FilterOptions.Query
-		cq.Repos = []string{request.FilterOptions.Repository}
+		cq.Repos = request.FilterOptions.Repositories
 	}
 
 	// TODO: We are not yet returning paginated results here

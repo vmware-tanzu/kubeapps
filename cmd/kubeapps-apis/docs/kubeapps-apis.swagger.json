@@ -165,11 +165,15 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
-            "description": "Repository where the packages belongs to.",
+            "name": "filterOptions.repositories",
+            "description": "Collection of repositories where the packages belong to.",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -331,11 +335,15 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
-            "description": "Repository where the packages belongs to.",
+            "name": "filterOptions.repositories",
+            "description": "Collection of repositories where the packages belong to.",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -513,11 +521,15 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
-            "description": "Repository where the packages belongs to.",
+            "name": "filterOptions.repositories",
+            "description": "Collection of repositories where the packages belong to.",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -652,11 +664,15 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
-            "description": "Repository where the packages belongs to.",
+            "name": "filterOptions.repositories",
+            "description": "Collection of repositories where the packages belong to.",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -723,9 +739,12 @@
           },
           "title": "Collection of categories for the request"
         },
-        "repository": {
-          "type": "string",
-          "title": "Repository where the packages belongs to"
+        "repositories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Collection of repositories where the packages belong to"
         }
       },
       "description": "FilterOptions available when requesting summaries",
