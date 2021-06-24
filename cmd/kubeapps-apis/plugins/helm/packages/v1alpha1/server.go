@@ -98,6 +98,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	log.Infof("+helm GetAvailablePackageSummaries %s", contextMsg)
 
+	// Check the request context (namespace and cluster)
 	namespace := ""
 	if request.Context != nil {
 		if request.Context.Cluster != "" {
@@ -106,18 +107,25 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		namespace = request.Context.Namespace
 	}
 
-	// TODO: add more filters in the context?
+	// Create the initial chart query with the namespace
 	cq := assetsvc_utils.ChartQuery{
-		// TODO(agamez): verify that not including a namespace means that we return everything you can read
 		Namespace: namespace,
 	}
 
-	// We are not returning paginated results here
+	// Add any other filter if a FilterOptions is passed
+	if request.FilterOptions != nil {
+		cq.Categories = request.FilterOptions.Categories
+		cq.SearchQuery = request.FilterOptions.Query
+		cq.Repos = []string{request.FilterOptions.Repository}
+	}
+
+	// TODO: We are not yet returning paginated results here
 	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
 	}
 
+	// Convert the charts response into a GetAvailablePackageSummariesResponse
 	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, chart := range charts {
 		pkg, err := AvailablePackageSummaryFromChart(chart)
