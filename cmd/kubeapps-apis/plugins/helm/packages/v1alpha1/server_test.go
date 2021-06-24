@@ -23,6 +23,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
@@ -35,20 +36,20 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), assetManager) {
-	var manager assetManager
+func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), assetsvc_utils.AssetManager) {
+	var manager assetsvc_utils.AssetManager
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	manager = &postgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeappsNamespace"}}
+	manager = &assetsvc_utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeappsNamespace"}}
 	return mock, func() { db.Close() }, manager
 }
 
 func TestGetClient(t *testing.T) {
 	kubeappsNamespace := "kubeapps"
 	dbConfig := datastore.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
-	manager, err := newPGManager(dbConfig, kubeappsNamespace)
+	manager, err := assetsvc_utils.NewPGManager(dbConfig, kubeappsNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -63,7 +64,7 @@ func TestGetClient(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		manager           assetManager
+		manager           assetsvc_utils.AssetManager
 		clientGetter      func(context.Context) (dynamic.Interface, error)
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code

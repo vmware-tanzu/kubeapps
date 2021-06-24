@@ -18,6 +18,7 @@ import (
 	"os"
 
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -37,7 +38,7 @@ type Server struct {
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
 	clientGetter func(context.Context) (dynamic.Interface, error)
-	manager      assetManager
+	manager      assetsvc_utils.AssetManager
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -51,7 +52,7 @@ func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *S
 
 	var dbConfig = datastore.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
-	manager, err := newPGManager(dbConfig, kubeappsNamespace)
+	manager, err := assetsvc_utils.NewPGManager(dbConfig, kubeappsNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -79,7 +80,7 @@ func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
 }
 
 // GetManager ensures a manager is available and uses it to return the client.
-func (s *Server) GetManager() (assetManager, error) {
+func (s *Server) GetManager() (assetsvc_utils.AssetManager, error) {
 	if s.manager == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with manager")
 	}
@@ -108,13 +109,13 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	// TODO: add more filters in the context?
-	cq := ChartQuery{
+	cq := assetsvc_utils.ChartQuery{
 		// TODO(agamez): verify that not including a namespace means that we return everything you can read
-		namespace: namespace,
+		Namespace: namespace,
 	}
 
 	// We are not returning paginated results here
-	charts, _, err := s.manager.getPaginatedChartListWithFilters(cq, 1, 0)
+	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
 	}
