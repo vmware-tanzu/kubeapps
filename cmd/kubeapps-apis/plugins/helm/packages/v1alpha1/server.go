@@ -103,9 +103,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		if request.Context.Cluster != "" {
 			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
 		}
-		if request.Context.Namespace != "" {
-			namespace = request.Context.Namespace
-		}
+		namespace = request.Context.Namespace
 	}
 
 	// TODO: add more filters in the context?
