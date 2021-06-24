@@ -21,14 +21,14 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 )
 
-type assetManager interface {
+type AssetManager interface {
 	Init() error
 	Close() error
-	getChart(namespace, chartID string) (models.Chart, error)
-	getChartVersion(namespace, chartID, version string) (models.Chart, error)
-	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
-	getPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
-	getAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
+	GetChart(namespace, chartID string) (models.Chart, error)
+	GetChartVersion(namespace, chartID, version string) (models.Chart, error)
+	GetChartFiles(namespace, filesID string) (models.ChartFiles, error)
+	GetPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
+	GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
 }
 
 // ChartQuery is a container for passing the supported query paramters for generating the WHERE query
@@ -42,6 +42,6 @@ type ChartQuery struct {
 	categories  []string
 }
 
-func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (assetManager, error) {
-	return newPGManager(config, kubeappsNamespace)
+func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
+	return NewPGManager(config, kubeappsNamespace)
 }
