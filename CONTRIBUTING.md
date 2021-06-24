@@ -2,7 +2,7 @@
 
 When contributing to Kubeapps, please first discuss the change you wish to make via an issue with this repository before making a change.
 
-Please note we have a [code of conduct](https://github.com/kubeapps/kubeapps/blob/master/CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 ## Pull Request Process
 

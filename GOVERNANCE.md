@@ -43,7 +43,7 @@ The project roadmap is defined by accepted proposals.
 
 Proposals should cover the high-level objectives, use cases, and technical recommendations on how to implement them. In general, the community member(s) interested in implementing the proposal should be either deeply engaged in the proposal process or be an author of the proposal.
 
-The proposal should be documented as a separate markdown file pushed to the root of the [design-proposals](https://github.com/kubeapps/kubeapps/tree/master/docs/architecture/design-proposals) folder in the [Kubeapps repository](https://github.com/kubeapps/kubeapps) via PR.
+The proposal should be documented as a separate markdown file pushed to the root of the [design-proposals](./docs/architecture/design-proposals) folder in the [Kubeapps repository](https://github.com/kubeapps/kubeapps) via PR.
 
 ### Proposal Lifecycle
 
@@ -64,4 +64,4 @@ Removal of maintainers from Kubeapps
 
 ## Updating Governance
 
-All substantive changes in Governance require a supermajority agreement by all [maintainers](https://github.com/kubeapps/kubeapps/blob/master/MAINTAINERS.md).
+All substantive changes in Governance require a supermajority agreement by all [maintainers](./MAINTAINERS.md).
