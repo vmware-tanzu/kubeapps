@@ -16,7 +16,7 @@ The following code repositories are governed by Kubeapps community and maintaine
 ## Community Roles
 
 - **Users**: Members that engage with the Kubeapps community via any medium ([Slack](https://kubernetes.slack.com/messages/kubeapps), [GitHub](https://github.com/kubeapps/kubeapps), etc.).
-- **Contributors**: Regular contributions to projects (documentation, code reviews, responding to issues, participation in proposal discussions, contributing code, etc.).
+- **Contributors**: Members contributing to projects (documentation, code reviews, responding to issues, participation in proposal discussions, contributing code, etc.).
 - **Maintainers**: The Kubeapps project leaders. They are responsible for the overall health and direction of the project; final reviewers of PRs and responsible for releases. Maintainers are expected to contribute code and documentation, review PRs including ensuring the quality of code, triage issues, proactively fix bugs and perform maintenance tasks for Kubeapps components.
 
 ### Maintainers
@@ -38,8 +38,6 @@ Votes by maintainers belonging to the same company will count as one vote; e.g.,
 ## Proposal Process
 
 One of the most important aspects of any open source community is the concept of proposals. Large changes to the codebase and/or new features should be preceded by a proposal in our community repo. This process allows for all members of the community to weigh in on the concept (including the technical details), share their comments and ideas, and offer to help. It also ensures that members are not duplicating work or inadvertently stepping on toes by making large conflicting changes.
-
-The project roadmap is defined by accepted proposals.
 
 Proposals should cover the high-level objectives, use cases, and technical recommendations on how to implement them. In general, the community member(s) interested in implementing the proposal should be either deeply engaged in the proposal process or be an author of the proposal.
 
@@ -65,3 +63,7 @@ Removal of maintainers from Kubeapps
 ## Updating Governance
 
 All substantive changes in Governance require a supermajority agreement by all [maintainers](./MAINTAINERS.md).
+
+## Credits
+
+Sections of this documents have been borrowed from [Velero](https://github.com/vmware-tanzu/velero) project.

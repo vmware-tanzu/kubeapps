@@ -10,8 +10,7 @@ With Kubeapps you can:
 
 - Customize deployments through an intuitive, form-based user interface
 - Inspect, upgrade and delete applications installed in the cluster
-- Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
-- Browse and deploy from public or private chart repositories (including [VMware Marketplace™](https://marketplace.cloud.vmware.com) and [Bitnami Application Catalog](https://bitnami.com/application-catalog))
+- Browse and deploy [Helm](https://github.com/helm/helm) charts from public or private chart repositories (including [VMware Marketplace™](https://marketplace.cloud.vmware.com) and [Bitnami Application Catalog](https://bitnami.com/application-catalog))
 - Browse and deploy [Kubernetes Operators](https://operatorhub.io/)
 - Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](./docs/user/using-an-OIDC-provider.md) or [using Pinniped](./docs/user/using-an-OIDC-provider-with-pinniped.md)
 - Secure authorization based on Kubernetes [Role-Based Access Control](./docs/user/access-control.md)
@@ -45,7 +44,7 @@ See how to deploy and configure [Kubeapps on VMware Tanzu™ Kubernetes Grid™]
 
 ## Troubleshooting
 
-If you encounter issues, review the [troubleshooting docs](./chart/kubeapps/README.md#troubleshooting), review our [project board] (https://github.com/kubeapps/kubeapps/projects/11), [file an issue](https://github.com/kubeapps/kubeapps/issues), or talk to us on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) on the Kubernetes Slack server.
+If you encounter issues, review the [troubleshooting docs](./chart/kubeapps/README.md#troubleshooting), review our [project board](https://github.com/kubeapps/kubeapps/projects/11), file an [issue](https://github.com/kubeapps/kubeapps/issues), or talk to us on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) on the Kubernetes Slack server.
 
 - Click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack org.
 
@@ -53,7 +52,7 @@ If you encounter issues, review the [troubleshooting docs](./chart/kubeapps/READ
 
 ## Contributing
 
-If you are ready to jump in and test, add code, or help with documentation, follow the instructions on our [Start contributing](./CONTRIBUTING.md) documentation for guidance on how to setup Kubeapps for development.
+If you are ready to jump in and test, add code, or help with documentation, follow the instructions on our [start contributing](./CONTRIBUTING.md) documentation for guidance on how to setup Kubeapps for development.
 
 ## Changelog
 

@@ -2,6 +2,8 @@
 
 When contributing to Kubeapps, please first discuss the change you wish to make via an issue with this repository before making a change.
 
+> Kubeapps distribution is delegated to the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) from the separate Bitnami charts repository. PRs and issues related to the official chart should be created in the Bitnami charts repository.
+
 Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 ## Pull Request Process
