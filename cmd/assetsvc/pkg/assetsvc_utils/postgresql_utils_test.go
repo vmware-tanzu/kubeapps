@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package assetsvc_utils
 
 import (
 	"database/sql/driver"
@@ -173,7 +173,7 @@ func Test_GetChartsWithFilters(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "foo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "foo", version: version, appVersion: appVersion}, 1, 0)
+	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: "namespace", ChartName: "foo", Version: version, AppVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -213,7 +213,7 @@ func Test_GetChartsWithFilters_withSlashes(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "fo%2Fo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{namespace: "namespace", chartName: "fo%2Fo", version: version, appVersion: appVersion}, 1, 0)
+	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: "namespace", ChartName: "fo%2Fo", Version: version, AppVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -276,7 +276,7 @@ func Test_GetAllChartCategories(t *testing.T) {
 				WithArgs(expectedParams...).
 				WillReturnRows(rows)
 
-			chartCategories, err := pgManager.GetAllChartCategories(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}})
+			chartCategories, err := pgManager.GetAllChartCategories(ChartQuery{Namespace: tt.namespace, Repos: []string{tt.repo}})
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}
@@ -424,7 +424,7 @@ func Test_GetPaginatedChartList(t *testing.T) {
 			mock.ExpectQuery("^SELECT count(.+) FROM").
 				WillReturnRows(rowCount)
 
-			charts, totalPages, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{namespace: tt.namespace, repos: []string{tt.repo}}, tt.pageNumber, tt.pageSize)
+			charts, totalPages, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tt.namespace, Repos: []string{tt.repo}}, tt.pageNumber, tt.pageSize)
 			if err != nil {
 				t.Fatalf("Found error %v", err)
 			}
@@ -655,13 +655,13 @@ func Test_GenerateWhereClause(t *testing.T) {
 			defer cleanup()
 
 			cq := ChartQuery{
-				namespace:   tt.namespace,
-				chartName:   tt.chartName,
-				version:     tt.version,
-				appVersion:  tt.appVersion,
-				searchQuery: tt.query,
-				repos:       tt.repos,
-				categories:  tt.categories,
+				Namespace:   tt.namespace,
+				ChartName:   tt.chartName,
+				Version:     tt.version,
+				AppVersion:  tt.appVersion,
+				SearchQuery: tt.query,
+				Repos:       tt.repos,
+				Categories:  tt.categories,
 			}
 			whereQuery, whereQueryParams := pgManager.GenerateWhereClause(cq)
 
