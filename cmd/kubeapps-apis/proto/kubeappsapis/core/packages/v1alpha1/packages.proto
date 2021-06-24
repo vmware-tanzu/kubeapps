@@ -3,6 +3,7 @@ package kubeappsapis.core.packages.v1alpha1;
 option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
 import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -174,7 +175,7 @@ message AvailablePackageDetail {
   // Available package reference
   //
   // A reference uniquely identifying the package.
-  AvailablePackageReference package_ref = 1;
+  AvailablePackageReference available_package_ref = 1;
 
   // Available package name
   //
@@ -183,50 +184,60 @@ message AvailablePackageDetail {
   
   // Available package version
   //
-  // TODO: add description
+  // The version of the package (eg. chart version)
   string version = 3;
+
+  // Available package app version
+  //
+  // The version of the packaged application (eg. wordpress version or whatever).
+  string app_version = 4;
   
   // Available package icon URL
   //
   // A url for an icon.
-  string icon_url = 4;
+  string icon_url = 5;
   
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 5;
+  string display_name = 6;
   
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 6;
+  string short_description = 7;
   
   // Available package long description
   //
-  // A long description of the package, such as a README formatted with Markdown.
-  string long_description = 7;
+  // A longer description of the package, a few sentences.
+  string long_description = 8;
   
+  // Available package readme
+  //
+  // A longer README with potentially pages of formatted Markdown.
+  string readme = 9;
+
   // Available package default values
   //
   // An example of default values used during package templating that can serve
   // as documentation or a starting point for user customization.
-  string default_values = 8;
+  string default_values = 10;
   
   // Available package values schema
   //
   // An optional openapi/json schema that can be used to validate a user-provided values.
-  string values_schema = 9;
+  
+  string values_schema = 11;
   
   // Available package maintainers
   //
   // List of Maintainer
-  repeated Maintainer maintainers = 10;
+  repeated Maintainer maintainers = 12;
   
-  // Available package opaque data
+  // Custom data added by the plugin
   //
-  // A plugin can define further key-values for data which does not (yet) fit
-  // with the core.packaging.AvailablePackageDetail.
-  map<string, bytes> opaque_data = 11;
+  // Some additional information added by the plugin
+  google.protobuf.Any custom_detail = 13;
 }
 
 // -- Start other definitions  -- 
