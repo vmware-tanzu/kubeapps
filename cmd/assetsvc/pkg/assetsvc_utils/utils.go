@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package assetsvc_utils
 
 import (
 	"github.com/kubeapps/common/datastore"
@@ -33,15 +33,15 @@ type AssetManager interface {
 
 // ChartQuery is a container for passing the supported query paramters for generating the WHERE query
 type ChartQuery struct {
-	namespace   string
-	chartName   string
-	version     string
-	appVersion  string
-	searchQuery string
-	repos       []string
-	categories  []string
+	Namespace   string
+	ChartName   string
+	Version     string
+	AppVersion  string
+	SearchQuery string
+	Repos       []string
+	Categories  []string
 }
 
-func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
+func NewManager(databaseType string, config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
 	return NewPGManager(config, kubeappsNamespace)
 }
