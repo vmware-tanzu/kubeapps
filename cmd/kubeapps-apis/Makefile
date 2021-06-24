@@ -33,12 +33,6 @@ cli-dependencies:
 
 # Not sure if it's worth having targets for buf, but at least the targets can
 # be tooling agnostic.
-# NOTE: I have an issue with buf in that if I try to update the protobuf dependencies
-# (defined in the buf.yaml) with `buf beta mod update`, the `buf.lock` file updates
-# accordingly, but then am unable to run `buf generate` or any other command that
-# pulls the dependencies to the local cache. I've reported this and created a minimal
-# demo of the issue (at least, for me) at: https://github.com/bufbuild/buf/issues/294#issuecomment-837839297
-# I'll update once I've resolved that.
 generate:
 	buf generate
 
