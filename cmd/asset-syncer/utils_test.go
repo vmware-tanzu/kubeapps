@@ -388,7 +388,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		defer cleanup()
 		netClient := &badHTTPClient{}
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, fmt.Errorf("500 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [500]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
@@ -636,7 +636,7 @@ func Test_ociAPICli(t *testing.T) {
 			},
 		}
 		_, err := apiCli.TagList("apache")
-		assert.Err(t, fmt.Errorf("request failed: forbidden"), err)
+		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]: forbidden"), err)
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
@@ -661,7 +661,7 @@ func Test_ociAPICli(t *testing.T) {
 			netClient:  &authenticatedOCIAPIHTTPClient{},
 		}
 		_, err := apiCli.TagList("apache")
-		assert.Err(t, fmt.Errorf("request failed: "), err)
+		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]"), err)
 	})
 
 	t.Run("TagList with auth - success", func(t *testing.T) {
@@ -686,7 +686,7 @@ func Test_ociAPICli(t *testing.T) {
 			netClient: &badHTTPClient{},
 		}
 		_, err := apiCli.IsHelmChart("apache", "7.5.1")
-		assert.Err(t, fmt.Errorf("request failed: "), err)
+		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/manifests/7.5.1] failed due to status [500]"), err)
 	})
 
 	t.Run("IsHelmChart - successful request", func(t *testing.T) {
