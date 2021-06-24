@@ -33,7 +33,8 @@ type GetAvailablePackageSummariesRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// The context (cluster/namespace) for the request
-	Context       *Context                                           `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+	// The filters used for the request
 	FilterOptions *GetAvailablePackageSummariesRequest_FilterOptions `protobuf:"bytes,2,opt,name=filter_options,json=filterOptions,proto3" json:"filter_options,omitempty"`
 }
 
@@ -763,15 +764,20 @@ func (x *Maintainer) GetEmail() string {
 	return ""
 }
 
+// FilterOptions
+//
 // FilterOptions available when requesting summaries
 type GetAvailablePackageSummariesRequest_FilterOptions struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Query      string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	// Text query for the request
+	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	// Collection of categories for the request
 	Categories []string `protobuf:"bytes,2,rep,name=categories,proto3" json:"categories,omitempty"`
-	Repository string   `protobuf:"bytes,3,opt,name=repository,proto3" json:"repository,omitempty"`
+	// Repository where the packages belongs to
+	Repository string `protobuf:"bytes,3,opt,name=repository,proto3" json:"repository,omitempty"`
 }
 
 func (x *GetAvailablePackageSummariesRequest_FilterOptions) Reset() {

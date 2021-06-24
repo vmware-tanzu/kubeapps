@@ -148,12 +148,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query for the request.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Collection of categories for the request.",
             "in": "query",
             "required": false,
             "type": "array",
@@ -164,6 +166,7 @@
           },
           {
             "name": "filterOptions.repository",
+            "description": "Repository where the packages belongs to.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -311,12 +314,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query for the request.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Collection of categories for the request.",
             "in": "query",
             "required": false,
             "type": "array",
@@ -327,6 +332,7 @@
           },
           {
             "name": "filterOptions.repository",
+            "description": "Repository where the packages belongs to.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -490,12 +496,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query for the request.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Collection of categories for the request.",
             "in": "query",
             "required": false,
             "type": "array",
@@ -506,6 +514,7 @@
           },
           {
             "name": "filterOptions.repository",
+            "description": "Repository where the packages belongs to.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -626,12 +635,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query for the request.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Collection of categories for the request.",
             "in": "query",
             "required": false,
             "type": "array",
@@ -642,6 +653,7 @@
           },
           {
             "name": "filterOptions.repository",
+            "description": "Repository where the packages belongs to.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -701,19 +713,23 @@
       "type": "object",
       "properties": {
         "query": {
-          "type": "string"
+          "type": "string",
+          "title": "Text query for the request"
         },
         "categories": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "title": "Collection of categories for the request"
         },
         "repository": {
-          "type": "string"
+          "type": "string",
+          "title": "Repository where the packages belongs to"
         }
       },
-      "title": "FilterOptions available when requesting summaries"
+      "description": "FilterOptions available when requesting summaries",
+      "title": "FilterOptions"
     },
     "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",

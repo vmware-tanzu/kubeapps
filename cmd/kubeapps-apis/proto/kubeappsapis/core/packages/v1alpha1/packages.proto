@@ -70,12 +70,21 @@ message GetAvailablePackageSummariesRequest {
   // The context (cluster/namespace) for the request
   Context context = 1;
 
+  // FilterOptions
+  //
   // FilterOptions available when requesting summaries
   message FilterOptions {
+    // Text query for the request
     string query = 1;
+
+    // Collection of categories for the request
     repeated string categories = 2;
+
+    // Repository where the packages belongs to
     string repository = 3;
   };
+
+  // The filters used for the request
   FilterOptions filter_options = 2;
 }
 
