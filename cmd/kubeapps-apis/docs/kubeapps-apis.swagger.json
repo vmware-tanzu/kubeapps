@@ -78,7 +78,7 @@
           },
           {
             "name": "availablePackageRef.identifier",
-            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "query",
             "required": false,
             "type": "string"
@@ -142,6 +142,28 @@
           {
             "name": "context.namespace",
             "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
             "in": "query",
             "required": false,
             "type": "string"
@@ -218,7 +240,7 @@
           },
           {
             "name": "availablePackageRef.identifier",
-            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "query",
             "required": false,
             "type": "string"
@@ -283,6 +305,28 @@
           {
             "name": "context.namespace",
             "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
             "in": "query",
             "required": false,
             "type": "string"
@@ -375,7 +419,7 @@
           },
           {
             "name": "availablePackageRef.identifier",
-            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "query",
             "required": false,
             "type": "string"
@@ -443,6 +487,28 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -489,7 +555,7 @@
           },
           {
             "name": "availablePackageRef.identifier",
-            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "query",
             "required": false,
             "type": "string"
@@ -557,6 +623,28 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -609,6 +697,24 @@
     }
   },
   "definitions": {
+    "GetAvailablePackageSummariesRequestFilterOptions": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "repository": {
+          "type": "string"
+        }
+      },
+      "title": "FilterOptions available when requesting summaries"
+    },
     "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
       "example": {
@@ -827,7 +933,7 @@
         },
         "identifier": {
           "type": "string",
-          "description": "The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique. \nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+          "description": "The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
           "title": "Available package identifier"
         },
         "plugin": {
