@@ -33,9 +33,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
+func getInitializedManager(t *testing.T) (*PostgresAssetManager, func()) {
 	pam, cleanup := pgtest.GetInitializedManager(t)
-	return &postgresAssetManager{pam}, cleanup
+	return &PostgresAssetManager{pam}, cleanup
 }
 
 func TestGetChart(t *testing.T) {

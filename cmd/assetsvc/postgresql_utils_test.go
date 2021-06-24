@@ -29,13 +29,13 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
-func getMockManager(t *testing.T) (*postgresAssetManager, sqlmock.Sqlmock, func()) {
+func getMockManager(t *testing.T) (*PostgresAssetManager, sqlmock.Sqlmock, func()) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 
-	pgManager := &postgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeapps"}}
+	pgManager := &PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeapps"}}
 
 	return pgManager, mock, func() { db.Close() }
 }
