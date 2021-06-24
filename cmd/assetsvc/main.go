@@ -31,7 +31,7 @@ import (
 const pathPrefix = "/v1"
 
 // TODO(absoludity): Let's not use globals for storing state like this.
-var manager assetManager
+var manager AssetManager
 
 func setupRoutes() http.Handler {
 	r := mux.NewRouter()
