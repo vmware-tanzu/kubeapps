@@ -23,6 +23,8 @@ type HelmPackagesServiceClient interface {
 	GetAvailablePackageSummaries(ctx context.Context, in *v1alpha1.GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetAvailablePackageDetail returns the package details managed by the 'helm' plugin
 	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
+	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 }
 
 type helmPackagesServiceClient struct {
@@ -51,6 +53,15 @@ func (c *helmPackagesServiceClient) GetAvailablePackageDetail(ctx context.Contex
 	return out, nil
 }
 
+func (c *helmPackagesServiceClient) GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
+	out := new(v1alpha1.GetAvailablePackageVersionsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HelmPackagesServiceServer is the server API for HelmPackagesService service.
 // All implementations should embed UnimplementedHelmPackagesServiceServer
 // for forward compatibility
@@ -59,6 +70,8 @@ type HelmPackagesServiceServer interface {
 	GetAvailablePackageSummaries(context.Context, *v1alpha1.GetAvailablePackageSummariesRequest) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetAvailablePackageDetail returns the package details managed by the 'helm' plugin
 	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
+	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 }
 
 // UnimplementedHelmPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -70,6 +83,9 @@ func (UnimplementedHelmPackagesServiceServer) GetAvailablePackageSummaries(conte
 }
 func (UnimplementedHelmPackagesServiceServer) GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageDetail not implemented")
+}
+func (UnimplementedHelmPackagesServiceServer) GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageVersions not implemented")
 }
 
 // UnsafeHelmPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -119,6 +135,24 @@ func _HelmPackagesService_GetAvailablePackageDetail_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HelmPackagesService_GetAvailablePackageVersions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetAvailablePackageVersionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HelmPackagesServiceServer).GetAvailablePackageVersions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HelmPackagesServiceServer).GetAvailablePackageVersions(ctx, req.(*v1alpha1.GetAvailablePackageVersionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HelmPackagesService_ServiceDesc is the grpc.ServiceDesc for HelmPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -133,6 +167,10 @@ var HelmPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailablePackageDetail",
 			Handler:    _HelmPackagesService_GetAvailablePackageDetail_Handler,
+		},
+		{
+			MethodName: "GetAvailablePackageVersions",
+			Handler:    _HelmPackagesService_GetAvailablePackageVersions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
