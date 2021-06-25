@@ -21,11 +21,13 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	log "k8s.io/klog/v2"
 )
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter func(context.Context) (dynamic.Interface, error)) interface{} {
+	log.Infof("+fluxv2 RegisterWithGRPCServer")
 	svr := NewServer(clientGetter)
 	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
 	return svr
@@ -34,6 +36,7 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter func(context.C
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+	log.Infof("+fluxv2 RegisterHTTPHandlerFromEndpoint")
 	return v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
 

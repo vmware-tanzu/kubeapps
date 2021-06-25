@@ -3,6 +3,7 @@ package kubeappsapis.core.packages.v1alpha1;
 option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
 import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -60,7 +61,7 @@ service PackagesService {
 // Standard request and response messages for each required function are defined
 // below for import and re-use.
 
-// -- Start definitions of the request messages -- 
+// -- Start definitions of the request messages --
 
 // GetAvailablePackageSummariesRequest
 //
@@ -68,7 +69,14 @@ service PackagesService {
 message GetAvailablePackageSummariesRequest {
   // The context (cluster/namespace) for the request
   Context context = 1;
-  // TODO: Add standard filters.
+
+  // FilterOptions available when requesting summaries
+  message FilterOptions {
+    string query = 1;
+    repeated string categories = 2;
+    string repository = 3;
+  };
+  FilterOptions filter_options = 2;
 }
 
 // GetAvailablePackageDetailRequest
@@ -85,7 +93,7 @@ message GetAvailablePackageDetailRequest {
   string version = 2;
 }
 
-// -- Start definitions of the response messages -- 
+// -- Start definitions of the response messages --
 
 // GetAvailablePackageSummariesResponse
 //
@@ -110,14 +118,14 @@ message GetAvailablePackageDetailResponse {
   // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
   //   example: '{"available_package_detail": [{}]}'
   // };
-  
+
   // Available package detail
   //
   // List of AvailablePackageDetail
   AvailablePackageDetail available_package_detail = 1;
 }
 
-// -- Start definitions used in the responses  -- 
+// -- Start definitions used in the responses  --
 
 // AvailablePackageSummary
 //
@@ -144,17 +152,17 @@ message AvailablePackageSummary {
   // The latest version available for this package. Often expected when viewing
   // a summary of many available packages.
   string latest_version = 3;
-  
+
   // Available package Icon URL
   //
   // A url for an icon.
   string icon_url = 4;
-  
+
   // Available package display name
   //
   // A name as displayed to users
   string display_name = 5;
-  
+
   // Available package short description
   //
   // A short description of the app provided by the package
@@ -174,62 +182,72 @@ message AvailablePackageDetail {
   // Available package reference
   //
   // A reference uniquely identifying the package.
-  AvailablePackageReference package_ref = 1;
+  AvailablePackageReference available_package_ref = 1;
 
   // Available package name
   //
   // The name of the available package
   string name = 2;
-  
+
   // Available package version
   //
-  // TODO: add description
+  // The version of the package (eg. chart version)
   string version = 3;
-  
+
+  // Available package app version
+  //
+  // The version of the packaged application (eg. wordpress version or whatever).
+  string app_version = 4;
+
   // Available package icon URL
   //
   // A url for an icon.
-  string icon_url = 4;
-  
+  string icon_url = 5;
+
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 5;
-  
+  string display_name = 6;
+
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 6;
-  
+  string short_description = 7;
+
   // Available package long description
   //
-  // A long description of the package, such as a README formatted with Markdown.
-  string long_description = 7;
-  
+  // A longer description of the package, a few sentences.
+  string long_description = 8;
+
+  // Available package readme
+  //
+  // A longer README with potentially pages of formatted Markdown.
+  string readme = 9;
+
   // Available package default values
   //
   // An example of default values used during package templating that can serve
   // as documentation or a starting point for user customization.
-  string default_values = 8;
-  
+  string default_values = 10;
+
   // Available package values schema
   //
   // An optional openapi/json schema that can be used to validate a user-provided values.
-  string values_schema = 9;
-  
+
+  string values_schema = 11;
+
   // Available package maintainers
   //
   // List of Maintainer
-  repeated Maintainer maintainers = 10;
-  
-  // Available package opaque data
+  repeated Maintainer maintainers = 12;
+
+  // Custom data added by the plugin
   //
-  // A plugin can define further key-values for data which does not (yet) fit
-  // with the core.packaging.AvailablePackageDetail.
-  map<string, bytes> opaque_data = 11;
+  // Some additional information added by the plugin
+  google.protobuf.Any custom_detail = 13;
 }
 
-// -- Start other definitions  -- 
+// -- Start other definitions  --
 
 // Context
 //
@@ -239,7 +257,7 @@ message Context {
   // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
   //   example: '{}'
   // };
-  
+
   // Cluster
   //
   // A cluster name can be provided to target a specific cluster if multiple
@@ -277,7 +295,7 @@ message AvailablePackageReference {
   // will just be the name, but for others such as those where an available
   // package is not backed by a CR (eg. standard helm) it may be necessary
   // to include the repository in the name or even the repo namespace
-  // to ensure this is unique. 
+  // to ensure this is unique.
   // For example two helm repositories can define
   // an "apache" chart that is available globally, the names would need to
   // encode that to be unique (ie. "repoA:apache" and "repoB:apache").
@@ -298,7 +316,7 @@ message Maintainer {
   // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
   //   example: '{}'
   // };
-  
+
   // Maintainer name
   //
   // A maintainer name

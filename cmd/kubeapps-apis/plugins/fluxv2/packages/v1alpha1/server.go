@@ -61,6 +61,8 @@ type Server struct {
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *Server {
+	log.Infof("+fluxv2 NewServer")
+	go startHelmRepositoryWatcher()
 	return &Server{
 		clientGetter: clientGetter,
 	}
