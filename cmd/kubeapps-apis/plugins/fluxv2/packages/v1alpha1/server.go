@@ -56,16 +56,19 @@ type Server struct {
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
 	clientGetter func(context.Context) (dynamic.Interface, error)
+
+	cache *FluxPlugInCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *Server {
 	log.Infof("+fluxv2 NewServer")
-	go startHelmRepositoryWatcher()
-	return &Server{
+	server := &Server{
 		clientGetter: clientGetter,
+		cache:        NewCache(),
 	}
+	return server
 }
 
 // getClient ensures a client getter is available and uses it to return the client.

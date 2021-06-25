@@ -120,7 +120,7 @@ func readPackageSummariesFromOneRepo(unstructuredRepo map[string]interface{}) ([
 		Type:      "helm",
 	}
 
-	// this is potentially a very expensive operation for large repos like bitnami
+	// this is potentially a very expensive operation for large repos like 'bitnami'
 	charts, err := helm.ChartsFromIndex(bytes, modelRepo, true)
 	if err != nil {
 		return nil, err

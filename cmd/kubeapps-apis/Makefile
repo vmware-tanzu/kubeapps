@@ -29,7 +29,8 @@ cli-dependencies:
 		google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 		google.golang.org/protobuf/cmd/protoc-gen-go \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
-		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+		github.com/go-redis/redis/v8
 
 # Not sure if it's worth having targets for buf, but at least the targets can
 # be tooling agnostic.
