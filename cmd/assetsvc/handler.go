@@ -25,6 +25,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
 )
@@ -109,7 +110,7 @@ func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, stri
 	return namespace, repo, version, "", nil
 }
 
-func extractChartQueryFromRequest(namespace, repo string, req *http.Request) ChartQuery {
+func extractChartQueryFromRequest(namespace, repo string, req *http.Request) utils.ChartQuery {
 	repos := []string{}
 	if repo != "" {
 		repos = append(repos, repo)
@@ -123,18 +124,18 @@ func extractChartQueryFromRequest(namespace, repo string, req *http.Request) Cha
 		categories = strings.Split(strings.TrimSpace(req.FormValue("categories")), ",")
 	}
 
-	return ChartQuery{
-		namespace:   namespace,
-		chartName:   req.FormValue("name"), // chartName remains encoded
-		version:     req.FormValue("version"),
-		appVersion:  req.FormValue("appversion"),
-		repos:       repos,
-		categories:  categories,
-		searchQuery: req.FormValue("q"),
+	return utils.ChartQuery{
+		Namespace:   namespace,
+		ChartName:   req.FormValue("name"), // chartName remains encoded
+		Version:     req.FormValue("version"),
+		AppVersion:  req.FormValue("appversion"),
+		Repos:       repos,
+		Categories:  categories,
+		SearchQuery: req.FormValue("q"),
 	}
 }
 
-func getAllChartCategories(cq ChartQuery) (apiChartCategoryListResponse, error) {
+func getAllChartCategories(cq utils.ChartQuery) (apiChartCategoryListResponse, error) {
 	chartCategories, err := manager.GetAllChartCategories(cq)
 	return newChartCategoryListResponse(chartCategories), err
 }
@@ -322,7 +323,7 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 	charts, totalPages, err := manager.GetPaginatedChartListWithFilters(cq, pageNumber, pageSize)
 	if err != nil {
 		log.WithError(err).Errorf("could not find charts with the given namespace=%s, chartName=%s, version=%s, appversion=%s, repos=%s, categories=%s, searchQuery=%s",
-			cq.namespace, cq.chartName, cq.version, cq.appVersion, cq.repos, cq.categories, cq.searchQuery,
+			cq.Namespace, cq.ChartName, cq.Version, cq.AppVersion, cq.Repos, cq.Categories, cq.SearchQuery,
 		)
 		// continue to return empty list
 	}
