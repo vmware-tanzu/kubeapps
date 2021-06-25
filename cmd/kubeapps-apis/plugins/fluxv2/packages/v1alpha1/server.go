@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
@@ -67,16 +68,16 @@ func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	}
 }
 
-// getClient ensures a client getter is available and uses it to return the client.
-func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
+// getClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
+func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
 	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	client, err := s.clientGetter(ctx)
+	_, client, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
-	return client, nil
+	return nil, client, nil
 }
 
 // ===== general note on error handling ========
@@ -208,7 +209,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
 	}
 
-	client, err := s.GetClient(ctx)
+	_, client, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +299,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 
 // namespace maybe "", in which case repositories from all namespaces are returned
 func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
-	client, err := s.GetClient(ctx)
+	_, client, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}

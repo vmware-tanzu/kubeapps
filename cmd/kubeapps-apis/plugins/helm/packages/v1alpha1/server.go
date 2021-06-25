@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -44,14 +45,14 @@ func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	}
 }
 
-// getClient ensures a client getter is available and uses it to return the client.
-func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
+// getClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
+func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
 	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	client, err := s.clientGetter(ctx)
+	typedClient, dynamicClient, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
-	return client, nil
+	return typedClient, dynamicClient, nil
 }

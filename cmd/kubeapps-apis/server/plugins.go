@@ -34,6 +34,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	log "k8s.io/klog/v2"
@@ -48,7 +49,7 @@ const (
 )
 
 // KubernetesClientGetter is a function type used by plugins to get a k8s client
-type KubernetesClientGetter func(context.Context) (dynamic.Interface, error)
+type KubernetesClientGetter func(context.Context) (kubernetes.Interface, dynamic.Interface, error)
 
 // pkgsPluginWithServer stores the plugin detail together with its implementation.
 type pkgsPluginWithServer struct {
@@ -301,33 +302,34 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return func(ctx context.Context) (dynamic.Interface, error) {
+	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
 		var err error
 		token, err := extractToken(ctx)
 		if err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
+			return nil, nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
 		}
 
-		var client dynamic.Interface
+		var config *rest.Config
 		if !serveOpts.UnsafeUseDemoSA {
 			// We are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
 			// we should pass the cluster name instead
-			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
+			config, err = kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
 			if err != nil {
-				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
-			}
-			client, err = dynamic.NewForConfig(restConfig)
-			if err != nil {
-				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+				return nil, nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 			}
 		} else {
 			// Just using the created SA, no user account is used
-			client, err = dynamic.NewForConfig(inClusterConfig)
-			if err != nil {
-				return nil, fmt.Errorf("unable to create dynamic client: %w", err)
-			}
+			config = inClusterConfig
 		}
-		return client, nil
+		dynamicClient, err := dynamic.NewForConfig(config)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to create dynamic client: %w", err)
+		}
+		typedClient, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to create typed client: %w", err)
+		}
+		return typedClient, dynamicClient, nil
 	}, nil
 }
 
