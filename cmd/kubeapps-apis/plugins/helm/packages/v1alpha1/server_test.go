@@ -41,20 +41,21 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+const globalPackagingNamespace = "kubeapps"
+
 func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) {
 	var manager utils.AssetManager
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeappsNamespace"}}
+	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: globalPackagingNamespace}}
 	return mock, func() { db.Close() }, manager
 }
 
 func TestGetClient(t *testing.T) {
-	kubeappsNamespace := "kubeapps"
 	dbConfig := datastore.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
-	manager, err := utils.NewPGManager(dbConfig, kubeappsNamespace)
+	manager, err := utils.NewPGManager(dbConfig, globalPackagingNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -214,8 +215,6 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
-	globalPackagingNamespace := "kubeapps"
-
 	// Creating the dynamic client
 	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
@@ -283,7 +282,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		server           *Server
 	}{
 		{
-			name: "it returns a set of availablePackageSummary from the database",
+			name: "it returns a set of availablePackageSummary from the database (global ns)",
 			server: &Server{
 				clientGetter:             authorizedClientGetter,
 				manager:                  manager,
@@ -293,6 +292,30 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				Context: &corev1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
+				},
+				FilterOptions: &corev1.FilterOptions{
+					Query:        "",
+					AppVersion:   "",
+					Version:      "",
+					Categories:   nil,
+					Repositories: nil,
+				},
+			},
+			charts:           []*models.Chart{chartOK},
+			expectedPackages: []*corev1.AvailablePackageSummary{availablePackageSummaryOK},
+			statusCode:       codes.OK,
+		},
+		{
+			name: "it returns a set of availablePackageSummary from the database (specific ns)",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: "my-ns",
 				},
 				FilterOptions: &corev1.FilterOptions{
 					Query:        "",
@@ -359,7 +382,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			rows := sqlmock.NewRows([]string{"info"})
-			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tc.charts))
 
 			for _, chart := range tc.charts {
 				chartJSON, err := json.Marshal(chart)
@@ -368,11 +390,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				}
 				rows.AddRow(string(chartJSON))
 			}
+			// Checking if the WHERE condtion is properly applied
 			mock.ExpectQuery("SELECT info FROM").
+				WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
 				WillReturnRows(rows)
-
-			mock.ExpectQuery("^SELECT count(.+) FROM").
-				WillReturnRows(rowCount)
 
 			availablePackageSummaries, err := tc.server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
