@@ -26,6 +26,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -33,12 +34,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes"
 )
 
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter func(context.Context) (dynamic.Interface, error)
+		clientGetter server.KubernetesClientGetter
 		statusCode   codes.Code
 	}{
 		{
@@ -48,15 +50,15 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
 		{
 			name: "returns without error if response status does not contain conditions",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
@@ -68,8 +70,8 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns without error if response status does not contain conditions",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
@@ -85,8 +87,8 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns without error if response does not contain ready repos",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
@@ -105,8 +107,8 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns without error if response does not contain status url",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
@@ -348,8 +350,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
-					return fake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
@@ -470,8 +472,8 @@ func TestGetPackageRepositories(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
-					return fake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
@@ -598,8 +600,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			repo := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
-					return fake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
@@ -682,8 +684,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			repo := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
-					return fake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
