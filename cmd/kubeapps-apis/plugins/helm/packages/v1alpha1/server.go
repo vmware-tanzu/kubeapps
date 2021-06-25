@@ -45,7 +45,7 @@ func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	}
 }
 
-// getClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
+// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
 func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
 	if s.clientGetter == nil {
 		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
