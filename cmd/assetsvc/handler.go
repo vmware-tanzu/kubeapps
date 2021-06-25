@@ -25,7 +25,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
 )
@@ -110,7 +110,7 @@ func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, stri
 	return namespace, repo, version, "", nil
 }
 
-func extractChartQueryFromRequest(namespace, repo string, req *http.Request) assetsvc_utils.ChartQuery {
+func extractChartQueryFromRequest(namespace, repo string, req *http.Request) utils.ChartQuery {
 	repos := []string{}
 	if repo != "" {
 		repos = append(repos, repo)
@@ -124,7 +124,7 @@ func extractChartQueryFromRequest(namespace, repo string, req *http.Request) ass
 		categories = strings.Split(strings.TrimSpace(req.FormValue("categories")), ",")
 	}
 
-	return assetsvc_utils.ChartQuery{
+	return utils.ChartQuery{
 		Namespace:   namespace,
 		ChartName:   req.FormValue("name"), // chartName remains encoded
 		Version:     req.FormValue("version"),
@@ -135,7 +135,7 @@ func extractChartQueryFromRequest(namespace, repo string, req *http.Request) ass
 	}
 }
 
-func getAllChartCategories(cq assetsvc_utils.ChartQuery) (apiChartCategoryListResponse, error) {
+func getAllChartCategories(cq utils.ChartQuery) (apiChartCategoryListResponse, error) {
 	chartCategories, err := manager.GetAllChartCategories(cq)
 	return newChartCategoryListResponse(chartCategories), err
 }

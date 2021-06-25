@@ -32,7 +32,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/disintegration/imaging"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/assert"
@@ -77,7 +77,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func()) {
 	// TODO(absoludity): Let's not use globals for storing state like this.
 	origManager := manager
 
-	manager = &assetsvc_utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: kubeappsNamespace}}
+	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: kubeappsNamespace}}
 
 	return mock, func() { db.Close(); manager = origManager }
 }

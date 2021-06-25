@@ -22,6 +22,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	authorizationapi "k8s.io/api/authorization/v1"
@@ -31,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -42,14 +44,14 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             func(context.Context) (dynamic.Interface, error)
-	manager                  assetsvc_utils.AssetManager
+	clientGetter server.KubernetesClientGetter
 	globalPackagingNamespace string
+	manager                  assetsvc_utils.AssetManager
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *Server {
+func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
@@ -58,15 +60,15 @@ func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *S
 
 	var dbConfig = datastore.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
-	manager, err := assetsvc_utils.NewPGManager(dbConfig, kubeappsNamespace)
-	if err != nil {
-		log.Fatalf("%s", err)
 	}
+		log.Fatalf("%s", err)
 	err = manager.Init()
 	if err != nil {
 		log.Fatalf("%s", err)
+	if err != nil {
 	}
 
+	manager, err := assetsvc_utils.NewPGManager(dbConfig, kubeappsNamespace)
 	return &Server{
 		clientGetter:             clientGetter,
 		manager:                  manager,
@@ -74,16 +76,16 @@ func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *S
 	}
 }
 
-// GetClient ensures a client getter is available and uses it to return the client.
-func (s *Server) GetClient(ctx context.Context) (dynamic.Interface, error) {
+// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
+func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
 	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	client, err := s.clientGetter(ctx)
+	typedClient, dynamicClient, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
-	return client, nil
+	return typedClient, dynamicClient, nil
 }
 
 // GetManager ensures a manager is available and uses it to return the client.

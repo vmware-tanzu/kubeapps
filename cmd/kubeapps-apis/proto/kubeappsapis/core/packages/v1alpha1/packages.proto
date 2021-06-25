@@ -23,14 +23,14 @@ service PackagesService {
       get: "/core/packages/v1alpha1/availablepackagedetails"
     };
   }
+  rpc GetAvailablePackageVersions(GetAvailablePackageVersionsRequest) returns (GetAvailablePackageVersionsResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/availablepackageversions"
+    };
+  }
 
   // TODO: remaining operations yet to be defined
 
-  // rpc GetAvailablePackageVersions(GetAvailablePackageVersionsRequest) returns (GetAvailablePackageVersionsResponse) {
-  //   option (google.api.http) = {
-  //     get: "/core/packages/v1alpha1/availablepackageversions"
-  //   };
-  // }
   // rpc GetInstalledPackageSummaries(GetInstalledPackageSummariesRequest) returns (GetInstalledPackageSummariesResponse) {
   //   option (google.api.http) = {
   //     get: "/core/packages/v1alpha1/installedpackagesummaries"
@@ -102,6 +102,21 @@ message GetAvailablePackageDetailRequest {
   string version = 2;
 }
 
+// GetAvailablePackageVersionsRequest
+//
+// Request for GetAvailablePackageVersions
+message GetAvailablePackageVersionsRequest {
+  // The information required to uniquely
+  // identify an available package
+  AvailablePackageReference available_package_ref = 1;
+
+  // Optional version reference for which version history is required.
+  // By default a summary of versions is returned as outlined in the
+  // response. Plugins can choose not to implement this and provide
+  // the summary only, it is provided for completeness only.
+  string version = 2;
+}
+
 // -- Start definitions of the response messages --
 
 // GetAvailablePackageSummariesResponse
@@ -132,6 +147,44 @@ message GetAvailablePackageDetailResponse {
   //
   // List of AvailablePackageDetail
   AvailablePackageDetail available_package_detail = 1;
+}
+
+// GetAvailablePackageVersionsResponse
+//
+// Response for GetAvailablePackageVersions
+message GetAvailablePackageVersionsResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"package_app_versions": [{}]}'
+  // };
+
+  // PackageAppVersion conveys both the package version and the packaged app version.
+  message PackageAppVersion {
+    string pkg_version = 1;
+    string app_version = 2;
+  };
+  // By default (when version_query is empty or ignored) the response
+  // should contain an ordered summary of versions including the most recent three
+  // patch versions of the most recent three minor versions of the most recent three
+  // major versions when available, something like:
+  // [
+  //   { pkg_version: "10.3.19", app_version: "2.16.8" },
+  //   { pkg_version: "10.3.18", app_version: "2.16.8" },
+  //   { pkg_version: "10.3.17", app_version: "2.16.7" },
+  //   { pkg_version: "10.2.6", app_version: "2.15.3" },
+  //   { pkg_version: "10.2.5", app_version: "2.15.2" },
+  //   { pkg_version: "10.2.4", app_version: "2.15.2" },
+  //   { pkg_version: "10.1.8", app_version: "2.13.5" },
+  //   { pkg_version: "10.1.7", app_version: "2.13.5" },
+  //   { pkg_version: "10.1.6", app_version: "2.13.5" },
+  //   { pkg_version: "9.5.4", app_version: "2.8.9" },
+  //   ...
+  //   { pkg_version: "8.2.5", app_version: "1.19.5" },
+  //   ...
+  // ]
+  // If a version_query is present and the plugin chooses to support it,
+  // the full history of versions matching the version query should be returned.
+  repeated PackageAppVersion package_app_versions = 1;
 }
 
 // -- Start definitions used in the responses  --
