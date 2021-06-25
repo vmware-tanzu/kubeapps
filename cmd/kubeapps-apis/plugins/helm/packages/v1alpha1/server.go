@@ -24,6 +24,11 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	authorizationapi "k8s.io/api/authorization/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
 )
@@ -37,8 +42,9 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter func(context.Context) (dynamic.Interface, error)
-	manager      assetsvc_utils.AssetManager
+	clientGetter             func(context.Context) (dynamic.Interface, error)
+	manager                  assetsvc_utils.AssetManager
+	globalPackagingNamespace string
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -62,8 +68,9 @@ func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *S
 	}
 
 	return &Server{
-		clientGetter: clientGetter,
-		manager:      manager,
+		clientGetter:             clientGetter,
+		manager:                  manager,
+		globalPackagingNamespace: kubeappsNamespace,
 	}
 }
 
@@ -90,7 +97,6 @@ func (s *Server) GetManager() (assetsvc_utils.AssetManager, error) {
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-
 	contextMsg := ""
 	if request.Context != nil {
 		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
@@ -105,6 +111,32 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
 		}
 		namespace = request.Context.Namespace
+	}
+	// Check the requested namespace: if any, return "everything a user can read";
+	// otherwise, first check if the user can access the requested ns
+	if namespace == "" {
+		// TODO(agamez): not including a namespace means that it returns everything a user can read
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: not including a namespace means that it returns everything a user can read")
+	} else {
+		// After requesting a specific namespace, we have to ensure the user can actually access to it
+		// If checking the global namespace, allow access always
+		hasAccess := namespace != s.globalPackagingNamespace
+		if !hasAccess {
+			var err error
+			// If checking another namespace, check if the user has access (ie, "get secrets in this ns")
+			hasAccess, err = s.hasAccessToNamespace(ctx, namespace)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
+			}
+			if err != nil || !hasAccess {
+				msg := fmt.Sprintf("Unable to validate user for namespace %q", namespace)
+				if err != nil {
+					msg = fmt.Sprintf("%s: %s", msg, err.Error())
+				}
+				// If the user has not access, return a unauthenticated response, otherwise, continue
+				return nil, status.Errorf(codes.Unauthenticated, msg)
+			}
+		}
 	}
 
 	// Create the initial chart query with the namespace
@@ -174,4 +206,39 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	}
 
 	return pkg, nil
+}
+
+func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bool, error) {
+	client, err := s.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	// TODO(agamez): this is a temporary workaround since the client getter we (the plugin) get is just
+	// for dynamic interfaces. I guess we should also pass a normal k8s client in case the plugins want to
+	// interact with typed kubernetes resources.
+	selfSubjectAccessReviews := schema.GroupVersionResource{Group: "authorization.k8s.io", Version: "v1", Resource: "selfsubjectaccessreviews"}
+	unstructuredData, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&authorizationapi.SelfSubjectAccessReview{
+		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapi.ResourceAttributes{
+				Group:     "",
+				Resource:  "secrets",
+				Verb:      "get",
+				Namespace: namespace,
+			},
+		},
+	})
+	if err != nil {
+		return false, fmt.Errorf("Error parsing the selfSubjectAccessReviews request: %s", err)
+	}
+	selfSubjectAccessReviewsResponse, err := client.Resource(selfSubjectAccessReviews).Create(ctx, &unstructured.Unstructured{Object: unstructuredData}, metav1.CreateOptions{})
+	if err != nil {
+		return false, fmt.Errorf("Error creating the selfSubjectAccessReviews request: %s", err)
+	}
+	res := &authorizationapi.SelfSubjectAccessReview{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(selfSubjectAccessReviewsResponse.Object, res)
+	if err != nil {
+		return false, fmt.Errorf("Error parsing the selfSubjectAccessReviews response: %s", err)
+	}
+	return res.Status.Allowed, nil
 }
