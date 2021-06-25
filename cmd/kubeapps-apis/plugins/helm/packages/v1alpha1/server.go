@@ -25,7 +25,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	authorizationapi "k8s.io/api/authorization/v1"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -85,7 +85,7 @@ func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.
 	return typedClient, dynamicClient, nil
 }
 
-// GetManager ensures a manager is available and uses it to return the client.
+// GetManager ensures a manager is available and returns it.
 func (s *Server) GetManager() (utils.AssetManager, error) {
 	if s.manager == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with manager")
@@ -116,25 +116,20 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if namespace == "" {
 		// TODO(agamez): not including a namespace means that it returns everything a user can read
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: not including a namespace means that it returns everything a user can read")
-	} else {
-		// After requesting a specific namespace, we have to ensure the user can actually access to it
-		// If checking the global namespace, allow access always
-		hasAccess := namespace != s.globalPackagingNamespace
+	}
+	// After requesting a specific namespace, we have to ensure the user can actually access to it
+	// If checking the global namespace, allow access always
+	hasAccess := namespace != s.globalPackagingNamespace
+	if !hasAccess {
+		var err error
+		// If checking another namespace, check if the user has access (ie, "get secrets in this ns")
+		hasAccess, err = s.hasAccessToNamespace(ctx, namespace)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
+		}
 		if !hasAccess {
-			var err error
-			// If checking another namespace, check if the user has access (ie, "get secrets in this ns")
-			hasAccess, err = s.hasAccessToNamespace(ctx, namespace)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
-			}
-			if err != nil || !hasAccess {
-				msg := fmt.Sprintf("Unable to validate user for namespace %q", namespace)
-				if err != nil {
-					msg = fmt.Sprintf("%s: %s", msg, err.Error())
-				}
-				// If the user has not access, return a unauthenticated response, otherwise, continue
-				return nil, status.Errorf(codes.Unauthenticated, msg)
-			}
+			// If the user has not access, return a unauthenticated response, otherwise, continue
+			return nil, status.Errorf(codes.Unauthenticated, "The current user has no access to the namespace %q", namespace)
 		}
 	}
 
@@ -215,9 +210,9 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bo
 		return false, err
 	}
 
-	res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &authorizationapi.ResourceAttributes{
+	res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationv1.SelfSubjectAccessReview{
+		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationv1.ResourceAttributes{
 				Group:     "",
 				Resource:  "secrets",
 				Verb:      "get",
