@@ -16,11 +16,11 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -36,7 +36,7 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter func(context.Context) (dynamic.Interface, error)) interface{} {
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesClientGetter) interface{} {
 	svr := NewServer(clientGetter)
 	v1alpha1.RegisterHelmPackagesServiceServer(s, svr)
 	return svr

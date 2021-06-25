@@ -39,10 +39,6 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-// Add plugin message to proto. then include in struct here with client?
-// How to create client dynamically? Perhaps return client when registering each?
-// Perhaps define an interface that client must implement (based on server?)
-
 const (
 	pluginRootDir           = "/"
 	grpcRegisterFunction    = "RegisterWithGRPCServer"
@@ -50,6 +46,9 @@ const (
 	pluginDetailFunction    = "GetPluginDetail"
 	clustersCAFilesPrefix   = "/etc/additional-clusters-cafiles"
 )
+
+// KubernetesClientGetter is a function type used by plugins to get a k8s client
+type KubernetesClientGetter func(context.Context) (dynamic.Interface, error)
 
 // pkgsPluginWithServer stores the plugin detail together with its implementation.
 type pkgsPluginWithServer struct {
@@ -145,16 +144,16 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar, clientGetter func(context.Context) (dynamic.Interface, error)) error {
+func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar, clientGetter KubernetesClientGetter) error {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, func(context.Context) (dynamic.Interface, error)) interface{}
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{}
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, func(context.Context) (dynamic.Interface, error)) interface{} { return nil }
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{} { return nil }
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
 
@@ -256,7 +255,7 @@ func listSOFiles(fsys fs.FS, pluginDirs []string) ([]string, error) {
 // createClientGetter returns a function closure for creating the k8s client to interact with the cluster.
 // The returned function utilizes the user credential present in the request context.
 // The plugins just have to call this function passing the context in order to retrieve the configured k8s client
-func createClientGetter(serveOpts ServeOptions) (func(context.Context) (dynamic.Interface, error), error) {
+func createClientGetter(serveOpts ServeOptions) (KubernetesClientGetter, error) {
 	var restConfig *rest.Config
 	var clustersConfig kube.ClustersConfig
 	var err error
@@ -298,7 +297,7 @@ func createClientGetter(serveOpts ServeOptions) (func(context.Context) (dynamic.
 
 // createClientGetter takes the required params and returns the closure fuction.
 // it's splitted for testing this fn separately
-func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (func(context.Context) (dynamic.Interface, error), error) {
+func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (KubernetesClientGetter, error) {
 
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'

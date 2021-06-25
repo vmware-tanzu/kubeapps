@@ -24,6 +24,7 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 
@@ -55,12 +56,12 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter func(context.Context) (dynamic.Interface, error)
+	clientGetter server.KubernetesClientGetter
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter func(context.Context) (dynamic.Interface, error)) *Server {
+func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	return &Server{
 		clientGetter: clientGetter,
 	}
