@@ -148,6 +148,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		cq.Categories = request.FilterOptions.Categories
 		cq.SearchQuery = request.FilterOptions.Query
 		cq.Repos = request.FilterOptions.Repositories
+		cq.Version = request.FilterOptions.Version
+		cq.AppVersion = request.FilterOptions.AppVersion
 	}
 
 	// TODO: We are not yet returning paginated results here
