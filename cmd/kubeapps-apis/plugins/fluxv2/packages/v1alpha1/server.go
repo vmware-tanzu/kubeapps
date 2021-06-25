@@ -73,11 +73,11 @@ func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.
 	if s.clientGetter == nil {
 		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	_, client, err := s.clientGetter(ctx)
+	typedClient, dynamicClient, err := s.clientGetter(ctx)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
-	return nil, client, nil
+	return typedClient, dynamicClient, nil
 }
 
 // ===== general note on error handling ========
