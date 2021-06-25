@@ -27,16 +27,16 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
 	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 	_ "github.com/lib/pq"
 )
 
-func getInitializedManager(t *testing.T) (*assetsvc_utils.PostgresAssetManager, func()) {
+func getInitializedManager(t *testing.T) (*utils.PostgresAssetManager, func()) {
 	pam, cleanup := pgtest.GetInitializedManager(t)
-	return &assetsvc_utils.PostgresAssetManager{pam}, cleanup
+	return &utils.PostgresAssetManager{pam}, cleanup
 }
 
 func TestGetChart(t *testing.T) {
@@ -135,7 +135,7 @@ func TestGetVersion(t *testing.T) {
 			chartId:          "chart-1",
 			namespace:        "namespace-1",
 			requestedVersion: "doesnt-exist",
-			expectedErr:      assetsvc_utils.ErrChartVersionNotFound,
+			expectedErr:      utils.ErrChartVersionNotFound,
 		},
 		{
 			name: "it returns an error if the chart version does not exist in that namespace",
@@ -388,7 +388,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 				}
 			}
 
-			charts, numPages, err := pam.GetPaginatedChartListWithFilters(assetsvc_utils.ChartQuery{Namespace: tc.namespace, Repos: []string{tc.repo}}, 1, 10)
+			charts, numPages, err := pam.GetPaginatedChartListWithFilters(utils.ChartQuery{Namespace: tc.namespace, Repos: []string{tc.repo}}, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got err: %+v, want: %+v", got, want)
@@ -510,7 +510,7 @@ func TestGetChartsWithFilters(t *testing.T) {
 				}
 			}
 
-			charts, _, err := pam.GetPaginatedChartListWithFilters(assetsvc_utils.ChartQuery{Namespace: tc.namespace, ChartName: tc.chartName, Version: tc.chartVersion, AppVersion: tc.appVersion}, 1, 0)
+			charts, _, err := pam.GetPaginatedChartListWithFilters(utils.ChartQuery{Namespace: tc.namespace, ChartName: tc.chartName, Version: tc.chartVersion, AppVersion: tc.appVersion}, 1, 0)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}

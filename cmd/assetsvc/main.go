@@ -24,7 +24,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 )
@@ -32,7 +32,7 @@ import (
 const pathPrefix = "/v1"
 
 // TODO(absoludity): Let's not use globals for storing state like this.
-var manager assetsvc_utils.AssetManager
+var manager utils.AssetManager
 
 func setupRoutes() http.Handler {
 	r := mux.NewRouter()
@@ -77,7 +77,7 @@ func main() {
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
 
 	var err error
-	manager, err = assetsvc_utils.NewManager("postgresql", dbConfig, kubeappsNamespace)
+	manager, err = utils.NewManager("postgresql", dbConfig, kubeappsNamespace)
 	if err != nil {
 		log.Fatal(err)
 	}
