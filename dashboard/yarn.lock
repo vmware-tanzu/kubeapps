@@ -1206,10 +1206,10 @@
     "@cds/city" "^1.1.0"
     normalize.css "^8.0.1"
 
-"@clr/ui@^5.1.1":
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-5.1.1.tgz#4a9e3bad06ad26a6a8015096778d9ba666b4fd37"
-  integrity sha512-mGOWBAMGm1M3fgCzH8QiA8dgCtsg3v9q+otAJ00BlZWJpBLP7o/tZA3O07abp5xeuyAYAPBWcZ1gKL/3nXJV9A==
+"@clr/ui@^5.4.1":
+  version "5.4.1"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-5.4.1.tgz#686bb3db5b369add42be59e7b24da6c2dd376a0c"
+  integrity sha512-E03VDj43moarX2mp4U48h9Nrx9N6foDPjzqTFqKvjFaAIzEs/5GM8cNlo6EizVBV7y3+MwoM72bT5XJTygRL6w==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
