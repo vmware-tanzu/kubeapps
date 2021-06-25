@@ -23,8 +23,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
@@ -32,29 +33,31 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/fake"
+	dynfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes"
+	typfake "k8s.io/client-go/kubernetes/fake"
 	log "k8s.io/klog/v2"
 )
 
-func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), assetsvc_utils.AssetManager) {
-	var manager assetsvc_utils.AssetManager
+func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) {
+	var manager utils.AssetManager
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	manager = &assetsvc_utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeappsNamespace"}}
+	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: "kubeappsNamespace"}}
 	return mock, func() { db.Close() }, manager
 }
 
 func TestGetClient(t *testing.T) {
 	kubeappsNamespace := "kubeapps"
 	dbConfig := datastore.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
-	manager, err := assetsvc_utils.NewPGManager(dbConfig, kubeappsNamespace)
+	manager, err := utils.NewPGManager(dbConfig, kubeappsNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	getter := func(context.Context) (dynamic.Interface, error) {
-		return fake.NewSimpleDynamicClientWithCustomListKinds(
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 			runtime.NewScheme(),
 			map[schema.GroupVersionResource]string{
 				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
@@ -64,13 +67,13 @@ func TestGetClient(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		manager           assetsvc_utils.AssetManager
-		clientGetter      func(context.Context) (dynamic.Interface, error)
+		manager           utils.AssetManager
+		clientGetter      server.KubernetesClientGetter
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code
 	}{
 		{
-			name:              "it returns internal error status when no getter configured",
+			name:              "it returns internal error status when no clientGetter configured",
 			manager:           manager,
 			clientGetter:      nil,
 			statusCodeClient:  codes.Internal,
@@ -79,12 +82,12 @@ func TestGetClient(t *testing.T) {
 		{
 			name:              "it returns internal error status when no manager configured",
 			manager:           nil,
-			clientGetter:      getter,
+			clientGetter:      clientGetter,
 			statusCodeClient:  codes.OK,
 			statusCodeManager: codes.Internal,
 		},
 		{
-			name:              "it returns internal error status when no getter/manager configured",
+			name:              "it returns internal error status when no clientGetter/manager configured",
 			manager:           nil,
 			clientGetter:      nil,
 			statusCodeClient:  codes.Internal,
@@ -93,8 +96,8 @@ func TestGetClient(t *testing.T) {
 		{
 			name:    "it returns failed-precondition when configGetter itself errors",
 			manager: manager,
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCodeClient:  codes.FailedPrecondition,
 			statusCodeManager: codes.OK,
@@ -102,7 +105,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:         "it returns client without error when configured correctly",
 			manager:      manager,
-			clientGetter: getter,
+			clientGetter: clientGetter,
 		},
 	}
 
@@ -110,7 +113,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
-			client, errClient := s.GetClient(context.Background())
+			typedClient, dynamicClient, errClient := s.GetClients(context.Background())
 
 			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
@@ -124,13 +127,15 @@ func TestGetClient(t *testing.T) {
 
 			// If there is no error, the client should be a dynamic.Interface implementation.
 			if tc.statusCodeClient == codes.OK {
-				if _, ok := client.(dynamic.Interface); !ok {
-					t.Errorf("got: %T, want: dynamic.Interface", client)
+				if dynamicClient == nil {
+					t.Errorf("got: nil, want: dynamic.Interface")
+				}
+				if typedClient == nil {
+					t.Errorf("got: nil, want: kubernetes.Interface")
 				}
 			}
 		})
 	}
-
 }
 
 func TestAvailablePackageSummaryFromChart(t *testing.T) {
@@ -207,12 +212,13 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
-	getter := func(context.Context) (dynamic.Interface, error) {
-		return fake.NewSimpleDynamicClientWithCustomListKinds(
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 			runtime.NewScheme(),
 			map[schema.GroupVersionResource]string{
 				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
 			},
+			nil,
 		), nil
 	}
 	chartOK := &models.Chart{
@@ -266,7 +272,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			mock, cleanup, manager := setMockManager(t)
 			defer cleanup()
 			s := Server{
-				clientGetter: getter,
+				clientGetter: clientGetter,
 				manager:      manager,
 			}
 
@@ -300,5 +306,4 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 		})
 	}
-
 }

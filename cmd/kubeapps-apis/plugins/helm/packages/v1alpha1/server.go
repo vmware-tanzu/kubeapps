@@ -18,21 +18,18 @@ import (
 	"os"
 
 	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/assetsvc_utils"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	authorizationapi "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	log "k8s.io/klog/v2"
 	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -44,9 +41,9 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter server.KubernetesClientGetter
+	clientGetter             server.KubernetesClientGetter
 	globalPackagingNamespace string
-	manager                  assetsvc_utils.AssetManager
+	manager                  utils.AssetManager
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -60,15 +57,15 @@ func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 
 	var dbConfig = datastore.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
-	}
+	manager, err := utils.NewPGManager(dbConfig, kubeappsNamespace)
+	if err != nil {
 		log.Fatalf("%s", err)
+	}
 	err = manager.Init()
 	if err != nil {
 		log.Fatalf("%s", err)
-	if err != nil {
 	}
 
-	manager, err := assetsvc_utils.NewPGManager(dbConfig, kubeappsNamespace)
 	return &Server{
 		clientGetter:             clientGetter,
 		manager:                  manager,
@@ -89,7 +86,7 @@ func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.
 }
 
 // GetManager ensures a manager is available and uses it to return the client.
-func (s *Server) GetManager() (assetsvc_utils.AssetManager, error) {
+func (s *Server) GetManager() (utils.AssetManager, error) {
 	if s.manager == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with manager")
 	}
@@ -142,7 +139,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	// Create the initial chart query with the namespace
-	cq := assetsvc_utils.ChartQuery{
+	cq := utils.ChartQuery{
 		Namespace: namespace,
 	}
 
@@ -211,16 +208,12 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 }
 
 func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bool, error) {
-	client, err := s.GetClient(ctx)
+	client, _, err := s.GetClients(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	// TODO(agamez): this is a temporary workaround since the client getter we (the plugin) get is just
-	// for dynamic interfaces. I guess we should also pass a normal k8s client in case the plugins want to
-	// interact with typed kubernetes resources.
-	selfSubjectAccessReviews := schema.GroupVersionResource{Group: "authorization.k8s.io", Version: "v1", Resource: "selfsubjectaccessreviews"}
-	unstructuredData, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&authorizationapi.SelfSubjectAccessReview{
+	res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
 		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationapi.ResourceAttributes{
 				Group:     "",
@@ -229,18 +222,9 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bo
 				Namespace: namespace,
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
-		return false, fmt.Errorf("Error parsing the selfSubjectAccessReviews request: %s", err)
-	}
-	selfSubjectAccessReviewsResponse, err := client.Resource(selfSubjectAccessReviews).Create(ctx, &unstructured.Unstructured{Object: unstructuredData}, metav1.CreateOptions{})
-	if err != nil {
-		return false, fmt.Errorf("Error creating the selfSubjectAccessReviews request: %s", err)
-	}
-	res := &authorizationapi.SelfSubjectAccessReview{}
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(selfSubjectAccessReviewsResponse.Object, res)
-	if err != nil {
-		return false, fmt.Errorf("Error parsing the selfSubjectAccessReviews response: %s", err)
+		return false, err
 	}
 	return res.Status.Allowed, nil
 }
