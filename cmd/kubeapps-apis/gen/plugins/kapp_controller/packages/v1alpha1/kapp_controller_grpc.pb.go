@@ -25,6 +25,8 @@ type KappControllerPackagesServiceClient interface {
 	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
 	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
+	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 }
 
 type kappControllerPackagesServiceClient struct {
@@ -62,6 +64,15 @@ func (c *kappControllerPackagesServiceClient) GetPackageRepositories(ctx context
 	return out, nil
 }
 
+func (c *kappControllerPackagesServiceClient) GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
+	out := new(v1alpha1.GetAvailablePackageVersionsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KappControllerPackagesServiceServer is the server API for KappControllerPackagesService service.
 // All implementations should embed UnimplementedKappControllerPackagesServiceServer
 // for forward compatibility
@@ -72,6 +83,8 @@ type KappControllerPackagesServiceServer interface {
 	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
 	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
+	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 }
 
 // UnimplementedKappControllerPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -86,6 +99,9 @@ func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageDetai
 }
 func (UnimplementedKappControllerPackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageVersions not implemented")
 }
 
 // UnsafeKappControllerPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -153,6 +169,24 @@ func _KappControllerPackagesService_GetPackageRepositories_Handler(srv interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KappControllerPackagesService_GetAvailablePackageVersions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetAvailablePackageVersionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).GetAvailablePackageVersions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).GetAvailablePackageVersions(ctx, req.(*v1alpha1.GetAvailablePackageVersionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KappControllerPackagesService_ServiceDesc is the grpc.ServiceDesc for KappControllerPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -171,6 +205,10 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPackageRepositories",
 			Handler:    _KappControllerPackagesService_GetPackageRepositories_Handler,
+		},
+		{
+			MethodName: "GetAvailablePackageVersions",
+			Handler:    _KappControllerPackagesService_GetAvailablePackageVersions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

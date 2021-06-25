@@ -20,6 +20,12 @@ service FluxV2PackagesService {
       get: "/plugins/fluxv2/packages/v1alpha1/availablepackagedetails"
     };
   };
+  // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
+  rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
+    option (google.api.http) = {
+      get: "/plugins/fluxv2/packages/v1alpha1/availablepackageversions"
+    };
+  }
   // GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
   rpc GetPackageRepositories(GetPackageRepositoriesRequest) returns (GetPackageRepositoriesResponse) {
     option (google.api.http) = {
@@ -66,12 +72,12 @@ message PackageRepository {
   //
   // The name identifying package repository on the cluster.
   string name = 1;
-  
+
   // Package repository namespace
   //
   // An optional namespace for namespaced package repositories.
   string namespace = 2;
-  
+
   // Package repository URL
   //
   // A url identifying the package repository location.
