@@ -70,26 +70,6 @@ message GetAvailablePackageSummariesRequest {
   // The context (cluster/namespace) for the request
   Context context = 1;
 
-  // FilterOptions
-  //
-  // FilterOptions available when requesting summaries
-  message FilterOptions {
-    // Text query for the request
-    string query = 1;
-
-    // Collection of categories for the request
-    repeated string categories = 2;
-
-    // Collection of repositories where the packages belong to
-    repeated string repositories = 3;
-
-    // Package version for the request
-    string version = 4;
-
-    // Packaged app version for the request
-    string app_version = 5;
-  };
-
   // The filters used for the request
   FilterOptions filter_options = 2;
 }
@@ -395,3 +375,38 @@ message Maintainer {
   // A maintainer email
   string email = 2;
   }
+
+  // FilterOptions
+  //
+  // FilterOptions available when requesting summaries
+  message FilterOptions {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+
+    // Text query
+    //
+    // Text query for the request
+    string query = 1;
+
+    // Categories
+    //
+    // Collection of categories for the request
+    repeated string categories = 2;
+
+    // Repositories
+    //
+    // Collection of repositories where the packages belong to
+    repeated string repositories = 3;
+
+    // Package version
+    //
+    // Package version for the request
+    string version = 4;
+
+    // App version
+    //
+    // Packaged app version for the request
+    string app_version = 5;
+  };

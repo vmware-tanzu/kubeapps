@@ -148,14 +148,14 @@
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query for the request.",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Collection of categories for the request.",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -166,7 +166,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Collection of repositories where the packages belong to.",
+            "description": "Repositories. Collection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -177,14 +177,14 @@
           },
           {
             "name": "filterOptions.version",
-            "description": "Package version for the request.",
+            "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "Packaged app version for the request.",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -402,14 +402,14 @@
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query for the request.",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Collection of categories for the request.",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -420,7 +420,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Collection of repositories where the packages belong to.",
+            "description": "Repositories. Collection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -431,14 +431,14 @@
           },
           {
             "name": "filterOptions.version",
-            "description": "Package version for the request.",
+            "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "Packaged app version for the request.",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -673,14 +673,14 @@
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query for the request.",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Collection of categories for the request.",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -691,7 +691,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Collection of repositories where the packages belong to.",
+            "description": "Repositories. Collection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -702,14 +702,14 @@
           },
           {
             "name": "filterOptions.version",
-            "description": "Package version for the request.",
+            "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "Packaged app version for the request.",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -830,14 +830,14 @@
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query for the request.",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Collection of categories for the request.",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -848,7 +848,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Collection of repositories where the packages belong to.",
+            "description": "Repositories. Collection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -859,14 +859,14 @@
           },
           {
             "name": "filterOptions.version",
-            "description": "Package version for the request.",
+            "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "Packaged app version for the request.",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -922,39 +922,6 @@
     }
   },
   "definitions": {
-    "GetAvailablePackageSummariesRequestFilterOptions": {
-      "type": "object",
-      "properties": {
-        "query": {
-          "type": "string",
-          "title": "Text query for the request"
-        },
-        "categories": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "Collection of categories for the request"
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "Collection of repositories where the packages belong to"
-        },
-        "version": {
-          "type": "string",
-          "title": "Package version for the request"
-        },
-        "appVersion": {
-          "type": "string",
-          "title": "Packaged app version for the request"
-        }
-      },
-      "description": "FilterOptions available when requesting summaries",
-      "title": "FilterOptions"
-    },
     "GetAvailablePackageVersionsResponsePackageAppVersion": {
       "type": "object",
       "properties": {
@@ -1250,6 +1217,44 @@
       },
       "description": "A Context specifies the context of the message",
       "title": "Context"
+    },
+    "v1alpha1FilterOptions": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Text query for the request",
+          "title": "Text query"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Collection of categories for the request",
+          "title": "Categories"
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Collection of repositories where the packages belong to",
+          "title": "Repositories"
+        },
+        "version": {
+          "type": "string",
+          "description": "Package version for the request",
+          "title": "Package version"
+        },
+        "appVersion": {
+          "type": "string",
+          "description": "Packaged app version for the request",
+          "title": "App version"
+        }
+      },
+      "description": "FilterOptions available when requesting summaries",
+      "title": "FilterOptions"
     },
     "v1alpha1GetAvailablePackageDetailResponse": {
       "type": "object",
