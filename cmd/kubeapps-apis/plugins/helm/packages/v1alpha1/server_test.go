@@ -30,12 +30,14 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 	log "k8s.io/klog/v2"
 )
 
@@ -212,15 +214,38 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
-			runtime.NewScheme(),
-			map[schema.GroupVersionResource]string{
-				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
-			},
-			nil,
-		), nil
+	globalPackagingNamespace := "kubeapps"
+
+	// Creating the dynamic client
+	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{
+			{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
+		},
+	)
+
+	// Creating an authorized clientGetter
+	authorizedClientSet := typfake.NewSimpleClientset()
+	authorizedClientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+	authorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return authorizedClientSet, dynamicClient, nil
 	}
+
+	// Creating a unauthorized clientGetter
+	unauthorizedClientSet := typfake.NewSimpleClientset()
+	unauthorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return unauthorizedClientSet, dynamicClient, nil
+	}
+
+	// Creating the SQL mock manager
+	mock, cleanup, manager := setMockManager(t)
+	defer cleanup()
+
+	// Defining a chart
 	chartOK := &models.Chart{
 		Name:        "foo",
 		ID:          "foo",
@@ -237,6 +262,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			{Version: "whatever", AppVersion: "1.0.0"},
 		},
 	}
+	// Defining a PackageSummary
 	availablePackageSummaryOK := &corev1.AvailablePackageSummary{
 		DisplayName:      "foo",
 		LatestVersion:    "1.0.0",
@@ -247,35 +273,91 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			Identifier: "foo",
 		},
 	}
+
 	testCases := []struct {
 		name             string
 		charts           []*models.Chart
 		expectedPackages []*corev1.AvailablePackageSummary
 		statusCode       codes.Code
+		request          *corev1.GetAvailablePackageSummariesRequest
+		server           *Server
 	}{
 		{
-			name:             "it returns a set of availablePackageSummary from the database",
+			name: "it returns a set of availablePackageSummary from the database",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				FilterOptions: &corev1.FilterOptions{
+					Query:        "",
+					AppVersion:   "",
+					Version:      "",
+					Categories:   nil,
+					Repositories: nil,
+				},
+			},
 			charts:           []*models.Chart{chartOK},
 			expectedPackages: []*corev1.AvailablePackageSummary{availablePackageSummaryOK},
 			statusCode:       codes.OK,
 		},
 		{
-			name:             "it returns an internal error status if response does not contain version",
+			name: "it returns a unimplemented status if no namespaces is provided",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "",
+				},
+			},
+			charts:           []*models.Chart{{Name: "foo"}},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+			statusCode:       codes.Unimplemented,
+		},
+		{
+			name: "it returns an internal error status if response does not contain version",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: globalPackagingNamespace,
+				},
+			},
 			charts:           []*models.Chart{{Name: "foo"}},
 			expectedPackages: []*corev1.AvailablePackageSummary{},
 			statusCode:       codes.Internal,
+		},
+		{
+			name: "it returns an unauthenticated status if the user doesn't have permissions",
+			server: &Server{
+				clientGetter:             unauthorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: globalPackagingNamespace,
+				},
+			},
+			charts:           []*models.Chart{{Name: "foo"}},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+			statusCode:       codes.Unauthenticated,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mock, cleanup, manager := setMockManager(t)
-			defer cleanup()
-			s := Server{
-				clientGetter: clientGetter,
-				manager:      manager,
-			}
-
 			rows := sqlmock.NewRows([]string{"info"})
 			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tc.charts))
 
@@ -292,7 +374,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			mock.ExpectQuery("^SELECT count(.+) FROM").
 				WillReturnRows(rowCount)
 
-			availablePackageSummaries, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			availablePackageSummaries, err := tc.server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
