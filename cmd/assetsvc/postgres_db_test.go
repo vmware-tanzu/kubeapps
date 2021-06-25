@@ -33,9 +33,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
+func getInitializedManager(t *testing.T) (*PostgresAssetManager, func()) {
 	pam, cleanup := pgtest.GetInitializedManager(t)
-	return &postgresAssetManager{pam}, cleanup
+	return &PostgresAssetManager{pam}, cleanup
 }
 
 func TestGetChart(t *testing.T) {
@@ -90,7 +90,7 @@ func TestGetChart(t *testing.T) {
 				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
-			chart, err := pam.getChart(tc.namespace, tc.chartId)
+			chart, err := pam.GetChart(tc.namespace, tc.chartId)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got: %+v, want: %+v", got, want)
@@ -175,7 +175,7 @@ func TestGetVersion(t *testing.T) {
 				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
-			chart, err := pam.getChartVersion(tc.namespace, tc.chartId, tc.requestedVersion)
+			chart, err := pam.GetChartVersion(tc.namespace, tc.chartId, tc.requestedVersion)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("got: %+v, want: %+v", got, want)
@@ -387,7 +387,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 				}
 			}
 
-			charts, numPages, err := pam.getPaginatedChartListWithFilters(ChartQuery{namespace: tc.namespace, repos: []string{tc.repo}}, 1, 10)
+			charts, numPages, err := pam.GetPaginatedChartListWithFilters(ChartQuery{namespace: tc.namespace, repos: []string{tc.repo}}, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got err: %+v, want: %+v", got, want)
@@ -509,7 +509,7 @@ func TestGetChartsWithFilters(t *testing.T) {
 				}
 			}
 
-			charts, _, err := pam.getPaginatedChartListWithFilters(ChartQuery{namespace: tc.namespace, chartName: tc.chartName, version: tc.chartVersion, appVersion: tc.appVersion}, 1, 0)
+			charts, _, err := pam.GetPaginatedChartListWithFilters(ChartQuery{namespace: tc.namespace, chartName: tc.chartName, version: tc.chartVersion, appVersion: tc.appVersion}, 1, 0)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}

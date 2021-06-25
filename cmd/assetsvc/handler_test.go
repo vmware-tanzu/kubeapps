@@ -76,7 +76,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func()) {
 	// TODO(absoludity): Let's not use globals for storing state like this.
 	origManager := manager
 
-	manager = &postgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: kubeappsNamespace}}
+	manager = &PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: kubeappsNamespace}}
 
 	return mock, func() { db.Close(); manager = origManager }
 }
