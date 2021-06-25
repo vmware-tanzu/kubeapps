@@ -25,6 +25,7 @@ import (
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
@@ -38,10 +39,59 @@ import (
 	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
 
 const globalPackagingNamespace = "kubeapps"
+
+var chartOK = &models.Chart{
+	Name:        "foo",
+	ID:          "foo/bar",
+	Category:    "cat1",
+	Description: "best chart",
+	Icon:        "foo.bar/icon.svg",
+	Repo: &models.Repo{
+		Name:      "bar",
+		Namespace: "my-ns",
+	},
+	Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
+	ChartVersions: []models.ChartVersion{
+		{Version: "3.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+		{Version: "2.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+		{Version: "1.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+	},
+}
+
+var availablePackageSummaryOK = &corev1.AvailablePackageSummary{
+	DisplayName:      "foo",
+	LatestVersion:    "3.0.0",
+	IconUrl:          "foo.bar/icon.svg",
+	ShortDescription: "best chart",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Context:    &corev1.Context{Namespace: "my-ns"},
+		Identifier: "foo/bar",
+	},
+}
+
+var availablePackageDetailOK = &corev1.AvailablePackageDetail{
+	Name:             "foo",
+	DisplayName:      "foo",
+	IconUrl:          "foo.bar/icon.svg",
+	ShortDescription: "best chart",
+	LongDescription:  "best chart",
+	Version:          "3.0.0",
+	AppVersion:       "1.0.0",
+	Readme:           "chart readme",
+	DefaultValues:    "chart values",
+	ValuesSchema:     "chart schema",
+	Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Context:    &corev1.Context{Namespace: "my-ns"},
+		Identifier: "foo/bar",
+		Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+	},
+}
 
 func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) {
 	var manager utils.AssetManager
@@ -142,34 +192,6 @@ func TestGetClient(t *testing.T) {
 }
 
 func TestAvailablePackageSummaryFromChart(t *testing.T) {
-	chartOK := &models.Chart{
-		Name:        "foo",
-		ID:          "foo",
-		Category:    "cat1",
-		Description: "best chart",
-		Icon:        "foo.bar/icon.svg",
-		Repo: &models.Repo{
-			Name:      "bar",
-			Namespace: "my-ns",
-		},
-		ChartVersions: []models.ChartVersion{
-			{Version: "1.0.0", AppVersion: "0.1.0"},
-			{Version: "1.0.0", AppVersion: "whatever"},
-			{Version: "whatever", AppVersion: "1.0.0"},
-		},
-	}
-
-	availablePackageSummaryOK := &corev1.AvailablePackageSummary{
-		DisplayName:      "foo",
-		LatestVersion:    "1.0.0",
-		IconUrl:          "foo.bar/icon.svg",
-		ShortDescription: "best chart",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Namespace: "my-ns"},
-			Identifier: "foo",
-		},
-	}
-
 	invalidChart := &models.Chart{Name: "foo"}
 
 	testCases := []struct {
@@ -243,35 +265,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	// Creating the SQL mock manager
 	mock, cleanup, manager := setMockManager(t)
 	defer cleanup()
-
-	// Defining a chart
-	chartOK := &models.Chart{
-		Name:        "foo",
-		ID:          "foo",
-		Category:    "cat1",
-		Description: "best chart",
-		Icon:        "foo.bar/icon.svg",
-		Repo: &models.Repo{
-			Name:      "bar",
-			Namespace: "my-ns",
-		},
-		ChartVersions: []models.ChartVersion{
-			{Version: "1.0.0", AppVersion: "0.1.0"},
-			{Version: "1.0.0", AppVersion: "whatever"},
-			{Version: "whatever", AppVersion: "1.0.0"},
-		},
-	}
-	// Defining a PackageSummary
-	availablePackageSummaryOK := &corev1.AvailablePackageSummary{
-		DisplayName:      "foo",
-		LatestVersion:    "1.0.0",
-		IconUrl:          "foo.bar/icon.svg",
-		ShortDescription: "best chart",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Namespace: "my-ns"},
-			Identifier: "foo",
-		},
-	}
 
 	testCases := []struct {
 		name             string
@@ -370,7 +363,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
-					Namespace: globalPackagingNamespace,
+					Namespace: "my-ns",
 				},
 			},
 			charts:           []*models.Chart{{Name: "foo"}},
@@ -390,11 +383,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				}
 				rows.AddRow(string(chartJSON))
 			}
-			// Checking if the WHERE condtion is properly applied
-			mock.ExpectQuery("SELECT info FROM").
-				WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
-				WillReturnRows(rows)
-
+			if tc.statusCode != codes.Unauthenticated {
+				// Checking if the WHERE condtion is properly applied
+				mock.ExpectQuery("SELECT info FROM").
+					WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
+					WillReturnRows(rows)
+			}
 			availablePackageSummaries, err := tc.server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {

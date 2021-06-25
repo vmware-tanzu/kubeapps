@@ -119,7 +119,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
 	// If checking the global namespace, allow access always
-	hasAccess := namespace != s.globalPackagingNamespace
+	hasAccess := namespace == s.globalPackagingNamespace
 	if !hasAccess {
 		var err error
 		// If checking another namespace, check if the user has access (ie, "get secrets in this ns")
