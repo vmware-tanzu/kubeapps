@@ -16,17 +16,17 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	log "k8s.io/klog/v2"
 )
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter func(context.Context) (dynamic.Interface, error)) interface{} {
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesClientGetter) interface{} {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
 	svr := NewServer(clientGetter)
 	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)

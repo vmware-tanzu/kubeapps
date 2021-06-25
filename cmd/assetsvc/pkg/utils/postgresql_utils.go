@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package utils
 
 import (
 	"encoding/base64"
@@ -213,27 +213,27 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 	whereQueryParams := []interface{}{}
 	whereQuery := ""
 
-	if cq.namespace != dbutils.AllNamespaces {
-		whereQueryParams = append(whereQueryParams, cq.namespace, m.GetKubeappsNamespace())
+	if cq.Namespace != dbutils.AllNamespaces {
+		whereQueryParams = append(whereQueryParams, cq.Namespace, m.GetKubeappsNamespace())
 		whereClauses = append(whereClauses, fmt.Sprintf(
 			"(repo_namespace = $%d OR repo_namespace = $%d)", len(whereQueryParams)-1, len(whereQueryParams),
 		))
 	}
-	if cq.chartName != "" {
-		whereQueryParams = append(whereQueryParams, cq.chartName)
+	if cq.ChartName != "" {
+		whereQueryParams = append(whereQueryParams, cq.ChartName)
 		whereClauses = append(whereClauses, fmt.Sprintf(
 			"(info->>'name' = $%d)", len(whereQueryParams),
 		))
 	}
-	if cq.version != "" && cq.appVersion != "" {
-		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, cq.version, cq.appVersion)
+	if cq.Version != "" && cq.AppVersion != "" {
+		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, cq.Version, cq.AppVersion)
 		whereQueryParams = append(whereQueryParams, parametrizedJsonbLiteral)
 		whereClauses = append(whereClauses, fmt.Sprintf("(info->'chartVersions' @> $%d::jsonb)", len(whereQueryParams)))
 	}
 
-	if cq.repos != nil && len(cq.repos) > 0 {
+	if cq.Repos != nil && len(cq.Repos) > 0 {
 		repoClauses := []string{}
-		for _, repo := range cq.repos {
+		for _, repo := range cq.Repos {
 			if repo != "" {
 				whereQueryParams = append(whereQueryParams, repo)
 				repoClauses = append(repoClauses, fmt.Sprintf("(repo_name = $%d)", len(whereQueryParams)))
@@ -244,9 +244,9 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 			whereClauses = append(whereClauses, repoQuery)
 		}
 	}
-	if cq.categories != nil && len(cq.categories) > 0 {
+	if cq.Categories != nil && len(cq.Categories) > 0 {
 		categoryClauses := []string{}
-		for _, category := range cq.categories {
+		for _, category := range cq.Categories {
 			if category != "" {
 				whereQueryParams = append(whereQueryParams, category)
 				categoryClauses = append(categoryClauses, fmt.Sprintf("info->>'category' = $%d", len(whereQueryParams)))
@@ -257,8 +257,8 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 			whereClauses = append(whereClauses, categoryQuery)
 		}
 	}
-	if cq.searchQuery != "" {
-		whereQueryParams = append(whereQueryParams, "%"+cq.searchQuery+"%")
+	if cq.SearchQuery != "" {
+		whereQueryParams = append(whereQueryParams, "%"+cq.SearchQuery+"%")
 		searchClause := fmt.Sprintf("((info ->> 'name' ILIKE $%d) OR ", len(whereQueryParams)) +
 			fmt.Sprintf("(info ->> 'description' ILIKE $%d) OR ", len(whereQueryParams)) +
 			fmt.Sprintf("(info -> 'repo' ->> 'name' ILIKE $%d) OR ", len(whereQueryParams)) +

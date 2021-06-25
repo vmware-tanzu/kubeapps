@@ -302,7 +302,8 @@ func TestExtractToken(t *testing.T) {
 	}
 }
 
-// TODO(agamez): this test is just testing the dynamicInterface is created, but nothing else.
+// TODO(agamez): this test is just testing that the clients (typed and dynamic)
+// are created, but nothing else.
 // As per the PR #2908' comments, we could:
 // use the http_test package to create a fake http server and use it's address as the endpoint you expect,
 // then you could actually use the client to request something (anything),
@@ -316,21 +317,21 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 		expectedErrMsg error
 	}{
 		{
-			name:           "it creates the dynamicInterface when passing a valid value for the authorization metadata",
+			name:           "it creates the clients when passing a valid value for the authorization metadata",
 			contextKey:     "authorization",
 			contextValue:   "Bearer abc",
 			shouldCreate:   true,
 			expectedErrMsg: nil,
 		},
 		{
-			name:           "it doesn't create the dynamicInterface and throws a grpc error when passing an invalid authorization metadata",
+			name:           "it doesn't create the clients and throws a grpc error when passing an invalid authorization metadata",
 			contextKey:     "authorization",
 			contextValue:   "Bla",
 			shouldCreate:   false,
 			expectedErrMsg: status.Errorf(codes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
 		},
 		{
-			name:           "it creates the dynamicInterface when no authorization metadata is passed",
+			name:           "it creates the clients when no authorization metadata is passed",
 			contextKey:     "",
 			contextValue:   "",
 			shouldCreate:   true,
@@ -340,7 +341,7 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			contx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+			ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
 				tc.contextKey: tc.contextValue,
 			}))
 
@@ -368,7 +369,7 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 				t.Fatalf("in %s: fail creating the clientGetter:  %+v", tc.name, err)
 			}
 
-			dynamicInterface, err := clientGetter(contx)
+			typedClient, dynamicClient, err := clientGetter(ctx)
 			if tc.expectedErrMsg != nil && err != nil {
 				if got, want := err.Error(), tc.expectedErrMsg.Error(); !cmp.Equal(want, got) {
 					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
@@ -377,8 +378,13 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 				t.Fatalf("in %s: %+v", tc.name, err)
 			}
 
-			if tc.shouldCreate != (dynamicInterface != nil) {
-				t.Fatalf("in %s: Unexpected dynamicInterface result:  %+v", tc.name, err)
+			if tc.shouldCreate {
+				if dynamicClient == nil {
+					t.Errorf("got: nil, want: dynamic.Interface")
+				}
+				if typedClient == nil {
+					t.Errorf("got: nil, want: kubernetes.Interface")
+				}
 			}
 		})
 	}
