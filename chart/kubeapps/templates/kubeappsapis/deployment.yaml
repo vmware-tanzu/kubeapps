@@ -85,6 +85,16 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.kubeappsapis.containerPort | quote }}
+            # These env vars are required by the plugins for caching functionality
+            - name: REDIS_ADDR
+              value: kubeapps-redis-master.{{ .Release.Namespace }}.svc.cluster.local:6379
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: redis-password
+                  name: {{ include "kubeapps.redis.secretName" . }}
+            - name: REDIS_DB
+              value: "0"
             {{- if .Values.kubeappsapis.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

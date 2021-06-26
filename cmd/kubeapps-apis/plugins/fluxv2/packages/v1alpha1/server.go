@@ -64,11 +64,16 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter server.KubernetesClientGetter) *Server {
+func NewServer(clientGetter server.KubernetesClientGetter) (*Server, error) {
+	// TODO return an error
+	cache, err := NewCache()
+	if err != nil {
+		return nil, err
+	}
 	return &Server{
 		clientGetter: clientGetter,
-		cache:        NewCache(),
-	}
+		cache:        cache,
+	}, nil
 }
 
 // getClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.

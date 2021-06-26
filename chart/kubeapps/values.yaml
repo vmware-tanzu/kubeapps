@@ -1529,3 +1529,16 @@ postgresql:
     requests:
       memory: 256Mi
       cpu: 250m
+
+## Redis chart configuration
+## ref: https://github.com/helm/charts/blob/master/stable/redis/values.yaml
+##
+redis:
+  ## @param redis.enabled Deploy a Redis server to satisfy the applications caching requirements
+  ##
+  enabled: true
+  ## @param redis.redisPassword Password 
+  ## ref: https://github.com/bitnami/bitnami-docker-redis/blob/master/README.md#setting-the-server-password-on-first-run
+  ##
+  redisPassword: ""
+

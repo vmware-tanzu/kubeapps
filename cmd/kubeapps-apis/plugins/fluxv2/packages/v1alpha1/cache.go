@@ -14,6 +14,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"strconv"
 	"sync"
 
 	"github.com/go-redis/redis"
@@ -35,20 +38,32 @@ type FluxPlugInCache struct {
 	redisCli *redis.Client
 }
 
-func NewCache() *FluxPlugInCache {
-	log.Infof("+fluxv2 New FluxPlugInCache")
+func NewCache() (*FluxPlugInCache, error) {
+	log.Infof("+NewCache")
+
+	REDIS_ADDR := os.Getenv("REDIS_ADDR")
+	REDIS_PASSWORD := os.Getenv("REDIS_PASSWORD")
+	REDIS_DB, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("NewCache: addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB)
+
 	redisCli := redis.NewClient(&redis.Options{
-		Addr:     "kubeapps-redis-master.kubeapps.svc.cluster.local:6379",
-		Password: "5hcCT6srwP", // TODO found that value thru kubeapps UX, need to obtain programmatically
-		DB:       0,            // use default DB
+		Addr:     REDIS_ADDR,
+		Password: REDIS_PASSWORD,
+		DB:       REDIS_DB,
 	})
+
+	redisCli.Time()
 	c := FluxPlugInCache{
 		watcherStarted: false,
 		mutex:          sync.Mutex{},
 		redisCli:       redisCli,
 	}
 	go c.startHelmRepositoryWatcher()
-	return &c
+	return &c, nil
 }
 
 func (c *FluxPlugInCache) startHelmRepositoryWatcher() {
@@ -105,7 +120,8 @@ func (c *FluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, er
 func (c *FluxPlugInCache) processEvents(ch <-chan watch.Event) {
 	for {
 		event := <-ch
-		log.Infof("got event: type: [%v] object: [%v]", event.Type, event.Object)
+		prettyBytes, _ := json.MarshalIndent(event.Object, "", "  ")
+		log.Infof("got event: type: [%v] object:\n[%v]", event.Type, string(prettyBytes))
 		if event.Type == watch.Added {
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
