@@ -13,6 +13,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"math"
 	"sync"
 
@@ -34,56 +35,67 @@ const (
 	maxWorkers = 10
 )
 
-type readRepoJob struct {
+type fetchRepoFromCacheJob struct {
 	unstructuredRepo map[string]interface{}
 }
 
-type readRepoJobResult struct {
+type fetchRepoFromCacheJobResult struct {
 	packages []*corev1.AvailablePackageSummary
 	Error    error
 }
 
 // each repo is read in a separate go routine (lightweight thread of execution)
-func readPackageSummariesFromRepoList(repoItems []unstructured.Unstructured) ([]*corev1.AvailablePackageSummary, error) {
+func fetchPackageSummariesFromCache(repoItems []unstructured.Unstructured, cache *FluxPlugInCache) ([]*corev1.AvailablePackageSummary, error) {
 	responsePackages := []*corev1.AvailablePackageSummary{}
 	var wg sync.WaitGroup
 	workers := int(math.Min(float64(len(repoItems)), float64(maxWorkers)))
-	readRepoJobsChannel := make(chan readRepoJob, workers)
-	readRepoResultChannel := make(chan readRepoJobResult, workers)
+	fatchRepoJobsChannel := make(chan fetchRepoFromCacheJob, workers)
+	fetchRepoResultChannel := make(chan fetchRepoFromCacheJobResult, workers)
 
 	// Process only at most maxWorkers at a time
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		go func() {
-			for job := range readRepoJobsChannel {
-				packages, err := readPackageSummariesFromOneRepo(job.unstructuredRepo)
-				readRepoResultChannel <- readRepoJobResult{packages, err}
+			for job := range fatchRepoJobsChannel {
+				name, found, err := unstructured.NestedString(job.unstructuredRepo, "metadata", "name")
+				if err != nil || !found {
+					fetchRepoResultChannel <- fetchRepoFromCacheJobResult{
+						nil,
+						fmt.Errorf("required field metadata.name not found on HelmRepository: %v:\n%v", err, job.unstructuredRepo)}
+				} else {
+					packages := cache.packageSummariesForRepo(name)
+					fetchRepoResultChannel <- fetchRepoFromCacheJobResult{
+						packages,
+						nil}
+				}
 			}
 			wg.Done()
 		}()
 	}
 	go func() {
 		wg.Wait()
-		close(readRepoResultChannel)
+		close(fetchRepoResultChannel)
 	}()
 
 	go func() {
 		for _, repoItem := range repoItems {
-			readRepoJobsChannel <- readRepoJob{repoItem.Object}
+			fatchRepoJobsChannel <- fetchRepoFromCacheJob{repoItem.Object}
 		}
-		close(readRepoJobsChannel)
+		close(fatchRepoJobsChannel)
 	}()
 
 	// Start receiving results
-	for res := range readRepoResultChannel {
+	for res := range fetchRepoResultChannel {
 		if res.Error == nil {
 			responsePackages = append(responsePackages, res.packages...)
+		} else {
+			log.Errorf("%v", res.Error)
 		}
 	}
 	return responsePackages, nil
 }
 
-func readPackageSummariesFromOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
+func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
 	repo, err := newPackageRepository(unstructuredRepo)
 	if err != nil {
 		return nil, err

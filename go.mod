@@ -59,6 +59,7 @@ require (
 	github.com/go-openapi/spec v0.19.4 // indirect
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-redis/redis/v8 v8.10.0 // indirect
+	github.com/go-redis/redismock/v8 v8.0.6 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6

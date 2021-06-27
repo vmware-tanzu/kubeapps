@@ -159,6 +159,9 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 	}
 
 	server := grpcFn(registrar, clientGetter)
+	if server == nil {
+		return fmt.Errorf("registration for plug-in %v failed due to: %T returned nil when non-nil value was expected", pluginDetail, grpcFn)
+	}
 
 	return s.registerPluginsSatisfyingCoreAPIs(server, pluginDetail)
 }
@@ -299,10 +302,10 @@ func createClientGetter(serveOpts ServeOptions) (KubernetesClientGetter, error) 
 // createClientGetter takes the required params and returns the closure fuction.
 // it's splitted for testing this fn separately
 func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (KubernetesClientGetter, error) {
-
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
 	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		log.Infof("+clientGetter.GetClient")
 		var err error
 		token, err := extractToken(ctx)
 		if err != nil {

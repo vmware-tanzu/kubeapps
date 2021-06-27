@@ -65,8 +65,7 @@ type Server struct {
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(clientGetter server.KubernetesClientGetter) (*Server, error) {
-	// TODO return an error
-	cache, err := NewCache()
+	cache, err := NewCache(clientGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +82,7 @@ func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.
 	}
 	typedClient, dynamicClient, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 	return typedClient, dynamicClient, nil
 }
@@ -142,11 +141,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 
-	if request == nil || request.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
-	}
-
-	if request.Context.Cluster != "" {
+	if request != nil && request.Context != nil && request.Context.Cluster != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"Not supported yet: request.Context.Cluster: [%v]",
@@ -158,7 +153,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	responsePackages, err := readPackageSummariesFromRepoList(repos.Items)
+	responsePackages, err := fetchPackageSummariesFromCache(repos.Items, s.cache)
 	if err != nil {
 		return nil, err
 	}
