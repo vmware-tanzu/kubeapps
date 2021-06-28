@@ -1,4 +1,5 @@
 // Temporary change explained at https://github.com/kubeapps/kubeapps/pull/3042#issuecomment-870053634
+/* eslint-disable */
 import { ClarityIcons as s } from "../icon.service.js";
 import { accessibility1Icon as r } from "../shapes/accessibility-1.js";
 import { accessibility2Icon as o } from "../shapes/accessibility-2.js";
