@@ -26,17 +26,15 @@ import (
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesClientGetter) interface{} {
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesClientGetter) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
 	// TODO (gfichtenholt) return an error when func signature is changed to allow for it
 	svr, err := NewServer(clientGetter)
 	if err != nil {
-		log.Errorf("failed to instantiate a new server due to: %v", err)
-		return nil
-	} else {
-		v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
-		return svr
+		return nil, err
 	}
+	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
+	return svr, nil
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http

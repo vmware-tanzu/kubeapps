@@ -153,7 +153,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	responsePackages, err := fetchPackageSummariesFromCache(repos.Items, s.cache)
+	responsePackages, err := s.cache.fetchPackageSummaries(repos.Items)
 	if err != nil {
 		return nil, err
 	}

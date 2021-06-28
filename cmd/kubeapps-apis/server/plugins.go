@@ -150,16 +150,18 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{}
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) (interface{}, error)
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{} { return nil }
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) (interface{}, error) { return nil, nil }
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
 
-	server := grpcFn(registrar, clientGetter)
-	if server == nil {
+	server, err := grpcFn(registrar, clientGetter)
+	if err != nil {
+		return fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)
+	} else if server == nil {
 		return fmt.Errorf("registration for plug-in %v failed due to: %T returned nil when non-nil value was expected", pluginDetail, grpcFn)
 	}
 

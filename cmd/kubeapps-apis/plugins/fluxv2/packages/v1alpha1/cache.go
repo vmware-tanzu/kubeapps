@@ -14,7 +14,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"sync"
@@ -157,8 +158,7 @@ func (c *FluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, er
 func (c *FluxPlugInCache) processEvents(ch <-chan watch.Event) {
 	for {
 		event := <-ch
-		prettyBytes, _ := json.MarshalIndent(event.Object, "", "  ")
-		log.Infof("got event: type: [%v] object:\n[%v]", event.Type, string(prettyBytes))
+		log.Infof("got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
 		if event.Type == watch.Added {
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
@@ -177,7 +177,7 @@ func (c *FluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}
 	startTime := time.Now()
 	packages, err := indexOneRepo(unstructuredRepo)
 	if err != nil {
-		log.Errorf("Failed to processRepo %v due to: %v", unstructuredRepo, err)
+		log.Errorf("Failed to processRepo %s due to: %v", prettyPrintMap(unstructuredRepo), err)
 		return
 	}
 	name, _, _ := unstructured.NestedString(unstructuredRepo, "metadata", "name")
@@ -201,6 +201,7 @@ func (c *FluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}
 
 // this is effectively a cache GET operation
 func (c *FluxPlugInCache) packageSummariesForRepo(name string) []*corev1.AvailablePackageSummary {
+	startTime := time.Now()
 	// read back from cache, should be sane as what we wrote
 	bytes, err := c.redisCli.Get(c.redisCli.Context(), name).Bytes()
 	if err != nil {
@@ -214,7 +215,73 @@ func (c *FluxPlugInCache) packageSummariesForRepo(name string) []*corev1.Availab
 		log.Errorf("Failed to unmarshal bytes for repository [%s] in cache due to: %v", name, err)
 		return []*corev1.AvailablePackageSummary{}
 	}
-	log.Infof("Unmarshalled [%d] packages in repo: [%s]", len(protoMsg.AvailablePackagesSummaries), name)
-
+	duration := time.Since(startTime)
+	log.Infof("Unmarshalled [%d] packages in repo: [%s] in [%d] ms", len(protoMsg.AvailablePackagesSummaries), name, duration.Milliseconds())
 	return protoMsg.AvailablePackagesSummaries
+}
+
+const (
+	// max number of concurrent workers reading repo index at the same time
+	maxWorkers = 10
+)
+
+type fetchRepoJob struct {
+	unstructuredRepo map[string]interface{}
+}
+
+type fetchRepoJobResult struct {
+	packages []*corev1.AvailablePackageSummary
+	Error    error
+}
+
+// each repo is read in a separate go routine (lightweight thread of execution)
+func (c *FluxPlugInCache) fetchPackageSummaries(repoItems []unstructured.Unstructured) ([]*corev1.AvailablePackageSummary, error) {
+	responsePackages := []*corev1.AvailablePackageSummary{}
+	var wg sync.WaitGroup
+	workers := int(math.Min(float64(len(repoItems)), float64(maxWorkers)))
+	requestChan := make(chan fetchRepoJob, workers)
+	responseChan := make(chan fetchRepoJobResult, workers)
+
+	// Process only at most maxWorkers at a time
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			for job := range requestChan {
+				name, found, err := unstructured.NestedString(job.unstructuredRepo, "metadata", "name")
+				if err != nil || !found {
+					responseChan <- fetchRepoJobResult{
+						nil,
+						fmt.Errorf("required field metadata.name not found on HelmRepository: %v:\n%s",
+							err,
+							prettyPrintMap(job.unstructuredRepo)),
+					}
+				} else {
+					packages := c.packageSummariesForRepo(name)
+					responseChan <- fetchRepoJobResult{packages, nil}
+				}
+			}
+			wg.Done()
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(responseChan)
+	}()
+
+	go func() {
+		for _, repoItem := range repoItems {
+			requestChan <- fetchRepoJob{repoItem.Object}
+		}
+		close(requestChan)
+	}()
+
+	// Start receiving results
+	for res := range responseChan {
+		if res.Error == nil {
+			responsePackages = append(responsePackages, res.packages...)
+		} else {
+			log.Errorf("%v", res.Error)
+		}
+	}
+	return responsePackages, nil
 }
