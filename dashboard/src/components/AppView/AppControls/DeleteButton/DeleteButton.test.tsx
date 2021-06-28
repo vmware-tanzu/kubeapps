@@ -13,6 +13,7 @@ const defaultProps = {
   cluster: "default",
   namespace: "kubeapps",
   releaseName: "foo",
+  status: null,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
