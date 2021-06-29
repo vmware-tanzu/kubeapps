@@ -15,21 +15,23 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
-	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+
+	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/client-go/rest"
-	helmrepo "k8s.io/helm/pkg/repo"
 	log "k8s.io/klog/v2"
 )
 
@@ -37,10 +39,16 @@ const (
 	// see docs at https://fluxcd.io/docs/components/source/
 	fluxGroup              = "source.toolkit.fluxcd.io"
 	fluxVersion            = "v1beta1"
-	fluxHelmRepository     = "helmrepository"
+	fluxHelmRepository     = "HelmRepository"
 	fluxHelmRepositories   = "helmrepositories"
 	fluxHelmRepositoryList = "HelmRepositoryList"
+	fluxHelmChart          = "HelmChart"
+	fluxHelmCharts         = "helmcharts"
+	fluxHelmChartList      = "HelmChartList"
 )
+
+// Compile-time statement to ensure this service implementation satisfies the core packaging API
+var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
@@ -49,15 +57,27 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter func(context.Context) (dynamic.Interface, error)
+	clientGetter server.KubernetesClientGetter
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer() *Server {
+func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	return &Server{
-		clientGetter: clientForRequestContext,
+		clientGetter: clientGetter,
 	}
+}
+
+// getClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
+func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+	if s.clientGetter == nil {
+		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+	}
+	typedClient, dynamicClient, err := s.clientGetter(ctx)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+	return typedClient, dynamicClient, nil
 }
 
 // ===== general note on error handling ========
@@ -73,234 +93,231 @@ func NewServer() *Server {
 // that error by returning a status.Errorf with the appropriate code
 
 // GetPackageRepositories returns the package repositories based on the request.
-func (s *Server) GetPackageRepositories(ctx context.Context, request *corev1.GetPackageRepositoriesRequest) (*corev1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+GetPackageRepositories(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
-	if request.Cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+// note that this func currently returns ALL repositories, not just those in 'ready' (reconciled) state
+func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
+	log.Infof("+fluxv2 GetPackageRepositories(request: [%v])", request)
+
+	if request == nil || request.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Namespace)
+	if request.Context.Cluster != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"Not supported yet: request.Context.Cluster: [%v]",
+			request.Context.Cluster)
+	}
+
+	repos, err := s.getHelmRepos(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	responseRepos := []*corev1.PackageRepository{}
+	responseRepos := []*v1alpha1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
-		repo := &corev1.PackageRepository{}
-		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
-		if err != nil || !found {
-			return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%v", err, repoUnstructured.Object)
+		repo, err := newPackageRepository(repoUnstructured.Object)
+		if err != nil {
+			return nil, err
 		}
-		repo.Name = name
-
-		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
-		namespace, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "namespace")
-
-		// TODO(absoludity): When testing, write failing test for the case of a
-		// cluster-scoped object without a namespace, then fix.
-		if err == nil && found {
-			repo.Namespace = namespace
-		}
-
-		url, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
-		if err != nil || !found {
-			return nil, status.Errorf(
-				codes.Internal, "required field spec.url not found on HelmRepository: %v:\n%v", err, repoUnstructured.Object)
-		}
-		repo.Url = url
-
 		responseRepos = append(responseRepos, repo)
 	}
-	return &corev1.GetPackageRepositoriesResponse{
+	return &v1alpha1.GetPackageRepositoriesResponse{
 		Repositories: responseRepos,
 	}, nil
 }
 
-// GetAvailablePackages streams the available packages based on the request.
-func (s *Server) GetAvailablePackages(ctx context.Context, request *corev1.GetAvailablePackagesRequest) (*corev1.GetAvailablePackagesResponse, error) {
-	log.Infof("+GetAvailablePackages(namespace=[%s], cluster=[%s])", request.Namespace, request.Cluster)
-	if request.Cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet")
+// GetAvailablePackageSummaries returns the available packages based on the request.
+// Note that currently packages are returned only from repos that are in a 'Ready'
+// state. For the fluxv2 plugin, the request context namespace (the target
+// namespace) is not relevant since charts from a repository in any namespace
+//  accessible to the user are available to be installed in the target namespace.
+func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
+	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
+
+	if request == nil || request.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Namespace)
+	if request.Context.Cluster != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"Not supported yet: request.Context.Cluster: [%v]",
+			request.Context.Cluster)
+	}
+
+	repos, err := s.getHelmRepos(ctx, "")
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackages := []*corev1.AvailablePackage{}
-	for _, repoUnstructured := range repos.Items {
-		name, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "name")
-		if err != nil || !found {
-			log.Errorf("required field metadata.name not found on HelmRepository: %w:\n%v", err, repoUnstructured.Object)
-			// just skip over to the next one
-			continue
-		}
-
-		ready, err := isRepoReady(&repoUnstructured)
-		if err != nil || !ready {
-			log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%v", name, err, repoUnstructured.Object)
-			continue
-		}
-
-		url, found, err := unstructured.NestedString(repoUnstructured.Object, "status", "url")
-		if err != nil || !found {
-			log.Infof("expected field status.url not found on HelmRepository [%s]: %v:\n%v", name, err, repoUnstructured.Object)
-			continue
-		}
-
-		log.Infof("Found repository: [%s], index URL: [%s]", name, url)
-		repoRef := corev1.AvailablePackage_PackageRepositoryReference{
-			Name: name,
-		}
-		// namespace is optional according to https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
-		namespace, found, err := unstructured.NestedString(repoUnstructured.Object, "metadata", "namespace")
-		if err == nil && found {
-			repoRef.Namespace = namespace
-		}
-
-		repoPackages, err := readPackagesFromRepoIndex(&repoRef, url)
-		if err != nil {
-			// just skip this repo
-			log.Errorf("Failed to read packages for repository [%s] due to %v", name, err)
-		} else {
-			responsePackages = append(responsePackages, repoPackages...)
-		}
+	responsePackages, err := readPackageSummariesFromRepoList(repos.Items)
+	if err != nil {
+		return nil, err
 	}
-	return &corev1.GetAvailablePackagesResponse{
-		Packages: responsePackages,
+
+	return &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackagesSummaries: responsePackages,
 	}, nil
 }
 
-// clientForRequestContext returns a k8s client for use during interactions with the cluster.
-// This will be updated to use the user credential from the request context but for now
-// simply returns th in-cluster config (which is linked to a service-account with demo RBAC).
-func clientForRequestContext(ctx context.Context) (dynamic.Interface, error) {
-	// TODO: replace incluster config with the user config using token from request meta.
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get client config: %w", err)
+// GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
+func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
+	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
+
+	if request == nil || request.AvailablePackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
 	}
 
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create dynamic client: %w", err)
+	if request.Version != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"Not supported yet: version: [%v]",
+			request.Version)
 	}
 
-	return client, nil
+	url, err := s.pullChartTarball(ctx, request.AvailablePackageRef)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("Found chart url: [%s]", *url)
+
+	// unzip and untar .tgz file
+	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
+	// local cluster, not remote repo.
+	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
+	// Flux does the hard work of pulling the bits from remote repo
+	// based on secretRef associated with HelmRepository, if applicable
+	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", httpclient.New())
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetAvailablePackageDetailResponse{
+		AvailablePackageDetail: &corev1.AvailablePackageDetail{
+			LongDescription: detail[chart.ReadmeKey],
+		},
+	}, nil
 }
 
-func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
-	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.AvailablePackageReference) (*string, error) {
+	// flux CRDs require a namespace, cluster-wide resources are not supported
+	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
 	}
-	client, err := s.clientGetter(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client : %v", err)
+	packageRefIdParts := strings.Split(packageRef.Identifier, "/")
+	if len(packageRefIdParts) != 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
 	}
 
-	repositoryResource := schema.GroupVersionResource{
+	_, client, err := s.GetClients(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	chartsResource := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
-		Resource: fluxHelmRepositories}
-
-	var resource dynamic.NamespaceableResourceInterface = client.Resource(repositoryResource)
-	var resourceIfc dynamic.ResourceInterface = resource
-	if namespace != "" {
-		resourceIfc = resource.Namespace(namespace)
+		Resource: fluxHelmCharts,
 	}
-	repos, err := resourceIfc.List(ctx, metav1.ListOptions{})
+
+	resourceIfc := client.Resource(chartsResource).Namespace(packageRef.Context.Namespace)
+
+	// see if we the chart already exists
+	// TODO (gfichtenholt):
+	// see https://github.com/kubeapps/kubeapps/pull/2915
+	// for context. It'd be better if we could filter on server-side. The problem is the set of supported
+	// fields in FieldSelector is very small. things like "spec.chart" are certainly not supported.
+	// see
+	//  - kubernetes/client-go#713 and
+	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
+	//  - https://github.com/kubernetes/kubernetes/issues/53459
+	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, unstructuredChart := range chartList.Items {
+		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
+		repoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
+
+		// TODO (gfichtenholt) compare chart versions too
+		if err == nil && err2 == nil && found && found2 && repoName == packageRefIdParts[0] && chartName == packageRefIdParts[1] {
+			done, err := isChartPullComplete(&unstructuredChart)
+			if err != nil {
+				return nil, err
+			} else if done {
+				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+				if err != nil || !found {
+					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+				}
+				log.Infof("Found existing HelmChart for: [%s]", packageRef.Identifier)
+				return &url, nil
+			}
+			// TODO (gfichtenholt) waitUntilChartPullComplete?
+		}
+	}
+
+	// did not find the chart, need to create
+	// see https://fluxcd.io/docs/components/source/helmcharts/
+	unstructuredChart := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+			"kind":       fluxHelmChart,
+			"metadata": map[string]interface{}{
+				"generateName": fmt.Sprintf("%s-", packageRefIdParts[1]),
+			},
+			"spec": map[string]interface{}{
+				"chart": packageRefIdParts[1],
+				"sourceRef": map[string]interface{}{
+					"name": packageRefIdParts[0],
+					"kind": fluxHelmRepository,
+				},
+				"interval": "10m",
+			},
+		},
+	}
+
+	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
+	if err != nil {
+		log.Errorf("error creating chart: %v\n%v", err, unstructuredChart)
+		return nil, err
+	}
+
+	log.Infof("created chart: [%v]", newChart)
+
+	// wait until flux reconciles
+	watcher, err := resourceIfc.Watch(ctx, metav1.ListOptions{
+		ResourceVersion: newChart.GetResourceVersion(),
+	})
+	if err != nil {
+		log.Errorf("error creating watch: %v\n%v", err, unstructuredChart)
+		return nil, err
+	}
+
+	return waitUntilChartPullComplete(watcher)
+}
+
+// namespace maybe "", in which case repositories from all namespaces are returned
+func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+	_, client, err := s.GetClients(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	repositoriesResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
+	}
+
+	repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
-		// TODO: should we filter out those repos that don't have .status.condition.Ready == True?
-		// like we do in GetAvailablePackages()?
+		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
+		// like we do in GetAvailablePackageSummaries()?
 		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
 		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
 	}
-}
-
-func isRepoReady(repoUnstructured *unstructured.Unstructured) (bool, error) {
-	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
-	conditions, found, err := unstructured.NestedSlice(repoUnstructured.Object, "status", "conditions")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				if statusString, ok := conditionAsMap["status"]; ok && statusString == "True" {
-					// note that the current doc on https://fluxcd.io/docs/components/source/helmrepositories/
-					// incorrectly states the example status reason as "IndexationSucceeded".
-					// The actual string is "IndexationSucceed"
-					if reasonString, ok := conditionAsMap["reason"]; ok && reasonString == "IndexationSucceed" {
-						return true, nil
-					}
-				}
-			}
-		}
-	}
-	return false, nil
-}
-
-func readPackagesFromRepoIndex(repoRef *corev1.AvailablePackage_PackageRepositoryReference, indexURL string) ([]*corev1.AvailablePackage, error) {
-	index, err := getHelmIndexFileFromURL(indexURL)
-	if err != nil {
-		return nil, err
-	}
-
-	responsePackages := []*corev1.AvailablePackage{}
-	for _, entry := range index.Entries {
-		// note that 'entry' itself is an array of chart versions
-		// after index.SortEntires() call, it looks like there is only one entry per package,
-		// and entry[0] should be the most recent chart version, e.g. Name: "mariadb" Version: "9.3.12"
-		// while the rest of the elements in the entry array keep track of previous chart versions, e.g.
-		// "mariadb" version "9.3.11", "9.3.10", etc. For entry "mariadb", bitnami catalog has
-		// almost 200 chart versions going all the way back many years to version "2.1.4".
-		// So for now, let's just keep track of the latest, not to overwhelm the caller with
-		// all these outdated versions
-		if entry[0].GetDeprecated() {
-			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
-			continue
-		}
-
-		pkg := &corev1.AvailablePackage{
-			Name:       entry[0].Name,
-			Version:    entry[0].Version,
-			IconUrl:    entry[0].Icon,
-			Repository: repoRef,
-		}
-		responsePackages = append(responsePackages, pkg)
-	}
-	return responsePackages, nil
-}
-
-func getHelmIndexFileFromURL(indexURL string) (*helmrepo.IndexFile, error) {
-	// Get the response bytes from the url
-	response, err := http.Get(indexURL)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return nil, status.Errorf(codes.FailedPrecondition, "received non OK response code: [%d]", response.StatusCode)
-	}
-
-	contents, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var index helmrepo.IndexFile
-	err = yaml.Unmarshal(contents, &index)
-	if err != nil {
-		return nil, err
-	}
-	index.SortEntries()
-	return &index, nil
 }

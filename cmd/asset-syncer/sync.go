@@ -23,6 +23,7 @@ import (
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -55,7 +56,7 @@ var syncCmd = &cobra.Command{
 		}
 		defer manager.Close()
 
-		netClient, err := initNetClient(additionalCAFile, tlsInsecureSkipVerify)
+		netClient, err := httpclient.NewWithCertFile(additionalCAFile, tlsInsecureSkipVerify)
 		if err != nil {
 			logrus.Fatal(err)
 		}

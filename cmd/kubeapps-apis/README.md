@@ -37,9 +37,10 @@ Similar to most go commands, we've used [Cobra](https://github.com/spf13/cobra) 
 
 ## Trying it out
 
-You can run `make run` to run the currently stubbed service.
+You can run `make run` to run the currently stubbed service. If passing the `KUBECONFIG` env var it will try to use your local configuration instead of relying on the usual inCluster config. This behavior is just intended for development purposes and it will get eventually removed.
 
 ```bash
+export KUBECONFIG=/home/user/.kube/config # replace it with your desired kube config file
 make run
 
 I0514 14:14:52.969498 1932386 server.go:129] Successfully registered plugin "/home/michael/dev/vmware/kubeapps/cmd/kubeapps-apis/devel/fluxv2-packages-v1alpha1-plugin.so"
@@ -159,10 +160,18 @@ curl -s http://localhost:8080/core/packages/v1alpha1/packagerepositories | jq .
 }
 ```
 
-Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available in your cluster.
+Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available ([example](https://github.com/vmware-tanzu/carvel-kapp-controller/tree/develop/examples/packaging-with-repo)) in your cluster.
 ## Hacking
 
 A few extra tools will be needed to contribute to the development of this service.
+
+### GOPATH env variable 
+
+Make sure your GOPATH environment variable is set. 
+You can use the value of command
+```bash
+go env GOPATH
+```
 
 ### Install go cli deps
 
@@ -180,8 +189,9 @@ Grab the latest binary from the [buf releases](https://github.com/bufbuild/buf/r
 
 You can now try changing the url in the proto file (such as in `proto/kubeappsapis/core/v1/core.proto`) and then run:
 
-```
+```bash
 buf generate
+export KUBECONFIG=/home/user/.kube/config # replace it with your desired kube config file
 make run
 ```
 

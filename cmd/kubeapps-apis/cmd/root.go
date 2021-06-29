@@ -28,9 +28,8 @@ import (
 )
 
 var (
-	cfgFile    string
-	port       int
-	pluginDirs []string
+	cfgFile   string
+	serveOpts server.ServeOptions
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -42,7 +41,7 @@ var rootCmd = &cobra.Command{
 The api service serves both gRPC and HTTP requests for the configured APIs.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		server.Serve(port, pluginDirs)
+		server.Serve(serveOpts)
 	},
 }
 
@@ -57,8 +56,13 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kubeapps-apis.yaml)")
 
-	rootCmd.Flags().IntVar(&port, "port", 50051, "The port on which to run this api server. Both gRPC and HTTP requests will be served on this port.")
-	rootCmd.Flags().StringSliceVar(&pluginDirs, "plugin-dir", []string{"."}, "A directory to be scanned for .so plugins. May be specified multiple times.")
+	rootCmd.Flags().IntVar(&serveOpts.Port, "port", 50051, "The port on which to run this api server. Both gRPC and HTTP requests will be served on this port.")
+	rootCmd.Flags().StringSliceVar(&serveOpts.PluginDirs, "plugin-dir", []string{"."}, "A directory to be scanned for .so plugins. May be specified multiple times.")
+
+	rootCmd.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
+	rootCmd.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
+	rootCmd.Flags().BoolVar(&serveOpts.UnsafeUseDemoSA, "unsafe-use-demo-sa", false, "if true, it will create and use a privileged Service Account for interacting with the resources instead of acting on a user's behalf.")
+	rootCmd.Flags().BoolVar(&serveOpts.UnsafeLocalDevKubeconfig, "unsafe-local-dev-kubeconfig", false, "if true, it will use the local kubeconfig at the KUBECONFIG env var instead of using the inCluster configuration.")
 }
 
 // initConfig reads in config file and ENV variables if set.

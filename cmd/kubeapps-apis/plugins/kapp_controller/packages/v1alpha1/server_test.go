@@ -21,19 +21,24 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/fake"
+	dynfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes"
+	typfake "k8s.io/client-go/kubernetes/fake"
 )
 
 func TestGetClient(t *testing.T) {
+
 	testCases := []struct {
 		name         string
-		clientGetter func(context.Context) (dynamic.Interface, error)
+		clientGetter server.KubernetesClientGetter
 		statusCode   codes.Code
 	}{
 		{
@@ -43,18 +48,18 @@ func TestGetClient(t *testing.T) {
 		},
 		{
 			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
 		{
 			name: "returns client without error when configured correctly",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 				), nil
 			},
@@ -65,16 +70,19 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			client, err := s.GetClient(context.Background())
+			typedClient, dynamicClient, err := s.GetClients(context.Background())
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
-			// If there is no error, the client should be a dynamic.Interface implementation.
+			// If there is no error, the clients should not be nil.
 			if tc.statusCode == codes.OK {
-				if _, ok := client.(dynamic.Interface); !ok {
-					t.Errorf("got: %T, want: dynamic.Interface", client)
+				if dynamicClient == nil {
+					t.Errorf("got: nil, want: dynamic.Interface")
+				}
+				if typedClient == nil {
+					t.Errorf("got: nil, want: kubernetes.Interface")
 				}
 			}
 		})
@@ -85,51 +93,54 @@ func TestGetClient(t *testing.T) {
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter func(context.Context) (dynamic.Interface, error)
+		clientGetter server.KubernetesClientGetter
 		statusCode   codes.Code
 	}{
 		{
-			name: "returns an internal error status if response does not contain publicName",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			name: "returns an internal error status if response does not contain packageRef.refName",
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec(map[string]interface{}{
-						"version": "1.2.3",
-					}),
+					packageFromSpec("1.2.3", map[string]interface{}{
+						"packageRef": map[string]interface{}{},
+					}, t),
 				), nil
 			},
 			statusCode: codes.Internal,
 		},
 		{
 			name: "returns an internal error status if response does not contain version",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec(map[string]interface{}{
-						"publicName": "someName",
-					}),
+					packageFromSpec(nil, map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "someName",
+						},
+					}, t),
 				), nil
 			},
 			statusCode: codes.Internal,
 		},
 		{
 			name: "returns OK status if items contain required fields",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return fake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec(map[string]interface{}{
-						"publicName": "someName",
-						"version":    "1.2.3",
-					}),
+					packageFromSpec("1.2.3", map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "someName",
+						},
+					}, t),
 				), nil
 			},
 			statusCode: codes.OK,
@@ -140,7 +151,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			_, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			_, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
@@ -154,53 +165,72 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 }
 
-func packageFromSpec(spec map[string]interface{}) *unstructured.Unstructured {
+func packageFromSpec(version interface{}, spec map[string]interface{}, t *testing.T) *unstructured.Unstructured {
+	pkgRef, ok := spec["packageRef"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("unable to convert %+v to a map[string]interface{}", spec["packageRef"])
+	}
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
-			"kind":       "Package",
+			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, packageVersion),
+			"kind":       packageResource,
 			"metadata": map[string]interface{}{
-				"name": fmt.Sprintf("%s.%s", spec["publicName"], spec["version"]),
+				"name": fmt.Sprintf("%s.%s", pkgRef["refName"], version),
 			},
 			"spec": spec,
+			"status": map[string]interface{}{
+				"version": version,
+			},
 		},
 	}
 }
 
-func packagesFromSpecs(specs []map[string]interface{}) []runtime.Object {
+func packagesFromSpecs(specs []map[string]interface{}, t *testing.T) []runtime.Object {
 	pkgs := []runtime.Object{}
 	for _, s := range specs {
-		pkgs = append(pkgs, packageFromSpec(s))
+		pkgSpec, ok := s["spec"].(map[string]interface{})
+		if !ok {
+			t.Fatalf("unable to convert %+v to a map[string]interface{}", s["spec"])
+		}
+		pkgs = append(pkgs, packageFromSpec(s["version"], pkgSpec, t))
 	}
 	return pkgs
 }
 
-func TestGetAvailablePackages(t *testing.T) {
+func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name             string
 		packageSpecs     []map[string]interface{}
-		expectedPackages []*corev1.AvailablePackage
+		expectedPackages []*corev1.AvailablePackageSummary
 	}{
 		{
 			name: "it returns carvel packages from the cluster",
 			packageSpecs: []map[string]interface{}{
 				{
-					"publicName": "tetris.foo.example.com",
-					"version":    "1.2.3",
+					"spec": map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "tetris.foo.example.com",
+						},
+					},
+					"version": "1.2.3",
 				},
 				{
-					"publicName": "another.foo.example.com",
-					"version":    "1.2.5",
+					"spec": map[string]interface{}{
+						"packageRef": map[string]interface{}{
+							"refName": "another.foo.example.com",
+						},
+					},
+					"version": "1.2.5",
 				},
 			},
-			expectedPackages: []*corev1.AvailablePackage{
+			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					Name:    "another.foo.example.com",
-					Version: "1.2.5",
+					DisplayName:   "another.foo.example.com",
+					LatestVersion: "1.2.5",
 				},
 				{
-					Name:    "tetris.foo.example.com",
-					Version: "1.2.3",
+					DisplayName:   "tetris.foo.example.com",
+					LatestVersion: "1.2.3",
 				},
 			},
 		},
@@ -208,26 +238,27 @@ func TestGetAvailablePackages(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgs := packagesFromSpecs(tc.packageSpecs)
+			pkgs := packagesFromSpecs(tc.packageSpecs, t)
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
-					return fake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+							{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 						},
 						pkgs...,
 					), nil
 				},
 			}
 
-			response, err := s.GetAvailablePackages(context.Background(), &corev1.GetAvailablePackagesRequest{})
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := response.Packages, tc.expectedPackages; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.AvailablePackage{})) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.AvailablePackage{})))
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{})
+			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 			}
 		})
 	}
@@ -237,10 +268,11 @@ func TestGetAvailablePackages(t *testing.T) {
 func repositoryFromSpec(name string, spec map[string]interface{}) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", installPackageGroup, installPackageVersion),
-			"kind":       "PackageRepository",
+			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, installPackageVersion),
+			"kind":       repositoryResource,
 			"metadata": map[string]interface{}{
-				"name": name,
+				"name":      name,
+				"namespace": globalPackagingNamespace,
 			},
 			"spec": spec,
 		},
@@ -263,14 +295,14 @@ func repositoriesFromSpecs(specs map[string]spec) []runtime.Object {
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
-		request                     *corev1.GetPackageRepositoriesRequest
+		request                     *v1alpha1.GetPackageRepositoriesRequest
 		repoSpecs                   map[string]spec
-		expectedPackageRepositories []*corev1.PackageRepository
+		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
 		{
-			name:    "returns an internal error status if item in response cannot be converted to corev1.PackageRepository",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			name:    "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
+			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": "unexpected",
@@ -280,7 +312,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name:    "returns expected repositories",
-			request: &corev1.GetPackageRepositoriesRequest{},
+			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoSpecs: map[string]spec{
 				"repo-1": {
 					"fetch": map[string]interface{}{
@@ -297,14 +329,16 @@ func TestGetPackageRepositories(t *testing.T) {
 					},
 				},
 			},
-			expectedPackageRepositories: []*corev1.PackageRepository{
+			expectedPackageRepositories: []*v1alpha1.PackageRepository{
 				{
-					Name: "repo-1",
-					Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+					Name:      "repo-1",
+					Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
+					Namespace: globalPackagingNamespace,
 				},
 				{
-					Name: "repo-2",
-					Url:  "projects.registry.example.com/repo-2/main@sha256:abcd",
+					Name:      "repo-2",
+					Url:       "projects.registry.example.com/repo-2/main@sha256:abcd",
+					Namespace: globalPackagingNamespace,
 				},
 			},
 		},
@@ -313,18 +347,18 @@ func TestGetPackageRepositories(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
-					return fake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: installPackageGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",
+							{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",
 						},
 						repositoriesFromSpecs(tc.repoSpecs)...,
 					), nil
 				},
 			}
 
-			response, err := s.GetPackageRepositories(context.Background(), &corev1.GetPackageRepositoriesRequest{})
+			response, err := s.GetPackageRepositories(context.Background(), &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}})
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -335,8 +369,9 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.PackageRepository{})) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.PackageRepository{})))
+					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
+					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
 			}
@@ -358,7 +393,7 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         *unstructured.Unstructured
-		expected   *corev1.PackageRepository
+		expected   *v1alpha1.PackageRepository
 		statusCode codes.Code
 	}{
 		{
@@ -374,9 +409,10 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 		{
 			name: "returns a repo for an imgpkgBundle type",
 			in:   repositoryFromSpec("valid-name", validSpec),
-			expected: &corev1.PackageRepository{
-				Name: "valid-name",
-				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+			expected: &v1alpha1.PackageRepository{
+				Name:      "valid-name",
+				Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 		{
@@ -388,9 +424,10 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
-				Name: "valid-name",
-				Url:  "host.com/username/image:v0.1.0",
+			expected: &v1alpha1.PackageRepository{
+				Name:      "valid-name",
+				Url:       "host.com/username/image:v0.1.0",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 		{
@@ -402,9 +439,10 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
-				Name: "valid-name",
-				Url:  "https://host.com/archive.tgz",
+			expected: &v1alpha1.PackageRepository{
+				Name:      "valid-name",
+				Url:       "https://host.com/archive.tgz",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 		{
@@ -416,9 +454,10 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 					},
 				},
 			}),
-			expected: &corev1.PackageRepository{
-				Name: "valid-name",
-				Url:  "https://github.com/k14s/k8s-simple-app-example",
+			expected: &v1alpha1.PackageRepository{
+				Name:      "valid-name",
+				Url:       "https://github.com/k14s/k8s-simple-app-example",
+				Namespace: globalPackagingNamespace,
 			},
 		},
 	}
@@ -432,8 +471,9 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := repo, tc.expected; !cmp.Equal(got, want, cmpopts.IgnoreUnexported(corev1.PackageRepository{})) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpopts.IgnoreUnexported(corev1.PackageRepository{})))
+				opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
+				if got, want := repo, tc.expected; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
 		})

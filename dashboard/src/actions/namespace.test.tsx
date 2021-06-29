@@ -83,6 +83,22 @@ describe("fetchNamespaces", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
+  it("dispatches errorNamespace if the request returns no 'namespaces'", async () => {
+    Namespace.list = jest.fn().mockImplementationOnce(() => {
+      return {};
+    });
+    const err = new Error("The current account does not have access to any namespaces");
+    const expectedActions = [
+      {
+        type: getType(errorNamespaces),
+        payload: { cluster: "default-c", err, op: "list" },
+      },
+    ];
+
+    await store.dispatch(fetchNamespaces("default-c"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
   it("dispatches errorNamespace if error listing namespaces", async () => {
     const err = new Error("Bang!");
     Namespace.list = jest.fn().mockImplementationOnce(() => Promise.reject(err));

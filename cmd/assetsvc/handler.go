@@ -25,6 +25,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
 )
@@ -109,7 +110,7 @@ func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, stri
 	return namespace, repo, version, "", nil
 }
 
-func extractChartQueryFromRequest(namespace, repo string, req *http.Request) ChartQuery {
+func extractChartQueryFromRequest(namespace, repo string, req *http.Request) utils.ChartQuery {
 	repos := []string{}
 	if repo != "" {
 		repos = append(repos, repo)
@@ -123,19 +124,19 @@ func extractChartQueryFromRequest(namespace, repo string, req *http.Request) Cha
 		categories = strings.Split(strings.TrimSpace(req.FormValue("categories")), ",")
 	}
 
-	return ChartQuery{
-		namespace:   namespace,
-		chartName:   req.FormValue("name"), // chartName remains encoded
-		version:     req.FormValue("version"),
-		appVersion:  req.FormValue("appversion"),
-		repos:       repos,
-		categories:  categories,
-		searchQuery: req.FormValue("q"),
+	return utils.ChartQuery{
+		Namespace:   namespace,
+		ChartName:   req.FormValue("name"), // chartName remains encoded
+		Version:     req.FormValue("version"),
+		AppVersion:  req.FormValue("appversion"),
+		Repos:       repos,
+		Categories:  categories,
+		SearchQuery: req.FormValue("q"),
 	}
 }
 
-func getAllChartCategories(cq ChartQuery) (apiChartCategoryListResponse, error) {
-	chartCategories, err := manager.getAllChartCategories(cq)
+func getAllChartCategories(cq utils.ChartQuery) (apiChartCategoryListResponse, error) {
+	chartCategories, err := manager.GetAllChartCategories(cq)
 	return newChartCategoryListResponse(chartCategories), err
 }
 
@@ -166,7 +167,7 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
 
-	chart, err := manager.getChart(namespace, chartID)
+	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
@@ -186,7 +187,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
 
-	chart, err := manager.getChart(namespace, chartID)
+	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
@@ -206,7 +207,7 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
 
-	chart, err := manager.getChartVersion(namespace, chartID, version)
+	chart, err := manager.GetChartVersion(namespace, chartID, version)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart version").Write(w)
@@ -226,7 +227,7 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 	}
 	chartID := getChartID(repo, params["chartName"]) // chartName remains encoded
 
-	chart, err := manager.getChart(namespace, chartID)
+	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		http.NotFound(w, req)
@@ -256,7 +257,7 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
 
-	files, err := manager.getChartFiles(namespace, fileID)
+	files, err := manager.GetChartFiles(namespace, fileID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find files with id %s", fileID)
 		http.NotFound(w, req)
@@ -280,7 +281,7 @@ func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Para
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
 
-	files, err := manager.getChartFiles(namespace, fileID)
+	files, err := manager.GetChartFiles(namespace, fileID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find values.yaml with id %s", fileID)
 		http.NotFound(w, req)
@@ -299,7 +300,7 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 	}
 	fileID := fmt.Sprintf("%s-%s", getChartID(repo, params["chartName"]), version) // chartName remains encoded
 
-	files, err := manager.getChartFiles(namespace, fileID)
+	files, err := manager.GetChartFiles(namespace, fileID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find values.schema.json with id %s", fileID)
 		http.NotFound(w, req)
@@ -319,10 +320,10 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 	cq := extractChartQueryFromRequest(namespace, repo, req)
 
 	pageNumber, pageSize := getPageAndSizeParams(req)
-	charts, totalPages, err := manager.getPaginatedChartListWithFilters(cq, pageNumber, pageSize)
+	charts, totalPages, err := manager.GetPaginatedChartListWithFilters(cq, pageNumber, pageSize)
 	if err != nil {
 		log.WithError(err).Errorf("could not find charts with the given namespace=%s, chartName=%s, version=%s, appversion=%s, repos=%s, categories=%s, searchQuery=%s",
-			cq.namespace, cq.chartName, cq.version, cq.appVersion, cq.repos, cq.categories, cq.searchQuery,
+			cq.Namespace, cq.ChartName, cq.Version, cq.AppVersion, cq.Repos, cq.Categories, cq.SearchQuery,
 		)
 		// continue to return empty list
 	}

@@ -14,6 +14,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"testing"
@@ -21,6 +22,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/kube"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"k8s.io/client-go/rest"
 )
 
 func TestPluginsAvailable(t *testing.T) {
@@ -239,4 +245,147 @@ func createTestFS(t *testing.T, filenames []string) fstest.MapFS {
 		}
 	}
 	return fs
+}
+
+func TestExtractToken(t *testing.T) {
+	testCases := []struct {
+		name          string
+		contextKey    string
+		contextValue  string
+		expectedToken string
+		expectedErr   error
+	}{
+		{
+			name:          "it returns the expected token without error for a valid 'authorization' metadata value",
+			contextKey:    "authorization",
+			contextValue:  "Bearer abc",
+			expectedToken: "abc",
+			expectedErr:   nil,
+		},
+		{
+			name:          "it returns no token with an error if the 'authorization' metadata value is invalid",
+			contextKey:    "authorization",
+			contextValue:  "Bla",
+			expectedToken: "",
+			expectedErr:   fmt.Errorf("malformed authorization metadata"),
+		},
+		{
+			name:          "it returns no token and no error if the 'authorization' is empty",
+			contextKey:    "",
+			contextValue:  "",
+			expectedToken: "",
+			expectedErr:   nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			context := context.Background()
+			context = metadata.NewIncomingContext(context, metadata.New(map[string]string{
+				tc.contextKey: tc.contextValue,
+			}))
+
+			token, err := extractToken(context)
+
+			if tc.expectedErr != nil && err != nil {
+				if got, want := err.Error(), tc.expectedErr.Error(); !cmp.Equal(want, got) {
+					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
+				}
+			} else if err != nil {
+				t.Fatalf("in %s: %+v", tc.name, err)
+			}
+
+			if got, want := token, tc.expectedToken; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+// TODO(agamez): this test is just testing that the clients (typed and dynamic)
+// are created, but nothing else.
+// As per the PR #2908' comments, we could:
+// use the http_test package to create a fake http server and use it's address as the endpoint you expect,
+// then you could actually use the client to request something (anything),
+// and verify that the token was sent with the request to the expected address
+func TestCreateClientGetterWithParams(t *testing.T) {
+	testCases := []struct {
+		name           string
+		contextKey     string
+		contextValue   string
+		shouldCreate   bool
+		expectedErrMsg error
+	}{
+		{
+			name:           "it creates the clients when passing a valid value for the authorization metadata",
+			contextKey:     "authorization",
+			contextValue:   "Bearer abc",
+			shouldCreate:   true,
+			expectedErrMsg: nil,
+		},
+		{
+			name:           "it doesn't create the clients and throws a grpc error when passing an invalid authorization metadata",
+			contextKey:     "authorization",
+			contextValue:   "Bla",
+			shouldCreate:   false,
+			expectedErrMsg: status.Errorf(codes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
+		},
+		{
+			name:           "it creates the clients when no authorization metadata is passed",
+			contextKey:     "",
+			contextValue:   "",
+			shouldCreate:   true,
+			expectedErrMsg: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+				tc.contextKey: tc.contextValue,
+			}))
+
+			inClusterConfig := &rest.Config{}
+			serveOpts := ServeOptions{
+				ClustersConfigPath: "/config.yaml",
+				PinnipedProxyURL:   "http://example.com",
+				UnsafeUseDemoSA:    true,
+			}
+			config := kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				PinnipedProxyURL:    serveOpts.PinnipedProxyURL,
+				Clusters: map[string]kube.ClusterConfig{
+					"default": {
+						Name: "default",
+						PinnipedConfig: kube.PinnipedConciergeConfig{
+							Enable: true,
+						},
+						IsKubeappsCluster: true,
+					},
+				},
+			}
+			clientGetter, err := createClientGetterWithParams(inClusterConfig, serveOpts, config)
+			if err != nil {
+				t.Fatalf("in %s: fail creating the clientGetter:  %+v", tc.name, err)
+			}
+
+			typedClient, dynamicClient, err := clientGetter(ctx)
+			if tc.expectedErrMsg != nil && err != nil {
+				if got, want := err.Error(), tc.expectedErrMsg.Error(); !cmp.Equal(want, got) {
+					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
+				}
+			} else if err != nil {
+				t.Fatalf("in %s: %+v", tc.name, err)
+			}
+
+			if tc.shouldCreate {
+				if dynamicClient == nil {
+					t.Errorf("got: nil, want: dynamic.Interface")
+				}
+				if typedClient == nil {
+					t.Errorf("got: nil, want: kubernetes.Interface")
+				}
+			}
+		})
+	}
 }

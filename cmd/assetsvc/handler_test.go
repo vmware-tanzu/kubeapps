@@ -32,6 +32,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/disintegration/imaging"
+	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/assert"
@@ -76,7 +77,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func()) {
 	// TODO(absoludity): Let's not use globals for storing state like this.
 	origManager := manager
 
-	manager = &postgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: kubeappsNamespace}}
+	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, KubeappsNamespace: kubeappsNamespace}}
 
 	return mock, func() { db.Close(); manager = origManager }
 }
@@ -143,13 +144,13 @@ func Test_extractChartQueryFromRequest(t *testing.T) {
 
 			cq := extractChartQueryFromRequest(tt.namespace, tt.repo, req)
 
-			assert.Equal(t, tt.namespace, cq.namespace, "namespace should be the same")
-			assert.Equal(t, tt.chartName, cq.chartName, "chartName should be the same")
-			assert.Equal(t, tt.version, cq.version, "version should be the same")
-			assert.Equal(t, tt.appVersion, cq.appVersion, "appVersion should be the same")
-			assert.Equal(t, tt.searchQuery, cq.searchQuery, "searchQuery should be the same")
-			assert.Equal(t, tt.expectedRepos, cq.repos, "repos should be the same")
-			assert.Equal(t, tt.expectedCategories, cq.categories, "categories should be the same")
+			assert.Equal(t, tt.namespace, cq.Namespace, "namespace should be the same")
+			assert.Equal(t, tt.chartName, cq.ChartName, "chartName should be the same")
+			assert.Equal(t, tt.version, cq.Version, "version should be the same")
+			assert.Equal(t, tt.appVersion, cq.AppVersion, "appVersion should be the same")
+			assert.Equal(t, tt.searchQuery, cq.SearchQuery, "searchQuery should be the same")
+			assert.Equal(t, tt.expectedRepos, cq.Repos, "repos should be the same")
+			assert.Equal(t, tt.expectedCategories, cq.Categories, "categories should be the same")
 
 		})
 	}
