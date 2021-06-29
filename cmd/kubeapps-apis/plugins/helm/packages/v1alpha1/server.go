@@ -145,7 +145,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		cq.Categories = request.FilterOptions.Categories
 		cq.SearchQuery = request.FilterOptions.Query
 		cq.Repos = request.FilterOptions.Repositories
-		cq.Version = request.FilterOptions.Version
+		cq.Version = request.FilterOptions.PkgVersion
 		cq.AppVersion = request.FilterOptions.AppVersion
 	}
 
@@ -319,7 +319,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	if chart.ChartVersions[0].Version == "" {
 		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0].Version not found on helm package: %v", chart)
 	}
-	pkg.Version = chart.ChartVersions[0].Version
+	pkg.PkgVersion = chart.ChartVersions[0].Version
 
 	if chart.ChartVersions[0].AppVersion == "" {
 		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0].AppVersion not found on helm package: %v", chart)

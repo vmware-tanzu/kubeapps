@@ -80,7 +80,7 @@ var availablePackageDetailOK = &corev1.AvailablePackageDetail{
 	IconUrl:          "foo.bar/icon.svg",
 	ShortDescription: "best chart",
 	LongDescription:  "best chart",
-	Version:          "3.0.0",
+	PkgVersion:       "3.0.0",
 	AppVersion:       "1.0.0",
 	Readme:           "chart readme",
 	DefaultValues:    "chart values",
@@ -289,7 +289,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				FilterOptions: &corev1.FilterOptions{
 					Query:        "",
 					AppVersion:   "",
-					Version:      "",
+					PkgVersion:   "",
 					Categories:   nil,
 					Repositories: nil,
 				},
@@ -313,7 +313,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				FilterOptions: &corev1.FilterOptions{
 					Query:        "",
 					AppVersion:   "",
-					Version:      "",
+					PkgVersion:   "",
 					Categories:   nil,
 					Repositories: nil,
 				},
@@ -501,7 +501,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "foo/bar",
 				},
 			},
-			expectedVersion: availablePackageDetailOK.Version,
+			expectedVersion: availablePackageDetailOK.PkgVersion,
 			charts:          []*models.Chart{chartOK},
 			expectedPackage: availablePackageDetailOK,
 			statusCode:      codes.OK,
@@ -538,7 +538,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "foo/bar",
 				},
 			},
-			expectedVersion: availablePackageDetailOK.Version,
+			expectedVersion: availablePackageDetailOK.PkgVersion,
 			charts:          []*models.Chart{{Name: "foo"}},
 			expectedPackage: &corev1.AvailablePackageDetail{},
 			statusCode:      codes.Internal,
@@ -583,7 +583,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			currentExpectedPackage := tc.expectedPackage
-			currentExpectedPackage.Version = tc.expectedVersion
+			currentExpectedPackage.PkgVersion = tc.expectedVersion
 
 			rows := sqlmock.NewRows([]string{"info"})
 
