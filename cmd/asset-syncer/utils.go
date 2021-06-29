@@ -236,11 +236,18 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 
 // FetchFiles retrieves the important files of a chart and version from the repo
 func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
+	authorizationHeader := ""
+	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
+
+	if (passCredentials || compareURLDomains(chartTarballURL, r.URL)) && len(r.AuthorizationHeader) > 0 {
+		authorizationHeader = r.AuthorizationHeader
+	}
+
 	return tarutil.FetchChartDetailFromTarball(
 		name,
-		chartTarballURL(r.RepoInternal, cv),
+		chartTarballURL,
 		userAgent(),
-		r.AuthorizationHeader,
+		authorizationHeader,
 		r.netClient)
 }
 
@@ -783,7 +790,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 		return err
 	}
 	req.Header.Set("User-Agent", userAgent())
-	if len(r.AuthorizationHeader) > 0 {
+	if (passCredentials || compareURLDomains(c.Icon, r.URL)) && len(r.AuthorizationHeader) > 0 {
 		req.Header.Set("Authorization", r.AuthorizationHeader)
 	}
 
@@ -826,7 +833,11 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	// TODO: make this configurable?
 	resizedImg := imaging.Fit(img, 160, 160, imaging.Lanczos)
 	var buf bytes.Buffer
-	imaging.Encode(&buf, resizedImg, imaging.PNG)
+	err = imaging.Encode(&buf, resizedImg, imaging.PNG)
+	if err != nil {
+		log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to encode icon")
+		return err
+	}
 	b = buf.Bytes()
 	contentType = "image/png"
 
@@ -870,4 +881,22 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	// inserts the chart files if not already indexed, or updates the existing
 	// entry if digest has changed
 	return f.manager.insertFiles(chartID, chartFiles)
+}
+
+// Check if two URL strings are in the same domain.
+// Return true if so, and false otherwise or when an error occurs
+func compareURLDomains(url1Str, url2Str string) bool {
+	url1, err := url.ParseRequestURI(url1Str)
+	if err != nil {
+		return false
+	}
+	url2, err := url.ParseRequestURI(url2Str)
+	if err != nil {
+		return false
+	}
+
+	a := url1.Hostname()
+	b := url2.Hostname()
+	// return url1.Hostname() == url2.Hostname()
+	return a == b
 }

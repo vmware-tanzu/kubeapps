@@ -30,6 +30,7 @@ interface IAppRepoFormProps {
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
+    passCredentials: boolean,
     filter?: IAppRepositoryFilter,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
@@ -65,6 +66,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [type, setType] = useState(TYPE_HELM);
   const [ociRepositories, setOCIRepositories] = useState("");
   const [skipTLS, setSkipTLS] = useState(!!repo?.spec?.tlsInsecureSkipVerify);
+  const [passCredentials, setPassCredentials] = useState(!!repo?.spec?.passCredentials);
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
   const [filterExclude, setFilterExclude] = useState(false);
@@ -105,6 +107,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       );
       setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
       setSkipTLS(!!repo.spec?.tlsInsecureSkipVerify);
+      setPassCredentials(!!repo.spec?.passCredentials);
       if (repo.spec?.filterRule?.jq) {
         const { names, regex, exclude } = toParams(repo.spec.filterRule);
         setFilterRegex(regex);
@@ -187,6 +190,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           customCA,
           ociRepoList,
           skipTLS,
+          passCredentials,
         ),
       );
       setValidated(currentlyValidated);
@@ -208,6 +212,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         selectedImagePullSecret.length ? [selectedImagePullSecret] : [],
         ociRepoList,
         skipTLS,
+        passCredentials,
         filter,
       );
       if (success && onAfterInstall) {
@@ -261,6 +266,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handleSkipTLSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSkipTLS(!skipTLS);
+    setValidated(undefined);
+  };
+  const handlePassCredentialsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassCredentials(!passCredentials);
     setValidated(undefined);
   };
   const handleFilterNames = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -546,6 +555,17 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             type="checkbox"
             checked={skipTLS}
             onChange={handleSkipTLSChange}
+          />
+        </CdsCheckbox>
+        <CdsCheckbox className="ca-skip-tls">
+          <label className="clr-control-label">
+            Pass Credentials to 3rd party URLs (Icon and Tarball files)
+          </label>
+          <input
+            id="kubeapps-repo-pass-credentials"
+            type="checkbox"
+            checked={passCredentials}
+            onChange={handlePassCredentialsChange}
           />
         </CdsCheckbox>
 

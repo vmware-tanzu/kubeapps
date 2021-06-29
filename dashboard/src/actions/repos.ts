@@ -225,6 +225,7 @@ export const installRepo = (
   registrySecrets: string[],
   ociRepositories: string[],
   skipTLS: boolean,
+  passCredentials: boolean,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -248,6 +249,7 @@ export const installRepo = (
         registrySecrets,
         ociRepositories,
         skipTLS,
+        passCredentials,
         filter,
       );
       dispatch(addedRepo(data.appRepository));
@@ -273,6 +275,7 @@ export const updateRepo = (
   registrySecrets: string[],
   ociRepositories: string[],
   skipTLS: boolean,
+  passCredentials: boolean,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -296,6 +299,7 @@ export const updateRepo = (
         registrySecrets,
         ociRepositories,
         skipTLS,
+        passCredentials,
         filter,
       );
       dispatch(repoUpdated(data.appRepository));
@@ -331,6 +335,7 @@ export const validateRepo = (
   customCA: string,
   ociRepositories: string[],
   skipTLS: boolean,
+  passCredentials: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -349,6 +354,7 @@ export const validateRepo = (
         customCA,
         ociRepositories,
         skipTLS,
+        passCredentials,
       );
       if (data.code === 200) {
         dispatch(repoValidated(data));

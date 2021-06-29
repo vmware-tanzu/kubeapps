@@ -32,6 +32,7 @@ var (
 	ociRepositories       []string
 	tlsInsecureSkipVerify bool
 	filterRules           string
+	passCredentials       bool
 )
 
 var rootCmd = &cobra.Command{
@@ -59,6 +60,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
 	rootCmd.PersistentFlags().BoolVar(&tlsInsecureSkipVerify, "tls-insecure-skip-verify", false, "Skip TLS verification")
 	rootCmd.PersistentFlags().StringVar(&filterRules, "filter-rules", "", "JSON blob with the rules to filter assets")
+	rootCmd.PersistentFlags().BoolVar(&passCredentials, "pass-credentials", false, "pass credentials to all domains")
 
 	databasePassword = os.Getenv("DB_PASSWORD")
 

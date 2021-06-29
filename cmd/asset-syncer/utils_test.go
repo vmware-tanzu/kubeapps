@@ -81,6 +81,24 @@ func (h *goodHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return w.Result(), nil
 }
 
+type goodAuthenticatedHTTPClient struct{}
+
+func (h *goodAuthenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	w := httptest.NewRecorder()
+
+	// Ensure we're sending an Authorization header
+	if req.Header.Get("Authorization") == "" {
+		w.WriteHeader(401)
+	}
+	// Ensure we're sending the right Authorization header
+	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
+		w.WriteHeader(403)
+	}
+
+	w.Write(iconBytes())
+	return w.Result(), nil
+}
+
 type authenticatedHTTPClient struct{}
 
 func (h *authenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
@@ -373,6 +391,8 @@ func Test_newManager(t *testing.T) {
 
 func Test_fetchAndImportIcon(t *testing.T) {
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace"}
+	repoWithAuthorization := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
+
 	t.Run("no icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
@@ -429,6 +449,52 @@ func Test_fetchAndImportIcon(t *testing.T) {
 
 		fImporter := fileImporter{pgManager, netClient}
 		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
+	})
+
+	t.Run("valid icon (not passing through the auth header by default)", func(t *testing.T) {
+		pgManager, _, cleanup := getMockManager(t)
+		defer cleanup()
+		netClient := &goodAuthenticatedHTTPClient{}
+
+		fImporter := fileImporter{pgManager, netClient}
+		assert.Err(t, fmt.Errorf("401 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+	})
+
+	t.Run("valid icon (not passing through the auth header)", func(t *testing.T) {
+		pgManager, _, cleanup := getMockManager(t)
+		defer cleanup()
+		netClient := &goodAuthenticatedHTTPClient{}
+
+		fImporter := fileImporter{pgManager, netClient}
+		passCredentials = false
+		assert.Err(t, fmt.Errorf("401 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+	})
+
+	// t.Run("valid icon (passing through if same domain)", func(t *testing.T) {
+	// 	pgManager, mock, cleanup := getMockManager(t)
+	// 	defer cleanup()
+	// 	netClient := &goodAuthenticatedHTTPClient{}
+
+	// 	mock.ExpectQuery("UPDATE charts SET info *").
+	// 		WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
+	// 		WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
+
+	// 	fImporter := fileImporter{pgManager, netClient}
+	// 	assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization))
+	// })
+
+	t.Run("valid icon (passing through the auth header)", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+		netClient := &goodAuthenticatedHTTPClient{}
+
+		mock.ExpectQuery("UPDATE charts SET info *").
+			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
+
+		fImporter := fileImporter{pgManager, netClient}
+		passCredentials = true
+		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization))
 	})
 }
 
@@ -1229,6 +1295,48 @@ func Test_filterCharts(t *testing.T) {
 					t.Fatalf("Unexpected error %v", err)
 				}
 			}
+			if !cmp.Equal(res, tt.expected) {
+				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
+			}
+		})
+	}
+}
+
+func Test_compareURLDomains(t *testing.T) {
+	tests := []struct {
+		name     string
+		url1     string
+		url2     string
+		expected bool
+	}{
+		{
+			"it returns false if a url is malformed",
+			"abc",
+			"https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
+			false,
+		},
+		{
+			"it returns false if they are different subdomains",
+			"https://charts.bitnami.com/bitnami/index.yaml",
+			"https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
+			false,
+		},
+		{
+			"it returns false if they are under different subdomains",
+			"https://bitnami.com/bitnami/index.yaml",
+			"https://charts.bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
+			false,
+		},
+		{
+			"it returns true if they are under the same",
+			"https://charts.bitnami.com/bitnami/airflow-10.2.0.tgz",
+			"https://charts.bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := compareURLDomains(tt.url1, tt.url2)
 			if !cmp.Equal(res, tt.expected) {
 				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
 			}
