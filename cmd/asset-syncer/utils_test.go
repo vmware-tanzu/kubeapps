@@ -143,7 +143,7 @@ type svgIconClient struct{}
 
 func (h *svgIconClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
-	w.Write([]byte("foo"))
+	w.Write([]byte("<svg width='100' height='100'></svg>"))
 	res := w.Result()
 	res.Header.Set("Content-Type", "image/svg")
 	return res, nil
