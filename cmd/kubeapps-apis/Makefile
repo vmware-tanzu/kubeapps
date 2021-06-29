@@ -16,6 +16,7 @@
 build-plugins:
 	go build -o devel/kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin plugins/kapp_controller/packages/v1alpha1/*.go
 	go build -o devel/fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin plugins/fluxv2/packages/v1alpha1/*.go
+	go build -o devel/helm-packages-v1alpha1-plugin.so -buildmode=plugin plugins/helm/packages/v1alpha1/*.go
 
 
 # Ensure the required version of cli tooling in tools/tools.go is installed.
@@ -27,21 +28,16 @@ cli-dependencies:
 		github.com/spf13/cobra/cobra \
 		google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 		google.golang.org/protobuf/cmd/protoc-gen-go \
-		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
 # Not sure if it's worth having targets for buf, but at least the targets can
 # be tooling agnostic.
-# NOTE: I have an issue with buf in that if I try to update the protobuf dependencies
-# (defined in the buf.yaml) with `buf beta mod update`, the `buf.lock` file updates
-# accordingly, but then am unable to run `buf generate` or any other command that
-# pulls the dependencies to the local cache. I've reported this and created a minimal
-# demo of the issue (at least, for me) at: https://github.com/bufbuild/buf/issues/294#issuecomment-837839297
-# I'll update once I've resolved that.
 generate:
 	buf generate
 
 run: build-plugins
-	go run main.go --plugin-dir devel/
+	go run main.go --plugin-dir devel/ --unsafe-use-demo-sa=true --unsafe-local-dev-kubeconfig=true
 
 test:
 	go test ./...

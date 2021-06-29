@@ -16,31 +16,40 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"plugin"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	log "k8s.io/klog/v2"
 )
-
-// Add plugin message to proto. then include in struct here with client?
-// How to create client dynamically? Perhaps return client when registering each?
-// Perhaps define an interface that client must implement (based on server?)
 
 const (
 	pluginRootDir           = "/"
 	grpcRegisterFunction    = "RegisterWithGRPCServer"
 	gatewayRegisterFunction = "RegisterHTTPHandlerFromEndpoint"
 	pluginDetailFunction    = "GetPluginDetail"
+	clustersCAFilesPrefix   = "/etc/additional-clusters-cafiles"
 )
+
+// KubernetesClientGetter is a function type used by plugins to get a k8s client
+type KubernetesClientGetter func(context.Context) (kubernetes.Interface, dynamic.Interface, error)
 
 // pkgsPluginWithServer stores the plugin detail together with its implementation.
 type pkgsPluginWithServer struct {
@@ -62,16 +71,18 @@ type pluginsServer struct {
 	packagesPlugins []*pkgsPluginWithServer
 }
 
-func NewPluginsServer(pluginDirs []string, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*pluginsServer, error) {
+func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*pluginsServer, error) {
+	// Store the serveOptions in the global 'pluginsServeOpts' variable
+
 	// Find all .so plugins in the specified plugins directory.
-	pluginPaths, err := listSOFiles(os.DirFS(pluginRootDir), pluginDirs)
+	pluginPaths, err := listSOFiles(os.DirFS(pluginRootDir), serveOpts.PluginDirs)
 	if err != nil {
 		log.Fatalf("failed to check for plugins: %v", err)
 	}
 
 	ps := &pluginsServer{}
 
-	pluginDetails, err := ps.registerPlugins(pluginPaths, registrar, gwArgs)
+	pluginDetails, err := ps.registerPlugins(pluginPaths, registrar, gwArgs, serveOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register plugins: %w", err)
 	}
@@ -92,14 +103,21 @@ func sortPlugins(p []*plugins.Plugin) {
 
 // GetConfiguredPlugins returns details for each configured plugin.
 func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
+	log.Infof("+core GetConfiguredPlugins")
 	return &plugins.GetConfiguredPluginsResponse{
 		Plugins: s.plugins,
 	}, nil
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
-func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs) ([]*plugins.Plugin, error) {
+func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs, serveOpts ServeOptions) ([]*plugins.Plugin, error) {
 	pluginDetails := []*plugins.Plugin{}
+
+	clientGetter, err := createClientGetter(serveOpts)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create a ClientGetter: %w", err)
+	}
+
 	for _, pluginPath := range pluginPaths {
 		p, err := plugin.Open(pluginPath)
 		if err != nil {
@@ -113,7 +131,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			pluginDetails = append(pluginDetails, pluginDetail)
 		}
 
-		if err = s.registerGRPC(p, pluginDetail, grpcReg); err != nil {
+		if err = s.registerGRPC(p, pluginDetail, grpcReg, clientGetter); err != nil {
 			return nil, err
 		}
 
@@ -127,18 +145,20 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar) error {
+func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar, clientGetter KubernetesClientGetter) error {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar) interface{}
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{}
+
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar) interface{} { return nil }
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{} { return nil }
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
-	server := grpcFn(registrar)
+
+	server := grpcFn(registrar, clientGetter)
 
 	return s.registerPluginsSatisfyingCoreAPIs(server, pluginDetail)
 }
@@ -231,4 +251,121 @@ func listSOFiles(fsys fs.FS, pluginDirs []string) ([]string, error) {
 		}
 	}
 	return matches, nil
+}
+
+// createClientGetter returns a function closure for creating the k8s client to interact with the cluster.
+// The returned function utilizes the user credential present in the request context.
+// The plugins just have to call this function passing the context in order to retrieve the configured k8s client
+func createClientGetter(serveOpts ServeOptions) (KubernetesClientGetter, error) {
+	var restConfig *rest.Config
+	var clustersConfig kube.ClustersConfig
+	var err error
+
+	if !serveOpts.UnsafeLocalDevKubeconfig {
+		// get the default rest inCluster config for the kube.NewClusterConfig function
+		restConfig, err = rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+		}
+	} else {
+		// using the local kubeconfig instead of the inCluster config
+		log.Warningf("Using the local kubeconfig configuration (in KUBECONFIG='%s' envar) since you passed --unsafe-local-dev-kubeconfig=true", os.Getenv("KUBECONFIG"))
+		kubeconfigBytes, err := ioutil.ReadFile(os.Getenv("KUBECONFIG"))
+		if err != nil {
+			return nil, fmt.Errorf("unable to read the file in KUBECONFIG envar: %w", err)
+		}
+		restConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get local KUBECONFIG='%s' file: %w", os.Getenv("KUBECONFIG"), err)
+		}
+	}
+
+	if !serveOpts.UnsafeUseDemoSA {
+		// get the parsed kube.ClustersConfig from the serveOpts
+		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Just using the created SA, no user account nor clustersConfig is used here
+		clustersConfig = kube.ClustersConfig{}
+	}
+
+	// return the closure fuction that takes the context, but preserving the required scope,
+	// 'inClusterConfig' and 'config'
+	return createClientGetterWithParams(restConfig, serveOpts, clustersConfig)
+}
+
+// createClientGetter takes the required params and returns the closure fuction.
+// it's splitted for testing this fn separately
+func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (KubernetesClientGetter, error) {
+
+	// return the closure fuction that takes the context, but preserving the required scope,
+	// 'inClusterConfig' and 'config'
+	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		var err error
+		token, err := extractToken(ctx)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
+		}
+
+		var config *rest.Config
+		if !serveOpts.UnsafeUseDemoSA {
+			// We are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
+			// we should pass the cluster name instead
+			config, err = kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
+			if err != nil {
+				return nil, nil, fmt.Errorf("unable to get clusterConfig: %w", err)
+			}
+		} else {
+			// Just using the created SA, no user account is used
+			config = inClusterConfig
+		}
+		dynamicClient, err := dynamic.NewForConfig(config)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to create dynamic client: %w", err)
+		}
+		typedClient, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to create typed client: %w", err)
+		}
+		return typedClient, dynamicClient, nil
+	}, nil
+}
+
+// extractToken returns the token passed through the gRPC request in the "authorization" metadata in the context
+// It is equivalent to the "Authorization" usual HTTP 1 header
+// For instance: authorization="Bearer abc" will return "abc"
+func extractToken(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("error reading request metadata/headers")
+	}
+
+	// metadata is always lowercased
+	if len(md["authorization"]) > 0 {
+		if strings.HasPrefix(md["authorization"][0], "Bearer ") {
+			return strings.TrimPrefix(md["authorization"][0], "Bearer "), nil
+		} else {
+			return "", fmt.Errorf("malformed authorization metadata")
+		}
+	} else {
+		// No authorization header found, no error here, we will delegate it to the RBAC
+		return "", nil
+	}
+}
+
+// getClustersConfigFromServeOpts get the serveOptions and calls parseClusterConfig with the proper values
+// returning a kube.ClustersConfig
+func getClustersConfigFromServeOpts(serveOpts ServeOptions) (kube.ClustersConfig, error) {
+	if serveOpts.ClustersConfigPath == "" {
+		return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+	}
+	var cleanupCAFiles func()
+	config, cleanupCAFiles, err := kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+	if err != nil {
+		return kube.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
+	}
+	defer cleanupCAFiles()
+	return config, nil
 }

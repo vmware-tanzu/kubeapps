@@ -1,5 +1,6 @@
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
+import { get } from "lodash";
 
 import { ActionType, deprecated } from "typesafe-actions";
 
@@ -55,7 +56,9 @@ export function fetchNamespaces(
   return async dispatch => {
     try {
       const namespaceList = await Namespace.list(cluster);
-      const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
+      const namespaceStrings = get(namespaceList, "namespaces", []).map(
+        (n: IResource) => n.metadata.name,
+      );
       if (namespaceStrings.length === 0) {
         dispatch(
           errorNamespaces(

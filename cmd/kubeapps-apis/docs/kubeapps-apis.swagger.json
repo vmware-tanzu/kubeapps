@@ -21,12 +21,17 @@
       "name": "FluxV2PackagesService"
     },
     {
+      "name": "HelmPackagesService"
+    },
+    {
       "name": "KappControllerPackagesService"
     }
   ],
   "host": "127.0.0.1:8080",
+  "basePath": "/apis",
   "schemes": [
-    "http"
+    "http",
+    "https"
   ],
   "consumes": [
     "application/json"
@@ -35,15 +40,19 @@
     "application/json"
   ],
   "paths": {
-    "/core/packages/v1alpha1/packagerepositories": {
+    "/core/packages/v1alpha1/availablepackagedetails": {
       "get": {
-        "operationId": "PackagesService_GetPackageRepositories",
+        "operationId": "PackagesService_GetAvailablePackageDetail",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -54,15 +63,43 @@
         },
         "parameters": [
           {
-            "name": "cluster",
-            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "namespace",
-            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -73,15 +110,19 @@
         ]
       }
     },
-    "/core/packages/v1alpha1/packages": {
+    "/core/packages/v1alpha1/availablepackagesummaries": {
       "get": {
-        "operationId": "PackagesService_GetAvailablePackages",
+        "operationId": "PackagesService_GetAvailablePackageSummaries",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -92,15 +133,107 @@
         },
         "parameters": [
           {
-            "name": "cluster",
-            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "namespace",
-            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
+    "/core/packages/v1alpha1/availablepackageversions": {
+      "get": {
+        "operationId": "PackagesService_GetAvailablePackageVersions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageVersionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "Optional version reference for which version history is required.\nBy default a summary of versions is returned as outlined in the\nresponse. Plugins can choose not to implement this and provide\nthe summary only, it is provided for completeness only.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -122,6 +255,10 @@
               "$ref": "#/definitions/v1alpha1GetConfiguredPluginsResponse"
             }
           },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -134,16 +271,20 @@
         ]
       }
     },
-    "/plugins/fluxv2/packages/v1alpha1/packagerepositories": {
+    "/plugins/fluxv2/packages/v1alpha1/availablepackagedetails": {
       "get": {
-        "summary": "GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin",
-        "operationId": "FluxV2PackagesService_GetPackageRepositories",
+        "summary": "GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetAvailablePackageDetail",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -154,15 +295,43 @@
         },
         "parameters": [
           {
-            "name": "cluster",
-            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "namespace",
-            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -173,16 +342,20 @@
         ]
       }
     },
-    "/plugins/fluxv2/packages/v1alpha1/packages": {
+    "/plugins/fluxv2/packages/v1alpha1/availablepackagesummaries": {
       "get": {
-        "summary": "GetAvailablePackages returns the available packages managed by the 'fluxv2' plugin",
-        "operationId": "FluxV2PackagesService_GetAvailablePackages",
+        "summary": "GetAvailablePackageSummaries returns the available packages managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetAvailablePackageSummaries",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -193,15 +366,37 @@
         },
         "parameters": [
           {
-            "name": "cluster",
-            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "namespace",
-            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
             "in": "query",
             "required": false,
             "type": "string"
@@ -209,6 +404,392 @@
         ],
         "tags": [
           "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/availablepackageversions": {
+      "get": {
+        "summary": "GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetAvailablePackageVersions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageVersionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "Optional version reference for which version history is required.\nBy default a summary of versions is returned as outlined in the\nresponse. Plugins can choose not to implement this and provide\nthe summary only, it is provided for completeness only.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/packagerepositories": {
+      "get": {
+        "summary": "GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetPackageRepositories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/helm/packages/v1alpha1/availablepackagedetails": {
+      "get": {
+        "summary": "GetAvailablePackageDetail returns the package details managed by the 'helm' plugin",
+        "operationId": "HelmPackagesService_GetAvailablePackageDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
+    "/plugins/helm/packages/v1alpha1/availablepackagesummaries": {
+      "get": {
+        "summary": "GetAvailablePackageSummaries returns the available packages managed by the 'helm' plugin",
+        "operationId": "HelmPackagesService_GetAvailablePackageSummaries",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/availablepackagedetails": {
+      "get": {
+        "summary": "GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetAvailablePackageDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/availablepackagesummaries": {
+      "get": {
+        "summary": "GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetAvailablePackageSummaries",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageSummariesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.categories",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.repository",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
         ]
       }
     },
@@ -220,8 +801,12 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
+              "$ref": "#/definitions/pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse"
             }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -232,54 +817,15 @@
         },
         "parameters": [
           {
-            "name": "cluster",
-            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "namespace",
-            "description": "A namespace can be provided if the package repositories for a specific namespace\nare requested, when supported by the packaging format.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "KappControllerPackagesService"
-        ]
-      }
-    },
-    "/plugins/kapp_controller/packages/v1alpha1/packages": {
-      "get": {
-        "summary": "GetAvailablePackages returns the available packages managed by the 'kapp_controller' plugin",
-        "operationId": "KappControllerPackagesService_GetAvailablePackages",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1alpha1GetAvailablePackagesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "cluster",
-            "description": "A cluster name can be provided if multiple clusters are configured,\notherwise the current cluster will be assumed.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "namespace",
-            "description": "A namespace can be provided if the packages available for install in a\nspecific namespace are required.",
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -292,137 +838,37 @@
     }
   },
   "definitions": {
-    "AvailablePackagePackageRepositoryReference": {
+    "GetAvailablePackageSummariesRequestFilterOptions": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "The fully qualified name of the package repository.",
-          "title": "Package repository name"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "An optional namespace for namespaced package repositories.",
-          "title": "Package repository namespace"
-        }
-      },
-      "description": "A PackageRepository is identified by a fully qualified name and\noptionally a specific namespace.",
-      "title": "PackageRepositoryReference"
-    },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "typeUrl": {
+        "query": {
           "type": "string"
         },
-        "value": {
-          "type": "string",
-          "format": "byte"
-        }
-      }
-    },
-    "rpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
+        "categories": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/protobufAny"
+            "type": "string"
           }
-        }
-      }
-    },
-    "v1alpha1AvailablePackage": {
-      "type": "object",
-      "example": {
-        "name": "app1.example.com",
-        "version": "9.10.09",
-        "iconUrl": ""
-      },
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The fully qualified name of the package.",
-          "title": "Available package name"
-        },
-        "version": {
-          "type": "string",
-          "description": "The version of the package in the repository.",
-          "title": "Available package version"
-        },
-        "iconUrl": {
-          "type": "string",
-          "description": "A url for an icon.",
-          "title": "Available package icon"
         },
         "repository": {
-          "$ref": "#/definitions/AvailablePackagePackageRepositoryReference",
-          "description": "An optional package repository reference where this package is located. Not\nall plugins may support this back reference (eg. kapp-controller)",
-          "title": "Package repository reference"
+          "type": "string"
+        }
+      },
+      "title": "FilterOptions available when requesting summaries"
+    },
+    "GetAvailablePackageVersionsResponsePackageAppVersion": {
+      "type": "object",
+      "properties": {
+        "pkgVersion": {
+          "type": "string"
         },
-        "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository.",
-          "title": "Package repository plugin"
+        "appVersion": {
+          "type": "string"
         }
       },
-      "description": "An AvailablePackage defines a package available for installation.",
-      "title": "AvailablePackage"
+      "description": "PackageAppVersion conveys both the package version and the packaged app version."
     },
-    "v1alpha1GetAvailablePackagesResponse": {
-      "type": "object",
-      "example": {
-        "packages": [
-          {
-            "name": "app1.example.com",
-            "version": "9.10.09",
-            "iconUrl": ""
-          }
-        ]
-      },
-      "properties": {
-        "packages": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1alpha1AvailablePackage"
-          },
-          "title": "List of AvailablePackage"
-        }
-      },
-      "description": "Response for GetAvailablePackages",
-      "title": "GetAvailablePackages"
-    },
-    "v1alpha1GetConfiguredPluginsResponse": {
-      "type": "object",
-      "example": {
-        "plugins": [
-          {
-            "name": "kapp_controller.packages",
-            "version": "v1alpha1"
-          }
-        ]
-      },
-      "properties": {
-        "plugins": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1alpha1Plugin"
-          },
-          "description": "List of Plugin",
-          "title": "Plugins"
-        }
-      },
-      "description": "Response for GetConfiguredPlugins",
-      "title": "GetConfiguredPluginsResponse"
-    },
-    "v1alpha1GetPackageRepositoriesResponse": {
+    "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
       "example": {
         "repositories": [
@@ -437,7 +883,7 @@
         "repositories": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1alpha1PackageRepository"
+            "$ref": "#/definitions/pluginsfluxv2packagesv1alpha1PackageRepository"
           },
           "description": "List of PackageRepository",
           "title": "Repositories"
@@ -446,13 +892,8 @@
       "description": "Response for GetPackageRepositories",
       "title": "GetPackageRepositories"
     },
-    "v1alpha1PackageRepository": {
+    "pluginsfluxv2packagesv1alpha1PackageRepository": {
       "type": "object",
-      "example": {
-        "name": "repo-name.example.com",
-        "namespace": "",
-        "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
-      },
       "properties": {
         "name": {
           "type": "string",
@@ -478,6 +919,320 @@
       "description": "A PackageRepository defines a repository of packages for installation.",
       "title": "PackageRepository"
     },
+    "pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse": {
+      "type": "object",
+      "example": {
+        "repositories": [
+          {
+            "name": "repo-name.example.com",
+            "namespace": "",
+            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+          }
+        ]
+      },
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pluginskapp_controllerpackagesv1alpha1PackageRepository"
+          },
+          "description": "List of PackageRepository",
+          "title": "Repositories"
+        }
+      },
+      "description": "Response for GetPackageRepositories",
+      "title": "GetPackageRepositories"
+    },
+    "pluginskapp_controllerpackagesv1alpha1PackageRepository": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name identifying package repository on the cluster.",
+          "title": "Package repository name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
+        },
+        "url": {
+          "type": "string",
+          "description": "A url identifying the package repository location.",
+          "title": "Package repository URL"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
+        }
+      },
+      "description": "A PackageRepository defines a repository of packages for installation.",
+      "title": "PackageRepository"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        },
+        "value": {
+          "type": "string",
+          "format": "byte",
+          "description": "Must be a valid serialized protocol buffer of the above specified type."
+        }
+      },
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1alpha1AvailablePackageDetail": {
+      "type": "object",
+      "properties": {
+        "availablePackageRef": {
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
+          "description": "A reference uniquely identifying the package.",
+          "title": "Available package reference"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the available package",
+          "title": "Available package name"
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the package (eg. chart version)",
+          "title": "Available package version"
+        },
+        "appVersion": {
+          "type": "string",
+          "description": "The version of the packaged application (eg. wordpress version or whatever).",
+          "title": "Available package app version"
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "A url for an icon.",
+          "title": "Available package icon URL"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "A name as displayed to users",
+          "title": "Available package display name"
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A short description of the app provided by the package",
+          "title": "Available package short description"
+        },
+        "longDescription": {
+          "type": "string",
+          "description": "A longer description of the package, a few sentences.",
+          "title": "Available package long description"
+        },
+        "readme": {
+          "type": "string",
+          "description": "A longer README with potentially pages of formatted Markdown.",
+          "title": "Available package readme"
+        },
+        "defaultValues": {
+          "type": "string",
+          "description": "An example of default values used during package templating that can serve\nas documentation or a starting point for user customization.",
+          "title": "Available package default values"
+        },
+        "valuesSchema": {
+          "type": "string"
+        },
+        "maintainers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1Maintainer"
+          },
+          "description": "List of Maintainer",
+          "title": "Available package maintainers"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "description": "Some additional information added by the plugin",
+          "title": "Custom data added by the plugin"
+        }
+      },
+      "description": "An AvailablePackageDetail provides additional details required when\ninspecting an individual package.",
+      "title": "AvailablePackageDetail"
+    },
+    "v1alpha1AvailablePackageReference": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1alpha1Context",
+          "description": "The context (cluster/namespace) for the package.",
+          "title": "Available package context"
+        },
+        "identifier": {
+          "type": "string",
+          "description": "The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+          "title": "Available package identifier"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a specific plugin.",
+          "title": "Plugin for the available package"
+        }
+      },
+      "description": "An AvailablePackageReference has the minimum information required to uniquely\nidentify an available package. This is re-used on the summary and details of an\navailable package.",
+      "title": "AvailablePackageReference"
+    },
+    "v1alpha1AvailablePackageSummary": {
+      "type": "object",
+      "properties": {
+        "availablePackageRef": {
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
+          "description": "A reference uniquely identifying the package.",
+          "title": "Available package reference"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the available package",
+          "title": "Available package name"
+        },
+        "latestVersion": {
+          "type": "string",
+          "description": "The latest version available for this package. Often expected when viewing\na summary of many available packages.",
+          "title": "Latest available package version"
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "A url for an icon.",
+          "title": "Available package Icon URL"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "A name as displayed to users",
+          "title": "Available package display name"
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A short description of the app provided by the package",
+          "title": "Available package short description"
+        }
+      },
+      "description": "An AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages.",
+      "title": "AvailablePackageSummary"
+    },
+    "v1alpha1Context": {
+      "type": "object",
+      "properties": {
+        "cluster": {
+          "type": "string",
+          "description": "A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+          "title": "Cluster"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+          "title": "Namespace"
+        }
+      },
+      "description": "A Context specifies the context of the message",
+      "title": "Context"
+    },
+    "v1alpha1GetAvailablePackageDetailResponse": {
+      "type": "object",
+      "properties": {
+        "availablePackageDetail": {
+          "$ref": "#/definitions/v1alpha1AvailablePackageDetail",
+          "description": "List of AvailablePackageDetail",
+          "title": "Available package detail"
+        }
+      },
+      "description": "Response for GetAvailablePackageDetail",
+      "title": "GetAvailablePackageDetailResponse"
+    },
+    "v1alpha1GetAvailablePackageSummariesResponse": {
+      "type": "object",
+      "properties": {
+        "availablePackagesSummaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1AvailablePackageSummary"
+          },
+          "description": "List of AvailablePackageSummary",
+          "title": "Available packages summaries"
+        }
+      },
+      "description": "Response for GetAvailablePackageSummaries",
+      "title": "GetAvailablePackageSummariesResponse"
+    },
+    "v1alpha1GetAvailablePackageVersionsResponse": {
+      "type": "object",
+      "properties": {
+        "packageAppVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GetAvailablePackageVersionsResponsePackageAppVersion"
+          },
+          "description": "By default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned."
+        }
+      },
+      "description": "Response for GetAvailablePackageVersions",
+      "title": "GetAvailablePackageVersionsResponse"
+    },
+    "v1alpha1GetConfiguredPluginsResponse": {
+      "type": "object",
+      "example": {
+        "plugins": [
+          {
+            "name": "kapp_controller.packages",
+            "version": "v1alpha1"
+          }
+        ]
+      },
+      "properties": {
+        "plugins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1Plugin"
+          },
+          "description": "List of Plugin",
+          "title": "Plugins"
+        }
+      },
+      "description": "Response for GetConfiguredPlugins",
+      "title": "GetConfiguredPluginsResponse"
+    },
+    "v1alpha1Maintainer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "A maintainer name",
+          "title": "Maintainer name"
+        },
+        "email": {
+          "type": "string",
+          "description": "A maintainer email",
+          "title": "Maintainer email"
+        }
+      },
+      "description": "Maintainers for the package.",
+      "title": "Maintainer"
+    },
     "v1alpha1Plugin": {
       "type": "object",
       "example": {
@@ -500,6 +1255,18 @@
       "title": "Plugin"
     }
   },
+  "securityDefinitions": {
+    "ApiKeyAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "externalDocs": {
     "description": "Kuebapps GitHub repository",
     "url": "https://github.com/kubeapps/kubeapps"

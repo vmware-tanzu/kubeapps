@@ -53,7 +53,7 @@ reset-dev-kubeapps:
 # The kapp-controller support for the new Package and PackageRepository CRDs is currently
 # only available in an alpha release.
 deploy-kapp-controller:
-	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/alpha-releases/v0.19.0-alpha.8.yml
+	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/alpha-releases/v0.20.0-rc.1.yml
 
 # Add the flux controllers used for testing the kubeapps-apis integration.
 deploy-flux-controllers:

@@ -18,6 +18,7 @@ package kube
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,7 +26,9 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -160,6 +163,58 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 		config.CAFile = clusterConfig.CAFile
 	}
 	return config, nil
+}
+
+func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL string) (ClustersConfig, func(), error) {
+	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
+	if err != nil {
+		return ClustersConfig{}, func() {}, err
+	}
+	deferFn := func() { os.RemoveAll(caFilesDir) }
+	content, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return ClustersConfig{}, deferFn, err
+	}
+
+	var clusterConfigs []ClusterConfig
+	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
+		return ClustersConfig{}, deferFn, err
+	}
+
+	configs := ClustersConfig{Clusters: map[string]ClusterConfig{}}
+	configs.PinnipedProxyURL = pinnipedProxyURL
+	for _, c := range clusterConfigs {
+		// Select the cluster in which Kubeapps in installed. We look for either
+		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
+		isKubeappsClusterCandidate := c.IsKubeappsCluster || c.APIServiceURL == ""
+		if isKubeappsClusterCandidate {
+			if configs.KubeappsClusterName == "" {
+				configs.KubeappsClusterName = c.Name
+			} else {
+				return ClustersConfig{}, nil, fmt.Errorf("only one cluster can be configured using either 'isKubeappsCluster: true' or without an apiServiceURL to refer to the cluster on which Kubeapps is installed, two defined: %q, %q", configs.KubeappsClusterName, c.Name)
+			}
+		}
+
+		// We need to decode the base64-encoded cadata from the input.
+		if c.CertificateAuthorityData != "" {
+			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
+			if err != nil {
+				return ClustersConfig{}, deferFn, err
+			}
+			c.CertificateAuthorityDataDecoded = string(decodedCAData)
+
+			// We also need a CAFile field because Helm uses the genericclioptions.ConfigFlags
+			// struct which does not support CAData.
+			// https://github.com/kubernetes/cli-runtime/issues/8
+			c.CAFile = filepath.Join(caFilesDir, c.Name)
+			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
+			if err != nil {
+				return ClustersConfig{}, deferFn, err
+			}
+		}
+		configs.Clusters[c.Name] = c
+	}
+	return configs, deferFn, nil
 }
 
 // combinedClientsetInterface provides both the app repository clientset and the corev1 clientset.

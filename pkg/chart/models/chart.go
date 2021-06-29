@@ -108,3 +108,10 @@ type RepoCheck struct {
 	LastUpdate time.Time `bson:"last_update"`
 	Checksum   string    `bson:"checksum"`
 }
+
+// some constant strings used as keys in maps in several modules
+const (
+	ReadmeKey = "readme"
+	ValuesKey = "values"
+	SchemaKey = "schema"
+)

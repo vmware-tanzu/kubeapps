@@ -12,9 +12,12 @@ parameters:
   DOCKER_VERSION:
     type: string
     default: "19.03.13"
-  HELM_VERSION:
+  HELM_VERSION_MIN:
     type: "string"
     default: "v3.1.0"
+  HELM_VERSION_STABLE:
+    type: "string"
+    default: "v3.6.0"
   OLM_VERSION:
     type: "string"
     default: "v0.17.0"
@@ -183,7 +186,8 @@ workflows:
 common_envars: &common_envars
   DOCKER_VERSION: << pipeline.parameters.DOCKER_VERSION >>
   GOLANG_VERSION: << pipeline.parameters.GOLANG_VERSION >>
-  HELM_VERSION: << pipeline.parameters.HELM_VERSION >>
+  HELM_VERSION_MIN: << pipeline.parameters.HELM_VERSION_MIN >>
+  HELM_VERSION_STABLE: << pipeline.parameters.HELM_VERSION_STABLE >>
   K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
   KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
   KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
@@ -207,11 +211,15 @@ install_gcloud_sdk: &install_gcloud_sdk
       fi
 install_helm_cli: &install_helm_cli
   run:
-    name: "Install helm"
+    name: "Install helm (minimum and stable)"
     command: |
-      wget https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
-      tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
+      wget https://get.helm.sh/helm-${HELM_VERSION_MIN}-linux-amd64.tar.gz
+      tar zxf helm-$HELM_VERSION_MIN-linux-amd64.tar.gz
       sudo mv linux-amd64/helm /usr/local/bin/
+
+      wget https://get.helm.sh/helm-${HELM_VERSION_STABLE}-linux-amd64.tar.gz
+      tar zxf helm-$HELM_VERSION_STABLE-linux-amd64.tar.gz
+      sudo mv linux-amd64/helm /usr/local/bin/helm-stable
 exports: &exports
   run:
     name: "Export variables"

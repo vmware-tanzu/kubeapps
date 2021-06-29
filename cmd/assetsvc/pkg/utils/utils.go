@@ -14,34 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package utils
 
 import (
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 )
 
-type assetManager interface {
+type AssetManager interface {
 	Init() error
 	Close() error
-	getChart(namespace, chartID string) (models.Chart, error)
-	getChartVersion(namespace, chartID, version string) (models.Chart, error)
-	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
-	getPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
-	getAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
+	GetChart(namespace, chartID string) (models.Chart, error)
+	GetChartVersion(namespace, chartID, version string) (models.Chart, error)
+	GetChartFiles(namespace, filesID string) (models.ChartFiles, error)
+	GetPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
+	GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
 }
 
 // ChartQuery is a container for passing the supported query paramters for generating the WHERE query
 type ChartQuery struct {
-	namespace   string
-	chartName   string
-	version     string
-	appVersion  string
-	searchQuery string
-	repos       []string
-	categories  []string
+	Namespace   string
+	ChartName   string
+	Version     string
+	AppVersion  string
+	SearchQuery string
+	Repos       []string
+	Categories  []string
 }
 
-func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (assetManager, error) {
-	return newPGManager(config, kubeappsNamespace)
+func NewManager(databaseType string, config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
+	return NewPGManager(config, kubeappsNamespace)
 }
