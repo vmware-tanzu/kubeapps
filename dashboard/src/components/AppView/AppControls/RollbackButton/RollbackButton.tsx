@@ -52,7 +52,7 @@ function RollbackButton({
         status="primary"
         onClick={openModal}
         releaseStatus={status}
-        key="rollback-button"
+        id="rollback-button"
       >
         <CdsIcon shape="rewind" /> Rollback
       </StatusAwareButton>

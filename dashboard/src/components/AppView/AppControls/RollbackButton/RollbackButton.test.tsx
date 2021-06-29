@@ -7,6 +7,7 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { RollbackError } from "shared/types";
 import RollbackButton from "./RollbackButton";
+import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",
@@ -71,4 +72,17 @@ it("renders an error", async () => {
   wrapper.update();
 
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
+});
+
+it("renders disabled", async () => {
+  const disabledProps = {
+    ...defaultProps,
+    status: {
+      code: 6,
+    },
+  };
+  const wrapper = mountWrapper(defaultStore, <RollbackButton {...disabledProps} />);
+
+  expect(wrapper.find(CdsButton)).toBeDisabled();
+  expect(wrapper.find(ReactTooltip)).toExist();
 });

@@ -47,7 +47,7 @@ export default function DeleteButton({
         status="danger"
         onClick={openModal}
         releaseStatus={status}
-        key="delete-button"
+        id="delete-button"
       >
         <CdsIcon shape="trash" /> Delete
       </StatusAwareButton>

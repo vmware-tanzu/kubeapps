@@ -19,7 +19,7 @@ export default function UpgradeButton({
 }: IUpgradeButtonProps) {
   return (
     <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
-      <StatusAwareButton key="upgrade-button" status="primary" releaseStatus={status}>
+      <StatusAwareButton id="upgrade-button" status="primary" releaseStatus={status}>
         <CdsIcon shape="upload-cloud" /> Upgrade
       </StatusAwareButton>
     </Link>

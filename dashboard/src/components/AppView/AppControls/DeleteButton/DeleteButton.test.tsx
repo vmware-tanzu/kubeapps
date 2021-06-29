@@ -8,6 +8,7 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError } from "shared/types";
 import DeleteButton from "./DeleteButton";
+import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",
@@ -67,4 +68,17 @@ it("renders an error", async () => {
   wrapper.update();
 
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
+});
+
+it("renders disabled", async () => {
+  const disabledProps = {
+    ...defaultProps,
+    status: {
+      code: 7,
+    },
+  };
+  const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
+
+  expect(wrapper.find(CdsButton)).toBeDisabled();
+  expect(wrapper.find(ReactTooltip)).toExist();
 });
