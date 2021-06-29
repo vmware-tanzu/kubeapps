@@ -80,7 +80,7 @@ var availablePackageDetailOK = &corev1.AvailablePackageDetail{
 	IconUrl:          "foo.bar/icon.svg",
 	ShortDescription: "best chart",
 	LongDescription:  "best chart",
-	Version:          "3.0.0",
+	PkgVersion:       "3.0.0",
 	AppVersion:       "1.0.0",
 	Readme:           "chart readme",
 	DefaultValues:    "chart values",
@@ -289,7 +289,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				FilterOptions: &corev1.FilterOptions{
 					Query:        "",
 					AppVersion:   "",
-					Version:      "",
+					PkgVersion:   "",
 					Categories:   nil,
 					Repositories: nil,
 				},
@@ -313,7 +313,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				FilterOptions: &corev1.FilterOptions{
 					Query:        "",
 					AppVersion:   "",
-					Version:      "",
+					PkgVersion:   "",
 					Categories:   nil,
 					Repositories: nil,
 				},

@@ -176,7 +176,7 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.version",
+            "name": "filterOptions.pkgVersion",
             "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
@@ -430,7 +430,7 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.version",
+            "name": "filterOptions.pkgVersion",
             "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
@@ -701,7 +701,7 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.version",
+            "name": "filterOptions.pkgVersion",
             "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
@@ -858,7 +858,7 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.version",
+            "name": "filterOptions.pkgVersion",
             "description": "Package version. Package version for the request",
             "in": "query",
             "required": false,
@@ -1082,7 +1082,7 @@
           "description": "The name of the available package",
           "title": "Available package name"
         },
-        "version": {
+        "pkgVersion": {
           "type": "string",
           "description": "The version of the package (eg. chart version)",
           "title": "Available package version"
@@ -1242,7 +1242,7 @@
           "description": "Collection of repositories where the packages belong to",
           "title": "Repositories"
         },
-        "version": {
+        "pkgVersion": {
           "type": "string",
           "description": "Package version for the request",
           "title": "Package version"

@@ -240,7 +240,7 @@ message AvailablePackageDetail {
   // Available package version
   //
   // The version of the package (eg. chart version)
-  string version = 3;
+  string pkg_version = 3;
 
   // Available package app version
   //
@@ -403,7 +403,7 @@ message Maintainer {
     // Package version
     //
     // Package version for the request
-    string version = 4;
+    string pkg_version = 4;
 
     // App version
     //
