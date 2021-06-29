@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use strict";
 
 const babelJest = require("babel-jest");
