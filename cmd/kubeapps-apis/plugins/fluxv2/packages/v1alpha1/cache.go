@@ -41,6 +41,7 @@ type FluxPlugInCache struct {
 	mutex        sync.Mutex
 	redisCli     *redis.Client
 	clientGetter server.KubernetesClientGetter
+	waitGroup    *sync.WaitGroup
 }
 
 func NewCache(clientGetter server.KubernetesClientGetter) (*FluxPlugInCache, error) {
@@ -78,11 +79,11 @@ func NewCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCl
 	log.Infof("+NewCacheWithRedisClient")
 
 	if redisCli == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with redis Client")
+		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
 	}
 
 	if clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with configGetter")
 	}
 
 	// sanity check that the redis client is connected
@@ -158,6 +159,10 @@ func (c *FluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, er
 func (c *FluxPlugInCache) processEvents(ch <-chan watch.Event) {
 	for {
 		event := <-ch
+		if event.Type == "" {
+			// not quite sure why this happens (the docs don't say), but it seems to happen quite often
+			continue
+		}
 		log.Infof("got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
 		if event.Type == watch.Added {
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
@@ -180,6 +185,7 @@ func (c *FluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}
 		log.Errorf("Failed to processRepo %s due to: %v", prettyPrintMap(unstructuredRepo), err)
 		return
 	}
+
 	name, _, _ := unstructured.NestedString(unstructuredRepo, "metadata", "name")
 
 	protoMsg := corev1.GetAvailablePackageSummariesResponse{
@@ -190,6 +196,7 @@ func (c *FluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}
 		log.Errorf("Failed to marshal due to: %v", err)
 		return
 	}
+
 	err = c.redisCli.Set(c.redisCli.Context(), name, bytes, 0).Err()
 	if err != nil {
 		log.Errorf("Failed to set value for repository [%s] in cache due to: %v", name, err)
@@ -204,7 +211,10 @@ func (c *FluxPlugInCache) packageSummariesForRepo(name string) []*corev1.Availab
 	startTime := time.Now()
 	// read back from cache, should be sane as what we wrote
 	bytes, err := c.redisCli.Get(c.redisCli.Context(), name).Bytes()
-	if err != nil {
+	if err == redis.Nil {
+		// this is normal if the key does not exist
+		return []*corev1.AvailablePackageSummary{}
+	} else if err != nil {
 		log.Errorf("Failed to get value for repository [%s] from cache due to: %v", name, err)
 		return []*corev1.AvailablePackageSummary{}
 	}

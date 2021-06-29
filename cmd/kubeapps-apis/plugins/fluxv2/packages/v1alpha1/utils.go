@@ -53,20 +53,20 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailableP
 
 	ready, err := isRepoReady(unstructuredRepo)
 	if err != nil || !ready {
-		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%s",
+		return nil, status.Errorf(codes.Internal,
+			"Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%s",
 			repo.Name,
 			err,
 			prettyPrintMap(unstructuredRepo))
-		return nil, err
 	}
 
 	indexUrl, found, err := unstructured.NestedString(unstructuredRepo, "status", "url")
 	if err != nil || !found {
-		log.Infof("expected field status.url not found on HelmRepository [%s]: %v:\n%s",
+		return nil, status.Errorf(codes.Internal,
+			"expected field status.url not found on HelmRepository [%s]: %v:\n%s",
 			repo.Name,
 			err,
 			prettyPrintMap(unstructuredRepo))
-		return nil, err
 	}
 
 	log.Infof("Found repository: [%s], index URL: [%s]", repo.Name, indexUrl)

@@ -148,6 +148,12 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.Context.Cluster)
 	}
 
+	if s.cache == nil {
+		return nil, status.Errorf(
+			codes.FailedPrecondition,
+			"Server has not been properly initialized")
+	}
+
 	repos, err := s.getHelmRepos(ctx, "")
 	if err != nil {
 		return nil, err

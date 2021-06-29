@@ -16,14 +16,21 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	redismock "github.com/go-redis/redismock/v8"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,107 +39,25 @@ import (
 	"k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	k8stesting "k8s.io/client-go/testing"
-	log "k8s.io/klog/v2"
 )
 
-func TestGetAvailablePackagesStatus(t *testing.T) {
-	client1 := fake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
-			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-		},
-		newRepo("test", "", nil, map[string]interface{}{
-			"conditions": []interface{}{
-				map[string]interface{}{
-					"type":   "Ready",
-					"status": "True",
-					"reason": "IndexationSucceed",
-				},
-			}}),
-	)
-
-	client1.Fake.PrependWatchReactor(
-		"*",
-		func(action k8stesting.Action) (handled bool, ret watch.Interface, err error) {
-			log.Infof("+watchReactor(action: %v)", action)
-			return false, nil, nil
-		})
-
+func TestClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
 		clientGetter server.KubernetesClientGetter
 		statusCode   codes.Code
 	}{
-		/*
-				{
-					name:         "returns internal error status when no getter configured",
-					clientGetter: nil,
-					statusCode:   codes.Internal,
-				},
-				{
-					name: "returns failed-precondition when configGetter itself errors",
-					clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-						return nil, nil, fmt.Errorf("Bang!")
-					},
-					statusCode: codes.FailedPrecondition,
-				},
-				{
-					name: "returns without error if response status does not contain conditions",
-					clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-						return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
-							map[schema.GroupVersionResource]string{
-								{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-							},
-							newRepo("test", "", nil, nil),
-						), nil
-					},
-					statusCode: codes.OK,
-				},
-			{
-				name: "returns without error if response status does not contain conditions",
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-						},
-						newRepo("test", "", map[string]interface{}{
-							"foo": "bar",
-						}, map[string]interface{}{
-							"zot": "xyz",
-						}),
-					), nil
-				},
-				statusCode: codes.OK,
-			},
-			{
-				name: "returns without error if response does not contain ready repos",
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-						},
-						newRepo("test", "", map[string]interface{}{}, map[string]interface{}{
-							"conditions": []interface{}{
-								map[string]interface{}{
-									"type":   "Ready",
-									"status": "False",
-									"reason": "IndexationFailed",
-								},
-							}}),
-					), nil
-				},
-				statusCode: codes.OK,
-			},
-		*/
 		{
-			name: "returns without error if response does not contain status url",
+			name:         "returns failed-precondition error status when no getter configured",
+			clientGetter: nil,
+			statusCode:   codes.FailedPrecondition,
+		},
+		{
+			name: "returns failed-precondition when configGetter itself errors",
 			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, client1, nil
+				return nil, nil, fmt.Errorf("Bang!")
 			},
-			statusCode: codes.OK,
+			statusCode: codes.FailedPrecondition,
 		},
 	}
 
@@ -140,16 +65,130 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			redisCli, mock := redismock.NewClientMock()
 			mock.ExpectPing().SetVal("PONG")
-			cache, err := NewCacheWithRedisClient(tc.clientGetter, redisCli)
-			if err != nil {
-				t.Fatalf("error instantiating the cache: %v", err)
-			}
+			cache, _ := NewCacheWithRedisClient(tc.clientGetter, redisCli)
 			s := &Server{
 				clientGetter: tc.clientGetter,
 				cache:        cache,
 			}
 
-			time.Sleep(10 * time.Second)
+			response, err := s.GetAvailablePackageSummaries(
+				context.Background(),
+				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+
+			if err == nil && tc.statusCode != codes.OK {
+				t.Fatalf("got: nil, want: error")
+			}
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Errorf("got: %+v, want: %+v", got, want)
+
+				if got == codes.OK {
+					if len(response.AvailablePackagesSummaries) != 0 {
+						t.Errorf("unexpected response: %v", response)
+					} else if response != nil {
+						t.Errorf("unexpected response: %v", response)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGetAvailablePackagesStatus(t *testing.T) {
+	testCases := []struct {
+		name       string
+		repo       *unstructured.Unstructured
+		statusCode codes.Code
+	}{
+		{
+			name: "returns without error if response status does not contain conditions",
+			repo: newRepo("test", "default",
+				map[string]interface{}{
+					"url":      "http://example.com",
+					"interval": "1m0s",
+				},
+				nil),
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response status does not contain conditions (2)",
+			repo: newRepo("test", "default",
+				map[string]interface{}{
+					"url":      "http://example.com",
+					"interval": "1m0s",
+				},
+				map[string]interface{}{
+					"zot": "xyz",
+				}),
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response does not contain ready repos",
+			repo: newRepo("test", "default",
+				map[string]interface{}{
+					"url":      "http://example.com",
+					"interval": "1m0s",
+				},
+				map[string]interface{}{
+					"conditions": []interface{}{
+						map[string]interface{}{
+							"type":   "Ready",
+							"status": "False",
+							"reason": "IndexationFailed",
+						},
+					}}),
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response does not contain namespace",
+			repo: newRepo("test", "", nil, map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Ready",
+						"status": "True",
+						"reason": "IndexationSucceed",
+					},
+				}}),
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response does not contain spec url",
+			repo: newRepo("test", "default", nil, map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Ready",
+						"status": "True",
+						"reason": "IndexationSucceed",
+					},
+				}}),
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if response does not contain status url",
+			repo: newRepo("test", "default", map[string]interface{}{
+				"url":      "http://example.com",
+				"interval": "1m0s",
+			}, map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Ready",
+						"status": "True",
+						"reason": "IndexationSucceed",
+					},
+				}}),
+			statusCode: codes.OK,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, watcher, mock, err := newServerWithRepos(tc.repo)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			(*mock).ExpectGet(tc.repo.GetName()).RedisNil()
+			watcher.Add(tc.repo)
 
 			response, err := s.GetAvailablePackageSummaries(
 				context.Background(),
@@ -203,8 +242,8 @@ func newRepo(name string, namespace string, spec map[string]interface{}, status 
 }
 
 // newRepos takes a map of specs keyed by object name converting them to runtime objects.
-func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
-	repos := []runtime.Object{}
+func newRepos(specs map[string]map[string]interface{}, namespace string) []*unstructured.Unstructured {
+	repos := []*unstructured.Unstructured{}
 	for name, spec := range specs {
 		repo := newRepo(name, namespace, spec, nil)
 		repos = append(repos, repo)
@@ -219,7 +258,6 @@ type testRepoStruct struct {
 	index     string
 }
 
-/*
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		testName         string
@@ -291,53 +329,55 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 		},
-		{
-			testName: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
-			testRepos: []testRepoStruct{
-				{
-					name:      "bitnami-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/valid-index.yaml",
-				},
-				{
-					name:      "jetstack-1",
-					namespace: "ns1",
-					url:       "https://charts.jetstack.io",
-					index:     "testdata/jetstack-index.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					DisplayName:   "acs-engine-autoscaler",
-					LatestVersion: "2.1.1",
-					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/acs-engine-autoscaler",
-						Context:    &corev1.Context{Namespace: "default"},
+		/*
+			{
+					testName: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
+					testRepos: []testRepoStruct{
+						{
+							name:      "bitnami-1",
+							namespace: "default",
+							url:       "https://example.repo.com/charts",
+							index:     "testdata/valid-index.yaml",
+						},
+						{
+							name:      "jetstack-1",
+							namespace: "ns1",
+							url:       "https://charts.jetstack.io",
+							index:     "testdata/jetstack-index.yaml",
+						},
+					},
+					request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
+					expectedPackages: []*corev1.AvailablePackageSummary{
+						{
+							DisplayName:   "acs-engine-autoscaler",
+							LatestVersion: "2.1.1",
+							IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+							AvailablePackageRef: &corev1.AvailablePackageReference{
+								Identifier: "bitnami-1/acs-engine-autoscaler",
+								Context:    &corev1.Context{Namespace: "default"},
+							},
+						},
+						{
+							DisplayName:   "cert-manager",
+							LatestVersion: "v1.4.0",
+							IconUrl:       "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+							AvailablePackageRef: &corev1.AvailablePackageReference{
+								Identifier: "jetstack-1/cert-manager",
+								Context:    &corev1.Context{Namespace: "ns1"},
+							},
+						},
+						{
+							DisplayName:   "wordpress",
+							LatestVersion: "0.7.5",
+							IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+							AvailablePackageRef: &corev1.AvailablePackageReference{
+								Identifier: "bitnami-1/wordpress",
+								Context:    &corev1.Context{Namespace: "default"},
+							},
+						},
 					},
 				},
-				{
-					DisplayName:   "cert-manager",
-					LatestVersion: "v1.4.0",
-					IconUrl:       "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "jetstack-1/cert-manager",
-						Context:    &corev1.Context{Namespace: "ns1"},
-					},
-				},
-				{
-					DisplayName:   "wordpress",
-					LatestVersion: "0.7.5",
-					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/wordpress",
-						Context:    &corev1.Context{Namespace: "default"},
-					},
-				},
-			},
-		},
+		*/
 	}
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -370,17 +410,28 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				}
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
-			s := Server{
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-						},
-						repos...,
-					), nil
-				},
+
+			s, watcher, mock, err := newServerWithRepos(repos...)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
 			}
+
+			// TODO move this into newServerWithRepos somehow
+			for _, r := range repos {
+				protoMsg := corev1.GetAvailablePackageSummariesResponse{
+					AvailablePackagesSummaries: tc.expectedPackages,
+				}
+				bytes, err := proto.Marshal(&protoMsg)
+				if err != nil {
+					t.Fatalf("error marshalling data: %v", err)
+				}
+				key := r.(*unstructured.Unstructured).GetName()
+				(*mock).ExpectSet(key, bytes, 0).SetVal("")
+				(*mock).ExpectGet(key).SetVal(string(bytes))
+				watcher.Add(r)
+			}
+
+			time.Sleep(5 * time.Second)
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
 			if err != nil {
@@ -396,6 +447,37 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	}
 }
 
+func newServerWithRepos(repos ...runtime.Object) (*Server, *watch.FakeWatcher, *redismock.ClientMock, error) {
+	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
+		runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{
+			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+		},
+		repos...)
+
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return nil, dynamicClient, nil
+	}
+
+	watcher := watch.NewFake()
+
+	dynamicClient.Fake.PrependWatchReactor(
+		"*",
+		k8stesting.DefaultWatchReactor(watcher, nil))
+
+	redisCli, mock := redismock.NewClientMock()
+	mock.ExpectPing().SetVal("PONG")
+	cache, err := NewCacheWithRedisClient(clientGetter, redisCli)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return &Server{
+		clientGetter: clientGetter,
+		cache:        cache,
+	}, watcher, &mock, nil
+}
+
+/*
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
@@ -726,6 +808,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		})
 	}
 }
+*/
 
 // these are helpers to compare slices ignoring order
 func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
@@ -735,4 +818,3 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }
-*/
