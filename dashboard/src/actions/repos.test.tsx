@@ -377,6 +377,7 @@ describe("installRepo", () => {
     [],
     [],
     false,
+    false,
     undefined,
   );
 
@@ -393,6 +394,7 @@ describe("installRepo", () => {
       "",
       [],
       [],
+      false,
       false,
       undefined,
     );
@@ -413,6 +415,7 @@ describe("installRepo", () => {
         [],
         [],
         false,
+        false,
         undefined,
       );
     });
@@ -432,6 +435,7 @@ describe("installRepo", () => {
           [],
           ["apache", "jenkins"],
           false,
+          false,
           undefined,
         ),
       );
@@ -448,6 +452,7 @@ describe("installRepo", () => {
         {},
         [],
         ["apache", "jenkins"],
+        false,
         false,
         undefined,
       );
@@ -468,6 +473,7 @@ describe("installRepo", () => {
           [],
           [],
           true,
+          false,
           undefined,
         ),
       );
@@ -485,6 +491,7 @@ describe("installRepo", () => {
         [],
         [],
         true,
+        false,
         undefined,
       );
     });
@@ -509,6 +516,7 @@ describe("installRepo", () => {
       [],
       [],
       false,
+      false,
       undefined,
     );
 
@@ -527,6 +535,7 @@ describe("installRepo", () => {
         {},
         [],
         [],
+        false,
         false,
         undefined,
       );
@@ -553,6 +562,7 @@ describe("installRepo", () => {
             [],
             [],
             false,
+            false,
             undefined,
           ),
         );
@@ -572,6 +582,7 @@ describe("installRepo", () => {
           },
           [],
           [],
+          false,
           false,
           undefined,
         );
@@ -595,6 +606,7 @@ describe("installRepo", () => {
             unsafeYAMLTemplate,
             [],
             [],
+            false,
             false,
             undefined,
           ),
@@ -620,6 +632,7 @@ describe("installRepo", () => {
         {},
         [],
         [],
+        false,
         false,
         undefined,
       );
@@ -689,6 +702,7 @@ describe("installRepo", () => {
         ["repo-1"],
         [],
         false,
+        false,
         undefined,
       ),
     );
@@ -706,6 +720,7 @@ describe("installRepo", () => {
       {},
       ["repo-1"],
       [],
+      false,
       false,
       undefined,
     );
@@ -726,6 +741,7 @@ describe("installRepo", () => {
         [],
         ["apache", "jenkins"],
         false,
+        false,
         undefined,
       ),
     );
@@ -742,6 +758,7 @@ describe("installRepo", () => {
       {},
       [],
       ["apache", "jenkins"],
+      false,
       false,
       undefined,
     );
@@ -787,6 +804,7 @@ describe("updateRepo", () => {
         ["repo-1"],
         [],
         false,
+        false,
         undefined,
       ),
     );
@@ -804,6 +822,7 @@ describe("updateRepo", () => {
       { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
       ["repo-1"],
       [],
+      false,
       false,
       undefined,
     );
@@ -847,6 +866,7 @@ describe("updateRepo", () => {
         ["repo-1"],
         [],
         false,
+        false,
         undefined,
       ),
     );
@@ -864,6 +884,7 @@ describe("updateRepo", () => {
       { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
       ["repo-1"],
       [],
+      false,
       false,
       undefined,
     );
@@ -897,6 +918,7 @@ describe("updateRepo", () => {
         [],
         [],
         false,
+        false,
         undefined,
       ),
     );
@@ -921,6 +943,7 @@ describe("updateRepo", () => {
         [],
         ["apache", "jenkins"],
         false,
+        false,
         undefined,
       ),
     );
@@ -937,6 +960,7 @@ describe("updateRepo", () => {
       {},
       [],
       ["apache", "jenkins"],
+      false,
       false,
       undefined,
     );
@@ -960,6 +984,7 @@ describe("updateRepo", () => {
         [],
         ["apache", "jenkins"],
         false,
+        false,
         undefined,
       ),
     );
@@ -976,6 +1001,7 @@ describe("updateRepo", () => {
       {},
       [],
       ["apache", "jenkins"],
+      false,
       false,
       undefined,
     );
@@ -1050,7 +1076,7 @@ describe("validateRepo", () => {
     ];
 
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(true);
@@ -1071,7 +1097,7 @@ describe("validateRepo", () => {
       },
     ];
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
@@ -1095,7 +1121,7 @@ describe("validateRepo", () => {
       },
     ];
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false),
+      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
@@ -1106,7 +1132,7 @@ describe("validateRepo", () => {
       code: 200,
     });
     const res = await store.dispatch(
-      repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false),
+      repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false, false),
     );
     expect(res).toBe(true);
     expect(AppRepository.validate).toHaveBeenCalledWith(
@@ -1118,6 +1144,7 @@ describe("validateRepo", () => {
       "",
       "",
       ["apache", "jenkins"],
+      false,
       false,
     );
   });

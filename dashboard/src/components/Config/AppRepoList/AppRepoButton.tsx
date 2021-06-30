@@ -47,6 +47,7 @@ export function AppRepoAddButton({
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
+    passCredentials: boolean,
     filter?: IAppRepositoryFilter,
   ) => {
     if (repo) {
@@ -64,6 +65,7 @@ export function AppRepoAddButton({
           registrySecrets,
           ociRepositories,
           skipTLS,
+          passCredentials,
           filter,
         ),
       );
@@ -82,6 +84,7 @@ export function AppRepoAddButton({
           registrySecrets,
           ociRepositories,
           skipTLS,
+          passCredentials,
           filter,
         ),
       );

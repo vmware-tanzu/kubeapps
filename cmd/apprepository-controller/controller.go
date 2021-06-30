@@ -608,6 +608,10 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 		args = append(args, "--tls-insecure-skip-verify")
 	}
 
+	if apprepo.Spec.PassCredentials {
+		args = append(args, "--pass-credentials")
+	}
+
 	if apprepo.Spec.FilterRule.JQ != "" {
 		rulesJSON, err := json.Marshal(apprepo.Spec.FilterRule)
 		if err != nil {

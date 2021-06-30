@@ -18,9 +18,9 @@ servers:
 info:
   description: |
     [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
-     
+
      [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.
-     
+
      Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.
      #### Developer Documentation
      - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/master/docs/architecture/overview.md).
@@ -2016,6 +2016,8 @@ components:
             type: string
         tlsInsecureSkipVerify:
           type: boolean
+        passCredentials:
+          type: boolean
     # pkg/kube/kube_handler.go
     ValidationResponse:
       type: object
@@ -2097,6 +2099,8 @@ components:
           type: boolean
         description:
           type: string
+        passCredentials:
+          type: boolean
     # cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/types.go
     AppRepositoryStatus:
       type: object
