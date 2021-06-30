@@ -105,8 +105,8 @@ func newCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCl
 func (c *fluxPlugInCache) startHelmRepositoryWatcher() {
 	log.Infof("+fluxv2 startHelmRepositoryWatcher")
 	c.mutex.Lock()
-	// can't defer c.mutex.Unlock() because in all is well we never
-	// return from this func
+	// can't defer c.mutex.Unlock() because when all is well,
+	// we never return from this func
 
 	if !c.watcherStarted {
 		ch, err := c.newHelmRepositoryWatcherChan()
@@ -125,7 +125,7 @@ func (c *fluxPlugInCache) startHelmRepositoryWatcher() {
 		log.Infof("watcher already started. exiting...")
 	}
 	// we should never reach here
-	log.Infof("-fluxv2 startHelmRepositoryWatcher")
+	log.Warningf("-fluxv2 startHelmRepositoryWatcher")
 }
 
 func (c *fluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, error) {

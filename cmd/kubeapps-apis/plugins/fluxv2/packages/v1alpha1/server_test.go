@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -182,12 +183,10 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newServerWithRepos(tc.repo)
+			s, err := newServerWithReadyRepos(true, tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-
-			(*mock).ExpectGet(tc.repo.GetName()).RedisNil()
 
 			response, err := s.GetAvailablePackageSummaries(
 				context.Background(),
@@ -210,44 +209,6 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			}
 		})
 	}
-}
-
-func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
-	metadata := map[string]interface{}{
-		"name":       name,
-		"generation": int64(1),
-	}
-	if namespace != "" {
-		metadata["namespace"] = namespace
-	}
-	obj := map[string]interface{}{
-		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-		"kind":       fluxHelmRepository,
-		"metadata":   metadata,
-	}
-
-	if spec != nil {
-		obj["spec"] = spec
-	}
-
-	if status != nil {
-		status["observedGeneration"] = int64(1)
-		obj["status"] = status
-	}
-
-	return &unstructured.Unstructured{
-		Object: obj,
-	}
-}
-
-// newRepos takes a map of specs keyed by object name converting them to runtime objects.
-func newRepos(specs map[string]map[string]interface{}, namespace string) []*unstructured.Unstructured {
-	repos := []*unstructured.Unstructured{}
-	for name, spec := range specs {
-		repo := newRepo(name, namespace, spec, nil)
-		repos = append(repos, repo)
-	}
-	return repos
 }
 
 type testRepoStruct struct {
@@ -328,55 +289,53 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 		},
-		/*
-			{
-					testName: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
-					testRepos: []testRepoStruct{
-						{
-							name:      "bitnami-1",
-							namespace: "default",
-							url:       "https://example.repo.com/charts",
-							index:     "testdata/valid-index.yaml",
-						},
-						{
-							name:      "jetstack-1",
-							namespace: "ns1",
-							url:       "https://charts.jetstack.io",
-							index:     "testdata/jetstack-index.yaml",
-						},
-					},
-					request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
-					expectedPackages: []*corev1.AvailablePackageSummary{
-						{
-							DisplayName:   "acs-engine-autoscaler",
-							LatestVersion: "2.1.1",
-							IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-							AvailablePackageRef: &corev1.AvailablePackageReference{
-								Identifier: "bitnami-1/acs-engine-autoscaler",
-								Context:    &corev1.Context{Namespace: "default"},
-							},
-						},
-						{
-							DisplayName:   "cert-manager",
-							LatestVersion: "v1.4.0",
-							IconUrl:       "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-							AvailablePackageRef: &corev1.AvailablePackageReference{
-								Identifier: "jetstack-1/cert-manager",
-								Context:    &corev1.Context{Namespace: "ns1"},
-							},
-						},
-						{
-							DisplayName:   "wordpress",
-							LatestVersion: "0.7.5",
-							IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-							AvailablePackageRef: &corev1.AvailablePackageReference{
-								Identifier: "bitnami-1/wordpress",
-								Context:    &corev1.Context{Namespace: "default"},
-							},
-						},
+		{
+			testName: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     "testdata/jetstack-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:   "acs-engine-autoscaler",
+					LatestVersion: "2.1.1",
+					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1/acs-engine-autoscaler",
+						Context:    &corev1.Context{Namespace: "default"},
 					},
 				},
-		*/
+				{
+					DisplayName:   "cert-manager",
+					LatestVersion: "v1.4.0",
+					IconUrl:       "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "jetstack-1/cert-manager",
+						Context:    &corev1.Context{Namespace: "ns1"},
+					},
+				},
+				{
+					DisplayName:   "wordpress",
+					LatestVersion: "0.7.5",
+					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "bitnami-1/wordpress",
+						Context:    &corev1.Context{Namespace: "default"},
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -410,31 +369,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, mock, err := newServerWithRepos(repos...)
+			s, err := newServerWithReadyRepos(false, repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			// TODO move this into newServerWithRepos somehow
-			for _, r := range repos {
-				protoMsg := corev1.GetAvailablePackageSummariesResponse{
-					AvailablePackagesSummaries: tc.expectedPackages,
-				}
-				bytes, err := proto.Marshal(&protoMsg)
-				if err != nil {
-					t.Fatalf("error marshalling data: %v", err)
-				}
-				key := r.(*unstructured.Unstructured).GetName()
-				(*mock).ExpectSet(key, bytes, 0).SetVal("")
-				(*mock).ExpectGet(key).SetVal(string(bytes))
-			}
-
-			// TODO get rid of this. Need to wait until background sync is done indexing all the repos. How?
-			time.Sleep(5 * time.Second)
-
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatalf("%v", err)
 			}
 
 			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
@@ -446,43 +388,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(repos ...runtime.Object) (*Server, *redismock.ClientMock, error) {
-	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
-			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-		},
-		repos...)
-
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return nil, dynamicClient, nil
-	}
-
-	watcher := watch.NewFake()
-
-	dynamicClient.Fake.PrependWatchReactor(
-		"*",
-		k8stesting.DefaultWatchReactor(watcher, nil))
-
-	redisCli, mock := redismock.NewClientMock()
-	mock.ExpectPing().SetVal("PONG")
-	cache, err := newCacheWithRedisClient(clientGetter, redisCli)
-	if err != nil {
-		return nil, nil, err
-	}
-	s := &Server{
-		clientGetter: clientGetter,
-		cache:        cache,
-	}
-
-	for _, r := range repos {
-		watcher.Add(r)
-	}
-
-	return s, &mock, nil
-}
-
-/*
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
@@ -579,16 +484,9 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := Server{
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-						},
-						newRepos(tc.repoSpecs, tc.repoNamespace)...,
-					), nil
-				},
+			s, _, _, err := newServerWithUnreadyRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
 			}
 
 			response, err := s.GetPackageRepositories(context.Background(), tc.request)
@@ -610,35 +508,6 @@ func TestGetPackageRepositories(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func newChart(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
-	metadata := map[string]interface{}{
-		"name":       name,
-		"generation": int64(1),
-	}
-	if namespace != "" {
-		metadata["namespace"] = namespace
-	}
-
-	obj := map[string]interface{}{
-		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-		"kind":       fluxHelmChart,
-		"metadata":   metadata,
-	}
-
-	if spec != nil {
-		obj["spec"] = spec
-	}
-
-	if status != nil {
-		status["observedGeneration"] = int64(1)
-		obj["status"] = status
-	}
-
-	return &unstructured.Unstructured{
-		Object: obj,
 	}
 }
 
@@ -813,7 +682,154 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		})
 	}
 }
-*/
+
+//
+// utilities
+//
+func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"name":       name,
+		"generation": int64(1),
+	}
+	if namespace != "" {
+		metadata["namespace"] = namespace
+	}
+	obj := map[string]interface{}{
+		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+		"kind":       fluxHelmRepository,
+		"metadata":   metadata,
+	}
+
+	if spec != nil {
+		obj["spec"] = spec
+	}
+
+	if status != nil {
+		status["observedGeneration"] = int64(1)
+		obj["status"] = status
+	}
+
+	return &unstructured.Unstructured{
+		Object: obj,
+	}
+}
+
+// newRepos takes a map of specs keyed by object name converting them to runtime objects.
+func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
+	repos := []runtime.Object{}
+	for name, spec := range specs {
+		repo := newRepo(name, namespace, spec, nil)
+		repos = append(repos, repo)
+	}
+	return repos
+}
+
+func newChart(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"name":       name,
+		"generation": int64(1),
+	}
+	if namespace != "" {
+		metadata["namespace"] = namespace
+	}
+
+	obj := map[string]interface{}{
+		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+		"kind":       fluxHelmChart,
+		"metadata":   metadata,
+	}
+
+	if spec != nil {
+		obj["spec"] = spec
+	}
+
+	if status != nil {
+		status["observedGeneration"] = int64(1)
+		obj["status"] = status
+	}
+
+	return &unstructured.Unstructured{
+		Object: obj,
+	}
+}
+
+func newServerWithUnreadyRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
+	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
+		runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{
+			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+		},
+		repos...)
+
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return nil, dynamicClient, nil
+	}
+
+	redisCli, mock := redismock.NewClientMock()
+	mock.ExpectPing().SetVal("PONG")
+	cache, err := newCacheWithRedisClient(clientGetter, redisCli)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	s := &Server{
+		clientGetter: clientGetter,
+		cache:        cache,
+	}
+	return s, dynamicClient, mock, nil
+}
+
+func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, error) {
+	s, dynamicClient, mock, err := newServerWithUnreadyRepos(repos...)
+	if err != nil {
+		return nil, err
+	}
+
+	// this is so we can emulate actual k8s server firing events
+	// see https://github.com/kubernetes/kubernetes/issues/54075 for explanation
+	watcher := watch.NewFake()
+
+	dynamicClient.Fake.PrependWatchReactor(
+		"*",
+		k8stesting.DefaultWatchReactor(watcher, nil))
+
+	// first we need to mock all the SETs and only then all the GETs, otherwise
+	// redismock throws a fit
+	mapVals := make(map[string][]byte)
+	if !expectNil {
+		for _, r := range repos {
+			key := r.(*unstructured.Unstructured).GetName()
+			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
+			if err != nil {
+				return nil, err
+			}
+			protoMsg := corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackagesSummaries: packageSummaries,
+			}
+			bytes, err := proto.Marshal(&protoMsg)
+			if err != nil {
+				return nil, err
+			}
+			mapVals[key] = bytes
+			mock.ExpectSet(key, bytes, 0).SetVal("")
+
+			// fire an ADD event
+			watcher.Add(r)
+		}
+
+		// TODO get rid of this. Need to wait until background sync is done indexing all the repos. How?
+		time.Sleep(5 * time.Second)
+	}
+
+	for _, r := range repos {
+		key := r.(*unstructured.Unstructured).GetName()
+		if expectNil {
+			mock.ExpectGet(key).RedisNil()
+		} else {
+			mock.ExpectGet(key).SetVal(string(mapVals[key]))
+		}
+	}
+	return s, nil
+}
 
 // these are helpers to compare slices ignoring order
 func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
