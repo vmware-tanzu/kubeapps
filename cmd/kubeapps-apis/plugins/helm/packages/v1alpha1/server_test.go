@@ -71,6 +71,7 @@ var availablePackageSummaryOK = &corev1.AvailablePackageSummary{
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Context:    &corev1.Context{Namespace: "my-ns"},
 		Identifier: "foo/bar",
+		Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 	},
 }
 
@@ -79,7 +80,7 @@ var availablePackageDetailOK = &corev1.AvailablePackageDetail{
 	DisplayName:      "foo",
 	IconUrl:          "foo.bar/icon.svg",
 	ShortDescription: "best chart",
-	LongDescription:  "best chart",
+	LongDescription:  "",
 	PkgVersion:       "3.0.0",
 	AppVersion:       "1.0.0",
 	Readme:           "chart readme",
@@ -191,6 +192,85 @@ func TestGetClient(t *testing.T) {
 	}
 }
 
+func TestIsValidChart(t *testing.T) {
+	testCases := []struct {
+		name     string
+		in       *models.Chart
+		expected bool
+	}{
+		{
+			name:     "it returns true if the chart is correct",
+			in:       chartOK,
+			expected: true,
+		},
+		{
+			name: "it returns true if the minimum chart is correct",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "it returns false if the ChartVersions are missing",
+			in: &models.Chart{
+				Name: "foo",
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if a ChartVersions.Version is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{Version: "3.0.0"},
+					{AppVersion: "3.0.0"},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns true if the minimum (+maintainer) chart is correct",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+				Maintainers: []chart.Maintainer{{Name: "me"}},
+			},
+			expected: true,
+		},
+		{
+			name: "it returns false if a Maintainer.Name is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := isValidChart(tc.in)
+			if got, want := res, tc.expected; got != want {
+				t.Fatalf("got: %+v, want: %+v, res: %+v (%+v)", got, want, res, err)
+			}
+		})
+	}
+}
+
 func TestAvailablePackageSummaryFromChart(t *testing.T) {
 	invalidChart := &models.Chart{Name: "foo"}
 
@@ -227,7 +307,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -396,7 +476,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 				if got, want := availablePackageSummaries.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -439,7 +519,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 				if got, want := availablePackageDetail, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -616,7 +696,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 				if got, want := availablePackageDetails.AvailablePackageDetail, currentExpectedPackage; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}

@@ -169,38 +169,29 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}, nil
 }
 
+// AvailablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
 func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
 	pkg := &corev1.AvailablePackageSummary{}
 
-	if chart.Name == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Name not found on helm package: %v", chart)
+	isValid, err := isValidChart(chart)
+	if !isValid || err != nil {
+		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
 	}
+
 	pkg.DisplayName = chart.Name
-
-	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 || chart.ChartVersions[0].Version == "" {
-		return nil, status.Errorf(codes.Internal, "required field .ChartVersions[0].Version not found on helm package: %v", chart)
-	}
-	pkg.LatestVersion = chart.ChartVersions[0].Version
-
-	if chart.Icon == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Icon not found on helm package: %v", chart)
-	}
 	pkg.IconUrl = chart.Icon
-
-	if chart.Description == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Description not found on helm package: %v", chart)
-	}
 	pkg.ShortDescription = chart.Description
 
-	if chart.ID == "" {
-		return nil, status.Errorf(codes.Internal, "required field .ID not found on helm package: %v", chart)
-	}
-	if chart.Repo == nil || chart.Repo.Namespace == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Repo.Namespace not found on helm package: %v", chart)
-	}
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
-		Context:    &corev1.Context{Namespace: chart.Repo.Namespace},
 		Identifier: chart.ID,
+		Plugin:     GetPluginDetail(),
+	}
+	if chart.Repo != nil {
+		pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
+	}
+
+	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
+		pkg.LatestVersion = chart.ChartVersions[0].Version
 	}
 
 	return pkg, nil
@@ -270,80 +261,46 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}, nil
 }
 
+// AvailablePackageDetailFromChart builds an AvailablePackageDetail from a Chart
 func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePackageDetail, error) {
 	pkg := &corev1.AvailablePackageDetail{}
 
-	if chart.Name == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Name not found on helm package: %v", chart)
+	isValid, err := isValidChart(chart)
+	if !isValid || err != nil {
+		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
 	}
-	pkg.Name = chart.Name
+
 	pkg.DisplayName = chart.Name
-
-	if chart.Icon == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Icon not found on helm package: %v", chart)
-	}
 	pkg.IconUrl = chart.Icon
-
-	if chart.Description == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Description not found on helm package: %v", chart)
-	}
+	pkg.Name = chart.Name
 	pkg.ShortDescription = chart.Description
-	pkg.LongDescription = chart.Description
 
-	if chart.Maintainers == nil {
-		return nil, status.Errorf(codes.Internal, "required field .Maintainers not found on helm package: %v", chart)
-	}
 	pkg.Maintainers = []*corev1.Maintainer{}
 	for _, maintainer := range chart.Maintainers {
 		m := &corev1.Maintainer{Name: maintainer.Name, Email: maintainer.Email}
 		pkg.Maintainers = append(pkg.Maintainers, m)
 	}
 
-	if chart.ID == "" {
-		return nil, status.Errorf(codes.Internal, "required field .ID not found on helm package: %v", chart)
-	}
-	if chart.Repo == nil || chart.Repo.Namespace == "" {
-		return nil, status.Errorf(codes.Internal, "required field .Repo.Namespace not found on helm package: %v", chart)
-	}
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
-		Context:    &corev1.Context{Namespace: chart.Repo.Namespace},
 		Identifier: chart.ID,
 		Plugin:     GetPluginDetail(),
 	}
+	if chart.Repo != nil {
+		pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
+	}
 
 	// We assume that chart.ChartVersions[0] will always contain either: the latest version or the specified version
-	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
-		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0] not found on helm package: %v", chart)
+	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
+		pkg.PkgVersion = chart.ChartVersions[0].Version
+		pkg.AppVersion = chart.ChartVersions[0].AppVersion
+		pkg.Readme = chart.ChartVersions[0].Readme
+		pkg.DefaultValues = chart.ChartVersions[0].Values
+		pkg.ValuesSchema = chart.ChartVersions[0].Schema
 	}
-
-	if chart.ChartVersions[0].Version == "" {
-		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0].Version not found on helm package: %v", chart)
-	}
-	pkg.PkgVersion = chart.ChartVersions[0].Version
-
-	if chart.ChartVersions[0].AppVersion == "" {
-		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0].AppVersion not found on helm package: %v", chart)
-	}
-	pkg.AppVersion = chart.ChartVersions[0].AppVersion
-
-	if chart.ChartVersions[0].Readme == "" {
-		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0].Readme not found on helm package: %v", chart)
-	}
-	pkg.Readme = chart.ChartVersions[0].Readme
-
-	if chart.ChartVersions[0].Values == "" {
-		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0].Values not found on helm package: %v", chart)
-	}
-	pkg.DefaultValues = chart.ChartVersions[0].Values
-
-	if chart.ChartVersions[0].Schema == "" {
-		return nil, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0].Schema not found on helm package: %v", chart)
-	}
-	pkg.ValuesSchema = chart.ChartVersions[0].Schema
-
 	return pkg, nil
 }
 
+// hasAccessToNamespace returns true if the client has read access to a given namespace
 func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bool, error) {
 	client, _, err := s.GetClients(ctx)
 	if err != nil {
@@ -364,4 +321,30 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bo
 		return false, err
 	}
 	return res.Status.Allowed, nil
+}
+
+// isValidChart returns true if the chart model passed defines a value
+// for each required field described at the Helm website:
+// https://helm.sh/docs/topics/charts/#the-chartyaml-file
+func isValidChart(chart *models.Chart) (bool, error) {
+	if chart.Name == "" {
+		return false, status.Errorf(codes.Internal, "required field .Name not found on helm package: %v", chart)
+	}
+	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
+		return false, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0] not found on helm package: %v", chart)
+	} else {
+		for _, chartVersion := range chart.ChartVersions {
+			if chartVersion.Version == "" {
+				return false, status.Errorf(codes.Internal, "required field .ChartVersions[i].Version not found on helm package: %v", chart)
+			}
+		}
+	}
+	if chart.Maintainers != nil || len(chart.ChartVersions) != 0 {
+		for _, maintainer := range chart.Maintainers {
+			if maintainer.Name == "" {
+				return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm package: %v", chart)
+			}
+		}
+	}
+	return true, nil
 }
