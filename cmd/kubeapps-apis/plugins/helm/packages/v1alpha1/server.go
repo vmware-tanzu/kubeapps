@@ -178,7 +178,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 || chart.ChartVersions[0].Version == "" {
 		return nil, status.Errorf(codes.Internal, "required field .ChartVersions[0].Version not found on helm package: %v", chart)
 	}
-	pkg.LatestVersion = chart.ChartVersions[0].Version
+	pkg.LatestPkgVersion = chart.ChartVersions[0].Version
 
 	if chart.Icon == "" {
 		return nil, status.Errorf(codes.Internal, "required field .Icon not found on helm package: %v", chart)

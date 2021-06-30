@@ -85,7 +85,7 @@ message GetAvailablePackageDetailRequest {
   // Optional specific version (or version reference) to request.
   // By default the latest version (or latest version matching the reference)
   // will be returned.
-  string version = 2;
+  string pkg_version = 2;
 }
 
 // GetAvailablePackageVersionsRequest
@@ -100,7 +100,7 @@ message GetAvailablePackageVersionsRequest {
   // By default a summary of versions is returned as outlined in the
   // response. Plugins can choose not to implement this and provide
   // the summary only, it is provided for completeness only.
-  string version = 2;
+  string pkg_version = 2;
 }
 
 // -- Start definitions of the response messages --
@@ -199,7 +199,7 @@ message AvailablePackageSummary {
   //
   // The latest version available for this package. Often expected when viewing
   // a summary of many available packages.
-  string latest_version = 3;
+  string latest_pkg_version = 3;
 
   // Available package Icon URL
   //

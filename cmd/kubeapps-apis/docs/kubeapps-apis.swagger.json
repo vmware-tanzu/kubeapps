@@ -98,7 +98,7 @@
             "type": "string"
           },
           {
-            "name": "version",
+            "name": "pkgVersion",
             "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
             "in": "query",
             "required": false,
@@ -253,7 +253,7 @@
             "type": "string"
           },
           {
-            "name": "version",
+            "name": "pkgVersion",
             "description": "Optional version reference for which version history is required.\nBy default a summary of versions is returned as outlined in the\nresponse. Plugins can choose not to implement this and provide\nthe summary only, it is provided for completeness only.",
             "in": "query",
             "required": false,
@@ -351,7 +351,7 @@
             "type": "string"
           },
           {
-            "name": "version",
+            "name": "pkgVersion",
             "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
             "in": "query",
             "required": false,
@@ -508,7 +508,7 @@
             "type": "string"
           },
           {
-            "name": "version",
+            "name": "pkgVersion",
             "description": "Optional version reference for which version history is required.\nBy default a summary of versions is returned as outlined in the\nresponse. Plugins can choose not to implement this and provide\nthe summary only, it is provided for completeness only.",
             "in": "query",
             "required": false,
@@ -622,7 +622,7 @@
             "type": "string"
           },
           {
-            "name": "version",
+            "name": "pkgVersion",
             "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
             "in": "query",
             "required": false,
@@ -779,7 +779,7 @@
             "type": "string"
           },
           {
-            "name": "version",
+            "name": "pkgVersion",
             "description": "Optional specific version (or version reference) to request.\nBy default the latest version (or latest version matching the reference)\nwill be returned.",
             "in": "query",
             "required": false,
@@ -1177,7 +1177,7 @@
           "description": "The name of the available package",
           "title": "Available package name"
         },
-        "latestVersion": {
+        "latestPkgVersion": {
           "type": "string",
           "description": "The latest version available for this package. Often expected when viewing\na summary of many available packages.",
           "title": "Latest available package version"
