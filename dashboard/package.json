@@ -5,9 +5,9 @@
   "homepage": "./",
   "dependencies": {
     "@cds/city": "^1.1.0",
-    "@cds/core": "^5.1.1",
-    "@cds/react": "^5.1.1",
-    "@clr/ui": "^5.1.1",
+    "@cds/core": "^5.4.1",
+    "@cds/react": "^5.4.1",
+    "@clr/ui": "^5.4.1",
     "@paciolan/remote-component": "^2.11.0",
     "@types/diff": "^5.0.0",
     "@types/js-yaml": "^4.0.1",
@@ -81,9 +81,10 @@
     "build-js": "react-scripts build",
     "start": "npm-run-all -p watch-css compile-lang start-js",
     "build": "npm-run-all build-css compile-lang build-js",
-    "test": "yarn run build-css && yarn run compile-lang && react-scripts test",
+    "test": "yarn run build-css && yarn run compile-lang && yarn run copy-babelTransform && react-scripts test",
     "eject": "react-scripts eject",
-    "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
+    "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && shx cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && shx cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
+    "copy-babelTransform": "shx cp ./src/babelTransform.js ./node_modules/react-scripts/config/jest/babelTransform.js",
     "prettier": "prettier --write 'src/**/*.{ts,tsx,scss}'",
     "prettier-check": "prettier --check 'src/**/*.{ts,tsx,scss}'",
     "lint-css": "stylelint --config ./.stylelintrc.json 'src/**/*.scss'",
@@ -154,7 +155,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@clr|@cds|lit-element|lit-html|ramda|lodash-es|.*css)"
+      "node_modules/(?!@clr|@cds|lit|@lit|ramda|lodash-es|.*css)"
     ]
   },
   "husky": {
