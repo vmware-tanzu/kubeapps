@@ -95,6 +95,23 @@ spec:
                   name: {{ include "kubeapps.redis.secretName" . }}
             - name: REDIS_DB
               value: "0"
+            # TODO(agamez): pass this configuration using a separated config file
+            # These env vars are currently (and temporarily) required by the 'helm' plugin
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: ASSET_SYNCER_DB_URL
+              value: {{ template "kubeapps.postgresql.fullname" . }}-headless:{{ default "5432" .Values.postgresql.service.port }}
+            - name: ASSET_SYNCER_DB_NAME
+              value: {{ .Values.postgresql.postgresqlDatabase }}
+            - name: ASSET_SYNCER_DB_USERNAME
+              value: postgres
+            - name: ASSET_SYNCER_DB_USERPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-password
+                  name: {{ include "kubeapps.postgresql.secretName" . }}
             {{- if .Values.kubeappsapis.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

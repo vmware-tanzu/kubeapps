@@ -148,12 +148,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -163,7 +165,26 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
+            "name": "filterOptions.repositories",
+            "description": "Repositories. Collection of repositories where the packages belong to",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.pkgVersion",
+            "description": "Package version. Package version for the request",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.appVersion",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -381,12 +402,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -396,7 +419,26 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
+            "name": "filterOptions.repositories",
+            "description": "Repositories. Collection of repositories where the packages belong to",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.pkgVersion",
+            "description": "Package version. Package version for the request",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.appVersion",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -631,12 +673,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -646,7 +690,26 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
+            "name": "filterOptions.repositories",
+            "description": "Repositories. Collection of repositories where the packages belong to",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.pkgVersion",
+            "description": "Package version. Package version for the request",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.appVersion",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -767,12 +830,14 @@
           },
           {
             "name": "filterOptions.query",
+            "description": "Text query. Text query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
+            "description": "Categories. Collection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -782,7 +847,26 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "filterOptions.repository",
+            "name": "filterOptions.repositories",
+            "description": "Repositories. Collection of repositories where the packages belong to",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterOptions.pkgVersion",
+            "description": "Package version. Package version for the request",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterOptions.appVersion",
+            "description": "App version. Packaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
@@ -838,24 +922,6 @@
     }
   },
   "definitions": {
-    "GetAvailablePackageSummariesRequestFilterOptions": {
-      "type": "object",
-      "properties": {
-        "query": {
-          "type": "string"
-        },
-        "categories": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "repository": {
-          "type": "string"
-        }
-      },
-      "title": "FilterOptions available when requesting summaries"
-    },
     "GetAvailablePackageVersionsResponsePackageAppVersion": {
       "type": "object",
       "properties": {
@@ -1016,7 +1082,7 @@
           "description": "The name of the available package",
           "title": "Available package name"
         },
-        "version": {
+        "pkgVersion": {
           "type": "string",
           "description": "The version of the package (eg. chart version)",
           "title": "Available package version"
@@ -1151,6 +1217,44 @@
       },
       "description": "A Context specifies the context of the message",
       "title": "Context"
+    },
+    "v1alpha1FilterOptions": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Text query for the request",
+          "title": "Text query"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Collection of categories for the request",
+          "title": "Categories"
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Collection of repositories where the packages belong to",
+          "title": "Repositories"
+        },
+        "pkgVersion": {
+          "type": "string",
+          "description": "Package version for the request",
+          "title": "Package version"
+        },
+        "appVersion": {
+          "type": "string",
+          "description": "Packaged app version for the request",
+          "title": "App version"
+        }
+      },
+      "description": "FilterOptions available when requesting summaries",
+      "title": "FilterOptions"
     },
     "v1alpha1GetAvailablePackageDetailResponse": {
       "type": "object",
