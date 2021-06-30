@@ -35,17 +35,16 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-type FluxPlugInCache struct {
+type fluxPlugInCache struct {
 	watcherStarted bool
 	// to prevent multiple watchers
 	mutex        sync.Mutex
 	redisCli     *redis.Client
 	clientGetter server.KubernetesClientGetter
-	waitGroup    *sync.WaitGroup
 }
 
-func NewCache(clientGetter server.KubernetesClientGetter) (*FluxPlugInCache, error) {
-	log.Infof("+NewCache")
+func newCache(clientGetter server.KubernetesClientGetter) (*fluxPlugInCache, error) {
+	log.Infof("+newCache")
 	REDIS_ADDR, ok := os.LookupEnv("REDIS_ADDR")
 	if !ok {
 		return nil, status.Errorf(codes.Internal, "missing environment variable REDIS_ADDR")
@@ -64,9 +63,9 @@ func NewCache(clientGetter server.KubernetesClientGetter) (*FluxPlugInCache, err
 		return nil, err
 	}
 
-	log.Infof("NewCache: addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB)
+	log.Infof("newCache: addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB)
 
-	return NewCacheWithRedisClient(
+	return newCacheWithRedisClient(
 		clientGetter,
 		redis.NewClient(&redis.Options{
 			Addr:     REDIS_ADDR,
@@ -75,8 +74,8 @@ func NewCache(clientGetter server.KubernetesClientGetter) (*FluxPlugInCache, err
 		}))
 }
 
-func NewCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCli *redis.Client) (*FluxPlugInCache, error) {
-	log.Infof("+NewCacheWithRedisClient")
+func newCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCli *redis.Client) (*fluxPlugInCache, error) {
+	log.Infof("+newCacheWithRedisClient")
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
@@ -93,7 +92,7 @@ func NewCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCl
 	}
 	log.Infof("[PING] -> [%s]", pong)
 
-	c := FluxPlugInCache{
+	c := fluxPlugInCache{
 		watcherStarted: false,
 		mutex:          sync.Mutex{},
 		redisCli:       redisCli,
@@ -103,7 +102,7 @@ func NewCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCl
 	return &c, nil
 }
 
-func (c *FluxPlugInCache) startHelmRepositoryWatcher() {
+func (c *fluxPlugInCache) startHelmRepositoryWatcher() {
 	log.Infof("+fluxv2 startHelmRepositoryWatcher")
 	c.mutex.Lock()
 	// can't defer c.mutex.Unlock() because in all is well we never
@@ -129,7 +128,7 @@ func (c *FluxPlugInCache) startHelmRepositoryWatcher() {
 	log.Infof("-fluxv2 startHelmRepositoryWatcher")
 }
 
-func (c *FluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, error) {
+func (c *fluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, error) {
 	ctx := context.Background()
 	// TODO this is a temp hack to get around the fact that the only clientGetter we've got today
 	// always expects authorization Bearer token in the context
@@ -156,7 +155,7 @@ func (c *FluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, er
 	return watcher.ResultChan(), nil
 }
 
-func (c *FluxPlugInCache) processEvents(ch <-chan watch.Event) {
+func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 	for {
 		event := <-ch
 		if event.Type == "" {
@@ -178,7 +177,7 @@ func (c *FluxPlugInCache) processEvents(ch <-chan watch.Event) {
 }
 
 // this is effectively a cache PUT operation
-func (c *FluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}) {
+func (c *fluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}) {
 	startTime := time.Now()
 	packages, err := indexOneRepo(unstructuredRepo)
 	if err != nil {
@@ -207,7 +206,7 @@ func (c *FluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}
 }
 
 // this is effectively a cache GET operation
-func (c *FluxPlugInCache) packageSummariesForRepo(name string) []*corev1.AvailablePackageSummary {
+func (c *fluxPlugInCache) packageSummariesForRepo(name string) []*corev1.AvailablePackageSummary {
 	startTime := time.Now()
 	// read back from cache, should be sane as what we wrote
 	bytes, err := c.redisCli.Get(c.redisCli.Context(), name).Bytes()
@@ -245,7 +244,7 @@ type fetchRepoJobResult struct {
 }
 
 // each repo is read in a separate go routine (lightweight thread of execution)
-func (c *FluxPlugInCache) fetchPackageSummaries(repoItems []unstructured.Unstructured) ([]*corev1.AvailablePackageSummary, error) {
+func (c *fluxPlugInCache) fetchPackageSummaries(repoItems []unstructured.Unstructured) ([]*corev1.AvailablePackageSummary, error) {
 	responsePackages := []*corev1.AvailablePackageSummary{}
 	var wg sync.WaitGroup
 	workers := int(math.Min(float64(len(repoItems)), float64(maxWorkers)))

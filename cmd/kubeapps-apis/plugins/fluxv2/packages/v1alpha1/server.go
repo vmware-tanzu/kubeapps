@@ -59,13 +59,13 @@ type Server struct {
 	// non-test implementation.
 	clientGetter server.KubernetesClientGetter
 
-	cache *FluxPlugInCache
+	cache *fluxPlugInCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(clientGetter server.KubernetesClientGetter) (*Server, error) {
-	cache, err := NewCache(clientGetter)
+	cache, err := newCache(clientGetter)
 	if err != nil {
 		return nil, err
 	}

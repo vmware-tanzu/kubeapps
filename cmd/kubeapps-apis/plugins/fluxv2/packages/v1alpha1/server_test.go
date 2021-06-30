@@ -65,7 +65,7 @@ func TestClientGetter(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			redisCli, mock := redismock.NewClientMock()
 			mock.ExpectPing().SetVal("PONG")
-			cache, _ := NewCacheWithRedisClient(tc.clientGetter, redisCli)
+			cache, _ := newCacheWithRedisClient(tc.clientGetter, redisCli)
 			s := &Server{
 				clientGetter: tc.clientGetter,
 				cache:        cache,
@@ -140,7 +140,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "returns without error if response does not contain namespace",
+			name: "returns without error if repo object does not contain namespace",
 			repo: newRepo("test", "", nil, map[string]interface{}{
 				"conditions": []interface{}{
 					map[string]interface{}{
@@ -152,7 +152,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "returns without error if response does not contain spec url",
+			name: "returns without error if repo object does not contain spec url",
 			repo: newRepo("test", "default", nil, map[string]interface{}{
 				"conditions": []interface{}{
 					map[string]interface{}{
@@ -164,7 +164,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "returns without error if response does not contain status url",
+			name: "returns without error if repo object does not contain status url",
 			repo: newRepo("test", "default", map[string]interface{}{
 				"url":      "http://example.com",
 				"interval": "1m0s",
@@ -182,13 +182,12 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, watcher, mock, err := newServerWithRepos(tc.repo)
+			s, mock, err := newServerWithRepos(tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
 			(*mock).ExpectGet(tc.repo.GetName()).RedisNil()
-			watcher.Add(tc.repo)
 
 			response, err := s.GetAvailablePackageSummaries(
 				context.Background(),
@@ -411,7 +410,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, watcher, mock, err := newServerWithRepos(repos...)
+			s, mock, err := newServerWithRepos(repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -428,9 +427,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				key := r.(*unstructured.Unstructured).GetName()
 				(*mock).ExpectSet(key, bytes, 0).SetVal("")
 				(*mock).ExpectGet(key).SetVal(string(bytes))
-				watcher.Add(r)
 			}
 
+			// TODO get rid of this. Need to wait until background sync is done indexing all the repos. How?
 			time.Sleep(5 * time.Second)
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -447,7 +446,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(repos ...runtime.Object) (*Server, *watch.FakeWatcher, *redismock.ClientMock, error) {
+func newServerWithRepos(repos ...runtime.Object) (*Server, *redismock.ClientMock, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -467,14 +466,20 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, *watch.FakeWatcher, *
 
 	redisCli, mock := redismock.NewClientMock()
 	mock.ExpectPing().SetVal("PONG")
-	cache, err := NewCacheWithRedisClient(clientGetter, redisCli)
+	cache, err := newCacheWithRedisClient(clientGetter, redisCli)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
-	return &Server{
+	s := &Server{
 		clientGetter: clientGetter,
 		cache:        cache,
-	}, watcher, &mock, nil
+	}
+
+	for _, r := range repos {
+		watcher.Add(r)
+	}
+
+	return s, &mock, nil
 }
 
 /*
