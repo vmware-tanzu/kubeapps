@@ -74,7 +74,7 @@ it("renders an error", async () => {
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
 
-it("renders disabled", async () => {
+it("should render a disabled button if when passing an in-progress status", async () => {
   const disabledProps = {
     ...defaultProps,
     status: {
