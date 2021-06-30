@@ -792,6 +792,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 		"*",
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
+	mock.MatchExpectationsInOrder(false)
 	// first we need to mock all the SETs and only then all the GETs, otherwise
 	// redismock throws a fit
 	mapVals := make(map[string][]byte)
