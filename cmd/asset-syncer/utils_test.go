@@ -391,7 +391,7 @@ func Test_newManager(t *testing.T) {
 
 func Test_fetchAndImportIcon(t *testing.T) {
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace"}
-	repoWithAuthorization := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
+	repoWithAuthorization := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient", URL: "https://github.com/"}
 
 	t.Run("no icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
@@ -470,7 +470,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		assert.Err(t, fmt.Errorf("401 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
-	t.Run("valid icon (passing through if same domain)", func(t *testing.T) {
+	t.Run("valid icon (passing through the auth header if same domain)", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
 		netClient := &goodAuthenticatedHTTPClient{}
