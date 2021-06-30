@@ -470,18 +470,18 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		assert.Err(t, fmt.Errorf("401 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
-	// t.Run("valid icon (passing through if same domain)", func(t *testing.T) {
-	// 	pgManager, mock, cleanup := getMockManager(t)
-	// 	defer cleanup()
-	// 	netClient := &goodAuthenticatedHTTPClient{}
+	t.Run("valid icon (passing through if same domain)", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+		netClient := &goodAuthenticatedHTTPClient{}
 
-	// 	mock.ExpectQuery("UPDATE charts SET info *").
-	// 		WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
-	// 		WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
+		mock.ExpectQuery("UPDATE charts SET info *").
+			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-	// 	fImporter := fileImporter{pgManager, netClient}
-	// 	assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization))
-	// })
+		fImporter := fileImporter{pgManager, netClient}
+		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization))
+	})
 
 	t.Run("valid icon (passing through the auth header)", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
@@ -1302,7 +1302,7 @@ func Test_filterCharts(t *testing.T) {
 	}
 }
 
-func Test_compareURLDomains(t *testing.T) {
+func Test_isURLDomainEqual(t *testing.T) {
 	tests := []struct {
 		name     string
 		url1     string
@@ -1316,19 +1316,69 @@ func Test_compareURLDomains(t *testing.T) {
 			false,
 		},
 		{
-			"it returns false if they are different subdomains",
-			"https://charts.bitnami.com/bitnami/index.yaml",
-			"https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
-			false,
-		},
-		{
 			"it returns false if they are under different subdomains",
 			"https://bitnami.com/bitnami/index.yaml",
 			"https://charts.bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
 			false,
 		},
 		{
-			"it returns true if they are under the same",
+			"it returns false if they are under the same domain but using different schema",
+			"http://charts.bitnami.com/bitnami/airflow-10.2.0.tgz",
+			"https://charts.bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
+			false,
+		},
+		{
+			"it returns false if attempting a CRLF injection",
+			"https://charts.bitnami.com",
+			"https://charts.bitnami.com%0A%0Ddevil.com",
+			false,
+		},
+		{
+			"it returns false if attempting a SSRF",
+			"https://ⓖⓞⓞⓖⓛⓔ.com",
+			"https://google.com",
+			false,
+		},
+		{
+			"it returns false if attempting a SSRF",
+			"https://wordpress.com",
+			"https://wordpreß.com",
+			false,
+		},
+		{
+			"it returns false if attempting a SSRF",
+			"http://foo@127.0.0.1 @bitnami.com:11211/",
+			"https://127.0.0.1:11211",
+			false,
+		},
+		{
+			"it returns false if attempting a SSRF",
+			"https://foo@evil.com@charts.bitnami.com",
+			"https://evil.com",
+			false,
+			// should be careful, curl would send a request to evil.com
+			// but the go net/url parser detects charts.bitnami.com
+		},
+		{
+			"it returns false if attempting a SSRF",
+			"https://charts.bitnami.com#@evil.com",
+			"https://charts.bitnami.com",
+			false,
+		},
+		{
+			"it returns true if they are under the same domain",
+			"https://charts.bitnami.com/bitnami/airflow-10.2.0.tgz",
+			"https://charts.bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
+			true,
+		},
+		{
+			"it returns false if they are under the same domain but different ports",
+			"https://charts.bitnami.com:8080/bitnami/airflow-10.2.0.tgz",
+			"https://charts.bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
+			false,
+		},
+		{
+			"it returns true if they are under the same domain",
 			"https://charts.bitnami.com/bitnami/airflow-10.2.0.tgz",
 			"https://charts.bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png",
 			true,
@@ -1336,7 +1386,7 @@ func Test_compareURLDomains(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res := compareURLDomains(tt.url1, tt.url2)
+			res := isURLDomainEqual(tt.url1, tt.url2)
 			if !cmp.Equal(res, tt.expected) {
 				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
 			}

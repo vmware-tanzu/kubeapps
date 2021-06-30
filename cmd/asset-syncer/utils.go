@@ -239,7 +239,7 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 	authorizationHeader := ""
 	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
 
-	if (passCredentials || compareURLDomains(chartTarballURL, r.URL)) && len(r.AuthorizationHeader) > 0 {
+	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(chartTarballURL, r.URL) {
 		authorizationHeader = r.AuthorizationHeader
 	}
 
@@ -790,7 +790,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 		return err
 	}
 	req.Header.Set("User-Agent", userAgent())
-	if (passCredentials || compareURLDomains(c.Icon, r.URL)) && len(r.AuthorizationHeader) > 0 {
+	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(c.Icon, r.URL) {
 		req.Header.Set("Authorization", r.AuthorizationHeader)
 	}
 
@@ -885,7 +885,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 
 // Check if two URL strings are in the same domain.
 // Return true if so, and false otherwise or when an error occurs
-func compareURLDomains(url1Str, url2Str string) bool {
+func isURLDomainEqual(url1Str, url2Str string) bool {
 	url1, err := url.ParseRequestURI(url1Str)
 	if err != nil {
 		return false
@@ -895,8 +895,5 @@ func compareURLDomains(url1Str, url2Str string) bool {
 		return false
 	}
 
-	a := url1.Hostname()
-	b := url2.Hostname()
-	// return url1.Hostname() == url2.Hostname()
-	return a == b
+	return url1.Scheme == url2.Scheme && url1.Host == url2.Host
 }
