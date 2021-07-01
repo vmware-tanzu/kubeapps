@@ -129,9 +129,9 @@ func readPackageSummariesFromOneRepo(unstructuredRepo map[string]interface{}) ([
 	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, chart := range charts {
 		pkg := &corev1.AvailablePackageSummary{
-			DisplayName:   chart.Name,
-			LatestVersion: chart.ChartVersions[0].Version,
-			IconUrl:       chart.Icon,
+			DisplayName:      chart.Name,
+			LatestPkgVersion: chart.ChartVersions[0].Version,
+			IconUrl:          chart.Icon,
 			AvailablePackageRef: &corev1.AvailablePackageReference{
 				Context:    &corev1.Context{Namespace: repo.Namespace},
 				Identifier: chart.ID,

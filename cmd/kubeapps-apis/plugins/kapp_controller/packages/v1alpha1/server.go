@@ -147,7 +147,7 @@ func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*co
 	if err != nil || !found {
 		return nil, status.Errorf(codes.Internal, "required field status.version not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
-	pkg.LatestVersion = version
+	pkg.LatestPkgVersion = version
 	return pkg, nil
 }
 
