@@ -1,7 +1,8 @@
 import { IIngressSpec, IIngressTLS, IResource } from "shared/types";
 import { IURLItem } from "./IURLItem";
 
-const isURLRegex = /^(https?:\/\/)?((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z-]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i;
+const isURLRegex =
+  /^(https?:\/\/)?((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z-]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i;
 
 // URLs returns the list of URLs obtained from the service status
 function URLs(ingress: IResource): string[] {
