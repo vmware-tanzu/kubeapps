@@ -21,7 +21,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
@@ -813,12 +812,18 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 			mapVals[key] = bytes
 			mock.ExpectSet(key, bytes, 0).SetVal("")
 
-			// fire an ADD event
+			// fire an ADD event for this repo as k8s server would do
 			watcher.Add(r)
 		}
 
-		// TODO get rid of this. Need to wait until background sync is done indexing all the repos. How?
-		time.Sleep(5 * time.Second)
+		// sanity check
+		s.cache.watcherMutex.Lock()
+		defer s.cache.watcherMutex.Unlock()
+		if !s.cache.watcherStarted {
+			return nil, fmt.Errorf("unexpected condition: watcher not started")
+		}
+
+		s.cache.indexRepoWaitGroup.Wait()
 	}
 
 	for _, r := range repos {

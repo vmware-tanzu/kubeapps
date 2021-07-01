@@ -36,26 +36,30 @@ import (
 )
 
 type fluxPlugInCache struct {
-	watcherStarted bool
 	// to prevent multiple watchers
-	mutex        sync.Mutex
+	watcherStarted bool
+	// this mutex guards watcherStarted var
+	watcherMutex sync.Mutex
 	redisCli     *redis.Client
 	clientGetter server.KubernetesClientGetter
+	// this waitGroup is used exclusively by unit tests to block until all expected repos have
+	// been indexed by the go routine running in the background
+	indexRepoWaitGroup sync.WaitGroup
 }
 
 func newCache(clientGetter server.KubernetesClientGetter) (*fluxPlugInCache, error) {
 	log.Infof("+newCache")
 	REDIS_ADDR, ok := os.LookupEnv("REDIS_ADDR")
 	if !ok {
-		return nil, status.Errorf(codes.Internal, "missing environment variable REDIS_ADDR")
+		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_ADDR")
 	}
 	REDIS_PASSWORD, ok := os.LookupEnv("REDIS_PASSWORD")
 	if !ok {
-		return nil, status.Errorf(codes.Internal, "missing environment variable REDIS_PASSWORD")
+		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_PASSWORD")
 	}
 	REDIS_DB, ok := os.LookupEnv("REDIS_DB")
 	if !ok {
-		return nil, status.Errorf(codes.Internal, "missing environment variable REDIS_DB")
+		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_DB")
 	}
 
 	REDIS_DB_NUM, err := strconv.Atoi(REDIS_DB)
@@ -94,7 +98,7 @@ func newCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCl
 
 	c := fluxPlugInCache{
 		watcherStarted: false,
-		mutex:          sync.Mutex{},
+		watcherMutex:   sync.Mutex{},
 		redisCli:       redisCli,
 		clientGetter:   clientGetter,
 	}
@@ -104,24 +108,24 @@ func newCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCl
 
 func (c *fluxPlugInCache) startHelmRepositoryWatcher() {
 	log.Infof("+fluxv2 startHelmRepositoryWatcher")
-	c.mutex.Lock()
-	// can't defer c.mutex.Unlock() because when all is well,
+	c.watcherMutex.Lock()
+	// can't defer c.watcherMutex.Unlock() because when all is well,
 	// we never return from this func
 
 	if !c.watcherStarted {
 		ch, err := c.newHelmRepositoryWatcherChan()
 		if err != nil {
-			c.mutex.Unlock()
+			c.watcherMutex.Unlock()
 			log.Errorf("failed to start HelmRepository watcher due to: %v", err)
 			return
 		}
 		c.watcherStarted = true
-		c.mutex.Unlock()
+		c.watcherMutex.Unlock()
 		log.Infof("watcher successfully started. waiting for events...")
 
 		c.processEvents(ch)
 	} else {
-		c.mutex.Unlock()
+		c.watcherMutex.Unlock()
 		log.Infof("watcher already started. exiting...")
 	}
 	// we should never reach here
@@ -129,10 +133,9 @@ func (c *fluxPlugInCache) startHelmRepositoryWatcher() {
 }
 
 func (c *fluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, error) {
-	ctx := context.Background()
 	// TODO this is a temp hack to get around the fact that the only clientGetter we've got today
 	// always expects authorization Bearer token in the context
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+	ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 		"authorization": []string{"Bearer kaka"},
 	})
 
@@ -163,6 +166,7 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 			continue
 		}
 		log.Infof("got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
+		c.indexRepoWaitGroup.Add(1)
 		if event.Type == watch.Added {
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
@@ -203,6 +207,7 @@ func (c *fluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}
 	}
 	duration := time.Since(startTime)
 	log.Infof("Indexed [%d] packages in repo [%s] in [%d] ms", len(packages), name, duration.Milliseconds())
+	c.indexRepoWaitGroup.Done()
 }
 
 // this is effectively a cache GET operation
