@@ -29,7 +29,7 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-it("renders disabled", async () => {
+it("should render a disabled button if when passing an in-progress status", async () => {
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
