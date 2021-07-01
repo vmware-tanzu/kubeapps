@@ -89,13 +89,12 @@ func (h *goodAuthenticatedHTTPClient) Do(req *http.Request) (*http.Response, err
 	// Ensure we're sending an Authorization header
 	if req.Header.Get("Authorization") == "" {
 		w.WriteHeader(401)
-	}
-	// Ensure we're sending the right Authorization header
-	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
+	} else if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
+		// Ensure we're sending the right Authorization header
 		w.WriteHeader(403)
+	} else {
+		w.Write(iconBytes())
 	}
-
-	w.Write(iconBytes())
 	return w.Result(), nil
 }
 
@@ -457,7 +456,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		netClient := &goodAuthenticatedHTTPClient{}
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, fmt.Errorf("401 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
 	t.Run("valid icon (not passing through the auth header)", func(t *testing.T) {
@@ -467,7 +466,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 
 		fImporter := fileImporter{pgManager, netClient}
 		passCredentials = false
-		assert.Err(t, fmt.Errorf("401 %s", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
 	})
 
 	t.Run("valid icon (passing through the auth header if same domain)", func(t *testing.T) {
