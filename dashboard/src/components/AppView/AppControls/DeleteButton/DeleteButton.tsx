@@ -15,14 +15,14 @@ interface IDeleteButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
-  status: hapi.release.IStatus | undefined | null;
+  releaseStatus: hapi.release.IStatus | undefined | null;
 }
 
 export default function DeleteButton({
   cluster,
   namespace,
   releaseName,
-  status,
+  releaseStatus,
 }: IDeleteButtonProps) {
   const [modalIsOpen, setModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -46,7 +46,7 @@ export default function DeleteButton({
       <StatusAwareButton
         status="danger"
         onClick={openModal}
-        releaseStatus={status}
+        releaseStatus={releaseStatus}
         id="delete-button"
       >
         <CdsIcon shape="trash" /> Delete

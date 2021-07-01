@@ -14,7 +14,7 @@ export interface IRollbackButtonProps {
   namespace: string;
   releaseName: string;
   revision: number;
-  status: hapi.release.IStatus | undefined | null;
+  releaseStatus: hapi.release.IStatus | undefined | null;
 }
 
 function RollbackButton({
@@ -22,7 +22,7 @@ function RollbackButton({
   namespace,
   releaseName,
   revision,
-  status,
+  releaseStatus,
 }: IRollbackButtonProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ function RollbackButton({
       <StatusAwareButton
         status="primary"
         onClick={openModal}
-        releaseStatus={status}
+        releaseStatus={releaseStatus}
         id="rollback-button"
       >
         <CdsIcon shape="rewind" /> Rollback

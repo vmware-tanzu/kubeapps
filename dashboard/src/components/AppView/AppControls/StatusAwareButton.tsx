@@ -13,7 +13,7 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
     ? releaseStatus.code >= 5 && releaseStatus.code <= 8
     : false;
   const tooltips = {
-    5: "The applicatixon is being deleted.",
+    5: "The application is being deleted.",
     6: "The application is pending installation.",
     7: "The application is pending upgrade.",
     8: "The application is pending rollback.",

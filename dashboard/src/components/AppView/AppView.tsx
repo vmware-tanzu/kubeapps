@@ -197,7 +197,7 @@ export default function AppView() {
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
-            status={app?.info?.status}
+            releaseStatus={app?.info?.status}
           />,
           <RollbackButton
             key="rollback-button"
@@ -205,14 +205,14 @@ export default function AppView() {
             namespace={namespace}
             releaseName={releaseName}
             revision={app?.version || 0}
-            status={app?.info?.status}
+            releaseStatus={app?.info?.status}
           />,
           <DeleteButton
             key="delete-button"
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
-            status={app?.info?.status}
+            releaseStatus={app?.info?.status}
           />,
         ]}
       />

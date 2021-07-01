@@ -8,18 +8,18 @@ interface IUpgradeButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
-  status: hapi.release.IStatus | undefined | null;
+  releaseStatus: hapi.release.IStatus | undefined | null;
 }
 
 export default function UpgradeButton({
   cluster,
   namespace,
   releaseName,
-  status,
+  releaseStatus,
 }: IUpgradeButtonProps) {
   return (
     <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
-      <StatusAwareButton id="upgrade-button" status="primary" releaseStatus={status}>
+      <StatusAwareButton id="upgrade-button" status="primary" releaseStatus={releaseStatus}>
         <CdsIcon shape="upload-cloud" /> Upgrade
       </StatusAwareButton>
     </Link>

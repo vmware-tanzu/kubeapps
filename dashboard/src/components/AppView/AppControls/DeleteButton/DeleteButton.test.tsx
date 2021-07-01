@@ -14,7 +14,7 @@ const defaultProps = {
   cluster: "default",
   namespace: "kubeapps",
   releaseName: "foo",
-  status: null,
+  releaseStatus: null,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -73,7 +73,7 @@ it("renders an error", async () => {
 it("renders disabled", async () => {
   const disabledProps = {
     ...defaultProps,
-    status: {
+    releaseStatus: {
       code: 7,
     },
   };
