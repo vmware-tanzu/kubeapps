@@ -157,9 +157,9 @@ export default function AppView() {
       return;
     }
 
-    let parsedManifest: IResource[] = YAML.parseAllDocuments(app.manifest).map(
-      (doc: YAML.Document) => doc.toJSON(),
-    );
+    let parsedManifest: IResource[] = YAML.parseAllDocuments(
+      app.manifest,
+    ).map((doc: YAML.Document) => doc.toJSON());
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
@@ -184,8 +184,15 @@ export default function AppView() {
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Application not found. Received: {error.message}</Alert>;
   }
-  const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
-    resourceRefs;
+  const {
+    services,
+    ingresses,
+    deployments,
+    statefulsets,
+    daemonsets,
+    secrets,
+    otherResources,
+  } = resourceRefs;
   const icon = get(app, "chart.metadata.icon", placeholder);
   return (
     <section>

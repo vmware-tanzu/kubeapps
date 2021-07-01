@@ -165,12 +165,10 @@ it("deletes the resource", async () => {
   );
 
   act(() => {
-    (
-      wrapper
-        .find(CdsButton)
-        .filterWhere(b => b.text().includes("Delete"))
-        .prop("onClick") as any
-    )();
+    (wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.text().includes("Delete"))
+      .prop("onClick") as any)();
   });
   wrapper.update();
   const dialog = wrapper.find(ConfirmDialog);
