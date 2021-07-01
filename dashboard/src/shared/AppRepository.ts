@@ -38,6 +38,7 @@ export class AppRepository {
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
+    passCredentials: boolean,
     filter?: IAppRepositoryFilter,
   ) {
     const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
@@ -55,6 +56,7 @@ export class AppRepository {
           registrySecrets,
           ociRepositories,
           tlsInsecureSkipVerify: skipTLS,
+          passCredentials: passCredentials,
           filter,
         },
       },
@@ -86,6 +88,7 @@ export class AppRepository {
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
+    passCredentials: boolean,
     filter?: IAppRepositoryFilter,
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
@@ -103,6 +106,7 @@ export class AppRepository {
           registrySecrets,
           ociRepositories,
           tlsInsecureSkipVerify: skipTLS,
+          passCredentials: passCredentials,
           filterRule: filter,
         },
       },
@@ -120,6 +124,7 @@ export class AppRepository {
     customCA: string,
     ociRepositories: string[],
     skipTLS: boolean,
+    passCredentials: boolean,
   ) {
     const { data } = await axiosWithAuth.post<any>(
       url.backend.apprepositories.validate(cluster, namespace),
@@ -132,6 +137,7 @@ export class AppRepository {
           customCA,
           ociRepositories,
           tlsInsecureSkipVerify: skipTLS,
+          passCredentials: passCredentials,
         },
       },
     );

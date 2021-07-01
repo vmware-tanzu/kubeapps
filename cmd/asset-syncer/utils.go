@@ -236,11 +236,18 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 
 // FetchFiles retrieves the important files of a chart and version from the repo
 func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
+	authorizationHeader := ""
+	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
+
+	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(chartTarballURL, r.URL) {
+		authorizationHeader = r.AuthorizationHeader
+	}
+
 	return tarutil.FetchChartDetailFromTarball(
 		name,
-		chartTarballURL(r.RepoInternal, cv),
+		chartTarballURL,
 		userAgent(),
-		r.AuthorizationHeader,
+		authorizationHeader,
 		r.netClient)
 }
 
@@ -861,4 +868,19 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	// inserts the chart files if not already indexed, or updates the existing
 	// entry if digest has changed
 	return f.manager.insertFiles(chartID, chartFiles)
+}
+
+// Check if two URL strings are in the same domain.
+// Return true if so, and false otherwise or when an error occurs
+func isURLDomainEqual(url1Str, url2Str string) bool {
+	url1, err := url.ParseRequestURI(url1Str)
+	if err != nil {
+		return false
+	}
+	url2, err := url.ParseRequestURI(url2Str)
+	if err != nil {
+		return false
+	}
+
+	return url1.Scheme == url2.Scheme && url1.Host == url2.Host
 }

@@ -106,12 +106,10 @@ it("should not call the install method when the validation fails unless forced",
 
   // So disabling this test for the moment.
   await act(async () => {
-    await (
-      wrapper
-        .find(CdsButton)
-        .filterWhere(b => b.html().includes("Install Repo (force)"))
-        .prop("onClick") as () => Promise<any>
-    )();
+    await (wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.html().includes("Install Repo (force)"))
+      .prop("onClick") as () => Promise<any>)();
   });
   expect(install).toHaveBeenCalled();
 });
@@ -146,6 +144,7 @@ it("should call the install method with OCI information", async () => {
     [],
     ["apache", "jenkins"],
     false,
+    false,
     undefined,
   );
 });
@@ -176,6 +175,39 @@ it("should call the install skipping TLS verification", async () => {
     "",
     [],
     [],
+    true,
+    false,
+    undefined,
+  );
+});
+
+it("should call the install passing credentials", async () => {
+  const validateRepo = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+    validateRepo,
+  };
+  const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+  wrapper.find("#kubeapps-repo-pass-credentials").simulate("change");
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith(
+    "",
+    "https://helm.repo",
+    "helm",
+    "",
+    "",
+    "",
+    "",
+    "",
+    [],
+    [],
+    false,
     true,
     undefined,
   );
@@ -211,6 +243,7 @@ describe("when using a filter", () => {
       "",
       [],
       [],
+      false,
       false,
       { jq: ".name == $var0 or .name == $var1", variables: { $var0: "nginx", $var1: "wordpress" } },
     );
@@ -248,6 +281,7 @@ describe("when using a filter", () => {
       [],
       [],
       false,
+      false,
       { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
     );
   });
@@ -283,6 +317,7 @@ describe("when using a filter", () => {
       [],
       [],
       false,
+      false,
       undefined,
     );
   });
@@ -317,6 +352,7 @@ describe("when using a description", () => {
       "",
       [],
       [],
+      false,
       false,
       undefined,
     );
@@ -385,6 +421,7 @@ it("should call the install method with the selected docker credentials", async 
     ["repo-1"],
     [],
     false,
+    false,
     undefined,
   );
 });
@@ -432,6 +469,7 @@ it("should call the install reusing as auth the selected docker credentials", as
     "",
     ["repo-1"],
     [],
+    false,
     false,
     undefined,
   );
@@ -514,6 +552,12 @@ describe("when the repository info is already populated", () => {
       const repo = { metadata: { name: "foo" }, spec: { tlsInsecureSkipVerify: true } } as any;
       const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
       expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
+    });
+
+    it("should parse the existing pass credentials config", () => {
+      const repo = { metadata: { name: "foo" }, spec: { passCredentials: true } } as any;
+      const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+      expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
     });
 
     it("should parse a bearer token", () => {

@@ -417,6 +417,7 @@ type appRepositoryRequestDetails struct {
 	TLSInsecureSkipVerify bool                    `json:"tlsInsecureSkipVerify"`
 	FilterRule            v1alpha1.FilterRuleSpec `json:"filterRule"`
 	Description           string                  `json:"description"`
+	PassCredentials       bool                    `json:"passCredentials"`
 }
 
 // ErrGlobalRepositoryWithSecrets defines the error returned when an attempt is
@@ -851,6 +852,7 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 			TLSInsecureSkipVerify: appRepo.TLSInsecureSkipVerify,
 			FilterRule:            appRepo.FilterRule,
 			Description:           appRepo.Description,
+			PassCredentials:       appRepo.PassCredentials,
 		},
 	}
 }
