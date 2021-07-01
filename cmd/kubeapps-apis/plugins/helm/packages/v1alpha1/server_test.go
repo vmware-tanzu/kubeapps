@@ -71,6 +71,7 @@ var availablePackageSummaryOK = &corev1.AvailablePackageSummary{
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Context:    &corev1.Context{Namespace: "my-ns"},
 		Identifier: "foo/bar",
+		Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 	},
 }
 
@@ -79,7 +80,7 @@ var availablePackageDetailOK = &corev1.AvailablePackageDetail{
 	DisplayName:      "foo",
 	IconUrl:          "foo.bar/icon.svg",
 	ShortDescription: "best chart",
-	LongDescription:  "best chart",
+	LongDescription:  "",
 	PkgVersion:       "3.0.0",
 	AppVersion:       "1.0.0",
 	Readme:           "chart readme",
@@ -191,6 +192,85 @@ func TestGetClient(t *testing.T) {
 	}
 }
 
+func TestIsValidChart(t *testing.T) {
+	testCases := []struct {
+		name     string
+		in       *models.Chart
+		expected bool
+	}{
+		{
+			name:     "it returns true if the chart is correct",
+			in:       chartOK,
+			expected: true,
+		},
+		{
+			name: "it returns true if the minimum chart is correct",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "it returns false if the ChartVersions are missing",
+			in: &models.Chart{
+				Name: "foo",
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if a ChartVersions.Version is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{Version: "3.0.0"},
+					{AppVersion: "3.0.0"},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns true if the minimum (+maintainer) chart is correct",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+				Maintainers: []chart.Maintainer{{Name: "me"}},
+			},
+			expected: true,
+		},
+		{
+			name: "it returns false if a Maintainer.Name is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := isValidChart(tc.in)
+			if got, want := res, tc.expected; got != want {
+				t.Fatalf("got: %+v, want: %+v, res: %+v (%+v)", got, want, res, err)
+			}
+		})
+	}
+}
+
 func TestAvailablePackageSummaryFromChart(t *testing.T) {
 	invalidChart := &models.Chart{Name: "foo"}
 
@@ -227,7 +307,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -396,8 +476,228 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 				if got, want := availablePackageSummaries.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				}
+			}
+		})
+	}
+}
+
+func TestAvailablePackageDetailFromChart(t *testing.T) {
+	testCases := []struct {
+		name       string
+		chart      *models.Chart
+		expected   *corev1.AvailablePackageDetail
+		statusCode codes.Code
+	}{
+		{
+			name:       "it returns AvailablePackageDetail if the chart is correct",
+			chart:      chartOK,
+			expected:   availablePackageDetailOK,
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it returns internal error if empty chart",
+			chart:      &models.Chart{},
+			statusCode: codes.Internal,
+		},
+		{
+			name:       "it returns internal error if chart is invalid",
+			chart:      &models.Chart{Name: "foo"},
+			statusCode: codes.Internal,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			availablePackageDetail, err := AvailablePackageDetailFromChart(tc.chart)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				if got, want := availablePackageDetail, tc.expected; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				}
+			}
+		})
+	}
+}
+
+func TestGetAvailablePackageDetail(t *testing.T) {
+	// Creating the dynamic client
+	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{
+			{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
+		},
+	)
+
+	// Creating an authorized clientGetter
+	authorizedClientSet := typfake.NewSimpleClientset()
+	authorizedClientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+	authorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return authorizedClientSet, dynamicClient, nil
+	}
+
+	// Creating a unauthorized clientGetter
+	unauthorizedClientSet := typfake.NewSimpleClientset()
+	unauthorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return unauthorizedClientSet, dynamicClient, nil
+	}
+
+	// Creating the SQL mock manager
+	mock, cleanup, manager := setMockManager(t)
+	defer cleanup()
+
+	testCases := []struct {
+		name             string
+		charts           []*models.Chart
+		requestedVersion string
+		expectedVersion  string
+		expectedPackage  *corev1.AvailablePackageDetail
+		statusCode       codes.Code
+		request          *corev1.GetAvailablePackageDetailRequest
+		server           *Server
+	}{
+		{
+			name: "it returns an availablePackageDetail from the database (latest version)",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			},
+			expectedVersion: availablePackageDetailOK.PkgVersion,
+			charts:          []*models.Chart{chartOK},
+			expectedPackage: availablePackageDetailOK,
+			statusCode:      codes.OK,
+		},
+		{
+			name: "it returns an availablePackageDetail from the database (specific version)",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			},
+			requestedVersion: "1.0.0",
+			expectedVersion:  "1.0.0",
+			charts:           []*models.Chart{chartOK},
+			expectedPackage:  availablePackageDetailOK,
+			statusCode:       codes.OK,
+		},
+		{
+			name: "it returns an internal error status if the chart is invalid",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			},
+			expectedVersion: availablePackageDetailOK.PkgVersion,
+			charts:          []*models.Chart{{Name: "foo"}},
+			expectedPackage: &corev1.AvailablePackageDetail{},
+			statusCode:      codes.Internal,
+		},
+		{
+			name: "it returns an internal error status if the requested chart version doesn't exist",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			},
+			requestedVersion: "9.9.9",
+			charts:           []*models.Chart{{Name: "foo"}},
+			expectedPackage:  &corev1.AvailablePackageDetail{},
+			statusCode:       codes.Internal,
+		},
+		{
+			name: "it returns an unauthenticated status if the user doesn't have permissions",
+			server: &Server{
+				clientGetter:             unauthorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			},
+			charts:          []*models.Chart{{Name: "foo"}},
+			expectedPackage: &corev1.AvailablePackageDetail{},
+			statusCode:      codes.Unauthenticated,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			currentExpectedPackage := tc.expectedPackage
+			currentExpectedPackage.PkgVersion = tc.expectedVersion
+
+			rows := sqlmock.NewRows([]string{"info"})
+
+			for _, chart := range tc.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
+			}
+			if tc.statusCode != codes.Unauthenticated {
+				// Checking if the WHERE condition is properly applied
+				mock.ExpectQuery("SELECT info FROM").
+					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, tc.request.AvailablePackageRef.Identifier).
+					WillReturnRows(rows)
+			}
+			req := &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			}
+			if tc.requestedVersion != "" {
+				req.PkgVersion = tc.requestedVersion
+			}
+			availablePackageDetails, err := tc.server.GetAvailablePackageDetail(context.Background(), req)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				if got, want := availablePackageDetails.AvailablePackageDetail, currentExpectedPackage; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
