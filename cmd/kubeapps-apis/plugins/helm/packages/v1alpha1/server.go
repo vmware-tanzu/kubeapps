@@ -191,7 +191,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	}
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestVersion = chart.ChartVersions[0].Version
+		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
 	}
 
 	return pkg, nil
@@ -208,7 +208,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// Retrieve namespace, chartID, version from the request
 	namespace := request.AvailablePackageRef.Context.Namespace
 	chartID := request.AvailablePackageRef.Identifier
-	version := request.Version
+	version := request.PkgVersion
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
 	// If checking the global namespace, allow access always

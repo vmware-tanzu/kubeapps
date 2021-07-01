@@ -65,7 +65,7 @@ var chartOK = &models.Chart{
 
 var availablePackageSummaryOK = &corev1.AvailablePackageSummary{
 	DisplayName:      "foo",
-	LatestVersion:    "3.0.0",
+	LatestPkgVersion: "3.0.0",
 	IconUrl:          "foo.bar/icon.svg",
 	ShortDescription: "best chart",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -687,7 +687,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 			}
 			if tc.requestedVersion != "" {
-				req.Version = tc.requestedVersion
+				req.PkgVersion = tc.requestedVersion
 			}
 			availablePackageDetails, err := tc.server.GetAvailablePackageDetail(context.Background(), req)
 

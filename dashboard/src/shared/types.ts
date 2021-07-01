@@ -458,6 +458,7 @@ export type IAppRepository = IK8sObject<
     ociRepositories?: string[];
     tlsInsecureSkipVerify?: boolean;
     filterRule?: IAppRepositoryFilter;
+    passCredentials?: boolean;
   },
   undefined
 >;

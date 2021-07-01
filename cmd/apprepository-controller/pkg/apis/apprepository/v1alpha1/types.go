@@ -54,6 +54,8 @@ type AppRepositorySpec struct {
 	FilterRule FilterRuleSpec `json:"filterRule,omitempty"`
 	// (optional) description
 	Description string `json:"description,omitempty"`
+	// PassCredentials allows passing credentials with requests to other domains linked from the repository
+	PassCredentials bool `json:"passCredentials,omitempty"`
 }
 
 // AppRepositoryAuth is the auth for an AppRepository resource
