@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -339,6 +340,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			repos := []runtime.Object{}
+			httpServers := []*httptest.Server{}
+
 			for _, rs := range tc.testRepos {
 				indexYAMLBytes, err := ioutil.ReadFile(rs.index)
 				if err != nil {
@@ -349,7 +352,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					fmt.Fprintln(w, string(indexYAMLBytes))
 				}))
-				defer ts.Close()
+				httpServers = append(httpServers, ts)
 
 				repoSpec := map[string]interface{}{
 					"url":      rs.url,
@@ -387,6 +390,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+
+			for _, ts := range httpServers {
+				ts.Close()
 			}
 		})
 	}
@@ -591,6 +598,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					), nil
 				},
 			}
+
+			// note we not seeting up Server with cache here cuz its not needed for this use case
 
 			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
 			if err != nil {
@@ -801,7 +810,10 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 	// redismock throws a fit
 	mapVals := make(map[string][]byte)
 	if !expectNil {
+		s.cache.indexRepoWaitGroup = &sync.WaitGroup{}
+
 		for _, r := range repos {
+			s.cache.indexRepoWaitGroup.Add(1)
 			key := r.(*unstructured.Unstructured).GetName()
 			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
 			if err != nil {
@@ -828,9 +840,17 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 			return nil, nil, fmt.Errorf("unexpected condition: watcher not started")
 		}
 
+		// here we wait until all repos have been indexed on the server-side
 		s.cache.indexRepoWaitGroup.Wait()
 	}
 
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO (gfichtenholt) move this out of this func - strictly speaking,
+	// GET only expected when the caller calls GetAvailablePackageSummaries()
 	for _, r := range repos {
 		key := r.(*unstructured.Unstructured).GetName()
 		if expectNil {

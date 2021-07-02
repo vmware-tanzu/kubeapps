@@ -42,9 +42,11 @@ type fluxPlugInCache struct {
 	watcherMutex sync.Mutex
 	redisCli     *redis.Client
 	clientGetter server.KubernetesClientGetter
-	// this waitGroup is used exclusively by unit tests to block until all expected repos have
-	// been indexed by the go routine running in the background
-	indexRepoWaitGroup sync.WaitGroup
+	// these waitGroup is used exclusively by unit tests to block until all expected repos have
+	// been indexed by the go routine running in the background. The creation of the WaitGroup object
+	// and .Add() is expected to be done by the unit test client. The server-side only signals
+	// when indexing one repo is complete
+	indexRepoWaitGroup *sync.WaitGroup
 }
 
 func newCache(clientGetter server.KubernetesClientGetter) (*fluxPlugInCache, error) {
@@ -167,8 +169,6 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 			continue
 		}
 		log.Infof("got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
-		// this is to let unit tests know we are about to start indexing a repo
-		c.indexRepoWaitGroup.Add(1)
 		if event.Type == watch.Added || event.Type == watch.Modified {
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
@@ -185,7 +185,11 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 
 // this is effectively a cache PUT operation
 func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interface{}) {
-	defer c.indexRepoWaitGroup.Done()
+	defer func() {
+		if c.indexRepoWaitGroup != nil {
+			c.indexRepoWaitGroup.Done()
+		}
+	}()
 
 	startTime := time.Now()
 	ready, err := isRepoReady(unstructuredRepo)
