@@ -67,7 +67,7 @@ To access Kubeapps from outside your K8s cluster, follow the steps below:
 ##########################################################################################################
 {{- end }}
 
-{{ if and (not .Values.redis.existingSecret) (empty .Values.redis.redisPassword) -}}
+{{ if and (.Values.featureFlags.kubeappsAPIsServer) (not .Values.redis.existingSecret) (empty .Values.redis.redisPassword) -}}
 ##########################################################################################################
 ### WARNING: You did not provide a value for the redisPassword so one has been generated randomly      ###
 ##########################################################################################################

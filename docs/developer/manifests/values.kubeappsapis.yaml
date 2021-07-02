@@ -200,3 +200,13 @@ kubeappsapis:
     ## @param kubeappsapis.service.annotations Additional custom annotations for KubeappsAPIs service
     ##
     annotations: {}
+
+## Redis chart configuration
+## ref: https://github.com/helm/charts/blob/master/stable/redis/values.yaml
+## Redis server to satisfy the applications caching requirements
+##
+redis:
+  ## @param redis.redisPassword Password 
+  ## ref: https://github.com/bitnami/bitnami-docker-redis/blob/master/README.md#setting-the-server-password-on-first-run
+  ##
+  redisPassword: ""

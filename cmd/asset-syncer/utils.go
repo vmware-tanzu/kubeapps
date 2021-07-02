@@ -787,7 +787,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 
 	reqHeaders := make(map[string]string)
 	reqHeaders["User-Agent"] = userAgent()
-	if len(r.AuthorizationHeader) > 0 {
+	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(c.Icon, r.URL) {
 		reqHeaders["Authorization"] = r.AuthorizationHeader
 	}
 
@@ -824,7 +824,11 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	// TODO: make this configurable?
 	resizedImg := imaging.Fit(img, 160, 160, imaging.Lanczos)
 	var buf bytes.Buffer
-	imaging.Encode(&buf, resizedImg, imaging.PNG)
+	err = imaging.Encode(&buf, resizedImg, imaging.PNG)
+	if err != nil {
+		log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to encode icon")
+		return err
+	}
 	b := buf.Bytes()
 	contentType = "image/png"
 
