@@ -182,7 +182,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, err := newServerWithReadyRepos(true, tc.repo)
+			s, _, err := newServerWithReadyRepos(true, tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -368,12 +368,17 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, err := newServerWithReadyRepos(false, repos...)
+			s, mock, err := newServerWithReadyRepos(false, repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			err = mock.ExpectationsWereMet()
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -777,10 +782,10 @@ func newServerWithUnreadyRepos(repos ...runtime.Object) (*Server, *fake.FakeDyna
 	return s, dynamicClient, mock, nil
 }
 
-func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, error) {
+func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
 	s, dynamicClient, mock, err := newServerWithUnreadyRepos(repos...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// this is so we can emulate actual k8s server firing events
@@ -800,14 +805,14 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 			key := r.(*unstructured.Unstructured).GetName()
 			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			protoMsg := corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: packageSummaries,
 			}
 			bytes, err := proto.Marshal(&protoMsg)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			mapVals[key] = bytes
 			mock.ExpectSet(key, bytes, 0).SetVal("")
@@ -820,7 +825,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 		s.cache.watcherMutex.Lock()
 		defer s.cache.watcherMutex.Unlock()
 		if !s.cache.watcherStarted {
-			return nil, fmt.Errorf("unexpected condition: watcher not started")
+			return nil, nil, fmt.Errorf("unexpected condition: watcher not started")
 		}
 
 		s.cache.indexRepoWaitGroup.Wait()
@@ -834,7 +839,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 			mock.ExpectGet(key).SetVal(string(mapVals[key]))
 		}
 	}
-	return s, nil
+	return s, mock, nil
 }
 
 // these are helpers to compare slices ignoring order

@@ -158,6 +158,7 @@ func (c *fluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, er
 	return watcher.ResultChan(), nil
 }
 
+// this is an infinite loop that waits for new events and processes them when they happen
 func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 	for {
 		event := <-ch
@@ -166,13 +167,15 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 			continue
 		}
 		log.Infof("got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
+		// this is to let unit tests know we are about to start indexing a repo
 		c.indexRepoWaitGroup.Add(1)
-		if event.Type == watch.Added {
+		if event.Type == watch.Added || event.Type == watch.Modified {
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
 				log.Errorf("Could not cast to unstructured.Unstructured")
+			} else {
+				go c.onAddOrModifyRepo(unstructuredRepo.Object)
 			}
-			go c.processNewRepo(unstructuredRepo.Object)
 		} else {
 			// TODO handle other kinds of events
 			log.Errorf("got unexpected event: %v", event)
@@ -181,33 +184,49 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 }
 
 // this is effectively a cache PUT operation
-func (c *fluxPlugInCache) processNewRepo(unstructuredRepo map[string]interface{}) {
+func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interface{}) {
+	defer c.indexRepoWaitGroup.Done()
+
 	startTime := time.Now()
-	packages, err := indexOneRepo(unstructuredRepo)
+	ready, err := isRepoReady(unstructuredRepo)
 	if err != nil {
-		log.Errorf("Failed to processRepo %s due to: %v", prettyPrintMap(unstructuredRepo), err)
+		log.Errorf("Failed to process repo %s\ndue to: %v", prettyPrintMap(unstructuredRepo), err)
 		return
 	}
 
 	name, _, _ := unstructured.NestedString(unstructuredRepo, "metadata", "name")
 
-	protoMsg := corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: packages,
-	}
-	bytes, err := proto.Marshal(&protoMsg)
-	if err != nil {
-		log.Errorf("Failed to marshal due to: %v", err)
-		return
-	}
+	if ready {
+		packages, err := indexOneRepo(unstructuredRepo)
+		if err != nil {
+			log.Errorf("Failed to process repo %s\ndue to: %v", prettyPrintMap(unstructuredRepo), err)
+			return
+		}
+		protoMsg := corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackagesSummaries: packages,
+		}
+		bytes, err := proto.Marshal(&protoMsg)
+		if err != nil {
+			log.Errorf("Failed to marshal due to: %v", err)
+			return
+		}
 
-	err = c.redisCli.Set(c.redisCli.Context(), name, bytes, 0).Err()
-	if err != nil {
-		log.Errorf("Failed to set value for repository [%s] in cache due to: %v", name, err)
-		return
+		// TODO - name should be in the format of 'namespace/repo'
+		err = c.redisCli.Set(c.redisCli.Context(), name, bytes, 0).Err()
+		if err != nil {
+			log.Errorf("Failed to set value for repository [%s] in cache due to: %v", name, err)
+			return
+		}
+		duration := time.Since(startTime)
+		log.Infof("Indexed [%d] packages in repo [%s] in [%d] ms", len(packages), name, duration.Milliseconds())
+	} else {
+		// repo is not quite ready to be indexed - not really an error condition,
+		// just skip it eventually there will be another event when it is in ready state
+		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", name)
+
+		// clear that key so cache doesn't contain any stale info for this repo
+		c.redisCli.Del(c.redisCli.Context(), name)
 	}
-	duration := time.Since(startTime)
-	log.Infof("Indexed [%d] packages in repo [%s] in [%d] ms", len(packages), name, duration.Milliseconds())
-	c.indexRepoWaitGroup.Done()
 }
 
 // this is effectively a cache GET operation

@@ -54,7 +54,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailableP
 	ready, err := isRepoReady(unstructuredRepo)
 	if err != nil || !ready {
 		return nil, status.Errorf(codes.Internal,
-			"Skipping packages for repository [%s] because it is not in 'Ready' state:%v\n%s",
+			"cannot index repository [%s] because it is not in 'Ready' state:%v\n%s",
 			repo.Name,
 			err,
 			prettyPrintMap(unstructuredRepo))
