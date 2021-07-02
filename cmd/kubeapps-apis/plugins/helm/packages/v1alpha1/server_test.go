@@ -471,17 +471,56 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				FilterOptions: &corev1.FilterOptions{
-					Query:        "",
-					AppVersion:   "",
-					PkgVersion:   "",
-					Categories:   nil,
-					Repositories: nil,
+			},
+			charts: []*models.Chart{
+				{
+					Name: "chart-1",
+					ID:   "repo-1/chart-1",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "3.0.0",
+						},
+					},
+				},
+				{
+					Name: "chart-2",
+					ID:   "repo-1/chart-2",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "2.0.0",
+						},
+					},
 				},
 			},
-			charts:           []*models.Chart{chartOK},
-			expectedPackages: []*corev1.AvailablePackageSummary{availablePackageSummaryOK},
-			statusCode:       codes.OK,
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "chart-1",
+					LatestPkgVersion: "3.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-1",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+				{
+					DisplayName:      "chart-2",
+					LatestPkgVersion: "2.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-2",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+			},
+			statusCode: codes.OK,
 		},
 		{
 			name: "it returns a set of availablePackageSummary from the database (specific ns)",
@@ -495,17 +534,56 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Cluster:   "",
 					Namespace: "my-ns",
 				},
-				FilterOptions: &corev1.FilterOptions{
-					Query:        "",
-					AppVersion:   "",
-					PkgVersion:   "",
-					Categories:   nil,
-					Repositories: nil,
+			},
+			charts: []*models.Chart{
+				{
+					Name: "chart-1",
+					ID:   "repo-1/chart-1",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "3.0.0",
+						},
+					},
+				},
+				{
+					Name: "chart-2",
+					ID:   "repo-1/chart-2",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "2.0.0",
+						},
+					},
 				},
 			},
-			charts:           []*models.Chart{chartOK},
-			expectedPackages: []*corev1.AvailablePackageSummary{availablePackageSummaryOK},
-			statusCode:       codes.OK,
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "chart-1",
+					LatestPkgVersion: "3.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-1",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+				{
+					DisplayName:      "chart-2",
+					LatestPkgVersion: "2.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-2",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+			},
+			statusCode: codes.OK,
 		},
 		{
 			name: "it returns a unimplemented status if no namespaces is provided",
