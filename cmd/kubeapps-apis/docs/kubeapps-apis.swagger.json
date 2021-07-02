@@ -188,6 +188,21 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageToken",
+            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageSize",
+            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -442,6 +457,21 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageToken",
+            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageSize",
+            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -713,6 +743,21 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageToken",
+            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageSize",
+            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -870,6 +915,21 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageToken",
+            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageSize",
+            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -1278,6 +1338,11 @@
           },
           "description": "List of AvailablePackageSummary",
           "title": "Available packages summaries"
+        },
+        "nextPageToken": {
+          "type": "string",
+          "description": "This field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request.",
+          "title": "Next page token"
         }
       },
       "description": "Response for GetAvailablePackageSummaries",
@@ -1336,6 +1401,24 @@
       },
       "description": "Maintainers for the package.",
       "title": "Maintainer"
+    },
+    "v1alpha1PaginationOptions": {
+      "type": "object",
+      "properties": {
+        "pageToken": {
+          "type": "string",
+          "description": "The client uses this field to request a specific page of the list results.",
+          "title": "Page token"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+          "title": "Page size"
+        }
+      },
+      "description": "The PaginationOptions based on the example proto at:\nhttps://cloud.google.com/apis/design/design_patterns#list_pagination\njust encapsulated in a message so it can be reused on different request messages.",
+      "title": "PaginationOptions"
     },
     "v1alpha1Plugin": {
       "type": "object",
