@@ -386,7 +386,7 @@ mod tests {
                     e.is::<http::uri::InvalidUri>(),
                     "got: {:#?}, want: {}",
                     e,
-                    http::uri::InvalidUri.InvalidUriChar
+                    "InvalidUri.InvalidUriChar"
                 );
                 Ok(())
             }
