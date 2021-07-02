@@ -177,11 +177,11 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
 	}
 
-	if request.Version != "" {
+	if request.PkgVersion != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"Not supported yet: version: [%v]",
-			request.Version)
+			request.PkgVersion)
 	}
 
 	url, err := s.pullChartTarball(ctx, request.AvailablePackageRef)

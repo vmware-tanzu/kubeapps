@@ -225,12 +225,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					DisplayName:   "another.foo.example.com",
-					LatestVersion: "1.2.5",
+					DisplayName:      "another.foo.example.com",
+					LatestPkgVersion: "1.2.5",
 				},
 				{
-					DisplayName:   "tetris.foo.example.com",
-					LatestVersion: "1.2.3",
+					DisplayName:      "tetris.foo.example.com",
+					LatestPkgVersion: "1.2.3",
 				},
 			},
 		},

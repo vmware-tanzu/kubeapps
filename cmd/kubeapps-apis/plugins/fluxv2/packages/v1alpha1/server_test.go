@@ -237,18 +237,18 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					DisplayName:   "acs-engine-autoscaler",
-					LatestVersion: "2.1.1",
-					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					DisplayName:      "acs-engine-autoscaler",
+					LatestPkgVersion: "2.1.1",
+					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
 						Context:    &corev1.Context{Namespace: "default"},
 					},
 				},
 				{
-					DisplayName:   "wordpress",
-					LatestVersion: "0.7.5",
-					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					DisplayName:      "wordpress",
+					LatestPkgVersion: "0.7.5",
+					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/wordpress",
 						Context:    &corev1.Context{Namespace: "default"},
@@ -269,18 +269,18 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					DisplayName:   "acs-engine-autoscaler",
-					LatestVersion: "2.1.1",
-					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					DisplayName:      "acs-engine-autoscaler",
+					LatestPkgVersion: "2.1.1",
+					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
 						Context:    &corev1.Context{Namespace: "default"},
 					},
 				},
 				{
-					DisplayName:   "wordpress",
-					LatestVersion: "0.7.5",
-					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					DisplayName:      "wordpress",
+					LatestPkgVersion: "0.7.5",
+					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/wordpress",
 						Context:    &corev1.Context{Namespace: "default"},
@@ -307,27 +307,27 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					DisplayName:   "acs-engine-autoscaler",
-					LatestVersion: "2.1.1",
-					IconUrl:       "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					DisplayName:      "acs-engine-autoscaler",
+					LatestPkgVersion: "2.1.1",
+					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
 						Context:    &corev1.Context{Namespace: "default"},
 					},
 				},
 				{
-					DisplayName:   "cert-manager",
-					LatestVersion: "v1.4.0",
-					IconUrl:       "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+					DisplayName:      "cert-manager",
+					LatestPkgVersion: "v1.4.0",
+					IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "jetstack-1/cert-manager",
 						Context:    &corev1.Context{Namespace: "ns1"},
 					},
 				},
 				{
-					DisplayName:   "wordpress",
-					LatestVersion: "0.7.5",
-					IconUrl:       "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					DisplayName:      "wordpress",
+					LatestPkgVersion: "0.7.5",
+					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/wordpress",
 						Context:    &corev1.Context{Namespace: "default"},
