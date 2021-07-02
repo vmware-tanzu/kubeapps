@@ -1,4 +1,3 @@
-import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
@@ -9,14 +8,22 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
+import { hapi } from "../../../../shared/hapi/release";
+import StatusAwareButton from "../StatusAwareButton";
 
 interface IDeleteButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
+  releaseStatus: hapi.release.IStatus | undefined | null;
 }
 
-export default function DeleteButton({ cluster, namespace, releaseName }: IDeleteButtonProps) {
+export default function DeleteButton({
+  cluster,
+  namespace,
+  releaseName,
+  releaseStatus,
+}: IDeleteButtonProps) {
   const [modalIsOpen, setModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -36,9 +43,14 @@ export default function DeleteButton({ cluster, namespace, releaseName }: IDelet
 
   return (
     <>
-      <CdsButton status="danger" onClick={openModal}>
+      <StatusAwareButton
+        status="danger"
+        onClick={openModal}
+        releaseStatus={releaseStatus}
+        id="delete-button"
+      >
         <CdsIcon shape="trash" /> Delete
-      </CdsButton>
+      </StatusAwareButton>
       <ConfirmDialog
         modalIsOpen={modalIsOpen}
         loading={deleting}
