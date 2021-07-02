@@ -34,11 +34,11 @@ For Kubeapps to use an Identity Provider it's necessary to configure at least th
 
 Kubeapps uses [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) to handle the OAuth2/OpenIDConnect authentication. The following sections explain how you can find the parameters above for some of the identity providers tested. If you have configured your cluster to use an Identity Provider you will already know some of these parameters. More detailed information can be found on the [OAuth2 Proxy Auth configuration page](https://oauth2-proxy.github.io/oauth2-proxy/auth-configuration).
 
-- [Keycloak](./OAuth2OIDC-keycloak.md)
-- [Dex](OAuth2OIDC-dex.md)
+- [VMware Cloud Services](./OAuth2OIDC-VMware-cloud-services.md)
 - [Azure Active Directory](./OAuth2OIDC-azure-active-directory.md)
 - [Google OpenID Connect](./OAuth2OIDC-google-openid-connect.md)
-- [VMware Cloud Services](./OAuth2OIDC-VMware-cloud-services.md)
+- [Keycloak](./OAuth2OIDC-keycloak.md)
+- [Dex](OAuth2OIDC-dex.md)
 - [Oauth2-proxy](./OAuth2OIDC-oauth2-proxy.md)
 
 For a complete worked example of this process on a specific Kubernetes environment, one of the Kubeapps developers has written a series detailing the installation of [Kubeapps on a set of VMware TKG clusters with OpenID Connect](https://liveandletlearn.net/post/kubeapps-on-tkg-management-cluster/).
