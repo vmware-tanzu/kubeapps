@@ -383,10 +383,10 @@ mod tests {
             Ok(_) => anyhow::bail!("expected error"),
             Err(e) => {
                 assert!(
-                    e.is::<url::ParseError>(),
+                    e.is::<http::uri::InvalidUri>(),
                     "got: {:#?}, want: {}",
                     e,
-                    url::ParseError::InvalidDomainCharacter
+                    http::uri::InvalidUri::InvalidUriChar
                 );
                 Ok(())
             }
