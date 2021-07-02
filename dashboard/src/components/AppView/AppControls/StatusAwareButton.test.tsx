@@ -1,23 +1,8 @@
 import { CdsButton } from "@cds/react/button";
-import actions from "actions";
 import { hapi } from "../../../shared/hapi/release";
-
-import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import StatusAwareButton from "./StatusAwareButton";
 import ReactTooltip from "react-tooltip";
-
-let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
-beforeEach(() => {
-  const mockDispatch = jest.fn();
-  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-});
-
-afterEach(() => {
-  actions.kube = { ...kubeaActions };
-  spyOnUseDispatch.mockRestore();
-});
 
 it("tests the disabled flag and tooltip for each release status condition", async () => {
   type TProps = {
@@ -37,8 +22,8 @@ it("tests the disabled flag and tooltip for each release status condition", asyn
     { code: 6, disabled: true, tooltip: "installation" },
     { code: 7, disabled: true, tooltip: "upgrade" },
     { code: 8, disabled: true, tooltip: "rollback" },
-    { code: undefined, disabled: false, tooltip: undefined },
-    { code: null, disabled: false, tooltip: undefined },
+    { code: undefined, disabled: true, tooltip: undefined },
+    { code: null, disabled: true, tooltip: undefined },
   ];
 
   for (const testProps of testsProps) {
@@ -56,7 +41,7 @@ it("tests the disabled flag and tooltip for each release status condition", asyn
         };
     }
     const disabled = testProps.disabled;
-    const tooltip = testProps.tooltip ? testProps.tooltip : "";
+    const tooltip = testProps.tooltip;
     const wrapper = mountWrapper(
       defaultStore,
       <StatusAwareButton id="test" releaseStatus={releaseStatus} />,
@@ -67,7 +52,7 @@ it("tests the disabled flag and tooltip for each release status condition", asyn
 
     // test tooltip
     const tooltipUI = wrapper.find(ReactTooltip);
-    if (disabled) {
+    if (tooltip) {
       expect(tooltipUI).toExist();
       expect(tooltipUI).toIncludeText(tooltip);
     } else {
