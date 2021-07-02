@@ -845,14 +845,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 
 		for _, r := range repos {
 			s.cache.indexRepoWaitGroup.Add(1)
-			// redis convention on key format
-			// https://redis.io/topics/data-types-intro
-			// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
-			// We will use "helmrepository:ns:repoName"
-			key := fmt.Sprintf("%s:%s:%s",
-				fluxHelmRepository,
-				r.(*unstructured.Unstructured).GetNamespace(),
-				r.(*unstructured.Unstructured).GetName())
+			key := helmRepoRedisKeyFromRuntimeObject(r)
 			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
 			if err != nil {
 				return nil, nil, err
@@ -890,10 +883,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 	// TODO (gfichtenholt) move this out of this func - strictly speaking,
 	// GET only expected when the caller calls GetAvailablePackageSummaries()
 	for _, r := range repos {
-		key := fmt.Sprintf("%s:%s:%s",
-			fluxHelmRepository,
-			r.(*unstructured.Unstructured).GetNamespace(),
-			r.(*unstructured.Unstructured).GetName())
+		key := helmRepoRedisKeyFromRuntimeObject(r)
 		if expectNil {
 			mock.ExpectGet(key).RedisNil()
 		} else {
@@ -920,6 +910,18 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicCl
 		return nil, nil, nil, err
 	}
 	return s, dynamicClient, mock, nil
+}
+
+func helmRepoRedisKeyFromRuntimeObject(r runtime.Object) string {
+	// redis convention on key format
+	// https://redis.io/topics/data-types-intro
+	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// We will use "helmrepository:ns:repoName"
+	return fmt.Sprintf("%s:%s:%s",
+		fluxHelmRepository,
+		r.(*unstructured.Unstructured).GetNamespace(),
+		r.(*unstructured.Unstructured).GetName())
+
 }
 
 // these are helpers to compare slices ignoring order

@@ -201,8 +201,11 @@ func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interfac
 		return
 	}
 
-	name, _, _ := unstructured.NestedString(unstructuredRepo, "metadata", "name")
-	namespace, _, _ := unstructured.NestedString(unstructuredRepo, "metadata", "namespace")
+	key, err := helmRepoRedisKey(unstructuredRepo)
+	if err != nil {
+		log.Errorf("Failed to get redis key due to: %v", err)
+		return
+	}
 
 	if ready {
 		packages, err := indexOneRepo(unstructuredRepo)
@@ -219,58 +222,52 @@ func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interfac
 			return
 		}
 
-		// redis convention on key format
-		// https://redis.io/topics/data-types-intro
-		// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
-		// We will use "helmrepository:ns:repoName"
-		key := fmt.Sprintf("%s:%s:%s", fluxHelmRepository, namespace, name)
-		err = c.redisCli.Set(c.redisCli.Context(), key, bytes, 0).Err()
+		err = c.redisCli.Set(c.redisCli.Context(), *key, bytes, 0).Err()
 		if err != nil {
-			log.Errorf("Failed to set value for repository [%s] in cache due to: %v", name, err)
+			log.Errorf("Failed to set value for repository [%s] in cache due to: %v", *key, err)
 			return
 		}
 		duration := time.Since(startTime)
-		log.Infof("Indexed [%d] packages in repo [%s] in [%d] ms", len(packages), name, duration.Milliseconds())
+		log.Infof("Indexed [%d] packages in repo [%s] in [%d] ms", len(packages), *key, duration.Milliseconds())
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
-		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", name)
+		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", *key)
 
 		// clear that key so cache doesn't contain any stale info for this repo
-		c.redisCli.Del(c.redisCli.Context(), name)
+		c.redisCli.Del(c.redisCli.Context(), *key)
 	}
 }
 
 // this is effectively a cache GET operation
-func (c *fluxPlugInCache) packageSummariesForRepo(name string, namespace string) []*corev1.AvailablePackageSummary {
+func (c *fluxPlugInCache) packageSummariesForRepo(unstucturedRepo map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
 	startTime := time.Now()
 
-	// redis convention on key format
-	// https://redis.io/topics/data-types-intro
-	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
-	// We will use "helmrepository:ns:repoName"
-	key := fmt.Sprintf("%s:%s:%s", fluxHelmRepository, namespace, name)
+	key, err := helmRepoRedisKey(unstucturedRepo)
+	if err != nil {
+		return nil, err
+	}
 
 	// read back from cache: should be bytes we previously wrote or Redis.Nil
-	bytes, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
+	bytes, err := c.redisCli.Get(c.redisCli.Context(), *key).Bytes()
 	if err == redis.Nil {
 		// this is normal if the key does not exist
-		return []*corev1.AvailablePackageSummary{}
+		return []*corev1.AvailablePackageSummary{}, nil
 	} else if err != nil {
 		log.Errorf("Failed to get value for [%s] from cache due to: %v", key, err)
-		return []*corev1.AvailablePackageSummary{}
+		return []*corev1.AvailablePackageSummary{}, nil
 	}
 
 	var protoMsg corev1.GetAvailablePackageSummariesResponse
 	err = proto.Unmarshal(bytes, &protoMsg)
 	if err != nil {
 		log.Errorf("Failed to unmarshal bytes for [%s] in cache due to: %v", key, err)
-		return []*corev1.AvailablePackageSummary{}
+		return []*corev1.AvailablePackageSummary{}, nil
 	}
 	duration := time.Since(startTime)
 	log.Infof("Unmarshalled [%d] packages for: [%s] in [%d] ms",
 		len(protoMsg.AvailablePackagesSummaries), key, duration.Milliseconds())
-	return protoMsg.AvailablePackagesSummaries
+	return protoMsg.AvailablePackagesSummaries, nil
 }
 
 const (
@@ -300,28 +297,8 @@ func (c *fluxPlugInCache) fetchPackageSummaries(repoItems []unstructured.Unstruc
 		wg.Add(1)
 		go func() {
 			for job := range requestChan {
-				name, found, err := unstructured.NestedString(job.unstructuredRepo, "metadata", "name")
-				if err != nil || !found {
-					responseChan <- fetchRepoJobResult{
-						nil,
-						fmt.Errorf("required field metadata.name not found on HelmRepository: %v:\n%s",
-							err,
-							prettyPrintMap(job.unstructuredRepo)),
-					}
-				} else {
-					namespace, found, err := unstructured.NestedString(job.unstructuredRepo, "metadata", "namespace")
-					if err != nil || !found {
-						responseChan <- fetchRepoJobResult{
-							nil,
-							fmt.Errorf("required field metadata.namespace not found on HelmRepository: %v:\n%s",
-								err,
-								prettyPrintMap(job.unstructuredRepo)),
-						}
-					} else {
-						packages := c.packageSummariesForRepo(name, namespace)
-						responseChan <- fetchRepoJobResult{packages, nil}
-					}
-				}
+				packages, err := c.packageSummariesForRepo(job.unstructuredRepo)
+				responseChan <- fetchRepoJobResult{packages, err}
 			}
 			wg.Done()
 		}()
@@ -347,4 +324,27 @@ func (c *fluxPlugInCache) fetchPackageSummaries(repoItems []unstructured.Unstruc
 		}
 	}
 	return responsePackages, nil
+}
+
+func helmRepoRedisKey(unstructuredRepo map[string]interface{}) (*string, error) {
+	name, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "name")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%s",
+			err,
+			prettyPrintMap(unstructuredRepo))
+	}
+
+	namespace, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "namespace")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.Internal, "required field metadata.namespace not found on HelmRepository: %v:\n%s",
+			err,
+			prettyPrintMap(unstructuredRepo))
+	}
+
+	// redis convention on key format
+	// https://redis.io/topics/data-types-intro
+	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// We will use "helmrepository:ns:repoName"
+	s := fmt.Sprintf("%s:%s:%s", fluxHelmRepository, namespace, name)
+	return &s, nil
 }
