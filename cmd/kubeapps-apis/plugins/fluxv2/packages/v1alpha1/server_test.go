@@ -42,7 +42,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
-func TestClientGetter(t *testing.T) {
+func TestNilClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
 		clientGetter server.KubernetesClientGetter
@@ -53,6 +53,33 @@ func TestClientGetter(t *testing.T) {
 			clientGetter: nil,
 			statusCode:   codes.FailedPrecondition,
 		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, mock, err := newServer(tc.clientGetter)
+			if err == nil && tc.statusCode != codes.OK {
+				t.Fatalf("got: nil, want: error")
+			}
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Errorf("got: %+v, want: %+v", got, want)
+			}
+
+			err = mock.ExpectationsWereMet()
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+		})
+	}
+}
+
+func TestBadClientGetter(t *testing.T) {
+	testCases := []struct {
+		name         string
+		clientGetter server.KubernetesClientGetter
+		statusCode   codes.Code
+	}{
 		{
 			name: "returns failed-precondition when configGetter itself errors",
 			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
@@ -64,15 +91,12 @@ func TestClientGetter(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			redisCli, mock := redismock.NewClientMock()
-			mock.ExpectPing().SetVal("PONG")
-			cache, _ := newCacheWithRedisClient(tc.clientGetter, redisCli)
-			s := &Server{
-				clientGetter: tc.clientGetter,
-				cache:        cache,
+			s, mock, err := newServer(tc.clientGetter)
+			if err != nil {
+				t.Fatalf("%v", err)
 			}
 
-			response, err := s.GetAvailablePackageSummaries(
+			_, err = s.GetAvailablePackageSummaries(
 				context.Background(),
 				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
@@ -82,14 +106,11 @@ func TestClientGetter(t *testing.T) {
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
+			}
 
-				if got == codes.OK {
-					if len(response.AvailablePackagesSummaries) != 0 {
-						t.Errorf("unexpected response: %v", response)
-					} else if response != nil {
-						t.Errorf("unexpected response: %v", response)
-					}
-				}
+			err = mock.ExpectationsWereMet()
+			if err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -495,7 +516,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, _, _, err := newServerWithUnreadyRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
+			s, _, mock, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -517,6 +538,11 @@ func TestGetPackageRepositories(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 					}
 				}
+			}
+
+			err = mock.ExpectationsWereMet()
+			if err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -586,20 +612,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 				"url": ts.URL,
 			}
-			repo := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
-			s := Server{
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
-						},
-						repo,
-					), nil
-				},
-			}
+			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
 
-			// note we not seeting up Server with cache here cuz its not needed for this use case
+			s, _, mock, err := newServerWithCharts(chart)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 
 			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
 			if err != nil {
@@ -613,6 +631,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			if !strings.Contains(response.AvailablePackageDetail.LongDescription, tc.expectedPackageDetail.LongDescription) {
 				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.LongDescription, response.AvailablePackageDetail.LongDescription)
+			}
+
+			err = mock.ExpectationsWereMet()
+			if err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -672,25 +695,23 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 				"url": "does-not-matter",
 			}
-			repo := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
-			s := Server{
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, fake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
-						},
-						repo,
-					), nil
-				},
+			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
+			s, _, mock, err := newServerWithCharts(chart)
+			if err != nil {
+				t.Fatalf("%+v", err)
 			}
 
-			_, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			_, err = s.GetAvailablePackageDetail(context.Background(), tc.request)
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			err = mock.ExpectationsWereMet()
+			if err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -766,7 +787,23 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 	}
 }
 
-func newServerWithUnreadyRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
+func newServer(clientGetter server.KubernetesClientGetter) (*Server, redismock.ClientMock, error) {
+	redisCli, mock := redismock.NewClientMock()
+	if clientGetter != nil {
+		mock.ExpectPing().SetVal("PONG")
+	}
+	cache, err := newCacheWithRedisClient(clientGetter, redisCli)
+	if err != nil {
+		return nil, mock, err
+	}
+	s := &Server{
+		clientGetter: clientGetter,
+		cache:        cache,
+	}
+	return s, mock, nil
+}
+
+func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -778,21 +815,15 @@ func newServerWithUnreadyRepos(repos ...runtime.Object) (*Server, *fake.FakeDyna
 		return nil, dynamicClient, nil
 	}
 
-	redisCli, mock := redismock.NewClientMock()
-	mock.ExpectPing().SetVal("PONG")
-	cache, err := newCacheWithRedisClient(clientGetter, redisCli)
+	s, mock, err := newServer(clientGetter)
 	if err != nil {
 		return nil, nil, nil, err
-	}
-	s := &Server{
-		clientGetter: clientGetter,
-		cache:        cache,
 	}
 	return s, dynamicClient, mock, nil
 }
 
 func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
-	s, dynamicClient, mock, err := newServerWithUnreadyRepos(repos...)
+	s, dynamicClient, mock, err := newServerWithRepos(repos...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -860,6 +891,25 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 		}
 	}
 	return s, mock, nil
+}
+
+func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
+	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
+		runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{
+			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
+		},
+		charts...)
+
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return nil, dynamicClient, nil
+	}
+
+	s, mock, err := newServer(clientGetter)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return s, dynamicClient, mock, nil
 }
 
 // these are helpers to compare slices ignoring order
