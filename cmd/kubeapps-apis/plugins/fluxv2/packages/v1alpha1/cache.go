@@ -195,15 +195,20 @@ func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interfac
 	}()
 
 	startTime := time.Now()
-	ready, err := isRepoReady(unstructuredRepo)
-	if err != nil {
-		log.Errorf("Failed to process repo %s\ndue to: %v", prettyPrintMap(unstructuredRepo), err)
-		return
-	}
 
 	key, err := helmRepoRedisKey(unstructuredRepo)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
+		return
+	}
+
+	// clear that key so cache doesn't contain any stale info for this repo if not ready or
+	// indexing or marshalling fails for whatever reason
+	c.redisCli.Del(c.redisCli.Context(), *key)
+
+	ready, err := isRepoReady(unstructuredRepo)
+	if err != nil {
+		log.Errorf("Failed to process repo %s\ndue to: %v", prettyPrintMap(unstructuredRepo), err)
 		return
 	}
 
@@ -233,9 +238,6 @@ func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interfac
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
 		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", *key)
-
-		// clear that key so cache doesn't contain any stale info for this repo
-		c.redisCli.Del(c.redisCli.Context(), *key)
 	}
 }
 
@@ -254,19 +256,19 @@ func (c *fluxPlugInCache) packageSummariesForRepo(unstucturedRepo map[string]int
 		// this is normal if the key does not exist
 		return []*corev1.AvailablePackageSummary{}, nil
 	} else if err != nil {
-		log.Errorf("Failed to get value for [%s] from cache due to: %v", key, err)
+		log.Errorf("Failed to get value for [%s] from cache due to: %v", *key, err)
 		return []*corev1.AvailablePackageSummary{}, nil
 	}
 
 	var protoMsg corev1.GetAvailablePackageSummariesResponse
 	err = proto.Unmarshal(bytes, &protoMsg)
 	if err != nil {
-		log.Errorf("Failed to unmarshal bytes for [%s] in cache due to: %v", key, err)
+		log.Errorf("Failed to unmarshal bytes for [%s] in cache due to: %v", *key, err)
 		return []*corev1.AvailablePackageSummary{}, nil
 	}
 	duration := time.Since(startTime)
 	log.Infof("Unmarshalled [%d] packages for: [%s] in [%d] ms",
-		len(protoMsg.AvailablePackagesSummaries), key, duration.Milliseconds())
+		len(protoMsg.AvailablePackagesSummaries), *key, duration.Milliseconds())
 	return protoMsg.AvailablePackagesSummaries, nil
 }
 

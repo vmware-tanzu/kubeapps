@@ -204,7 +204,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, _, err := newServerWithReadyRepos(true, tc.repo)
+			s, _, _, err := newServerWithReadyRepos(true, tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -392,7 +392,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, mock, err := newServerWithReadyRepos(false, repos...)
+			s, mock, _, err := newServerWithReadyRepos(false, repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -418,6 +418,155 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
+	t.Run("test get available package summaries after repo index is updated", func(t *testing.T) {
+		indexYamlBeforeUpdateBytes, err := ioutil.ReadFile("testdata/index-before-update.yaml")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		indexYamlAfterUpdateBytes, err := ioutil.ReadFile("testdata/index-after-update.yaml")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		updateHappened := false
+		// stand up an http server just for the duration of this test
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if updateHappened {
+				fmt.Fprintln(w, string(indexYamlAfterUpdateBytes))
+			} else {
+				fmt.Fprintln(w, string(indexYamlBeforeUpdateBytes))
+			}
+		}))
+		defer ts.Close()
+
+		repoSpec := map[string]interface{}{
+			"url":      "https://example.repo.com/charts",
+			"interval": "1m0s",
+		}
+
+		repoStatus := map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"type":   "Ready",
+					"status": "True",
+					"reason": "IndexationSucceed",
+				},
+			},
+			"url": ts.URL,
+		}
+		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
+
+		s, mock, watcher, err := newServerWithReadyRepos(false, repo)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		responseBeforeUpdate, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		err = mock.ExpectationsWereMet()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		expectedPackagesBeforeUpdate := []*corev1.AvailablePackageSummary{
+			{
+				DisplayName:      "alpine",
+				LatestPkgVersion: "0.2.0",
+				IconUrl:          "",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2"},
+				},
+			},
+			{
+				DisplayName:      "nginx",
+				LatestPkgVersion: "1.1.0",
+				IconUrl:          "",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2"},
+				},
+			}}
+
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+		if got, want := responseBeforeUpdate.AvailablePackagesSummaries, expectedPackagesBeforeUpdate; !cmp.Equal(got, want, opt1, opt2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+
+		updateHappened = true
+		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
+		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
+		s.cache.indexRepoWaitGroup.Add(1)
+
+		key := helmRepoRedisKeyFromRuntimeObject(repo)
+		packageSummariesAfterUpdate, err := indexOneRepo(repo.Object)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		protoMsg := corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackagesSummaries: packageSummariesAfterUpdate,
+		}
+		bytes, err := proto.Marshal(&protoMsg)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		mock.ExpectSet(key, bytes, 0).SetVal("")
+		watcher.Modify(repo)
+		s.cache.indexRepoWaitGroup.Wait()
+
+		err = mock.ExpectationsWereMet()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		mock.ExpectGet(key).SetVal(string(bytes))
+
+		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		expectedPackagesAfterUpdate := []*corev1.AvailablePackageSummary{
+			{
+				DisplayName:      "alpine",
+				LatestPkgVersion: "0.3.0",
+				IconUrl:          "",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2"},
+				},
+			},
+			{
+				DisplayName:      "nginx",
+				LatestPkgVersion: "1.1.0",
+				IconUrl:          "",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2"},
+				},
+			}}
+
+		if got, want := responsePackagesAfterUpdate.AvailablePackagesSummaries, expectedPackagesAfterUpdate; !cmp.Equal(got, want, opt1, opt2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+
+		err = mock.ExpectationsWereMet()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 }
 
 func TestGetPackageRepositories(t *testing.T) {
@@ -822,10 +971,10 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClie
 	return s, dynamicClient, mock, nil
 }
 
-func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
+func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	s, dynamicClient, mock, err := newServerWithRepos(repos...)
 	if err != nil {
-		return nil, nil, err
+		return s, mock, nil, err
 	}
 
 	// this is so we can emulate actual k8s server firing events
@@ -848,14 +997,14 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 			key := helmRepoRedisKeyFromRuntimeObject(r)
 			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
 			if err != nil {
-				return nil, nil, err
+				return s, mock, watcher, err
 			}
 			protoMsg := corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: packageSummaries,
 			}
 			bytes, err := proto.Marshal(&protoMsg)
 			if err != nil {
-				return nil, nil, err
+				return s, mock, watcher, err
 			}
 			mapVals[key] = bytes
 			mock.ExpectSet(key, bytes, 0).SetVal("")
@@ -868,7 +1017,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 		s.cache.watcherMutex.Lock()
 		defer s.cache.watcherMutex.Unlock()
 		if !s.cache.watcherStarted {
-			return nil, nil, fmt.Errorf("unexpected condition: watcher not started")
+			return s, mock, watcher, fmt.Errorf("unexpected condition: watcher not started")
 		}
 
 		// here we wait until all repos have been indexed on the server-side
@@ -877,11 +1026,12 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 
 	err = mock.ExpectationsWereMet()
 	if err != nil {
-		return nil, nil, err
+		return s, mock, watcher, err
 	}
 
 	// TODO (gfichtenholt) move this out of this func - strictly speaking,
-	// GET only expected when the caller calls GetAvailablePackageSummaries()
+	// GET only expected when the caller immediately calls GetAvailablePackageSummaries()
+	// which at the moment, they all do, but may not necessarily so
 	for _, r := range repos {
 		key := helmRepoRedisKeyFromRuntimeObject(r)
 		if expectNil {
@@ -890,7 +1040,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 			mock.ExpectGet(key).SetVal(string(mapVals[key]))
 		}
 	}
-	return s, mock, nil
+	return s, mock, watcher, nil
 }
 
 func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
