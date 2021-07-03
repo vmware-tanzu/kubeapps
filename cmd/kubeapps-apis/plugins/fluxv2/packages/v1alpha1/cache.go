@@ -46,7 +46,7 @@ type fluxPlugInCache struct {
 	// been indexed by the go routine running in the background. The creation of the WaitGroup object
 	// and .Add() is expected to be done by the unit test client. The server-side only signals
 	// when indexing one repo is complete
-	indexRepoWaitGroup *sync.WaitGroup
+	repoEventWaitGroup *sync.WaitGroup
 }
 
 func newCache(clientGetter server.KubernetesClientGetter) (*fluxPlugInCache, error) {
@@ -179,6 +179,13 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 			} else {
 				go c.onAddOrModifyRepo(unstructuredRepo.Object)
 			}
+		} else if event.Type == watch.Deleted {
+			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
+			if !ok {
+				log.Errorf("Could not cast to unstructured.Unstructured")
+			} else {
+				go c.onDeleteRepo(unstructuredRepo.Object)
+			}
 		} else {
 			// TODO handle other kinds of events
 			log.Errorf("got unexpected event: %v", event)
@@ -189,8 +196,8 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 // this is effectively a cache PUT operation
 func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interface{}) {
 	defer func() {
-		if c.indexRepoWaitGroup != nil {
-			c.indexRepoWaitGroup.Done()
+		if c.repoEventWaitGroup != nil {
+			c.repoEventWaitGroup.Done()
 		}
 	}()
 
@@ -238,6 +245,26 @@ func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interfac
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
 		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", *key)
+	}
+}
+
+// this is effectively a cache DEL operation
+func (c *fluxPlugInCache) onDeleteRepo(unstructuredRepo map[string]interface{}) {
+	defer func() {
+		if c.repoEventWaitGroup != nil {
+			c.repoEventWaitGroup.Done()
+		}
+	}()
+
+	key, err := helmRepoRedisKey(unstructuredRepo)
+	if err != nil {
+		log.Errorf("Failed to get redis key due to: %v", err)
+		return
+	}
+
+	err = c.redisCli.Del(c.redisCli.Context(), *key).Err()
+	if err != nil {
+		log.Errorf("Failed to delete value for repository [%s] in cache due to: %v", *key, err)
 	}
 }
 

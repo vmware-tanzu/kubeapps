@@ -506,7 +506,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		s.cache.indexRepoWaitGroup.Add(1)
+		s.cache.repoEventWaitGroup.Add(1)
 
 		key := helmRepoRedisKeyFromRuntimeObject(repo)
 		packageSummariesAfterUpdate, err := indexOneRepo(repo.Object)
@@ -522,7 +522,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		}
 		mock.ExpectSet(key, bytes, 0).SetVal("")
 		watcher.Modify(repo)
-		s.cache.indexRepoWaitGroup.Wait()
+		s.cache.repoEventWaitGroup.Wait()
 
 		err = mock.ExpectationsWereMet()
 		if err != nil {
@@ -560,6 +560,113 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 
 		if got, want := responsePackagesAfterUpdate.AvailablePackagesSummaries, expectedPackagesAfterUpdate; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+
+		err = mock.ExpectationsWereMet()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+}
+
+func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
+	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
+		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		// stand up an http server just for the duration of this test
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(w, string(indexYaml))
+		}))
+		defer ts.Close()
+
+		repoSpec := map[string]interface{}{
+			"url":      "https://example.repo.com/charts",
+			"interval": "1m0s",
+		}
+
+		repoStatus := map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"type":   "Ready",
+					"status": "True",
+					"reason": "IndexationSucceed",
+				},
+			},
+			"url": ts.URL,
+		}
+		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
+
+		s, mock, watcher, err := newServerWithReadyRepos(false, repo)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		responseBeforeDelete, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		err = mock.ExpectationsWereMet()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		expectedPackagesBeforeDelete := []*corev1.AvailablePackageSummary{
+			{
+				DisplayName:      "acs-engine-autoscaler",
+				LatestPkgVersion: "2.1.1",
+				IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/acs-engine-autoscaler",
+					Context:    &corev1.Context{Namespace: "default"},
+				},
+			},
+			{
+				DisplayName:      "wordpress",
+				LatestPkgVersion: "0.7.5",
+				IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/wordpress",
+					Context:    &corev1.Context{Namespace: "default"},
+				},
+			},
+		}
+
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+		if got, want := responseBeforeDelete.AvailablePackagesSummaries, expectedPackagesBeforeDelete; !cmp.Equal(got, want, opt1, opt2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+
+		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
+		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
+		s.cache.repoEventWaitGroup.Add(1)
+		key := helmRepoRedisKeyFromRuntimeObject(repo)
+		mock.ExpectDel(key).SetVal(0)
+		watcher.Delete(repo)
+		s.cache.repoEventWaitGroup.Wait()
+
+		err = mock.ExpectationsWereMet()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		mock.ExpectGet(key).RedisNil()
+
+		responseAfterDelete, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		if len(responseAfterDelete.AvailablePackagesSummaries) != 0 {
+			t.Errorf("expected empty array, got: %s", responseAfterDelete)
 		}
 
 		err = mock.ExpectationsWereMet()
@@ -990,10 +1097,10 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 	// redismock throws a fit
 	mapVals := make(map[string][]byte)
 	if !expectNil {
-		s.cache.indexRepoWaitGroup = &sync.WaitGroup{}
+		s.cache.repoEventWaitGroup = &sync.WaitGroup{}
 
 		for _, r := range repos {
-			s.cache.indexRepoWaitGroup.Add(1)
+			s.cache.repoEventWaitGroup.Add(1)
 			key := helmRepoRedisKeyFromRuntimeObject(r)
 			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
 			if err != nil {
@@ -1021,7 +1128,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 		}
 
 		// here we wait until all repos have been indexed on the server-side
-		s.cache.indexRepoWaitGroup.Wait()
+		s.cache.repoEventWaitGroup.Wait()
 	}
 
 	err = mock.ExpectationsWereMet()
