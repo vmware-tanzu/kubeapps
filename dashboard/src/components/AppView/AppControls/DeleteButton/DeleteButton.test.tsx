@@ -8,11 +8,13 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError } from "shared/types";
 import DeleteButton from "./DeleteButton";
+import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",
   namespace: "kubeapps",
   releaseName: "foo",
+  releaseStatus: null,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -66,4 +68,17 @@ it("renders an error", async () => {
   wrapper.update();
 
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
+});
+
+it("should render a disabled button if when passing an in-progress status", async () => {
+  const disabledProps = {
+    ...defaultProps,
+    releaseStatus: {
+      code: 7,
+    },
+  };
+  const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
+
+  expect(wrapper.find(CdsButton)).toBeDisabled();
+  expect(wrapper.find(ReactTooltip)).toExist();
 });

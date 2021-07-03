@@ -7,12 +7,14 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { RollbackError } from "shared/types";
 import RollbackButton from "./RollbackButton";
+import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",
   namespace: "kubeapps",
   releaseName: "foo",
   revision: 3,
+  releaseStatus: null,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -70,4 +72,17 @@ it("renders an error", async () => {
   wrapper.update();
 
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
+});
+
+it("should render a disabled button if when passing an in-progress status", async () => {
+  const disabledProps = {
+    ...defaultProps,
+    releaseStatus: {
+      code: 6,
+    },
+  };
+  const wrapper = mountWrapper(defaultStore, <RollbackButton {...disabledProps} />);
+
+  expect(wrapper.find(CdsButton)).toBeDisabled();
+  expect(wrapper.find(ReactTooltip)).toExist();
 });

@@ -1,4 +1,3 @@
-import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import { useState } from "react";
@@ -7,15 +6,24 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import RollbackDialog from "./RollbackDialog";
+import { hapi } from "../../../../shared/hapi/release";
+import StatusAwareButton from "../StatusAwareButton";
 
 export interface IRollbackButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
   revision: number;
+  releaseStatus: hapi.release.IStatus | undefined | null;
 }
 
-function RollbackButton({ cluster, namespace, releaseName, revision }: IRollbackButtonProps) {
+function RollbackButton({
+  cluster,
+  namespace,
+  releaseName,
+  revision,
+  releaseStatus,
+}: IRollbackButtonProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -40,9 +48,14 @@ function RollbackButton({ cluster, namespace, releaseName, revision }: IRollback
         currentRevision={revision}
         error={error}
       />
-      <CdsButton status="primary" onClick={openModal}>
+      <StatusAwareButton
+        status="primary"
+        onClick={openModal}
+        releaseStatus={releaseStatus}
+        id="rollback-button"
+      >
         <CdsIcon shape="rewind" /> Rollback
-      </CdsButton>
+      </StatusAwareButton>
     </>
   );
 }

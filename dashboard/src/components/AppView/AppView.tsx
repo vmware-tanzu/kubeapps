@@ -1,5 +1,3 @@
-import { CdsButton } from "@cds/react/button";
-import { CdsIcon } from "@cds/react/icon";
 import { assignWith, get } from "lodash";
 
 import { useEffect, useState } from "react";
@@ -13,7 +11,6 @@ import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
-import { Link } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -26,9 +23,9 @@ import {
   IResource,
   IStoreState,
 } from "../../shared/types";
-import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
+import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
 import AppNotes from "./AppNotes";
@@ -195,23 +192,27 @@ export default function AppView() {
         helm={true}
         icon={icon}
         buttons={[
-          <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)} key="upgrade-button">
-            <CdsButton status="primary">
-              <CdsIcon shape="upload-cloud" /> Upgrade
-            </CdsButton>
-          </Link>,
+          <UpgradeButton
+            key="upgrade-button"
+            cluster={cluster}
+            namespace={namespace}
+            releaseName={releaseName}
+            releaseStatus={app?.info?.status}
+          />,
           <RollbackButton
             key="rollback-button"
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
             revision={app?.version || 0}
+            releaseStatus={app?.info?.status}
           />,
           <DeleteButton
             key="delete-button"
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
+            releaseStatus={app?.info?.status}
           />,
         ]}
       />
