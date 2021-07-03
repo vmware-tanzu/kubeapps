@@ -16,7 +16,7 @@ ${CLUSTER_CONFIG}:
 		--config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml \
 		--retain \
 		--wait 10s
-#	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
 	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
 	sleep 5
