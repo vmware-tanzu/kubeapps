@@ -506,9 +506,9 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		s.cache.repoEventWaitGroup.Add(1)
+		s.cache.eventProcessingWaitGroup.Add(1)
 
-		key := helmRepoRedisKeyFromRuntimeObject(repo)
+		key := redisKeyForRuntimeObject(repo)
 		packageSummariesAfterUpdate, err := indexOneRepo(repo.Object)
 		if err != nil {
 			t.Fatalf("%v", err)
@@ -522,7 +522,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		}
 		mock.ExpectSet(key, bytes, 0).SetVal("")
 		watcher.Modify(repo)
-		s.cache.repoEventWaitGroup.Wait()
+		s.cache.eventProcessingWaitGroup.Wait()
 
 		err = mock.ExpectationsWereMet()
 		if err != nil {
@@ -645,11 +645,11 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		s.cache.repoEventWaitGroup.Add(1)
-		key := helmRepoRedisKeyFromRuntimeObject(repo)
+		s.cache.eventProcessingWaitGroup.Add(1)
+		key := redisKeyForRuntimeObject(repo)
 		mock.ExpectDel(key).SetVal(0)
 		watcher.Delete(repo)
-		s.cache.repoEventWaitGroup.Wait()
+		s.cache.eventProcessingWaitGroup.Wait()
 
 		err = mock.ExpectationsWereMet()
 		if err != nil {
@@ -1048,7 +1048,20 @@ func newServer(clientGetter server.KubernetesClientGetter) (*Server, redismock.C
 	if clientGetter != nil {
 		mock.ExpectPing().SetVal("PONG")
 	}
-	cache, err := newCacheWithRedisClient(clientGetter, redisCli)
+	repositoriesGvr := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
+	}
+	config := cacheConfig{
+		gvr:          repositoriesGvr,
+		clientGetter: clientGetter,
+		onAdd:        onAddOrModifyRepo,
+		onModify:     onAddOrModifyRepo,
+		onGet:        onGetRepo,
+		onDelete:     onDeleteRepo,
+	}
+	cache, err := newCacheWithRedisClient(config, redisCli)
 	if err != nil {
 		return nil, mock, err
 	}
@@ -1097,11 +1110,11 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 	// redismock throws a fit
 	mapVals := make(map[string][]byte)
 	if !expectNil {
-		s.cache.repoEventWaitGroup = &sync.WaitGroup{}
+		s.cache.eventProcessingWaitGroup = &sync.WaitGroup{}
 
 		for _, r := range repos {
-			s.cache.repoEventWaitGroup.Add(1)
-			key := helmRepoRedisKeyFromRuntimeObject(r)
+			s.cache.eventProcessingWaitGroup.Add(1)
+			key := redisKeyForRuntimeObject(r)
 			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
 			if err != nil {
 				return s, mock, watcher, err
@@ -1128,7 +1141,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 		}
 
 		// here we wait until all repos have been indexed on the server-side
-		s.cache.repoEventWaitGroup.Wait()
+		s.cache.eventProcessingWaitGroup.Wait()
 	}
 
 	err = mock.ExpectationsWereMet()
@@ -1140,7 +1153,7 @@ func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, 
 	// GET only expected when the caller immediately calls GetAvailablePackageSummaries()
 	// which at the moment, they all do, but may not necessarily so
 	for _, r := range repos {
-		key := helmRepoRedisKeyFromRuntimeObject(r)
+		key := redisKeyForRuntimeObject(r)
 		if expectNil {
 			mock.ExpectGet(key).RedisNil()
 		} else {
@@ -1169,13 +1182,13 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicCl
 	return s, dynamicClient, mock, nil
 }
 
-func helmRepoRedisKeyFromRuntimeObject(r runtime.Object) string {
+func redisKeyForRuntimeObject(r runtime.Object) string {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
 	return fmt.Sprintf("%s:%s:%s",
-		fluxHelmRepository,
+		fluxHelmRepositories,
 		r.(*unstructured.Unstructured).GetNamespace(),
 		r.(*unstructured.Unstructured).GetName())
 

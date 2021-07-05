@@ -59,13 +59,26 @@ type Server struct {
 	// non-test implementation.
 	clientGetter server.KubernetesClientGetter
 
-	cache *fluxPlugInCache
+	cache *ResourceWatcherCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(clientGetter server.KubernetesClientGetter) (*Server, error) {
-	cache, err := newCache(clientGetter)
+	repositoriesGvr := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
+	}
+	config := cacheConfig{
+		gvr:          repositoriesGvr,
+		clientGetter: clientGetter,
+		onAdd:        onAddOrModifyRepo,
+		onModify:     onAddOrModifyRepo,
+		onGet:        onGetRepo,
+		onDelete:     onDeleteRepo,
+	}
+	cache, err := newCache(config)
 	if err != nil {
 		return nil, err
 	}
@@ -151,17 +164,35 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if s.cache == nil {
 		return nil, status.Errorf(
 			codes.FailedPrecondition,
-			"Server has not been properly initialized")
+			"Server cache has not been properly initialized")
 	}
 
+	// TODO (gfichtenholt) use request.FilterOptions
 	repos, err := s.getHelmRepos(ctx, "")
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackages, err := s.cache.fetchPackageSummaries(repos.Items)
+	responsePackagesFromCache, err := s.cache.fetchCachedObjects(repos.Items)
 	if err != nil {
 		return nil, err
+	}
+
+	// this non-sense below is only here to convert from []interface{} which is
+	// what the generic cache implementation returns for cache hits to
+	// a typed array object.
+	responsePackages := make([]*corev1.AvailablePackageSummary, 0)
+	for _, packages := range responsePackagesFromCache {
+		if packages != nil {
+			typedPackages, ok := packages.([]*corev1.AvailablePackageSummary)
+			if !ok {
+				return nil, status.Errorf(
+					codes.Internal,
+					"Unexpected value fetched from cache: %v", packages)
+			} else {
+				responsePackages = append(responsePackages, typedPackages...)
+			}
+		}
 	}
 
 	return &corev1.GetAvailablePackageSummariesResponse{
@@ -268,6 +299,10 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 
 	// did not find the chart, need to create
 	// see https://fluxcd.io/docs/components/source/helmcharts/
+	// TODO (gfichtenholt)
+	// 1. HelmChart object needs to be co-located in the same namespace as the HelmRepository it is referencing.
+	// 2. flux impersonates a "super" user when doing this (see fluxv2 plug-in specific notes at the end of
+	//	design doc). We should probably be doing simething similar to avoid RBAC-related problems
 	unstructuredChart := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),

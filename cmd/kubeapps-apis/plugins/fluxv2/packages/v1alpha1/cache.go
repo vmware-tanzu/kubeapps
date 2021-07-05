@@ -19,15 +19,12 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/go-redis/redis/v8"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -35,21 +32,41 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-type fluxPlugInCache struct {
-	// to prevent multiple watchers
+// a type of cache that is based on watching for changes to specified kubernetes resources
+type ResourceWatcherCache struct {
+	// these expected to be provided by the caller when creating new cache
+	config cacheConfig
+	// internal state: prevent multiple watchers
 	watcherStarted bool
-	// this mutex guards watcherStarted var
+	// internal state: this mutex guards watcherStarted var
 	watcherMutex sync.Mutex
 	redisCli     *redis.Client
-	clientGetter server.KubernetesClientGetter
-	// these waitGroup is used exclusively by unit tests to block until all expected repos have
-	// been indexed by the go routine running in the background. The creation of the WaitGroup object
-	// and .Add() is expected to be done by the unit test client. The server-side only signals
-	// when indexing one repo is complete
-	repoEventWaitGroup *sync.WaitGroup
+	// this WaitGroup is used exclusively by unit tests to block until all expected objects have
+	// been 'processed' by the go routine running in the background. The creation of the WaitGroup object
+	// and to call to .Add() is expected to be done by the unit test client. The server-side only signals
+	// .Done() when processing one object is complete
+	eventProcessingWaitGroup *sync.WaitGroup
 }
 
-func newCache(clientGetter server.KubernetesClientGetter) (*fluxPlugInCache, error) {
+// TODO (gfichtenholt) rename this to just Config when caching is separated out into core server
+// and/or caching-rleated code is moved into a separate package?
+type cacheConfig struct {
+	gvr          schema.GroupVersionResource
+	clientGetter server.KubernetesClientGetter
+	// 'onAdd' and 'onModify' hooks are called when a new or modified object comes about and
+	// allows the plug-in to return information about WHETHER OR NOT and WHAT is to be stored
+	// in the cache for a given k8s object (passed in as a untyped/unstructured map)
+	onAdd    func(string, map[string]interface{}) (interface{}, bool, error)
+	onModify func(string, map[string]interface{}) (interface{}, bool, error)
+	// the semantics of 'onGet' hook is to convert or "reverse engineer" what was previously
+	// stored in the cache (via onAdd/onModify hooks) to an object that the plug-in understands
+	// and wishes to be returned as part of response to fetchCachedObjects() call
+	onGet func(string, interface{}) (interface{}, error)
+	// onDelete hook is called on the plug-in when the corresponding object is deleted in k8s cluster
+	onDelete func(string, map[string]interface{}) (bool, error)
+}
+
+func newCache(config cacheConfig) (*ResourceWatcherCache, error) {
 	log.Infof("+newCache")
 	// TODO (gfichtenholt) small preference for reading all config in the main.go
 	// (whether from env vars or cmd-line options) only in the one spot and passing
@@ -72,10 +89,10 @@ func newCache(clientGetter server.KubernetesClientGetter) (*fluxPlugInCache, err
 		return nil, err
 	}
 
-	log.Infof("newCache: addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB)
+	log.Infof("newCache: addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB_NUM)
 
 	return newCacheWithRedisClient(
-		clientGetter,
+		config,
 		redis.NewClient(&redis.Options{
 			Addr:     REDIS_ADDR,
 			Password: REDIS_PASSWORD,
@@ -83,15 +100,19 @@ func newCache(clientGetter server.KubernetesClientGetter) (*fluxPlugInCache, err
 		}))
 }
 
-func newCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCli *redis.Client) (*fluxPlugInCache, error) {
+func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client) (*ResourceWatcherCache, error) {
 	log.Infof("+newCacheWithRedisClient")
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
 	}
 
-	if clientGetter == nil {
+	if config.clientGetter == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with configGetter")
+	}
+
+	if config.onAdd == nil || config.onModify == nil || config.onDelete == nil || config.onGet == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with expected cache hooks")
 	}
 
 	// sanity check that the redis client is connected
@@ -101,32 +122,32 @@ func newCacheWithRedisClient(clientGetter server.KubernetesClientGetter, redisCl
 	}
 	log.Infof("[PING] -> [%s]", pong)
 
-	c := fluxPlugInCache{
+	c := ResourceWatcherCache{
+		config:         config,
 		watcherStarted: false,
 		watcherMutex:   sync.Mutex{},
 		redisCli:       redisCli,
-		clientGetter:   clientGetter,
 	}
-	go c.startHelmRepositoryWatcher()
+	go c.startResourceWatcher()
 	return &c, nil
 }
 
-func (c *fluxPlugInCache) startHelmRepositoryWatcher() {
-	log.Infof("+fluxv2 startHelmRepositoryWatcher")
+func (c *ResourceWatcherCache) startResourceWatcher() {
+	log.Infof("+ResourceWatcherCache startResourceWatcher")
 	c.watcherMutex.Lock()
 	// can't defer c.watcherMutex.Unlock() because when all is well,
 	// we never return from this func
 
 	if !c.watcherStarted {
-		ch, err := c.newHelmRepositoryWatcherChan()
+		ch, err := c.newResourceWatcherChan()
 		if err != nil {
 			c.watcherMutex.Unlock()
-			log.Errorf("failed to start HelmRepository watcher due to: %v", err)
+			log.Errorf("failed to start resource watcher due to: %v", err)
 			return
 		}
 		c.watcherStarted = true
 		c.watcherMutex.Unlock()
-		log.Infof("watcher successfully started. waiting for events...")
+		log.Infof("watcher for [%s] successfully started. waiting for events...", c.config.gvr)
 
 		c.processEvents(ch)
 	} else {
@@ -134,28 +155,23 @@ func (c *fluxPlugInCache) startHelmRepositoryWatcher() {
 		log.Infof("watcher already started. exiting...")
 	}
 	// we should never reach here under normal usage
-	log.Warningf("-fluxv2 startHelmRepositoryWatcher")
+	log.Warningf("+ResourceWatcherCache startResourceWatcher")
 }
 
-func (c *fluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, error) {
+func (c *ResourceWatcherCache) newResourceWatcherChan() (<-chan watch.Event, error) {
 	// TODO this is a temp hack to get around the fact that the only clientGetter we've got today
 	// always expects authorization Bearer token in the context
 	ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 		"authorization": []string{"Bearer kaka"},
 	})
 
-	_, dynamicClient, err := c.clientGetter(ctx)
+	_, dynamicClient, err := c.config.clientGetter(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	repositoriesResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmRepositories,
-	}
-
-	watcher, err := dynamicClient.Resource(repositoriesResource).Namespace("").Watch(ctx, metav1.ListOptions{})
+	// this will start a watcher on all namespaces
+	watcher, err := dynamicClient.Resource(c.config.gvr).Namespace("").Watch(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +180,7 @@ func (c *fluxPlugInCache) newHelmRepositoryWatcherChan() (<-chan watch.Event, er
 }
 
 // this is an infinite loop that waits for new events and processes them when they happen
-func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
+func (c *ResourceWatcherCache) processEvents(ch <-chan watch.Event) {
 	for {
 		event := <-ch
 		if event.Type == "" {
@@ -172,162 +188,162 @@ func (c *fluxPlugInCache) processEvents(ch <-chan watch.Event) {
 			continue
 		}
 		log.Infof("got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
-		if event.Type == watch.Added || event.Type == watch.Modified {
+		switch event.Type {
+		case watch.Added, watch.Modified, watch.Deleted:
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
 				log.Errorf("Could not cast to unstructured.Unstructured")
 			} else {
-				go c.onAddOrModifyRepo(unstructuredRepo.Object)
+				if event.Type == watch.Added {
+					go c.onAddOrModify(true, unstructuredRepo.Object)
+				} else if event.Type == watch.Modified {
+					go c.onAddOrModify(false, unstructuredRepo.Object)
+				} else {
+					go c.onDelete(unstructuredRepo.Object)
+				}
 			}
-		} else if event.Type == watch.Deleted {
-			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
-			if !ok {
-				log.Errorf("Could not cast to unstructured.Unstructured")
-			} else {
-				go c.onDeleteRepo(unstructuredRepo.Object)
-			}
-		} else {
-			// TODO handle other kinds of events
+		default:
+			// TODO (gfichtenholt) handle other kinds of events?
 			log.Errorf("got unexpected event: %v", event)
 		}
 	}
 }
 
 // this is effectively a cache PUT operation
-func (c *fluxPlugInCache) onAddOrModifyRepo(unstructuredRepo map[string]interface{}) {
+func (c *ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) {
 	defer func() {
-		if c.repoEventWaitGroup != nil {
-			c.repoEventWaitGroup.Done()
+		if c.eventProcessingWaitGroup != nil {
+			c.eventProcessingWaitGroup.Done()
 		}
 	}()
 
-	startTime := time.Now()
-
-	key, err := helmRepoRedisKey(unstructuredRepo)
+	key, err := c.redisKeyFor(unstructuredObj)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
 		return
 	}
 
-	// clear that key so cache doesn't contain any stale info for this repo if not ready or
+	// clear that key so cache doesn't contain any stale info for this object if not ready or
 	// indexing or marshalling fails for whatever reason
 	c.redisCli.Del(c.redisCli.Context(), *key)
 
-	ready, err := isRepoReady(unstructuredRepo)
+	var funcName string
+	var value interface{}
+	var setVal bool
+	if add {
+		funcName = "OnAdd"
+		value, setVal, err = c.config.onAdd(*key, unstructuredObj)
+	} else {
+		funcName = "OnModify"
+		value, setVal, err = c.config.onModify(*key, unstructuredObj)
+	}
 	if err != nil {
-		log.Errorf("Failed to process repo %s\ndue to: %v", prettyPrintMap(unstructuredRepo), err)
+		log.Errorf("Invokation of [%s] for object %s\nfailed due to: %v", funcName, prettyPrintMap(unstructuredObj), err)
 		return
 	}
 
-	if ready {
-		packages, err := indexOneRepo(unstructuredRepo)
+	if setVal {
+		// Zero expiration means the key has no expiration time.
+		err = c.redisCli.Set(c.redisCli.Context(), *key, value, 0).Err()
 		if err != nil {
-			log.Errorf("Failed to process repo %s\ndue to: %v", prettyPrintMap(unstructuredRepo), err)
+			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", *key, err)
 			return
+		} else {
+			log.Infof("set value for object with key [%s] in cache", *key)
 		}
-		protoMsg := corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackagesSummaries: packages,
-		}
-		bytes, err := proto.Marshal(&protoMsg)
-		if err != nil {
-			log.Errorf("Failed to marshal due to: %v", err)
-			return
-		}
-
-		err = c.redisCli.Set(c.redisCli.Context(), *key, bytes, 0).Err()
-		if err != nil {
-			log.Errorf("Failed to set value for repository [%s] in cache due to: %v", *key, err)
-			return
-		}
-		duration := time.Since(startTime)
-		log.Infof("Indexed [%d] packages in repo [%s] in [%d] ms", len(packages), *key, duration.Milliseconds())
-	} else {
-		// repo is not quite ready to be indexed - not really an error condition,
-		// just skip it eventually there will be another event when it is in ready state
-		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", *key)
 	}
 }
 
 // this is effectively a cache DEL operation
-func (c *fluxPlugInCache) onDeleteRepo(unstructuredRepo map[string]interface{}) {
+func (c *ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) {
 	defer func() {
-		if c.repoEventWaitGroup != nil {
-			c.repoEventWaitGroup.Done()
+		if c.eventProcessingWaitGroup != nil {
+			c.eventProcessingWaitGroup.Done()
 		}
 	}()
 
-	key, err := helmRepoRedisKey(unstructuredRepo)
+	key, err := c.redisKeyFor(unstructuredObj)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
 		return
 	}
 
-	err = c.redisCli.Del(c.redisCli.Context(), *key).Err()
+	delete, err := c.config.onDelete(*key, unstructuredObj)
 	if err != nil {
-		log.Errorf("Failed to delete value for repository [%s] in cache due to: %v", *key, err)
+		log.Errorf("Invokation of 'onDelete' for object %s\nfailed due to: %v", prettyPrintMap(unstructuredObj), err)
+		return
+	}
+
+	if delete {
+		err = c.redisCli.Del(c.redisCli.Context(), *key).Err()
+		if err != nil {
+			log.Errorf("Failed to delete value for object [%s] from cache due to: %v", *key, err)
+		}
 	}
 }
 
 // this is effectively a cache GET operation
-func (c *fluxPlugInCache) packageSummariesForRepo(unstucturedRepo map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
-	startTime := time.Now()
-
-	key, err := helmRepoRedisKey(unstucturedRepo)
-	if err != nil {
+func (c *ResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
+	// read back from cache: should be what we previously wrote or Redis.Nil
+	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
+	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
+	// The limitation here is caused by the fact that redis go client does not offer a
+	// generic Get() method that would work with interface{}. Instead, all results are returned as
+	// strings which can be converted to desired types as needed, e.g.
+	// redisCli.Get(ctx, key).Bytes() first gets the string and then converts it to bytes.
+	bytes, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
+	if err == redis.Nil {
+		// this is normal if the key does not exist
+		return nil, nil
+	} else if err != nil {
+		log.Errorf("Failed to get value for key [%s] from cache due to: %v", key, err)
 		return nil, err
 	}
 
-	// read back from cache: should be bytes we previously wrote or Redis.Nil
-	bytes, err := c.redisCli.Get(c.redisCli.Context(), *key).Bytes()
-	if err == redis.Nil {
-		// this is normal if the key does not exist
-		return []*corev1.AvailablePackageSummary{}, nil
-	} else if err != nil {
-		log.Errorf("Failed to get value for [%s] from cache due to: %v", *key, err)
-		return []*corev1.AvailablePackageSummary{}, nil
+	val, err := c.config.onGet(key, bytes)
+	if err != nil {
+		log.Errorf("Invokation of 'onGet' for object with key [%s]\nfailed due to: %v", key, err)
+		return nil, err
 	}
 
-	var protoMsg corev1.GetAvailablePackageSummariesResponse
-	err = proto.Unmarshal(bytes, &protoMsg)
-	if err != nil {
-		log.Errorf("Failed to unmarshal bytes for [%s] in cache due to: %v", *key, err)
-		return []*corev1.AvailablePackageSummary{}, nil
-	}
-	duration := time.Since(startTime)
-	log.Infof("Unmarshalled [%d] packages for: [%s] in [%d] ms",
-		len(protoMsg.AvailablePackagesSummaries), *key, duration.Milliseconds())
-	return protoMsg.AvailablePackagesSummaries, nil
+	//log.Infof("Fetched value for key [%s]: %v", key, val)
+	return val, nil
 }
 
 const (
-	// max number of concurrent workers reading repo index at the same time
+	// max number of concurrent workers reading results for fetch() at the same time
 	maxWorkers = 10
 )
 
-type fetchRepoJob struct {
-	unstructuredRepo map[string]interface{}
+type fetchValueJob struct {
+	key string
 }
 
-type fetchRepoJobResult struct {
-	packages []*corev1.AvailablePackageSummary
-	Error    error
+type fetchValueJobResult struct {
+	result interface{}
+	err    error
 }
 
-// each repo is read in a separate go routine (lightweight thread of execution)
-func (c *fluxPlugInCache) fetchPackageSummaries(repoItems []unstructured.Unstructured) ([]*corev1.AvailablePackageSummary, error) {
-	responsePackages := []*corev1.AvailablePackageSummary{}
+// each object is read from redis in a separate go routine (lightweight thread of execution)
+// listItems is a list of unstructured objects.
+// TODO 1 (gfichtenholt) all we really need is the list of keys, so we should have a flavor of this func
+// that accepts that
+// TODO 2 (gfichtenholt) the result should really be a map[string]interface{}, i.e. map with keys
+// instead of []interface{}
+func (c *ResourceWatcherCache) fetchCachedObjects(requestItems []unstructured.Unstructured) ([]interface{}, error) {
+	responseItems := make([]interface{}, 0)
 	var wg sync.WaitGroup
-	workers := int(math.Min(float64(len(repoItems)), float64(maxWorkers)))
-	requestChan := make(chan fetchRepoJob, workers)
-	responseChan := make(chan fetchRepoJobResult, workers)
+	numWorkers := int(math.Min(float64(len(requestItems)), float64(maxWorkers)))
+	requestChan := make(chan fetchValueJob, numWorkers)
+	responseChan := make(chan fetchValueJobResult, numWorkers)
 
 	// Process only at most maxWorkers at a time
-	for i := 0; i < workers; i++ {
+	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			for job := range requestChan {
-				packages, err := c.packageSummariesForRepo(job.unstructuredRepo)
-				responseChan <- fetchRepoJobResult{packages, err}
+				result, err := c.fetchForOne(job.key)
+				responseChan <- fetchValueJobResult{result, err}
 			}
 			wg.Done()
 		}()
@@ -338,42 +354,52 @@ func (c *fluxPlugInCache) fetchPackageSummaries(repoItems []unstructured.Unstruc
 	}()
 
 	go func() {
-		for _, repoItem := range repoItems {
-			requestChan <- fetchRepoJob{repoItem.Object}
+		for _, item := range requestItems {
+			key, err := c.redisKeyFor(item.Object)
+			if err != nil {
+				log.Errorf("Failed to get redis key due to: %v", err)
+			} else {
+				requestChan <- fetchValueJob{*key}
+			}
 		}
 		close(requestChan)
 	}()
 
 	// Start receiving results
-	for res := range responseChan {
-		if res.Error == nil {
-			responsePackages = append(responsePackages, res.packages...)
+	for resp := range responseChan {
+		if resp.err == nil {
+			// resp.result may be nil when there is a cache miss
+			if resp.result != nil {
+				responseItems = append(responseItems, resp.result)
+			}
 		} else {
-			log.Errorf("%v", res.Error)
+			log.Errorf("%v", resp.err)
 		}
 	}
-	return responsePackages, nil
+	return responseItems, nil
 }
 
-func helmRepoRedisKey(unstructuredRepo map[string]interface{}) (*string, error) {
-	name, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "name")
+// TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
+// for generating a cache key given an object
+func (c *ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{}) (*string, error) {
+	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on HelmRepository: %v:\n%s",
+		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on: %v:\n%s",
 			err,
-			prettyPrintMap(unstructuredRepo))
+			prettyPrintMap(unstructuredObj))
 	}
 
-	namespace, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "namespace")
+	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field metadata.namespace not found on HelmRepository: %v:\n%s",
+		return nil, status.Errorf(codes.Internal, "required field metadata.namespace not found on: %v:\n%s",
 			err,
-			prettyPrintMap(unstructuredRepo))
+			prettyPrintMap(unstructuredObj))
 	}
 
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	s := fmt.Sprintf("%s:%s:%s", fluxHelmRepository, namespace, name)
+	s := fmt.Sprintf("%s:%s:%s", c.config.gvr.Resource, namespace, name)
 	return &s, nil
 }

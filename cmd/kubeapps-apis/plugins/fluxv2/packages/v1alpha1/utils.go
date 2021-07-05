@@ -15,6 +15,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
@@ -23,6 +24,7 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	log "k8s.io/klog/v2"
@@ -46,6 +48,8 @@ func prettyPrintMap(m map[string]interface{}) string {
 }
 
 func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
+	startTime := time.Now()
+
 	repo, err := newPackageRepository(unstructuredRepo)
 	if err != nil {
 		return nil, err
@@ -107,6 +111,9 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailableP
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
+	duration := time.Since(startTime)
+	log.Infof("Indexed [%d] packages in repository [%s] in [%d] ms", len(responsePackages), repo.Name, duration.Milliseconds())
+
 	return responsePackages, nil
 }
 
@@ -134,4 +141,51 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 		Namespace: namespace,
 		Url:       url,
 	}, nil
+}
+
+// implements plug-in specific cache-related functionality
+// onAddOrModifyRepo essentially tells the cache what to store for a given key
+func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
+	ready, err := isRepoReady(unstructuredRepo)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if ready {
+		packages, err := indexOneRepo(unstructuredRepo)
+		if err != nil {
+			return nil, false, err
+		}
+		protoMsg := corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackagesSummaries: packages,
+		}
+		bytes, err := proto.Marshal(&protoMsg)
+		if err != nil {
+			return nil, false, err
+		}
+		return bytes, true, nil
+	} else {
+		// repo is not quite ready to be indexed - not really an error condition,
+		// just skip it eventually there will be another event when it is in ready state
+		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
+		return nil, false, nil
+	}
+}
+
+func onGetRepo(key string, value interface{}) (interface{}, error) {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
+	}
+
+	var protoMsg corev1.GetAvailablePackageSummariesResponse
+	err := proto.Unmarshal(bytes, &protoMsg)
+	if err != nil {
+		return nil, err
+	}
+	return protoMsg.AvailablePackagesSummaries, nil
+}
+
+func onDeleteRepo(key string, unstructuredRepo map[string]interface{}) (bool, error) {
+	return true, nil
 }
