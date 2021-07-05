@@ -109,6 +109,7 @@ yarn upgrade
 ```bash
 go mod tidy
 go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
+go get -u ./...
 ```
 
 Then, try to manually update those versions that can be safely upgraded. A useful tool for doing so is [go-mod-upgrade](https://github.com/oligot/go-mod-upgrade).
