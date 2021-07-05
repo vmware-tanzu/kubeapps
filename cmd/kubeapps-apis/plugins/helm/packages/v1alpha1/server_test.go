@@ -43,56 +43,11 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-const globalPackagingNamespace = "kubeapps"
-
-var chartOK = &models.Chart{
-	Name:        "foo",
-	ID:          "foo/bar",
-	Category:    "cat1",
-	Description: "best chart",
-	Icon:        "foo.bar/icon.svg",
-	Repo: &models.Repo{
-		Name:      "bar",
-		Namespace: "my-ns",
-	},
-	Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
-	ChartVersions: []models.ChartVersion{
-		{Version: "3.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-		{Version: "2.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-		{Version: "1.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-	},
-}
-
-var availablePackageSummaryOK = &corev1.AvailablePackageSummary{
-	DisplayName:      "foo",
-	LatestPkgVersion: "3.0.0",
-	IconUrl:          "foo.bar/icon.svg",
-	ShortDescription: "best chart",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Context:    &corev1.Context{Namespace: "my-ns"},
-		Identifier: "foo/bar",
-		Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
-	},
-}
-
-var availablePackageDetailOK = &corev1.AvailablePackageDetail{
-	Name:             "foo",
-	DisplayName:      "foo",
-	IconUrl:          "foo.bar/icon.svg",
-	ShortDescription: "best chart",
-	LongDescription:  "",
-	PkgVersion:       "3.0.0",
-	AppVersion:       "1.0.0",
-	Readme:           "chart readme",
-	DefaultValues:    "chart values",
-	ValuesSchema:     "chart schema",
-	Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Context:    &corev1.Context{Namespace: "my-ns"},
-		Identifier: "foo/bar",
-		Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
-	},
-}
+const (
+	globalPackagingNamespace = "kubeapps"
+	DefaultChartDescription  = "default chart description"
+	DefaultChartIconURL      = "https://example.com/chart.svg"
+)
 
 func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) {
 	var manager utils.AssetManager
@@ -421,6 +376,33 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 	}
 }
 
+func makeChart(chart_name, repo_name, namespace string, chart_versions []string) *models.Chart {
+	ch := &models.Chart{
+		Name:        chart_name,
+		ID:          fmt.Sprintf("%s/%s", repo_name, chart_name),
+		Category:    "cat1",
+		Description: DefaultChartDescription,
+		Icon:        DefaultChartIconURL,
+		Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
+		Repo: &models.Repo{
+			Name:      repo_name,
+			Namespace: namespace,
+		},
+	}
+	versions := []models.ChartVersion{}
+	for _, v := range chart_versions {
+		versions = append(versions, models.ChartVersion{
+			Version:    v,
+			AppVersion: "1.0.0",
+			Readme:     "chart readme",
+			Values:     "chart values",
+			Schema:     "chart schema",
+		})
+	}
+	ch.ChartVersions = versions
+	return ch
+}
+
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	// Creating the dynamic client
 	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
@@ -454,6 +436,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name             string
 		charts           []*models.Chart
+		expectDBQuery    bool
 		expectedPackages []*corev1.AvailablePackageSummary
 		statusCode       codes.Code
 		request          *corev1.GetAvailablePackageSummariesRequest
@@ -472,38 +455,17 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 			},
+			expectDBQuery: true,
 			charts: []*models.Chart{
-				{
-					Name: "chart-1",
-					ID:   "repo-1/chart-1",
-					Repo: &models.Repo{
-						Name:      "repo-1",
-						Namespace: "my-ns",
-					},
-					ChartVersions: []models.ChartVersion{
-						{
-							Version: "3.0.0",
-						},
-					},
-				},
-				{
-					Name: "chart-2",
-					ID:   "repo-1/chart-2",
-					Repo: &models.Repo{
-						Name:      "repo-1",
-						Namespace: "my-ns",
-					},
-					ChartVersions: []models.ChartVersion{
-						{
-							Version: "2.0.0",
-						},
-					},
-				},
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					DisplayName:      "chart-1",
 					LatestPkgVersion: "3.0.0",
+					IconUrl:          DefaultChartIconURL,
+					ShortDescription: DefaultChartDescription,
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    &corev1.Context{Namespace: "my-ns"},
 						Identifier: "repo-1/chart-1",
@@ -513,6 +475,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				{
 					DisplayName:      "chart-2",
 					LatestPkgVersion: "2.0.0",
+					IconUrl:          DefaultChartIconURL,
+					ShortDescription: DefaultChartDescription,
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    &corev1.Context{Namespace: "my-ns"},
 						Identifier: "repo-1/chart-2",
@@ -535,38 +499,17 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "my-ns",
 				},
 			},
+			expectDBQuery: true,
 			charts: []*models.Chart{
-				{
-					Name: "chart-1",
-					ID:   "repo-1/chart-1",
-					Repo: &models.Repo{
-						Name:      "repo-1",
-						Namespace: "my-ns",
-					},
-					ChartVersions: []models.ChartVersion{
-						{
-							Version: "3.0.0",
-						},
-					},
-				},
-				{
-					Name: "chart-2",
-					ID:   "repo-1/chart-2",
-					Repo: &models.Repo{
-						Name:      "repo-1",
-						Namespace: "my-ns",
-					},
-					ChartVersions: []models.ChartVersion{
-						{
-							Version: "2.0.0",
-						},
-					},
-				},
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					DisplayName:      "chart-1",
 					LatestPkgVersion: "3.0.0",
+					IconUrl:          DefaultChartIconURL,
+					ShortDescription: DefaultChartDescription,
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    &corev1.Context{Namespace: "my-ns"},
 						Identifier: "repo-1/chart-1",
@@ -576,6 +519,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				{
 					DisplayName:      "chart-2",
 					LatestPkgVersion: "2.0.0",
+					IconUrl:          DefaultChartIconURL,
+					ShortDescription: DefaultChartDescription,
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    &corev1.Context{Namespace: "my-ns"},
 						Identifier: "repo-1/chart-2",
@@ -597,9 +542,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "",
 				},
 			},
-			charts:           []*models.Chart{{Name: "foo"}},
-			expectedPackages: []*corev1.AvailablePackageSummary{},
-			statusCode:       codes.Unimplemented,
+			expectDBQuery: false,
+			charts:        []*models.Chart{},
+			statusCode:    codes.Unimplemented,
 		},
 		{
 			name: "it returns an internal error status if response does not contain version",
@@ -610,12 +555,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
+					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
 			},
-			charts:           []*models.Chart{{Name: "foo"}},
-			expectedPackages: []*corev1.AvailablePackageSummary{},
-			statusCode:       codes.Internal,
+			expectDBQuery: true,
+			charts:        []*models.Chart{makeChart("chart-1", "repo-1", "my-ns", []string{})},
+			statusCode:    codes.Internal,
 		},
 		{
 			name: "it returns an unauthenticated status if the user doesn't have permissions",
@@ -629,6 +575,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "my-ns",
 				},
 			},
+			expectDBQuery:    false,
 			charts:           []*models.Chart{{Name: "foo"}},
 			expectedPackages: []*corev1.AvailablePackageSummary{},
 			statusCode:       codes.Unauthenticated,
@@ -646,7 +593,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				}
 				rows.AddRow(string(chartJSON))
 			}
-			if tc.statusCode != codes.Unauthenticated {
+			if tc.expectDBQuery {
 				// Checking if the WHERE condtion is properly applied
 				mock.ExpectQuery("SELECT info FROM").
 					WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
@@ -664,6 +611,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
 		})
 	}
 }
@@ -676,9 +627,26 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 		statusCode codes.Code
 	}{
 		{
-			name:       "it returns AvailablePackageDetail if the chart is correct",
-			chart:      chartOK,
-			expected:   availablePackageDetailOK,
+			name:  "it returns AvailablePackageDetail if the chart is correct",
+			chart: makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}),
+			expected: &corev1.AvailablePackageDetail{
+				Name:             "foo",
+				DisplayName:      "foo",
+				IconUrl:          DefaultChartIconURL,
+				ShortDescription: DefaultChartDescription,
+				LongDescription:  "",
+				PkgVersion:       "3.0.0",
+				AppVersion:       "1.0.0",
+				Readme:           "chart readme",
+				DefaultValues:    "chart values",
+				ValuesSchema:     "chart schema",
+				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "repo-1/foo",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
 			statusCode: codes.OK,
 		},
 		{
@@ -745,7 +713,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		name             string
 		charts           []*models.Chart
 		requestedVersion string
-		expectedVersion  string
 		expectedPackage  *corev1.AvailablePackageDetail
 		statusCode       codes.Code
 		request          *corev1.GetAvailablePackageDetailRequest
@@ -764,10 +731,26 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "foo/bar",
 				},
 			},
-			expectedVersion: availablePackageDetailOK.PkgVersion,
-			charts:          []*models.Chart{chartOK},
-			expectedPackage: availablePackageDetailOK,
-			statusCode:      codes.OK,
+			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"})},
+			expectedPackage: &corev1.AvailablePackageDetail{
+				Name:             "foo",
+				DisplayName:      "foo",
+				IconUrl:          DefaultChartIconURL,
+				ShortDescription: DefaultChartDescription,
+				LongDescription:  "",
+				PkgVersion:       "3.0.0",
+				AppVersion:       "1.0.0",
+				Readme:           "chart readme",
+				DefaultValues:    "chart values",
+				ValuesSchema:     "chart schema",
+				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "repo-1/foo",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
 		},
 		{
 			name: "it returns an availablePackageDetail from the database (specific version)",
@@ -783,10 +766,26 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 			},
 			requestedVersion: "1.0.0",
-			expectedVersion:  "1.0.0",
-			charts:           []*models.Chart{chartOK},
-			expectedPackage:  availablePackageDetailOK,
-			statusCode:       codes.OK,
+			charts:           []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			expectedPackage: &corev1.AvailablePackageDetail{
+				Name:             "foo",
+				DisplayName:      "foo",
+				IconUrl:          DefaultChartIconURL,
+				ShortDescription: DefaultChartDescription,
+				LongDescription:  "",
+				PkgVersion:       "1.0.0",
+				AppVersion:       "1.0.0",
+				Readme:           "chart readme",
+				DefaultValues:    "chart values",
+				ValuesSchema:     "chart schema",
+				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "repo-1/foo",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
 		},
 		{
 			name: "it returns an internal error status if the chart is invalid",
@@ -801,7 +800,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "foo/bar",
 				},
 			},
-			expectedVersion: availablePackageDetailOK.PkgVersion,
 			charts:          []*models.Chart{{Name: "foo"}},
 			expectedPackage: &corev1.AvailablePackageDetail{},
 			statusCode:      codes.Internal,
@@ -845,9 +843,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			currentExpectedPackage := tc.expectedPackage
-			currentExpectedPackage.PkgVersion = tc.expectedVersion
-
 			rows := sqlmock.NewRows([]string{"info"})
 
 			for _, chart := range tc.charts {
@@ -868,9 +863,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
 				},
-			}
-			if tc.requestedVersion != "" {
-				req.PkgVersion = tc.requestedVersion
+				PkgVersion: tc.requestedVersion,
 			}
 			availablePackageDetails, err := tc.server.GetAvailablePackageDetail(context.Background(), req)
 
@@ -880,9 +873,14 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			if tc.statusCode == codes.OK {
 				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
-				if got, want := availablePackageDetails.AvailablePackageDetail, currentExpectedPackage; !cmp.Equal(got, want, opt1) {
+				if got, want := availablePackageDetails.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
 	}
