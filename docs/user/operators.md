@@ -19,7 +19,7 @@ Follow the instructions to install the latest OLM version. For example:
 ```bash
 curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.17.0/install.sh -o install.sh
 chmod +x install.sh
-./install.sh 0.17.0
+./install.sh 0.18.2
 ```
 
 Note that you will need special permissions to manage Operators. If you receive a Forbidden error, apply the following ClusterRole to your admin user:
