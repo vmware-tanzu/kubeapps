@@ -72,6 +72,11 @@ message GetAvailablePackageSummariesRequest {
 
   // The filters used for the request
   FilterOptions filter_options = 2;
+
+  // PaginationOptions
+  //
+  // Pagination options specifying where to start and how many results to include.
+  PaginationOptions pagination_options = 3;
 }
 
 // GetAvailablePackageDetailRequest
@@ -118,6 +123,12 @@ message GetAvailablePackageSummariesResponse {
   //
   // List of AvailablePackageSummary
   repeated AvailablePackageSummary available_packages_summaries = 1;
+
+  // Next page token
+  //
+  // This field represents the pagination token to retrieve the next page of
+  // results. If the value is "", it means no further results for the request.
+  string next_page_token = 2;
 }
 
 // GetAvailablePackageDetailResponse
@@ -410,3 +421,28 @@ message Maintainer {
     // Packaged app version for the request
     string app_version = 5;
   };
+
+// PaginationOptions
+//
+// The PaginationOptions based on the example proto at:
+// https://cloud.google.com/apis/design/design_patterns#list_pagination
+// just encapsulated in a message so it can be reused on different request messages.
+message PaginationOptions {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+
+  // Page token
+  //
+  // The client uses this field to request a specific page of the list results.
+  string page_token = 1;
+
+  // Page size
+  //
+  // Clients use this field to specify the maximum number of results to be
+  // returned by the server. The server may further constrain the maximum number
+  // of results returned in a single page. If the page_size is 0, the server
+  // will decide the number of results to be returned.
+  int32 page_size = 2;
+}

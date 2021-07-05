@@ -199,14 +199,14 @@ func TestIsValidChart(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "it returns true if the chart is correct",
-			in:       chartOK,
-			expected: true,
-		},
-		{
-			name: "it returns true if the minimum chart is correct",
+			name: "it returns true if the chart name, ID, repo and versions are specified",
 			in: &models.Chart{
 				Name: "foo",
+				ID:   "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
 				ChartVersions: []models.ChartVersion{
 					{
 						Version: "3.0.0",
@@ -216,9 +216,55 @@ func TestIsValidChart(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "it returns false if the chart name is missing",
+			in: &models.Chart{
+				ID: "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if the chart ID is missing",
+			in: &models.Chart{
+				Name: "foo",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if the chart repo is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
 			name: "it returns false if the ChartVersions are missing",
 			in: &models.Chart{
 				Name: "foo",
+				ID:   "foo/bar",
 			},
 			expected: false,
 		},
@@ -226,6 +272,7 @@ func TestIsValidChart(t *testing.T) {
 			name: "it returns false if a ChartVersions.Version is missing",
 			in: &models.Chart{
 				Name: "foo",
+				ID:   "foo/bar",
 				ChartVersions: []models.ChartVersion{
 					{Version: "3.0.0"},
 					{AppVersion: "3.0.0"},
@@ -237,6 +284,11 @@ func TestIsValidChart(t *testing.T) {
 			name: "it returns true if the minimum (+maintainer) chart is correct",
 			in: &models.Chart{
 				Name: "foo",
+				ID:   "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
 				ChartVersions: []models.ChartVersion{
 					{
 						Version: "3.0.0",
@@ -250,6 +302,7 @@ func TestIsValidChart(t *testing.T) {
 			name: "it returns false if a Maintainer.Name is missing",
 			in: &models.Chart{
 				Name: "foo",
+				ID:   "foo/bar",
 				ChartVersions: []models.ChartVersion{
 					{
 						Version: "3.0.0",
@@ -281,9 +334,61 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 		statusCode codes.Code
 	}{
 		{
-			name:       "it returns AvailablePackageSummary if the chart is correct",
-			in:         chartOK,
-			expected:   availablePackageSummaryOK,
+			name: "it returns a complete AvailablePackageSummary for a complete chart",
+			in: &models.Chart{
+				Name:        "foo",
+				ID:          "foo/bar",
+				Category:    "cat1",
+				Description: "best chart",
+				Icon:        "foo.bar/icon.svg",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
+				ChartVersions: []models.ChartVersion{
+					{Version: "3.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+					{Version: "2.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+					{Version: "1.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+				},
+			},
+			expected: &corev1.AvailablePackageSummary{
+				DisplayName:      "foo",
+				LatestPkgVersion: "3.0.0",
+				IconUrl:          "foo.bar/icon.svg",
+				ShortDescription: "best chart",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it returns a valid AvailablePackageSummary if the minimal chart is correct",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: &corev1.AvailablePackageSummary{
+				DisplayName:      "foo",
+				LatestPkgVersion: "3.0.0",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
 			statusCode: codes.OK,
 		},
 		{
@@ -366,17 +471,56 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				FilterOptions: &corev1.FilterOptions{
-					Query:        "",
-					AppVersion:   "",
-					PkgVersion:   "",
-					Categories:   nil,
-					Repositories: nil,
+			},
+			charts: []*models.Chart{
+				{
+					Name: "chart-1",
+					ID:   "repo-1/chart-1",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "3.0.0",
+						},
+					},
+				},
+				{
+					Name: "chart-2",
+					ID:   "repo-1/chart-2",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "2.0.0",
+						},
+					},
 				},
 			},
-			charts:           []*models.Chart{chartOK},
-			expectedPackages: []*corev1.AvailablePackageSummary{availablePackageSummaryOK},
-			statusCode:       codes.OK,
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "chart-1",
+					LatestPkgVersion: "3.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-1",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+				{
+					DisplayName:      "chart-2",
+					LatestPkgVersion: "2.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-2",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+			},
+			statusCode: codes.OK,
 		},
 		{
 			name: "it returns a set of availablePackageSummary from the database (specific ns)",
@@ -390,17 +534,56 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Cluster:   "",
 					Namespace: "my-ns",
 				},
-				FilterOptions: &corev1.FilterOptions{
-					Query:        "",
-					AppVersion:   "",
-					PkgVersion:   "",
-					Categories:   nil,
-					Repositories: nil,
+			},
+			charts: []*models.Chart{
+				{
+					Name: "chart-1",
+					ID:   "repo-1/chart-1",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "3.0.0",
+						},
+					},
+				},
+				{
+					Name: "chart-2",
+					ID:   "repo-1/chart-2",
+					Repo: &models.Repo{
+						Name:      "repo-1",
+						Namespace: "my-ns",
+					},
+					ChartVersions: []models.ChartVersion{
+						{
+							Version: "2.0.0",
+						},
+					},
 				},
 			},
-			charts:           []*models.Chart{chartOK},
-			expectedPackages: []*corev1.AvailablePackageSummary{availablePackageSummaryOK},
-			statusCode:       codes.OK,
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "chart-1",
+					LatestPkgVersion: "3.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-1",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+				{
+					DisplayName:      "chart-2",
+					LatestPkgVersion: "2.0.0",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    &corev1.Context{Namespace: "my-ns"},
+						Identifier: "repo-1/chart-2",
+						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					},
+				},
+			},
+			statusCode: codes.OK,
 		},
 		{
 			name: "it returns a unimplemented status if no namespaces is provided",
