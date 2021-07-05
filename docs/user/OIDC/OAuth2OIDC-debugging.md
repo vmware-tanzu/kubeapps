@@ -13,7 +13,7 @@ Once the deployment runs a new container with the extra option, Kubeapps will th
 
 To view the token, in your browser debugger's Network tab, watch for the request to `/api/clusters/default` or similar which will have a 40X status. Click on this request to view the headers and in the Response headers look for the `Authorization` header. The bearer token of the value will be the base64-encoded `id_token`. Copy the token as shown:
 
-![Copying the bearer token](../img/oidc-debug-copy-bearer-token.png)
+![Copying the bearer token](../../img/oidc-debug-copy-bearer-token.png)
 
 ## Testing the JWT Token directly with your Kubernetes cluster
 

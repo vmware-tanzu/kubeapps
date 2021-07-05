@@ -32,19 +32,31 @@ For Kubeapps to use an Identity Provider it's necessary to configure at least th
 
 ## Configuration
 
-Kubeapps uses [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) to handle the OAuth2/OpenIDConnect authentication. The following sections explain how you can find the parameters above for some of the identity providers tested. If you have configured your cluster to use an Identity Provider you will already know some of these parameters. More detailed information can be found on the [OAuth2 Proxy Auth configuration page](https://oauth2-proxy.github.io/oauth2-proxy/auth-configuration).
+Kubeapps uses [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) to handle the OAuth2/OpenIDConnect authentication. The following sections explain how you can find the parameters above for some of the identity providers tested. If you have configured your cluster to use an Identity Provider you will already know some of these parameters. More detailed information can be found on the [OAuth2 Proxy Auth configuration page](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview).
 
-- [VMware Cloud Services](./OAuth2OIDC-VMware-cloud-services.md)
-- [Azure Active Directory](./OAuth2OIDC-azure-active-directory.md)
-- [Google OpenID Connect](./OAuth2OIDC-google-openid-connect.md)
-- [Keycloak](./OAuth2OIDC-keycloak.md)
-- [Dex](OAuth2OIDC-dex.md)
-- [Oauth2-proxy](./OAuth2OIDC-oauth2-proxy.md)
+- [VMware Cloud Services](./OIDC/OAuth2OIDC-VMware-cloud-services.md)
+- [Azure Active Directory](./OIDC/OAuth2OIDC-azure-active-directory.md)
+- [Google OpenID Connect](./OIDC/OAuth2OIDC-google-openid-connect.md)
+- [Keycloak](./OIDC/OAuth2OIDC-keycloak.md)
+- [Dex](./OIDC/OAuth2OIDC-dex.md)
 
 For a complete worked example of this process on a specific Kubernetes environment, one of the Kubeapps developers has written a series detailing the installation of [Kubeapps on a set of VMware TKG clusters with OpenID Connect](https://liveandletlearn.net/post/kubeapps-on-tkg-management-cluster/).
+
+## Deploying an auth proxy to access Kubeapps
+
+The main difference in the authentication is that instead of accessing the Kubeapps service, we will be accessing an oauth2 proxy service that is in charge of authenticating users with the identity provider and injecting the required credentials in the requests to Kubeapps. 
+
+There are a number of available solutions for this use-case, like [keycloak-gatekeeper](https://github.com/keycloak/keycloak-gatekeeper) and [oauth2_proxy](https://github.com/oauth2-proxy/oauth2-proxy). For this guide we will use `oauth2_proxy` since it supports both OIDC and plain OAuth2 for many providers.
+
+Once the proxy is accessible, you will be redirected to the identity provider to authenticate. After successfully authenticating, you will be redirected to Kubeapps and be authenticated with your user's OIDC token.
+
+The next sections explain how you can deploy this proxy either using the Kubeapps chart or manually:
+
+- [Using Kubeapps chart](./OIDC/OAuth2OIDC-oauth2-proxy.md#using-the-chart)
+- [Manual deployment](./OIDC/OAuth2OIDC-oauth2-proxy.md#manual-deployment)
 
 ## Troubleshoothing
 
 If you find after configuring your OIDC/OAuth2 setup following the above instructions, that although you can successfully authenticate with your provider you are nonetheless unable to login to Kubeapps but instead see a 403 or 401 request in the browser's debugger, then you will need to investigate _why_ the Kubernetes cluster is not accepting your credential. 
 
-Visit the [debugging auth failures when using OIDC](./OAuth2OIDC-debugging.md) section for more information.
+Visit the [debugging auth failures when using OIDC](./OIDC/OAuth2OIDC-debugging.md) page for more information.

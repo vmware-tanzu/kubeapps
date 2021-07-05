@@ -1,11 +1,13 @@
-# VMware Cloud Services
+# Configuring VMware Cloud Services as an OIDC provider
 
-Note: there is a [more detailed guide on how to use VMware Cloud Services in this document](../step-by-step/kubeapps-on-tkg/step-1.md#step-12-configure-an-oidc-provider).
+This document explains how to configure VMware Cloud Services as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../using-an-OIDC-provider.md)).
+
+> **_Note:_** there is a [more detailed guide on how to use VMware Cloud Services in this document](../../step-by-step/kubeapps-on-tkg/step-1.md#step-12-configure-an-oidc-provider).
 
 Login to VMware Cloud Services and select the organization which you want to use.
 
 1. Select View Organization (under Organization settings of the org menu),
-   ![Copying the bearer token](../img/csp-view-organization.png)
+   ![Copying the bearer token](../../img/csp-view-organization.png)
 2. Click on the OAuth Apps tab,
 3. Click Create App, select Web App and continue,
 4. Enter a name and description for your OAuth app,
@@ -15,7 +17,7 @@ Login to VMware Cloud Services and select the organization which you want to use
 
 You will now see a dialog with the app id and secret. Click on the Download JSON option as there is other useful info in the JSON.
 
-Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](./using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the production VMware cloud services issuer URL is used in the example below):
+Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](../using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the production VMware cloud services issuer URL is used in the example below):
 
 ```yaml
 kind: ClusterConfiguration
@@ -52,4 +54,4 @@ authProxy:
 Note: VMware Cloud Services has an issuer URL specific to organizations which is required for the Kubeapps auth proxy configuration above, but if you check the [`.well-known/openid-configuration`](https://console-stg.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration) you will see that it identifies a different (parent) issuer, `https://gaz.csp-vidm-prod.com`.
 It is for this reason that the `--skip-oidc-discovery=true` option is required above and we need to manually set each `oidc-issuer`, `login-url`, `redeem-url` and `oidc-jwks-url` instead of relying on the automatic discovery.
 
-Once deployed, if you experience issues logging in, please refer to the [Debugging auth failures when using OIDC](#debugging-auth-failures-when-using-oidc) section below.
+Once deployed, if you experience issues logging in, please refer to the [Debugging auth failures when using OIDC](./OAuth2OIDC-debugging.md) section below.

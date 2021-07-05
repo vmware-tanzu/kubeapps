@@ -1,4 +1,6 @@
-# Azure Active Directory
+# Configuring Azure Active Directory as an OIDC provider
+
+This document explains how to configure Azure Active Directory as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../using-an-OIDC-provider.md)).
 
 ## AKS-managed Azure Active Directory
 
@@ -10,47 +12,47 @@ Please refer to the [official docs](https://docs.microsoft.com/en-us/azure/aks/m
 
 First, you need to verify that you have `AKS-managed Azure Active Directory: Enabled`.
 
-![Enabled AKS-managed Azure Active Directory](../img/azure-00.png)
+![Enabled AKS-managed Azure Active Directory](../../img/azure-00.png)
 
 Then, you have to register an Application. Go to `App registrations` and click on `Register an application`. Enter a `Name` (any name is ok) and a `Redirect URI` (it should be `https://<YOUR_KUBEAPPS_DOMAIN>/oauth2/callback` unless you have manually changed it).
 
 > Replace `<YOUR_KUBEAPPS_DOMAIN>` with your actual Kubeapps domain. Note that you will need to use `https` instead of `http`.
 
-![Registering an Application](../img/azure-01.png)
+![Registering an Application](../../img/azure-01.png)
 
 Once you got your Application created, click `Overview` to see the `Application (client) ID` and the `Directory (tenant) ID`. You will need these values later.
 
-![Application overview](../img/azure-02.png)
+![Application overview](../../img/azure-02.png)
 
 The next step is to create a secret for the Application. Click on `Certificates & secrets` and then on `New client secret`.
 
-![Creating secret screen](../img/azure-03.png)
+![Creating secret screen](../../img/azure-03.png)
 
 Fill the `Description` and `Expires` fields according to your preferences.
 
-![Creating the secret](../img/azure-04.png)
+![Creating the secret](../../img/azure-04.png)
 
 Next, the `Value` of the secret will appear and you will be able to copy it. You will need this value later.
 
-![Retrieving the secret value](../img/azure-05.png)
+![Retrieving the secret value](../../img/azure-05.png)
 
 The following step is to define the permissions that the Application will need. To do so, go to `API permissions` and click `Add a permission`.
 
-![Add permissions screen](../img/azure-06.png)
+![Add permissions screen](../../img/azure-06.png)
 
 Then, in the `APIs my organization uses` enter this value `6dae42f8-4368-4678-94ff-3960e28e3630`. This is a fixed Application ID corresponding to the _Azure Kubernetes Service AAD Server_ globally provided by Azure.
 
 > You can also get this Application ID (`6dae42f8-4368-4678-94ff-3960e28e3630`) by executing `az ad sp list --display-name "Azure Kubernetes Service AAD Server"` and inspecting the `appId` value.
 
-![Selecting the permissions](../img/azure-07.png)
+![Selecting the permissions](../../img/azure-07.png)
 
 Next, select the `user.read` permission and click `Add permissions`.
 
-![Selecting user.read permission](../img/azure-08.png)
+![Selecting user.read permission](../../img/azure-08.png)
 
 Then, go to `Manifest` and change `accessTokenAcceptedVersion` from `null` to `2`. It will make the Application generate `v2` tokens instead of `v1`.
 
-![Editing the manifest](../img/azure-09.png)
+![Editing the manifest](../../img/azure-09.png)
 
 At the end of these steps, you will have created an application, generated a secret, granted it with `6dae42f8-4368-4678-94ff-3960e28e3630/user.read` permissions and changed the token version to `v2`. You also will have the following information:
 
