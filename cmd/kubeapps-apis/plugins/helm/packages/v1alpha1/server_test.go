@@ -376,6 +376,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 	}
 }
 
+// makeChart makes a chart with specific input used in the test and default constants for other relevant data.
 func makeChart(chart_name, repo_name, namespace string, chart_versions []string) *models.Chart {
 	ch := &models.Chart{
 		Name:        chart_name,
