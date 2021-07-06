@@ -422,6 +422,7 @@ install_multicluster_deps: &install_multicluster_deps
       helm install dex dex/dex --version 0.5.0 --namespace dex --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
       # Install openldap
+      helm repo add stable https://charts.helm.sh/stable
       kubectl create namespace ldap
       helm install ldap stable/openldap --namespace ldap
 
