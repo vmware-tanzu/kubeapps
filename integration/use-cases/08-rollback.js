@@ -40,22 +40,22 @@ test("Upgrades an application", async () => {
   await new Promise(r => setTimeout(r, 500));
 
   await expect(page).toClick("li", { text: "Changes" });
-  await expect(page).toMatch("replicaCount: 2");
+  await expect(page).toMatch("replicaCount: 2", { timeout: 60000 });
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   // Rollback to the previous revision (default selected value)
+  await page.waitForTimeout(1000)
   await expect(page).toClick("cds-button", { text: "Rollback" });
-
-  await expect(page).toMatch("(current: 2)");
+  await expect(page).toMatch("(current: 2)", { timeout: 60000 });
   await expect(page).toClick("cds-modal-actions cds-button", { text: "Rollback" });
 
 
   // Check revision and rollback to a revision (manual selected value)
   await page.waitForTimeout(1000)
   await expect(page).toClick("cds-button", { text: "Rollback" });
-  await expect(page).toMatch("(current: 3)");
+  await expect(page).toMatch("(current: 3)", { timeout: 60000 });
 
   await expect(page).toSelect("cds-select > select", "1");
   await expect(page).toClick("cds-modal-actions cds-button", { text: "Rollback" });
@@ -63,6 +63,6 @@ test("Upgrades an application", async () => {
   // Check revision
   await page.waitForTimeout(1000)
   await expect(page).toClick("cds-button", { text: "Rollback" });
-  await expect(page).toMatch("(current: 4)");
+  await expect(page).toMatch("(current: 4)", { timeout: 60000 });
 
 });
