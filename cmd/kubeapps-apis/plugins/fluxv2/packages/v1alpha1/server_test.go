@@ -204,7 +204,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, _, _, err := newServerWithReadyRepos(true, tc.repo)
+			s, _, _, err := newServerWithWatcher(true, tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -391,7 +391,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, mock, _, err := newServerWithReadyRepos(false, repos...)
+			s, mock, _, err := newServerWithWatcher(false, repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -455,7 +455,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithReadyRepos(false, repo)
+		s, mock, watcher, err := newServerWithWatcher(false, repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -594,7 +594,7 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithReadyRepos(false, repo)
+		s, mock, watcher, err := newServerWithWatcher(false, repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -824,6 +824,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			chartTarGz: "testdata/redis-14.4.0.tgz",
 			expectedPackageDetail: &corev1.AvailablePackageDetail{
 				// TODO (gfichtenholt) other fields
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				},
 				LongDescription: "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
 			},
 		},
@@ -1086,7 +1092,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClie
 	return s, dynamicClient, mock, nil
 }
 
-func newServerWithReadyRepos(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+func newServerWithWatcher(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	s, dynamicClient, mock, err := newServerWithRepos(repos...)
 	if err != nil {
 		return s, mock, nil, err

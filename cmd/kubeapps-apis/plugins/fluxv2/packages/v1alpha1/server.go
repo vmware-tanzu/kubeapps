@@ -235,7 +235,8 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: &corev1.AvailablePackageDetail{
-			LongDescription: detail[chart.ReadmeKey],
+			AvailablePackageRef: request.AvailablePackageRef, // copy just for now
+			LongDescription:     detail[chart.ReadmeKey],
 		},
 	}, nil
 }
