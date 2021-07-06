@@ -17,7 +17,7 @@ Since Kubeapps 2.0, Operators are available by default. Once you access to the d
 Follow the instructions to install the latest OLM version. For example:
 
 ```bash
-curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.17.0/install.sh -o install.sh
+curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.2/install.sh -o install.sh
 chmod +x install.sh
 ./install.sh 0.18.2
 ```
