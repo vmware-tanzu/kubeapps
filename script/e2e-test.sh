@@ -398,7 +398,7 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 
 ## Run tests
 info "Running Integration tests..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
