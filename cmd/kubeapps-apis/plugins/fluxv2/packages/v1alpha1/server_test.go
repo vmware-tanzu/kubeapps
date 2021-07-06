@@ -361,7 +361,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			repos := []runtime.Object{}
-			httpServers := []*httptest.Server{}
 
 			for _, rs := range tc.testRepos {
 				indexYAMLBytes, err := ioutil.ReadFile(rs.index)
@@ -373,7 +372,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					fmt.Fprintln(w, string(indexYAMLBytes))
 				}))
-				httpServers = append(httpServers, ts)
+				defer ts.Close()
 
 				repoSpec := map[string]interface{}{
 					"url":      rs.url,
@@ -411,10 +410,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
-
-			for _, ts := range httpServers {
-				ts.Close()
 			}
 		})
 	}

@@ -154,7 +154,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 
-	if request != nil && request.Context != nil && request.Context.Cluster != "" {
+	// grpc compiles in getters for you which automatically return a default (empty) struct if the pointer was nil
+	if request != nil && request.GetContext().GetCluster() != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"Not supported yet: request.Context.Cluster: [%v]",

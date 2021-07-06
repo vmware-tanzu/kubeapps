@@ -28,7 +28,6 @@ import (
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesClientGetter) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
-	// TODO (gfichtenholt) return an error when func signature is changed to allow for it
 	svr, err := NewServer(clientGetter)
 	if err != nil {
 		return nil, err

@@ -228,13 +228,18 @@ func (c *ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[strin
 	var funcName string
 	var value interface{}
 	var setVal bool
+	// Define an actual type so you can use it in your interface earlier also, as well as below:
+	type CacheSetter func(string, map[string]interface{}) (interface{}, bool, error)
+
+	var addOrModify CacheSetter
 	if add {
 		funcName = "OnAdd"
-		value, setVal, err = c.config.onAdd(*key, unstructuredObj)
+		addOrModify = c.config.onAdd
 	} else {
 		funcName = "OnModify"
-		value, setVal, err = c.config.onModify(*key, unstructuredObj)
+		addOrModify = c.config.onModify
 	}
+	value, setVal, err = addOrModify(*key, unstructuredObj)
 	if err != nil {
 		log.Errorf("Invokation of [%s] for object %s\nfailed due to: %v", funcName, prettyPrintMap(unstructuredObj), err)
 		return
@@ -340,6 +345,7 @@ func (c *ResourceWatcherCache) fetchCachedObjects(requestItems []unstructured.Un
 		wg.Add(1)
 		go func() {
 			for job := range requestChan {
+				// The following loop will only terminate when the request channel is closed (and there are no more items)
 				result, err := c.fetchForOne(job.key)
 				responseChan <- fetchValueJobResult{result, err}
 			}
@@ -364,6 +370,8 @@ func (c *ResourceWatcherCache) fetchCachedObjects(requestItems []unstructured.Un
 	}()
 
 	// Start receiving results
+	// The following loop will only terminate when the response channel is closed, i.e.
+	// after the all the requests have been processed
 	for resp := range responseChan {
 		if resp.err == nil {
 			// resp.result may be nil when there is a cache miss
