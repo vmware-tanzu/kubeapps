@@ -160,10 +160,8 @@ func (c *ResourceWatcherCache) startResourceWatcher() {
 
 func (c *ResourceWatcherCache) newResourceWatcherChan() (<-chan watch.Event, error) {
 	// TODO this is a temp hack to get around the fact that the only clientGetter we've got today
-	// always expects authorization Bearer token in the context
-	ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
-		"authorization": []string{"Bearer kaka"},
-	})
+	// always expectsan Incoming request with metadata
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD{})
 
 	_, dynamicClient, err := c.config.clientGetter(ctx)
 	if err != nil {
