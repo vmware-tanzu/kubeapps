@@ -26,7 +26,7 @@ parameters:
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.19.10"
+    default: "v1.21.2"
   GITHUB_VERSION:
     type: "string"
     default: "1.12.1"
