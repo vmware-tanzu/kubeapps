@@ -25,8 +25,8 @@
     "@types/react-tabs": "^2.3.2",
     "@types/react-transition-group": "^4.4.1",
     "@types/semver": "^7.3.6",
-    "@types/ws": "^7.4.5",
-    "ajv": "^8.6.0",
+    "@types/ws": "^7.4.6",
+    "ajv": "^8.6.1",
     "axios": "^0.21.1",
     "connected-react-router": "^6.9.1",
     "enzyme-adapter-react-16": "^1.1.1",
@@ -113,7 +113,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.2.24",
+    "@formatjs/cli": "^4.2.25",
     "@types/enzyme": "^3.10.8",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/jest": "^26.0.23",
@@ -124,7 +124,7 @@
     "@types/react-router": "^5.1.15",
     "@types/react-test-renderer": "^17.0.1",
     "@types/redux-mock-store": "^1.0.2",
-    "@types/swagger-ui-react": "^3.35.1",
+    "@types/swagger-ui-react": "^3.35.2",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.2.0",
     "eslint-import-resolver-typescript": "^2.4.0",
