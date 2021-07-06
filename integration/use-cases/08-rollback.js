@@ -25,7 +25,9 @@ test("Upgrades an application", async () => {
 
   // Try to rollback when the app hasn't been upgraded
   await expect(page).toClick("cds-button", { text: "Rollback" });
-  await expect(page).toMatchElement("cds-modal-content p", { text: "The application has not been upgraded, it's not possible to rollback." });
+  await expect(page).toMatchElement("cds-modal-content p", {
+    text: "The application has not been upgraded, it's not possible to rollback.",
+  });
   await expect(page).toClick("cds-button", { text: "Cancel" });
 
   // Upgrade the app to get another revision
@@ -40,29 +42,32 @@ test("Upgrades an application", async () => {
   await new Promise(r => setTimeout(r, 500));
 
   await expect(page).toClick("li", { text: "Changes" });
-  await expect(page).toMatch("replicaCount: 2", { timeout: 60000 });
+  await expect(page).toMatch("replicaCount: 2");
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   // Rollback to the previous revision (default selected value)
-  await page.waitForTimeout(1000)
+  await page.waitForTimeout(1000);
+  await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready" });
   await expect(page).toClick("cds-button", { text: "Rollback" });
-  await expect(page).toMatch("(current: 2)", { timeout: 60000 });
+  await expect(page).not.toMatch("Loading");
+  await expect(page).toMatch("(current: 2)");
   await expect(page).toClick("cds-modal-actions cds-button", { text: "Rollback" });
 
-
   // Check revision and rollback to a revision (manual selected value)
-  await page.waitForTimeout(1000)
+  await page.waitForTimeout(1000);
   await expect(page).toClick("cds-button", { text: "Rollback" });
-  await expect(page).toMatch("(current: 3)", { timeout: 60000 });
+  await expect(page).not.toMatch("Loading");
+  await expect(page).toMatch("(current: 3)");
 
   await expect(page).toSelect("cds-select > select", "1");
   await expect(page).toClick("cds-modal-actions cds-button", { text: "Rollback" });
 
-  // Check revision
-  await page.waitForTimeout(1000)
+  // Check revisions
+  await page.waitForTimeout(1000);
+  await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready" });
   await expect(page).toClick("cds-button", { text: "Rollback" });
-  await expect(page).toMatch("(current: 4)", { timeout: 60000 });
-
+  await expect(page).not.toMatch("Loading");
+  await expect(page).toMatch("(current: 4)");
 });
