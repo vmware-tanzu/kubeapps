@@ -104,14 +104,20 @@ cd dashboard
 yarn upgrade
 ```
 
-- Check the outdated [golang dependencies](../../go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
+- Check the outdated [golang dependencies](../../go.mod) as explained in the Golang documentation on [how to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies).
+  First, clean and tidy up any unused dependencies and list the upgradeable ones.
+  Then, try to manually update those versions that can be safely upgraded. A useful tool for doing so is [go-mod-upgrade](https://github.com/oligot/go-mod-upgrade).
+  Alternatively, you can run the `go get -u ...` command to perform an automatic upgrade.
 
 ```bash
 go mod tidy
 go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
+go-mod-upgrade
+# go get -u -t ./... # upgrades to minor or patch releases
+# go get -u=patch  -t ./... # upgrades just to patch releases
 ```
 
-Then, try to manually update those versions that can be safely upgraded. A useful tool for doing so is [go-mod-upgrade](https://github.com/oligot/go-mod-upgrade).
+> Sometimes, you may face some errors when upgrading. It is likely due to certain version requirements specified at the `replace(...)` statement in the `go.mod` file. For example, some k8s dependencies are not Go modules, so we need to manually set the version. Another reason is when using dependencies that have been renamed (eg., `docker` to `moby`) and some old transitive dependencies haven't updated that name yet.
 
 - Upgrade the [rust dependencies](../../cmd/pinniped-proxy/Cargo.toml) by running:
 
