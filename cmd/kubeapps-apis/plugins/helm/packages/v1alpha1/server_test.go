@@ -404,6 +404,37 @@ func makeChart(chart_name, repo_name, namespace string, chart_versions []string)
 	return ch
 }
 
+// makeChartRowsJSON returns a slice of paginated JSON chart info data.
+func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, pageSize int) []string {
+	// Simulate the pagination by reducing the rows of JSON based on the offset and limit.
+	rowsJSON := []string{}
+	for _, chart := range charts {
+		chartJSON, err := json.Marshal(chart)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		rowsJSON = append(rowsJSON, string(chartJSON))
+	}
+	if len(rowsJSON) == 0 {
+		return rowsJSON
+	}
+
+	if pageToken != "" {
+		pageOffset, err := pageOffsetFromPageToken(pageToken)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		if pageSize == 0 {
+			t.Fatalf("pagesize must be > 0 when using a page token")
+		}
+		rowsJSON = rowsJSON[((pageOffset - 1) * pageSize):]
+	}
+	if pageSize > 0 && pageSize < len(rowsJSON) {
+		rowsJSON = rowsJSON[0:pageSize]
+	}
+	return rowsJSON
+}
+
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	// Creating the dynamic client
 	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
@@ -438,9 +469,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		name             string
 		charts           []*models.Chart
 		expectDBQuery    bool
-		expectedPackages []*corev1.AvailablePackageSummary
 		statusCode       codes.Code
 		request          *corev1.GetAvailablePackageSummariesRequest
+		expectedResponse *corev1.GetAvailablePackageSummariesResponse
 		server           *Server
 	}{
 		{
@@ -461,27 +492,29 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					DisplayName:      "chart-1",
-					LatestPkgVersion: "3.0.0",
-					IconUrl:          DefaultChartIconURL,
-					ShortDescription: DefaultChartDescription,
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context:    &corev1.Context{Namespace: "my-ns"},
-						Identifier: "repo-1/chart-1",
-						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+					{
+						DisplayName:      "chart-1",
+						LatestPkgVersion: "3.0.0",
+						IconUrl:          DefaultChartIconURL,
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-1",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
 					},
-				},
-				{
-					DisplayName:      "chart-2",
-					LatestPkgVersion: "2.0.0",
-					IconUrl:          DefaultChartIconURL,
-					ShortDescription: DefaultChartDescription,
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context:    &corev1.Context{Namespace: "my-ns"},
-						Identifier: "repo-1/chart-2",
-						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					{
+						DisplayName:      "chart-2",
+						LatestPkgVersion: "2.0.0",
+						IconUrl:          DefaultChartIconURL,
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
 					},
 				},
 			},
@@ -505,27 +538,29 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					DisplayName:      "chart-1",
-					LatestPkgVersion: "3.0.0",
-					IconUrl:          DefaultChartIconURL,
-					ShortDescription: DefaultChartDescription,
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context:    &corev1.Context{Namespace: "my-ns"},
-						Identifier: "repo-1/chart-1",
-						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+					{
+						DisplayName:      "chart-1",
+						LatestPkgVersion: "3.0.0",
+						IconUrl:          DefaultChartIconURL,
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-1",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
 					},
-				},
-				{
-					DisplayName:      "chart-2",
-					LatestPkgVersion: "2.0.0",
-					IconUrl:          DefaultChartIconURL,
-					ShortDescription: DefaultChartDescription,
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context:    &corev1.Context{Namespace: "my-ns"},
-						Identifier: "repo-1/chart-2",
-						Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					{
+						DisplayName:      "chart-2",
+						LatestPkgVersion: "2.0.0",
+						IconUrl:          DefaultChartIconURL,
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
 					},
 				},
 			},
@@ -576,29 +611,135 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "my-ns",
 				},
 			},
-			expectDBQuery:    false,
-			charts:           []*models.Chart{{Name: "foo"}},
-			expectedPackages: []*corev1.AvailablePackageSummary{},
-			statusCode:       codes.Unauthenticated,
+			expectDBQuery: false,
+			charts:        []*models.Chart{{Name: "foo"}},
+			statusCode:    codes.Unauthenticated,
+		},
+		{
+			name: "it returns only the requested page of results and includes the next page token",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "2",
+					PageSize:  1,
+				},
+			},
+			expectDBQuery: true,
+			charts: []*models.Chart{
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
+				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+					{
+						DisplayName:      "chart-2",
+						LatestPkgVersion: "2.0.0",
+						IconUrl:          DefaultChartIconURL,
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+				},
+				NextPageToken: "3",
+			},
+		},
+		{
+			name: "it returns the last page without a next page token",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				// Start on page two with two results per page, which in this input
+				// corresponds only to the third chart.
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "2",
+					PageSize:  2,
+				},
+			},
+			expectDBQuery: true,
+			charts: []*models.Chart{
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
+				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+					{
+						DisplayName:      "chart-3",
+						LatestPkgVersion: "1.0.0",
+						IconUrl:          DefaultChartIconURL,
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-3",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "it returns an invalid argument error if the page token is invalid",
+			server: &Server{
+				clientGetter:             authorizedClientGetter,
+				manager:                  manager,
+				globalPackagingNamespace: globalPackagingNamespace,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "this is not a page token",
+					PageSize:  2,
+				},
+			},
+			expectDBQuery: false,
+			statusCode:    codes.InvalidArgument,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			rows := sqlmock.NewRows([]string{"info"})
+			// Simulate the pagination by reducing the rows of JSON based on the offset and limit.
+			// TODO(mnelson): We should check the LIMIT and OFFSET in the actual query as well.
+			rowsJSON := makeChartRowsJSON(t, tc.charts, tc.request.GetPaginationOptions().GetPageToken(), int(tc.request.GetPaginationOptions().GetPageSize()))
 
-			for _, chart := range tc.charts {
-				chartJSON, err := json.Marshal(chart)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				rows.AddRow(string(chartJSON))
+			rows := sqlmock.NewRows([]string{"info"})
+			for _, row := range rowsJSON {
+				rows.AddRow(row)
 			}
+
 			if tc.expectDBQuery {
 				// Checking if the WHERE condtion is properly applied
 				mock.ExpectQuery("SELECT info FROM").
 					WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
 					WillReturnRows(rows)
+				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
+					mock.ExpectQuery("SELECT count").
+						WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
+						WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
+				}
 			}
 			availablePackageSummaries, err := tc.server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
@@ -607,8 +748,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
-				if got, want := availablePackageSummaries.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
+				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{})
+				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
