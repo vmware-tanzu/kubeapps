@@ -166,6 +166,20 @@ installOrUpgradeKubeapps() {
     info "Installing Kubeapps from ${chartSource}..."
     kubectl -n kubeapps delete secret localhost-tls || true
 
+    pwd
+    echo helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
+      ${invalidateCacheFlag} \
+      "${img_flags[@]}" \
+      "${@:2}" \
+      "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}" \
+      --set frontend.replicaCount=1 \
+      --set kubeops.replicaCount=1 \
+      --set assetsvc.replicaCount=1 \
+      --set dashboard.replicaCount=1 \
+      --set postgresql.replication.enabled=false \
+      --set postgresql.postgresqlPassword=password \
+      --wait
+
     helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
@@ -176,7 +190,8 @@ installOrUpgradeKubeapps() {
       --set assetsvc.replicaCount=1 \
       --set dashboard.replicaCount=1 \
       --set postgresql.replication.enabled=false \
-      --set postgresql.postgresqlPassword=password
+      --set postgresql.postgresqlPassword=password \
+      --wait
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
