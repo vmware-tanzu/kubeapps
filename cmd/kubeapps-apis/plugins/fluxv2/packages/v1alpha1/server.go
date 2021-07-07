@@ -209,6 +209,16 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
 	}
 
+	packageRef := request.AvailablePackageRef
+	// flux CRDs require a namespace, cluster-wide resources are not supported
+	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
+	}
+	packageIdParts := strings.Split(packageRef.Identifier, "/")
+	if len(packageIdParts) != 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
+	}
+
 	if request.PkgVersion != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
@@ -216,7 +226,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			request.PkgVersion)
 	}
 
-	url, err := s.pullChartTarball(ctx, request.AvailablePackageRef)
+	url, err := s.pullChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -228,29 +238,22 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
 	// Flux does the hard work of pulling the bits from remote repo
 	// based on secretRef associated with HelmRepository, if applicable
-	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", httpclient.New())
+	detail, err := tar.FetchChartDetailFromTarball(packageRef.Identifier, *url, "", "", httpclient.New())
 	if err != nil {
 		return nil, err
 	}
 
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: &corev1.AvailablePackageDetail{
-			AvailablePackageRef: request.AvailablePackageRef, // copy just for now
+			AvailablePackageRef: packageRef, // copy just for now
+			Name:                packageIdParts[1],
 			LongDescription:     detail[chart.ReadmeKey],
 		},
 	}, nil
 }
 
-func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.AvailablePackageReference) (*string, error) {
-	// flux CRDs require a namespace, cluster-wide resources are not supported
-	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
-	}
-	packageRefIdParts := strings.Split(packageRef.Identifier, "/")
-	if len(packageRefIdParts) != 2 {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
-	}
-
+// returns the url from which chart .tgz can be downloaded
+func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartName string, namespace string) (*string, error) {
 	_, client, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
@@ -262,7 +265,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		Resource: fluxHelmCharts,
 	}
 
-	resourceIfc := client.Resource(chartsResource).Namespace(packageRef.Context.Namespace)
+	resourceIfc := client.Resource(chartsResource).Namespace(namespace)
 
 	// see if we the chart already exists
 	// TODO (gfichtenholt):
@@ -279,11 +282,11 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	}
 
 	for _, unstructuredChart := range chartList.Items {
-		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
-		repoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
+		thisChartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
+		thisRepoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
 
 		// TODO (gfichtenholt) compare chart versions too
-		if err == nil && err2 == nil && found && found2 && repoName == packageRefIdParts[0] && chartName == packageRefIdParts[1] {
+		if err == nil && err2 == nil && found && found2 && repoName == thisRepoName && chartName == thisChartName {
 			done, err := isChartPullComplete(&unstructuredChart)
 			if err != nil {
 				return nil, err
@@ -292,7 +295,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 				if err != nil || !found {
 					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
 				}
-				log.Infof("Found existing HelmChart for: [%s]", packageRef.Identifier)
+				log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
 				return &url, nil
 			}
 			// TODO (gfichtenholt) waitUntilChartPullComplete?
@@ -310,12 +313,12 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 			"kind":       fluxHelmChart,
 			"metadata": map[string]interface{}{
-				"generateName": fmt.Sprintf("%s-", packageRefIdParts[1]),
+				"generateName": fmt.Sprintf("%s-", chartName),
 			},
 			"spec": map[string]interface{}{
-				"chart": packageRefIdParts[1],
+				"chart": chartName,
 				"sourceRef": map[string]interface{}{
-					"name": packageRefIdParts[0],
+					"name": repoName,
 					"kind": fluxHelmRepository,
 				},
 				"interval": "10m",
@@ -340,6 +343,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		return nil, err
 	}
 
+	// wait til we have chart url available
 	return waitUntilChartPullComplete(watcher)
 }
 

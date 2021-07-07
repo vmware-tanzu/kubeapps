@@ -830,6 +830,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Namespace: "default",
 					},
 				},
+				Name:            "redis",
 				LongDescription: "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
 			},
 		},
