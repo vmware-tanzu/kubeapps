@@ -15,14 +15,14 @@ anyhow = "1.0"
 base64 = "0.13"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
-kube = { version = "0.57.0" }
+kube = { version = "0.58.1" }
 # We explicitly import kube-derive without the schema option to avoid
 # requiring the jsonschema for CRDs until
 # https://github.com/Arnavion/k8s-openapi/issues/86
 # is sorted. AFAICT, the openapi json schema is only required when creating a
 # CRD (which we're not).
-kube-derive = { version = "0.57.0", default-features = false}
-kube-runtime = "0.57.0"
+kube-derive = { version = "0.58.1", default-features = false}
+kube-runtime = "0.58.1"
 k8s-openapi = { version = "0.12.0", default-features = false, features = ["v1_20"] }
 log = "0.4"
 native-tls = "0.2"
