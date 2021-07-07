@@ -20,7 +20,7 @@ set -o pipefail
 # Constants
 ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
-OLM_VERSION=${2:-"v0.17.0"}
+OLM_VERSION=${2:-"v0.18.2"}
 DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
 DEX_IP=${5:-"172.18.0.2"}
@@ -166,8 +166,7 @@ installOrUpgradeKubeapps() {
     info "Installing Kubeapps from ${chartSource}..."
     kubectl -n kubeapps delete secret localhost-tls || true
 
-    pwd
-    echo helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
+    cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
       ${invalidateCacheFlag} \
       "${img_flags[@]}" \
       "${@:2}" \
@@ -178,20 +177,11 @@ installOrUpgradeKubeapps() {
       --set dashboard.replicaCount=1 \
       --set postgresql.replication.enabled=false \
       --set postgresql.postgresqlPassword=password \
-      --wait
+      --set redis.auth.password=password \
+      --wait)
 
-    helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
-      ${invalidateCacheFlag} \
-      "${img_flags[@]}" \
-      "${@:2}" \
-      "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}" \
-      --set frontend.replicaCount=1 \
-      --set kubeops.replicaCount=1 \
-      --set assetsvc.replicaCount=1 \
-      --set dashboard.replicaCount=1 \
-      --set postgresql.replication.enabled=false \
-      --set postgresql.postgresqlPassword=password \
-      --wait
+    echo "${cmd[@]}"
+    "${cmd[@]}"
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
