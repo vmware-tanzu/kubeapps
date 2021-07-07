@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM rust:1.51 as builder
+FROM rust:1.53 as builder
 
 WORKDIR /pinniped-proxy
 

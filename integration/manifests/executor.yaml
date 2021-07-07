@@ -22,7 +22,7 @@ spec:
             - tail
             - -f
             - /dev/null
-          image: kubeapps/integration-tests:v1.0.0
+          image: kubeapps/integration-tests:v1.0.1
           name: integration
           resources:
             requests:
