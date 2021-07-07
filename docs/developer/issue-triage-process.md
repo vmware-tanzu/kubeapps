@@ -29,9 +29,9 @@ Besides this manual triage process, there are two automatic process lead by the 
 
 - Automatically move new and reopened issues to the **Inbox** column to start the triage process (due to eventual project-bot outages, once a month we should manually search for issues with "no:project" assigned).
 - Automatically **dependabot** and **Snyk** are labelling PRs depending on the target language.
-- Automatically **stalebot** is checking inactive issues to label them as 'stale'. An issue becomes stale after 60 days of inactivity and the bot will close it after 7 days of inactivity for stale issues. To be considered:
+- Automatically **stalebot** is checking inactive issues to label them as 'stale'. An issue becomes stale after 15 days of inactivity and the bot will close it after 3 days of inactivity for stale issues. To be considered:
   - Issues labeled as 'priority/unbreak-now' → 'priority/high' → 'priority/medium' will never be labeled as 'stale'.
-  - Issues labeled as 'kind/feature' or 'kind/bug' will never be labeled as 'stale'
+  - Issues labeled as 'kind/feature', 'kind/bug' or 'kind/refactor' will never be labeled as 'stale'
   - Only issues labeled as 'priority/low' or 'awaiting-more-evidence' could be considered stale (and those without any priority label).
   - The label to use when marking an issue as stale is 'stale'.
 
