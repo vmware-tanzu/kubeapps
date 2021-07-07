@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/kubeapps/common/datastore"
@@ -149,8 +150,12 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		cq.AppVersion = request.FilterOptions.AppVersion
 	}
 
-	// TODO: We are not yet returning paginated results here
-	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+	}
+	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, pageOffset, int(pageSize))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
 	}
@@ -164,9 +169,35 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		}
 		responsePackages = append(responsePackages, pkg)
 	}
+
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(responsePackages) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	}
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackagesSummaries: responsePackages,
+		NextPageToken:              nextPageToken,
 	}, nil
+}
+
+// pageOffsetFromPageToken converts a page token to an integer offset
+// representing the page of results.
+// TODO(mnelson): When aggregating results from different plugins, we'll
+// need to update the actual query in GetPaginatedChartListWithFilters to
+// use a row offset rather than a page offset (as not all rows may be consumed
+// for a specific plugin when combining).
+func pageOffsetFromPageToken(pageToken string) (int, error) {
+	if pageToken == "" {
+		return 1, nil
+	}
+	offset, err := strconv.ParseUint(pageToken, 10, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(offset), nil
 }
 
 // AvailablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
