@@ -45,6 +45,7 @@ import (
 
 const (
 	globalPackagingNamespace = "kubeapps"
+	DefaultAppVersion        = "1.2.6"
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
 )
@@ -230,7 +231,7 @@ func TestIsValidChart(t *testing.T) {
 				ID:   "foo/bar",
 				ChartVersions: []models.ChartVersion{
 					{Version: "3.0.0"},
-					{AppVersion: "3.0.0"},
+					{AppVersion: DefaultAppVersion},
 				},
 			},
 			expected: false,
@@ -302,9 +303,9 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 				ChartVersions: []models.ChartVersion{
-					{Version: "3.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-					{Version: "2.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-					{Version: "1.0.0", AppVersion: "1.0.0", Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+					{Version: "1.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
@@ -394,7 +395,7 @@ func makeChart(chart_name, repo_name, namespace string, chart_versions []string)
 	for _, v := range chart_versions {
 		versions = append(versions, models.ChartVersion{
 			Version:    v,
-			AppVersion: "1.0.0",
+			AppVersion: DefaultAppVersion,
 			Readme:     "chart readme",
 			Values:     "chart values",
 			Schema:     "chart schema",
@@ -435,7 +436,8 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 	return rowsJSON
 }
 
-func TestGetAvailablePackageSummaries(t *testing.T) {
+// makeServer returns a server backed with an sql mock and a cleanup function
+func makeServer(t *testing.T, authorized bool) (*Server, sqlmock.Sqlmock, func()) {
 	// Creating the dynamic client
 	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
@@ -445,26 +447,27 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	)
 
 	// Creating an authorized clientGetter
-	authorizedClientSet := typfake.NewSimpleClientset()
-	authorizedClientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+	clientSet := typfake.NewSimpleClientset()
+	clientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, &authorizationv1.SelfSubjectAccessReview{
-			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
 	})
-	authorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return authorizedClientSet, dynamicClient, nil
-	}
-
-	// Creating a unauthorized clientGetter
-	unauthorizedClientSet := typfake.NewSimpleClientset()
-	unauthorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return unauthorizedClientSet, dynamicClient, nil
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return clientSet, dynamicClient, nil
 	}
 
 	// Creating the SQL mock manager
 	mock, cleanup, manager := setMockManager(t)
-	defer cleanup()
 
+	return &Server{
+		clientGetter:             clientGetter,
+		manager:                  manager,
+		globalPackagingNamespace: globalPackagingNamespace,
+	}, mock, cleanup
+}
+
+func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name             string
 		charts           []*models.Chart
@@ -472,15 +475,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		statusCode       codes.Code
 		request          *corev1.GetAvailablePackageSummariesRequest
 		expectedResponse *corev1.GetAvailablePackageSummariesResponse
-		server           *Server
+		authorized       bool
 	}{
 		{
-			name: "it returns a set of availablePackageSummary from the database (global ns)",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns a set of availablePackageSummary from the database (global ns)",
+			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Cluster:   "",
@@ -521,12 +520,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it returns a set of availablePackageSummary from the database (specific ns)",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns a set of availablePackageSummary from the database (specific ns)",
+			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Cluster:   "",
@@ -567,12 +562,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it returns a unimplemented status if no namespaces is provided",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns a unimplemented status if no namespaces is provided",
+			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Namespace: "",
@@ -583,12 +574,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode:    codes.Unimplemented,
 		},
 		{
-			name: "it returns an internal error status if response does not contain version",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an internal error status if response does not contain version",
+			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Cluster:   "",
@@ -600,12 +587,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode:    codes.Internal,
 		},
 		{
-			name: "it returns an unauthenticated status if the user doesn't have permissions",
-			server: &Server{
-				clientGetter:             unauthorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an unauthenticated status if the user doesn't have permissions",
+			authorized: false,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Namespace: "my-ns",
@@ -616,12 +599,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode:    codes.Unauthenticated,
 		},
 		{
-			name: "it returns only the requested page of results and includes the next page token",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns only the requested page of results and includes the next page token",
+			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Cluster:   "",
@@ -656,12 +635,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns the last page without a next page token",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns the last page without a next page token",
+			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Cluster:   "",
@@ -698,12 +673,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns an invalid argument error if the page token is invalid",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an invalid argument error if the page token is invalid",
+			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
 					Cluster:   "",
@@ -721,6 +692,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			server, mock, cleanup := makeServer(t, tc.authorized)
+			defer cleanup()
+
 			// Simulate the pagination by reducing the rows of JSON based on the offset and limit.
 			// TODO(mnelson): We should check the LIMIT and OFFSET in the actual query as well.
 			rowsJSON := makeChartRowsJSON(t, tc.charts, tc.request.GetPaginationOptions().GetPageToken(), int(tc.request.GetPaginationOptions().GetPageSize()))
@@ -733,15 +707,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			if tc.expectDBQuery {
 				// Checking if the WHERE condtion is properly applied
 				mock.ExpectQuery("SELECT info FROM").
-					WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
+					WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
 					WillReturnRows(rows)
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
 					mock.ExpectQuery("SELECT count").
-						WithArgs(tc.request.Context.Namespace, tc.server.globalPackagingNamespace).
+						WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
 						WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
 				}
 			}
-			availablePackageSummaries, err := tc.server.GetAvailablePackageSummaries(context.Background(), tc.request)
+			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -778,7 +752,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "3.0.0",
-				AppVersion:       "1.0.0",
+				AppVersion:       DefaultAppVersion,
 				Readme:           "chart readme",
 				DefaultValues:    "chart values",
 				ValuesSchema:     "chart schema",
@@ -822,35 +796,6 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 }
 
 func TestGetAvailablePackageDetail(t *testing.T) {
-	// Creating the dynamic client
-	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
-			{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
-		},
-	)
-
-	// Creating an authorized clientGetter
-	authorizedClientSet := typfake.NewSimpleClientset()
-	authorizedClientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
-		return true, &authorizationv1.SelfSubjectAccessReview{
-			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
-		}, nil
-	})
-	authorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return authorizedClientSet, dynamicClient, nil
-	}
-
-	// Creating a unauthorized clientGetter
-	unauthorizedClientSet := typfake.NewSimpleClientset()
-	unauthorizedClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return unauthorizedClientSet, dynamicClient, nil
-	}
-
-	// Creating the SQL mock manager
-	mock, cleanup, manager := setMockManager(t)
-	defer cleanup()
-
 	testCases := []struct {
 		name             string
 		charts           []*models.Chart
@@ -858,15 +803,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		expectedPackage  *corev1.AvailablePackageDetail
 		statusCode       codes.Code
 		request          *corev1.GetAvailablePackageDetailRequest
-		server           *Server
+		authorized       bool
 	}{
 		{
-			name: "it returns an availablePackageDetail from the database (latest version)",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an availablePackageDetail from the database (latest version)",
+			authorized: true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -881,7 +822,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "3.0.0",
-				AppVersion:       "1.0.0",
+				AppVersion:       DefaultAppVersion,
 				Readme:           "chart readme",
 				DefaultValues:    "chart values",
 				ValuesSchema:     "chart schema",
@@ -895,12 +836,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it returns an availablePackageDetail from the database (specific version)",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an availablePackageDetail from the database (specific version)",
+			authorized: true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -916,7 +853,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "1.0.0",
-				AppVersion:       "1.0.0",
+				AppVersion:       DefaultAppVersion,
 				Readme:           "chart readme",
 				DefaultValues:    "chart values",
 				ValuesSchema:     "chart schema",
@@ -930,12 +867,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it returns an internal error status if the chart is invalid",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an internal error status if the chart is invalid",
+			authorized: true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -947,12 +880,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			statusCode:      codes.Internal,
 		},
 		{
-			name: "it returns an internal error status if the requested chart version doesn't exist",
-			server: &Server{
-				clientGetter:             authorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an internal error status if the requested chart version doesn't exist",
+			authorized: true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -965,12 +894,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			statusCode:       codes.Internal,
 		},
 		{
-			name: "it returns an unauthenticated status if the user doesn't have permissions",
-			server: &Server{
-				clientGetter:             unauthorizedClientGetter,
-				manager:                  manager,
-				globalPackagingNamespace: globalPackagingNamespace,
-			},
+			name:       "it returns an unauthenticated status if the user doesn't have permissions",
+			authorized: false,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -985,6 +910,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			server, mock, cleanup := makeServer(t, tc.authorized)
+			defer cleanup()
+
 			rows := sqlmock.NewRows([]string{"info"})
 
 			for _, chart := range tc.charts {
@@ -1007,7 +935,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 				PkgVersion: tc.requestedVersion,
 			}
-			availablePackageDetails, err := tc.server.GetAvailablePackageDetail(context.Background(), req)
+			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), req)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1023,6 +951,274 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestGetAvailablePackageVersions(t *testing.T) {
+	testCases := []struct {
+		name               string
+		charts             []*models.Chart
+		request            *corev1.GetAvailablePackageVersionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+	}{
+		{
+			name:               "it returns invalid argument if called without a package reference",
+			request:            nil,
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without namespace",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{},
+					Identifier: "bitnami/apache",
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without an identifier",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name:   "it returns the package version summary",
+			charts: []*models.Chart{makeChart("apache", "bitnami", "kubeapps", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "bitnami/apache",
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
+				PackageAppVersions: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+					{
+						PkgVersion: "3.0.0",
+						AppVersion: DefaultAppVersion,
+					},
+					{
+						PkgVersion: "2.0.0",
+						AppVersion: DefaultAppVersion,
+					},
+					{
+						PkgVersion: "1.0.0",
+						AppVersion: DefaultAppVersion,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			authorized := true
+			server, mock, cleanup := makeServer(t, authorized)
+			defer cleanup()
+
+			rows := sqlmock.NewRows([]string{"info"})
+
+			for _, chart := range tc.charts {
+				chartJSON, err := json.Marshal(chart)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				rows.AddRow(string(chartJSON))
+			}
+			if tc.expectedStatusCode == codes.OK {
+				mock.ExpectQuery("SELECT info FROM").
+					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, tc.request.AvailablePackageRef.Identifier).
+					WillReturnRows(rows)
+			}
+
+			response, err := server.GetAvailablePackageVersions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestPackageAppVersionsSummary(t *testing.T) {
+	testCases := []struct {
+		name            string
+		chart_versions  []models.ChartVersion
+		version_summary []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion
+	}{
+		{
+			name: "it includes the latest three major versions only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "7.5.6", AppVersion: DefaultAppVersion},
+				{Version: "6.5.6", AppVersion: DefaultAppVersion},
+				{Version: "5.5.6", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "7.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
+			},
+		},
+		{
+			name: "it includes the latest three minor versions for each major version only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "8.4.6", AppVersion: DefaultAppVersion},
+				{Version: "8.3.6", AppVersion: DefaultAppVersion},
+				{Version: "8.2.6", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
+			},
+		},
+		{
+			name: "it includes the latest three patch versions for each minor version only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "8.5.5", AppVersion: DefaultAppVersion},
+				{Version: "8.5.4", AppVersion: DefaultAppVersion},
+				{Version: "8.5.3", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
+			},
+		},
+		{
+			name: "it includes the latest three patch versions of the latest three minor versions of the latest three major versions only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "8.5.5", AppVersion: DefaultAppVersion},
+				{Version: "8.5.4", AppVersion: DefaultAppVersion},
+				{Version: "8.5.3", AppVersion: DefaultAppVersion},
+				{Version: "8.4.6", AppVersion: DefaultAppVersion},
+				{Version: "8.4.5", AppVersion: DefaultAppVersion},
+				{Version: "8.4.4", AppVersion: DefaultAppVersion},
+				{Version: "8.4.3", AppVersion: DefaultAppVersion},
+				{Version: "8.3.6", AppVersion: DefaultAppVersion},
+				{Version: "8.3.5", AppVersion: DefaultAppVersion},
+				{Version: "8.3.4", AppVersion: DefaultAppVersion},
+				{Version: "8.3.3", AppVersion: DefaultAppVersion},
+				{Version: "8.2.6", AppVersion: DefaultAppVersion},
+				{Version: "8.2.5", AppVersion: DefaultAppVersion},
+				{Version: "8.2.4", AppVersion: DefaultAppVersion},
+				{Version: "8.2.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.6", AppVersion: DefaultAppVersion},
+				{Version: "6.5.5", AppVersion: DefaultAppVersion},
+				{Version: "6.5.4", AppVersion: DefaultAppVersion},
+				{Version: "6.5.3", AppVersion: DefaultAppVersion},
+				{Version: "6.4.6", AppVersion: DefaultAppVersion},
+				{Version: "6.4.5", AppVersion: DefaultAppVersion},
+				{Version: "6.4.4", AppVersion: DefaultAppVersion},
+				{Version: "6.4.3", AppVersion: DefaultAppVersion},
+				{Version: "6.3.6", AppVersion: DefaultAppVersion},
+				{Version: "6.3.5", AppVersion: DefaultAppVersion},
+				{Version: "6.3.4", AppVersion: DefaultAppVersion},
+				{Version: "6.3.3", AppVersion: DefaultAppVersion},
+				{Version: "6.2.6", AppVersion: DefaultAppVersion},
+				{Version: "6.2.5", AppVersion: DefaultAppVersion},
+				{Version: "6.2.4", AppVersion: DefaultAppVersion},
+				{Version: "6.2.3", AppVersion: DefaultAppVersion},
+				{Version: "4.5.6", AppVersion: DefaultAppVersion},
+				{Version: "4.5.5", AppVersion: DefaultAppVersion},
+				{Version: "4.5.4", AppVersion: DefaultAppVersion},
+				{Version: "4.5.3", AppVersion: DefaultAppVersion},
+				{Version: "4.4.6", AppVersion: DefaultAppVersion},
+				{Version: "4.4.5", AppVersion: DefaultAppVersion},
+				{Version: "4.4.4", AppVersion: DefaultAppVersion},
+				{Version: "4.4.3", AppVersion: DefaultAppVersion},
+				{Version: "4.3.6", AppVersion: DefaultAppVersion},
+				{Version: "4.3.5", AppVersion: DefaultAppVersion},
+				{Version: "4.3.4", AppVersion: DefaultAppVersion},
+				{Version: "4.3.3", AppVersion: DefaultAppVersion},
+				{Version: "4.2.6", AppVersion: DefaultAppVersion},
+				{Version: "4.2.5", AppVersion: DefaultAppVersion},
+				{Version: "4.2.4", AppVersion: DefaultAppVersion},
+				{Version: "4.2.3", AppVersion: DefaultAppVersion},
+				{Version: "2.5.6", AppVersion: DefaultAppVersion},
+				{Version: "2.5.5", AppVersion: DefaultAppVersion},
+				{Version: "2.5.4", AppVersion: DefaultAppVersion},
+				{Version: "2.5.3", AppVersion: DefaultAppVersion},
+				{Version: "2.4.6", AppVersion: DefaultAppVersion},
+				{Version: "2.4.5", AppVersion: DefaultAppVersion},
+				{Version: "2.4.4", AppVersion: DefaultAppVersion},
+				{Version: "2.4.3", AppVersion: DefaultAppVersion},
+				{Version: "2.3.6", AppVersion: DefaultAppVersion},
+				{Version: "2.3.5", AppVersion: DefaultAppVersion},
+				{Version: "2.3.4", AppVersion: DefaultAppVersion},
+				{Version: "2.3.3", AppVersion: DefaultAppVersion},
+				{Version: "2.2.6", AppVersion: DefaultAppVersion},
+				{Version: "2.2.5", AppVersion: DefaultAppVersion},
+				{Version: "2.2.4", AppVersion: DefaultAppVersion},
+				{Version: "2.2.3", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.4.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.4.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.3.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.3.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.4.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.4.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.4.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.3.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.3.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.3.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.5.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.4.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.4.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.4.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.3.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.3.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.3.4", AppVersion: DefaultAppVersion},
+			},
+		},
+	}
+
+	opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got, want := packageAppVersionsSummary(tc.chart_versions), tc.version_summary; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})
 	}
