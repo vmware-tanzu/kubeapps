@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.16.3 as builder
+FROM bitnami/golang:1.16.5 as builder
 WORKDIR /go/src/github.com/kubeapps/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
