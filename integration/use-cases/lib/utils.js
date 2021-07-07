@@ -59,7 +59,6 @@ module.exports = {
         timeout: 10000,
       });
       await page.click("#submit-login");
-      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
       await expect(page).toClick("button", {
         text: "Grant Access",
       });
