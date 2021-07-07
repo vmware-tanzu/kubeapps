@@ -10,7 +10,7 @@
     "@clr/ui": "^5.4.1",
     "@paciolan/remote-component": "^2.11.0",
     "@types/diff": "^5.0.0",
-    "@types/js-yaml": "^4.0.1",
+    "@types/js-yaml": "^4.0.2",
     "@types/json-schema": "^7.0.7",
     "@types/jsonwebtoken": "^8.5.3",
     "@types/lodash": "^4.14.171",
@@ -114,7 +114,7 @@
   },
   "devDependencies": {
     "@formatjs/cli": "^4.2.27",
-    "@types/enzyme": "^3.10.8",
+    "@types/enzyme": "^3.10.9",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/jest": "^26.0.23",
     "@types/node": "^16.0.0",
