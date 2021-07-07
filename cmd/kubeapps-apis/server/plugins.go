@@ -342,9 +342,11 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 // It is equivalent to the "Authorization" usual HTTP 1 header
 // For instance: authorization="Bearer abc" will return "abc"
 func extractToken(ctx context.Context) (string, error) {
+	// per https://github.com/kubeapps/kubeapps/pull/3044
+	// extractToken() to return an empty token with a nil error if there is no metadata with the context.
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", fmt.Errorf("error reading request metadata/headers")
+		return "", nil
 	}
 
 	// metadata is always lowercased

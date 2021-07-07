@@ -226,6 +226,10 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			request.PkgVersion)
 	}
 
+	// TODO (gfichtenholt) check if the repo has been indexed, stored in the cache and requested
+	// package is part of it. Otherwise, there is a time window when this scenario can happen:
+	// - GetAvailablePackageSummaries may return {} while a ready repo is being indexed BUT
+	// - GetAvailablePackageDetail may return package detail
 	url, err := s.pullChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace)
 	if err != nil {
 		return nil, err

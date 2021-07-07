@@ -23,7 +23,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -155,13 +154,11 @@ func (c *ResourceWatcherCache) startResourceWatcher() {
 		log.Infof("watcher already started. exiting...")
 	}
 	// we should never reach here under normal usage
-	log.Warningf("+ResourceWatcherCache startResourceWatcher")
+	log.Warningf("-ResourceWatcherCache startResourceWatcher")
 }
 
 func (c *ResourceWatcherCache) newResourceWatcherChan() (<-chan watch.Event, error) {
-	// TODO this is a temp hack to get around the fact that the only clientGetter we've got today
-	// always expectsan Incoming request with metadata
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD{})
+	ctx := context.Background()
 
 	_, dynamicClient, err := c.config.clientGetter(ctx)
 	if err != nil {
