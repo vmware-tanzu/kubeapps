@@ -16,7 +16,7 @@ IMG_MODIFIER ?=
 GO_PACKAGES = ./...
 # GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 
-all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubeapps/assetsvc kubeapps/asset-syncer
+all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubeapps/assetsvc kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis
 
 # TODO(miguel) Create Makefiles per component
 # TODO(mnelson) Or at least don't send the whole repo as the context for each project.
