@@ -23,7 +23,7 @@
     "@types/react-router-dom": "^5.1.7",
     "@types/react-router-hash-link": "^2.4.1",
     "@types/react-tabs": "^2.3.3",
-    "@types/react-transition-group": "^4.4.1",
+    "@types/react-transition-group": "^4.4.2",
     "@types/semver": "^7.3.6",
     "@types/ws": "^7.4.6",
     "ajv": "^8.6.1",
