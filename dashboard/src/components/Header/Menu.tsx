@@ -100,7 +100,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
             </div>
             <div>
               <div className="dropdown-menu-subtext">
-                Made with <CdsIcon size="sm" shape="heart" solid={true} /> by Bitnami and{" "}
+                Made with <CdsIcon size="sm" shape="heart" solid={true} /> by VMware and{" "}
                 <a
                   href="https://github.com/kubeapps/kubeapps/graphs/contributors"
                   className="type-color-white"
