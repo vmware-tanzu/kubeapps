@@ -286,7 +286,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
 
 	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
+		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
 	}
 	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
 	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
