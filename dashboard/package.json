@@ -18,7 +18,7 @@
     "@types/pako": "^1.0.1",
     "@types/qs": "^6.9.6",
     "@types/react": "^17.0.13",
-    "@types/react-copy-to-clipboard": "^5.0.0",
+    "@types/react-copy-to-clipboard": "^5.0.1",
     "@types/react-jsonschema-form": "^1.7.5",
     "@types/react-router-dom": "^5.1.7",
     "@types/react-router-hash-link": "^2.4.0",
