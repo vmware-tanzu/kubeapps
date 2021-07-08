@@ -14,7 +14,7 @@
     "@types/json-schema": "^7.0.7",
     "@types/jsonwebtoken": "^8.5.3",
     "@types/lodash": "^4.14.171",
-    "@types/moxios": "^0.4.11",
+    "@types/moxios": "^0.4.12",
     "@types/pako": "^1.0.1",
     "@types/qs": "^6.9.6",
     "@types/react": "^17.0.13",
