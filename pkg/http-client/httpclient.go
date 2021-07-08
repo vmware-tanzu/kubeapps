@@ -16,6 +16,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -89,30 +90,46 @@ func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 // returns response body, as bytes on successful status, or error body,
 // if applicable on error status
 func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	reader, _, err := GetStream(url, cli, headers)
+	if reader != nil {
+		defer reader.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
+	return ioutil.ReadAll(reader)
+}
 
-	for header, content := range headers {
+// performs an HTTP GET request using provided client, URL and request headers.
+// returns response body, as bytes on successful status, or error body,
+// if applicable on error status
+// returns response as a stream, as well as response content type
+// NOTE: it is the caller's responsibility to close the reader stream when no longer needed
+func GetStream(url string, cli Client, reqHeaders map[string]string) (io.ReadCloser, string, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, "", err
+	}
+
+	for header, content := range reqHeaders {
 		req.Header.Set(header, content)
 	}
 
 	res, err := cli.Do(req)
-	if res != nil {
-		defer res.Body.Close()
-	}
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
+
+	respContentType := res.Header.Get("Content-Type")
 
 	if res.StatusCode != http.StatusOK {
-		errC, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read error content: %v", err)
+		errorMsg := fmt.Sprintf("GET request to [%s] failed due to status [%d]", url, res.StatusCode)
+		errPayload, err := ioutil.ReadAll(res.Body)
+		if err == nil && len(errPayload) > 0 {
+			errorMsg += ": " + string(errPayload)
 		}
-		return nil, fmt.Errorf("request failed: %v", string(errC))
+		return nil, respContentType, fmt.Errorf(errorMsg)
 	}
 
-	return ioutil.ReadAll(res.Body)
+	return res.Body, respContentType, nil
 }

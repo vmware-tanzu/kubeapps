@@ -150,15 +150,20 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{}
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) (interface{}, error)
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) interface{} { return nil }
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesClientGetter) (interface{}, error) { return nil, nil }
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
 
-	server := grpcFn(registrar, clientGetter)
+	server, err := grpcFn(registrar, clientGetter)
+	if err != nil {
+		return fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)
+	} else if server == nil {
+		return fmt.Errorf("registration for plug-in %v failed due to: %T returned nil when non-nil value was expected", pluginDetail, grpcFn)
+	}
 
 	return s.registerPluginsSatisfyingCoreAPIs(server, pluginDetail)
 }
@@ -299,10 +304,10 @@ func createClientGetter(serveOpts ServeOptions) (KubernetesClientGetter, error) 
 // createClientGetter takes the required params and returns the closure fuction.
 // it's splitted for testing this fn separately
 func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (KubernetesClientGetter, error) {
-
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
 	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		log.Infof("+clientGetter.GetClient")
 		var err error
 		token, err := extractToken(ctx)
 		if err != nil {
@@ -337,9 +342,11 @@ func createClientGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 // It is equivalent to the "Authorization" usual HTTP 1 header
 // For instance: authorization="Bearer abc" will return "abc"
 func extractToken(ctx context.Context) (string, error) {
+	// per https://github.com/kubeapps/kubeapps/pull/3044
+	// extractToken() to return an empty token with a nil error if there is no metadata with the context.
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", fmt.Errorf("error reading request metadata/headers")
+		return "", nil
 	}
 
 	// metadata is always lowercased

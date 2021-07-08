@@ -17,6 +17,15 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Create a default fully qualified app name for Redis dependency.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "kubeapps.redis.fullname" -}}
+{{- $name := default "redis" .Values.redis.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
 Create name for the apprepository-controller based on the fullname
 */}}
 {{- define "kubeapps.apprepository.fullname" -}}
@@ -163,6 +172,17 @@ Return the Postgresql secret name
       {{- printf "%s" .Values.postgresql.existingSecret -}}
   {{- else -}}
       {{- printf "%s" (include "kubeapps.postgresql.fullname" .) -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Return the Redis secret name
+*/}}
+{{- define "kubeapps.redis.secretName" -}}
+  {{- if .Values.redis.existingSecret }}
+      {{- printf "%s" .Values.redis.existingSecret -}}
+  {{- else -}}
+      {{- printf "%s" (include "kubeapps.redis.fullname" .) -}}
   {{- end -}}
 {{- end -}}
 

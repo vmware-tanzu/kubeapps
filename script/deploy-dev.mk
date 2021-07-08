@@ -57,7 +57,7 @@ deploy-kapp-controller:
 
 # Add the flux controllers used for testing the kubeapps-apis integration.
 deploy-flux-controllers:
-	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.13.4/install.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.16.0/install.yaml
 
 reset-dev:
 	helm --kubeconfig=${CLUSTER_CONFIG} -n kubeapps delete kubeapps  || true

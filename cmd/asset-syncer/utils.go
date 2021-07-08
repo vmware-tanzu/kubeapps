@@ -785,34 +785,25 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 		return nil
 	}
 
-	req, err := http.NewRequest("GET", c.Icon, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("User-Agent", userAgent())
+	reqHeaders := make(map[string]string)
+	reqHeaders["User-Agent"] = userAgent()
 	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(c.Icon, r.URL) {
-		req.Header.Set("Authorization", r.AuthorizationHeader)
+		reqHeaders["Authorization"] = r.AuthorizationHeader
 	}
 
-	res, err := f.netClient.Do(req)
-	if res != nil {
-		defer res.Body.Close()
+	reader, contentType, err := httpclient.GetStream(c.Icon, f.netClient, reqHeaders)
+	if reader != nil {
+		defer reader.Close()
 	}
 	if err != nil {
 		return err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("%d %s", res.StatusCode, c.Icon)
-	}
-
-	b := []byte{}
-	contentType := ""
 	var img image.Image
 	// if the icon is in any other format try to convert it to PNG
-	if strings.Contains(res.Header.Get("Content-Type"), "image/svg") {
+	if strings.Contains(contentType, "image/svg") {
 		// if the icon is an SVG, it requires special processing
-		icon, err := oksvg.ReadIconStream(res.Body)
+		icon, err := oksvg.ReadIconStream(reader)
 		if err != nil {
 			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to decode icon")
 			return err
@@ -823,7 +814,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 		icon.Draw(rasterx.NewDasher(w, h, rasterx.NewScannerGV(w, h, rgba, rgba.Bounds())), 1)
 		img = rgba
 	} else {
-		img, err = imaging.Decode(res.Body)
+		img, err = imaging.Decode(reader)
 		if err != nil {
 			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to decode icon")
 			return err
@@ -838,7 +829,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 		log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to encode icon")
 		return err
 	}
-	b = buf.Bytes()
+	b := buf.Bytes()
 	contentType = "image/png"
 
 	return f.manager.updateIcon(models.Repo{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)

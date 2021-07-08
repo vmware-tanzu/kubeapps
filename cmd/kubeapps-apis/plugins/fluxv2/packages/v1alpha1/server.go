@@ -58,14 +58,34 @@ type Server struct {
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
 	clientGetter server.KubernetesClientGetter
+
+	cache *ResourceWatcherCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter server.KubernetesClientGetter) *Server {
+func NewServer(clientGetter server.KubernetesClientGetter) (*Server, error) {
+	repositoriesGvr := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
+	}
+	config := cacheConfig{
+		gvr:          repositoriesGvr,
+		clientGetter: clientGetter,
+		onAdd:        onAddOrModifyRepo,
+		onModify:     onAddOrModifyRepo,
+		onGet:        onGetRepo,
+		onDelete:     onDeleteRepo,
+	}
+	cache, err := newCache(config)
+	if err != nil {
+		return nil, err
+	}
 	return &Server{
 		clientGetter: clientGetter,
-	}
+		cache:        cache,
+	}, nil
 }
 
 // getClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
@@ -75,7 +95,7 @@ func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.
 	}
 	typedClient, dynamicClient, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 	return typedClient, dynamicClient, nil
 }
@@ -134,25 +154,46 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 
-	if request == nil || request.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
-	}
-
-	if request.Context.Cluster != "" {
+	// grpc compiles in getters for you which automatically return a default (empty) struct if the pointer was nil
+	if request != nil && request.GetContext().GetCluster() != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"Not supported yet: request.Context.Cluster: [%v]",
 			request.Context.Cluster)
 	}
 
+	if s.cache == nil {
+		return nil, status.Errorf(
+			codes.FailedPrecondition,
+			"Server cache has not been properly initialized")
+	}
+
+	// TODO (gfichtenholt) use request.FilterOptions
 	repos, err := s.getHelmRepos(ctx, "")
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackages, err := readPackageSummariesFromRepoList(repos.Items)
+	responsePackagesFromCache, err := s.cache.fetchCachedObjects(repos.Items)
 	if err != nil {
 		return nil, err
+	}
+
+	// this non-sense below is only here to convert from []interface{} which is
+	// what the generic cache implementation returns for cache hits to
+	// a typed array object.
+	responsePackages := make([]*corev1.AvailablePackageSummary, 0)
+	for _, packages := range responsePackagesFromCache {
+		if packages != nil {
+			typedPackages, ok := packages.([]*corev1.AvailablePackageSummary)
+			if !ok {
+				return nil, status.Errorf(
+					codes.Internal,
+					"Unexpected value fetched from cache: %v", packages)
+			} else {
+				responsePackages = append(responsePackages, typedPackages...)
+			}
+		}
 	}
 
 	return &corev1.GetAvailablePackageSummariesResponse{
@@ -168,6 +209,16 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
 	}
 
+	packageRef := request.AvailablePackageRef
+	// flux CRDs require a namespace, cluster-wide resources are not supported
+	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
+	}
+	packageIdParts := strings.Split(packageRef.Identifier, "/")
+	if len(packageIdParts) != 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
+	}
+
 	if request.PkgVersion != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
@@ -175,7 +226,11 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			request.PkgVersion)
 	}
 
-	url, err := s.pullChartTarball(ctx, request.AvailablePackageRef)
+	// TODO (gfichtenholt) check if the repo has been indexed, stored in the cache and requested
+	// package is part of it. Otherwise, there is a time window when this scenario can happen:
+	// - GetAvailablePackageSummaries may return {} while a ready repo is being indexed BUT
+	// - GetAvailablePackageDetail may return package detail
+	url, err := s.pullChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -187,28 +242,22 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
 	// Flux does the hard work of pulling the bits from remote repo
 	// based on secretRef associated with HelmRepository, if applicable
-	detail, err := tar.FetchChartDetailFromTarball(request.AvailablePackageRef.Identifier, *url, "", "", httpclient.New())
+	detail, err := tar.FetchChartDetailFromTarball(packageRef.Identifier, *url, "", "", httpclient.New())
 	if err != nil {
 		return nil, err
 	}
 
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: &corev1.AvailablePackageDetail{
-			LongDescription: detail[chart.ReadmeKey],
+			AvailablePackageRef: packageRef, // copy just for now
+			Name:                packageIdParts[1],
+			LongDescription:     detail[chart.ReadmeKey],
 		},
 	}, nil
 }
 
-func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.AvailablePackageReference) (*string, error) {
-	// flux CRDs require a namespace, cluster-wide resources are not supported
-	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
-	}
-	packageRefIdParts := strings.Split(packageRef.Identifier, "/")
-	if len(packageRefIdParts) != 2 {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
-	}
-
+// returns the url from which chart .tgz can be downloaded
+func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartName string, namespace string) (*string, error) {
 	_, client, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
@@ -220,7 +269,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		Resource: fluxHelmCharts,
 	}
 
-	resourceIfc := client.Resource(chartsResource).Namespace(packageRef.Context.Namespace)
+	resourceIfc := client.Resource(chartsResource).Namespace(namespace)
 
 	// see if we the chart already exists
 	// TODO (gfichtenholt):
@@ -237,11 +286,11 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 	}
 
 	for _, unstructuredChart := range chartList.Items {
-		chartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
-		repoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
+		thisChartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
+		thisRepoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
 
 		// TODO (gfichtenholt) compare chart versions too
-		if err == nil && err2 == nil && found && found2 && repoName == packageRefIdParts[0] && chartName == packageRefIdParts[1] {
+		if err == nil && err2 == nil && found && found2 && repoName == thisRepoName && chartName == thisChartName {
 			done, err := isChartPullComplete(&unstructuredChart)
 			if err != nil {
 				return nil, err
@@ -250,7 +299,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 				if err != nil || !found {
 					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
 				}
-				log.Infof("Found existing HelmChart for: [%s]", packageRef.Identifier)
+				log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
 				return &url, nil
 			}
 			// TODO (gfichtenholt) waitUntilChartPullComplete?
@@ -259,17 +308,21 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 
 	// did not find the chart, need to create
 	// see https://fluxcd.io/docs/components/source/helmcharts/
+	// TODO (gfichtenholt)
+	// 1. HelmChart object needs to be co-located in the same namespace as the HelmRepository it is referencing.
+	// 2. flux impersonates a "super" user when doing this (see fluxv2 plug-in specific notes at the end of
+	//	design doc). We should probably be doing simething similar to avoid RBAC-related problems
 	unstructuredChart := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 			"kind":       fluxHelmChart,
 			"metadata": map[string]interface{}{
-				"generateName": fmt.Sprintf("%s-", packageRefIdParts[1]),
+				"generateName": fmt.Sprintf("%s-", chartName),
 			},
 			"spec": map[string]interface{}{
-				"chart": packageRefIdParts[1],
+				"chart": chartName,
 				"sourceRef": map[string]interface{}{
-					"name": packageRefIdParts[0],
+					"name": repoName,
 					"kind": fluxHelmRepository,
 				},
 				"interval": "10m",
@@ -294,6 +347,7 @@ func (s *Server) pullChartTarball(ctx context.Context, packageRef *corev1.Availa
 		return nil, err
 	}
 
+	// wait til we have chart url available
 	return waitUntilChartPullComplete(watcher)
 }
 

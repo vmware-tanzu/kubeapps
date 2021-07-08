@@ -85,6 +85,19 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.kubeappsapis.containerPort | quote }}
+            # REDIS-* vars are required by the plugins for caching functionality
+            # TODO (gfichtenolt) this as required by the kubeapps apis service (which will 
+            # longer-term pass something to the plugins so that the plugins won't need to 
+            # know these details). Currently they're used directly by the flux plugin
+            - name: REDIS_ADDR
+              value: kubeapps-redis-master.{{ .Release.Namespace }}.svc.cluster.local:6379
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: redis-password
+                  name: {{ include "kubeapps.redis.secretName" . }}
+            - name: REDIS_DB
+              value: "0"
             # TODO(agamez): pass this configuration using a separated config file
             # These env vars are currently (and temporarily) required by the 'helm' plugin
             - name: POD_NAMESPACE
