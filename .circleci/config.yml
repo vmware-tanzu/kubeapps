@@ -121,24 +121,6 @@ workflows:
             - build_pinniped_proxy
       - sync_chart_from_bitnami:
           <<: *build_on_master
-      - GKE_1_17_MASTER:
-          <<: *build_on_tag
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - sync_chart_from_bitnami
-      - GKE_1_17_LATEST_RELEASE:
-          <<: *build_on_tag
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - sync_chart_from_bitnami
       - GKE_1_18_MASTER:
           <<: *build_on_tag
           requires:
@@ -157,6 +139,24 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
+      - GKE_1_19_MASTER:
+          <<: *build_on_tag
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
+            - sync_chart_from_bitnami
+      - GKE_1_19_LATEST_RELEASE:
+          <<: *build_on_tag
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
+            - sync_chart_from_bitnami
       - push_images:
           <<: *build_on_master
           requires:
@@ -165,18 +165,18 @@ workflows:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_17_MASTER
-            - GKE_1_17_LATEST_RELEASE
             - GKE_1_18_MASTER
             - GKE_1_18_LATEST_RELEASE
+            - GKE_1_19_MASTER
+            - GKE_1_19_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_17_MASTER
-            - GKE_1_17_LATEST_RELEASE
             - GKE_1_18_MASTER
             - GKE_1_18_LATEST_RELEASE
+            - GKE_1_19_MASTER
+            - GKE_1_19_LATEST_RELEASE
 
 ## Definitions
 common_envars: &common_envars
@@ -633,21 +633,6 @@ jobs:
       number:
         type: string
     <<: *local_e2e_steps
-  GKE_1_17_MASTER:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: "1.17"
-      KUBEAPPS_DB: "postgresql"
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
-  GKE_1_17_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: "1.17"
-      KUBEAPPS_DB: "postgresql"
-      TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
   GKE_1_18_MASTER:
     <<: *gke_test
     environment:
@@ -659,6 +644,21 @@ jobs:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.18"
+      KUBEAPPS_DB: "postgresql"
+      TEST_LATEST_RELEASE: 1
+      USE_MULTICLUSTER_OIDC_ENV: "false"
+      <<: *common_envars
+  GKE_1_19_MASTER:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: "1.19"
+      KUBEAPPS_DB: "postgresql"
+      USE_MULTICLUSTER_OIDC_ENV: "false"
+      <<: *common_envars
+  GKE_1_19_LATEST_RELEASE:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: "1.19"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
