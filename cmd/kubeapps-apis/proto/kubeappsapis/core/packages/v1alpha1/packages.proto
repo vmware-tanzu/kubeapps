@@ -101,10 +101,10 @@ message GetAvailablePackageVersionsRequest {
   // identify an available package
   AvailablePackageReference available_package_ref = 1;
 
-  // Optional version reference for which version history is required.
-  // By default a summary of versions is returned as outlined in the
-  // response. Plugins can choose not to implement this and provide
-  // the summary only, it is provided for completeness only.
+  // Optional version reference for which full version history is required.  By
+  // default a summary of versions is returned as outlined in the response.
+  // Plugins can choose not to implement this and provide the summary only, it
+  // is provided for completeness only.
   string pkg_version = 2;
 }
 

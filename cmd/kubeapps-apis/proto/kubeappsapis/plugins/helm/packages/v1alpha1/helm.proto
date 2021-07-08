@@ -22,11 +22,10 @@ service HelmPackagesService {
     };
   }
 
-  // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+  // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
   rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
     option (google.api.http) = {
-      get: "/plugins/fluxv2/packages/v1alpha1/availablepackageversions"
+      get: "/plugins/helm/packages/v1alpha1/availablepackageversions"
     };
   }
 }
-
