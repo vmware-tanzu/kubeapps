@@ -222,8 +222,8 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	return pkg, nil
 }
 
+// getUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
 func getUnescapedChartID(chartID string) (string, error) {
-	// Unescape URI-encoded characters, like '%2F' that becomes '/'
 	unescapedChartID, err := url.QueryUnescape(chartID)
 	if err != nil {
 		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
