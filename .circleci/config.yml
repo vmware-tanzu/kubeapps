@@ -8,7 +8,7 @@ parameters:
     default: "14"
   RUST_VERSION:
     type: string
-    default: "1.53"
+    default: "1.53.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.6"

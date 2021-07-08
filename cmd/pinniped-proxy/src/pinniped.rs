@@ -2,27 +2,28 @@ use std::convert::TryFrom;
 use std::env;
 
 use anyhow::{Context, Result};
+use http::Uri;
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
 use kube::{
-    api::{Api, PostParams}, Client, Config
+    api::{Api, ApiResource, DynamicObject, PostParams}, core::GroupVersionKind, Client, Config,
 };
-use kube_derive::CustomResource;
 use log::debug;
 use native_tls::Identity;
 use openssl::{pkcs12::Pkcs12, pkey::PKey, x509::X509};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use thiserror::Error;
-use http::Uri;
 
 const DEFAULT_PINNIPED_API_SUFFIX: &str = "DEFAULT_PINNIPED_API_SUFFIX";
 const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
 const DEFAULT_PINNIPED_AUTHENTICATOR_NAME: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_NAME";
 const DEFAULT_PINNIPED_AUTHENTICATOR_TYPE: &str = "DEFAULT_PINNIPED_AUTHENTICATOR_TYPE";
 
+const TOKEN_REQUEST_VERSION: &str = "v1alpha1";
+const TOKEN_REQUEST_KIND: &str = "TokenCredentialRequest";
+
 const DEFAULT_API_SUFFIX: &str = "pinniped.dev";
-const TMC_PINNIPED_API_SUFFIX: &str = "pinniped.tmc.cloud.vmware.com";
 
 #[derive(Error, Debug)]
 pub enum PinnipedError {
@@ -30,160 +31,19 @@ pub enum PinnipedError {
     UnsuccessfulAuthentication(String),
 }
 
-/// exchange_token_for_identity accepts an authorization header and returns a client cert authentication Identity in exchange.
+/// TokenCredentialRequest
 ///
-/// The token is exchanged with pinniped concierge API running on the identified kubernetes api server.
-pub async fn exchange_token_for_identity(
-    authorization: &str,
-    k8s_api_server_url: &str,
-    k8s_api_ca_cert_data: &[u8],
-) -> Result<Identity> {
-    let is_tmc_environment: bool = env::var(DEFAULT_PINNIPED_API_SUFFIX)
-        .unwrap_or(DEFAULT_API_SUFFIX.into())
-        == TMC_PINNIPED_API_SUFFIX;
-
-    // TODO(agamez): remove this duplicated branch and use a generic dynamic approach when possible.
-    // see PR comments: https://github.com/kubeapps/kubeapps/pull/2515
-    if is_tmc_environment {
-        let credential_request_tmc =
-            call_pinniped_exchange_tmc(authorization, k8s_api_server_url, k8s_api_ca_cert_data)
-                .await
-                .context("Failed to exchange credentials")?;
-        match credential_request_tmc.status {
-            Some(s) => {
-                match s.credential {
-                    Some(c) => return identity_for_exchange(&c),
-                    None => match s.message {
-                        // A returned status without a credential is unsuccessful authentication so
-                        // add context to identify this.
-                        Some(m) => {
-                            return Err(anyhow::anyhow!(m.clone())
-                                .context(PinnipedError::UnsuccessfulAuthentication(m)))
-                        }
-                        None => {
-                            return Err(anyhow::anyhow!(
-                                "response status neither an error msg or a credential: {:#?}",
-                                s
-                            ))
-                        }
-                    },
-                }
-            }
-            None => {
-                return Err(anyhow::anyhow!(
-                    "pinniped credential request did not include status: {:#?}",
-                    credential_request_tmc
-                ))
-            }
-        }
-    } else {
-        let credential_request =
-            call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data)
-                .await
-                .context("Failed to exchange credentials")?;
-        match credential_request.status {
-            Some(s) => {
-                match s.credential {
-                    Some(c) => return identity_for_exchange(&c),
-                    None => match s.message {
-                        // A returned status without a credential is unsuccessful authentication so
-                        // add context to identify this.
-                        Some(m) => {
-                            return Err(anyhow::anyhow!(m.clone())
-                                .context(PinnipedError::UnsuccessfulAuthentication(m)))
-                        }
-                        None => {
-                            return Err(anyhow::anyhow!(
-                                "response status neither an error msg or a credential: {:#?}",
-                                s
-                            ))
-                        }
-                    },
-                }
-            }
-            None => {
-                return Err(anyhow::anyhow!(
-                    "pinniped credential request did not include status: {:#?}",
-                    credential_request
-                ))
-            }
-        }
-    }
-}
-
-/// identity_for_exchange parses the JSON output of the credential exchange and returns the Identity.
-///
-/// Note: to create an identity, need to go via a pkcs12 currently.
-/// https://github.com/sfackler/rust-native-tls/issues/27#issuecomment-324262673
-fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
-    let pkey = PKey::private_key_from_pem(cred.client_key_data.as_bytes())
-        .context("error creating private key from pem")?;
-    let x509 = X509::from_pem(cred.client_certificate_data.as_bytes())
-        .context("error creating x509 from pem")?;
-
-    let pkcs_cert = Pkcs12::builder()
-        .build("", "friendly-name", &pkey, &x509)
-        .context("Error building Pkcs12 from private key and x509")?;
-    let identity = Identity::from_pkcs12(
-        &pkcs_cert
-            .to_der()
-            .context("error creating der from pkcs12")?,
-        "",
-    )
-    .context("error creating identity from der-formatted pkcs12")?;
-    Ok(identity)
-}
-
-/// TokenCredentialRequestSpec
-///
-/// TokenCredentialRequestSpec and the Status including the returned cluster credential
+/// Request, Spec and the Status including the returned cluster credential
 /// are structs based on the corresponding structs in the pinniped code at:
 /// https://github.com/vmware-tanzu/pinniped/blob/main/generated/1.19/apis/concierge/login/v1alpha1/types_token.go#L11
-///
-/// The rust derive macro together with the kube macro creates serializable and deserializable
-/// resources based on the struct. See https://docs.rs/kube/0.43.0/kube/ for more details.
-#[derive(CustomResource, Deserialize, Serialize, Clone, Debug)]
-#[kube(
-    group = "login.concierge.pinniped.dev",
-    version = "v1alpha1",
-    kind = "TokenCredentialRequest"
-)]
-#[kube(
-    status = "TokenCredentialRequestStatus",
-    struct = "TokenCredentialRequest"
-)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TokenCredentialRequest {
+    spec: TokenCredentialRequestSpec,
+    status: Option<TokenCredentialRequestStatus>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TokenCredentialRequestSpec {
-    // Bearer token supplied with the credential request.
-    token: Option<String>,
-
-    // Reference to an authenticator which can verify this credential request.
-    authenticator: corev1::TypedLocalObjectReference,
-}
-
-/// TokenCredentialRequestTMCSpec
-///
-/// TokenCredentialRequestTMCSpec and the Status including the returned cluster credential
-/// are structs based on the corresponding structs in the pinniped code at:
-/// https://github.com/vmware-tanzu/pinniped/blob/main/generated/1.19/apis/concierge/login/v1alpha1/types_token.go#L11
-///
-/// This is a custom version for TMC with its own API group suffix
-///
-/// The rust derive macro together with the kube macro creates serializable and deserializable
-/// resources based on the struct. See https://docs.rs/kube/0.43.0/kube/ for more details.
-///
-// TODO(agamez): remove this struct and use a generic dynamic approach when possible.
-// see PR comments: https://github.com/kubeapps/kubeapps/pull/2515
-#[derive(CustomResource, Deserialize, Serialize, Clone, Debug)]
-#[kube(
-    group = "login.concierge.pinniped.tmc.cloud.vmware.com",
-    version = "v1alpha1",
-    kind = "TokenCredentialRequest"
-)]
-#[kube(
-    status = "TokenCredentialRequestStatus",
-    struct = "TokenCredentialRequestTMC"
-)]
-pub struct TokenCredentialRequestTMCSpec {
     // Bearer token supplied with the credential request.
     token: Option<String>,
 
@@ -218,13 +78,80 @@ pub struct ClusterCredential {
     client_key_data: String,
 }
 
+/// exchange_token_for_identity accepts an authorization header and returns a client cert authentication Identity in exchange.
+///
+/// The token is exchanged with pinniped concierge API running on the identified kubernetes api server.
+pub async fn exchange_token_for_identity(
+    authorization: &str,
+    k8s_api_server_url: &str,
+    k8s_api_ca_cert_data: &[u8],
+) -> Result<Identity> {
+    let credential_request =
+        call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data)
+            .await
+            .context("Failed to exchange credentials")?;
+    match credential_request.status {
+        Some(s) => {
+            match s.credential {
+                Some(c) => return identity_for_exchange(&c),
+                None => match s.message {
+                    // A returned status without a credential is unsuccessful authentication so
+                    // add context to identify this.
+                    Some(m) => {
+                        return Err(anyhow::anyhow!(m.clone())
+                            .context(PinnipedError::UnsuccessfulAuthentication(m)))
+                    }
+                    None => {
+                        return Err(anyhow::anyhow!(
+                            "response status neither an error msg or a credential: {:#?}",
+                            s
+                        ))
+                    }
+                },
+            }
+        }
+        None => {
+            return Err(anyhow::anyhow!(
+                "pinniped credential request did not include status: {:#?}",
+                credential_request
+            ))
+        }
+    }
+}
+
+/// identity_for_exchange parses the JSON output of the credential exchange and returns the Identity.
+///
+/// Note: to create an identity, need to go via a pkcs12 currently.
+/// https://github.com/sfackler/rust-native-tls/issues/27#issuecomment-324262673
+fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
+    let pkey = PKey::private_key_from_pem(cred.client_key_data.as_bytes())
+        .context("error creating private key from pem")?;
+    let x509 = X509::from_pem(cred.client_certificate_data.as_bytes())
+        .context("error creating x509 from pem")?;
+
+    let pkcs_cert = Pkcs12::builder()
+        .build("", "friendly-name", &pkey, &x509)
+        .context("Error building Pkcs12 from private key and x509")?;
+    let identity = Identity::from_pkcs12(
+        &pkcs_cert
+            .to_der()
+            .context("error creating der from pkcs12")?,
+        "",
+    )
+    .context("error creating identity from der-formatted pkcs12")?;
+    Ok(identity)
+}
+
 fn get_client_config(
     k8s_api_server_url: &str,
     k8s_api_ca_cert_data: &[u8],
     pinniped_namespace: String,
 ) -> Result<kube::Client> {
-    let mut config =
-        Config::new(k8s_api_server_url.parse::<Uri>().context("Failed parsing url for exchange")?);
+    let mut config = Config::new(
+        k8s_api_server_url
+            .parse::<Uri>()
+            .context("Failed parsing url for exchange")?,
+    );
     config.default_namespace = pinniped_namespace.clone();
     let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
     let der = x509.to_der().context("error creating der from x509")?;
@@ -239,88 +166,82 @@ async fn call_pinniped_exchange(
     k8s_api_server_url: &str,
     k8s_api_ca_cert_data: &[u8],
 ) -> Result<TokenCredentialRequest> {
-    let pinniped_namespace = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
+    // context data
+    let pinniped_namespace: String = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
+    let pinniped_auth_type: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE)?;
+    let pinniped_auth_name: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME)?;
+
+    // kube client
     let client = get_client_config(
         k8s_api_server_url,
         k8s_api_ca_cert_data,
         pinniped_namespace.clone(),
     )?;
+
+    // extract token
     let auth_token = match authorization.to_string().strip_prefix("Bearer ") {
         Some(a) => a.to_string(),
         None => authorization.to_string(),
     };
-    let token_creds: Api<TokenCredentialRequest> = Api::all(client.clone());
-    let cred_request = TokenCredentialRequest::new(
-        "",
-        TokenCredentialRequestSpec {
+
+    // define the Api Resource dynamically
+    let gvk = GroupVersionKind::gvk(
+        &get_pinniped_login_api_group(),
+        TOKEN_REQUEST_VERSION,
+        TOKEN_REQUEST_KIND,
+    );
+    let ar = ApiResource::from_gvk(&gvk);
+
+    // create request
+    let cred_data = TokenCredentialRequest {
+        spec: TokenCredentialRequestSpec {
             token: Some(auth_token),
             authenticator: corev1::TypedLocalObjectReference {
-                name: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME).with_context(|| {
-                    format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_NAME)
-                })?,
-                kind: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE).with_context(|| {
-                    format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_TYPE)
-                })?,
+                name: pinniped_auth_name.clone(),
+                kind: pinniped_auth_type.clone(),
                 api_group: Some(get_pinniped_authenticator_api_group().into()),
             },
         },
-    );
-
-    debug!("{}", serde_json::to_string(&cred_request).unwrap());
-    match token_creds
-        .create(&PostParams::default(), &cred_request)
-        .await
-    {
-        Ok(o) => Ok(o),
-        Err(e) => Err(anyhow::anyhow!(
-            "err creating token exchange: {:#?}\n{}",
-            serde_json::to_string(&cred_request).unwrap(),
-            e
-        )),
-    }
-}
-
-/// call_pinniped_exchange returns the resulting TokenCredentialRequest with Status after requesting a token credential exchange.
-// TODO(agamez): remove this duplicated code and use a generic dynamic approach when possible.
-// see PR comments: https://github.com/kubeapps/kubeapps/pull/2515
-async fn call_pinniped_exchange_tmc(
-    authorization: &str,
-    k8s_api_server_url: &str,
-    k8s_api_ca_cert_data: &[u8],
-) -> Result<TokenCredentialRequestTMC> {
-    let pinniped_namespace = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
-    let client = get_client_config(
-        k8s_api_server_url,
-        k8s_api_ca_cert_data,
-        pinniped_namespace.clone(),
-    )?;
-    let auth_token = match authorization.to_string().strip_prefix("Bearer ") {
-        Some(a) => a.to_string(),
-        None => authorization.to_string(),
+        status: None,
     };
-    let token_creds: Api<TokenCredentialRequestTMC> = Api::all(client.clone());
-    let cred_request = TokenCredentialRequestTMC::new(
-        "",
-        TokenCredentialRequestTMCSpec {
-            token: Some(auth_token),
-            authenticator: corev1::TypedLocalObjectReference {
-                name: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME).with_context(|| {
-                    format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_NAME)
-                })?,
-                kind: env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE).with_context(|| {
-                    format!("error retrieving {}", DEFAULT_PINNIPED_AUTHENTICATOR_TYPE)
-                })?,
-                api_group: Some(get_pinniped_authenticator_api_group().into()),
-            },
-        },
-    );
-
+    let cred_request = DynamicObject::new("", &ar)
+        .within(&pinniped_namespace)
+        .data(serde_json::to_value(cred_data)?);
     debug!("{}", serde_json::to_string(&cred_request).unwrap());
-    match token_creds
+
+    // token credential request invocation
+    // we start first as a cluster-based call. if this call fails with a NotFound error, it is
+    // an indication we are on an old version which was namespace-based. we thus fallback to
+    // a namespace-based call.
+    let token_creds_all: Api<DynamicObject> = Api::all_with(client.clone(), &ar);
+    match token_creds_all
         .create(&PostParams::default(), &cred_request)
         .await
     {
-        Ok(o) => Ok(o),
+        Ok(o) => Ok(serde_json::from_value(o.data)?),
+        Err(kube::Error::Api(e)) => {
+            if e.reason == "NotFound" {
+                let token_creds_ns: Api<DynamicObject> =
+                    Api::namespaced_with(client.clone(), &pinniped_namespace, &ar);
+                match token_creds_ns
+                    .create(&PostParams::default(), &cred_request)
+                    .await
+                {
+                    Ok(o) => Ok(serde_json::from_value(o.data)?),
+                    Err(e) => Err(anyhow::anyhow!(
+                        "err creating token exchange: {:#?}\n{}",
+                        serde_json::to_string(&cred_request).unwrap(),
+                        e
+                    )),
+                }
+            } else {
+                Err(anyhow::anyhow!(
+                    "err creating token exchange: {:#?}\n{}",
+                    serde_json::to_string(&cred_request).unwrap(),
+                    e
+                ))
+            }
+        }
         Err(e) => Err(anyhow::anyhow!(
             "err creating token exchange: {:#?}\n{}",
             serde_json::to_string(&cred_request).unwrap(),
@@ -375,6 +296,8 @@ mod tests {
     #[serial(envtest)]
     fn test_call_pinniped_exchange_bad_url() -> Result<()> {
         env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
+        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE, "JWTAuthenticator");
+        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME, "oidc-authenticator");
         match tokio_test::block_on(call_pinniped_exchange(
             "authorization",
             "not a url",
@@ -397,6 +320,8 @@ mod tests {
     #[serial(envtest)]
     fn test_call_pinniped_exchange_bad_cert() -> Result<()> {
         env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
+        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE, "JWTAuthenticator");
+        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME, "oidc-authenticator");
         match tokio_test::block_on(call_pinniped_exchange(
             "authorization",
             "https://example.com",
@@ -433,30 +358,6 @@ mod tests {
 
         let login_api_group = get_pinniped_login_api_group();
         assert_eq!(login_api_group, "login.concierge.foo.bar");
-        Ok(())
-    }
-
-    #[test]
-    #[serial(envtest)]
-    fn test_get_is_tmc_environment() -> Result<()> {
-        env::remove_var("DEFAULT_PINNIPED_API_SUFFIX");
-        let is_tmc_environment: bool = env::var(DEFAULT_PINNIPED_API_SUFFIX)
-            .unwrap_or(DEFAULT_API_SUFFIX.into())
-            == TMC_PINNIPED_API_SUFFIX;
-        assert_eq!(is_tmc_environment, false);
-
-        let is_tmc_environment: bool = env::var(DEFAULT_PINNIPED_API_SUFFIX)
-            .unwrap_or(DEFAULT_API_SUFFIX.into())
-            == TMC_PINNIPED_API_SUFFIX;
-        env::set_var(DEFAULT_PINNIPED_API_SUFFIX, "foo.bar");
-        assert_eq!(is_tmc_environment, false);
-
-        let is_tmc_environment: bool = env::var(DEFAULT_PINNIPED_API_SUFFIX)
-            .unwrap_or(DEFAULT_API_SUFFIX.into())
-            == TMC_PINNIPED_API_SUFFIX;
-        env::set_var(DEFAULT_PINNIPED_API_SUFFIX, "pinniped.tmc.cloud.vmware.com");
-        assert_eq!(is_tmc_environment, false);
-
         Ok(())
     }
 }
