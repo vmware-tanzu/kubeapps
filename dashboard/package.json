@@ -120,7 +120,7 @@
     "@types/node": "^16.0.1",
     "@types/react-dom": "^17.0.9",
     "@types/react-helmet": "^6.1.1",
-    "@types/react-redux": "^7.1.16",
+    "@types/react-redux": "^7.1.17",
     "@types/react-router": "^5.1.16",
     "@types/react-test-renderer": "^17.0.1",
     "@types/redux-mock-store": "^1.0.2",
