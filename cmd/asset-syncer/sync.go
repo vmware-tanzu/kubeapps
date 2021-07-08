@@ -23,8 +23,8 @@ import (
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/kubernetes/pkg/credentialprovider"
