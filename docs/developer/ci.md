@@ -2,7 +2,7 @@
 
 Kubeapps leverages CircleCI for running the tests (both unit and integration tests), pushing the images and syncing the chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). The following image depicts how a successful workflow looks like after pushing a commit to the main branch.
 
-![CircleCI workflow after pushing to the main branch](../img/ci-workflow-release.png "CircleCI workflow after pushing to the main branch")
+![CircleCI workflow after pushing to the main branch](../img/ci-workflow-main.png "CircleCI workflow after pushing to the main branch")
 
 The main configuration is located at this [CircleCI config file](../../.circleci/config.yml). At a glance, it contains:
 
@@ -29,8 +29,8 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Renaming the production images (`bitnami/kubeapps-xxx`) by the development ones (`kubeapps/xxx`) with the `latest` tag.
     - Using `DEVEL` as the `appVersion`.
     - Sending a draft PR in the Kubeapps repository with these changes (from a pushed branch in the Kubeapps repository).
-  - `GKE_X_XX_MASTER` and `GKE_X_XX_LATEST_RELEASE` (on master): there is a job for each [Kubernetes version supported by Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/release-notes) (GKE). It will run the e2e tests in a GKE cluster (version X.XX) using either the code in `master` or in the latest released version. If a change affecting the UI is pushed to the main branch, the e2e test might fail here. Use a try/catch block to temporarily work around this.
   - `push_images` (on master): the CI images (which have already been built) get re-tagged and pushed to the `kubeapps` account.
+  - `GKE_X_XX_MASTER` and `GKE_X_XX_LATEST_RELEASE` (on tag): there is a job for each [Kubernetes version supported by Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/release-notes) (GKE). It will run the e2e tests in a GKE cluster (version X.XX) using either the code in `master` or in the latest released version. If a change affecting the UI is pushed to the main branch, the e2e test might fail here. Use a try/catch block to temporarily work around this.
   - `sync_chart_to_bitnami` (on tag): when releasing, it will synchronize our development chart with the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merge the changes. This step involves:
     - Checking if the Kubeapps development chart version is greater than the Bitnami chart version. If not, abort.
     - Deleting the local `bitnami/kubeapps` folder (note that the changes are already committed in git).
@@ -102,4 +102,4 @@ As per the official [CircleCI documentation](https://circleci.com/docs/2.0/ssh-a
 
   - To see the connection details, expand the _Enable SSH_ section in the job output where you will see the SSH command needed to connect.
 
-The build will remain available for an SSH connection for 10 minutes after the build finishes running and then automatically shut down. After you SSH into the build, the connection will remain open for two hours.
+The build will remain available for an SSH connection for 10 minutes after the build finishes running and then automatically shuts down. After you SSH into the build, the connection will remain open for two hours.
