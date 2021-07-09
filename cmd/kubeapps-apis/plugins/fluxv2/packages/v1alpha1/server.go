@@ -168,13 +168,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			"Server cache has not been properly initialized")
 	}
 
-	// TODO (gfichtenholt) use request.FilterOptions
-	repos, err := s.getHelmRepos(ctx, "")
+	// TODO 1 (gfichtenholt) use request.FilterOptions when the semantics of various fields
+	// in FilterOptions becomes clear
+	repos, err := s.cache.listKeys()
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackagesFromCache, err := s.cache.fetchCachedObjects(repos.Items)
+	responsePackagesFromCache, err := s.cache.fetchForMultiple(repos)
 	if err != nil {
 		return nil, err
 	}

@@ -204,9 +204,13 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, _, _, err := newServerWithWatcher(true, tc.repo)
+			s, mock, _, err := newServerWithWatcher(tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			if err = beforeCallGetAvailablePackageSummaries(mock); err != nil {
+				t.Fatalf("%v", err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(
@@ -218,7 +222,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			}
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
+				t.Errorf("got: %+v, error: %v, want: %+v", got, err, want)
 
 				if got == codes.OK {
 					if len(response.AvailablePackagesSummaries) != 0 {
@@ -227,6 +231,10 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 						t.Errorf("unexpected response: %v", response)
 					}
 				}
+			}
+
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -391,9 +399,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, mock, _, err := newServerWithWatcher(false, repos...)
+			s, mock, _, err := newServerWithWatcherAndReadyRepos(repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			if err = beforeCallGetAvailablePackageSummaries(mock, repos...); err != nil {
+				t.Fatalf("%v", err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -401,8 +413,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 
@@ -455,9 +466,13 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithWatcher(false, repo)
+		s, mock, watcher, err := newServerWithWatcherAndReadyRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = beforeCallGetAvailablePackageSummaries(mock, repo); err != nil {
+			t.Fatalf("%v", err)
 		}
 
 		responseBeforeUpdate, err := s.GetAvailablePackageSummaries(
@@ -467,8 +482,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -503,27 +517,21 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
 		s.cache.eventProcessingWaitGroup.Add(1)
 
-		key := redisKeyForRuntimeObject(repo)
-		packageSummariesAfterUpdate, err := indexOneRepo(repo.Object)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		protoMsg := corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackagesSummaries: packageSummariesAfterUpdate,
-		}
-		bytes, err := proto.Marshal(&protoMsg)
+		key, bytes, err := redisKeyValueForRuntimeObject(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
 		mock.ExpectSet(key, bytes, 0).SetVal("")
+
 		watcher.Modify(repo)
+
 		s.cache.eventProcessingWaitGroup.Wait()
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
+		mock.ExpectKeys("*").SetVal([]string{key})
 		mock.ExpectGet(key).SetVal(string(bytes))
 
 		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
@@ -557,8 +565,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
@@ -594,9 +601,13 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithWatcher(false, repo)
+		s, mock, watcher, err := newServerWithWatcherAndReadyRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = beforeCallGetAvailablePackageSummaries(mock, repo); err != nil {
+			t.Fatalf("%v", err)
 		}
 
 		responseBeforeDelete, err := s.GetAvailablePackageSummaries(
@@ -606,8 +617,7 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -643,15 +653,16 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 		s.cache.eventProcessingWaitGroup.Add(1)
 		key := redisKeyForRuntimeObject(repo)
 		mock.ExpectDel(key).SetVal(0)
+
 		watcher.Delete(repo)
+
 		s.cache.eventProcessingWaitGroup.Wait()
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		mock.ExpectGet(key).RedisNil()
+		mock.ExpectKeys("*").SetVal([]string{})
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
@@ -664,8 +675,7 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Errorf("expected empty array, got: %s", responseAfterDelete)
 		}
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
@@ -791,8 +801,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				}
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 		})
@@ -891,8 +900,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.LongDescription, response.AvailablePackageDetail.LongDescription)
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 		})
@@ -967,8 +975,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 		})
@@ -1093,7 +1100,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClie
 	return s, dynamicClient, mock, nil
 }
 
-func newServerWithWatcher(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+func newServerWithWatcher(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	s, dynamicClient, mock, err := newServerWithRepos(repos...)
 	if err != nil {
 		return s, mock, nil, err
@@ -1108,59 +1115,48 @@ func newServerWithWatcher(expectNil bool, repos ...runtime.Object) (*Server, red
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
 	mock.MatchExpectationsInOrder(false)
-	// first we need to mock all the SETs and only then all the GETs, otherwise
-	// redismock throws a fit
-	mapVals := make(map[string][]byte)
-	if !expectNil {
-		s.cache.eventProcessingWaitGroup = &sync.WaitGroup{}
 
-		for _, r := range repos {
-			s.cache.eventProcessingWaitGroup.Add(1)
-			key := redisKeyForRuntimeObject(r)
-			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
-			if err != nil {
-				return s, mock, watcher, err
-			}
-			protoMsg := corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: packageSummaries,
-			}
-			bytes, err := proto.Marshal(&protoMsg)
-			if err != nil {
-				return s, mock, watcher, err
-			}
-			mapVals[key] = bytes
-			mock.ExpectSet(key, bytes, 0).SetVal("")
+	return s, mock, watcher, nil
+}
 
-			// fire an ADD event for this repo as k8s server would do
-			watcher.Add(r)
-		}
-
-		// sanity check
-		s.cache.watcherMutex.Lock()
-		defer s.cache.watcherMutex.Unlock()
-		if !s.cache.watcherStarted {
-			return s, mock, watcher, fmt.Errorf("unexpected condition: watcher not started")
-		}
-
-		// here we wait until all repos have been indexed on the server-side
-		s.cache.eventProcessingWaitGroup.Wait()
-	}
-
-	err = mock.ExpectationsWereMet()
+func newServerWithWatcherAndReadyRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+	s, mock, watcher, err := newServerWithWatcher(repos...)
 	if err != nil {
 		return s, mock, watcher, err
 	}
 
-	// TODO (gfichtenholt) move this out of this func - strictly speaking,
-	// GET only expected when the caller immediately calls GetAvailablePackageSummaries()
-	// which at the moment, they all do, but may not necessarily so
+	s.cache.eventProcessingWaitGroup = &sync.WaitGroup{}
+
 	for _, r := range repos {
+		s.cache.eventProcessingWaitGroup.Add(1)
 		key := redisKeyForRuntimeObject(r)
-		if expectNil {
-			mock.ExpectGet(key).RedisNil()
-		} else {
-			mock.ExpectGet(key).SetVal(string(mapVals[key]))
+		packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
+		if err != nil {
+			return s, mock, watcher, err
 		}
+		protoMsg := corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackagesSummaries: packageSummaries,
+		}
+		bytes, err := proto.Marshal(&protoMsg)
+		if err != nil {
+			return s, mock, watcher, err
+		}
+		mock.ExpectSet(key, bytes, 0).SetVal("")
+
+		// fire an ADD event for this repo as k8s server would do
+		watcher.Add(r)
+	}
+
+	// sanity check
+	if err = s.cache.checkInit(); err != nil {
+		return s, mock, watcher, err
+	}
+
+	// here we wait until all repos have been indexed on the server-side
+	s.cache.eventProcessingWaitGroup.Wait()
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		return s, mock, watcher, err
 	}
 	return s, mock, watcher, nil
 }
@@ -1182,6 +1178,40 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicCl
 		return nil, nil, nil, err
 	}
 	return s, dynamicClient, mock, nil
+}
+
+func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, repos ...runtime.Object) error {
+	mapVals := make(map[string][]byte)
+	keys := []string{}
+	for _, r := range repos {
+		key, bytes, err := redisKeyValueForRuntimeObject(r)
+		if err != nil {
+			return err
+		}
+		keys = append(keys, key)
+		mapVals[key] = bytes
+	}
+	mock.ExpectKeys("*").SetVal(keys)
+	for _, k := range keys {
+		mock.ExpectGet(k).SetVal(string(mapVals[k]))
+	}
+	return nil
+}
+
+func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
+	key := redisKeyForRuntimeObject(r)
+	packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
+	if err != nil {
+		return "", nil, err
+	}
+	protoMsg := corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackagesSummaries: packageSummaries,
+	}
+	bytes, err := proto.Marshal(&protoMsg)
+	if err != nil {
+		return "", nil, err
+	}
+	return key, bytes, nil
 }
 
 func redisKeyForRuntimeObject(r runtime.Object) string {

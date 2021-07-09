@@ -36,10 +36,10 @@ type ResourceWatcherCache struct {
 	// these expected to be provided by the caller when creating new cache
 	config cacheConfig
 	// internal state: prevent multiple watchers
-	watcherStarted bool
+	initOk bool
 	// internal state: this mutex guards watcherStarted var
-	watcherMutex sync.Mutex
-	redisCli     *redis.Client
+	initMutex sync.Mutex
+	redisCli  *redis.Client
 	// this WaitGroup is used exclusively by unit tests to block until all expected objects have
 	// been 'processed' by the go routine running in the background. The creation of the WaitGroup object
 	// and to call to .Add() is expected to be done by the unit test client. The server-side only signals
@@ -122,35 +122,37 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client) (*Resou
 	log.Infof("[PING] -> [%s]", pong)
 
 	c := ResourceWatcherCache{
-		config:         config,
-		watcherStarted: false,
-		watcherMutex:   sync.Mutex{},
-		redisCli:       redisCli,
+		config:    config,
+		initOk:    false,
+		initMutex: sync.Mutex{},
+		redisCli:  redisCli,
 	}
+
+	c.initMutex.Lock()
 	go c.startResourceWatcher()
+
 	return &c, nil
 }
 
 func (c *ResourceWatcherCache) startResourceWatcher() {
 	log.Infof("+ResourceWatcherCache startResourceWatcher")
-	c.watcherMutex.Lock()
 	// can't defer c.watcherMutex.Unlock() because when all is well,
 	// we never return from this func
 
-	if !c.watcherStarted {
+	if !c.initOk {
 		ch, err := c.newResourceWatcherChan()
 		if err != nil {
-			c.watcherMutex.Unlock()
-			log.Errorf("failed to start resource watcher due to: %v", err)
+			c.initMutex.Unlock()
+			log.Errorf("Failed to start resource watcher for [%s] due to: %v", c.config.gvr, err)
 			return
 		}
-		c.watcherStarted = true
-		c.watcherMutex.Unlock()
-		log.Infof("watcher for [%s] successfully started. waiting for events...", c.config.gvr)
+		c.initOk = true
+		c.initMutex.Unlock()
+		log.Infof("Watcher for [%s] successfully started. waiting for events...", c.config.gvr)
 
 		c.processEvents(ch)
 	} else {
-		c.watcherMutex.Unlock()
+		c.initMutex.Unlock()
 		log.Infof("watcher already started. exiting...")
 	}
 	// we should never reach here under normal usage
@@ -166,6 +168,12 @@ func (c *ResourceWatcherCache) newResourceWatcherChan() (<-chan watch.Event, err
 	}
 
 	// this will start a watcher on all namespaces
+	// notice, we are not setting resourceVersion in ListOptions, which means
+	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
+	// Get State and Start at Most Recent: to establish initial state, the watch
+	// begins with synthetic "Added" events of all resources instances that exist
+	// at the starting resource version. All following watch events are for all changes
+	// that occurred after the resource version the watch started at
 	watcher, err := dynamicClient.Resource(c.config.gvr).Namespace("").Watch(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -320,20 +328,37 @@ type fetchValueJob struct {
 }
 
 type fetchValueJobResult struct {
-	result interface{}
-	err    error
+	key   string
+	value interface{}
+	err   error
+}
+
+// currently returns all available keys
+// TODO (gfichtenholt) this func needs to take an filter argument to return all keys matching a specific filter
+func (c *ResourceWatcherCache) listKeys() ([]string, error) {
+	if err := c.checkInit(); err != nil {
+		return nil, err
+	}
+	return c.redisCli.Keys(c.redisCli.Context(), "*").Result()
 }
 
 // each object is read from redis in a separate go routine (lightweight thread of execution)
 // listItems is a list of unstructured objects.
-// TODO 1 (gfichtenholt) all we really need is the list of keys, so we should have a flavor of this func
-// that accepts that
-// TODO 2 (gfichtenholt) the result should really be a map[string]interface{}, i.e. map with keys
+// TODO 1 (gfichtenholt) the result should really be a map[string]interface{}, i.e. map with keys
 // instead of []interface{}
-func (c *ResourceWatcherCache) fetchCachedObjects(requestItems []unstructured.Unstructured) ([]interface{}, error) {
+// TODO 2 (gfichtenholt) this func originally was written such that it was doing all the heavy work,
+// like indexing a repo for each key when asked, hence the use of concurrent go routines.
+// Now all it does is fetch pre-computed values out of the cache, which by definition should be
+// very quick, so I am not sure warrants the complexity below.
+// Perhaps, I need to simplify it and fetch everything in a single sequence in a for loop
+func (c *ResourceWatcherCache) fetchForMultiple(keys []string) ([]interface{}, error) {
+	if err := c.checkInit(); err != nil {
+		return nil, err
+	}
+
 	responseItems := make([]interface{}, 0)
 	var wg sync.WaitGroup
-	numWorkers := int(math.Min(float64(len(requestItems)), float64(maxWorkers)))
+	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
 	requestChan := make(chan fetchValueJob, numWorkers)
 	responseChan := make(chan fetchValueJobResult, numWorkers)
 
@@ -344,7 +369,7 @@ func (c *ResourceWatcherCache) fetchCachedObjects(requestItems []unstructured.Un
 			for job := range requestChan {
 				// The following loop will only terminate when the request channel is closed (and there are no more items)
 				result, err := c.fetchForOne(job.key)
-				responseChan <- fetchValueJobResult{result, err}
+				responseChan <- fetchValueJobResult{job.key, result, err}
 			}
 			wg.Done()
 		}()
@@ -355,13 +380,8 @@ func (c *ResourceWatcherCache) fetchCachedObjects(requestItems []unstructured.Un
 	}()
 
 	go func() {
-		for _, item := range requestItems {
-			key, err := c.redisKeyFor(item.Object)
-			if err != nil {
-				log.Errorf("Failed to get redis key due to: %v", err)
-			} else {
-				requestChan <- fetchValueJob{*key}
-			}
+		for _, key := range keys {
+			requestChan <- fetchValueJob{key}
 		}
 		close(requestChan)
 	}()
@@ -372,11 +392,11 @@ func (c *ResourceWatcherCache) fetchCachedObjects(requestItems []unstructured.Un
 	for resp := range responseChan {
 		if resp.err == nil {
 			// resp.result may be nil when there is a cache miss
-			if resp.result != nil {
-				responseItems = append(responseItems, resp.result)
+			if resp.value != nil {
+				responseItems = append(responseItems, resp.value)
 			}
 		} else {
-			log.Errorf("%v", resp.err)
+			log.Errorf("fetch value for key [%s] failed due to %v", resp.key, resp.err)
 		}
 	}
 	return responseItems, nil
@@ -405,4 +425,16 @@ func (c *ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{
 	// We will use "helmrepository:ns:repoName"
 	s := fmt.Sprintf("%s:%s:%s", c.config.gvr.Resource, namespace, name)
 	return &s, nil
+}
+
+func (c *ResourceWatcherCache) checkInit() error {
+	c.initMutex.Lock()
+	defer c.initMutex.Unlock()
+	if !c.initOk {
+		return status.Errorf(
+			codes.FailedPrecondition,
+			"Server cache has not been properly initialized")
+	} else {
+		return nil
+	}
 }
