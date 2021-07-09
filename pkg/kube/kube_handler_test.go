@@ -45,6 +45,7 @@ import (
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	fakeapprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 )
 
 type repoStub struct {
@@ -1164,8 +1165,8 @@ func TestValidateAppRepository(t *testing.T) {
 			if !cmp.Equal(tc.expectedURLs, reqURLs) {
 				t.Errorf("Unexpected URLS: %v", cmp.Diff(tc.expectedURLs, reqURLs))
 			}
-			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders))
+			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders))
 			}
 		})
 	}

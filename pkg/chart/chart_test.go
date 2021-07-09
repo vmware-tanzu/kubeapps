@@ -35,6 +35,7 @@ import (
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -477,7 +478,7 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 	return &http.Response{StatusCode: 404}, fmt.Errorf("Unexpected path %q for chartURLs %+v", h.URL.String(), f.chartURLs)
 }
 
-func newHTTPClient(repoURL string, charts []Details, userAgent string) kube.HTTPClient {
+func newHTTPClient(repoURL string, charts []Details, userAgent string) httpclient.Client {
 	var chartURLs []string
 	entries := map[string]repo.ChartVersions{}
 	// Populate Chart registry with content of the given helmReleases
@@ -500,7 +501,7 @@ func newHTTPClient(repoURL string, charts []Details, userAgent string) kube.HTTP
 }
 
 // getFakeClientRequests returns the requests which were issued to the fake test client.
-func getFakeClientRequests(t *testing.T, c kube.HTTPClient) []*http.Request {
+func getFakeClientRequests(t *testing.T, c httpclient.Client) []*http.Request {
 	fakeClient, ok := c.(*fakeHTTPClient)
 	if !ok {
 		t.Fatalf("client was not a fakeHTTPClient")

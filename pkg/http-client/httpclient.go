@@ -19,21 +19,42 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
 
 const (
-	defaultTimeoutSeconds = 10
+	defaultTimeoutSeconds = 180
 )
 
 type Client interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// creates a new instance of Client, with default configuration
+// ClientWithDefaults implements Client interface
+// and includes an override of the Do method which injects the following supported defaults:
+//  - headers: e.g. User-Agent and Authorization (when present)
+type ClientWithDefaults struct {
+	Client         Client
+	DefaultHeaders http.Header
+}
+
+// ClientWithDefaults Do HTTP request
+func (c *ClientWithDefaults) Do(req *http.Request) (*http.Response, error) {
+	for k, v := range c.DefaultHeaders {
+		// Only add the default header if it's not already set in the request.
+		if _, ok := req.Header[k]; !ok {
+			req.Header[k] = v
+		}
+	}
+	return c.Client.Do(req)
+}
+
+// creates a new instance of http Client, with following default configuration:
+//		- timeout
+//		- proxy from environment
 func New() *http.Client {
-	// Return Transport for testing purposes
 	return &http.Client{
 		Timeout: time.Second * defaultTimeoutSeconds,
 		Transport: &http.Transport{
@@ -54,36 +75,74 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 		return NewWithCertBytes(certs, skipTLS)
 	}
 
-	// Return Transport for testing purposes
+	// Return client with TLS skipVerify but no additional certs
 	client := New()
-	client.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: skipTLS,
-		}}
+	if err := SetClientTLS(client, nil, skipTLS); err != nil {
+		return nil, err
+	}
+
 	return client, nil
 }
 
 // creates a new instance of Client, given bytes for addtional certificates
 func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
-	// Get the SystemCertPool, continue with an empty pool on error
-	caCertPool, _ := x509.SystemCertPool()
-	if caCertPool == nil {
+	// create cert pool
+	caCertPool, err := GetCertPool(certs)
+	if err != nil {
+		return nil, err
+	}
+
+	// create and configure client
+	client := New()
+	if err := SetClientTLS(client, caCertPool, skipTLS); err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// get or create a cert pool, with the given (optional) certs
+func GetCertPool(certs []byte) (*x509.CertPool, error) {
+	// Require the SystemCertPool unless the env var is explicitly set.
+	caCertPool, err := x509.SystemCertPool()
+	if err != nil {
+		if _, ok := os.LookupEnv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL"); !ok {
+			return nil, err
+		}
 		caCertPool = x509.NewCertPool()
 	}
 
 	// Append our cert to the system pool
-	if ok := caCertPool.AppendCertsFromPEM(certs); !ok {
-		return nil, fmt.Errorf("failed to append bytes to RootCAs")
+	if certs != nil && len(certs) > 0 {
+		if ok := caCertPool.AppendCertsFromPEM(certs); !ok {
+			return nil, fmt.Errorf("failed to append certs to RootCAs")
+		}
 	}
 
-	// Return Transport for testing purposes
-	client := New()
-	client.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: skipTLS,
-			RootCAs:            caCertPool,
-		}}
-	return client, nil
+	return caCertPool, nil
+}
+
+// configure the given proxy on the given client
+func SetClientProxy(client *http.Client, proxy func(*http.Request) (*url.URL, error)) error {
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return fmt.Errorf("transport was not an http.Transport")
+	}
+	transport.Proxy = proxy
+	return nil
+}
+
+// configure the given tls on the given client
+func SetClientTLS(client *http.Client, caCertPool *x509.CertPool, skipTLS bool) error {
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return fmt.Errorf("transport was not an http.Transport")
+	}
+	transport.TLSClientConfig = &tls.Config{
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: skipTLS,
+	}
+	return nil
 }
 
 // performs an HTTP GET request using provided client, URL and request headers.

@@ -35,6 +35,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	apprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1alpha1typed "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -684,7 +685,7 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	return err
 }
 
-func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (*v1alpha1.AppRepository, HTTPClient, error) {
+func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (*v1alpha1.AppRepository, httpclient.Client, error) {
 	appRepoRequest, err := parseRepoRequest(appRepoBody)
 	if err != nil {
 		return nil, nil, err
@@ -712,7 +713,7 @@ func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespa
 	return appRepo, cli, nil
 }
 
-func doValidationRequest(cli HTTPClient, req *http.Request) (*ValidationResponse, error) {
+func doValidationRequest(cli httpclient.Client, req *http.Request) (*ValidationResponse, error) {
 	res, err := cli.Do(req)
 	if err != nil {
 		// If the request fail, it's not an internal error
@@ -725,7 +726,7 @@ func doValidationRequest(cli HTTPClient, req *http.Request) (*ValidationResponse
 	return &ValidationResponse{Code: res.StatusCode, Message: string(body)}, nil
 }
 
-func getRequests(appRepo *v1alpha1.AppRepository, cli HTTPClient) ([]*http.Request, error) {
+func getRequests(appRepo *v1alpha1.AppRepository, cli httpclient.Client) ([]*http.Request, error) {
 	result := []*http.Request{}
 	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
 

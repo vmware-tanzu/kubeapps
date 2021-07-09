@@ -17,49 +17,18 @@ limitations under the License.
 package kube
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
-	"time"
 
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
-
-const (
-	defaultTimeoutSeconds = 180
-)
-
-// HTTPClient Interface to perform HTTP requests
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-// clientWithDefaultHeaders implements chart.HTTPClient interface
-// and includes an override of the Do method which injects our default
-// headers - User-Agent and Authorization (when present)
-type clientWithDefaultHeaders struct {
-	client         HTTPClient
-	defaultHeaders http.Header
-}
-
-// Do HTTP request
-func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error) {
-	for k, v := range c.defaultHeaders {
-		// Only add the default header if it's not already set in the request.
-		if _, ok := req.Header[k]; !ok {
-			req.Header[k] = v
-		}
-	}
-	return c.client.Do(req)
-}
 
 func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfigJSON) (string, error) {
 	if len(dockerConfig.Auths) > 1 {
@@ -91,8 +60,8 @@ func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 	return GetAuthHeaderFromDockerConfig(dockerConfig)
 }
 
-// GetData retrieves the given key from the secret as a string
-func GetData(key string, s *corev1.Secret) (string, error) {
+// GetDataFromSecret retrieves the given key from the secret as a string
+func GetDataFromSecret(key string, s *corev1.Secret) (string, error) {
 	if key == ".dockerconfigjson" {
 		// Parse the secret as a docker registry secret
 		return getDataFromRegistrySecret(key, s)
@@ -111,17 +80,10 @@ func GetData(key string, s *corev1.Secret) (string, error) {
 
 // InitHTTPClient returns a HTTP client using the configuration from the apprepo and CA secret given.
 func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret) (*http.Client, error) {
-	// Require the SystemCertPool unless the env var is explicitly set.
-	caCertPool, err := x509.SystemCertPool()
-	if err != nil {
-		if _, ok := os.LookupEnv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL"); !ok {
-			return nil, err
-		}
-		caCertPool = x509.NewCertPool()
-	}
-
+	// create cert pool
+	var certsData []byte = nil
 	if caCertSecret != nil && appRepo.Spec.Auth.CustomCA != nil {
-		// Append our cert to the system pool
+		// Fetch cert data
 		key := appRepo.Spec.Auth.CustomCA.SecretKeyRef.Key
 		customData, ok := caCertSecret.Data[key]
 		if !ok {
@@ -131,28 +93,32 @@ func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret
 			}
 			customData = []byte(customDataString)
 		}
-		if ok := caCertPool.AppendCertsFromPEM(customData); !ok {
-			return nil, fmt.Errorf("Failed to append %s to RootCAs", appRepo.Spec.Auth.CustomCA.SecretKeyRef.Name)
-		}
+		certsData = customData
 	}
+	caCertPool, err := httpclient.GetCertPool(certsData)
+	if err != nil {
+		return nil, err
+	}
+
+	// proxy config
 	proxyConfig := getProxyConfig(appRepo)
 	proxyFunc := func(r *http.Request) (*url.URL, error) { return proxyConfig.ProxyFunc()(r.URL) }
 
-	return &http.Client{
-		Timeout: time.Second * defaultTimeoutSeconds,
-		Transport: &http.Transport{
-			Proxy: proxyFunc,
-			TLSClientConfig: &tls.Config{
-				RootCAs:            caCertPool,
-				InsecureSkipVerify: appRepo.Spec.TLSInsecureSkipVerify,
-			},
-		},
-	}, nil
+	// create client
+	client := httpclient.New()
+	if err := httpclient.SetClientTLS(client, caCertPool, appRepo.Spec.TLSInsecureSkipVerify); err != nil {
+		return nil, err
+	}
+	if err := httpclient.SetClientProxy(client, proxyFunc); err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *corev1.Secret, defaultHeaders http.Header) (HTTPClient, error) {
+func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *corev1.Secret, defaultHeaders http.Header) (httpclient.Client, error) {
 	netClient, err := InitHTTPClient(appRepo, caCertSecret)
 	if err != nil {
 		return nil, err
@@ -162,16 +128,16 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *co
 		defaultHeaders = http.Header{}
 	}
 	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
-		auth, err := GetData(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
+		auth, err := GetDataFromSecret(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
 		if err != nil {
 			return nil, err
 		}
 		defaultHeaders.Set("Authorization", string(auth))
 	}
 
-	return &clientWithDefaultHeaders{
-		client:         netClient,
-		defaultHeaders: defaultHeaders,
+	return &httpclient.ClientWithDefaults{
+		Client:         netClient,
+		DefaultHeaders: defaultHeaders,
 	}, nil
 }
 
