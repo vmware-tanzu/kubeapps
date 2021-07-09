@@ -20,7 +20,7 @@
     "@types/react": "^17.0.13",
     "@types/react-copy-to-clipboard": "^5.0.1",
     "@types/react-jsonschema-form": "^1.7.5",
-    "@types/react-router-dom": "^5.1.7",
+    "@types/react-router-dom": "^5.1.8",
     "@types/react-router-hash-link": "^2.4.1",
     "@types/react-tabs": "^2.3.3",
     "@types/react-transition-group": "^4.4.2",
