@@ -73,8 +73,6 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
    pinnipedProxy:
      enabled: true
      defaultAuthenticatorName: kubeapps-jwt-authenticator # this name must match the authenticator name previously created
-     defaultPinnipedNamespace: vmware-system-tmc
-     defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
    ```
 
    > **TIP**: The `defaultAuthenticatorName` must match the _JWTAuthenticator_ resource name created in [Step 1](./step-1.md).
