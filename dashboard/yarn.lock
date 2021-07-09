@@ -2125,10 +2125,10 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@^26.0.23":
-  version "26.0.23"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.23.tgz#a1b7eab3c503b80451d019efb588ec63522ee4e7"
-  integrity sha512-ZHLmWMJ9jJ9PTiT58juykZpL7KjwJywFN3Rr2pTSkyQfydf/rk22yS7W8p5DaVUMQ2BQC7oYiU3FjbTM/mYrOA==
+"@types/jest@^26.0.24":
+  version "26.0.24"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.24.tgz#943d11976b16739185913a1936e0de0c4a7d595a"
+  integrity sha512-E/X5Vib8BWqZNRlDxj9vYXhsDwPYbPINqKF9BsnSoon4RQ0D9moEuLD8txgyypFLH7J4+Lho9Nr/c8H0Fi+17w==
   dependencies:
     jest-diff "^26.0.0"
     pretty-format "^26.0.0"
@@ -2253,10 +2253,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-helmet@^6.1.1":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@types/react-helmet/-/react-helmet-6.1.1.tgz#4fde22cbcaa1b461642e1d719cc6162d95acb110"
-  integrity sha512-VmSCMz6jp/06DABoY60vQa++h1YFt0PfAI23llxBJHbowqFgLUL0dhS1AQeVPNqYfRp9LAfokrfWACTNeobOrg==
+"@types/react-helmet@^6.1.2":
+  version "6.1.2"
+  resolved "https://registry.yarnpkg.com/@types/react-helmet/-/react-helmet-6.1.2.tgz#e9d7d16b29e4ec5716711c52c35c3cec45819eac"
+  integrity sha512-dcfAZNlWb5JYFbO9CGfrPWLJAyFcT6UeR3u35eBbv8liY2Rg4K7fM1G5+HnwVgot+C+kVwXAZ8pLEn2jsMfTDg==
   dependencies:
     "@types/react" "*"
 
@@ -13591,17 +13591,17 @@ stylelint-config-prettier@^8.0.2:
   resolved "https://registry.yarnpkg.com/stylelint-config-prettier/-/stylelint-config-prettier-8.0.2.tgz#da9de33da4c56893cbe7e26df239a7374045e14e"
   integrity sha512-TN1l93iVTXpF9NJstlvP7nOu9zY2k+mN0NSFQ/VEGz15ZIP9ohdDZTtCWHs5LjctAhSAzaILULGbgiM0ItId3A==
 
-stylelint-config-recommended-scss@^4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/stylelint-config-recommended-scss/-/stylelint-config-recommended-scss-4.2.0.tgz#3ad3fc858215cfd16a0f90aecf1ac0ea8a3e6971"
-  integrity sha512-4bI5BYbabo/GCQ6LbRZx/ZlVkK65a1jivNNsD+ix/Lw0U3iAch+jQcvliGnnAX8SUPaZ0UqzNVNNAF3urswa7g==
+stylelint-config-recommended-scss@^4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/stylelint-config-recommended-scss/-/stylelint-config-recommended-scss-4.3.0.tgz#717dc253b4cab246da654cee208e499c5c797ae4"
+  integrity sha512-/noGjXlO8pJTr/Z3qGMoaRFK8n1BFfOqmAbX1RjTIcl4Yalr+LUb1zb9iQ7pRx1GsEBXOAm4g2z5/jou/pfMPg==
   dependencies:
-    stylelint-config-recommended "^3.0.0"
+    stylelint-config-recommended "^5.0.0"
 
-stylelint-config-recommended@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-config-recommended/-/stylelint-config-recommended-3.0.0.tgz#e0e547434016c5539fe2650afd58049a2fd1d657"
-  integrity sha512-F6yTRuc06xr1h5Qw/ykb2LuFynJ2IxkKfCMf+1xqPffkxh0S09Zc902XCffcsw/XMFq/OzQ1w54fLIDtmRNHnQ==
+stylelint-config-recommended@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/stylelint-config-recommended/-/stylelint-config-recommended-5.0.0.tgz#fb5653f495a60b4938f2ad3e77712d9e1039ae78"
+  integrity sha512-c8aubuARSu5A3vEHLBeOSJt1udOdS+1iue7BmJDTSXoCBmfEQmmWX+59vYIj3NQdJBY6a/QRv1ozVFpaB9jaqA==
 
 stylelint-scss@^3.19.0:
   version "3.19.0"
