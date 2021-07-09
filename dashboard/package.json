@@ -33,7 +33,7 @@
     "fast-json-patch": "^3.0.0-1",
     "fstream": "^1.0.12",
     "history": "^4.10.1",
-    "immutable": "^4.0.0-rc.12",
+    "immutable": "^4.0.0-rc.14",
     "js-yaml": "^4.1.0",
     "json-schema": "^0.3.0",
     "jsonwebtoken": "^8.5.1",
