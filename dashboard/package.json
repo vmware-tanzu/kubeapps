@@ -12,7 +12,7 @@
     "@types/diff": "^5.0.1",
     "@types/js-yaml": "^4.0.2",
     "@types/json-schema": "^7.0.8",
-    "@types/jsonwebtoken": "^8.5.3",
+    "@types/jsonwebtoken": "^8.5.4",
     "@types/lodash": "^4.14.171",
     "@types/moxios": "^0.4.12",
     "@types/pako": "^1.0.2",
