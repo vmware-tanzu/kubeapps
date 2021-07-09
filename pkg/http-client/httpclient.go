@@ -77,7 +77,9 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 
 	// Return client with TLS skipVerify but no additional certs
 	client := New()
-	SetClientTLS(client, nil, skipTLS)
+	if err := SetClientTLS(client, nil, skipTLS); err != nil {
+		return nil, err
+	}
 
 	return client, nil
 }
@@ -92,7 +94,9 @@ func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 
 	// create and configure client
 	client := New()
-	SetClientTLS(client, caCertPool, skipTLS)
+	if err := SetClientTLS(client, caCertPool, skipTLS); err != nil {
+		return nil, err
+	}
 
 	return client, nil
 }
@@ -109,7 +113,7 @@ func GetCertPool(certs []byte) (*x509.CertPool, error) {
 	}
 
 	// Append our cert to the system pool
-	if certs != nil {
+	if certs != nil && len(certs) > 0 {
 		if ok := caCertPool.AppendCertsFromPEM(certs); !ok {
 			return nil, fmt.Errorf("failed to append certs to RootCAs")
 		}
@@ -119,16 +123,26 @@ func GetCertPool(certs []byte) (*x509.CertPool, error) {
 }
 
 // configure the given proxy on the given client
-func SetClientProxy(client *http.Client, proxy func(*http.Request) (*url.URL, error)) {
-	client.Transport.(*http.Transport).Proxy = proxy
+func SetClientProxy(client *http.Client, proxy func(*http.Request) (*url.URL, error)) error {
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return fmt.Errorf("transport was not an http.Transport")
+	}
+	transport.Proxy = proxy
+	return nil
 }
 
 // configure the given tls on the given client
-func SetClientTLS(client *http.Client, caCertPool *x509.CertPool, skipTLS bool) {
-	client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
+func SetClientTLS(client *http.Client, caCertPool *x509.CertPool, skipTLS bool) error {
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return fmt.Errorf("transport was not an http.Transport")
+	}
+	transport.TLSClientConfig = &tls.Config{
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: skipTLS,
 	}
+	return nil
 }
 
 // performs an HTTP GET request using provided client, URL and request headers.
