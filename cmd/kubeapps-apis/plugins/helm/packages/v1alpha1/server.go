@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -37,6 +38,12 @@ import (
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
+
+const (
+	MajorVersionsInSummary = 3
+	MinorVersionsInSummary = 3
+	PatchVersionsInSummary = 3
+)
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
@@ -121,19 +128,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: not including a namespace means that it returns everything a user can read")
 	}
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
-	// If checking the global namespace, allow access always
-	hasAccess := namespace == s.globalPackagingNamespace
-	if !hasAccess {
-		var err error
-		// If checking another namespace, check if the user has access (ie, "get secrets in this ns")
-		hasAccess, err = s.hasAccessToNamespace(ctx, namespace)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
-		}
-		if !hasAccess {
-			// If the user has not access, return a unauthenticated response, otherwise, continue
-			return nil, status.Errorf(codes.Unauthenticated, "The current user has no access to the namespace %q", namespace)
-		}
+	if err := s.hasAccessToNamespace(ctx, namespace); err != nil {
+		return nil, err
 	}
 
 	// Create the initial chart query with the namespace
@@ -226,6 +222,20 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	return pkg, nil
 }
 
+// getUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+func getUnescapedChartID(chartID string) (string, error) {
+	unescapedChartID, err := url.QueryUnescape(chartID)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
+	}
+	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
+	chartIDParts := strings.Split(unescapedChartID, "/")
+	if len(chartIDParts) != 2 {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
+	}
+	return unescapedChartID, nil
+}
+
 // GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
 	if request.AvailablePackageRef == nil || request.AvailablePackageRef.Context == nil {
@@ -236,34 +246,16 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	// Retrieve namespace, chartID, version from the request
 	namespace := request.AvailablePackageRef.Context.Namespace
-	chartID := request.AvailablePackageRef.Identifier
 	version := request.PkgVersion
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
-	// If checking the global namespace, allow access always
-	hasAccess := namespace == s.globalPackagingNamespace
-	if !hasAccess {
-		var err error
-		// If checking another namespace, check if the user has access (ie, "get secrets in this ns")
-		hasAccess, err = s.hasAccessToNamespace(ctx, namespace)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
-		}
-		if !hasAccess {
-			// If the user has not access, return a unauthenticated response, otherwise, continue
-			return nil, status.Errorf(codes.Unauthenticated, "The current user has no access to the namespace %q", namespace)
-		}
+	if err := s.hasAccessToNamespace(ctx, namespace); err != nil {
+		return nil, err
 	}
 
-	// Unescape URI-encoded characters, like '%2F' that becomes '/'
-	unescapedChartID, err := url.QueryUnescape(chartID)
+	unescapedChartID, err := getUnescapedChartID(request.AvailablePackageRef.Identifier)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
-	}
-	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	if len(chartIDParts) != 2 {
-		return nil, status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
+		return nil, err
 	}
 
 	// Since the version is optional, in case of an empty one, fall back to get all versions and get the first one
@@ -288,6 +280,84 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: availablePackageDetail,
 	}, nil
+}
+
+// GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
+func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+
+	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
+	}
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
+	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
+
+	namespace := request.AvailablePackageRef.Context.Namespace
+
+	// After requesting a specific namespace, we have to ensure the user can actually access to it
+	if err := s.hasAccessToNamespace(ctx, namespace); err != nil {
+		return nil, err
+	}
+
+	unescapedChartID, err := getUnescapedChartID(request.AvailablePackageRef.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Requesting chart '%s' (latest version) in ns '%s'", unescapedChartID, namespace)
+	chart, err := s.manager.GetChart(namespace, unescapedChartID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
+	}
+	return &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+	}, nil
+}
+
+// packageAppVersionsSummary converts the model chart versions into the required version summary.
+func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion {
+	pav := []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{}
+
+	// Use a version map to be able to count how many major, minor and patch versions
+	// we have included.
+	version_map := map[int64]map[int64][]int64{}
+	for _, v := range versions {
+		version, err := semver.NewVersion(v.Version)
+		if err != nil {
+			continue
+		}
+
+		if _, ok := version_map[version.Major()]; !ok {
+			// Don't add a new major version if we already have enough
+			if len(version_map) >= MajorVersionsInSummary {
+				continue
+			}
+		} else {
+			// If we don't yet have this minor version
+			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
+				// Don't add a new minor version if we already have enough for this major version
+				if len(version_map[version.Major()]) >= MinorVersionsInSummary {
+					continue
+				}
+			} else {
+				if len(version_map[version.Major()][version.Minor()]) >= PatchVersionsInSummary {
+					continue
+				}
+			}
+		}
+
+		// Include the version and update the version map.
+		pav = append(pav, &corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			PkgVersion: v.Version,
+			AppVersion: v.AppVersion,
+		})
+
+		if _, ok := version_map[version.Major()]; !ok {
+			version_map[version.Major()] = map[int64][]int64{}
+		}
+		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
+	}
+
+	return pav
 }
 
 // AvailablePackageDetailFromChart builds an AvailablePackageDetail from a Chart
@@ -329,11 +399,15 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	return pkg, nil
 }
 
-// hasAccessToNamespace returns true if the client has read access to a given namespace
-func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bool, error) {
+// hasAccessToNamespace returns an error if the client does not have read access to a given namespace
+func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) error {
+	// If checking the global namespace, allow access always
+	if namespace == s.globalPackagingNamespace {
+		return nil
+	}
 	client, _, err := s.GetClients(ctx)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationv1.SelfSubjectAccessReview{
@@ -347,9 +421,13 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bo
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return false, err
+		return status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
 	}
-	return res.Status.Allowed, nil
+	if !res.Status.Allowed {
+		// If the user has not access, return a unauthenticated response, otherwise, continue
+		return status.Errorf(codes.Unauthenticated, "The current user has no access to the namespace %q", namespace)
+	}
+	return nil
 }
 
 // isValidChart returns true if the chart model passed defines a value
