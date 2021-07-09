@@ -1181,10 +1181,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.4.1":
-  version "5.4.1"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.4.1.tgz#4dc56b160c1a6ab7c968de9fcc1ff1d64f780d0e"
-  integrity sha512-7RhtrMx5UM6xCU+2l9T7E/MBZ+nDqGGyzOLz9EhscKjurIJQrGTPAIwgomJNZ22W2Gw+S36+v/R62y4uStQFTg==
+"@cds/core@^5.4.2":
+  version "5.4.2"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.4.2.tgz#d4db6f8c8333ae1a74ade5183a88d9dee530b522"
+  integrity sha512-cpMomSlY3tr6y4srRrd7QUmjXv2MLNERSW5ZTx6AdkIAi9rgLRdYEnxncw/hsjCU7RWouD8vIYY4F0fDvnvxAQ==
   dependencies:
     lit "2.0.0-rc.2"
     ramda "^0.27.1"
@@ -1194,10 +1194,10 @@
     "@types/resize-observer-browser" "^0.1.5"
     normalize.css "^8.0.1"
 
-"@cds/react@^5.4.1":
-  version "5.4.1"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.4.1.tgz#56ebb9e02d785d05c474763fbdca53e0b382b7df"
-  integrity sha512-9i5UEDwR8QSHSdGT01tNNue68dSm2Tf76VebtHKXWcQdoDrjVAVMCIhVWXGKh7brqwys3xOAT9JbrLZ+SrMEpQ==
+"@cds/react@^5.4.2":
+  version "5.4.2"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.4.2.tgz#301dc8234138c184358ff8b746d4b69d6b2434dd"
+  integrity sha512-QQr7jGiJxZHQbNRmjGGDLEd9Ulj9fuiCSwYS1oQoH42LHbgO0LD38ZYI1GbQELgZbCqVLwv+woBMcxBODyxRIw==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
@@ -2278,10 +2278,10 @@
     hoist-non-react-statics "^3.3.0"
     redux "^4.0.0"
 
-"@types/react-router-dom@*", "@types/react-router-dom@^5.1.7":
-  version "5.1.7"
-  resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-5.1.7.tgz#a126d9ea76079ffbbdb0d9225073eb5797ab7271"
-  integrity sha512-D5mHD6TbdV/DNHYsnwBTv+y73ei+mMjrkGrla86HthE4/PVvL1J94Bu3qABU+COXzpL23T1EZapVVpwHuBXiUg==
+"@types/react-router-dom@*", "@types/react-router-dom@^5.1.8":
+  version "5.1.8"
+  resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-5.1.8.tgz#bf3e1c8149b3d62eaa206d58599de82df0241192"
+  integrity sha512-03xHyncBzG0PmDmf8pf3rehtjY0NpUj7TIN46FrT5n1ZWHPZvXz32gUyNboJ+xsL8cpg8bQVLcllptcQHvocrw==
   dependencies:
     "@types/history" "*"
     "@types/react" "*"
@@ -2357,10 +2357,10 @@
   resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.1.tgz#18845205e86ff0038517aab7a18a62a6b9f71275"
   integrity sha512-EaCxbanVeyxDRTQBkdLb3Bvl/HK7PBK6UJjsSixB0iHKoWxE5uu2Q/DgtpOhPIojN0Zl1whvOd7PoHs2P0s5eA==
 
-"@types/semver@^7.3.6":
-  version "7.3.6"
-  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.3.6.tgz#e9831776f4512a7ba6da53e71c26e5fb67882d63"
-  integrity sha512-0caWDWmpCp0uifxFh+FaqK3CuZ2SkRR/ZRxAV5+zNdC3QVUi6wyOJnefhPvtNt8NQWXB5OA93BUvZsXpWat2Xw==
+"@types/semver@^7.3.7":
+  version "7.3.7"
+  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.3.7.tgz#b9eb89d7dfa70d5d1ce525bc1411a35347f533a3"
+  integrity sha512-4g1jrL98mdOIwSOUh6LTlB0Cs9I0dQPwINUhBg7C6pN4HLr8GS8xsksJxilW6S6dQHVi2K/o+lQuQcg7LroCnw==
 
 "@types/source-list-map@*":
   version "0.1.2"
