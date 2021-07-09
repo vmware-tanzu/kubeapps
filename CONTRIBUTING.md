@@ -70,3 +70,14 @@ By making a contribution to this project, I certify that:
     maintained indefinitely and may be redistributed consistent with
     this project or the open source license(s) involved.
 ```
+
+If you find yourself in the position where you've created a pull-request and it's failing the DCO check because some of your commits are not signed off, you can just follow the details of the DCO check failure to sign-off on those commits with a single command, such as:
+
+```bash
+git rebase HEAD~N --signoff
+git push --force-with-lease
+```
+
+where N is the number of commits you've added.
+
+You can also setup a [commit template for your local git config](https://stackoverflow.com/a/34687806) that includes your sign-off.
