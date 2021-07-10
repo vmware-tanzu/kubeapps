@@ -19,7 +19,7 @@
     "@types/qs": "^6.9.7",
     "@types/react": "^17.0.14",
     "@types/react-copy-to-clipboard": "^5.0.1",
-    "@types/react-jsonschema-form": "^1.7.5",
+    "@types/react-jsonschema-form": "^1.7.6",
     "@types/react-router-dom": "^5.1.8",
     "@types/react-router-hash-link": "^2.4.1",
     "@types/react-tabs": "^2.3.3",

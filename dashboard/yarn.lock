@@ -2260,10 +2260,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-jsonschema-form@^1.7.5":
-  version "1.7.5"
-  resolved "https://registry.yarnpkg.com/@types/react-jsonschema-form/-/react-jsonschema-form-1.7.5.tgz#1b08327662afd610a93f28e33950e00e6e848581"
-  integrity sha512-Ovhmu9WOAHee0GNCncNiTRtUmrVZgj8vkdEwc3f0CgvkNIYss9ucQ1F6TNLuakXumAg25P1zGgeCqr37iJo5FQ==
+"@types/react-jsonschema-form@^1.7.6":
+  version "1.7.6"
+  resolved "https://registry.yarnpkg.com/@types/react-jsonschema-form/-/react-jsonschema-form-1.7.6.tgz#538b69e6219430c9f90af25b773bbfad35effad9"
+  integrity sha512-gkMH2ZEHH8+7EoZRhA4F2NSqO8zlcXrepMYExHRZ8nGynzBQdmp6vHryEiOSEysowVHTHCP7wLPOWhIHx3tMPg==
   dependencies:
     "@types/json-schema" "*"
     "@types/react" "*"
