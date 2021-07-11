@@ -33,6 +33,7 @@ import (
 	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/helm"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
@@ -87,7 +88,7 @@ type Resolver interface {
 // Client struct contains the clients required to retrieve charts info
 type Client struct {
 	userAgent string
-	netClient kube.HTTPClient
+	netClient httpclient.Client
 }
 
 // NewChartClient returns a new ChartClient
@@ -172,7 +173,7 @@ func parseIndex(data []byte) (*repo.IndexFile, error) {
 }
 
 // fetchRepoIndex returns a Helm repository
-func fetchRepoIndex(netClient *kube.HTTPClient, repoURL string) (*repo.IndexFile, error) {
+func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFile, error) {
 	req, err := getReq(repoURL)
 	if err != nil {
 		return nil, err
@@ -228,7 +229,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *kube.HTTPClient, chartURL string) (*helm3chart.Chart, error) {
+func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Chart, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -395,7 +396,7 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 	}
 	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
 		var auth string
-		auth, err = kube.GetData(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
+		auth, err = kube.GetDataFromSecret(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
 		if err != nil {
 			return err
 		}
