@@ -162,15 +162,33 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.Context.Cluster)
 	}
 
+	// TODO (gfichtenholt) support FilterOptions and PaginationOptions listed below
+	if request != nil {
+		filter := request.GetFilterOptions()
+		if filter.GetAppVersion() != "" || filter.GetCategories() != nil ||
+			filter.GetPkgVersion() != "" || filter.GetQuery() != "" {
+			return nil, status.Errorf(
+				codes.Unimplemented,
+				"Not supported yet: request.FilterOptions: [%v]",
+				filter)
+		}
+
+		pagination := request.GetPaginationOptions()
+		if pagination != nil {
+			return nil, status.Errorf(
+				codes.Unimplemented,
+				"Not supported yet: request.FilterOptions: [%v]",
+				filter)
+		}
+	}
+
 	if s.cache == nil {
 		return nil, status.Errorf(
 			codes.FailedPrecondition,
 			"Server cache has not been properly initialized")
 	}
 
-	// TODO 1 (gfichtenholt) use request.FilterOptions when the semantics of various fields
-	// in FilterOptions becomes clear
-	repos, err := s.cache.listKeys()
+	repos, err := s.cache.listKeys(request.GetFilterOptions().GetRepositories())
 	if err != nil {
 		return nil, err
 	}

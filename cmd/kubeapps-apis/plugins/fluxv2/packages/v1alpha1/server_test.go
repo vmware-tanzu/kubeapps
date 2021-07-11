@@ -209,7 +209,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = beforeCallGetAvailablePackageSummaries(mock); err != nil {
+			if err = beforeCallGetAvailablePackageSummaries(mock, nil); err != nil {
 				t.Fatalf("%v", err)
 			}
 
@@ -365,6 +365,64 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 		},
+		{
+			testName: "uses a filter based on existing repo",
+			testRepos: []testRepoStruct{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     "testdata/jetstack-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Repositories: []string{"jetstack-1"},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "cert-manager",
+					LatestPkgVersion: "v1.4.0",
+					IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "jetstack-1/cert-manager",
+						Context:    &corev1.Context{Namespace: "ns1"},
+					},
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing repo",
+			testRepos: []testRepoStruct{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     "testdata/jetstack-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Repositories: []string{"jetstack-2"},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -404,7 +462,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = beforeCallGetAvailablePackageSummaries(mock, repos...); err != nil {
+			if err = beforeCallGetAvailablePackageSummaries(mock, tc.request.FilterOptions, repos...); err != nil {
 				t.Fatalf("%v", err)
 			}
 
@@ -471,7 +529,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, repo); err != nil {
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -531,7 +589,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		mock.ExpectKeys("*").SetVal([]string{key})
+		mock.ExpectScan(0, "", 0).SetVal([]string{key}, 0)
 		mock.ExpectGet(key).SetVal(string(bytes))
 
 		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
@@ -606,7 +664,7 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, repo); err != nil {
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -662,7 +720,7 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		mock.ExpectKeys("*").SetVal([]string{})
+		mock.ExpectScan(0, "", 0).SetVal([]string{}, 0)
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
@@ -1180,7 +1238,7 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicCl
 	return s, dynamicClient, mock, nil
 }
 
-func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, repos ...runtime.Object) error {
+func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
 	keys := []string{}
 	for _, r := range repos {
@@ -1191,9 +1249,24 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, repos ...
 		keys = append(keys, key)
 		mapVals[key] = bytes
 	}
-	mock.ExpectKeys("*").SetVal(keys)
-	for _, k := range keys {
-		mock.ExpectGet(k).SetVal(string(mapVals[k]))
+	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
+		mock.ExpectScan(0, "", 0).SetVal(keys, 0)
+		for _, k := range keys {
+			mock.ExpectGet(k).SetVal(string(mapVals[k]))
+		}
+	} else {
+		for _, r := range filterOptions.GetRepositories() {
+			keys := []string{}
+			for k, _ := range mapVals {
+				if strings.HasSuffix(k, ":"+r) {
+					keys = append(keys, k)
+				}
+			}
+			mock.ExpectScan(0, "helmrepositories:*:"+r, 0).SetVal(keys, 0)
+			for _, k := range keys {
+				mock.ExpectGet(k).SetVal(string(mapVals[k]))
+			}
+		}
 	}
 	return nil
 }

@@ -190,7 +190,7 @@ func (c *ResourceWatcherCache) processEvents(ch <-chan watch.Event) {
 			// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 			continue
 		}
-		log.Infof("got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
+		log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
 		switch event.Type {
 		case watch.Added, watch.Modified, watch.Deleted:
 			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
@@ -257,7 +257,7 @@ func (c *ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[strin
 			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", *key, err)
 			return
 		} else {
-			log.Infof("set value for object with key [%s] in cache", *key)
+			log.Infof("Set value for object with key [%s] in cache", *key)
 		}
 	}
 }
@@ -333,30 +333,69 @@ type fetchValueJobResult struct {
 	err   error
 }
 
-// currently returns all available keys
-// TODO (gfichtenholt) this func needs to take an filter argument to return all keys matching a specific filter
-func (c *ResourceWatcherCache) listKeys() ([]string, error) {
+// return all keys, optionally matching a given filter (repository list)
+func (c *ResourceWatcherCache) listKeys(filters []string) ([]string, error) {
 	if err := c.checkInit(); err != nil {
 		return nil, err
 	}
-	return c.redisCli.Keys(c.redisCli.Context(), "*").Result()
+	// see https://github.com/redis/redis/issues/3627:
+	// 1) we don't want to use KEYS command
+	// 2) match pattern does not support 'OR'
+	// 3) simulate a HashSet in go to make sure we have no duplicates, as SCAN may
+	// return duplicates
+	redisKeys := map[string]struct{}{}
+	match := []string{""} // everything by default
+
+	if len(filters) > 0 {
+		match = make([]string, len(filters))
+		for i, f := range filters {
+			match[i] = fmt.Sprintf("%s:*:%s", c.config.gvr.Resource, f)
+		}
+	}
+
+	for _, m := range match {
+		// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
+		// and terminates when the cursor returned by the server is 0
+		cursor := uint64(0)
+		for {
+			// glob-style pattern, you can use https://www.digitalocean.com/community/tools/glob to test
+			keys, cursor, err := c.redisCli.Scan(c.redisCli.Context(), cursor, m, 0).Result()
+			if err != nil {
+				return nil, err
+			}
+			log.Infof("listKeys: SCAN returned keys: %s, cursor: [%d]", keys, cursor)
+			for _, key := range keys {
+				redisKeys[key] = struct{}{}
+			}
+			if cursor == 0 {
+				break
+			}
+		}
+	}
+
+	resultKeys := make([]string, len(redisKeys))
+	i := 0
+	for k := range redisKeys {
+		resultKeys[i] = k
+		i++
+	}
+	return resultKeys, nil
 }
 
 // each object is read from redis in a separate go routine (lightweight thread of execution)
-// listItems is a list of unstructured objects.
-// TODO 1 (gfichtenholt) the result should really be a map[string]interface{}, i.e. map with keys
-// instead of []interface{}
-// TODO 2 (gfichtenholt) this func originally was written such that it was doing all the heavy work,
+// returns a map with same keys as input and corresponding values out of the cache
+//
+// TODO (gfichtenholt) this func originally was written such that it was doing all the heavy work,
 // like indexing a repo for each key when asked, hence the use of concurrent go routines.
 // Now all it does is fetch pre-computed values out of the cache, which by definition should be
 // very quick, so I am not sure warrants the complexity below.
 // Perhaps, I need to simplify it and fetch everything in a single sequence in a for loop
-func (c *ResourceWatcherCache) fetchForMultiple(keys []string) ([]interface{}, error) {
+func (c *ResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
 	if err := c.checkInit(); err != nil {
 		return nil, err
 	}
 
-	responseItems := make([]interface{}, 0)
+	response := make(map[string]interface{})
 	var wg sync.WaitGroup
 	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
 	requestChan := make(chan fetchValueJob, numWorkers)
@@ -393,13 +432,13 @@ func (c *ResourceWatcherCache) fetchForMultiple(keys []string) ([]interface{}, e
 		if resp.err == nil {
 			// resp.result may be nil when there is a cache miss
 			if resp.value != nil {
-				responseItems = append(responseItems, resp.value)
+				response[resp.key] = resp.value
 			}
 		} else {
 			log.Errorf("fetch value for key [%s] failed due to %v", resp.key, resp.err)
 		}
 	}
-	return responseItems, nil
+	return response, nil
 }
 
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
@@ -433,7 +472,7 @@ func (c *ResourceWatcherCache) checkInit() error {
 	if !c.initOk {
 		return status.Errorf(
 			codes.FailedPrecondition,
-			"Server cache has not been properly initialized")
+			"server cache has not been properly initialized")
 	} else {
 		return nil
 	}
