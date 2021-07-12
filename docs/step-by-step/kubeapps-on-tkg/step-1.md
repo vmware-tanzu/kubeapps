@@ -6,7 +6,9 @@ The first step is to configure an OIDC provider ([VMware Cloud Service Portal (C
 
 TKG comes with Pinniped installed by default; you only need to configure an OIDC provider and then make Pinniped trust that OIDC provider. The OIDC provider is responsible for authenticating users in the TKG cluster and the Kubeapps dashboard. The steps below use the [VMware Cloud Services Platform (CSP)](https://console.cloud.vmware.com/) as an example; however, a similar process applies to any other OIDC-compliant provider, including Google Cloud, Azure Active Directory, Dex, Okta, and others.
 
-> You need a recent version of Kubeapps (2.3.3 onwards), otherwise, you would need to install an additional Pinniped (version 0.6.0 onwards).
+> **NOTE**: You need a recent version of Kubeapps (2.3.3 onwards), otherwise, you would need to install an additional Pinniped (version 0.6.0 onwards).
+
+> **NOTE**: If your cluster [is already attached to VMware Tanzu™ Mission Control™ (TMC)](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html) an additional Pinniped version is automatically installed in another namespace. However, this guide will always use the Pinniped version installed by TKG (not by TMC).
 
 #### Create an OAuth2 Application
 
@@ -64,6 +66,7 @@ apiVersion: authentication.concierge.dev/v1alpha1
 kind: JWTAuthenticator
 metadata:
   name: kubeapps-jwt-authenticator
+  namespace: pinniped-concierge
 spec:
   issuer: OIDC-ISSUER-URL
   audience: CLIENT-ID
@@ -76,6 +79,8 @@ spec:
 The `name` field specifies the name of the _JWTAuthenticator_ resource, which will be required in the next step.
 
 > **NOTE**: Ignore the `tls` section of the configuration shown above unless the OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
+
+> **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), the line `namespace: pinniped-concierge` must be removed.
 
 2. Install the _JWTAuthenticator_ resource in your cluster:
 

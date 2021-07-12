@@ -77,6 +77,15 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
 
    > **TIP**: The `defaultAuthenticatorName` must match the _JWTAuthenticator_ resource name created in [Step 1](./step-1.md).
 
+   > **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), you also need to point to its namespace and API group suffix as follows. You can read more about it in the [chart documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md#pinniped-proxy-parameters).
+   >
+   > ```yaml
+   > pinnipedProxy:
+   >   # other options
+   >   defaultPinnipedNamespace: vmware-system-tmc
+   >   defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
+   > ```
+
 3. Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows:
 
    - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
