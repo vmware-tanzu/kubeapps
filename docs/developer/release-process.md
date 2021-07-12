@@ -113,10 +113,15 @@ Check the outdated [golang dependencies](../../go.mod) by running the following 
 ```bash
 go mod tidy
 go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
+```
+
+Then, try updating to the latest version for all direct and indirect dependencies of the current module running this command:
+
+```bash
 go get -u ./...
 ```
 
-Then, try to manually update those versions that can be safely upgraded. A useful tool for doing so is [go-mod-upgrade](https://github.com/oligot/go-mod-upgrade).
+> In case this above command fails (for example, due to an issue with transitive dependencies), you can manually upgrade those versions. A useful tool for doing so is [go-mod-upgrade](https://github.com/oligot/go-mod-upgrade).
 
 #### Rust dependencies
 
@@ -129,13 +134,13 @@ cargo update
 
 #### Security and chart sync PRs
 
-Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk or `kubeapps-bot`fixing a security issue or bringing upstream chart changes. If so, discuss it with another Kubeapps maintainer and come to a decision on it, trying not to release with a high/medium severity issue.
+Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk or `kubeapps-bot` fixing a security issue or bringing upstream chart changes. If so, discuss it with another Kubeapps maintainer and come to a decision on it, trying not to release with a high/medium severity issue.
 
 > As part of this release process, the dashboard deps _must_ be updated, the golang deps _should_ be updated, the rust deps _should_ be updated and the security check _must_ be performed.
 
 #### Send a PR with the upgrades
 
-Now create a Pull Request containing all these changes (only if only minor and patch have been bumped up) and wait until for another Kubeapps maintainer to review and accept it.
+Now create a Pull Request containing all these changes (only if no major versions have been bumped up) and wait until for another Kubeapps maintainer to review and accept so you can merge it.
 
 ## 1 - Select the commit to tag and perform a manual test
 
@@ -177,7 +182,7 @@ A new tag pushed to the repository will trigger, apart from the usual test and b
 ![CircleCI workflow after pushing a new tag](../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
 
 > When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
-> Please note that this process is independent from the Kubeapps release process.
+> Please note that this workflow is run outside the control of the Kubeapps release process
 
 ## 3 - Complete the GitHub release notes
 
@@ -194,7 +199,7 @@ Since the chart that we host in the Kubeapps repository is only intended for dev
 To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
 Once the PR has been created, have a look at it (eg. remove any development changes that should not be released) and wait for someone from the Bitnami team to review and accept it.
 
-> Some issues can arise here, so please check the app versions are being properly updated at once and ensure you have the latest changes in the PR branch. Note that the [bitnami-bot](https://github.com/bitnami-bot) usually performs some automated commits to the main branch that might collide with the changes in our PR.
+> Some issues can arise here, so please check the app versions are being properly updated at once and ensure you have the latest changes in the PR branch. Note that the [bitnami-bot](https://github.com/bitnami-bot) usually performs some automated commits to the main branch that might collide with the changes in our PR. In particular, it will release a new version of the chart with the updated images.
 
 ## 5 - Publish the GitHub release
 
