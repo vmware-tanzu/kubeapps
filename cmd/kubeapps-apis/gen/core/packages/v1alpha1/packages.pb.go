@@ -844,7 +844,7 @@ type InstalledPackageSummary struct {
 	InstalledPackageRef *InstalledPackageReference `protobuf:"bytes,1,opt,name=installed_package_ref,json=installedPackageRef,proto3" json:"installed_package_ref,omitempty"`
 	// Name
 	//
-	// A name given to the installation of the package.
+	// A name given to the installation of the package (eg. "my-postgresql-for-testing").
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// PkgVersionReference
 	//
@@ -861,7 +861,7 @@ type InstalledPackageSummary struct {
 	IconUrl string `protobuf:"bytes,5,opt,name=icon_url,json=iconUrl,proto3" json:"icon_url,omitempty"`
 	// PackageDisplayName
 	//
-	// The package (not the installed package) name as displayed to users
+	// The package name as displayed to users (provided by the package, eg. "PostgreSQL")
 	PkgDisplayName string `protobuf:"bytes,6,opt,name=pkg_display_name,json=pkgDisplayName,proto3" json:"pkg_display_name,omitempty"`
 	// ShortDescription
 	//

@@ -28,4 +28,11 @@ service HelmPackagesService {
       get: "/plugins/helm/packages/v1alpha1/availablepackageversions"
     };
   }
+
+  // GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
+  rpc GetInstalledPackageSummaries(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/helm/packages/v1alpha1/installedpackagesummaries"
+    };
+  }
 }

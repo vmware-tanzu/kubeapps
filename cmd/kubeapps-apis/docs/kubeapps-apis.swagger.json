@@ -538,8 +538,8 @@
     },
     "/plugins/fluxv2/packages/v1alpha1/availablepackageversions": {
       "get": {
-        "summary": "GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin",
-        "operationId": "KappControllerPackagesService_GetAvailablePackageVersions",
+        "summary": "GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetAvailablePackageVersions",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -603,7 +603,65 @@
           }
         ],
         "tags": [
-          "KappControllerPackagesService"
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/installedpackagesummaries": {
+      "get": {
+        "summary": "GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetInstalledPackageSummaries",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageSummariesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageToken",
+            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageSize",
+            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
         ]
       }
     },
@@ -893,6 +951,64 @@
         ]
       }
     },
+    "/plugins/helm/packages/v1alpha1/installedpackagesummaries": {
+      "get": {
+        "summary": "GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin",
+        "operationId": "HelmPackagesService_GetInstalledPackageSummaries",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageSummariesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageToken",
+            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageSize",
+            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
     "/plugins/kapp_controller/packages/v1alpha1/availablepackagedetails": {
       "get": {
         "summary": "GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin",
@@ -1040,6 +1156,135 @@
           {
             "name": "filterOptions.appVersion",
             "description": "App version. Packaged app version for the request",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageToken",
+            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "paginationOptions.pageSize",
+            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/availablepackageversions": {
+      "get": {
+        "summary": "GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetAvailablePackageVersions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageVersionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pkgVersion",
+            "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/installedpackagesummaries": {
+      "get": {
+        "summary": "GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetInstalledPackageSummaries",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageSummariesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1562,7 +1807,7 @@
         },
         "name": {
           "type": "string",
-          "description": "A name given to the installation of the package.",
+          "description": "A name given to the installation of the package (eg. \"my-postgresql-for-testing\").",
           "title": "Name"
         },
         "pkgVersionReference": {
@@ -1582,7 +1827,7 @@
         },
         "pkgDisplayName": {
           "type": "string",
-          "description": "The package (not the installed package) name as displayed to users",
+          "description": "The package name as displayed to users (provided by the package, eg. \"PostgreSQL\")",
           "title": "PackageDisplayName"
         },
         "shortDescription": {
