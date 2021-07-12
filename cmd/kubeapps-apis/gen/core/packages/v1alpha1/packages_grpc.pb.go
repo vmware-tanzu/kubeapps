@@ -21,6 +21,7 @@ type PackagesServiceClient interface {
 	GetAvailablePackageSummaries(ctx context.Context, in *GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*GetAvailablePackageSummariesResponse, error)
 	GetAvailablePackageDetail(ctx context.Context, in *GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*GetAvailablePackageDetailResponse, error)
 	GetAvailablePackageVersions(ctx context.Context, in *GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*GetAvailablePackageVersionsResponse, error)
+	GetInstalledPackageSummaries(ctx context.Context, in *GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*GetInstalledPackageSummariesResponse, error)
 }
 
 type packagesServiceClient struct {
@@ -58,6 +59,15 @@ func (c *packagesServiceClient) GetAvailablePackageVersions(ctx context.Context,
 	return out, nil
 }
 
+func (c *packagesServiceClient) GetInstalledPackageSummaries(ctx context.Context, in *GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*GetInstalledPackageSummariesResponse, error) {
+	out := new(GetInstalledPackageSummariesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PackagesServiceServer is the server API for PackagesService service.
 // All implementations should embed UnimplementedPackagesServiceServer
 // for forward compatibility
@@ -65,6 +75,7 @@ type PackagesServiceServer interface {
 	GetAvailablePackageSummaries(context.Context, *GetAvailablePackageSummariesRequest) (*GetAvailablePackageSummariesResponse, error)
 	GetAvailablePackageDetail(context.Context, *GetAvailablePackageDetailRequest) (*GetAvailablePackageDetailResponse, error)
 	GetAvailablePackageVersions(context.Context, *GetAvailablePackageVersionsRequest) (*GetAvailablePackageVersionsResponse, error)
+	GetInstalledPackageSummaries(context.Context, *GetInstalledPackageSummariesRequest) (*GetInstalledPackageSummariesResponse, error)
 }
 
 // UnimplementedPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -79,6 +90,9 @@ func (UnimplementedPackagesServiceServer) GetAvailablePackageDetail(context.Cont
 }
 func (UnimplementedPackagesServiceServer) GetAvailablePackageVersions(context.Context, *GetAvailablePackageVersionsRequest) (*GetAvailablePackageVersionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageVersions not implemented")
+}
+func (UnimplementedPackagesServiceServer) GetInstalledPackageSummaries(context.Context, *GetInstalledPackageSummariesRequest) (*GetInstalledPackageSummariesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageSummaries not implemented")
 }
 
 // UnsafePackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -146,6 +160,24 @@ func _PackagesService_GetAvailablePackageVersions_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PackagesService_GetInstalledPackageSummaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInstalledPackageSummariesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackagesServiceServer).GetInstalledPackageSummaries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackagesServiceServer).GetInstalledPackageSummaries(ctx, req.(*GetInstalledPackageSummariesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PackagesService_ServiceDesc is the grpc.ServiceDesc for PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -164,6 +196,10 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailablePackageVersions",
 			Handler:    _PackagesService_GetAvailablePackageVersions_Handler,
+		},
+		{
+			MethodName: "GetInstalledPackageSummaries",
+			Handler:    _PackagesService_GetInstalledPackageSummaries_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

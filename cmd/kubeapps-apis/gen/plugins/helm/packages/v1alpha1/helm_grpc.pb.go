@@ -23,7 +23,7 @@ type HelmPackagesServiceClient interface {
 	GetAvailablePackageSummaries(ctx context.Context, in *v1alpha1.GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetAvailablePackageDetail returns the package details managed by the 'helm' plugin
 	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
-	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+	// GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
 	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 }
 
@@ -70,7 +70,7 @@ type HelmPackagesServiceServer interface {
 	GetAvailablePackageSummaries(context.Context, *v1alpha1.GetAvailablePackageSummariesRequest) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetAvailablePackageDetail returns the package details managed by the 'helm' plugin
 	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
-	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+	// GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
 	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 }
 
