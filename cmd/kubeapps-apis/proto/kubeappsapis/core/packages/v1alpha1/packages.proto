@@ -350,7 +350,7 @@ message InstalledPackageSummary {
 
   // Name
   //
-  // A name given to the installation of the package.
+  // A name given to the installation of the package (eg. "my-postgresql-for-testing").
   string name = 2;
 
   // PkgVersionReference
@@ -371,7 +371,7 @@ message InstalledPackageSummary {
 
   // PackageDisplayName
   //
-  // The package (not the installed package) name as displayed to users
+  // The package name as displayed to users (provided by the package, eg. "PostgreSQL")
   string pkg_display_name = 6;
 
   // ShortDescription
