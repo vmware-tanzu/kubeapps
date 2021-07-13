@@ -97,49 +97,52 @@ helm dependency update ./chart/kubeapps
 
 Currently, we have three types of dependencies: the [dashboard dependencies](../../dashboard/package.json), the [golang dependencies](../../go.mod), and the [rust dependencies](../../cmd/pinniped-proxy/Cargo.toml). They _must_ be upgraded to the latest minor/patch version to get the latest bug and security fixes.
 
-- Upgrade the [dashboard dependencies](../../dashboard/package.json) by running:
+#### Dashboard dependencies
+
+Upgrade the [dashboard dependencies](../../dashboard/package.json) by running:
 
 ```bash
 cd dashboard
 yarn upgrade
 ```
 
-- Check the outdated [golang dependencies](../../go.mod) as explained in the Golang documentation on [how to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies).
-  First, clean and tidy up any unused dependencies and list the upgradeable ones.
-  Then, try to manually update those versions that can be safely upgraded. A useful tool for doing so is [go-mod-upgrade](https://github.com/oligot/go-mod-upgrade).
-  Alternatively, you can run the `go get -u ...` command to perform an automatic upgrade.
+#### Golang dependencies
+
+Check the outdated [golang dependencies](../../go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
 
 ```bash
 go mod tidy
 go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
-go-mod-upgrade
-# go get -u -t ./... # upgrades to minor or patch releases
-# go get -u=patch  -t ./... # upgrades just to patch releases
 ```
 
-> Sometimes, you may face some errors when upgrading. It is likely due to certain version requirements specified at the `replace(...)` statement in the `go.mod` file. For example, some k8s dependencies are not Go modules, so we need to manually set the version. Another reason is when using dependencies that have been renamed (eg., `docker` to `moby`) and some old transitive dependencies haven't updated that name yet.
+Then, try updating to the latest version for all direct and indirect dependencies of the current module running this command:
 
-- Upgrade the [rust dependencies](../../cmd/pinniped-proxy/Cargo.toml) by running:
+```bash
+go get -u ./...
+```
+
+> In case this above command fails (for example, due to an issue with transitive dependencies), you can manually upgrade those versions. A useful tool for doing so is [go-mod-upgrade](https://github.com/oligot/go-mod-upgrade).
+
+#### Rust dependencies
+
+Upgrade the [rust dependencies](../../cmd/pinniped-proxy/Cargo.toml) by running:
 
 ```bash
 cd cmd/pinniped-proxy/
 cargo update
 ```
 
-- Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk fixing a security issue. If so, discuss it with another Kubeapps maintainer and come to a decision on it, trying not to release with a high/medium severity issue.
+#### Security and chart sync PRs
+
+Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk or `kubeapps-bot` fixing a security issue or bringing upstream chart changes. If so, discuss it with another Kubeapps maintainer and come to a decision on it, trying not to release with a high/medium severity issue.
 
 > As part of this release process, the dashboard deps _must_ be updated, the golang deps _should_ be updated, the rust deps _should_ be updated and the security check _must_ be performed.
 
-## 1 - Wait until the PR to the bitnami/chart repository is accepted
+#### Send a PR with the upgrades
 
-Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
+Now create a Pull Request containing all these changes (only if no major versions have been bumped up) and wait until for another Kubeapps maintainer to review and accept so you can merge it.
 
-To this end, our CI system will automatically (in the `sync_chart_from_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
-Once the PR has been created, wait for someone from the Bitnami team to review and accept it.
-
-> If the PR solely includes minor changes in the image versions, this wait can be safely skipped.
-
-## 2 - Select the commit to tag and perform a manual test
+## 1 - Select the commit to tag and perform a manual test
 
 Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch.
 
@@ -155,7 +158,7 @@ Even though the existing test base in our repository, we still _should_ perform 
   - Delete this application
   - Deploy an application in an additional cluster
 
-## 3 - Create a git tag
+## 2 - Create a git tag
 
 Next, create a tag for the aforementioned commit and push it to the main branch. Please note that the tag name will be used as the release name.
 
@@ -165,20 +168,38 @@ For doing so, execute the following commands:
 export VERSION_NAME="v1.0.0-beta.1" # edit it accordingly
 
 git tag ${VERSION_NAME}
-git push origin ${VERSION_NAME}
+git push origin ${VERSION_NAME} # replace `origin` by your remote name
 ```
 
-A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](./ci.md).
+> You can retrieve the `VERSION_NAME` using the [semver tool](https://github.com/fsaintjacques/semver-tool) for properly increasing the version from the latest pushed tag:
+>
+> ```bash
+> export VERSION_NAME="v$(semver bump <major|minor|patch> $(git fetch --tags && git describe --tags $(git rev-list --tags --max-count=1)))"
+> ```
 
-> When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
+A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](./ci.md). An example of the triggered workflow is depicted below:
 
-## 4 - Complete the GitHub release notes
+![CircleCI workflow after pushing a new tag](../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
+
+> When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
+> Please note that this workflow is run outside the control of the Kubeapps release process
+
+## 3 - Complete the GitHub release notes
 
 Once the release job is finished, you will have a pre-populated [draft GitHub release](https://github.com/kubeapps/kubeapps/releases).
 
 You still _must_ add a high-level description with the release highlights. Please take apart those commits just bumping dependencies up; it may prevent important commits from being clearly identified by our users.
 
 Then, save the draft and **do not publish it yet** and get these notes reviewed by another Kubeapps maintainer.
+
+## 4 - Manually review the PR created in the bitnami/charts repository
+
+Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
+
+To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
+Once the PR has been created, have a look at it (eg. remove any development changes that should not be released) and wait for someone from the Bitnami team to review and accept it.
+
+> Some issues can arise here, so please check the app versions are being properly updated at once and ensure you have the latest changes in the PR branch. Note that the [bitnami-bot](https://github.com/bitnami-bot) usually performs some automated commits to the main branch that might collide with the changes in our PR. In particular, it will release a new version of the chart with the updated images.
 
 ## 5 - Publish the GitHub release
 
