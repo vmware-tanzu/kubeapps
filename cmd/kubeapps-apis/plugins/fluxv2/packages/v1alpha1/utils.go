@@ -15,6 +15,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -192,10 +193,8 @@ func passesFilter(chart chart.Chart, filters *corev1.FilterOptions) bool {
 	if filters == nil {
 		return true
 	}
-
 	ok := true
-	categories := filters.GetCategories()
-	if len(categories) > 0 {
+	if categories := filters.GetCategories(); len(categories) > 0 {
 		ok = false
 		for _, cat := range categories {
 			if cat == chart.Category {
@@ -204,8 +203,21 @@ func passesFilter(chart chart.Chart, filters *corev1.FilterOptions) bool {
 			}
 		}
 	}
-	if (ok) {
-		
+	if ok {
+		if appVersion := filters.GetAppVersion(); len(appVersion) > 0 {
+			ok = appVersion == chart.ChartVersions[0].AppVersion
+		}
+	}
+	if ok {
+		if pkgVersion := filters.GetPkgVersion(); len(pkgVersion) > 0 {
+			ok = pkgVersion == chart.ChartVersions[0].Version
+		}
+	}
+	if ok {
+		if query := filters.GetQuery(); len(query) > 0 {
+			ok = strings.Contains(chart.Name, query)
+			// TODO (gfichtenholt) possibly also chart keywords, but it has not been clarified yet
+		}
 	}
 	return ok
 }

@@ -164,20 +164,12 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	// TODO (gfichtenholt) support FilterOptions and PaginationOptions listed below
 	if request != nil {
-		filter := request.GetFilterOptions()
-		if filter.GetAppVersion() != "" || filter.GetPkgVersion() != "" || filter.GetQuery() != "" {
-			return nil, status.Errorf(
-				codes.Unimplemented,
-				"Not supported yet: request.FilterOptions: [%v]",
-				filter)
-		}
-
 		pagination := request.GetPaginationOptions()
 		if pagination != nil {
 			return nil, status.Errorf(
 				codes.Unimplemented,
-				"Not supported yet: request.FilterOptions: [%v]",
-				filter)
+				"Not supported yet: request.PaginationOptions: [%v]",
+				pagination)
 		}
 	}
 

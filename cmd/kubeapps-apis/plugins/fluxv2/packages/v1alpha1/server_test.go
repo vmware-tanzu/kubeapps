@@ -528,6 +528,150 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{},
 		},
+		{
+			testName: "uses a filter based on existing appVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					AppVersion: "4.7.0",
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "ghost",
+					LatestPkgVersion: "13.0.14",
+					IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
+					ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "index-with-categories-1/ghost",
+						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+					},
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing appVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					AppVersion: "99.99.99",
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+		},
+		{
+			testName: "uses a filter based on existing pkgVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					PkgVersion: "15.5.0",
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "elasticsearch",
+					LatestPkgVersion: "15.5.0",
+					IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
+					ShortDescription: "A highly scalable open-source full-text search and analytics engine",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "index-with-categories-1/elasticsearch",
+						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+					},
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing pkgVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					PkgVersion: "99.99.99",
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+		},
+		{
+			testName: "uses a filter based on existing query text",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Query: "ela",
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					DisplayName:      "elasticsearch",
+					LatestPkgVersion: "15.5.0",
+					IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
+					ShortDescription: "A highly scalable open-source full-text search and analytics engine",
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Identifier: "index-with-categories-1/elasticsearch",
+						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+					},
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing query text",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Query: "qwerty",
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
