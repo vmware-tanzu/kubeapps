@@ -162,8 +162,8 @@ func isValidChart(chart *models.Chart) (bool, error) {
 	return true, nil
 }
 
-// AvailablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
-func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
+// availablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
+func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
 	pkg := &corev1.AvailablePackageSummary{}
 
 	isValid, err := isValidChart(chart)
@@ -186,6 +186,28 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	}
 
 	return pkg, nil
+}
+
+func passesFilter(chart chart.Chart, filters *corev1.FilterOptions) bool {
+	if filters == nil {
+		return true
+	}
+
+	ok := true
+	categories := filters.GetCategories()
+	if len(categories) > 0 {
+		ok = false
+		for _, cat := range categories {
+			if cat == chart.Category {
+				ok = true
+				break
+			}
+		}
+	}
+	if (ok) {
+		
+	}
+	return ok
 }
 
 // implements plug-in specific cache-related functionality

@@ -165,8 +165,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// TODO (gfichtenholt) support FilterOptions and PaginationOptions listed below
 	if request != nil {
 		filter := request.GetFilterOptions()
-		if filter.GetAppVersion() != "" || filter.GetCategories() != nil ||
-			filter.GetPkgVersion() != "" || filter.GetQuery() != "" {
+		if filter.GetAppVersion() != "" || filter.GetPkgVersion() != "" || filter.GetQuery() != "" {
 			return nil, status.Errorf(
 				codes.Unimplemented,
 				"Not supported yet: request.FilterOptions: [%v]",
@@ -198,9 +197,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	// this non-sense below is only here to convert from []interface{} which is
-	// what the generic cache implementation returns for cache hits to
-	// a typed array object.
+	// this loop is here for two reasons:
+	// 1) to convert from []interface{} which is what the generic cache implementation
+	// returns for cache hits to a typed array object.
+	// 2) perform any filtering of the results as needed, pending redis support for
+	// querying values stored in cache (see discussion in https://github.com/kubeapps/kubeapps/issues/3032)
 	responsePackages := make([]*corev1.AvailablePackageSummary, 0)
 	for _, packages := range cachedCharts {
 		if packages != nil {
@@ -211,11 +212,13 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					"Unexpected value fetched from cache: %v", packages)
 			} else {
 				for _, chart := range typedCharts {
-					pkg, err := AvailablePackageSummaryFromChart(&chart)
-					if err != nil {
-						return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
+					if passesFilter(chart, request.GetFilterOptions()) {
+						pkg, err := availablePackageSummaryFromChart(&chart)
+						if err != nil {
+							return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
+						}
+						responsePackages = append(responsePackages, pkg)
 					}
-					responsePackages = append(responsePackages, pkg)
 				}
 			}
 		}
