@@ -73,11 +73,18 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
    pinnipedProxy:
      enabled: true
      defaultAuthenticatorName: kubeapps-jwt-authenticator # this name must match the authenticator name previously created
-     defaultPinnipedNamespace: vmware-system-tmc
-     defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
    ```
 
    > **TIP**: The `defaultAuthenticatorName` must match the _JWTAuthenticator_ resource name created in [Step 1](./step-1.md).
+
+   > **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), you also need to point to its namespace and API group suffix as follows. You can read more about it in the [chart documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md#pinniped-proxy-parameters).
+   >
+   > ```yaml
+   > pinnipedProxy:
+   >   # other options
+   >   defaultPinnipedNamespace: vmware-system-tmc
+   >   defaultPinnipedAPISuffix: pinniped.tmc.cloud.vmware.com
+   > ```
 
 3. Configure the _OAuth2Proxy_ component by entering the information gathered from the OIDC provider in [Step 1](./step-1.md). This component performs the authentication flow, generating the appropriate request to the login page and retrieving the token in the callback URL. Here is an example. Remember to replace the placeholders as follows:
 
@@ -89,26 +96,26 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
    - Replace the `OIDC-REDEEM-URL` with the token redeem URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token`.
    - Replace the `OIDC-JWKS-URL` with the JSON Web Key Set URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks`.
 
-  > **TIP**: Remember that any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([CSP example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) where you will able to find the required endpoints in this step.
+> **TIP**: Remember that any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([CSP example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) where you will able to find the required endpoints in this step.
 
-   ```yaml
-   authProxy:
-     enabled: true
-     provider: oidc
-     clientID: CLIENT-ID
-     clientSecret: CLIENT-SECRET
-     cookieSecret: COOKIE-SECRET
-     additionalFlags:
-       - --scope=openid email groups
-       - --set-authorization-header=true
-       - --skip-oidc-discovery=true
-       - --oidc-issuer-url=OIDC-ISSUER-URL # In CSP: https://gaz.csp-vidm-prod.com
-       - --login-url=OIDC-LOGIN-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/discovery
-       - --redeem-url=OIDC-REDEEM-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/am/api/auth/token
-       - --oidc-jwks-url=OIDC-JWKS-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks
-   ```
+```yaml
+authProxy:
+  enabled: true
+  provider: oidc
+  clientID: CLIENT-ID
+  clientSecret: CLIENT-SECRET
+  cookieSecret: COOKIE-SECRET
+  additionalFlags:
+    - --scope=openid email groups
+    - --set-authorization-header=true
+    - --skip-oidc-discovery=true
+    - --oidc-issuer-url=OIDC-ISSUER-URL # In CSP: https://gaz.csp-vidm-prod.com
+    - --login-url=OIDC-LOGIN-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/discovery
+    - --redeem-url=OIDC-REDEEM-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/am/api/auth/token
+    - --oidc-jwks-url=OIDC-JWKS-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks
+```
 
-   > **TIP**: In some providers whose issuer URL does match the token URL, the flag `--skip-oidc-discovery=true` can be removed. Instead, just setting the `oidc-issuer-url` will perform the automatic discovery of the rest of the endpoints. Further information at the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
+> **TIP**: In some providers whose issuer URL does match the token URL, the flag `--skip-oidc-discovery=true` can be removed. Instead, just setting the `oidc-issuer-url` will perform the automatic discovery of the rest of the endpoints. Further information at the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
 
 At this point, Kubeapps is configured to use Pinniped for authentication.
 
@@ -230,22 +237,22 @@ Once Kubeapps is installed and configured, the next step is to log in and access
 
 1. If [the service was exposed externally](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally), it may be accessed using a public IP address; if not, it can be accessed locally by forwarding the cluster port using the command below:
 
-    ```bash
-    kubectl port-forward -n kubeapps svc/kubeapps 8080:80
-    ```
+   ```bash
+   kubectl port-forward -n kubeapps svc/kubeapps 8080:80
+   ```
 
-    This will start an HTTP proxy for secure access to the Kubeapps dashboard.
+   This will start an HTTP proxy for secure access to the Kubeapps dashboard.
 
 2. Browse to [http://127.0.0.1:8080](http://127.0.0.1:8080) (when forwarding the port) or to the public IP address of the serevice (when exposing the service externally). You see the Kubeapps login page, as shown below:
 
-    ![OIDC login page](./img/login-oidc-initial.png)
+   ![OIDC login page](./img/login-oidc-initial.png)
 
 3. Click the _Login_ button. You are redirected to the OIDC provider (in this example, the VMware Cloud Services Portal).
 
-    ![OIDC login provider](./img/login-oidc-provider.png)
+   ![OIDC login provider](./img/login-oidc-provider.png)
 
 4. Enter the necessary credentials. If the login is successful, you are redirected to the Kubeapps dashboard:
 
-    ![Kubeapps home](./img/kubeapps-applications-empty.png)
+   ![Kubeapps home](./img/kubeapps-applications-empty.png)
 
 At the end of this step, the Kubeapps installation is configured, customized and running in the cluster. The next step is to [add application repositories to Kubeapps](./step-3.md).
