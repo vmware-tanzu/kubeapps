@@ -2,14 +2,18 @@
 
 [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
 
-[Kubeapps](https://kubeapps.com) is a web-based UI for deploying and managing applications in Kubernetes clusters. Kubeapps allows you to:
+[Kubeapps](https://kubeapps.com) is an in-cluster web-based application that enables users with a one-time installation to deploy, manage, and upgrade applications on a Kubernetes cluster.
 
-- Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
-- Inspect, upgrade and delete Helm-based applications installed in the cluster
-- Add custom and private chart repositories (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
-- Browse and deploy [Kubernetes Operators](https://operatorhub.io/).
-- Secure authentication to Kubeapps using an [OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)
-- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md)
+With Kubeapps you can:
+
+- Customize deployments through an intuitive, form-based user interface
+- Inspect, upgrade and delete applications installed in the cluster
+- Browse and deploy [Helm](https://github.com/helm/helm) charts from public or private chart repositories (including [VMware Marketplace™](https://marketplace.cloud.vmware.com) and [Bitnami Application Catalog](https://bitnami.com/application-catalog))
+- Browse and deploy [Kubernetes Operators](https://operatorhub.io/)
+- Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](./docs/user/using-an-OIDC-provider.md) or [using Pinniped](./docs/user/using-an-OIDC-provider-with-pinniped.md)
+- Secure authorization based on Kubernetes [Role-Based Access Control](./docs/user/access-control.md)
+
+**_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work.
 
 ## TL;DR
 
@@ -99,7 +103,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------- | --------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                      | `docker.io`           |
 | `frontend.image.repository`                      | NGINX image repository                                                                    | `bitnami/nginx`       |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.1-debian-10-r2` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.1-debian-10-r4` |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                   | `IfNotPresent`        |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                  | `[]`                  |
 | `frontend.image.debug`                           | Enable image debug mode                                                                   | `false`               |
@@ -386,7 +390,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                   | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                 | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                       | `7.1.3-debian-10-r62`  |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                       | `7.1.3-debian-10-r63`  |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                               | `[]`                   |
 | `authProxy.external`                              | Use an external Auth Proxy instead of deploying its own one                   | `false`                |
@@ -445,7 +449,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`                |
 | `testImage.registry`      | NGINX image registry                                                          | `docker.io`           |
 | `testImage.repository`    | NGINX image repository                                                        | `bitnami/nginx`       |
-| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.1-debian-10-r2` |
+| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.1-debian-10-r4` |
 | `testImage.pullPolicy`    | NGINX image pull policy                                                       | `IfNotPresent`        |
 | `testImage.pullSecrets`   | NGINX image pull secrets                                                      | `[]`                  |
 
