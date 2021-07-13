@@ -19,12 +19,12 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	log "k8s.io/klog/v2"
@@ -47,7 +47,7 @@ func prettyPrintMap(m map[string]interface{}) string {
 	return string(prettyBytes)
 }
 
-func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
+func indexOneRepo(unstructuredRepo map[string]interface{}) ([]chart.Chart, error) {
 	startTime := time.Now()
 
 	repo, err := newPackageRepository(unstructuredRepo)
@@ -98,23 +98,9 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailableP
 		return nil, err
 	}
 
-	responsePackages := []*corev1.AvailablePackageSummary{}
-	for _, chart := range charts {
-		pkg := &corev1.AvailablePackageSummary{
-			DisplayName:      chart.Name,
-			LatestPkgVersion: chart.ChartVersions[0].Version,
-			IconUrl:          chart.Icon,
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Context:    &corev1.Context{Namespace: repo.Namespace},
-				Identifier: chart.ID,
-			},
-		}
-		responsePackages = append(responsePackages, pkg)
-	}
 	duration := time.Since(startTime)
-	log.Infof("Indexed [%d] packages in repository [%s] in [%d] ms", len(responsePackages), repo.Name, duration.Milliseconds())
-
-	return responsePackages, nil
+	log.Infof("Indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
+	return charts, nil
 }
 
 func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
@@ -143,6 +129,65 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 	}, nil
 }
 
+// isValidChart returns true if the chart model passed defines a value
+// for each required field described at the Helm website:
+// https://helm.sh/docs/topics/charts/#the-chartyaml-file
+// together with required fields for our model.
+func isValidChart(chart *models.Chart) (bool, error) {
+	if chart.Name == "" {
+		return false, status.Errorf(codes.Internal, "required field .Name not found on helm chart: %v", chart)
+	}
+	if chart.ID == "" {
+		return false, status.Errorf(codes.Internal, "required field .ID not found on helm chart: %v", chart)
+	}
+	if chart.Repo == nil {
+		return false, status.Errorf(codes.Internal, "required field .Repo not found on helm chart: %v", chart)
+	}
+	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
+		return false, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0] not found on helm chart: %v", chart)
+	} else {
+		for _, chartVersion := range chart.ChartVersions {
+			if chartVersion.Version == "" {
+				return false, status.Errorf(codes.Internal, "required field .ChartVersions[i].Version not found on helm chart: %v", chart)
+			}
+		}
+	}
+	if chart.Maintainers != nil || len(chart.ChartVersions) != 0 {
+		for _, maintainer := range chart.Maintainers {
+			if maintainer.Name == "" {
+				return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
+			}
+		}
+	}
+	return true, nil
+}
+
+// AvailablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
+func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
+	pkg := &corev1.AvailablePackageSummary{}
+
+	isValid, err := isValidChart(chart)
+	if !isValid || err != nil {
+		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
+	}
+
+	pkg.DisplayName = chart.Name
+	pkg.IconUrl = chart.Icon
+	pkg.ShortDescription = chart.Description
+
+	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
+		Identifier: chart.ID,
+		Plugin:     GetPluginDetail(),
+	}
+	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
+
+	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
+		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
+	}
+
+	return pkg, nil
+}
+
 // implements plug-in specific cache-related functionality
 // onAddOrModifyRepo essentially tells the cache what to store for a given key
 func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
@@ -152,18 +197,17 @@ func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (int
 	}
 
 	if ready {
-		packages, err := indexOneRepo(unstructuredRepo)
+		charts, err := indexOneRepo(unstructuredRepo)
 		if err != nil {
 			return nil, false, err
 		}
-		protoMsg := corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackagesSummaries: packages,
-		}
-		bytes, err := proto.Marshal(&protoMsg)
+
+		jsonBytes, err := json.Marshal(charts)
 		if err != nil {
 			return nil, false, err
 		}
-		return bytes, true, nil
+
+		return jsonBytes, true, nil
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
@@ -178,12 +222,12 @@ func onGetRepo(key string, value interface{}) (interface{}, error) {
 		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
 	}
 
-	var protoMsg corev1.GetAvailablePackageSummariesResponse
-	err := proto.Unmarshal(bytes, &protoMsg)
+	var charts []chart.Chart
+	err := json.Unmarshal(bytes, &charts)
 	if err != nil {
 		return nil, err
 	}
-	return protoMsg.AvailablePackagesSummaries, nil
+	return charts, nil
 }
 
 func onDeleteRepo(key string, unstructuredRepo map[string]interface{}) (bool, error) {

@@ -55,6 +55,8 @@ type cacheConfig struct {
 	// 'onAdd' and 'onModify' hooks are called when a new or modified object comes about and
 	// allows the plug-in to return information about WHETHER OR NOT and WHAT is to be stored
 	// in the cache for a given k8s object (passed in as a untyped/unstructured map)
+	// the list of types actually supported be redis you can find in
+	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
 	onAdd    func(string, map[string]interface{}) (interface{}, bool, error)
 	onModify func(string, map[string]interface{}) (interface{}, bool, error)
 	// the semantics of 'onGet' hook is to convert or "reverse engineer" what was previously

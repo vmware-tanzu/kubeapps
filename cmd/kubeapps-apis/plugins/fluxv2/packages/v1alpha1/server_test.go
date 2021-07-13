@@ -27,11 +27,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -270,18 +270,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					DisplayName:      "acs-engine-autoscaler",
 					LatestPkgVersion: "2.1.1",
 					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					ShortDescription: "Scales worker nodes within agent pools",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
 						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 				{
 					DisplayName:      "wordpress",
 					LatestPkgVersion: "0.7.5",
 					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					ShortDescription: "new description!",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/wordpress",
 						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 			},
@@ -302,18 +306,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					DisplayName:      "acs-engine-autoscaler",
 					LatestPkgVersion: "2.1.1",
 					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					ShortDescription: "Scales worker nodes within agent pools",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
 						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 				{
 					DisplayName:      "wordpress",
 					LatestPkgVersion: "0.7.5",
 					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					ShortDescription: "new description!",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/wordpress",
 						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 			},
@@ -340,27 +348,33 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					DisplayName:      "acs-engine-autoscaler",
 					LatestPkgVersion: "2.1.1",
 					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+					ShortDescription: "Scales worker nodes within agent pools",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/acs-engine-autoscaler",
 						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 				{
 					DisplayName:      "cert-manager",
 					LatestPkgVersion: "v1.4.0",
 					IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+					ShortDescription: "A Helm chart for cert-manager",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "jetstack-1/cert-manager",
 						Context:    &corev1.Context{Namespace: "ns1"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 				{
 					DisplayName:      "wordpress",
 					LatestPkgVersion: "0.7.5",
 					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+					ShortDescription: "new description!",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "bitnami-1/wordpress",
 						Context:    &corev1.Context{Namespace: "default"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 			},
@@ -392,9 +406,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					DisplayName:      "cert-manager",
 					LatestPkgVersion: "v1.4.0",
 					IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+					ShortDescription: "A Helm chart for cert-manager",
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Identifier: "jetstack-1/cert-manager",
 						Context:    &corev1.Context{Namespace: "ns1"},
+						Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 					},
 				},
 			},
@@ -475,7 +491,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -549,22 +565,26 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 				DisplayName:      "alpine",
 				LatestPkgVersion: "0.2.0",
 				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "testrepo/alpine",
 					Context:    &corev1.Context{Namespace: "ns2"},
+					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 				},
 			},
 			{
 				DisplayName:      "nginx",
 				LatestPkgVersion: "1.1.0",
 				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "testrepo/nginx",
 					Context:    &corev1.Context{Namespace: "ns2"},
+					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 				},
 			}}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeUpdate.AvailablePackagesSummaries, expectedPackagesBeforeUpdate; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -604,18 +624,22 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 				DisplayName:      "alpine",
 				LatestPkgVersion: "0.3.0",
 				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "testrepo/alpine",
 					Context:    &corev1.Context{Namespace: "ns2"},
+					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 				},
 			},
 			{
 				DisplayName:      "nginx",
 				LatestPkgVersion: "1.1.0",
 				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "testrepo/nginx",
 					Context:    &corev1.Context{Namespace: "ns2"},
+					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 				},
 			}}
 
@@ -684,23 +708,27 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 				DisplayName:      "acs-engine-autoscaler",
 				LatestPkgVersion: "2.1.1",
 				IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+				ShortDescription: "Scales worker nodes within agent pools",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/acs-engine-autoscaler",
 					Context:    &corev1.Context{Namespace: "default"},
+					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 				},
 			},
 			{
 				DisplayName:      "wordpress",
 				LatestPkgVersion: "0.7.5",
 				IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+				ShortDescription: "new description!",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/wordpress",
 					Context:    &corev1.Context{Namespace: "default"},
+					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 				},
 			},
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeDelete.AvailablePackagesSummaries, expectedPackagesBeforeDelete; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -1187,15 +1215,7 @@ func newServerWithWatcherAndReadyRepos(repos ...runtime.Object) (*Server, redism
 
 	for _, r := range repos {
 		s.cache.eventProcessingWaitGroup.Add(1)
-		key := redisKeyForRuntimeObject(r)
-		packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
-		if err != nil {
-			return s, mock, watcher, err
-		}
-		protoMsg := corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackagesSummaries: packageSummaries,
-		}
-		bytes, err := proto.Marshal(&protoMsg)
+		key, bytes, err := redisKeyValueForRuntimeObject(r)
 		if err != nil {
 			return s, mock, watcher, err
 		}
@@ -1273,18 +1293,11 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 
 func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
 	key := redisKeyForRuntimeObject(r)
-	packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
+	bytes, _, err := onAddOrModifyRepo(key, r.(*unstructured.Unstructured).Object)
 	if err != nil {
 		return "", nil, err
 	}
-	protoMsg := corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: packageSummaries,
-	}
-	bytes, err := proto.Marshal(&protoMsg)
-	if err != nil {
-		return "", nil, err
-	}
-	return key, bytes, nil
+	return key, bytes.([]byte), nil
 }
 
 func redisKeyForRuntimeObject(r runtime.Object) string {

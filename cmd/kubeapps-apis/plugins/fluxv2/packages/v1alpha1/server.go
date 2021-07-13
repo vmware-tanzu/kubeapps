@@ -193,7 +193,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	responsePackagesFromCache, err := s.cache.fetchForMultiple(repos)
+	cachedCharts, err := s.cache.fetchForMultiple(repos)
 	if err != nil {
 		return nil, err
 	}
@@ -202,15 +202,21 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// what the generic cache implementation returns for cache hits to
 	// a typed array object.
 	responsePackages := make([]*corev1.AvailablePackageSummary, 0)
-	for _, packages := range responsePackagesFromCache {
+	for _, packages := range cachedCharts {
 		if packages != nil {
-			typedPackages, ok := packages.([]*corev1.AvailablePackageSummary)
+			typedCharts, ok := packages.([]chart.Chart)
 			if !ok {
 				return nil, status.Errorf(
 					codes.Internal,
 					"Unexpected value fetched from cache: %v", packages)
 			} else {
-				responsePackages = append(responsePackages, typedPackages...)
+				for _, chart := range typedCharts {
+					pkg, err := AvailablePackageSummaryFromChart(&chart)
+					if err != nil {
+						return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
+					}
+					responsePackages = append(responsePackages, pkg)
+				}
 			}
 		}
 	}
