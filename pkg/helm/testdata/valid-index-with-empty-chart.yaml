@@ -1,0 +1,22 @@
+apiVersion: v1
+entries:
+  selenium: []
+  selenium3:
+  - apiVersion: v1
+    appVersion: 3.141.59
+    created: "2021-03-12T16:33:59.916048+07:00"
+    description: Chart for selenium 3 grid
+    digest: 6ce052be9ab63c209204d61f0dc9fa21da7f89b500ae799408b02a8a5867d483
+    home: https://www.seleniumhq.org/
+    icon: http://docs.seleniumhq.org/images/big-logo.png
+    keywords:
+    - qa
+    - selenium
+    - grid
+    - hub
+    name: selenium3
+    sources:
+    - https://github.com/LogiGear/selenium3-chart
+    urls:
+    - https://chart.testarchitect.com/selenium3-1.2.4.tgz
+    version: 1.2.4

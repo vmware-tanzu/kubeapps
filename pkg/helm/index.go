@@ -62,7 +62,7 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 	if err != nil {
 		return []models.Chart{}, err
 	}
-	for _, entry := range index.Entries {
+	for key, entry := range index.Entries {
 		// note that 'entry' itself is an array of chart versions
 		// after index.SortEntires() call, it looks like there is only one entry per package,
 		// and entry[0] should be the most recent chart version, e.g. Name: "mariadb" Version: "9.3.12"
@@ -74,6 +74,7 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 
 		// skip if the entry is empty
 		if len(entry) < 1 {
+			log.Infof("skipping chart: [%s]", key)
 			continue
 		}
 
