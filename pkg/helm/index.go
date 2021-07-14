@@ -71,6 +71,12 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 		// almost 200 chart versions going all the way back many years to version "2.1.4".
 		// So for now, let's just keep track of the latest, not to overwhelm the caller with
 		// all these outdated versions
+
+		// skip if the entry is empty
+		if len(entry) < 1 {
+			continue
+		}
+
 		if entry[0].GetDeprecated() {
 			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
 			continue
