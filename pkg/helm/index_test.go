@@ -23,9 +23,6 @@ import (
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
 var validRepoIndexYAML = string(validRepoIndexYAMLBytes)
 
-var validRepoWithEmptyChartIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index-with-empty-chart.yaml")
-var validRepoWithEmptyChartIndexYAML = string(validRepoWithEmptyChartIndexYAMLBytes)
-
 func Test_parseRepoIndex(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -85,8 +82,9 @@ func Test_newChart(t *testing.T) {
 
 func Test_loadRepoWithEmptyCharts(t *testing.T) {
 	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
-	charts, err := ChartsFromIndex([]byte(validRepoWithEmptyChartIndexYAML), r, true)
+	indexWithEmptyChart := validRepoIndexYAML + `emptyChart: []`
+	charts, err := ChartsFromIndex([]byte(indexWithEmptyChart), r, true)
 	assert.NoErr(t, err)
-	assert.Equal(t, len(charts), 1, "number of charts")
-	assert.Equal(t, len(charts[0].ChartVersions), 1, "number of versions")
+	assert.Equal(t, len(charts), 2, "number of charts")
+	assert.Equal(t, len(charts[1].ChartVersions), 1, "number of versions")
 }
