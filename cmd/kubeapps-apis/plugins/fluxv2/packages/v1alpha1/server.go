@@ -158,25 +158,23 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if request != nil && request.GetContext().GetCluster() != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
-			"Not supported yet: request.Context.Cluster: [%v]",
+			"not supported yet: request.Context.Cluster: [%v]",
 			request.Context.Cluster)
 	}
 
-	// TODO (gfichtenholt) support FilterOptions and PaginationOptions listed below
-	if request != nil {
-		pagination := request.GetPaginationOptions()
-		if pagination != nil {
-			return nil, status.Errorf(
-				codes.Unimplemented,
-				"Not supported yet: request.PaginationOptions: [%v]",
-				pagination)
-		}
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"unable to intepret page token %q: %v",
+			request.GetPaginationOptions().GetPageToken(), err)
 	}
 
 	if s.cache == nil {
 		return nil, status.Errorf(
 			codes.FailedPrecondition,
-			"Server cache has not been properly initialized")
+			"server cache has not been properly initialized")
 	}
 
 	repos, err := s.cache.listKeys(request.GetFilterOptions().GetRepositories())
@@ -189,35 +187,20 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	// this loop is here for two reasons:
-	// 1) to convert from []interface{} which is what the generic cache implementation
-	// returns for cache hits to a typed array object.
-	// 2) perform any filtering of the results as needed, pending redis support for
-	// querying values stored in cache (see discussion in https://github.com/kubeapps/kubeapps/issues/3032)
-	responsePackages := make([]*corev1.AvailablePackageSummary, 0)
-	for _, packages := range cachedCharts {
-		if packages != nil {
-			typedCharts, ok := packages.([]chart.Chart)
-			if !ok {
-				return nil, status.Errorf(
-					codes.Internal,
-					"Unexpected value fetched from cache: %v", packages)
-			} else {
-				for _, chart := range typedCharts {
-					if passesFilter(chart, request.GetFilterOptions()) {
-						pkg, err := availablePackageSummaryFromChart(&chart)
-						if err != nil {
-							return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
-						}
-						responsePackages = append(responsePackages, pkg)
-					}
-				}
-			}
-		}
+	responsePackages, err := getPaginatedSummariesWithFilters(int(pageSize), pageOffset, cachedCharts, request.GetFilterOptions())
+	if err != nil {
+		return nil, err
 	}
 
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(responsePackages) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	}
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackagesSummaries: responsePackages,
+		NextPageToken:              nextPageToken,
 	}, nil
 }
 

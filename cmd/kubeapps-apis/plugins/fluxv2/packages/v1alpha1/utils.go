@@ -15,12 +15,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -134,7 +134,7 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 // for each required field described at the Helm website:
 // https://helm.sh/docs/topics/charts/#the-chartyaml-file
 // together with required fields for our model.
-func isValidChart(chart *models.Chart) (bool, error) {
+func isValidChart(chart *chart.Chart) (bool, error) {
 	if chart.Name == "" {
 		return false, status.Errorf(codes.Internal, "required field .Name not found on helm chart: %v", chart)
 	}
@@ -164,7 +164,7 @@ func isValidChart(chart *models.Chart) (bool, error) {
 }
 
 // availablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
-func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
+func availablePackageSummaryFromChart(chart *chart.Chart) (*corev1.AvailablePackageSummary, error) {
 	pkg := &corev1.AvailablePackageSummary{}
 
 	isValid, err := isValidChart(chart)
@@ -220,6 +220,69 @@ func passesFilter(chart chart.Chart, filters *corev1.FilterOptions) bool {
 		}
 	}
 	return ok
+}
+
+// pageOffsetFromPageToken converts a page token to an integer offset
+// representing the page of results.
+// TODO(gfichtenholt): it'd be better if we ensure that the page_token
+// contains an offset to the item, not the page so we can
+// aggregate paginated results. Same as helm hlug-in.
+// Update this when helm plug-in does so
+func pageOffsetFromPageToken(pageToken string) (int, error) {
+	if pageToken == "" {
+		return 1, nil
+	}
+	offset, err := strconv.ParseUint(pageToken, 10, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(offset), nil
+}
+
+func getPaginatedSummariesWithFilters(pageSize, pageOffset int, cachedCharts map[string]interface{}, filters *corev1.FilterOptions) ([]*corev1.AvailablePackageSummary, error) {
+	// this loop is here for 3 reasons:
+	// 1) to convert from []interface{} which is what the generic cache implementation
+	// returns for cache hits to a typed array object.
+	// 2) perform any filtering of the results as needed, pending redis support for
+	// querying values stored in cache (see discussion in https://github.com/kubeapps/kubeapps/issues/3032)
+	// 3) if pagination was requested, only return up to one page size of results
+	responsePackages := make([]*corev1.AvailablePackageSummary, 0)
+	i := 0
+	startAt := -1
+	if pageSize > 0 {
+		startAt = int(pageSize) * pageOffset
+	}
+	for _, packages := range cachedCharts {
+		if packages != nil {
+			typedCharts, ok := packages.([]chart.Chart)
+			if !ok {
+				return nil, status.Errorf(
+					codes.Internal,
+					"Unexpected value fetched from cache: %v", packages)
+			} else {
+				for _, chart := range typedCharts {
+					if passesFilter(chart, filters) {
+						i++
+						if startAt < 0 || startAt < i {
+							pkg, err := availablePackageSummaryFromChart(&chart)
+							if err != nil {
+								return nil, status.Errorf(
+									codes.Internal,
+									"Unable to parse chart to an AvailablePackageSummary: %v",
+									err)
+							}
+							responsePackages = append(responsePackages, pkg)
+							if pageSize > 0 && len(responsePackages) == int(pageSize) {
+								return responsePackages, nil
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return responsePackages, nil
 }
 
 // implements plug-in specific cache-related functionality
