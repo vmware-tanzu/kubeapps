@@ -795,7 +795,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	}
 }
 
-func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
+func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 	t.Run("test get available package summaries after repo index is updated", func(t *testing.T) {
 		indexYamlBeforeUpdateBytes, err := ioutil.ReadFile("testdata/index-before-update.yaml")
 		if err != nil {
@@ -948,7 +948,7 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 	})
 }
 
-func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
+func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
 		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
 		if err != nil {
@@ -1489,7 +1489,7 @@ func newServerWithWatcher(repos ...runtime.Object) (*Server, redismock.ClientMoc
 
 	// this is so we can emulate actual k8s server firing events
 	// see https://github.com/kubernetes/kubernetes/issues/54075 for explanation
-	watcher := watch.NewFake()
+	watcher := watch.NewFakeWithChanSize(len(repos), true)
 
 	dynamicClient.Fake.PrependWatchReactor(
 		"*",

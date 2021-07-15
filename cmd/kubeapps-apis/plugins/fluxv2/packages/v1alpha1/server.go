@@ -187,7 +187,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	responsePackages, err := getPaginatedSummariesWithFilters(int(pageSize), pageOffset, cachedCharts, request.GetFilterOptions())
+	packageSummaries, err := filterAndPaginateChartsAsSummaries(request.GetFilterOptions(), int(pageSize), pageOffset, cachedCharts)
 	if err != nil {
 		return nil, err
 	}
@@ -195,11 +195,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
-	if pageSize > 0 && len(responsePackages) == int(pageSize) {
+	if pageSize > 0 && len(packageSummaries) == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: responsePackages,
+		AvailablePackagesSummaries: packageSummaries,
 		NextPageToken:              nextPageToken,
 	}, nil
 }

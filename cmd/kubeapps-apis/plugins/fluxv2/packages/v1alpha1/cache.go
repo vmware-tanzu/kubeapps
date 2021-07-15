@@ -15,7 +15,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 	"sync"
@@ -125,34 +124,38 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client) (*Resou
 
 	c := ResourceWatcherCache{
 		config:    config,
+		redisCli:  redisCli,
 		initOk:    false,
 		initMutex: sync.Mutex{},
-		redisCli:  redisCli,
 	}
 
 	c.initMutex.Lock()
 	go c.startResourceWatcher()
-
 	return &c, nil
 }
 
 func (c *ResourceWatcherCache) startResourceWatcher() {
 	log.Infof("+ResourceWatcherCache startResourceWatcher")
-	// can't defer c.watcherMutex.Unlock() because when all is well,
+	// can't defer c.initMutex.Unlock() because when all is well,
 	// we never return from this func
 
 	if !c.initOk {
-		ch, err := c.newResourceWatcherChan()
-		if err != nil {
+		for {
+			ch, err := c.newResourceWatcherChan()
+			if err != nil {
+				c.initMutex.Unlock()
+				log.Errorf("Failed to start resource watcher for [%s] due to: %v", c.config.gvr, err)
+				return
+			}
+			c.initOk = true
 			c.initMutex.Unlock()
-			log.Errorf("Failed to start resource watcher for [%s] due to: %v", c.config.gvr, err)
-			return
-		}
-		c.initOk = true
-		c.initMutex.Unlock()
-		log.Infof("Watcher for [%s] successfully started. waiting for events...", c.config.gvr)
+			log.Infof("Watcher for [%s] successfully started. waiting for events...", c.config.gvr)
 
-		c.processEvents(ch)
+			c.processEvents(ch)
+			// if we get here the watch needs to be re-started
+			c.initMutex.Lock()
+			c.initOk = false
+		}
 	} else {
 		c.initMutex.Unlock()
 		log.Infof("watcher already started. exiting...")
@@ -187,7 +190,12 @@ func (c *ResourceWatcherCache) newResourceWatcherChan() (<-chan watch.Event, err
 // this is an infinite loop that waits for new events and processes them when they happen
 func (c *ResourceWatcherCache) processEvents(ch <-chan watch.Event) {
 	for {
-		event := <-ch
+		event, ok := <-ch
+		if !ok {
+			log.Errorf("Channel already closed. Will attempt to restart the watcher")
+			// this may happen and we will need to restart the watcher
+			return
+		}
 		if event.Type == "" {
 			// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 			continue
@@ -320,21 +328,6 @@ func (c *ResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
 	return val, nil
 }
 
-const (
-	// max number of concurrent workers reading results for fetch() at the same time
-	maxWorkers = 10
-)
-
-type fetchValueJob struct {
-	key string
-}
-
-type fetchValueJobResult struct {
-	key   string
-	value interface{}
-	err   error
-}
-
 // return all keys, optionally matching a given filter (repository list)
 func (c *ResourceWatcherCache) listKeys(filters []string) ([]string, error) {
 	if err := c.checkInit(); err != nil {
@@ -384,61 +377,18 @@ func (c *ResourceWatcherCache) listKeys(filters []string) ([]string, error) {
 	return resultKeys, nil
 }
 
-// each object is read from redis in a separate go routine (lightweight thread of execution)
-// returns a map with same keys as input and corresponding values out of the cache
-//
-// TODO (gfichtenholt) this func originally was written such that it was doing all the heavy work,
-// like indexing a repo for each key when asked, hence the use of concurrent go routines.
-// Now all it does is fetch pre-computed values out of the cache, which by definition should be
-// very quick, so I am not sure warrants the complexity below.
-// Perhaps, I need to simplify it and fetch everything in a single sequence in a for loop
 func (c *ResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
 	if err := c.checkInit(); err != nil {
 		return nil, err
 	}
 
 	response := make(map[string]interface{})
-	var wg sync.WaitGroup
-	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
-	requestChan := make(chan fetchValueJob, numWorkers)
-	responseChan := make(chan fetchValueJobResult, numWorkers)
-
-	// Process only at most maxWorkers at a time
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			for job := range requestChan {
-				// The following loop will only terminate when the request channel is closed (and there are no more items)
-				result, err := c.fetchForOne(job.key)
-				responseChan <- fetchValueJobResult{job.key, result, err}
-			}
-			wg.Done()
-		}()
-	}
-	go func() {
-		wg.Wait()
-		close(responseChan)
-	}()
-
-	go func() {
-		for _, key := range keys {
-			requestChan <- fetchValueJob{key}
+	for _, key := range keys {
+		result, err := c.fetchForOne(key)
+		if err != nil {
+			return nil, err
 		}
-		close(requestChan)
-	}()
-
-	// Start receiving results
-	// The following loop will only terminate when the response channel is closed, i.e.
-	// after the all the requests have been processed
-	for resp := range responseChan {
-		if resp.err == nil {
-			// resp.result may be nil when there is a cache miss
-			if resp.value != nil {
-				response[resp.key] = resp.value
-			}
-		} else {
-			log.Errorf("fetch value for key [%s] failed due to %v", resp.key, resp.err)
-		}
+		response[key] = result
 	}
 	return response, nil
 }
