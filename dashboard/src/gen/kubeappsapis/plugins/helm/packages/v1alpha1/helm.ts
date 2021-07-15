@@ -18,17 +18,17 @@ export interface HelmPackagesService {
   /** GetAvailablePackageSummaries returns the available packages managed by the 'helm' plugin */
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<GetAvailablePackageSummariesResponse>;
   /** GetAvailablePackageDetail returns the package details managed by the 'helm' plugin */
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<GetAvailablePackageDetailResponse>;
   /** GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin */
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<GetAvailablePackageVersionsResponse>;
 }
 
@@ -37,123 +37,116 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
 
   constructor(rpc: Rpc) {
     this.rpc = rpc;
-    this.GetAvailablePackageSummaries =
-      this.GetAvailablePackageSummaries.bind(this);
+    this.GetAvailablePackageSummaries = this.GetAvailablePackageSummaries.bind(this);
     this.GetAvailablePackageDetail = this.GetAvailablePackageDetail.bind(this);
-    this.GetAvailablePackageVersions =
-      this.GetAvailablePackageVersions.bind(this);
+    this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
   }
 
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<GetAvailablePackageSummariesResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetAvailablePackageSummariesDesc,
       GetAvailablePackageSummariesRequest.fromPartial(request),
-      metadata
+      metadata,
     );
   }
 
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<GetAvailablePackageDetailResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetAvailablePackageDetailDesc,
       GetAvailablePackageDetailRequest.fromPartial(request),
-      metadata
+      metadata,
     );
   }
 
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<GetAvailablePackageVersionsResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetAvailablePackageVersionsDesc,
       GetAvailablePackageVersionsRequest.fromPartial(request),
-      metadata
+      metadata,
     );
   }
 }
 
 export const HelmPackagesServiceDesc = {
-  serviceName:
-    "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService",
+  serviceName: "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService",
 };
 
-export const HelmPackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish =
-  {
-    methodName: "GetAvailablePackageSummaries",
-    service: HelmPackagesServiceDesc,
-    requestStream: false,
-    responseStream: false,
-    requestType: {
-      serializeBinary() {
-        return GetAvailablePackageSummariesRequest.encode(this).finish();
-      },
-    } as any,
-    responseType: {
-      deserializeBinary(data: Uint8Array) {
-        return {
-          ...GetAvailablePackageSummariesResponse.decode(data),
-          toObject() {
-            return this;
-          },
-        };
-      },
-    } as any,
-  };
+export const HelmPackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish = {
+  methodName: "GetAvailablePackageSummaries",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetAvailablePackageSummariesRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetAvailablePackageSummariesResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
 
-export const HelmPackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish =
-  {
-    methodName: "GetAvailablePackageDetail",
-    service: HelmPackagesServiceDesc,
-    requestStream: false,
-    responseStream: false,
-    requestType: {
-      serializeBinary() {
-        return GetAvailablePackageDetailRequest.encode(this).finish();
-      },
-    } as any,
-    responseType: {
-      deserializeBinary(data: Uint8Array) {
-        return {
-          ...GetAvailablePackageDetailResponse.decode(data),
-          toObject() {
-            return this;
-          },
-        };
-      },
-    } as any,
-  };
+export const HelmPackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish = {
+  methodName: "GetAvailablePackageDetail",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetAvailablePackageDetailRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetAvailablePackageDetailResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
 
-export const HelmPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish =
-  {
-    methodName: "GetAvailablePackageVersions",
-    service: HelmPackagesServiceDesc,
-    requestStream: false,
-    responseStream: false,
-    requestType: {
-      serializeBinary() {
-        return GetAvailablePackageVersionsRequest.encode(this).finish();
-      },
-    } as any,
-    responseType: {
-      deserializeBinary(data: Uint8Array) {
-        return {
-          ...GetAvailablePackageVersionsResponse.decode(data),
-          toObject() {
-            return this;
-          },
-        };
-      },
-    } as any,
-  };
+export const HelmPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetAvailablePackageVersions",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetAvailablePackageVersionsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetAvailablePackageVersionsResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
 
-interface UnaryMethodDefinitionishR
-  extends grpc.UnaryMethodDefinition<any, any> {
+interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -164,7 +157,7 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined
+    metadata: grpc.Metadata | undefined,
   ): Promise<any>;
 }
 
@@ -184,7 +177,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-    }
+    },
   ) {
     this.host = host;
     this.options = options;
@@ -193,7 +186,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined
+    metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -225,14 +218,7 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin =
-  | Date
-  | Function
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
