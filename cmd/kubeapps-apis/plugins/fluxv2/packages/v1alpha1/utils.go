@@ -215,8 +215,29 @@ func passesFilter(chart chart.Chart, filters *corev1.FilterOptions) bool {
 	}
 	if ok {
 		if query := filters.GetQuery(); len(query) > 0 {
-			ok = strings.Contains(chart.Name, query)
-			// TODO (gfichtenholt) possibly also chart keywords, but it has not been clarified yet
+			if strings.Contains(chart.Name, query) {
+				return true
+			}
+			if strings.Contains(chart.Description, query) {
+				return true
+			}
+			for _, keyword := range chart.Keywords {
+				if strings.Contains(keyword, query) {
+					return true
+				}
+			}
+			for _, source := range chart.Sources {
+				if strings.Contains(source, query) {
+					return true
+				}
+			}
+			for _, maintainer := range chart.Maintainers {
+				if strings.Contains(maintainer.Name, query) {
+					return true
+				}
+			}
+			// could not find a match for the query text
+			ok = false
 		}
 	}
 	return ok
@@ -240,7 +261,7 @@ func pageOffsetFromPageToken(pageToken string) (int, error) {
 	return int(offset), nil
 }
 
-func filterAndPaginateChartsAsSummaries(filters *corev1.FilterOptions, pageSize, pageOffset int, cachedCharts map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
+func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize, pageOffset int, cachedCharts map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
 	// this loop is here for 3 reasons:
 	// 1) to convert from []interface{} which is what the generic cache implementation
 	// returns for cache hits to a typed array object.

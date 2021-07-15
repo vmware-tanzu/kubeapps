@@ -329,6 +329,7 @@ func (c *ResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
 }
 
 // return all keys, optionally matching a given filter (repository list)
+// currently we're caching the index of a repo using the repo name as the key
 func (c *ResourceWatcherCache) listKeys(filters []string) ([]string, error) {
 	if err := c.checkInit(); err != nil {
 		return nil, err
@@ -418,6 +419,9 @@ func (c *ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{
 	return &s, nil
 }
 
+// this func is meant to be called to make sure cache client waits
+// for the cache to be fully initialized before attempting read the data out
+// of the cache
 func (c *ResourceWatcherCache) checkInit() error {
 	c.initMutex.Lock()
 	defer c.initMutex.Unlock()

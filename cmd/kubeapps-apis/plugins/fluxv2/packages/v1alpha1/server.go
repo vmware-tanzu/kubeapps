@@ -187,7 +187,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	packageSummaries, err := filterAndPaginateChartsAsSummaries(request.GetFilterOptions(), int(pageSize), pageOffset, cachedCharts)
+	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), int(pageSize), pageOffset, cachedCharts)
 	if err != nil {
 		return nil, err
 	}

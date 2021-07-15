@@ -649,7 +649,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing query text",
+			testName: "uses a filter based on existing query text (chart name)",
 			testRepos: []testRepoStruct{
 				{
 					name:      "index-with-categories-1",
@@ -673,6 +673,38 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						ShortDescription: "A highly scalable open-source full-text search and analytics engine",
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Identifier: "index-with-categories-1/elasticsearch",
+							Context:    &corev1.Context{Namespace: "default"},
+							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+						},
+					},
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on existing query text (chart keywords)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Query: "vascrip",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+					{
+						DisplayName:      "ghost",
+						LatestPkgVersion: "13.0.14",
+						IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
+						ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Identifier: "index-with-categories-1/ghost",
 							Context:    &corev1.Context{Namespace: "default"},
 							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
 						},
