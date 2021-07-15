@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -95,9 +96,23 @@ func Serve(serveOpts ServeOptions) {
 	// at https://github.com/soheilhy/cmux/issues/64
 	mux := cmux.New(lis)
 	grpcLis := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+	grpcwebLis := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
 	httpLis := mux.Match(cmux.Any())
 
+	webrpcProxy := grpcweb.WrapServer(grpcSrv,
+		grpcweb.WithOriginFunc(func(origin string) bool { return true }),
+		grpcweb.WithWebsockets(true),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
+	)
+
+	httpSrv.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if webrpcProxy.IsGrpcWebRequest(r) || webrpcProxy.IsAcceptableGrpcCorsRequest(r) || webrpcProxy.IsGrpcWebSocketRequest(r) {
+			webrpcProxy.ServeHTTP(w, r)
+		}
+	})
+
 	go grpcSrv.Serve(grpcLis)
+	go grpcSrv.Serve(grpcwebLis)
 	go httpSrv.Serve(httpLis)
 
 	if serveOpts.UnsafeUseDemoSA {
