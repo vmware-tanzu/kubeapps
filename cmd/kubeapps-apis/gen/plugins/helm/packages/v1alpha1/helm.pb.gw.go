@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1_0 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Cont
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -89,7 +89,7 @@ func request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -109,7 +109,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -125,7 +125,7 @@ func request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Conte
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -198,7 +198,7 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackageversions"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackageversions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -300,7 +300,7 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackageversions"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackageversions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -324,7 +324,7 @@ var (
 
 	pattern_HelmPackagesService_GetAvailablePackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "helm", "packages", "v1alpha1", "availablepackagedetails"}, ""))
 
-	pattern_HelmPackagesService_GetAvailablePackageVersions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "availablepackageversions"}, ""))
+	pattern_HelmPackagesService_GetAvailablePackageVersions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "helm", "packages", "v1alpha1", "availablepackageversions"}, ""))
 )
 
 var (

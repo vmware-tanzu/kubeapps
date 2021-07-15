@@ -169,10 +169,10 @@ type GetAvailablePackageVersionsRequest struct {
 	// The information required to uniquely
 	// identify an available package
 	AvailablePackageRef *AvailablePackageReference `protobuf:"bytes,1,opt,name=available_package_ref,json=availablePackageRef,proto3" json:"available_package_ref,omitempty"`
-	// Optional version reference for which version history is required.
-	// By default a summary of versions is returned as outlined in the
-	// response. Plugins can choose not to implement this and provide
-	// the summary only, it is provided for completeness only.
+	// Optional version reference for which full version history is required.  By
+	// default a summary of versions is returned as outlined in the response.
+	// Plugins can choose not to implement this and provide the summary only, it
+	// is provided for completeness only.
 	PkgVersion string `protobuf:"bytes,2,opt,name=pkg_version,json=pkgVersion,proto3" json:"pkg_version,omitempty"`
 }
 

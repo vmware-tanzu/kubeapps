@@ -46,15 +46,8 @@ plugins:
     out: ../../dashboard/src/gen
     strategy: all
     opt:
-      - outputClientImpl=grpc-web
-      - esModuleInterop=true
-      # - context=true #  Go-style ctx parameters
-      # - env=browser # environment-specific assumptions
-      # - useOptionals=true # use optional TypeScript properties
-      # - exportCommonSymbols=false # utility types like DeepPartial wont be exported (avoid some import conflicts)
-      # - addGrpcMetadata=false # add Metadata, which contains additional information (i.e. access tokens)
-      # - nestJs=false  # required for metadata
-      # # - returnObservable=false
-      # # - outputServices=grpc-js
-      # - outputServices=generic-definitions
-      # - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+      - outputClientImpl=grpc-web # client implementation it generates
+      - esModuleInterop=true # use imports as required in modern ts setups
+      - useOptionals=true # use optional TypeScript properties instead of undefined
+      # - context=true #  Go-style ctx parameters # have to re-check it
+      # - exportCommonSymbols=false # utility types like DeepPartial wont be exported (avoid some import conflicts) # have to re-check it

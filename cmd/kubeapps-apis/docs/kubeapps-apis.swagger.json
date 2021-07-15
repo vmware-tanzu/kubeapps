@@ -269,7 +269,7 @@
           },
           {
             "name": "pkgVersion",
-            "description": "Optional version reference for which version history is required.\nBy default a summary of versions is returned as outlined in the\nresponse. Plugins can choose not to implement this and provide\nthe summary only, it is provided for completeness only.",
+            "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -539,7 +539,7 @@
           },
           {
             "name": "pkgVersion",
-            "description": "Optional version reference for which version history is required.\nBy default a summary of versions is returned as outlined in the\nresponse. Plugins can choose not to implement this and provide\nthe summary only, it is provided for completeness only.",
+            "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -758,6 +758,77 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
+    "/plugins/helm/packages/v1alpha1/availablepackageversions": {
+      "get": {
+        "summary": "GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin",
+        "operationId": "HelmPackagesService_GetAvailablePackageVersions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageVersionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier. The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pkgVersion",
+            "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
