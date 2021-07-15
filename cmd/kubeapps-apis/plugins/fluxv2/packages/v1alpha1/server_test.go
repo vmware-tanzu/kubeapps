@@ -1521,7 +1521,7 @@ func newServerWithWatcher(repos ...runtime.Object) (*Server, redismock.ClientMoc
 
 	// this is so we can emulate actual k8s server firing events
 	// see https://github.com/kubernetes/kubernetes/issues/54075 for explanation
-	watcher := watch.NewFakeWithChanSize(len(repos), true)
+	watcher := watch.NewFake()
 
 	dynamicClient.Fake.PrependWatchReactor(
 		"*",
