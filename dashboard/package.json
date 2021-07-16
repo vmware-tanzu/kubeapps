@@ -26,7 +26,7 @@
     "@types/react-transition-group": "^4.4.2",
     "@types/semver": "^7.3.7",
     "@types/ws": "^7.4.6",
-    "ajv": "^8.6.1",
+    "ajv": "^8.6.2",
     "axios": "^0.21.1",
     "connected-react-router": "^6.9.1",
     "enzyme-adapter-react-16": "^1.15.6",
