@@ -90,7 +90,7 @@ func main() {
 		QPS:                    qps,
 		NamespaceHeaderName:    namespaceHeaderName,
 		NamespaceHeaderPattern: namespaceHeaderPattern,
-		UserAgent:              userAgent(),
+		UserAgent:              getUserAgent(version, userAgentComment),
 	}
 
 	storageForDriver := agent.StorageForSecrets
@@ -192,7 +192,7 @@ func main() {
 // Examples:
 // kubeops/devel
 // kubeops/2.3.4 (kubeapps v2.3.4-beta4)
-func userAgent() string {
+func getUserAgent(version, userAgentComment string) string {
 	ua := "kubeops/" + version
 	if userAgentComment != "" {
 		ua = fmt.Sprintf("%s (%s)", ua, userAgentComment)
