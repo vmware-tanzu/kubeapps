@@ -61,12 +61,12 @@ const chartsReducer = (
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts): {
-      const isLastPage = action.payload.page >= action.payload.totalPages;
+      const isLastPage = action.payload.nextPageToken === "";
       return {
         ...state,
         isFetching: false,
         hasFinishedFetching: isLastPage,
-        items: uniqBy([...state.items, ...action.payload.items], "id"),
+        items: uniqBy([...state.items, ...action.payload.items], "availablePackageRef.identifier"),
       };
     }
     case getType(actions.charts.receiveChartCategories):

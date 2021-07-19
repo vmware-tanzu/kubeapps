@@ -1,10 +1,14 @@
+import { HelmPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { JSONSchema4 } from "json-schema";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IChart, IChartCategory, IChartListMeta, IChartVersion } from "./types";
+import { GrpcClient } from "./GrpcClient";
+import { IChart, IChartCategory, IChartVersion } from "./types";
 import * as URL from "./url";
 
 export default class Chart {
-  public static async fetchCharts(
+  private static grpcClient = new GrpcClient().getGrpcClient();
+
+  public static async getAvailablePackageSummaries(
     cluster: string,
     namespace: string,
     repos: string,
@@ -12,10 +16,16 @@ export default class Chart {
     size: number,
     query?: string,
   ) {
-    const { data } = await axiosWithAuth.get<{ data: IChart[]; meta: IChartListMeta }>(
-      URL.api.charts.list(cluster, namespace, repos, page, size, query),
-    );
-    return data;
+    const client = new HelmPackagesServiceClientImpl(this.grpcClient);
+    return await client.GetAvailablePackageSummaries({
+      // TODO(agamez): add cluster when it is supported
+      context: { cluster: "", namespace: namespace },
+      filterOptions: {
+        query: query,
+        repositories: repos.split(","),
+      },
+      paginationOptions: { pageSize: size, pageToken: page.toString() },
+    });
   }
 
   public static async fetchChartCategories(cluster: string, namespace: string) {

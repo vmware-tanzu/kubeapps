@@ -224,13 +224,14 @@ function Catalog(props: ICatalogProps) {
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
-        filters[filterNames.REPO].includes(c.attributes.repo.name),
-    )
-    .filter(
-      c =>
-        filters[filterNames.CATEGORY].length === 0 ||
-        filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
+        filters[filterNames.REPO].includes(c.availablePackageRef?.identifier),
     );
+  // FIXME(agamez): add "category" to GetAvailablePackageSummaries
+  // .filter(
+  //   c =>
+  //     filters[filterNames.CATEGORY].length === 0 ||
+  //     filters[filterNames.CATEGORY].includes(categoryToReadable(c?.category)),
+  // );
   const filteredCSVs = csvs
     .filter(
       () =>
@@ -311,7 +312,7 @@ function Catalog(props: ICatalogProps) {
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search charts..."
+            placeholder="search available packages..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}
