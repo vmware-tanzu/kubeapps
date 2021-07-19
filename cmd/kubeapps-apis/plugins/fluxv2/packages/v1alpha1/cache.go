@@ -21,7 +21,6 @@ import (
 	"sync"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,7 +50,7 @@ type ResourceWatcherCache struct {
 // and/or caching-rleated code is moved into a separate package?
 type cacheConfig struct {
 	gvr          schema.GroupVersionResource
-	clientGetter server.KubernetesClientGetter
+	clientGetter clientGetter
 	// 'onAdd' and 'onModify' hooks are called when a new or modified object comes about and
 	// allows the plug-in to return information about WHETHER OR NOT and WHAT is to be stored
 	// in the cache for a given k8s object (passed in as a untyped/unstructured map)
@@ -160,7 +159,7 @@ func (c *ResourceWatcherCache) startResourceWatcher() {
 func (c *ResourceWatcherCache) newResourceWatcherChan() (<-chan watch.Event, error) {
 	ctx := context.Background()
 
-	_, dynamicClient, err := c.config.clientGetter(ctx)
+	dynamicClient, err := c.config.clientGetter(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}

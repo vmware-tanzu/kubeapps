@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
@@ -50,6 +49,8 @@ const (
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
+type clientGetter func(context.Context) (dynamic.Interface, error)
+
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
@@ -57,14 +58,29 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter server.KubernetesClientGetter
+	clientGetter clientGetter
 
 	cache *ResourceWatcherCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter server.KubernetesClientGetter) (*Server, error) {
+func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
+	clientGetter := func(ctx context.Context) (dynamic.Interface, error) {
+		if configGetter == nil {
+			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+		}
+		config, err := configGetter(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+		}
+		dynamicClient, err := dynamic.NewForConfig(config)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
+		}
+		return dynamicClient, nil
+	}
+
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -88,16 +104,16 @@ func NewServer(clientGetter server.KubernetesClientGetter) (*Server, error) {
 	}, nil
 }
 
-// getClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+// getDynamicClient returns a dynamic k8s client.
+func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
 	if s.clientGetter == nil {
-		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	typedClient, dynamicClient, err := s.clientGetter(ctx)
+	dynamicClient, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
-	return typedClient, dynamicClient, nil
+	return dynamicClient, nil
 }
 
 // ===== general note on error handling ========
@@ -258,7 +274,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 // returns the url from which chart .tgz can be downloaded
 func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartName string, namespace string) (*string, error) {
-	_, client, err := s.GetClients(ctx)
+	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +369,7 @@ func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartNam
 
 // namespace maybe "", in which case repositories from all namespaces are returned
 func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
-	_, client, err := s.GetClients(ctx)
+	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return nil, err
 	}
