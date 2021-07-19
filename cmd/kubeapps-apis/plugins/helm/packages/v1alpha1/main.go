@@ -36,8 +36,8 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesConfigGetter) (interface{}, error) {
-	svr := NewServer(clientGetter)
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter) (interface{}, error) {
+	svr := NewServer(configGetter)
 	v1alpha1.RegisterHelmPackagesServiceServer(s, svr)
 	return svr, nil
 }

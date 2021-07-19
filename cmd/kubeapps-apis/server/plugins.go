@@ -111,7 +111,7 @@ func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.Ge
 func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs, serveOpts ServeOptions) ([]*plugins.Plugin, error) {
 	pluginDetails := []*plugins.Plugin{}
 
-	clientGetter, err := createConfigGetter(serveOpts)
+	configGetter, err := createConfigGetter(serveOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create a ClientGetter: %w", err)
 	}
@@ -129,7 +129,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			pluginDetails = append(pluginDetails, pluginDetail)
 		}
 
-		if err = s.registerGRPC(p, pluginDetail, grpcReg, clientGetter); err != nil {
+		if err = s.registerGRPC(p, pluginDetail, grpcReg, configGetter); err != nil {
 			return nil, err
 		}
 
