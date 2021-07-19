@@ -29,13 +29,14 @@ service PackagesService {
     };
   }
 
+  rpc GetInstalledPackageSummaries(GetInstalledPackageSummariesRequest) returns (GetInstalledPackageSummariesResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/installedpackagesummaries"
+    };
+  }
+
   // TODO: remaining operations yet to be defined
 
-  // rpc GetInstalledPackageSummaries(GetInstalledPackageSummariesRequest) returns (GetInstalledPackageSummariesResponse) {
-  //   option (google.api.http) = {
-  //     get: "/core/packages/v1alpha1/installedpackagesummaries"
-  //   };
-  // }
   // rpc GetInstalledPackageDetail(GetInstalledPackageDetailRequest) returns (GetInstalledPackageDetailResponse) {
   //   option (google.api.http) = {
   //     get: "/core/packages/v1alpha1/installedpackagedetails"
@@ -106,6 +107,19 @@ message GetAvailablePackageVersionsRequest {
   // Plugins can choose not to implement this and provide the summary only, it
   // is provided for completeness only.
   string pkg_version = 2;
+}
+
+// GetInstalledPackageSummariesRequest
+//
+// Request for GetInstalledPackageSummeraies
+message GetInstalledPackageSummariesRequest {
+  // The context (cluster/namespace) for the request.
+  Context context = 1;
+
+  // PaginationOptions
+  //
+  // Pagination options specifying where to start and how many results to include.
+  PaginationOptions pagination_options = 2;
 }
 
 // -- Start definitions of the response messages --
@@ -182,6 +196,19 @@ message GetAvailablePackageVersionsResponse {
   // If a version_query is present and the plugin chooses to support it,
   // the full history of versions matching the version query should be returned.
   repeated PackageAppVersion package_app_versions = 1;
+}
+
+// GetInstalledPackageSummariesResponse
+//
+// Response for GetInstalledPackageSummaries
+message GetInstalledPackageSummariesResponse {
+  // Installed packages summaries
+  //
+  // List of InstalledPackageSummary
+  repeated InstalledPackageSummary installed_packages_summaries = 1;
+
+  // The token used to request the next page of results
+  string next_page_token = 2;
 }
 
 // -- Start definitions used in the responses  --
@@ -306,6 +333,67 @@ message AvailablePackageDetail {
   google.protobuf.Any custom_detail = 13;
 }
 
+// InstalledPackageSummary
+//
+// An InstalledPackageSummary provides a summary of an installed package
+// useful when aggregating many installed packages.
+message InstalledPackageSummary {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+
+  // InstalledPackageReference
+  //
+  // A reference uniquely identifying the package.
+  InstalledPackageReference installed_package_ref = 1;
+
+  // Name
+  //
+  // A name given to the installation of the package (eg. "my-postgresql-for-testing").
+  string name = 2;
+
+  // PkgVersionReference
+  //
+  // The package version reference defines a version or constraint limiting
+  // matching package versions.
+  VersionReference pkg_version_reference = 3;
+
+  // CurrentPkgVersion
+  //
+  // The version of the package which is currently installed.
+  string current_pkg_version = 4;
+
+  // Installed package icon URL
+  //
+  // A url for an icon.
+  string icon_url = 5;
+
+  // PackageDisplayName
+  //
+  // The package name as displayed to users (provided by the package, eg. "PostgreSQL")
+  string pkg_display_name = 6;
+
+  // ShortDescription
+  //
+  // A short description of the package (provided by the package)
+  string short_description = 7;
+
+  // LatestMatchingPkgVersion
+  //
+  // Only non-empty if an available upgrade matches the specified pkg_version_reference.
+  // For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
+  // is installed, then:
+  //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
+  //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
+  string latest_matching_pkg_version = 8;
+
+  // LatestPkgVersion
+  //
+  // The latest version available for this package, regardless of the pkg_version_reference.
+  string latest_pkg_version = 9;
+}
+
 // -- Start other definitions  --
 
 // Context
@@ -327,6 +415,10 @@ message Context {
   //
   // A namespace must be provided if the context of the operation is for a resource
   // or resources in a particular namespace.
+  // For requests to list items, not including a namespace here implies that the context
+  // for the request is everything the requesting user can read, though the result can
+  // be filtered by any filtering options of the request. Plugins may choose to return
+  // Unimplemented for some queries for which we do not yet have a need.
   string namespace = 2;
 }
 
@@ -445,4 +537,40 @@ message PaginationOptions {
   // of results returned in a single page. If the page_size is 0, the server
   // will decide the number of results to be returned.
   int32 page_size = 2;
+}
+
+// InstalledPackageReference
+//
+// An InstalledPackageReference has the minimum information required to uniquely
+// identify an installed package.
+message InstalledPackageReference {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{}'
+  // };
+
+  // Installed package context
+  //
+  // The context (cluster/namespace) for the package.
+  Context context = 1;
+
+  // The fully qualified identifier for the installed package
+  // (ie. a unique name for the context).
+  string identifier = 2;
+
+  // The plugin used to identify and interact with the installed package.
+  // This field can be omitted when the request is in the context of a specific plugin.
+  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 3;
+}
+
+// VersionReference
+//
+// A VersionReference defines a version or constraint limiting matching versions.
+// The reason it is a separate message is so that in the future we can add other
+// fields as necessary (such as something similar to Carvel's `prereleases` option
+// to its versionSelection).
+message VersionReference {
+  // The format of the version constraint depends on the backend. For example,
+  // for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
+  string version = 1;
 }

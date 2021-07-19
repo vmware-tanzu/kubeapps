@@ -62,7 +62,7 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 	if err != nil {
 		return []models.Chart{}, err
 	}
-	for _, entry := range index.Entries {
+	for key, entry := range index.Entries {
 		// note that 'entry' itself is an array of chart versions
 		// after index.SortEntires() call, it looks like there is only one entry per package,
 		// and entry[0] should be the most recent chart version, e.g. Name: "mariadb" Version: "9.3.12"
@@ -71,6 +71,13 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 		// almost 200 chart versions going all the way back many years to version "2.1.4".
 		// So for now, let's just keep track of the latest, not to overwhelm the caller with
 		// all these outdated versions
+
+		// skip if the entry is empty
+		if len(entry) < 1 {
+			log.Infof("skipping chart: [%s]", key)
+			continue
+		}
+
 		if entry[0].GetDeprecated() {
 			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
 			continue

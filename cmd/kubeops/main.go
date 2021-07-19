@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -38,6 +39,9 @@ var (
 	userAgentComment       string
 	namespaceHeaderName    string
 	namespaceHeaderPattern string
+	// This version var is updated during the build (see the -ldflags option
+	// in the cmd/kubeops/Dockerfile)
+	version = "devel"
 )
 
 func init() {
@@ -86,6 +90,7 @@ func main() {
 		QPS:                    qps,
 		NamespaceHeaderName:    namespaceHeaderName,
 		NamespaceHeaderPattern: namespaceHeaderPattern,
+		UserAgent:              getUserAgent(version, userAgentComment),
 	}
 
 	storageForDriver := agent.StorageForSecrets
@@ -181,4 +186,16 @@ func main() {
 	srv.Shutdown(ctx)
 	log.Info("All requests have been served. Exiting")
 	os.Exit(0)
+}
+
+// Returns the user agent to be used during calls to the chart repositories
+// Examples:
+// kubeops/devel
+// kubeops/2.3.4 (kubeapps v2.3.4-beta4)
+func getUserAgent(version, userAgentComment string) string {
+	ua := "kubeops/" + version
+	if userAgentComment != "" {
+		ua = fmt.Sprintf("%s (%s)", ua, userAgentComment)
+	}
+	return ua
 }

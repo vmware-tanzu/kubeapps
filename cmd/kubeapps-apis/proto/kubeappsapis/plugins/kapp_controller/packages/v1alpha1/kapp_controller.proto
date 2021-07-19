@@ -32,7 +32,14 @@ service KappControllerPackagesService {
   // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
   rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
     option (google.api.http) = {
-      get: "/plugins/fluxv2/packages/v1alpha1/availablepackageversions"
+      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackageversions"
+    };
+  }
+
+  // GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
+  rpc GetInstalledPackageSummaries(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/kapp_controller/packages/v1alpha1/installedpackagesummaries"
     };
   }
 }
