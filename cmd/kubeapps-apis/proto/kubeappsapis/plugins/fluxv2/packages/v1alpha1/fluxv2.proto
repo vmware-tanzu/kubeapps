@@ -32,6 +32,13 @@ service FluxV2PackagesService {
       get: "/plugins/fluxv2/packages/v1alpha1/packagerepositories"
     };
   };
+
+  // GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
+  rpc GetInstalledPackageSummaries(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/fluxv2/packages/v1alpha1/installedpackagesummaries"
+    };
+  }
 }
 
 // Specific messages used by the 'fluxv2' plugin

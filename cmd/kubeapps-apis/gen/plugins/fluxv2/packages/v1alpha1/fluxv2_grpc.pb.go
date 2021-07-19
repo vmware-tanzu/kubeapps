@@ -27,6 +27,8 @@ type FluxV2PackagesServiceClient interface {
 	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
+	// GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
+	GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 }
 
 type fluxV2PackagesServiceClient struct {
@@ -73,6 +75,15 @@ func (c *fluxV2PackagesServiceClient) GetPackageRepositories(ctx context.Context
 	return out, nil
 }
 
+func (c *fluxV2PackagesServiceClient) GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error) {
+	out := new(v1alpha1.GetInstalledPackageSummariesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageSummaries", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FluxV2PackagesServiceServer is the server API for FluxV2PackagesService service.
 // All implementations should embed UnimplementedFluxV2PackagesServiceServer
 // for forward compatibility
@@ -85,6 +96,8 @@ type FluxV2PackagesServiceServer interface {
 	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
 	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
+	// GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
+	GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 }
 
 // UnimplementedFluxV2PackagesServiceServer should be embedded to have forward compatible implementations.
@@ -102,6 +115,9 @@ func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackageVersions(cont
 }
 func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
+}
+func (UnimplementedFluxV2PackagesServiceServer) GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageSummaries not implemented")
 }
 
 // UnsafeFluxV2PackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -187,6 +203,24 @@ func _FluxV2PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FluxV2PackagesService_GetInstalledPackageSummaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetInstalledPackageSummariesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2PackagesServiceServer).GetInstalledPackageSummaries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageSummaries",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2PackagesServiceServer).GetInstalledPackageSummaries(ctx, req.(*v1alpha1.GetInstalledPackageSummariesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FluxV2PackagesService_ServiceDesc is the grpc.ServiceDesc for FluxV2PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -209,6 +243,10 @@ var FluxV2PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPackageRepositories",
 			Handler:    _FluxV2PackagesService_GetPackageRepositories_Handler,
+		},
+		{
+			MethodName: "GetInstalledPackageSummaries",
+			Handler:    _FluxV2PackagesService_GetInstalledPackageSummaries_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
