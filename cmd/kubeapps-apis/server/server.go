@@ -62,9 +62,6 @@ func Serve(serveOpts ServeOptions) {
 		addr:        listenAddr,
 		dialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
-	httpSrv := &http.Server{
-		Handler: gwArgs.mux,
-	}
 
 	// Create the core.plugins server which handles registration of plugins,
 	// and register it for both grpc and http.
@@ -105,9 +102,15 @@ func Serve(serveOpts ServeOptions) {
 		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
 	)
 
-	httpSrv.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if webrpcProxy.IsGrpcWebRequest(r) || webrpcProxy.IsAcceptableGrpcCorsRequest(r) || webrpcProxy.IsGrpcWebSocketRequest(r) {
-			webrpcProxy.ServeHTTP(w, r)
+	httpSrv := &http.Server{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if webrpcProxy.IsGrpcWebRequest(r) || webrpcProxy.IsAcceptableGrpcCorsRequest(r) || webrpcProxy.IsGrpcWebSocketRequest(r) {
+				webrpcProxy.ServeHTTP(w, r)
+			} else {
+				gwArgs.mux.ServeHTTP(w, r)
+			}
+		}),
+	}
 
 	go func() {
 		err := grpcSrv.Serve(grpcLis)
