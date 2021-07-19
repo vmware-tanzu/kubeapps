@@ -28,7 +28,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -38,14 +37,13 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
 	k8stesting "k8s.io/client-go/testing"
 )
 
 func TestNilClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter server.KubernetesClientGetter
+		clientGetter clientGetter
 		statusCode   codes.Code
 	}{
 		{
@@ -77,13 +75,13 @@ func TestNilClientGetter(t *testing.T) {
 func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter server.KubernetesClientGetter
+		clientGetter clientGetter
 		statusCode   codes.Code
 	}{
 		{
 			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
@@ -1045,7 +1043,7 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 	}
 }
 
-func newServer(clientGetter server.KubernetesClientGetter) (*Server, redismock.ClientMock, error) {
+func newServer(clientGetter clientGetter) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
 	if clientGetter != nil {
 		mock.ExpectPing().SetVal("PONG")
@@ -1082,8 +1080,8 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClie
 		},
 		repos...)
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return nil, dynamicClient, nil
+	clientGetter := func(context.Context) (dynamic.Interface, error) {
+		return dynamicClient, nil
 	}
 
 	s, mock, err := newServer(clientGetter)
@@ -1173,8 +1171,8 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicCl
 		},
 		charts...)
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return nil, dynamicClient, nil
+	clientGetter := func(context.Context) (dynamic.Interface, error) {
+		return dynamicClient, nil
 	}
 
 	s, mock, err := newServer(clientGetter)

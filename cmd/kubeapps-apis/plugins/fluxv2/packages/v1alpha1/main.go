@@ -26,7 +26,7 @@ import (
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesClientGetter) (interface{}, error) {
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, clientGetter server.KubernetesConfigGetter) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
 	svr, err := NewServer(clientGetter)
 	if err != nil {

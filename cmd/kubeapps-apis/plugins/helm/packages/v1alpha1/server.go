@@ -36,6 +36,8 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+type clientGetter func(context.Context) (kubernetes.Interface, dynamic.Interface, error)
+
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
@@ -51,14 +53,14 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             server.KubernetesClientGetter
+	clientGetter             clientGetter
 	globalPackagingNamespace string
 	manager                  utils.AssetManager
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter server.KubernetesClientGetter) *Server {
+func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
@@ -77,7 +79,24 @@ func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	}
 
 	return &Server{
-		clientGetter:             clientGetter,
+		clientGetter: func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+			if configGetter == nil {
+				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+			}
+			config, err := configGetter(ctx)
+			if err != nil {
+				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+			}
+			dynamicClient, err := dynamic.NewForConfig(config)
+			if err != nil {
+				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
+			}
+			typedClient, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get typed client : %v", err))
+			}
+			return typedClient, dynamicClient, nil
+		},
 		manager:                  manager,
 		globalPackagingNamespace: kubeappsNamespace,
 	}
