@@ -1359,14 +1359,10 @@
       "type": "object",
       "properties": {
         "pkgVersion": {
-          "type": "string",
-          "description": "Version of the package itself",
-          "title": "Package version"
+          "type": "string"
         },
         "appVersion": {
-          "type": "string",
-          "description": "Version of the packaged application",
-          "title": "Application version"
+          "type": "string"
         }
       },
       "description": "PackageAppVersion conveys both the package version and the packaged app version."
@@ -1748,8 +1744,7 @@
           "items": {
             "$ref": "#/definitions/GetAvailablePackageVersionsResponsePackageAppVersion"
           },
-          "description": "By default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned.",
-          "title": "Package app versions"
+          "description": "By default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned."
         }
       },
       "description": "Response for GetAvailablePackageVersions",

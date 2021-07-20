@@ -123,8 +123,6 @@ export interface GetAvailablePackageDetailResponse {
  */
 export interface GetAvailablePackageVersionsResponse {
   /**
-   * Package app versions
-   *
    * By default (when version_query is empty or ignored) the response
    * should contain an ordered summary of versions including the most recent three
    * patch versions of the most recent three minor versions of the most recent three
@@ -152,17 +150,7 @@ export interface GetAvailablePackageVersionsResponse {
 
 /** PackageAppVersion conveys both the package version and the packaged app version. */
 export interface GetAvailablePackageVersionsResponse_PackageAppVersion {
-  /**
-   * Package version
-   *
-   * Version of the package itself
-   */
   pkgVersion: string;
-  /**
-   * Application version
-   *
-   * Version of the packaged application
-   */
   appVersion: string;
 }
 
