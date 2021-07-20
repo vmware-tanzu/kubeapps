@@ -61,7 +61,9 @@ const chartsReducer = (
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts): {
-      const isLastPage = action.payload.nextPageToken === "";
+      const isLastPage =
+        action.payload.page >= parseInt(action.payload.nextPageToken) ||
+        action.payload.nextPageToken === "";
       return {
         ...state,
         isFetching: false,

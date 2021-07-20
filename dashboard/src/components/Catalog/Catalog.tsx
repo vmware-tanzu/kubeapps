@@ -224,7 +224,7 @@ function Catalog(props: ICatalogProps) {
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
-        filters[filterNames.REPO].includes(c.availablePackageRef?.identifier),
+        filters[filterNames.REPO].includes(c.availablePackageRef?.identifier.split("/")[0]),
     )
     .filter(
       c =>
