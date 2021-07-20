@@ -18,7 +18,11 @@ export interface GetAvailablePackageSummariesRequest {
   context?: Context;
   /** The filters used for the request */
   filterOptions?: FilterOptions;
-  /** Pagination options specifying where to start and how many results to include. */
+  /**
+   * PaginationOptions
+   *
+   * Pagination options specifying where to start and how many results to include.
+   */
   paginationOptions?: PaginationOptions;
 }
 
@@ -69,7 +73,11 @@ export interface GetAvailablePackageVersionsRequest {
 export interface GetInstalledPackageSummariesRequest {
   /** The context (cluster/namespace) for the request. */
   context?: Context;
-  /** Pagination options specifying where to start and how many results to include. */
+  /**
+   * PaginationOptions
+   *
+   * Pagination options specifying where to start and how many results to include.
+   */
   paginationOptions?: PaginationOptions;
 }
 
@@ -142,11 +150,7 @@ export interface GetAvailablePackageVersionsResponse {
   packageAppVersions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
 }
 
-/**
- * Package AppVersion
- *
- * PackageAppVersion conveys both the package version and the packaged app version.
- */
+/** PackageAppVersion conveys both the package version and the packaged app version. */
 export interface GetAvailablePackageVersionsResponse_PackageAppVersion {
   /**
    * Package version
@@ -174,12 +178,7 @@ export interface GetInstalledPackageSummariesResponse {
    * List of InstalledPackageSummary
    */
   installedPackagesSummaries: InstalledPackageSummary[];
-  /**
-   * Next page token
-   *
-   * This field represents the pagination token to retrieve the next page of
-   * results. If the value is "", it means no further results for the request.
-   */
+  /** The token used to request the next page of results */
   nextPageToken: string;
 }
 
@@ -583,8 +582,6 @@ export interface InstalledPackageReference {
  */
 export interface VersionReference {
   /**
-   * Version
-   *
    * The format of the version constraint depends on the backend. For example,
    * for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
    */

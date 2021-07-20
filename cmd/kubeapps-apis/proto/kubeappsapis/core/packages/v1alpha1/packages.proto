@@ -74,6 +74,8 @@ message GetAvailablePackageSummariesRequest {
   // The filters used for the request
   FilterOptions filter_options = 2;
 
+  // PaginationOptions
+  //
   // Pagination options specifying where to start and how many results to include.
   PaginationOptions pagination_options = 3;
 }
@@ -114,6 +116,8 @@ message GetInstalledPackageSummariesRequest {
   // The context (cluster/namespace) for the request.
   Context context = 1;
 
+  // PaginationOptions
+  //
   // Pagination options specifying where to start and how many results to include.
   PaginationOptions pagination_options = 2;
 }
@@ -165,8 +169,6 @@ message GetAvailablePackageVersionsResponse {
   //   example: '{"package_app_versions": [{}]}'
   // };
 
-  // Package AppVersion
-  //
   // PackageAppVersion conveys both the package version and the packaged app version.
   message PackageAppVersion {
     // Package version
@@ -215,10 +217,7 @@ message GetInstalledPackageSummariesResponse {
   // List of InstalledPackageSummary
   repeated InstalledPackageSummary installed_packages_summaries = 1;
 
-  // Next page token
-  //
-  // This field represents the pagination token to retrieve the next page of
-  // results. If the value is "", it means no further results for the request.
+  // The token used to request the next page of results
   string next_page_token = 2;
 }
 
@@ -599,8 +598,6 @@ message InstalledPackageReference {
 // fields as necessary (such as something similar to Carvel's `prereleases` option
 // to its versionSelection).
 message VersionReference {
-  // Version
-  //
   // The format of the version constraint depends on the backend. For example,
   // for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
   string version = 1;
