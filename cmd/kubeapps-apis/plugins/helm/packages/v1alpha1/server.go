@@ -227,6 +227,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	pkg.DisplayName = chart.Name
 	pkg.IconUrl = chart.Icon
 	pkg.ShortDescription = chart.Description
+	pkg.Category = chart.Category
 
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
 		Identifier: chart.ID,
@@ -395,6 +396,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	pkg.IconUrl = chart.Icon
 	pkg.Name = chart.Name
 	pkg.ShortDescription = chart.Description
+	pkg.Category = chart.Category
 
 	pkg.Maintainers = []*corev1.Maintainer{}
 	for _, maintainer := range chart.Maintainers {
