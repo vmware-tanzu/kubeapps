@@ -1,4 +1,4 @@
-import { HelmPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { PackagesServiceClientImpl } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { JSONSchema4 } from "json-schema";
 import { axiosWithAuth } from "./AxiosInstance";
 import { GrpcClient } from "./GrpcClient";
@@ -16,7 +16,7 @@ export default class Chart {
     size: number,
     query?: string,
   ) {
-    const client = new HelmPackagesServiceClientImpl(this.grpcClient);
+    const client = new PackagesServiceClientImpl(this.grpcClient);
     return await client.GetAvailablePackageSummaries({
       // TODO(agamez): add cluster when it is supported
       context: { cluster: "", namespace: namespace },
