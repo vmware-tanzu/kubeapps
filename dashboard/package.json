@@ -168,7 +168,6 @@
       "pre-commit": "yarn run ts-compile-check && lint-staged"
     }
   },
-  "proxy": "http://127.0.0.1:8080",
   "browserslist": {
     "production": [
       ">0.2%",
