@@ -33,10 +33,8 @@ export default function CatalogItems({
             id: `chart/${c.availablePackageRef?.identifier}/${c.latestPkgVersion}`,
             name: c.displayName,
             icon: c.iconUrl,
-            // FIXME(agamez): replace with "latestAppVersion" once available
-            version: c.latestPkgVersion,
+            version: c.latestAppVersion,
             description: c.shortDescription,
-            // FIXME(agamez): (not required) passing "repo(name, namespace, url)""
             repo: { name: c.availablePackageRef?.identifier.split("/")[0] } as IRepo,
             cluster,
             namespace,

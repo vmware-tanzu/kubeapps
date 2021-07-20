@@ -225,13 +225,12 @@ function Catalog(props: ICatalogProps) {
       c =>
         filters[filterNames.REPO].length === 0 ||
         filters[filterNames.REPO].includes(c.availablePackageRef?.identifier),
+    )
+    .filter(
+      c =>
+        filters[filterNames.CATEGORY].length === 0 ||
+        filters[filterNames.CATEGORY].includes(categoryToReadable(c?.category)),
     );
-  // FIXME(agamez): add "category" to GetAvailablePackageSummaries
-  // .filter(
-  //   c =>
-  //     filters[filterNames.CATEGORY].length === 0 ||
-  //     filters[filterNames.CATEGORY].includes(categoryToReadable(c?.category)),
-  // );
   const filteredCSVs = csvs
     .filter(
       () =>
