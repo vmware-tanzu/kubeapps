@@ -1365,7 +1365,8 @@
           "type": "string"
         }
       },
-      "description": "PackageAppVersion conveys both the package version and the packaged app version."
+      "description": "PackageAppVersion conveys both the package version and the packaged app version.",
+      "title": "Package AppVersion"
     },
     "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
@@ -1771,7 +1772,8 @@
         },
         "nextPageToken": {
           "type": "string",
-          "title": "The token used to request the next page of results"
+          "description": "This field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request.",
+          "title": "Next page token"
         }
       },
       "description": "Response for GetInstalledPackageSummaries",
@@ -1910,7 +1912,8 @@
       "properties": {
         "version": {
           "type": "string",
-          "title": "The format of the version constraint depends on the backend. For example,\nfor a flux v2 and Carvel it’s a semver expression, such as \"\u003e=10.3 \u003c 10.4\""
+          "description": "The format of the version constraint depends on the backend. For example,\nfor a flux v2 and Carvel it’s a semver expression, such as \"\u003e=10.3 \u003c 10.4\"",
+          "title": "Version"
         }
       },
       "description": "A VersionReference defines a version or constraint limiting matching versions.\nThe reason it is a separate message is so that in the future we can add other\nfields as necessary (such as something similar to Carvel's `prereleases` option\nto its versionSelection).",
