@@ -3,13 +3,17 @@ import { GrpcWebImpl } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as URL from "./url";
 
 export class GrpcClient {
-  private baseUrl = URL.api.kubeappsapis;
   private grpcClient!: GrpcWebImpl;
+  private transport: grpc.TransportFactory;
 
-  public getGrpcClient = () => {
+  constructor(transport?: grpc.TransportFactory) {
+    this.transport = transport ?? grpc.CrossBrowserHttpTransport({});
+  }
+
+  public getGrpcClient = (transport?: grpc.TransportFactory) => {
     if (!this.grpcClient) {
-      grpc.setDefaultTransport(grpc.CrossBrowserHttpTransport({}));
-      this.grpcClient = new GrpcWebImpl(this.baseUrl, {});
+      grpc.setDefaultTransport(this.transport);
+      this.grpcClient = new GrpcWebImpl(URL.api.kubeappsapis, {});
     }
     return this.grpcClient;
   };

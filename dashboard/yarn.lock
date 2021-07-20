@@ -1420,6 +1420,13 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
+"@improbable-eng/grpc-web-fake-transport@^0.14.0":
+  version "0.14.0"
+  resolved "https://registry.yarnpkg.com/@improbable-eng/grpc-web-fake-transport/-/grpc-web-fake-transport-0.14.0.tgz#93b36b4f42d6f6a97f743dd4f85153ad173359e3"
+  integrity sha512-dJeSZTKxtDGil8O4awo+Qr6FDibTr+/45cLmfWrQrEGeNAjRZTA2iIjGO+1qYYMgV1+Sa3BgFSPM4CX+6gFVMA==
+  dependencies:
+    lodash.assignin "^4.2.0"
+
 "@improbable-eng/grpc-web@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@improbable-eng/grpc-web/-/grpc-web-0.14.0.tgz#a71c5af471dcef6a2810798f71f93ed8d6ac3817"
@@ -8926,6 +8933,11 @@ lodash._reinterpolate@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/lodash._reinterpolate/-/lodash._reinterpolate-3.0.0.tgz#0ccf2d89166af03b3663c796538b75ac6e114d9d"
   integrity sha1-DM8tiRZq8Ds2Y8eWU4t1rG4RTZ0=
+
+lodash.assignin@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/lodash.assignin/-/lodash.assignin-4.2.0.tgz#ba8df5fb841eb0a3e8044232b0e263a8dc6a28a2"
+  integrity sha1-uo31+4QesKPoBEIysOJjqNxqKKI=
 
 lodash.camelcase@^4.3.0:
   version "4.3.0"

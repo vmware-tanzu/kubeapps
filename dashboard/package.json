@@ -117,6 +117,7 @@
   },
   "devDependencies": {
     "@formatjs/cli": "^4.2.27",
+    "@improbable-eng/grpc-web-fake-transport": "^0.14.0",
     "@types/enzyme": "^3.10.9",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/jest": "^26.0.24",
@@ -167,6 +168,7 @@
       "pre-commit": "yarn run ts-compile-check && lint-staged"
     }
   },
+  "proxy": "http://127.0.0.1:8080",
   "browserslist": {
     "production": [
       ">0.2%",
