@@ -25,7 +25,7 @@
     "@types/react-tabs": "^2.3.3",
     "@types/react-transition-group": "^4.4.2",
     "@types/semver": "^7.3.7",
-    "@types/ws": "^7.4.6",
+    "@types/ws": "^7.4.7",
     "ajv": "^8.6.2",
     "axios": "^0.21.1",
     "connected-react-router": "^6.9.1",
