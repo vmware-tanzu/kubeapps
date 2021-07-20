@@ -21,7 +21,6 @@ import (
 	"sync"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,7 +51,7 @@ type cacheValueDeleter func(string, map[string]interface{}) (bool, error)
 // and/or caching-rleated code is moved into a separate package?
 type cacheConfig struct {
 	gvr          schema.GroupVersionResource
-	clientGetter server.KubernetesClientGetter
+	clientGetter clientGetter
 	// 'onAdd' and 'onModify' hooks are called when a new or modified object comes about and
 	// allows the plug-in to return information about WHETHER OR NOT and WHAT is to be stored
 	// in the cache for a given k8s object (passed in as a untyped/unstructured map)
@@ -187,7 +186,7 @@ func (c ResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
 func (c ResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
-	_, dynamicClient, err := c.config.clientGetter(ctx)
+	dynamicClient, err := c.config.clientGetter(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -204,7 +203,7 @@ func (c ResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface
 func (c ResourceWatcherCache) resync() (string, error) {
 	ctx := context.Background()
 
-	_, dynamicClient, err := c.config.clientGetter(ctx)
+	dynamicClient, err := c.config.clientGetter(ctx)
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}

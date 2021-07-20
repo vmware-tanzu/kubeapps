@@ -29,7 +29,6 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -38,14 +37,13 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
 	k8stesting "k8s.io/client-go/testing"
 )
 
 func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter server.KubernetesClientGetter
+		clientGetter clientGetter
 		statusCode   codes.Code
 	}{
 		{
@@ -55,8 +53,8 @@ func TestBadClientGetter(t *testing.T) {
 		},
 		{
 			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
@@ -1438,7 +1436,7 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 // I wanted to emphasize the fact that this flavor of 'newServer...' is kind of unusual and should only
 // be used directly by tests to test edge cases (in a one-off negative test),
 // such as TestBadClientGetter(), hence the weird name. Most tests should just use newServerWithRepos() flavor
-func newServerWithClientGetter(clientGetter server.KubernetesClientGetter, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
+func newServerWithClientGetter(clientGetter clientGetter, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
 	mock.MatchExpectationsInOrder(false)
 
@@ -1519,8 +1517,8 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 		"*",
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return nil, dynamicClient, nil
+	clientGetter := func(context.Context) (dynamic.Interface, error) {
+		return dynamicClient, nil
 	}
 
 	s, mock, err := newServerWithClientGetter(clientGetter, repos...)
@@ -1551,8 +1549,8 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicCl
 			return handled, ret, err
 		})
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return nil, dynamicClient, nil
+	clientGetter := func(context.Context) (dynamic.Interface, error) {
+		return dynamicClient, nil
 	}
 
 	s, mock, err := newServerWithClientGetter(clientGetter)

@@ -79,3 +79,12 @@ func Test_newChart(t *testing.T) {
 	assert.Equal(t, c.Repo, r, "repo set")
 	assert.Equal(t, c.ID, "test/wordpress", "id set")
 }
+
+func Test_loadRepoWithEmptyCharts(t *testing.T) {
+	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	indexWithEmptyChart := validRepoIndexYAML + `emptyChart: []`
+	charts, err := ChartsFromIndex([]byte(indexWithEmptyChart), r, true)
+	assert.NoErr(t, err)
+	assert.Equal(t, len(charts), 2, "number of charts")
+	assert.Equal(t, len(charts[1].ChartVersions), 1, "number of versions")
+}

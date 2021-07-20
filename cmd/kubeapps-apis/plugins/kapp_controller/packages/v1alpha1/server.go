@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 
 	log "k8s.io/klog/v2"
 
@@ -39,6 +38,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+type clientGetter func(context.Context) (dynamic.Interface, error)
 
 const (
 	packagingGroup = "packaging.carvel.dev"
@@ -65,27 +66,40 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter server.KubernetesClientGetter
+	clientGetter clientGetter
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter server.KubernetesClientGetter) *Server {
+func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 	return &Server{
-		clientGetter: clientGetter,
+		clientGetter: func(ctx context.Context) (dynamic.Interface, error) {
+			if configGetter == nil {
+				return nil, status.Errorf(codes.Internal, "configGetter arg required")
+			}
+			config, err := configGetter(ctx)
+			if err != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+			}
+			dynamicClient, err := dynamic.NewForConfig(config)
+			if err != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
+			}
+			return dynamicClient, nil
+		},
 	}
 }
 
-// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+// getDynamicClient returns a dynamic k8s client.
+func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
 	if s.clientGetter == nil {
-		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	typedClient, dynamicClient, err := s.clientGetter(ctx)
+	dynamicClient, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
-	return typedClient, dynamicClient, nil
+	return dynamicClient, nil
 }
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
@@ -107,7 +121,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		}
 	}
 
-	_, client, err := s.GetClients(ctx)
+	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +184,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 		}
 	}
 
-	_, client, err := s.GetClients(ctx)
+	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return nil, err
 	}

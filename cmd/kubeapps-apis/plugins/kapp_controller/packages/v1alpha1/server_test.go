@@ -22,7 +22,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,15 +29,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
-	typfake "k8s.io/client-go/kubernetes/fake"
 )
 
 func TestGetClient(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		clientGetter server.KubernetesClientGetter
+		clientGetter clientGetter
 		statusCode   codes.Code
 	}{
 		{
@@ -48,15 +45,15 @@ func TestGetClient(t *testing.T) {
 		},
 		{
 			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
 		{
 			name: "returns client without error when configured correctly",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
@@ -70,7 +67,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			typedClient, dynamicClient, err := s.GetClients(context.Background())
+			dynamicClient, err := s.getDynamicClient(context.Background())
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
@@ -81,9 +78,6 @@ func TestGetClient(t *testing.T) {
 				if dynamicClient == nil {
 					t.Errorf("got: nil, want: dynamic.Interface")
 				}
-				if typedClient == nil {
-					t.Errorf("got: nil, want: kubernetes.Interface")
-				}
 			}
 		})
 	}
@@ -93,13 +87,13 @@ func TestGetClient(t *testing.T) {
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter server.KubernetesClientGetter
+		clientGetter clientGetter
 		statusCode   codes.Code
 	}{
 		{
 			name: "returns an internal error status if response does not contain packageRef.refName",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
@@ -113,8 +107,8 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns an internal error status if response does not contain version",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
@@ -130,8 +124,8 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns OK status if items contain required fields",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+			clientGetter: func(context.Context) (dynamic.Interface, error) {
+				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
 						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
@@ -240,8 +234,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pkgs := packagesFromSpecs(tc.packageSpecs, t)
 			s := Server{
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (dynamic.Interface, error) {
+					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
@@ -347,8 +341,8 @@ func TestGetPackageRepositories(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{
-				clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context) (dynamic.Interface, error) {
+					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",

@@ -27,6 +27,8 @@ type KappControllerPackagesServiceClient interface {
 	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
 	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
 	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
+	// GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
+	GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 }
 
 type kappControllerPackagesServiceClient struct {
@@ -73,6 +75,15 @@ func (c *kappControllerPackagesServiceClient) GetAvailablePackageVersions(ctx co
 	return out, nil
 }
 
+func (c *kappControllerPackagesServiceClient) GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error) {
+	out := new(v1alpha1.GetInstalledPackageSummariesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KappControllerPackagesServiceServer is the server API for KappControllerPackagesService service.
 // All implementations should embed UnimplementedKappControllerPackagesServiceServer
 // for forward compatibility
@@ -85,6 +96,8 @@ type KappControllerPackagesServiceServer interface {
 	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
 	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
 	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
+	// GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
+	GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 }
 
 // UnimplementedKappControllerPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -102,6 +115,9 @@ func (UnimplementedKappControllerPackagesServiceServer) GetPackageRepositories(c
 }
 func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageVersions not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageSummaries not implemented")
 }
 
 // UnsafeKappControllerPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -187,6 +203,24 @@ func _KappControllerPackagesService_GetAvailablePackageVersions_Handler(srv inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KappControllerPackagesService_GetInstalledPackageSummaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetInstalledPackageSummariesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).GetInstalledPackageSummaries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).GetInstalledPackageSummaries(ctx, req.(*v1alpha1.GetInstalledPackageSummariesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KappControllerPackagesService_ServiceDesc is the grpc.ServiceDesc for KappControllerPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -209,6 +243,10 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailablePackageVersions",
 			Handler:    _KappControllerPackagesService_GetAvailablePackageVersions_Handler,
+		},
+		{
+			MethodName: "GetInstalledPackageSummaries",
+			Handler:    _KappControllerPackagesService_GetInstalledPackageSummaries_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
