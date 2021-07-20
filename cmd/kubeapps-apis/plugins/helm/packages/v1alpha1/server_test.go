@@ -310,6 +310,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			expected: &corev1.AvailablePackageSummary{
 				DisplayName:      "foo",
 				LatestPkgVersion: "3.0.0",
+				LatestAppVersion: DefaultAppVersion,
 				IconUrl:          "foo.bar/icon.svg",
 				ShortDescription: "best chart",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -331,13 +332,15 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 				ChartVersions: []models.ChartVersion{
 					{
-						Version: "3.0.0",
+						Version:    "3.0.0",
+						AppVersion: DefaultAppVersion,
 					},
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
 				DisplayName:      "foo",
 				LatestPkgVersion: "3.0.0",
+				LatestAppVersion: DefaultAppVersion,
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
@@ -495,6 +498,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					{
 						DisplayName:      "chart-1",
 						LatestPkgVersion: "3.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -506,6 +510,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					{
 						DisplayName:      "chart-2",
 						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -537,6 +542,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					{
 						DisplayName:      "chart-1",
 						LatestPkgVersion: "3.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -548,6 +554,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					{
 						DisplayName:      "chart-2",
 						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -621,6 +628,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					{
 						DisplayName:      "chart-2",
 						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -659,6 +667,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					{
 						DisplayName:      "chart-3",
 						LatestPkgVersion: "1.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
