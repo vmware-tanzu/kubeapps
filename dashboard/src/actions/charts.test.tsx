@@ -4,7 +4,12 @@ import { getType } from "typesafe-actions";
 import { axiosWithAuth } from "../shared/AxiosInstance";
 
 import actions from ".";
-import { FetchError, IChart, IChartListMeta, NotFoundError } from "../shared/types";
+import { FetchError, IReceiveChartsActionPayload, NotFoundError } from "../shared/types";
+import {
+  AvailablePackageSummary,
+  Context,
+  GetAvailablePackageSummariesResponse,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -18,16 +23,19 @@ const repos = "foo";
 const defaultPage = 1;
 const defaultSize = 0;
 
-const chartItem = {
-  id: "foo",
-  attributes: {
-    name: "foo",
-    description: "",
-    category: "",
-    repo: { name: "foo", namespace: "chart-namespace" },
+const chartItem: AvailablePackageSummary = {
+  name: "foo",
+  category: "",
+  displayName: "foo",
+  iconUrl: "",
+  latestAppVersion: "v1.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-} as IChart;
+};
 
 beforeEach(() => {
   store = mockStore();
@@ -46,8 +54,8 @@ afterEach(() => {
 
 interface IFetchChartsTestCase {
   name: string;
-  responseData: IChart[];
-  responseMeta: IChartListMeta;
+  responseData: AvailablePackageSummary[];
+  responseMeta: GetAvailablePackageSummariesResponse;
   requestedRepos: string;
   requestedPage: number;
   requestedQuery?: string;
@@ -59,7 +67,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts with query",
     responseData: [chartItem],
-    responseMeta: { totalPages: 1 },
+    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "1" },
     requestedRepos: "",
     requestedPage: 1,
     requestedQuery: "foo",
@@ -70,8 +78,8 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 1,
-          totalPages: 1,
-        },
+          nextPageToken: "1",
+        } as IReceiveChartsActionPayload,
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&q=foo`,
@@ -79,7 +87,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (first page)",
     responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
@@ -89,8 +97,8 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 1,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${1}&size=${defaultSize}&repos=foo`,
@@ -98,7 +106,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (middle page)",
     responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -108,8 +116,8 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 2,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
@@ -117,7 +125,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (last page)",
     responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
@@ -127,8 +135,8 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 3,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${3}&size=${defaultSize}&repos=${repos}`,
@@ -136,7 +144,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (already processed page)",
     responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -146,8 +154,8 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 2,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
@@ -155,7 +163,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (off-limits page)",
     responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
@@ -165,8 +173,8 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 4,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
     expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${4}&size=${defaultSize}&repos=${repos}`,

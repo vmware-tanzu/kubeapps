@@ -1,32 +1,39 @@
+import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 
-import { IChart, IChartCategory, IChartState } from "../shared/types";
+import { IChartCategory, IChartState, IReceiveChartsActionPayload } from "../shared/types";
 import chartsReducer from "./charts";
 
 describe("chartReducer", () => {
   let initialState: IChartState;
-  const chartItem = {
-    id: "foo",
-    attributes: {
-      name: "foo",
-      description: "",
-      category: "",
-      repo: { name: "foo", namespace: "chart-namespace" },
+  const chartItem: AvailablePackageSummary = {
+    name: "foo",
+    category: "",
+    displayName: "foo",
+    iconUrl: "",
+    latestAppVersion: "v1.0.0",
+    latestPkgVersion: "",
+    shortDescription: "",
+    availablePackageRef: {
+      identifier: "foo/foo",
+      context: { cluster: "", namespace: "chart-namespace" } as Context,
     },
-    relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-  } as IChart;
+  };
 
-  const chartItem2 = {
-    id: "bar",
-    attributes: {
-      name: "bar",
-      description: "",
-      category: "",
-      repo: { name: "bar", namespace: "chart-namespace" },
+  const chartItem2: AvailablePackageSummary = {
+    name: "bar",
+    category: "Database",
+    displayName: "bar",
+    iconUrl: "",
+    latestAppVersion: "v2.0.0",
+    latestPkgVersion: "",
+    shortDescription: "",
+    availablePackageRef: {
+      identifier: "bar/bar",
+      context: { cluster: "", namespace: "chart-namespace" } as Context,
     },
-    relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-  } as IChart;
+  };
 
   const chartCategoryItem = {
     name: "foo",
@@ -125,7 +132,7 @@ describe("chartReducer", () => {
   it("single receiveCharts (first page) should be returned", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 3 },
+      payload: { items: [chartItem], page: 1, nextPageToken: "3" } as IReceiveChartsActionPayload,
     });
     expect(state).toEqual({
       ...initialState,
@@ -140,7 +147,7 @@ describe("chartReducer", () => {
       { ...initialState },
       {
         type: getType(actions.charts.receiveCharts) as any,
-        payload: { items: [chartItem], page: 2, totalPages: 3 },
+        payload: { items: [chartItem], page: 2, nextPageToken: "3" } as IReceiveChartsActionPayload,
       },
     );
     expect(state).toEqual({
@@ -156,7 +163,7 @@ describe("chartReducer", () => {
       { ...initialState },
       {
         type: getType(actions.charts.receiveCharts) as any,
-        payload: { items: [chartItem], page: 2, totalPages: 3 },
+        payload: { items: [chartItem], page: 2, nextPageToken: "3" } as IReceiveChartsActionPayload,
       },
     );
     expect(state).toEqual({
@@ -174,7 +181,7 @@ describe("chartReducer", () => {
       },
       {
         type: getType(actions.charts.receiveCharts) as any,
-        payload: { items: [chartItem], page: 3, totalPages: 3 },
+        payload: { items: [chartItem], page: 3, nextPageToken: "3" } as IReceiveChartsActionPayload,
       },
     );
     expect(state).toEqual({
@@ -188,11 +195,11 @@ describe("chartReducer", () => {
   it("two receiveCharts should add items (no dups)", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 2 },
+      payload: { items: [chartItem], page: 1, nextPageToken: "2" } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem2], page: 2, totalPages: 2 },
+      payload: { items: [chartItem2], page: 2, nextPageToken: "2" } as IReceiveChartsActionPayload,
     });
     expect(state2).toEqual({
       ...initialState,
@@ -206,11 +213,11 @@ describe("chartReducer", () => {
   it("two receiveCharts should add items (remove dups)", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 2 },
+      payload: { items: [chartItem], page: 1, nextPageToken: "2" } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 2, totalPages: 2 },
+      payload: { items: [chartItem], page: 2, nextPageToken: "2" } as IReceiveChartsActionPayload,
     });
     expect(state2).toEqual({
       ...initialState,
@@ -234,7 +241,7 @@ describe("chartReducer", () => {
     });
     const stateRec1 = chartsReducer(stateReq1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 3 },
+      payload: { items: [chartItem], page: 1, nextPageToken: "3" } as IReceiveChartsActionPayload,
     });
     expect(stateRec1).toEqual({
       ...initialState,
@@ -254,7 +261,7 @@ describe("chartReducer", () => {
     });
     const stateRec2 = chartsReducer(stateReq2, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem2], page: 2, totalPages: 3 },
+      payload: { items: [chartItem2], page: 2, nextPageToken: "3" } as IReceiveChartsActionPayload,
     });
     expect(stateRec2).toEqual({
       ...initialState,
@@ -274,7 +281,7 @@ describe("chartReducer", () => {
     });
     const stateRec3 = chartsReducer(stateReq3, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [], page: 3, totalPages: 3 },
+      payload: { items: [], page: 3, nextPageToken: "3" } as IReceiveChartsActionPayload,
     });
     expect(stateRec3).toEqual({
       ...initialState,
@@ -287,11 +294,11 @@ describe("chartReducer", () => {
   it("two receiveCharts and then errorChart", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 1 },
+      payload: { items: [chartItem], page: 1, nextPageToken: "1" } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [], page: 2, totalPages: 2 },
+      payload: { items: [], page: 2, nextPageToken: "2" } as IReceiveChartsActionPayload,
     });
     const state3 = chartsReducer(state2, {
       type: getType(actions.charts.errorChart) as any,
@@ -306,7 +313,7 @@ describe("chartReducer", () => {
   it("clears errors after clearErrorChart", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveCharts) as any,
-      payload: { items: [chartItem], page: 1, totalPages: 5 },
+      payload: { items: [chartItem], page: 1, nextPageToken: "5" } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.errorChart) as any,

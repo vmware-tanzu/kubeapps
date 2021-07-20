@@ -1,26 +1,35 @@
+import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChart, IClusterServiceVersion } from "shared/types";
+import { IClusterServiceVersion } from "shared/types";
 import CatalogItem from "./CatalogItem";
 import CatalogItems from "./CatalogItems";
 
-const chartItem = {
-  id: "foo",
-  attributes: {
-    name: "foo",
-    description: "",
-    repo: { name: "foo", namespace: "chart-namespace" },
+const chartItem: AvailablePackageSummary = {
+  name: "foo",
+  category: "",
+  displayName: "foo",
+  iconUrl: "",
+  latestAppVersion: "v1.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-} as IChart;
-const chartItem2 = {
-  id: "bar",
-  attributes: {
-    name: "bar",
-    description: "",
-    repo: { name: "bar", namespace: "chart-namespace" },
+};
+const chartItem2: AvailablePackageSummary = {
+  name: "bar",
+  category: "Database",
+  displayName: "bar",
+  iconUrl: "",
+  latestAppVersion: "v2.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "bar/bar",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
-} as IChart;
+};
 const csv = {
   metadata: {
     name: "test-csv",

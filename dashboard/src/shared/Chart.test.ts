@@ -72,7 +72,7 @@ describe("App", () => {
     ].forEach(t => {
       it(t.description, async () => {
         expect(
-          await Chart.fetchCharts(
+          await Chart.getAvailablePackageSummaries(
             t.args.cluster,
             t.args.namespace,
             t.args.repos,

@@ -2,11 +2,12 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
+import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IAppRepository, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -36,26 +37,32 @@ const defaultProps = {
   csvs: [],
   getCSVs: jest.fn(),
 };
-const chartItem = {
-  id: "foo",
-  attributes: {
-    name: "foo",
-    description: "",
-    category: "",
-    repo: { name: "foo", namespace: "chart-namespace" },
+const chartItem: AvailablePackageSummary = {
+  name: "foo",
+  category: "",
+  displayName: "foo",
+  iconUrl: "",
+  latestAppVersion: "v1.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-} as IChart;
-const chartItem2 = {
-  id: "bar",
-  attributes: {
-    name: "bar",
-    description: "",
-    category: "Database",
-    repo: { name: "bar", namespace: "chart-namespace" },
+};
+const chartItem2: AvailablePackageSummary = {
+  name: "bar",
+  category: "Database",
+  displayName: "bar",
+  iconUrl: "",
+  latestAppVersion: "v2.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "bar/bar",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
-} as IChart;
+};
 const csv = {
   metadata: {
     name: "test-csv",
@@ -598,7 +605,7 @@ describe("filters by category", () => {
         charts={{
           ...defaultChartState,
           items: [chartItem],
-          categories: [{ name: chartItem.attributes.category, count: 1 }],
+          categories: [{ name: chartItem.category, count: 1 }],
         }}
       />,
     );
@@ -615,8 +622,8 @@ describe("filters by category", () => {
           ...defaultChartState,
           items: [chartItem, chartItem2],
           categories: [
-            { name: chartItem.attributes.category, count: 1 },
-            { name: chartItem2.attributes.category, count: 1 },
+            { name: chartItem.category, count: 1 },
+            { name: chartItem2.category, count: 1 },
           ],
         }}
       />,
@@ -643,8 +650,8 @@ describe("filters by category", () => {
           ...defaultChartState,
           items: [chartItem, chartItem2],
           categories: [
-            { name: chartItem.attributes.category, count: 1 },
-            { name: chartItem2.attributes.category, count: 1 },
+            { name: chartItem.category, count: 1 },
+            { name: chartItem2.category, count: 1 },
           ],
         }}
         filter={{ [filterNames.CATEGORY]: "Database" }}
