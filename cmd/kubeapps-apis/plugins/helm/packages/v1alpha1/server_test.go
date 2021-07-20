@@ -26,7 +26,6 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
@@ -66,7 +65,7 @@ func TestGetClient(t *testing.T) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+	testClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
 		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 			runtime.NewScheme(),
 			map[schema.GroupVersionResource]string{
@@ -78,7 +77,7 @@ func TestGetClient(t *testing.T) {
 	testCases := []struct {
 		name              string
 		manager           utils.AssetManager
-		clientGetter      server.KubernetesClientGetter
+		clientGetter      clientGetter
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code
 	}{
@@ -92,7 +91,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:              "it returns internal error status when no manager configured",
 			manager:           nil,
-			clientGetter:      clientGetter,
+			clientGetter:      testClientGetter,
 			statusCodeClient:  codes.OK,
 			statusCodeManager: codes.Internal,
 		},
@@ -115,7 +114,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:         "it returns client without error when configured correctly",
 			manager:      manager,
-			clientGetter: clientGetter,
+			clientGetter: testClientGetter,
 		},
 	}
 

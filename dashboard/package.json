@@ -27,7 +27,7 @@
     "@types/react-tabs": "^2.3.3",
     "@types/react-transition-group": "^4.4.2",
     "@types/semver": "^7.3.7",
-    "@types/ws": "^7.4.6",
+    "@types/ws": "^7.4.7",
     "ajv": "^8.6.2",
     "axios": "^0.21.1",
     "connected-react-router": "^6.9.1",
@@ -147,7 +147,7 @@
     "stylelint": "^13.13.1",
     "stylelint-config-prettier": "^8.0.2",
     "stylelint-config-recommended-scss": "^4.3.0",
-    "stylelint-scss": "^3.20.0",
+    "stylelint-scss": "^3.20.1",
     "ts-jest": "^26.5.6",
     "ts-proto": "^1.82.2",
     "typescript": "^4.3.5"
