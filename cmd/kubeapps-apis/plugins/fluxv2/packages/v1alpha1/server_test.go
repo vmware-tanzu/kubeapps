@@ -42,7 +42,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
-func TestNilClientGetter(t *testing.T) {
+func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
 		clientGetter server.KubernetesClientGetter
@@ -53,33 +53,6 @@ func TestNilClientGetter(t *testing.T) {
 			clientGetter: nil,
 			statusCode:   codes.FailedPrecondition,
 		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, mock, err := newServer(tc.clientGetter)
-			if err == nil && tc.statusCode != codes.OK {
-				t.Fatalf("got: nil, want: error")
-			}
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
-			}
-
-			err = mock.ExpectationsWereMet()
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-		})
-	}
-}
-
-func TestBadClientGetter(t *testing.T) {
-	testCases := []struct {
-		name         string
-		clientGetter server.KubernetesClientGetter
-		statusCode   codes.Code
-	}{
 		{
 			name: "returns failed-precondition when configGetter itself errors",
 			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
@@ -91,15 +64,7 @@ func TestBadClientGetter(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newServer(tc.clientGetter)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-
-			_, err = s.GetAvailablePackageSummaries(
-				context.Background(),
-				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
-
+			_, mock, err := newServerWithClientGetter(tc.clientGetter)
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
 			}
@@ -119,7 +84,7 @@ func TestBadClientGetter(t *testing.T) {
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name       string
-		repo       *unstructured.Unstructured
+		repo       runtime.Object
 		statusCode codes.Code
 	}{
 		{
@@ -204,7 +169,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, err := newServerWithWatcher(tc.repo)
+			s, mock, _, err := newServerWithRepos(tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -767,6 +732,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			repos := []runtime.Object{}
@@ -800,7 +766,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, mock, _, err := newServerWithWatcherAndReadyRepos(repos...)
+			s, mock, _, err := newServerWithRepos(repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -867,7 +833,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithWatcherAndReadyRepos(repo)
+		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -928,6 +894,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		mock.ExpectSet(key, bytes, 0).SetVal("")
 
+		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		watcher.Modify(repo)
 
 		s.cache.eventProcessingWaitGroup.Wait()
@@ -1010,7 +977,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithWatcherAndReadyRepos(repo)
+		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -1061,8 +1028,8 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
-		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
-		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
+		// now we are going to simulate the user deleting a HelmRepository CRD which, in turn,
+		// causes k8s server to fire a DELETE event
 		s.cache.eventProcessingWaitGroup.Add(1)
 		key := redisKeyForRuntimeObject(repo)
 		mock.ExpectDel(key).SetVal(0)
@@ -1093,6 +1060,8 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 	})
 }
+
+// TODO (gfichtenholt) add a test that causes RetryWatcher to stop and the cache needs to resync
 
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
@@ -1158,7 +1127,7 @@ func TestGetPackageRepositories(t *testing.T) {
 			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
 		},
 		{
-			name: "returns expected repositories in specific namespace",
+			name: "returns expected repositories in specific namespace (2)",
 			request: &v1alpha1.GetPackageRepositoriesRequest{
 				Context: &corev1.Context{
 					Namespace: "default",
@@ -1190,7 +1159,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, _, mock, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
+			s, mock, _, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -1400,8 +1369,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 //
 func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
-		"name":       name,
-		"generation": int64(1),
+		"name":            name,
+		"generation":      int64(1),
+		"resourceVersion": "1",
 	}
 	if namespace != "" {
 		metadata["namespace"] = namespace
@@ -1426,7 +1396,7 @@ func newRepo(name string, namespace string, spec map[string]interface{}, status 
 	}
 }
 
-// newRepos takes a map of specs keyed by object name converting them to runtime objects.
+// newRepos takes a map of specs keyed by object name converting them to unstructured objects.
 func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
 	repos := []runtime.Object{}
 	for name, spec := range specs {
@@ -1465,8 +1435,13 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 	}
 }
 
-func newServer(clientGetter server.KubernetesClientGetter) (*Server, redismock.ClientMock, error) {
+// I wanted to emphasize the fact that this flavor of 'newServer...' is kind of unusual and should only
+// be used directly by tests to test edge cases (in a one-off negative test),
+// such as TestBadClientGetter(), hence the weird name. Most tests should just use newServerWithRepos() flavor
+func newServerWithClientGetter(clientGetter server.KubernetesClientGetter, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
+	mock.MatchExpectationsInOrder(false)
+
 	if clientGetter != nil {
 		mock.ExpectPing().SetVal("PONG")
 	}
@@ -1483,10 +1458,31 @@ func newServer(clientGetter server.KubernetesClientGetter) (*Server, redismock.C
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-	cache, err := newCacheWithRedisClient(config, redisCli)
+
+	eventProcessingWaitGroup := &sync.WaitGroup{}
+	for _, r := range repos {
+		eventProcessingWaitGroup.Add(1)
+		ready, ok := isRepoReady(r.(*unstructured.Unstructured).Object)
+		if ready && ok == nil {
+			key, bytes, err := redisKeyValueForRuntimeObject(r)
+			if err != nil {
+				continue
+			}
+			mock.ExpectSet(key, bytes, 0).SetVal("")
+		}
+	}
+
+	cache, err := newCacheWithRedisClient(config, redisCli, eventProcessingWaitGroup)
 	if err != nil {
 		return nil, mock, err
 	}
+
+	eventProcessingWaitGroup.Wait()
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		return nil, mock, err
+	}
+
 	s := &Server{
 		clientGetter: clientGetter,
 		cache:        cache,
@@ -1494,7 +1490,7 @@ func newServer(clientGetter server.KubernetesClientGetter) (*Server, redismock.C
 	return s, mock, nil
 }
 
-func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
+func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -1502,83 +1498,64 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClie
 		},
 		repos...)
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
-		return nil, dynamicClient, nil
-	}
+	// here we are essentially adding on to how List() works for HelmRepository objects
+	// this is done so that the the item list returned by List() command with fake client contains
+	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
+	// is critical
+	reactor := dynamicClient.Fake.ReactionChain[0]
+	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			handled, ret, err := reactor.React(action)
+			ulist, ok := ret.(*unstructured.UnstructuredList)
+			if ok && ulist != nil {
+				ulist.SetResourceVersion("1")
+			}
+			return handled, ret, err
+		})
 
-	s, mock, err := newServer(clientGetter)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return s, dynamicClient, mock, nil
-}
-
-func newServerWithWatcher(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
-	s, dynamicClient, mock, err := newServerWithRepos(repos...)
-	if err != nil {
-		return s, mock, nil, err
-	}
-
-	// this is so we can emulate actual k8s server firing events
-	// see https://github.com/kubernetes/kubernetes/issues/54075 for explanation
 	watcher := watch.NewFake()
 
 	dynamicClient.Fake.PrependWatchReactor(
 		"*",
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	mock.MatchExpectationsInOrder(false)
-
-	return s, mock, watcher, nil
-}
-
-func newServerWithWatcherAndReadyRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
-	s, mock, watcher, err := newServerWithWatcher(repos...)
-	if err != nil {
-		return s, mock, watcher, err
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		return nil, dynamicClient, nil
 	}
 
-	s.cache.eventProcessingWaitGroup = &sync.WaitGroup{}
-
-	for _, r := range repos {
-		s.cache.eventProcessingWaitGroup.Add(1)
-		key, bytes, err := redisKeyValueForRuntimeObject(r)
-		if err != nil {
-			return s, mock, watcher, err
-		}
-		mock.ExpectSet(key, bytes, 0).SetVal("")
-
-		// fire an ADD event for this repo as k8s server would do
-		watcher.Add(r)
-	}
-
-	// sanity check
-	if err = s.cache.checkInit(); err != nil {
-		return s, mock, watcher, err
-	}
-
-	// here we wait until all repos have been indexed on the server-side
-	s.cache.eventProcessingWaitGroup.Wait()
-
-	if err = mock.ExpectationsWereMet(); err != nil {
-		return s, mock, watcher, err
-	}
-	return s, mock, watcher, nil
+	s, mock, err := newServerWithClientGetter(clientGetter, repos...)
+	return s, mock, watcher, err
 }
 
 func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
-			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
+			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}:       fluxHelmChartList,
+			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 		},
 		charts...)
+
+	// here we are essentially adding on to how List() works for HelmRepository objects
+	// this is done so that the the item list returned by List() command with fake client contains
+	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
+	// is critical
+	reactor := dynamicClient.Fake.ReactionChain[0]
+	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			handled, ret, err := reactor.React(action)
+			ulist, ok := ret.(*unstructured.UnstructuredList)
+			if ok && ulist != nil {
+				ulist.SetResourceVersion("1")
+			}
+			return handled, ret, err
+		})
 
 	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
 		return nil, dynamicClient, nil
 	}
 
-	s, mock, err := newServer(clientGetter)
+	s, mock, err := newServerWithClientGetter(clientGetter)
 	if err != nil {
 		return nil, nil, nil, err
 	}

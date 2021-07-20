@@ -56,25 +56,23 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]chart.Chart, error
 		return nil, err
 	}
 
+	// TODO: (gfichtenholt) the caller already checks this before invoking, see if I can remove this
 	ready, err := isRepoReady(unstructuredRepo)
 	if err != nil || !ready {
 		return nil, status.Errorf(codes.Internal,
-			"cannot index repository [%s] because it is not in 'Ready' state:%v\n%s",
+			"cannot index repository [%s] because it is not in 'Ready' state. error: %v",
 			repo.Name,
-			err,
-			prettyPrintMap(unstructuredRepo))
+			err)
 	}
 
 	indexUrl, found, err := unstructured.NestedString(unstructuredRepo, "status", "url")
 	if err != nil || !found {
 		return nil, status.Errorf(codes.Internal,
-			"expected field status.url not found on HelmRepository [%s]: %v:\n%s",
-			repo.Name,
-			err,
-			prettyPrintMap(unstructuredRepo))
+			"expected field status.url not found on HelmRepository\n[%s], error %v",
+			repo.Name, err)
 	}
 
-	log.Infof("Found repository: [%s], index URL: [%s]", repo.Name, indexUrl)
+	log.Infof("indexOneRepo: [%s], index URL: [%s]", repo.Name, indexUrl)
 
 	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
 	// local cluster, not some remote repo.
@@ -100,7 +98,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]chart.Chart, error
 	}
 
 	duration := time.Since(startTime)
-	log.Infof("Indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
+	log.Infof("indexOneRepo: indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
 	return charts, nil
 }
 
@@ -109,19 +107,19 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 	if err != nil || !found {
 		return nil, status.Errorf(
 			codes.Internal,
-			"required field metadata.name not found on HelmRepository: %v:\n%s", err, prettyPrintMap(unstructuredRepo))
+			"required field metadata.name not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
 	}
 	namespace, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "namespace")
 	if err != nil || !found {
 		return nil, status.Errorf(
 			codes.Internal,
-			"field metadata.namespace not found on HelmRepository: %v:\n%s", err, prettyPrintMap(unstructuredRepo))
+			"field metadata.namespace not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
 	}
 	url, found, err := unstructured.NestedString(unstructuredRepo, "spec", "url")
 	if err != nil || !found {
 		return nil, status.Errorf(
 			codes.Internal,
-			"required field spec.url not found on HelmRepository: %v:\n%s", err, prettyPrintMap(unstructuredRepo))
+			"required field spec.url not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
 	}
 	return &v1alpha1.PackageRepository{
 		Name:      name,
