@@ -68,3 +68,41 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		AvailablePackagesSummaries: pkgs,
 	}, nil
 }
+
+// GetAvailablePackages returns the packages based on the request.
+func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
+	contextMsg := ""
+	if request.AvailablePackageRef != nil && request.AvailablePackageRef.Context != nil {
+		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
+	}
+
+	log.Infof("+core GetAvailablePackageDetail %s", contextMsg)
+
+	pkg := &packages.AvailablePackageDetail{}
+
+	// TODO: We can do these in parallel in separate go routines.
+	for _, p := range s.plugins {
+
+		response, err := p.server.GetAvailablePackageDetail(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+
+		if response.AvailablePackageDetail != nil {
+			pkg = response.AvailablePackageDetail
+
+			if response.AvailablePackageDetail.AvailablePackageRef == nil {
+				pkg.AvailablePackageRef = &packages.AvailablePackageReference{}
+			}
+			pkg.AvailablePackageRef.Plugin = p.plugin
+
+			// TODO: handle multiple matches for a package
+			break
+		}
+	}
+
+	// TODO: Sort via default sort order or that specified in request.
+	return &packages.GetAvailablePackageDetailResponse{
+		AvailablePackageDetail: pkg,
+	}, nil
+}
