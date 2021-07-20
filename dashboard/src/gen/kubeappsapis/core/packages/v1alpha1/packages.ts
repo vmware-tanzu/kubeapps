@@ -215,6 +215,13 @@ export interface AvailablePackageSummary {
    * A short description of the app provided by the package
    */
   shortDescription: string;
+  /**
+   * Available package category
+   *
+   * A user-facing category name useful for creating richer user interfaces.
+   * Plugins can choose not to implement this
+   */
+  category: string;
 }
 
 /**
@@ -292,6 +299,13 @@ export interface AvailablePackageDetail {
    * List of Maintainer
    */
   maintainers: Maintainer[];
+  /**
+   * Available package category
+   *
+   * A user-facing category name useful for creating richer user interfaces.
+   * Plugins can choose not to implement this
+   */
+  category: string;
   /**
    * Custom data added by the plugin
    *
@@ -1389,6 +1403,7 @@ const baseAvailablePackageSummary: object = {
   iconUrl: "",
   displayName: "",
   shortDescription: "",
+  category: "",
 };
 
 export const AvailablePackageSummary = {
@@ -1413,6 +1428,9 @@ export const AvailablePackageSummary = {
     }
     if (message.shortDescription !== "") {
       writer.uint32(50).string(message.shortDescription);
+    }
+    if (message.category !== "") {
+      writer.uint32(58).string(message.category);
     }
     return writer;
   },
@@ -1443,6 +1461,9 @@ export const AvailablePackageSummary = {
           break;
         case 6:
           message.shortDescription = reader.string();
+          break;
+        case 7:
+          message.category = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -1486,6 +1507,11 @@ export const AvailablePackageSummary = {
     } else {
       message.shortDescription = "";
     }
+    if (object.category !== undefined && object.category !== null) {
+      message.category = String(object.category);
+    } else {
+      message.category = "";
+    }
     return message;
   },
 
@@ -1500,6 +1526,7 @@ export const AvailablePackageSummary = {
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
     message.displayName !== undefined && (obj.displayName = message.displayName);
     message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
+    message.category !== undefined && (obj.category = message.category);
     return obj;
   },
 
@@ -1539,6 +1566,11 @@ export const AvailablePackageSummary = {
     } else {
       message.shortDescription = "";
     }
+    if (object.category !== undefined && object.category !== null) {
+      message.category = object.category;
+    } else {
+      message.category = "";
+    }
     return message;
   },
 };
@@ -1554,6 +1586,7 @@ const baseAvailablePackageDetail: object = {
   readme: "",
   defaultValues: "",
   valuesSchema: "",
+  category: "",
 };
 
 export const AvailablePackageDetail = {
@@ -1597,8 +1630,11 @@ export const AvailablePackageDetail = {
     for (const v of message.maintainers) {
       Maintainer.encode(v!, writer.uint32(98).fork()).ldelim();
     }
+    if (message.category !== "") {
+      writer.uint32(106).string(message.category);
+    }
     if (message.customDetail !== undefined) {
-      Any.encode(message.customDetail, writer.uint32(106).fork()).ldelim();
+      Any.encode(message.customDetail, writer.uint32(114).fork()).ldelim();
     }
     return writer;
   },
@@ -1648,6 +1684,9 @@ export const AvailablePackageDetail = {
           message.maintainers.push(Maintainer.decode(reader, reader.uint32()));
           break;
         case 13:
+          message.category = reader.string();
+          break;
+        case 14:
           message.customDetail = Any.decode(reader, reader.uint32());
           break;
         default:
@@ -1721,6 +1760,11 @@ export const AvailablePackageDetail = {
         message.maintainers.push(Maintainer.fromJSON(e));
       }
     }
+    if (object.category !== undefined && object.category !== null) {
+      message.category = String(object.category);
+    } else {
+      message.category = "";
+    }
     if (object.customDetail !== undefined && object.customDetail !== null) {
       message.customDetail = Any.fromJSON(object.customDetail);
     } else {
@@ -1750,6 +1794,7 @@ export const AvailablePackageDetail = {
     } else {
       obj.maintainers = [];
     }
+    message.category !== undefined && (obj.category = message.category);
     message.customDetail !== undefined &&
       (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
     return obj;
@@ -1819,6 +1864,11 @@ export const AvailablePackageDetail = {
       for (const e of object.maintainers) {
         message.maintainers.push(Maintainer.fromPartial(e));
       }
+    }
+    if (object.category !== undefined && object.category !== null) {
+      message.category = object.category;
+    } else {
+      message.category = "";
     }
     if (object.customDetail !== undefined && object.customDetail !== null) {
       message.customDetail = Any.fromPartial(object.customDetail);

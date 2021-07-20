@@ -254,6 +254,12 @@ message AvailablePackageSummary {
   //
   // A short description of the app provided by the package
   string short_description = 6;
+
+  // Available package category
+  //
+  // A user-facing category name useful for creating richer user interfaces.
+  // Plugins can choose not to implement this
+  string category = 7;
 }
 
 // AvailablePackageDetail
@@ -328,10 +334,16 @@ message AvailablePackageDetail {
   // List of Maintainer
   repeated Maintainer maintainers = 12;
 
+  // Available package category
+  //
+  // A user-facing category name useful for creating richer user interfaces.
+  // Plugins can choose not to implement this
+  string category = 13;
+
   // Custom data added by the plugin
   //
   // Some additional information added by the plugin
-  google.protobuf.Any custom_detail = 13;
+  google.protobuf.Any custom_detail = 14;
 }
 
 // InstalledPackageSummary

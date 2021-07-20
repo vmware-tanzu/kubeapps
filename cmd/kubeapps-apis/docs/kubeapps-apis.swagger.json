@@ -1567,6 +1567,11 @@
           "description": "List of Maintainer",
           "title": "Available package maintainers"
         },
+        "category": {
+          "type": "string",
+          "description": "A user-facing category name useful for creating richer user interfaces.\nPlugins can choose not to implement this",
+          "title": "Available package category"
+        },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
           "description": "Some additional information added by the plugin",
@@ -1630,6 +1635,11 @@
           "type": "string",
           "description": "A short description of the app provided by the package",
           "title": "Available package short description"
+        },
+        "category": {
+          "type": "string",
+          "description": "A user-facing category name useful for creating richer user interfaces.\nPlugins can choose not to implement this",
+          "title": "Available package category"
         }
       },
       "description": "An AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages.",
