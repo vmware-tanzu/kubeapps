@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -61,9 +62,6 @@ func Serve(serveOpts ServeOptions) {
 		addr:        listenAddr,
 		dialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
-	httpSrv := &http.Server{
-		Handler: gwArgs.mux,
-	}
 
 	// Create the core.plugins server which handles registration of plugins,
 	// and register it for both grpc and http.
@@ -95,10 +93,43 @@ func Serve(serveOpts ServeOptions) {
 	// at https://github.com/soheilhy/cmux/issues/64
 	mux := cmux.New(lis)
 	grpcLis := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+	grpcwebLis := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
 	httpLis := mux.Match(cmux.Any())
 
-	go grpcSrv.Serve(grpcLis)
-	go httpSrv.Serve(httpLis)
+	webrpcProxy := grpcweb.WrapServer(grpcSrv,
+		grpcweb.WithOriginFunc(func(origin string) bool { return true }),
+		grpcweb.WithWebsockets(true),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
+	)
+
+	httpSrv := &http.Server{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if webrpcProxy.IsGrpcWebRequest(r) || webrpcProxy.IsAcceptableGrpcCorsRequest(r) || webrpcProxy.IsGrpcWebSocketRequest(r) {
+				webrpcProxy.ServeHTTP(w, r)
+			} else {
+				gwArgs.mux.ServeHTTP(w, r)
+			}
+		}),
+	}
+
+	go func() {
+		err := grpcSrv.Serve(grpcLis)
+		if err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	go func() {
+		err := grpcSrv.Serve(grpcwebLis)
+		if err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	go func() {
+		err := httpSrv.Serve(httpLis)
+		if err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
 
 	if serveOpts.UnsafeUseDemoSA {
 		log.Warning("Using the demo Service Account for authenticating the requests. This is not recommended except for development purposes. Set `kubeappsapis.unsafeUseDemoSA: false` to remove this warning")

@@ -993,6 +993,10 @@ type Context struct {
 	//
 	// A namespace must be provided if the context of the operation is for a resource
 	// or resources in a particular namespace.
+	// For requests to list items, not including a namespace here implies that the context
+	// for the request is everything the requesting user can read, though the result can
+	// be filtered by any filtering options of the request. Plugins may choose to return
+	// Unimplemented for some queries for which we do not yet have a need.
 	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 }
 
