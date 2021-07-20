@@ -1625,6 +1625,11 @@
           "description": "The latest version available for this package. Often expected when viewing\na summary of many available packages.",
           "title": "Latest available package version"
         },
+        "latestAppVersion": {
+          "type": "string",
+          "description": "The app version of the latest version available for this package. Often expected\nwhen viewing a summary of many available packages.",
+          "title": "Latest available package app version"
+        },
         "iconUrl": {
           "type": "string",
           "description": "A url for an icon.",

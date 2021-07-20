@@ -210,6 +210,13 @@ export interface AvailablePackageSummary {
    */
   latestPkgVersion: string;
   /**
+   * Latest available package app version
+   *
+   * The app version of the latest version available for this package. Often expected
+   * when viewing a summary of many available packages.
+   */
+  latestAppVersion: string;
+  /**
    * Available package Icon URL
    *
    * A url for an icon.
@@ -1412,6 +1419,7 @@ export const GetInstalledPackageSummariesResponse = {
 const baseAvailablePackageSummary: object = {
   name: "",
   latestPkgVersion: "",
+  latestAppVersion: "",
   iconUrl: "",
   displayName: "",
   shortDescription: "",
@@ -1432,17 +1440,20 @@ export const AvailablePackageSummary = {
     if (message.latestPkgVersion !== "") {
       writer.uint32(26).string(message.latestPkgVersion);
     }
+    if (message.latestAppVersion !== "") {
+      writer.uint32(34).string(message.latestAppVersion);
+    }
     if (message.iconUrl !== "") {
-      writer.uint32(34).string(message.iconUrl);
+      writer.uint32(42).string(message.iconUrl);
     }
     if (message.displayName !== "") {
-      writer.uint32(42).string(message.displayName);
+      writer.uint32(50).string(message.displayName);
     }
     if (message.shortDescription !== "") {
-      writer.uint32(50).string(message.shortDescription);
+      writer.uint32(58).string(message.shortDescription);
     }
     if (message.category !== "") {
-      writer.uint32(58).string(message.category);
+      writer.uint32(66).string(message.category);
     }
     return writer;
   },
@@ -1466,15 +1477,18 @@ export const AvailablePackageSummary = {
           message.latestPkgVersion = reader.string();
           break;
         case 4:
-          message.iconUrl = reader.string();
+          message.latestAppVersion = reader.string();
           break;
         case 5:
-          message.displayName = reader.string();
+          message.iconUrl = reader.string();
           break;
         case 6:
-          message.shortDescription = reader.string();
+          message.displayName = reader.string();
           break;
         case 7:
+          message.shortDescription = reader.string();
+          break;
+        case 8:
           message.category = reader.string();
           break;
         default:
@@ -1503,6 +1517,11 @@ export const AvailablePackageSummary = {
       message.latestPkgVersion = String(object.latestPkgVersion);
     } else {
       message.latestPkgVersion = "";
+    }
+    if (object.latestAppVersion !== undefined && object.latestAppVersion !== null) {
+      message.latestAppVersion = String(object.latestAppVersion);
+    } else {
+      message.latestAppVersion = "";
     }
     if (object.iconUrl !== undefined && object.iconUrl !== null) {
       message.iconUrl = String(object.iconUrl);
@@ -1535,6 +1554,7 @@ export const AvailablePackageSummary = {
         : undefined);
     message.name !== undefined && (obj.name = message.name);
     message.latestPkgVersion !== undefined && (obj.latestPkgVersion = message.latestPkgVersion);
+    message.latestAppVersion !== undefined && (obj.latestAppVersion = message.latestAppVersion);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
     message.displayName !== undefined && (obj.displayName = message.displayName);
     message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
@@ -1562,6 +1582,11 @@ export const AvailablePackageSummary = {
       message.latestPkgVersion = object.latestPkgVersion;
     } else {
       message.latestPkgVersion = "";
+    }
+    if (object.latestAppVersion !== undefined && object.latestAppVersion !== null) {
+      message.latestAppVersion = object.latestAppVersion;
+    } else {
+      message.latestAppVersion = "";
     }
     if (object.iconUrl !== undefined && object.iconUrl !== null) {
       message.iconUrl = object.iconUrl;

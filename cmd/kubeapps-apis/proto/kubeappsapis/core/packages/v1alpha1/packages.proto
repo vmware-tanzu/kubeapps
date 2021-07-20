@@ -250,26 +250,32 @@ message AvailablePackageSummary {
   // a summary of many available packages.
   string latest_pkg_version = 3;
 
+  // Latest available package app version
+  //
+  // The app version of the latest version available for this package. Often expected
+  // when viewing a summary of many available packages.
+  string latest_app_version = 4;
+
   // Available package Icon URL
   //
   // A url for an icon.
-  string icon_url = 4;
+  string icon_url = 5;
 
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 5;
+  string display_name = 6;
 
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 6;
+  string short_description = 7;
 
   // Available package category
   //
   // A user-facing category name useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  string category = 7;
+  string category = 8;
 }
 
 // AvailablePackageDetail
