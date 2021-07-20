@@ -406,6 +406,8 @@ type GetAvailablePackageVersionsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Package app versions
+	//
 	// By default (when version_query is empty or ignored) the response
 	// should contain an ordered summary of versions including the most recent three
 	// patch versions of the most recent three minor versions of the most recent three
@@ -1525,7 +1527,13 @@ type GetAvailablePackageVersionsResponse_PackageAppVersion struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Package version
+	//
+	// Version of the package itself
 	PkgVersion string `protobuf:"bytes,1,opt,name=pkg_version,json=pkgVersion,proto3" json:"pkg_version,omitempty"`
+	// Application version
+	//
+	// Version of the packaged application
 	AppVersion string `protobuf:"bytes,2,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
 }
 
