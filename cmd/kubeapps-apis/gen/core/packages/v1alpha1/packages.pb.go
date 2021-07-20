@@ -36,8 +36,6 @@ type GetAvailablePackageSummariesRequest struct {
 	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
 	// The filters used for the request
 	FilterOptions *FilterOptions `protobuf:"bytes,2,opt,name=filter_options,json=filterOptions,proto3" json:"filter_options,omitempty"`
-	// PaginationOptions
-	//
 	// Pagination options specifying where to start and how many results to include.
 	PaginationOptions *PaginationOptions `protobuf:"bytes,3,opt,name=pagination_options,json=paginationOptions,proto3" json:"pagination_options,omitempty"`
 }
@@ -232,8 +230,6 @@ type GetInstalledPackageSummariesRequest struct {
 
 	// The context (cluster/namespace) for the request.
 	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
-	// PaginationOptions
-	//
 	// Pagination options specifying where to start and how many results to include.
 	PaginationOptions *PaginationOptions `protobuf:"bytes,2,opt,name=pagination_options,json=paginationOptions,proto3" json:"pagination_options,omitempty"`
 }
@@ -485,7 +481,10 @@ type GetInstalledPackageSummariesResponse struct {
 	//
 	// List of InstalledPackageSummary
 	InstalledPackagesSummaries []*InstalledPackageSummary `protobuf:"bytes,1,rep,name=installed_packages_summaries,json=installedPackagesSummaries,proto3" json:"installed_packages_summaries,omitempty"`
-	// The token used to request the next page of results
+	// Next page token
+	//
+	// This field represents the pagination token to retrieve the next page of
+	// results. If the value is "", it means no further results for the request.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 }
 
@@ -1448,6 +1447,8 @@ type VersionReference struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Version
+	//
 	// The format of the version constraint depends on the backend. For example,
 	// for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
 	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
@@ -1492,6 +1493,8 @@ func (x *VersionReference) GetVersion() string {
 	return ""
 }
 
+// Package AppVersion
+//
 // PackageAppVersion conveys both the package version and the packaged app version.
 type GetAvailablePackageVersionsResponse_PackageAppVersion struct {
 	state         protoimpl.MessageState
