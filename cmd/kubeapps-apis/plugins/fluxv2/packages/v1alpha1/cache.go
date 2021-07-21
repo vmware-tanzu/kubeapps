@@ -169,13 +169,13 @@ func (c ResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
 		resourceVersion, err := c.resync()
 		if err != nil {
 			log.Errorf("Failed to resync due to: %v", err)
-			// TODO (gfichtenholt) retry with exponential backoff?
+			// TODO (gfichtenholt) retry some fixed number of times with exponential backoff?
 			return
 		}
 		watcher, err = watchutil.NewRetryWatcher(resourceVersion, c)
 		if err != nil {
 			log.Errorf("Failed to create a new RetryWatcher due to: %v", err)
-			// TODO (gfichtenholt) retry with exponential backoff?
+			// TODO (gfichtenholt) retry some fixed number of times with exponential backoff?
 			return
 		}
 	}
@@ -236,7 +236,6 @@ func (c ResourceWatcherCache) resync() (string, error) {
 
 	// re-populate the cache with current state from k8s
 	c.populateWith(listItems.Items)
-
 	return rv, nil
 }
 
@@ -287,7 +286,7 @@ func (c ResourceWatcherCache) receive(ch <-chan watch.Event) {
 
 // this is effectively a cache PUT operation
 // TODO (gfichtenholt) this func should return error if it happens, (see below for)
-func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) {
+func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) error {
 	defer func() {
 		if c.eventProcessingWaitGroup != nil {
 			c.eventProcessingWaitGroup.Done()
@@ -297,7 +296,7 @@ func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string
 	key, err := c.redisKeyFor(unstructuredObj)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
-		return
+		return nil
 	}
 
 	var funcName string
@@ -314,7 +313,7 @@ func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string
 		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, prettyPrintMap(unstructuredObj), err)
 		// clear that key so cache doesn't contain any stale info for this object
 		c.redisCli.Del(c.redisCli.Context(), key)
-		return
+		return err
 	}
 
 	if setVal {
@@ -322,15 +321,16 @@ func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string
 		err = c.redisCli.Set(c.redisCli.Context(), key, value, 0).Err()
 		if err != nil {
 			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", key, err)
-			return
+			return err
 		} else {
 			log.Infof("Set value for key [%s] in cache", key)
 		}
 	}
+	return nil
 }
 
 // this is effectively a cache DEL operation
-func (c ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) {
+func (c ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) error {
 	defer func() {
 		if c.eventProcessingWaitGroup != nil {
 			c.eventProcessingWaitGroup.Done()
@@ -340,21 +340,24 @@ func (c ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) {
 	key, err := c.redisKeyFor(unstructuredObj)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
-		return
+		return err
 	}
 
 	delete, err := c.config.onDelete(key, unstructuredObj)
 	if err != nil {
 		log.Errorf("Invocation of 'onDelete' for object %s\nfailed due to: %v", prettyPrintMap(unstructuredObj), err)
-		return
+		return err
 	}
 
 	if delete {
 		err = c.redisCli.Del(c.redisCli.Context(), key).Err()
 		if err != nil {
 			log.Errorf("Failed to delete value for object [%s] from cache due to: %v", key, err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 // this is effectively a cache GET operation
@@ -471,8 +474,7 @@ func (c ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{}
 // computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
-// TODO (gfichtenholt) this func should probably return an error, if one occurs so the caller
-// may decide what to do with it. One step at a time.
+// returns true if all was ok, false and logs any error(s) otherwise
 func (c ResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
@@ -481,12 +483,9 @@ func (c ResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 		item map[string]interface{}
 	}
 
-	type syncValueJobResult struct{}
-
 	var wg sync.WaitGroup
 	numWorkers := int(math.Min(float64(len(items)), float64(maxWorkers)))
 	requestChan := make(chan syncValueJob, numWorkers)
-	responseChan := make(chan syncValueJobResult, numWorkers)
 
 	// Process only at most maxWorkers at a time
 	for i := 0; i < numWorkers; i++ {
@@ -496,15 +495,10 @@ func (c ResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 				// The following loop will only terminate when the request channel is
 				// closed (and there are no more items)
 				c.onAddOrModify(true, job.item)
-				responseChan <- syncValueJobResult{}
 			}
 			wg.Done()
 		}()
 	}
-	go func() {
-		wg.Wait()
-		close(responseChan)
-	}()
 
 	go func() {
 		for _, item := range items {
@@ -513,10 +507,5 @@ func (c ResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 		close(requestChan)
 	}()
 
-	// Start receiving results
-	// The following loop will only terminate when the response channel is closed, i.e.
-	// after the all the requests have been processed
-	for _ = range responseChan {
-		// TODO (gfichtenholt) maybe have onAddOrModify return an error if fails and log it or return it here
-	}
+	wg.Wait()
 }
