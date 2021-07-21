@@ -50,6 +50,7 @@ require (
 	github.com/bugsnag/panicwrap v1.3.2 // indirect
 	github.com/containerd/containerd v1.4.6
 	github.com/deislabs/oras v0.11.1
+	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.7.1+incompatible
 	github.com/docker/cli v20.10.7+incompatible // indirect
@@ -72,6 +73,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
+	github.com/improbable-eng/grpc-web v0.14.0
 	github.com/itchyny/gojq v0.12.4
 	github.com/jinzhu/copier v0.3.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
@@ -80,6 +82,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
+	github.com/rs/cors v1.8.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.2.1
@@ -109,6 +112,7 @@ require (
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/kubernetes v1.20.8
+	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
 )
