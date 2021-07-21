@@ -17,6 +17,9 @@ import (
 	"fmt"
 
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
 )
 
@@ -69,7 +72,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	}, nil
 }
 
-// GetAvailablePackages returns the packages based on the request.
+// GetAvailablePackageDetail returns the package details based on the request.
 func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
 	contextMsg := ""
 	if request.AvailablePackageRef != nil && request.AvailablePackageRef.Context != nil {
@@ -78,31 +81,50 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 
 	log.Infof("+core GetAvailablePackageDetail %s", contextMsg)
 
-	pkg := &packages.AvailablePackageDetail{}
-
-	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.plugins {
-
-		response, err := p.server.GetAvailablePackageDetail(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		if response.AvailablePackageDetail != nil {
-			pkg = response.AvailablePackageDetail
-
-			if response.AvailablePackageDetail.AvailablePackageRef == nil {
-				pkg.AvailablePackageRef = &packages.AvailablePackageReference{}
-			}
-			pkg.AvailablePackageRef.Plugin = p.plugin
-
-			// TODO: handle multiple matches for a package
-			break
-		}
+	// Check prerequsites
+	if request.AvailablePackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the available package reference (missing AvailablePackageRef)")
+	}
+	if request.AvailablePackageRef.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the context (missing AvailablePackageRef.Context)")
+	}
+	if request.AvailablePackageRef.Identifier == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the identifier (missing AvailablePackageRef.Identifier)")
+	}
+	if request.AvailablePackageRef.Plugin == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
-	// TODO: Sort via default sort order or that specified in request.
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", pluginWithServer.plugin.Name)
+	}
+
+	// Get the response from the requested plugin
+	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctx, request)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable get the GetAvailablePackageDetail from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	// Validate the plugin response
+	if response.AvailablePackageDetail == nil || response.AvailablePackageDetail.AvailablePackageRef == nil {
+		return nil, status.Errorf(codes.Internal, "Invalid GetAvailablePackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	// Build the response
 	return &packages.GetAvailablePackageDetailResponse{
-		AvailablePackageDetail: pkg,
+		AvailablePackageDetail: response.AvailablePackageDetail,
 	}, nil
+}
+
+// getPluginWithServer returns the *pkgsPluginWithServer from a given packagesServer
+// matching the plugin name
+func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgsPluginWithServer {
+	for _, p := range s.plugins {
+		if plugin.Name == p.plugin.Name {
+			return p
+		}
+	}
+	return nil
 }

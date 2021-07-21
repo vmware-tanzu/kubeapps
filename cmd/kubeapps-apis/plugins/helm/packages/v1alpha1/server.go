@@ -237,8 +237,6 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
-	}
-	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		pkg.LatestAppVersion = chart.ChartVersions[0].AppVersion
 	}
 
