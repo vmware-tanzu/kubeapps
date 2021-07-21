@@ -84,7 +84,7 @@ export interface GetAvailablePackageSummariesResponse {
    *
    * List of AvailablePackageSummary
    */
-  availablePackagesSummaries: AvailablePackageSummary[];
+  availablePackageSummaries: AvailablePackageSummary[];
   /**
    * Next page token
    *
@@ -173,7 +173,7 @@ export interface GetInstalledPackageSummariesResponse {
    *
    * List of InstalledPackageSummary
    */
-  installedPackagesSummaries: InstalledPackageSummary[];
+  installedPackageSummaries: InstalledPackageSummary[];
   /**
    * Next page token
    *
@@ -953,7 +953,7 @@ export const GetAvailablePackageSummariesResponse = {
     message: GetAvailablePackageSummariesResponse,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    for (const v of message.availablePackagesSummaries) {
+    for (const v of message.availablePackageSummaries) {
       AvailablePackageSummary.encode(v!, writer.uint32(10).fork()).ldelim();
     }
     if (message.nextPageToken !== "") {
@@ -968,12 +968,12 @@ export const GetAvailablePackageSummariesResponse = {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackagesSummaries = [];
+    message.availablePackageSummaries = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackagesSummaries.push(
+          message.availablePackageSummaries.push(
             AvailablePackageSummary.decode(reader, reader.uint32()),
           );
           break;
@@ -992,13 +992,13 @@ export const GetAvailablePackageSummariesResponse = {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackagesSummaries = [];
+    message.availablePackageSummaries = [];
     if (
-      object.availablePackagesSummaries !== undefined &&
-      object.availablePackagesSummaries !== null
+      object.availablePackageSummaries !== undefined &&
+      object.availablePackageSummaries !== null
     ) {
-      for (const e of object.availablePackagesSummaries) {
-        message.availablePackagesSummaries.push(AvailablePackageSummary.fromJSON(e));
+      for (const e of object.availablePackageSummaries) {
+        message.availablePackageSummaries.push(AvailablePackageSummary.fromJSON(e));
       }
     }
     if (object.nextPageToken !== undefined && object.nextPageToken !== null) {
@@ -1011,12 +1011,12 @@ export const GetAvailablePackageSummariesResponse = {
 
   toJSON(message: GetAvailablePackageSummariesResponse): unknown {
     const obj: any = {};
-    if (message.availablePackagesSummaries) {
-      obj.availablePackagesSummaries = message.availablePackagesSummaries.map(e =>
+    if (message.availablePackageSummaries) {
+      obj.availablePackageSummaries = message.availablePackageSummaries.map(e =>
         e ? AvailablePackageSummary.toJSON(e) : undefined,
       );
     } else {
-      obj.availablePackagesSummaries = [];
+      obj.availablePackageSummaries = [];
     }
     message.nextPageToken !== undefined && (obj.nextPageToken = message.nextPageToken);
     return obj;
@@ -1028,13 +1028,13 @@ export const GetAvailablePackageSummariesResponse = {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackagesSummaries = [];
+    message.availablePackageSummaries = [];
     if (
-      object.availablePackagesSummaries !== undefined &&
-      object.availablePackagesSummaries !== null
+      object.availablePackageSummaries !== undefined &&
+      object.availablePackageSummaries !== null
     ) {
-      for (const e of object.availablePackagesSummaries) {
-        message.availablePackagesSummaries.push(AvailablePackageSummary.fromPartial(e));
+      for (const e of object.availablePackageSummaries) {
+        message.availablePackageSummaries.push(AvailablePackageSummary.fromPartial(e));
       }
     }
     if (object.nextPageToken !== undefined && object.nextPageToken !== null) {
@@ -1302,7 +1302,7 @@ export const GetInstalledPackageSummariesResponse = {
     message: GetInstalledPackageSummariesResponse,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    for (const v of message.installedPackagesSummaries) {
+    for (const v of message.installedPackageSummaries) {
       InstalledPackageSummary.encode(v!, writer.uint32(10).fork()).ldelim();
     }
     if (message.nextPageToken !== "") {
@@ -1317,12 +1317,12 @@ export const GetInstalledPackageSummariesResponse = {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackagesSummaries = [];
+    message.installedPackageSummaries = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackagesSummaries.push(
+          message.installedPackageSummaries.push(
             InstalledPackageSummary.decode(reader, reader.uint32()),
           );
           break;
@@ -1341,13 +1341,13 @@ export const GetInstalledPackageSummariesResponse = {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackagesSummaries = [];
+    message.installedPackageSummaries = [];
     if (
-      object.installedPackagesSummaries !== undefined &&
-      object.installedPackagesSummaries !== null
+      object.installedPackageSummaries !== undefined &&
+      object.installedPackageSummaries !== null
     ) {
-      for (const e of object.installedPackagesSummaries) {
-        message.installedPackagesSummaries.push(InstalledPackageSummary.fromJSON(e));
+      for (const e of object.installedPackageSummaries) {
+        message.installedPackageSummaries.push(InstalledPackageSummary.fromJSON(e));
       }
     }
     if (object.nextPageToken !== undefined && object.nextPageToken !== null) {
@@ -1360,12 +1360,12 @@ export const GetInstalledPackageSummariesResponse = {
 
   toJSON(message: GetInstalledPackageSummariesResponse): unknown {
     const obj: any = {};
-    if (message.installedPackagesSummaries) {
-      obj.installedPackagesSummaries = message.installedPackagesSummaries.map(e =>
+    if (message.installedPackageSummaries) {
+      obj.installedPackageSummaries = message.installedPackageSummaries.map(e =>
         e ? InstalledPackageSummary.toJSON(e) : undefined,
       );
     } else {
-      obj.installedPackagesSummaries = [];
+      obj.installedPackageSummaries = [];
     }
     message.nextPageToken !== undefined && (obj.nextPageToken = message.nextPageToken);
     return obj;
@@ -1377,13 +1377,13 @@ export const GetInstalledPackageSummariesResponse = {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackagesSummaries = [];
+    message.installedPackageSummaries = [];
     if (
-      object.installedPackagesSummaries !== undefined &&
-      object.installedPackagesSummaries !== null
+      object.installedPackageSummaries !== undefined &&
+      object.installedPackageSummaries !== null
     ) {
-      for (const e of object.installedPackagesSummaries) {
-        message.installedPackagesSummaries.push(InstalledPackageSummary.fromPartial(e));
+      for (const e of object.installedPackageSummaries) {
+        message.installedPackageSummaries.push(InstalledPackageSummary.fromPartial(e));
       }
     }
     if (object.nextPageToken !== undefined && object.nextPageToken !== null) {

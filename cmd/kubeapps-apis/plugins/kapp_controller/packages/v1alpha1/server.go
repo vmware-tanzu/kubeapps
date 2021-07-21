@@ -142,7 +142,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		responsePackages = append(responsePackages, pkg)
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: responsePackages,
+		AvailablePackageSummaries: responsePackages,
 	}, nil
 }
 

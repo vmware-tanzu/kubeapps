@@ -126,13 +126,13 @@ message GetInstalledPackageSummariesRequest {
 message GetAvailablePackageSummariesResponse {
   // TODO: add example for API docs
   // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-  //   example: '{"available_packages_summaries": [{}]}'
+  //   example: '{"available_package_summaries": [{}]}'
   // };
 
   // Available packages summaries
   //
   // List of AvailablePackageSummary
-  repeated AvailablePackageSummary available_packages_summaries = 1;
+  repeated AvailablePackageSummary available_package_summaries = 1;
 
   // Next page token
   //
@@ -213,7 +213,7 @@ message GetInstalledPackageSummariesResponse {
   // Installed packages summaries
   //
   // List of InstalledPackageSummary
-  repeated InstalledPackageSummary installed_packages_summaries = 1;
+  repeated InstalledPackageSummary installed_package_summaries = 1;
 
   // Next page token
   //

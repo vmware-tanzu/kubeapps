@@ -53,7 +53,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		}
 
 		// Add the plugin for the pkgs
-		pluginPkgs := response.AvailablePackagesSummaries
+		pluginPkgs := response.AvailablePackageSummaries
 		for _, r := range pluginPkgs {
 			if r.AvailablePackageRef == nil {
 				r.AvailablePackageRef = &packages.AvailablePackageReference{}
@@ -65,6 +65,6 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	// TODO: Sort via default sort order or that specified in request.
 	return &packages.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: pkgs,
+		AvailablePackageSummaries: pkgs,
 	}, nil
 }

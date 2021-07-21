@@ -215,8 +215,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: packageSummaries,
-		NextPageToken:              nextPageToken,
+		AvailablePackageSummaries: packageSummaries,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 

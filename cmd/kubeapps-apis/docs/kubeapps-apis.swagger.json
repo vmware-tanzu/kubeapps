@@ -1709,7 +1709,7 @@
     "v1alpha1GetAvailablePackageSummariesResponse": {
       "type": "object",
       "properties": {
-        "availablePackagesSummaries": {
+        "availablePackageSummaries": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1alpha1AvailablePackageSummary"
@@ -1767,7 +1767,7 @@
     "v1alpha1GetInstalledPackageSummariesResponse": {
       "type": "object",
       "properties": {
-        "installedPackagesSummaries": {
+        "installedPackageSummaries": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1alpha1InstalledPackageSummary"
