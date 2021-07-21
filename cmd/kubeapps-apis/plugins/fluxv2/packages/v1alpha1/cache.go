@@ -274,6 +274,10 @@ func (c ResourceWatcherCache) receive(ch <-chan watch.Event) {
 					go c.onDelete(unstructuredRepo.Object)
 				}
 			}
+		case watch.Error:
+			// will let caller (RetryWatcher) deal with it
+			continue
+
 		default:
 			// TODO (gfichtenholt) handle other kinds of events?
 			log.Errorf("got unexpected event: %v", event)

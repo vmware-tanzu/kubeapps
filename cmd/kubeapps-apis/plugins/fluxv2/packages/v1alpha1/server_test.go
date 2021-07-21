@@ -31,6 +31,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -229,30 +230,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "acs-engine-autoscaler",
-						LatestPkgVersion: "2.1.1",
-						IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-						ShortDescription: "Scales worker nodes within agent pools",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "bitnami-1/acs-engine-autoscaler",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-					{
-						DisplayName:      "wordpress",
-						LatestPkgVersion: "0.7.5",
-						IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-						ShortDescription: "new description!",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "bitnami-1/wordpress",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-				},
+				AvailablePackagesSummaries: valid_index_package_summaries,
 			},
 		},
 		{
@@ -267,30 +245,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "acs-engine-autoscaler",
-						LatestPkgVersion: "2.1.1",
-						IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-						ShortDescription: "Scales worker nodes within agent pools",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "bitnami-1/acs-engine-autoscaler",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-					{
-						DisplayName:      "wordpress",
-						LatestPkgVersion: "0.7.5",
-						IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-						ShortDescription: "new description!",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "bitnami-1/wordpress",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-				},
+				AvailablePackagesSummaries: valid_index_package_summaries,
 			},
 		},
 		{
@@ -311,41 +266,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "acs-engine-autoscaler",
-						LatestPkgVersion: "2.1.1",
-						IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-						ShortDescription: "Scales worker nodes within agent pools",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "bitnami-1/acs-engine-autoscaler",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-					{
-						DisplayName:      "cert-manager",
-						LatestPkgVersion: "v1.4.0",
-						IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-						ShortDescription: "A Helm chart for cert-manager",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "jetstack-1/cert-manager",
-							Context:    &corev1.Context{Namespace: "ns1"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-					{
-						DisplayName:      "wordpress",
-						LatestPkgVersion: "0.7.5",
-						IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-						ShortDescription: "new description!",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "bitnami-1/wordpress",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-				},
+				AvailablePackagesSummaries: append(valid_index_package_summaries, cert_manager_summary),
 			},
 		},
 		{
@@ -372,17 +293,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "cert-manager",
-						LatestPkgVersion: "v1.4.0",
-						IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-						ShortDescription: "A Helm chart for cert-manager",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "jetstack-1/cert-manager",
-							Context:    &corev1.Context{Namespace: "ns1"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
+					cert_manager_summary,
 				},
 			},
 		},
@@ -430,17 +341,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "elasticsearch",
-						LatestPkgVersion: "15.5.0",
-						IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
-						ShortDescription: "A highly scalable open-source full-text search and analytics engine",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/elasticsearch",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
+					elasticsearch_summary,
 				},
 			},
 		},
@@ -461,30 +362,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "elasticsearch",
-						LatestPkgVersion: "15.5.0",
-						IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
-						ShortDescription: "A highly scalable open-source full-text search and analytics engine",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/elasticsearch",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-					{
-						DisplayName:      "ghost",
-						LatestPkgVersion: "13.0.14",
-						IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
-						ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/ghost",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
-				},
+				AvailablePackagesSummaries: index_with_categories_summaries,
 			},
 		},
 		{
@@ -525,17 +403,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "ghost",
-						LatestPkgVersion: "13.0.14",
-						IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
-						ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/ghost",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
+					ghost_summary,
 				},
 			},
 		},
@@ -577,17 +445,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "elasticsearch",
-						LatestPkgVersion: "15.5.0",
-						IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
-						ShortDescription: "A highly scalable open-source full-text search and analytics engine",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/elasticsearch",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
+					elasticsearch_summary,
 				},
 			},
 		},
@@ -629,17 +487,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "elasticsearch",
-						LatestPkgVersion: "15.5.0",
-						IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
-						ShortDescription: "A highly scalable open-source full-text search and analytics engine",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/elasticsearch",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
+					elasticsearch_summary,
 				},
 			},
 		},
@@ -661,17 +509,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "ghost",
-						LatestPkgVersion: "13.0.14",
-						IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
-						ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/ghost",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
+					ghost_summary,
 				},
 			},
 		},
@@ -714,17 +552,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
-					{
-						DisplayName:      "ghost",
-						LatestPkgVersion: "13.0.14",
-						IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
-						ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
-						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Identifier: "index-with-categories-1/ghost",
-							Context:    &corev1.Context{Namespace: "default"},
-							Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-						},
-					},
+					ghost_summary,
 				},
 				NextPageToken: "2",
 			},
@@ -851,33 +679,9 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		expectedPackagesBeforeUpdate := []*corev1.AvailablePackageSummary{
-			{
-				DisplayName:      "alpine",
-				LatestPkgVersion: "0.2.0",
-				IconUrl:          "",
-				ShortDescription: "Deploy a basic Alpine Linux pod",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/alpine",
-					Context:    &corev1.Context{Namespace: "ns2"},
-					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-				},
-			},
-			{
-				DisplayName:      "nginx",
-				LatestPkgVersion: "1.1.0",
-				IconUrl:          "",
-				ShortDescription: "Create a basic nginx HTTP server",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/nginx",
-					Context:    &corev1.Context{Namespace: "ns2"},
-					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-				},
-			}}
-
 		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeUpdate.AvailablePackagesSummaries, expectedPackagesBeforeUpdate; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeUpdate.AvailablePackagesSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -911,31 +715,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		expectedPackagesAfterUpdate := []*corev1.AvailablePackageSummary{
-			{
-				DisplayName:      "alpine",
-				LatestPkgVersion: "0.3.0",
-				IconUrl:          "",
-				ShortDescription: "Deploy a basic Alpine Linux pod",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/alpine",
-					Context:    &corev1.Context{Namespace: "ns2"},
-					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-				},
-			},
-			{
-				DisplayName:      "nginx",
-				LatestPkgVersion: "1.1.0",
-				IconUrl:          "",
-				ShortDescription: "Create a basic nginx HTTP server",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/nginx",
-					Context:    &corev1.Context{Namespace: "ns2"},
-					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-				},
-			}}
-
-		if got, want := responsePackagesAfterUpdate.AvailablePackagesSummaries, expectedPackagesAfterUpdate; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responsePackagesAfterUpdate.AvailablePackagesSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -995,34 +775,9 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		expectedPackagesBeforeDelete := []*corev1.AvailablePackageSummary{
-			{
-				DisplayName:      "acs-engine-autoscaler",
-				LatestPkgVersion: "2.1.1",
-				IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-				ShortDescription: "Scales worker nodes within agent pools",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/acs-engine-autoscaler",
-					Context:    &corev1.Context{Namespace: "default"},
-					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-				},
-			},
-			{
-				DisplayName:      "wordpress",
-				LatestPkgVersion: "0.7.5",
-				IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-				ShortDescription: "new description!",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/wordpress",
-					Context:    &corev1.Context{Namespace: "default"},
-					Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
-				},
-			},
-		}
-
 		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackagesSummaries, expectedPackagesBeforeDelete; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeDelete.AvailablePackagesSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -1059,7 +814,96 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	})
 }
 
-// TODO (gfichtenholt) add a test that causes RetryWatcher to stop and the cache needs to resync
+// test that causes RetryWatcher to stop and the cache needs to resync
+func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
+	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
+		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		// stand up an http server just for the duration of this test
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(w, string(indexYaml))
+		}))
+		defer ts.Close()
+
+		repoSpec := map[string]interface{}{
+			"url":      "https://example.repo.com/charts",
+			"interval": "1m0s",
+		}
+
+		repoStatus := map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"type":   "Ready",
+					"status": "True",
+					"reason": "IndexationSucceed",
+				},
+			},
+			"url": ts.URL,
+		}
+		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
+
+		s, mock, watcher, err := newServerWithRepos(repo)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		responseBeforeResync, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+		if got, want := responseBeforeResync.AvailablePackagesSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+
+		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
+		// a cache resync
+		s.cache.eventProcessingWaitGroup.Add(1)
+		key, bytes, _ := redisKeyValueForRuntimeObject(repo)
+		mock.ExpectSet(key, bytes, 0).SetVal("")
+
+		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+
+		s.cache.eventProcessingWaitGroup.Wait()
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		responseAfterResync, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		if got, want := responseAfterResync.AvailablePackagesSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+	})
+}
 
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
@@ -1514,7 +1358,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 	watcher := watch.NewFake()
 
 	dynamicClient.Fake.PrependWatchReactor(
-		"*",
+		fluxHelmRepositories,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
 	clientGetter := func(context.Context) (dynamic.Interface, error) {
@@ -1622,3 +1466,119 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }
+
+// misc global vars that get re-used in multiple tests
+var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+	{
+		DisplayName:      "acs-engine-autoscaler",
+		LatestPkgVersion: "2.1.1",
+		IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+		ShortDescription: "Scales worker nodes within agent pools",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/acs-engine-autoscaler",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+	{
+		DisplayName:      "wordpress",
+		LatestPkgVersion: "0.7.5",
+		IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+		ShortDescription: "new description!",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/wordpress",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+}
+
+var cert_manager_summary = &corev1.AvailablePackageSummary{
+	DisplayName:      "cert-manager",
+	LatestPkgVersion: "v1.4.0",
+	IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+	ShortDescription: "A Helm chart for cert-manager",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "jetstack-1/cert-manager",
+		Context:    &corev1.Context{Namespace: "ns1"},
+		Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+	},
+}
+
+var elasticsearch_summary = &corev1.AvailablePackageSummary{
+	DisplayName:      "elasticsearch",
+	LatestPkgVersion: "15.5.0",
+	IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
+	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "index-with-categories-1/elasticsearch",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+	},
+}
+
+var ghost_summary = &corev1.AvailablePackageSummary{
+	DisplayName:      "ghost",
+	LatestPkgVersion: "13.0.14",
+	IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
+	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "index-with-categories-1/ghost",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+	},
+}
+
+var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
+	elasticsearch_summary,
+	ghost_summary,
+}
+
+var index_before_update_summaries = []*corev1.AvailablePackageSummary{
+	{
+		DisplayName:      "alpine",
+		LatestPkgVersion: "0.2.0",
+		IconUrl:          "",
+		ShortDescription: "Deploy a basic Alpine Linux pod",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/alpine",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+	{
+		DisplayName:      "nginx",
+		LatestPkgVersion: "1.1.0",
+		IconUrl:          "",
+		ShortDescription: "Create a basic nginx HTTP server",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/nginx",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+}
+
+var index_after_update_summaries = []*corev1.AvailablePackageSummary{
+	{
+		DisplayName:      "alpine",
+		LatestPkgVersion: "0.3.0",
+		IconUrl:          "",
+		ShortDescription: "Deploy a basic Alpine Linux pod",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/alpine",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+	{
+		DisplayName:      "nginx",
+		LatestPkgVersion: "1.1.0",
+		IconUrl:          "",
+		ShortDescription: "Create a basic nginx HTTP server",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/nginx",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	}}
