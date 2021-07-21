@@ -314,7 +314,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				LatestAppVersion: DefaultAppVersion,
 				IconUrl:          "foo.bar/icon.svg",
 				ShortDescription: "best chart",
-				Category:         DefaultChartCategory,
+				Categories:       []string{DefaultChartCategory},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
@@ -343,6 +343,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				DisplayName:      "foo",
 				LatestPkgVersion: "3.0.0",
 				LatestAppVersion: DefaultAppVersion,
+				Categories:       []string{""},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
@@ -502,7 +503,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						LatestPkgVersion: "3.0.0",
 						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
-						Category:         DefaultChartCategory,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -515,7 +516,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						LatestPkgVersion: "2.0.0",
 						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
-						Category:         DefaultChartCategory,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -548,7 +549,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						LatestPkgVersion: "3.0.0",
 						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
-						Category:         DefaultChartCategory,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -561,7 +562,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						LatestPkgVersion: "2.0.0",
 						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
-						Category:         DefaultChartCategory,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -637,7 +638,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
-						Category:         DefaultChartCategory,
+						Categories:       []string{DefaultChartCategory},
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
@@ -676,7 +677,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						LatestPkgVersion: "1.0.0",
 						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
-						Category:         DefaultChartCategory,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -765,7 +766,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 				Name:             "foo",
 				DisplayName:      "foo",
 				IconUrl:          DefaultChartIconURL,
-				Category:         DefaultChartCategory,
+				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "3.0.0",
@@ -836,7 +837,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Name:             "foo",
 				DisplayName:      "foo",
 				IconUrl:          DefaultChartIconURL,
-				Category:         DefaultChartCategory,
+				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "3.0.0",
@@ -868,7 +869,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Name:             "foo",
 				DisplayName:      "foo",
 				IconUrl:          DefaultChartIconURL,
-				Category:         DefaultChartCategory,
+				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "1.0.0",

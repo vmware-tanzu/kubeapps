@@ -260,11 +260,11 @@ message AvailablePackageSummary {
   // A short description of the app provided by the package
   string short_description = 7;
 
-  // Available package category
+  // Available package categories
   //
-  // A user-facing category name useful for creating richer user interfaces.
+  // A user-facing list of category names useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  string category = 8;
+  repeated string categories = 8;
 }
 
 // AvailablePackageDetail
@@ -339,11 +339,11 @@ message AvailablePackageDetail {
   // List of Maintainer
   repeated Maintainer maintainers = 12;
 
-  // Available package category
+  // Available package categories
   //
-  // A user-facing category name useful for creating richer user interfaces.
+  // A user-facing list of category names useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  string category = 13;
+  repeated string categories = 13;
 
   // Custom data added by the plugin
   //
