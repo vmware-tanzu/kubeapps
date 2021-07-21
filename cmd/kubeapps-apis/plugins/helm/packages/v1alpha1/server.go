@@ -256,6 +256,9 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
 	}
 
+	pkg.Name = chart.Name
+	// Helm's Chart.yaml (and hence our model) does not include a separate
+	// display name, so the chart name is also used here.
 	pkg.DisplayName = chart.Name
 	pkg.IconUrl = chart.Icon
 	pkg.ShortDescription = chart.Description
