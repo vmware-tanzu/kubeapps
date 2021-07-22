@@ -231,7 +231,7 @@ function Catalog(props: ICatalogProps) {
     .filter(
       c =>
         filters[filterNames.CATEGORY].length === 0 ||
-        filters[filterNames.CATEGORY].includes(categoryToReadable(c?.category)),
+        filters[filterNames.CATEGORY].includes(categoryToReadable(c?.categories[0])),
     );
   const filteredCSVs = csvs
     .filter(

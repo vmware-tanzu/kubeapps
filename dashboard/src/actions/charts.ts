@@ -114,7 +114,7 @@ export function fetchCharts(
       );
       dispatch(
         receiveCharts({
-          items: response.availablePackagesSummaries,
+          items: response.availablePackageSummaries,
           page,
           nextPageToken: response.nextPageToken,
         }),

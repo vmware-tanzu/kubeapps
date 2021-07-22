@@ -67,7 +67,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts with query",
     responseData: [chartItem],
-    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "1" },
+    responseMeta: { availablePackageSummaries: [chartItem], nextPageToken: "1" },
     requestedRepos: "",
     requestedPage: 1,
     requestedQuery: "foo",
@@ -87,7 +87,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (first page)",
     responseData: [chartItem],
-    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
+    responseMeta: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
@@ -106,7 +106,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (middle page)",
     responseData: [chartItem],
-    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
+    responseMeta: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -125,7 +125,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (last page)",
     responseData: [chartItem],
-    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
+    responseMeta: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
@@ -144,7 +144,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (already processed page)",
     responseData: [chartItem],
-    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
+    responseMeta: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -163,7 +163,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts from a repo (off-limits page)",
     responseData: [chartItem],
-    responseMeta: { availablePackagesSummaries: [chartItem], nextPageToken: "3" },
+    responseMeta: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
