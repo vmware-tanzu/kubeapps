@@ -35,6 +35,8 @@ export default function CatalogItems({
             icon: c.iconUrl,
             version: c.latestAppVersion,
             description: c.shortDescription,
+            // TODO(agamez): get the repo name once available
+            // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
             repo: { name: c.availablePackageRef?.identifier.split("/")[0] } as IRepo,
             cluster,
             namespace,

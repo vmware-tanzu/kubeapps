@@ -224,6 +224,8 @@ function Catalog(props: ICatalogProps) {
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
+        // TODO(agamez): get the repo name once available
+        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
         filters[filterNames.REPO].includes(c.availablePackageRef?.identifier.split("/")[0]),
     )
     .filter(
