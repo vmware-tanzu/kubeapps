@@ -251,7 +251,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{})
-			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
+			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 			}
 		})

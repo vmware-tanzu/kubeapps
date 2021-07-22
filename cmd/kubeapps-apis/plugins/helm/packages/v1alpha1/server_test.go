@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -30,6 +31,13 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -38,7 +46,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+
+	// TODO(mnelson): models.Chart.Maintainers is depending on the old v1 chart
+	// code. I don't expect there is any reason other than a historical one.
+	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
 
@@ -47,6 +58,7 @@ const (
 	DefaultAppVersion        = "1.2.6"
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
+	DefaultChartCategory     = "cat1"
 )
 
 func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) {
@@ -249,7 +261,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chart.Maintainer{{Name: "me"}},
+				Maintainers: []chartv1.Maintainer{{Name: "me"}},
 			},
 			expected: true,
 		},
@@ -263,7 +275,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
+				Maintainers: []chartv1.Maintainer{{Name: "me"}, {Email: "you"}},
 			},
 			expected: false,
 		},
@@ -293,14 +305,14 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			in: &models.Chart{
 				Name:        "foo",
 				ID:          "foo/bar",
-				Category:    "cat1",
+				Category:    DefaultChartCategory,
 				Description: "best chart",
 				Icon:        "foo.bar/icon.svg",
 				Repo: &models.Repo{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				ChartVersions: []models.ChartVersion{
 					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
@@ -308,10 +320,13 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
+				Name:             "foo",
 				DisplayName:      "foo",
 				LatestPkgVersion: "3.0.0",
+				LatestAppVersion: DefaultAppVersion,
 				IconUrl:          "foo.bar/icon.svg",
 				ShortDescription: "best chart",
+				Categories:       []string{DefaultChartCategory},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
@@ -331,13 +346,17 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 				ChartVersions: []models.ChartVersion{
 					{
-						Version: "3.0.0",
+						Version:    "3.0.0",
+						AppVersion: DefaultAppVersion,
 					},
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
+				Name:             "foo",
 				DisplayName:      "foo",
 				LatestPkgVersion: "3.0.0",
+				LatestAppVersion: DefaultAppVersion,
+				Categories:       []string{""},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
@@ -381,10 +400,10 @@ func makeChart(chart_name, repo_name, namespace string, chart_versions []string)
 	ch := &models.Chart{
 		Name:        chart_name,
 		ID:          fmt.Sprintf("%s/%s", repo_name, chart_name),
-		Category:    "cat1",
+		Category:    DefaultChartCategory,
 		Description: DefaultChartDescription,
 		Icon:        DefaultChartIconURL,
-		Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
+		Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
 		Repo: &models.Repo{
 			Name:      repo_name,
 			Namespace: namespace,
@@ -436,7 +455,7 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 }
 
 // makeServer returns a server backed with an sql mock and a cleanup function
-func makeServer(t *testing.T, authorized bool) (*Server, sqlmock.Sqlmock, func()) {
+func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration) (*Server, sqlmock.Sqlmock, func()) {
 	// Creating the dynamic client
 	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
@@ -463,6 +482,9 @@ func makeServer(t *testing.T, authorized bool) (*Server, sqlmock.Sqlmock, func()
 		clientGetter:             clientGetter,
 		manager:                  manager,
 		globalPackagingNamespace: globalPackagingNamespace,
+		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
+			return actionConfig, nil
+		},
 	}, mock, cleanup
 }
 
@@ -491,11 +513,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
+						Name:             "chart-1",
 						DisplayName:      "chart-1",
 						LatestPkgVersion: "3.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -504,9 +529,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
+						Name:             "chart-2",
 						DisplayName:      "chart-2",
 						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -533,11 +561,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
+						Name:             "chart-1",
 						DisplayName:      "chart-1",
 						LatestPkgVersion: "3.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -546,9 +577,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
+						Name:             "chart-2",
 						DisplayName:      "chart-2",
 						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -617,12 +651,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
+						Name:             "chart-2",
 						DisplayName:      "chart-2",
 						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
+						Categories:       []string{DefaultChartCategory},
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
@@ -655,11 +692,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
+						Name:             "chart-3",
 						DisplayName:      "chart-3",
 						LatestPkgVersion: "1.0.0",
+						LatestAppVersion: DefaultAppVersion,
 						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
 							Context:    &corev1.Context{Namespace: "my-ns"},
@@ -691,7 +731,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			server, mock, cleanup := makeServer(t, tc.authorized)
+			server, mock, cleanup := makeServer(t, tc.authorized, nil)
 			defer cleanup()
 
 			// Simulate the pagination by reducing the rows of JSON based on the offset and limit.
@@ -748,6 +788,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 				Name:             "foo",
 				DisplayName:      "foo",
 				IconUrl:          DefaultChartIconURL,
+				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "3.0.0",
@@ -818,6 +859,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Name:             "foo",
 				DisplayName:      "foo",
 				IconUrl:          DefaultChartIconURL,
+				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "3.0.0",
@@ -849,6 +891,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Name:             "foo",
 				DisplayName:      "foo",
 				IconUrl:          DefaultChartIconURL,
+				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
 				PkgVersion:       "1.0.0",
@@ -909,7 +952,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			server, mock, cleanup := makeServer(t, tc.authorized)
+			server, mock, cleanup := makeServer(t, tc.authorized, nil)
 			defer cleanup()
 
 			rows := sqlmock.NewRows([]string{"info"})
@@ -1023,7 +1066,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			server, mock, cleanup := makeServer(t, authorized)
+			server, mock, cleanup := makeServer(t, authorized, nil)
 			defer cleanup()
 
 			rows := sqlmock.NewRows([]string{"info"})
@@ -1221,4 +1264,337 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetInstalledPackageSummaries(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.GetInstalledPackageSummariesRequest
+		existingReleases   []releaseStub
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetInstalledPackageSummariesResponse
+	}{
+		{
+			name: "returns installed packages in a specific namespace",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "namespace-1"},
+			},
+			existingReleases: []releaseStub{
+				{
+					name:         "my-release-1",
+					namespace:    "namespace-1",
+					chartVersion: "1.2.3",
+					status:       release.StatusDeployed,
+				},
+				{
+					name:      "my-release-2",
+					namespace: "other-namespace",
+					status:    release.StatusDeployed,
+				},
+				{
+					name:         "my-release-3",
+					namespace:    "namespace-1",
+					chartVersion: "4.5.6",
+					status:       release.StatusDeployed,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-1",
+							},
+							Identifier: "my-release-1",
+						},
+						Name:    "my-release-1",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "1.2.3",
+						},
+						CurrentPkgVersion: "1.2.3",
+					},
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-1",
+							},
+							Identifier: "my-release-3",
+						},
+						Name:    "my-release-3",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "4.5.6",
+						},
+						CurrentPkgVersion: "4.5.6",
+					},
+				},
+			},
+		},
+		{
+			name: "returns installed packages across all namespaces",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+			},
+			existingReleases: []releaseStub{
+				{
+					name:         "my-release-1",
+					namespace:    "namespace-1",
+					chartVersion: "1.2.3",
+					status:       release.StatusDeployed,
+				},
+				{
+					name:         "my-release-2",
+					namespace:    "namespace-2",
+					status:       release.StatusDeployed,
+					chartVersion: "3.4.5",
+				},
+				{
+					name:         "my-release-3",
+					namespace:    "namespace-3",
+					chartVersion: "4.5.6",
+					status:       release.StatusDeployed,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-1",
+							},
+							Identifier: "my-release-1",
+						},
+						Name:    "my-release-1",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "1.2.3",
+						},
+						CurrentPkgVersion: "1.2.3",
+					},
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-2",
+							},
+							Identifier: "my-release-2",
+						},
+						Name:    "my-release-2",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "3.4.5",
+						},
+						CurrentPkgVersion: "3.4.5",
+					},
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-3",
+							},
+							Identifier: "my-release-3",
+						},
+						Name:    "my-release-3",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "4.5.6",
+						},
+						CurrentPkgVersion: "4.5.6",
+					},
+				},
+			},
+		},
+		{
+			name: "returns limited results",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageSize: 2,
+				},
+			},
+			existingReleases: []releaseStub{
+				{
+					name:         "my-release-1",
+					namespace:    "namespace-1",
+					chartVersion: "1.2.3",
+					status:       release.StatusDeployed,
+				},
+				{
+					name:         "my-release-2",
+					namespace:    "namespace-2",
+					status:       release.StatusDeployed,
+					chartVersion: "3.4.5",
+				},
+				{
+					name:         "my-release-3",
+					namespace:    "namespace-3",
+					chartVersion: "4.5.6",
+					status:       release.StatusDeployed,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-1",
+							},
+							Identifier: "my-release-1",
+						},
+						Name:    "my-release-1",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "1.2.3",
+						},
+						CurrentPkgVersion: "1.2.3",
+					},
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-2",
+							},
+							Identifier: "my-release-2",
+						},
+						Name:    "my-release-2",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "3.4.5",
+						},
+						CurrentPkgVersion: "3.4.5",
+					},
+				},
+				NextPageToken: "3",
+			},
+		},
+		{
+			name: "fetches results from an offset",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageSize:  2,
+					PageToken: "2",
+				},
+			},
+			existingReleases: []releaseStub{
+				{
+					name:         "my-release-1",
+					namespace:    "namespace-1",
+					chartVersion: "1.2.3",
+					status:       release.StatusDeployed,
+				},
+				{
+					name:         "my-release-2",
+					namespace:    "namespace-2",
+					status:       release.StatusDeployed,
+					chartVersion: "3.4.5",
+				},
+				{
+					name:         "my-release-3",
+					namespace:    "namespace-3",
+					chartVersion: "4.5.6",
+					status:       release.StatusDeployed,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-3",
+							},
+							Identifier: "my-release-3",
+						},
+						Name:    "my-release-3",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "4.5.6",
+						},
+						CurrentPkgVersion: "4.5.6",
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			authorized := true
+			actionConfig := newActionConfigFixture(t, tc.request.GetContext().GetNamespace(), tc.existingReleases)
+			server, _, cleanup := makeServer(t, authorized, actionConfig)
+			// It is the namespace of the the driver which determines the results. In the prod code,
+			// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
+			// actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.request.GetContext().GetNamespace())
+			defer cleanup()
+
+			response, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
+// newActionConfigFixture returns an action.Configuration with fake clients
+// and memory storage.
+func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) *action.Configuration {
+	t.Helper()
+
+	memDriver := driver.NewMemory()
+
+	actionConfig := &action.Configuration{
+		Releases:     storage.Init(memDriver),
+		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		Capabilities: chartutil.DefaultCapabilities,
+		Log: func(format string, v ...interface{}) {
+			t.Helper()
+			t.Logf(format, v...)
+		},
+	}
+
+	for _, r := range rels {
+		rel := &release.Release{
+			Name:      r.name,
+			Namespace: r.namespace,
+			Version:   r.version,
+			Info: &release.Info{
+				Status: r.status,
+			},
+			Chart: &chart.Chart{
+				Metadata: &chart.Metadata{
+					Version: r.chartVersion,
+					Icon:    "https://example.com/icon.png",
+				},
+			},
+		}
+		err := actionConfig.Releases.Create(rel)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	memDriver.SetNamespace(namespace)
+
+	return actionConfig
+}
+
+type releaseStub struct {
+	name         string
+	namespace    string
+	version      int
+	chartVersion string
+	status       release.Status
 }

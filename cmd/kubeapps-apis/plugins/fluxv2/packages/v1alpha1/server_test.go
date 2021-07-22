@@ -27,10 +27,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +41,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
-func TestNilClientGetter(t *testing.T) {
+func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
 		clientGetter clientGetter
@@ -51,33 +52,6 @@ func TestNilClientGetter(t *testing.T) {
 			clientGetter: nil,
 			statusCode:   codes.FailedPrecondition,
 		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, mock, err := newServer(tc.clientGetter)
-			if err == nil && tc.statusCode != codes.OK {
-				t.Fatalf("got: nil, want: error")
-			}
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
-			}
-
-			err = mock.ExpectationsWereMet()
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-		})
-	}
-}
-
-func TestBadClientGetter(t *testing.T) {
-	testCases := []struct {
-		name         string
-		clientGetter clientGetter
-		statusCode   codes.Code
-	}{
 		{
 			name: "returns failed-precondition when configGetter itself errors",
 			clientGetter: func(context.Context) (dynamic.Interface, error) {
@@ -89,15 +63,7 @@ func TestBadClientGetter(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newServer(tc.clientGetter)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-
-			_, err = s.GetAvailablePackageSummaries(
-				context.Background(),
-				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
-
+			_, mock, err := newServerWithClientGetter(tc.clientGetter)
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
 			}
@@ -117,7 +83,7 @@ func TestBadClientGetter(t *testing.T) {
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name       string
-		repo       *unstructured.Unstructured
+		repo       runtime.Object
 		statusCode codes.Code
 	}{
 		{
@@ -202,9 +168,13 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, _, _, err := newServerWithWatcher(true, tc.repo)
+			s, mock, _, err := newServerWithRepos(tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			if err = beforeCallGetAvailablePackageSummaries(mock, nil); err != nil {
+				t.Fatalf("%v", err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(
@@ -216,15 +186,19 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			}
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
+				t.Errorf("got: %+v, error: %v, want: %+v", got, err, want)
 
 				if got == codes.OK {
-					if len(response.AvailablePackagesSummaries) != 0 {
+					if len(response.AvailablePackageSummaries) != 0 {
 						t.Errorf("unexpected response: %v", response)
 					} else if response != nil {
 						t.Errorf("unexpected response: %v", response)
 					}
 				}
+			}
+
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -242,7 +216,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		testName         string
 		request          *corev1.GetAvailablePackageSummariesRequest
 		testRepos        []testRepoStruct
-		expectedPackages []*corev1.AvailablePackageSummary
+		expectedResponse *corev1.GetAvailablePackageSummariesResponse
 	}{
 		{
 			testName: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -255,25 +229,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					DisplayName:      "acs-engine-autoscaler",
-					LatestPkgVersion: "2.1.1",
-					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/acs-engine-autoscaler",
-						Context:    &corev1.Context{Namespace: "default"},
-					},
-				},
-				{
-					DisplayName:      "wordpress",
-					LatestPkgVersion: "0.7.5",
-					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/wordpress",
-						Context:    &corev1.Context{Namespace: "default"},
-					},
-				},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: valid_index_package_summaries,
 			},
 		},
 		{
@@ -287,25 +244,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					DisplayName:      "acs-engine-autoscaler",
-					LatestPkgVersion: "2.1.1",
-					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/acs-engine-autoscaler",
-						Context:    &corev1.Context{Namespace: "default"},
-					},
-				},
-				{
-					DisplayName:      "wordpress",
-					LatestPkgVersion: "0.7.5",
-					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/wordpress",
-						Context:    &corev1.Context{Namespace: "default"},
-					},
-				},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: valid_index_package_summaries,
 			},
 		},
 		{
@@ -325,37 +265,300 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
-			expectedPackages: []*corev1.AvailablePackageSummary{
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: append(valid_index_package_summaries, cert_manager_summary),
+			},
+		},
+		{
+			testName: "uses a filter based on existing repo",
+			testRepos: []testRepoStruct{
 				{
-					DisplayName:      "acs-engine-autoscaler",
-					LatestPkgVersion: "2.1.1",
-					IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/acs-engine-autoscaler",
-						Context:    &corev1.Context{Namespace: "default"},
-					},
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
 				},
 				{
-					DisplayName:      "cert-manager",
-					LatestPkgVersion: "v1.4.0",
-					IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "jetstack-1/cert-manager",
-						Context:    &corev1.Context{Namespace: "ns1"},
-					},
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     "testdata/jetstack-index.yaml",
 				},
-				{
-					DisplayName:      "wordpress",
-					LatestPkgVersion: "0.7.5",
-					IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/wordpress",
-						Context:    &corev1.Context{Namespace: "default"},
-					},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Repositories: []string{"jetstack-1"},
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					cert_manager_summary,
 				},
 			},
 		},
+		{
+			testName: "uses a filter based on non-existing repo",
+			testRepos: []testRepoStruct{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     "testdata/jetstack-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Repositories: []string{"jetstack-2"},
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			},
+		},
+		{
+			testName: "uses a filter based on existing categories",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Categories: []string{"Analytics"},
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					elasticsearch_summary,
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on existing categories (2)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Categories: []string{"Analytics", "CMS"},
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: index_with_categories_summaries,
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing categories",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Categories: []string{"Foo"},
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			},
+		},
+		{
+			testName: "uses a filter based on existing appVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					AppVersion: "4.7.0",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					ghost_summary,
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing appVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					AppVersion: "99.99.99",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			},
+		},
+		{
+			testName: "uses a filter based on existing pkgVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					PkgVersion: "15.5.0",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					elasticsearch_summary,
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing pkgVersion",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					PkgVersion: "99.99.99",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			},
+		},
+		{
+			testName: "uses a filter based on existing query text (chart name)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Query: "ela",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					elasticsearch_summary,
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on existing query text (chart keywords)",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Query: "vascrip",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					ghost_summary,
+				},
+			},
+		},
+		{
+			testName: "uses a filter based on non-existing query text",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				FilterOptions: &corev1.FilterOptions{
+					Query: "qwerty",
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			},
+		},
+		{
+			testName: "it returns only the requested page of results and includes the next page token",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "1",
+					PageSize:  1,
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					ghost_summary,
+				},
+				NextPageToken: "2",
+			},
+		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			repos := []runtime.Object{}
@@ -389,9 +592,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
 			}
 
-			s, mock, _, err := newServerWithWatcher(false, repos...)
+			s, mock, _, err := newServerWithRepos(repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			if err = beforeCallGetAvailablePackageSummaries(mock, tc.request.FilterOptions, repos...); err != nil {
+				t.Fatalf("%v", err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -399,21 +606,20 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := response.AvailablePackagesSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1, opt2) {
+			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 			}
 		})
 	}
 }
 
-func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
+func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 	t.Run("test get available package summaries after repo index is updated", func(t *testing.T) {
 		indexYamlBeforeUpdateBytes, err := ioutil.ReadFile("testdata/index-before-update.yaml")
 		if err != nil {
@@ -453,9 +659,13 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithWatcher(false, repo)
+		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+			t.Fatalf("%v", err)
 		}
 
 		responseBeforeUpdate, err := s.GetAvailablePackageSummaries(
@@ -465,34 +675,13 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		expectedPackagesBeforeUpdate := []*corev1.AvailablePackageSummary{
-			{
-				DisplayName:      "alpine",
-				LatestPkgVersion: "0.2.0",
-				IconUrl:          "",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/alpine",
-					Context:    &corev1.Context{Namespace: "ns2"},
-				},
-			},
-			{
-				DisplayName:      "nginx",
-				LatestPkgVersion: "1.1.0",
-				IconUrl:          "",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/nginx",
-					Context:    &corev1.Context{Namespace: "ns2"},
-				},
-			}}
-
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeUpdate.AvailablePackagesSummaries, expectedPackagesBeforeUpdate; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -501,27 +690,22 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
 		s.cache.eventProcessingWaitGroup.Add(1)
 
-		key := redisKeyForRuntimeObject(repo)
-		packageSummariesAfterUpdate, err := indexOneRepo(repo.Object)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		protoMsg := corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackagesSummaries: packageSummariesAfterUpdate,
-		}
-		bytes, err := proto.Marshal(&protoMsg)
+		key, bytes, err := redisKeyValueForRuntimeObject(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
 		mock.ExpectSet(key, bytes, 0).SetVal("")
+
+		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		watcher.Modify(repo)
+
 		s.cache.eventProcessingWaitGroup.Wait()
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
+		mock.ExpectScan(0, "", 0).SetVal([]string{key}, 0)
 		mock.ExpectGet(key).SetVal(string(bytes))
 
 		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
@@ -531,38 +715,17 @@ func TestGetAvailablePackageSummariesAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		expectedPackagesAfterUpdate := []*corev1.AvailablePackageSummary{
-			{
-				DisplayName:      "alpine",
-				LatestPkgVersion: "0.3.0",
-				IconUrl:          "",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/alpine",
-					Context:    &corev1.Context{Namespace: "ns2"},
-				},
-			},
-			{
-				DisplayName:      "nginx",
-				LatestPkgVersion: "1.1.0",
-				IconUrl:          "",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "testrepo/nginx",
-					Context:    &corev1.Context{Namespace: "ns2"},
-				},
-			}}
-
-		if got, want := responsePackagesAfterUpdate.AvailablePackagesSummaries, expectedPackagesAfterUpdate; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
 }
 
-func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
+func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
 		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
 		if err != nil {
@@ -592,9 +755,13 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithWatcher(false, repo)
+		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+			t.Fatalf("%v", err)
 		}
 
 		responseBeforeDelete, err := s.GetAvailablePackageSummaries(
@@ -604,52 +771,31 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		expectedPackagesBeforeDelete := []*corev1.AvailablePackageSummary{
-			{
-				DisplayName:      "acs-engine-autoscaler",
-				LatestPkgVersion: "2.1.1",
-				IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/acs-engine-autoscaler",
-					Context:    &corev1.Context{Namespace: "default"},
-				},
-			},
-			{
-				DisplayName:      "wordpress",
-				LatestPkgVersion: "0.7.5",
-				IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/wordpress",
-					Context:    &corev1.Context{Namespace: "default"},
-				},
-			},
-		}
-
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackagesSummaries, expectedPackagesBeforeDelete; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
-		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
-		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
+		// now we are going to simulate the user deleting a HelmRepository CRD which, in turn,
+		// causes k8s server to fire a DELETE event
 		s.cache.eventProcessingWaitGroup.Add(1)
 		key := redisKeyForRuntimeObject(repo)
 		mock.ExpectDel(key).SetVal(0)
+
 		watcher.Delete(repo)
+
 		s.cache.eventProcessingWaitGroup.Wait()
 
-		err = mock.ExpectationsWereMet()
-		if err != nil {
+		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		mock.ExpectGet(key).RedisNil()
+		mock.ExpectScan(0, "", 0).SetVal([]string{}, 0)
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
@@ -658,13 +804,103 @@ func TestGetAvailablePackageSummariesAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if len(responseAfterDelete.AvailablePackagesSummaries) != 0 {
+		if len(responseAfterDelete.AvailablePackageSummaries) != 0 {
 			t.Errorf("expected empty array, got: %s", responseAfterDelete)
 		}
 
-		err = mock.ExpectationsWereMet()
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+}
+
+// test that causes RetryWatcher to stop and the cache needs to resync
+func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
+	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
+		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		// stand up an http server just for the duration of this test
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(w, string(indexYaml))
+		}))
+		defer ts.Close()
+
+		repoSpec := map[string]interface{}{
+			"url":      "https://example.repo.com/charts",
+			"interval": "1m0s",
+		}
+
+		repoStatus := map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"type":   "Ready",
+					"status": "True",
+					"reason": "IndexationSucceed",
+				},
+			},
+			"url": ts.URL,
+		}
+		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
+
+		s, mock, watcher, err := newServerWithRepos(repo)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		responseBeforeResync, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+
+		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
+		// a cache resync
+		s.cache.eventProcessingWaitGroup.Add(1)
+		key, bytes, _ := redisKeyValueForRuntimeObject(repo)
+		mock.ExpectSet(key, bytes, 0).SetVal("")
+
+		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+
+		s.cache.eventProcessingWaitGroup.Wait()
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		responseAfterResync, err := s.GetAvailablePackageSummaries(
+			context.Background(),
+			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 	})
 }
@@ -733,7 +969,7 @@ func TestGetPackageRepositories(t *testing.T) {
 			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
 		},
 		{
-			name: "returns expected repositories in specific namespace",
+			name: "returns expected repositories in specific namespace (2)",
 			request: &v1alpha1.GetPackageRepositoriesRequest{
 				Context: &corev1.Context{
 					Namespace: "default",
@@ -765,7 +1001,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, _, mock, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
+			s, mock, _, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -789,8 +1025,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				}
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 		})
@@ -889,8 +1124,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.LongDescription, response.AvailablePackageDetail.LongDescription)
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 		})
@@ -965,8 +1199,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
+			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 		})
@@ -978,8 +1211,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 //
 func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
-		"name":       name,
-		"generation": int64(1),
+		"name":            name,
+		"generation":      int64(1),
+		"resourceVersion": "1",
 	}
 	if namespace != "" {
 		metadata["namespace"] = namespace
@@ -1004,7 +1238,7 @@ func newRepo(name string, namespace string, spec map[string]interface{}, status 
 	}
 }
 
-// newRepos takes a map of specs keyed by object name converting them to runtime objects.
+// newRepos takes a map of specs keyed by object name converting them to unstructured objects.
 func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
 	repos := []runtime.Object{}
 	for name, spec := range specs {
@@ -1043,8 +1277,13 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 	}
 }
 
-func newServer(clientGetter clientGetter) (*Server, redismock.ClientMock, error) {
+// I wanted to emphasize the fact that this flavor of 'newServer...' is kind of unusual and should only
+// be used directly by tests to test edge cases (in a one-off negative test),
+// such as TestBadClientGetter(), hence the weird name. Most tests should just use newServerWithRepos() flavor
+func newServerWithClientGetter(clientGetter clientGetter, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
+	mock.MatchExpectationsInOrder(false)
+
 	if clientGetter != nil {
 		mock.ExpectPing().SetVal("PONG")
 	}
@@ -1061,10 +1300,31 @@ func newServer(clientGetter clientGetter) (*Server, redismock.ClientMock, error)
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-	cache, err := newCacheWithRedisClient(config, redisCli)
+
+	eventProcessingWaitGroup := &sync.WaitGroup{}
+	for _, r := range repos {
+		eventProcessingWaitGroup.Add(1)
+		ready, ok := isRepoReady(r.(*unstructured.Unstructured).Object)
+		if ready && ok == nil {
+			key, bytes, err := redisKeyValueForRuntimeObject(r)
+			if err != nil {
+				continue
+			}
+			mock.ExpectSet(key, bytes, 0).SetVal("")
+		}
+	}
+
+	cache, err := newCacheWithRedisClient(config, redisCli, eventProcessingWaitGroup)
 	if err != nil {
 		return nil, mock, err
 	}
+
+	eventProcessingWaitGroup.Wait()
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		return nil, mock, err
+	}
+
 	s := &Server{
 		clientGetter: clientGetter,
 		cache:        cache,
@@ -1072,7 +1332,7 @@ func newServer(clientGetter clientGetter) (*Server, redismock.ClientMock, error)
 	return s, mock, nil
 }
 
-func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
+func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -1080,106 +1340,110 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, *fake.FakeDynamicClie
 		},
 		repos...)
 
+	// here we are essentially adding on to how List() works for HelmRepository objects
+	// this is done so that the the item list returned by List() command with fake client contains
+	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
+	// is critical
+	reactor := dynamicClient.Fake.ReactionChain[0]
+	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			handled, ret, err := reactor.React(action)
+			ulist, ok := ret.(*unstructured.UnstructuredList)
+			if ok && ulist != nil {
+				ulist.SetResourceVersion("1")
+			}
+			return handled, ret, err
+		})
+
+	watcher := watch.NewFake()
+
+	dynamicClient.Fake.PrependWatchReactor(
+		fluxHelmRepositories,
+		k8stesting.DefaultWatchReactor(watcher, nil))
+
 	clientGetter := func(context.Context) (dynamic.Interface, error) {
 		return dynamicClient, nil
 	}
 
-	s, mock, err := newServer(clientGetter)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return s, dynamicClient, mock, nil
-}
-
-func newServerWithWatcher(expectNil bool, repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
-	s, dynamicClient, mock, err := newServerWithRepos(repos...)
-	if err != nil {
-		return s, mock, nil, err
-	}
-
-	// this is so we can emulate actual k8s server firing events
-	// see https://github.com/kubernetes/kubernetes/issues/54075 for explanation
-	watcher := watch.NewFake()
-
-	dynamicClient.Fake.PrependWatchReactor(
-		"*",
-		k8stesting.DefaultWatchReactor(watcher, nil))
-
-	mock.MatchExpectationsInOrder(false)
-	// first we need to mock all the SETs and only then all the GETs, otherwise
-	// redismock throws a fit
-	mapVals := make(map[string][]byte)
-	if !expectNil {
-		s.cache.eventProcessingWaitGroup = &sync.WaitGroup{}
-
-		for _, r := range repos {
-			s.cache.eventProcessingWaitGroup.Add(1)
-			key := redisKeyForRuntimeObject(r)
-			packageSummaries, err := indexOneRepo(r.(*unstructured.Unstructured).Object)
-			if err != nil {
-				return s, mock, watcher, err
-			}
-			protoMsg := corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: packageSummaries,
-			}
-			bytes, err := proto.Marshal(&protoMsg)
-			if err != nil {
-				return s, mock, watcher, err
-			}
-			mapVals[key] = bytes
-			mock.ExpectSet(key, bytes, 0).SetVal("")
-
-			// fire an ADD event for this repo as k8s server would do
-			watcher.Add(r)
-		}
-
-		// sanity check
-		s.cache.watcherMutex.Lock()
-		defer s.cache.watcherMutex.Unlock()
-		if !s.cache.watcherStarted {
-			return s, mock, watcher, fmt.Errorf("unexpected condition: watcher not started")
-		}
-
-		// here we wait until all repos have been indexed on the server-side
-		s.cache.eventProcessingWaitGroup.Wait()
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		return s, mock, watcher, err
-	}
-
-	// TODO (gfichtenholt) move this out of this func - strictly speaking,
-	// GET only expected when the caller immediately calls GetAvailablePackageSummaries()
-	// which at the moment, they all do, but may not necessarily so
-	for _, r := range repos {
-		key := redisKeyForRuntimeObject(r)
-		if expectNil {
-			mock.ExpectGet(key).RedisNil()
-		} else {
-			mock.ExpectGet(key).SetVal(string(mapVals[key]))
-		}
-	}
-	return s, mock, watcher, nil
+	s, mock, err := newServerWithClientGetter(clientGetter, repos...)
+	return s, mock, watcher, err
 }
 
 func newServerWithCharts(charts ...runtime.Object) (*Server, *fake.FakeDynamicClient, redismock.ClientMock, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
-			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}: fluxHelmChartList,
+			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}:       fluxHelmChartList,
+			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 		},
 		charts...)
+
+	// here we are essentially adding on to how List() works for HelmRepository objects
+	// this is done so that the the item list returned by List() command with fake client contains
+	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
+	// is critical
+	reactor := dynamicClient.Fake.ReactionChain[0]
+	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			handled, ret, err := reactor.React(action)
+			ulist, ok := ret.(*unstructured.UnstructuredList)
+			if ok && ulist != nil {
+				ulist.SetResourceVersion("1")
+			}
+			return handled, ret, err
+		})
 
 	clientGetter := func(context.Context) (dynamic.Interface, error) {
 		return dynamicClient, nil
 	}
 
-	s, mock, err := newServer(clientGetter)
+	s, mock, err := newServerWithClientGetter(clientGetter)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	return s, dynamicClient, mock, nil
+}
+
+func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
+	mapVals := make(map[string][]byte)
+	keys := []string{}
+	for _, r := range repos {
+		key, bytes, err := redisKeyValueForRuntimeObject(r)
+		if err != nil {
+			return err
+		}
+		keys = append(keys, key)
+		mapVals[key] = bytes
+	}
+	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
+		mock.ExpectScan(0, "", 0).SetVal(keys, 0)
+		for _, k := range keys {
+			mock.ExpectGet(k).SetVal(string(mapVals[k]))
+		}
+	} else {
+		for _, r := range filterOptions.GetRepositories() {
+			keys := []string{}
+			for k, _ := range mapVals {
+				if strings.HasSuffix(k, ":"+r) {
+					keys = append(keys, k)
+				}
+			}
+			mock.ExpectScan(0, "helmrepositories:*:"+r, 0).SetVal(keys, 0)
+			for _, k := range keys {
+				mock.ExpectGet(k).SetVal(string(mapVals[k]))
+			}
+		}
+	}
+	return nil
+}
+
+func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
+	key := redisKeyForRuntimeObject(r)
+	bytes, _, err := onAddOrModifyRepo(key, r.(*unstructured.Unstructured).Object)
+	if err != nil {
+		return "", nil, err
+	}
+	return key, bytes.([]byte), nil
 }
 
 func redisKeyForRuntimeObject(r runtime.Object) string {
@@ -1202,3 +1466,119 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }
+
+// misc global vars that get re-used in multiple tests
+var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+	{
+		DisplayName:      "acs-engine-autoscaler",
+		LatestPkgVersion: "2.1.1",
+		IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+		ShortDescription: "Scales worker nodes within agent pools",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/acs-engine-autoscaler",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+	{
+		DisplayName:      "wordpress",
+		LatestPkgVersion: "0.7.5",
+		IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+		ShortDescription: "new description!",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/wordpress",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+}
+
+var cert_manager_summary = &corev1.AvailablePackageSummary{
+	DisplayName:      "cert-manager",
+	LatestPkgVersion: "v1.4.0",
+	IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+	ShortDescription: "A Helm chart for cert-manager",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "jetstack-1/cert-manager",
+		Context:    &corev1.Context{Namespace: "ns1"},
+		Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+	},
+}
+
+var elasticsearch_summary = &corev1.AvailablePackageSummary{
+	DisplayName:      "elasticsearch",
+	LatestPkgVersion: "15.5.0",
+	IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
+	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "index-with-categories-1/elasticsearch",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+	},
+}
+
+var ghost_summary = &corev1.AvailablePackageSummary{
+	DisplayName:      "ghost",
+	LatestPkgVersion: "13.0.14",
+	IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
+	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "index-with-categories-1/ghost",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+	},
+}
+
+var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
+	elasticsearch_summary,
+	ghost_summary,
+}
+
+var index_before_update_summaries = []*corev1.AvailablePackageSummary{
+	{
+		DisplayName:      "alpine",
+		LatestPkgVersion: "0.2.0",
+		IconUrl:          "",
+		ShortDescription: "Deploy a basic Alpine Linux pod",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/alpine",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+	{
+		DisplayName:      "nginx",
+		LatestPkgVersion: "1.1.0",
+		IconUrl:          "",
+		ShortDescription: "Create a basic nginx HTTP server",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/nginx",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+}
+
+var index_after_update_summaries = []*corev1.AvailablePackageSummary{
+	{
+		DisplayName:      "alpine",
+		LatestPkgVersion: "0.3.0",
+		IconUrl:          "",
+		ShortDescription: "Deploy a basic Alpine Linux pod",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/alpine",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	},
+	{
+		DisplayName:      "nginx",
+		LatestPkgVersion: "1.1.0",
+		IconUrl:          "",
+		ShortDescription: "Create a basic nginx HTTP server",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "testrepo/nginx",
+			Context:    &corev1.Context{Namespace: "ns2"},
+			Plugin:     &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"},
+		},
+	}}
