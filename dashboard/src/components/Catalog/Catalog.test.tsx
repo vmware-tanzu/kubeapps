@@ -39,7 +39,7 @@ const defaultProps = {
 };
 const chartItem: AvailablePackageSummary = {
   name: "foo",
-  category: "",
+  categories: [""],
   displayName: "foo",
   iconUrl: "",
   latestAppVersion: "v1.0.0",
@@ -52,7 +52,7 @@ const chartItem: AvailablePackageSummary = {
 };
 const chartItem2: AvailablePackageSummary = {
   name: "bar",
-  category: "Database",
+  categories: ["Database"],
   displayName: "bar",
   iconUrl: "",
   latestAppVersion: "v2.0.0",
@@ -605,7 +605,7 @@ describe("filters by category", () => {
         charts={{
           ...defaultChartState,
           items: [chartItem],
-          categories: [{ name: chartItem.category, count: 1 }],
+          categories: [{ name: chartItem.categories[0], count: 1 }],
         }}
       />,
     );
@@ -622,8 +622,8 @@ describe("filters by category", () => {
           ...defaultChartState,
           items: [chartItem, chartItem2],
           categories: [
-            { name: chartItem.category, count: 1 },
-            { name: chartItem2.category, count: 1 },
+            { name: chartItem.categories[0], count: 1 },
+            { name: chartItem2.categories[0], count: 1 },
           ],
         }}
       />,
@@ -650,8 +650,8 @@ describe("filters by category", () => {
           ...defaultChartState,
           items: [chartItem, chartItem2],
           categories: [
-            { name: chartItem.category, count: 1 },
-            { name: chartItem2.category, count: 1 },
+            { name: chartItem.categories[0], count: 1 },
+            { name: chartItem2.categories[0], count: 1 },
           ],
         }}
         filter={{ [filterNames.CATEGORY]: "Database" }}

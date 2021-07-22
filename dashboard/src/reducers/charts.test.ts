@@ -9,7 +9,7 @@ describe("chartReducer", () => {
   let initialState: IChartState;
   const chartItem: AvailablePackageSummary = {
     name: "foo",
-    category: "",
+    categories: [""],
     displayName: "foo",
     iconUrl: "",
     latestAppVersion: "v1.0.0",
@@ -23,7 +23,7 @@ describe("chartReducer", () => {
 
   const chartItem2: AvailablePackageSummary = {
     name: "bar",
-    category: "Database",
+    categories: ["Database"],
     displayName: "bar",
     iconUrl: "",
     latestAppVersion: "v2.0.0",

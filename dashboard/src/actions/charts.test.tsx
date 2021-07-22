@@ -25,7 +25,7 @@ const defaultSize = 0;
 
 const chartItem: AvailablePackageSummary = {
   name: "foo",
-  category: "",
+  categories: [""],
   displayName: "foo",
   iconUrl: "",
   latestAppVersion: "v1.0.0",
