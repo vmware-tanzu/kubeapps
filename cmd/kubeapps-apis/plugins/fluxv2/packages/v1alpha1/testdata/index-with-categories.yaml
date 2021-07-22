@@ -1,0 +1,76 @@
+apiVersion: v1
+entries:
+  elasticsearch:
+    - annotations:
+        category: Analytics
+      apiVersion: v2
+      appVersion: 7.13.2
+      created: "2021-06-18T11:07:56.105070413Z"
+      dependencies:
+      - name: common
+        repository: https://charts.bitnami.com/bitnami
+        tags:
+        - bitnami-common
+        version: 1.x.x
+      - condition: global.kibanaEnabled
+        name: kibana
+        repository: https://charts.bitnami.com/bitnami
+        version: 8.x.x
+      description: A highly scalable open-source full-text search and analytics engine
+      digest: 9912c085b1eed02397f2cd1f45b3fe82dfbc36ba7599eb1486957a550084078d
+      home: https://github.com/bitnami/charts/tree/master/bitnami/elasticsearch
+      icon: https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png
+      keywords:
+      - elasticsearch
+      maintainers:
+      - email: containers@bitnami.com
+        name: Bitnami
+      name: elasticsearch
+      sources:
+      - https://github.com/bitnami/bitnami-docker-elasticsearch
+      - https://www.elastic.co/products/elasticsearch
+      urls:
+      - https://charts.bitnami.com/bitnami/elasticsearch-15.5.0.tgz
+      version: 15.5.0
+  ghost:
+    - annotations:
+        category: CMS
+      apiVersion: v2
+      appVersion: 4.7.0
+      created: "2021-06-10T15:09:42.308823559Z"
+      dependencies:
+      - name: common
+        repository: https://charts.bitnami.com/bitnami
+        tags:
+        - bitnami-common
+        version: 1.x.x
+      - condition: mariadb.enabled
+        name: mariadb
+        repository: https://charts.bitnami.com/bitnami
+        tags:
+        - ghost-database
+        version: 9.x.x
+      description: A simple, powerful publishing platform that allows you to share your
+        stories with the world
+      digest: 2e8c1a08e90745ec076f40bd5b55d028a74ec0111854dc09d35e59e1be088847
+      home: https://github.com/bitnami/charts/tree/master/bitnami/ghost
+      icon: https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png
+      keywords:
+      - ghost
+      - blog
+      - http
+      - web
+      - application
+      - nodejs
+      - javascript
+      maintainers:
+      - email: containers@bitnami.com
+        name: Bitnami
+      name: ghost
+      sources:
+      - https://github.com/bitnami/bitnami-docker-ghost
+      - http://www.ghost.org/
+      urls:
+      - https://charts.bitnami.com/bitnami/ghost-13.0.14.tgz
+      version: 13.0.14
+generated: "2021-04-28T15:22:46.833256826+01:00"

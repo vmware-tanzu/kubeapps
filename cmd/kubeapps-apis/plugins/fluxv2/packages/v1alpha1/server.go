@@ -174,46 +174,49 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if request != nil && request.GetContext().GetCluster() != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
-			"Not supported yet: request.Context.Cluster: [%v]",
+			"not supported yet: request.Context.Cluster: [%v]",
 			request.Context.Cluster)
+	}
+
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"unable to intepret page token %q: %v",
+			request.GetPaginationOptions().GetPageToken(), err)
 	}
 
 	if s.cache == nil {
 		return nil, status.Errorf(
 			codes.FailedPrecondition,
-			"Server cache has not been properly initialized")
+			"server cache has not been properly initialized")
 	}
 
-	// TODO (gfichtenholt) use request.FilterOptions
-	repos, err := s.getHelmRepos(ctx, "")
+	repos, err := s.cache.listKeys(request.GetFilterOptions().GetRepositories())
 	if err != nil {
 		return nil, err
 	}
 
-	responsePackagesFromCache, err := s.cache.fetchCachedObjects(repos.Items)
+	cachedCharts, err := s.cache.fetchForMultiple(repos)
 	if err != nil {
 		return nil, err
 	}
 
-	// this non-sense below is only here to convert from []interface{} which is
-	// what the generic cache implementation returns for cache hits to
-	// a typed array object.
-	responsePackages := make([]*corev1.AvailablePackageSummary, 0)
-	for _, packages := range responsePackagesFromCache {
-		if packages != nil {
-			typedPackages, ok := packages.([]*corev1.AvailablePackageSummary)
-			if !ok {
-				return nil, status.Errorf(
-					codes.Internal,
-					"Unexpected value fetched from cache: %v", packages)
-			} else {
-				responsePackages = append(responsePackages, typedPackages...)
-			}
-		}
+	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), int(pageSize), pageOffset, cachedCharts)
+	if err != nil {
+		return nil, err
 	}
 
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(packageSummaries) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: responsePackages,
+		AvailablePackageSummaries: packageSummaries,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 
