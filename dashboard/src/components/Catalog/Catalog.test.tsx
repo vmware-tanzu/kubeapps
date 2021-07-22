@@ -331,7 +331,7 @@ describe("filters by application type", () => {
 describe("pagination and chart fetching", () => {
   let spyOnUseState: jest.SpyInstance;
 
-  it("sets the initial state page to 1 before fetching charts", () => {
+  it("sets the initial state page to 0 before fetching charts", () => {
     const fetchCharts = jest.fn();
     const resetRequestCharts = jest.fn();
 
@@ -352,9 +352,9 @@ describe("pagination and chart fetching", () => {
       />,
     );
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(0);
-    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 1, 20, "");
+    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 0, 20, "");
     expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
 
@@ -378,9 +378,9 @@ describe("pagination and chart fetching", () => {
         }
       />,
     );
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
-    expect(wrapper.find(ChartCatalogItem).length).toBe(0);
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
+    expect(wrapper.find(ChartCatalogItem).length).toBe(1);
+    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
@@ -404,9 +404,9 @@ describe("pagination and chart fetching", () => {
         }
       />,
     );
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(2);
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
+    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
@@ -427,9 +427,9 @@ describe("pagination and chart fetching", () => {
           // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
           return [true, setState];
         }
-        if (init === 1) {
+        if (init === 0) {
           // Mocking the result of setPage to ensure it's called
-          return [1, setPage];
+          return [0, setPage];
         }
         return [init, setState];
       });
@@ -446,7 +446,7 @@ describe("pagination and chart fetching", () => {
 
     mountWrapper(defaultStore, <Catalog {...populatedProps} charts={charts} />);
     spyOnUseState.mockRestore();
-    expect(setPage).toHaveBeenCalledWith(2);
+    expect(setPage).toHaveBeenCalledWith(1);
   });
 
   // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
