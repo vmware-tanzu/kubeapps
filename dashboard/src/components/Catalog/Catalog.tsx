@@ -117,7 +117,7 @@ function Catalog(props: ICatalogProps) {
 
   const dispatch = useDispatch();
   const [filters, setFilters] = React.useState(initialFilterState());
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(0);
 
   useEffect(() => {
     const newFilters = {};
@@ -203,7 +203,7 @@ function Catalog(props: ICatalogProps) {
 
   // detect changes in cluster/ns/repos/search and reset the current chart list
   useEffect(() => {
-    setPage(1);
+    setPage(0);
     resetRequestCharts();
   }, [resetRequestCharts, cluster, namespace, reposFilter, searchFilter]);
 
