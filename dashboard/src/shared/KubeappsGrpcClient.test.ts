@@ -42,15 +42,15 @@ describe("kubeapps grpc core plugin service", () => {
   it("it fails when an internal error is thrown", async () => {
     const kubeappsGrpcClient = new KubeappsGrpcClient(fakeErrorransport);
     const getPluginsServiceClientImpl = kubeappsGrpcClient.getPluginsServiceClientImpl();
-    const getConfiguredPlugins = await getPluginsServiceClientImpl.GetConfiguredPlugins({});
-    expect(getConfiguredPlugins).rejects.toThrowError("boom");
+    const getConfiguredPlugins = getPluginsServiceClientImpl.GetConfiguredPlugins({});
+    await expect(getConfiguredPlugins).rejects.toThrowError("boom");
   });
 
   it("it fails when unauthenticated", async () => {
     const kubeappsGrpcClient = new KubeappsGrpcClient(fakeUnauthenticatedTransport);
     const getPluginsServiceClientImpl = kubeappsGrpcClient.getPluginsServiceClientImpl();
-    const getConfiguredPlugins = await getPluginsServiceClientImpl.GetConfiguredPlugins({});
-    expect(getConfiguredPlugins).rejects.toThrowError("you shall not pass");
+    const getConfiguredPlugins = getPluginsServiceClientImpl.GetConfiguredPlugins({});
+    await expect(getConfiguredPlugins).rejects.toThrowError("you shall not pass");
   });
 
   it("it returns null when the server sends no messages", async () => {
