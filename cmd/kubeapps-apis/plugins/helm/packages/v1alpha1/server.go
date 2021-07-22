@@ -256,9 +256,13 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
 	}
 
+	pkg.Name = chart.Name
+	// Helm's Chart.yaml (and hence our model) does not include a separate
+	// display name, so the chart name is also used here.
 	pkg.DisplayName = chart.Name
 	pkg.IconUrl = chart.Icon
 	pkg.ShortDescription = chart.Description
+	pkg.Categories = []string{chart.Category}
 
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
 		Identifier: chart.ID,
@@ -268,6 +272,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
+		pkg.LatestAppVersion = chart.ChartVersions[0].AppVersion
 	}
 
 	return pkg, nil
@@ -423,6 +428,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	pkg.IconUrl = chart.Icon
 	pkg.Name = chart.Name
 	pkg.ShortDescription = chart.Description
+	pkg.Categories = []string{chart.Category}
 
 	pkg.Maintainers = []*corev1.Maintainer{}
 	for _, maintainer := range chart.Maintainers {
