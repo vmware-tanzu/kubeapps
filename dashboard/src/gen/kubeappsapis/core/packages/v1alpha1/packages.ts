@@ -197,6 +197,13 @@ export interface AvailablePackageSummary {
    */
   latestPkgVersion: string;
   /**
+   * Latest available package app version
+   *
+   * The app version of the latest version available for this package. Often expected
+   * when viewing a summary of many available packages.
+   */
+  latestAppVersion: string;
+  /**
    * Available package Icon URL
    *
    * A url for an icon.
@@ -214,6 +221,13 @@ export interface AvailablePackageSummary {
    * A short description of the app provided by the package
    */
   shortDescription: string;
+  /**
+   * Available package categories
+   *
+   * A user-facing list of category names useful for creating richer user interfaces.
+   * Plugins can choose not to implement this
+   */
+  categories: string[];
 }
 
 /**
@@ -291,6 +305,13 @@ export interface AvailablePackageDetail {
    * List of Maintainer
    */
   maintainers: Maintainer[];
+  /**
+   * Available package categories
+   *
+   * A user-facing list of category names useful for creating richer user interfaces.
+   * Plugins can choose not to implement this
+   */
+  categories: string[];
   /**
    * Custom data added by the plugin
    *
@@ -1383,9 +1404,11 @@ export const GetInstalledPackageSummariesResponse = {
 const baseAvailablePackageSummary: object = {
   name: "",
   latestPkgVersion: "",
+  latestAppVersion: "",
   iconUrl: "",
   displayName: "",
   shortDescription: "",
+  categories: "",
 };
 
 export const AvailablePackageSummary = {
@@ -1402,14 +1425,20 @@ export const AvailablePackageSummary = {
     if (message.latestPkgVersion !== "") {
       writer.uint32(26).string(message.latestPkgVersion);
     }
+    if (message.latestAppVersion !== "") {
+      writer.uint32(34).string(message.latestAppVersion);
+    }
     if (message.iconUrl !== "") {
-      writer.uint32(34).string(message.iconUrl);
+      writer.uint32(42).string(message.iconUrl);
     }
     if (message.displayName !== "") {
-      writer.uint32(42).string(message.displayName);
+      writer.uint32(50).string(message.displayName);
     }
     if (message.shortDescription !== "") {
-      writer.uint32(50).string(message.shortDescription);
+      writer.uint32(58).string(message.shortDescription);
+    }
+    for (const v of message.categories) {
+      writer.uint32(66).string(v!);
     }
     return writer;
   },
@@ -1420,6 +1449,7 @@ export const AvailablePackageSummary = {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
+    message.categories = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1433,13 +1463,19 @@ export const AvailablePackageSummary = {
           message.latestPkgVersion = reader.string();
           break;
         case 4:
-          message.iconUrl = reader.string();
+          message.latestAppVersion = reader.string();
           break;
         case 5:
-          message.displayName = reader.string();
+          message.iconUrl = reader.string();
           break;
         case 6:
+          message.displayName = reader.string();
+          break;
+        case 7:
           message.shortDescription = reader.string();
+          break;
+        case 8:
+          message.categories.push(reader.string());
           break;
         default:
           reader.skipType(tag & 7);
@@ -1453,6 +1489,7 @@ export const AvailablePackageSummary = {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
+    message.categories = [];
     if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
       message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
     } else {
@@ -1467,6 +1504,11 @@ export const AvailablePackageSummary = {
       message.latestPkgVersion = String(object.latestPkgVersion);
     } else {
       message.latestPkgVersion = "";
+    }
+    if (object.latestAppVersion !== undefined && object.latestAppVersion !== null) {
+      message.latestAppVersion = String(object.latestAppVersion);
+    } else {
+      message.latestAppVersion = "";
     }
     if (object.iconUrl !== undefined && object.iconUrl !== null) {
       message.iconUrl = String(object.iconUrl);
@@ -1483,6 +1525,11 @@ export const AvailablePackageSummary = {
     } else {
       message.shortDescription = "";
     }
+    if (object.categories !== undefined && object.categories !== null) {
+      for (const e of object.categories) {
+        message.categories.push(String(e));
+      }
+    }
     return message;
   },
 
@@ -1494,9 +1541,15 @@ export const AvailablePackageSummary = {
         : undefined);
     message.name !== undefined && (obj.name = message.name);
     message.latestPkgVersion !== undefined && (obj.latestPkgVersion = message.latestPkgVersion);
+    message.latestAppVersion !== undefined && (obj.latestAppVersion = message.latestAppVersion);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
     message.displayName !== undefined && (obj.displayName = message.displayName);
     message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
+    if (message.categories) {
+      obj.categories = message.categories.map(e => e);
+    } else {
+      obj.categories = [];
+    }
     return obj;
   },
 
@@ -1504,6 +1557,7 @@ export const AvailablePackageSummary = {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
+    message.categories = [];
     if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
       message.availablePackageRef = AvailablePackageReference.fromPartial(
         object.availablePackageRef,
@@ -1521,6 +1575,11 @@ export const AvailablePackageSummary = {
     } else {
       message.latestPkgVersion = "";
     }
+    if (object.latestAppVersion !== undefined && object.latestAppVersion !== null) {
+      message.latestAppVersion = object.latestAppVersion;
+    } else {
+      message.latestAppVersion = "";
+    }
     if (object.iconUrl !== undefined && object.iconUrl !== null) {
       message.iconUrl = object.iconUrl;
     } else {
@@ -1535,6 +1594,11 @@ export const AvailablePackageSummary = {
       message.shortDescription = object.shortDescription;
     } else {
       message.shortDescription = "";
+    }
+    if (object.categories !== undefined && object.categories !== null) {
+      for (const e of object.categories) {
+        message.categories.push(e);
+      }
     }
     return message;
   },
@@ -1551,6 +1615,7 @@ const baseAvailablePackageDetail: object = {
   readme: "",
   defaultValues: "",
   valuesSchema: "",
+  categories: "",
 };
 
 export const AvailablePackageDetail = {
@@ -1594,8 +1659,11 @@ export const AvailablePackageDetail = {
     for (const v of message.maintainers) {
       Maintainer.encode(v!, writer.uint32(98).fork()).ldelim();
     }
+    for (const v of message.categories) {
+      writer.uint32(106).string(v!);
+    }
     if (message.customDetail !== undefined) {
-      Any.encode(message.customDetail, writer.uint32(106).fork()).ldelim();
+      Any.encode(message.customDetail, writer.uint32(114).fork()).ldelim();
     }
     return writer;
   },
@@ -1605,6 +1673,7 @@ export const AvailablePackageDetail = {
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
     message.maintainers = [];
+    message.categories = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1645,6 +1714,9 @@ export const AvailablePackageDetail = {
           message.maintainers.push(Maintainer.decode(reader, reader.uint32()));
           break;
         case 13:
+          message.categories.push(reader.string());
+          break;
+        case 14:
           message.customDetail = Any.decode(reader, reader.uint32());
           break;
         default:
@@ -1658,6 +1730,7 @@ export const AvailablePackageDetail = {
   fromJSON(object: any): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
     message.maintainers = [];
+    message.categories = [];
     if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
       message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
     } else {
@@ -1718,6 +1791,11 @@ export const AvailablePackageDetail = {
         message.maintainers.push(Maintainer.fromJSON(e));
       }
     }
+    if (object.categories !== undefined && object.categories !== null) {
+      for (const e of object.categories) {
+        message.categories.push(String(e));
+      }
+    }
     if (object.customDetail !== undefined && object.customDetail !== null) {
       message.customDetail = Any.fromJSON(object.customDetail);
     } else {
@@ -1747,6 +1825,11 @@ export const AvailablePackageDetail = {
     } else {
       obj.maintainers = [];
     }
+    if (message.categories) {
+      obj.categories = message.categories.map(e => e);
+    } else {
+      obj.categories = [];
+    }
     message.customDetail !== undefined &&
       (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
     return obj;
@@ -1755,6 +1838,7 @@ export const AvailablePackageDetail = {
   fromPartial(object: DeepPartial<AvailablePackageDetail>): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
     message.maintainers = [];
+    message.categories = [];
     if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
       message.availablePackageRef = AvailablePackageReference.fromPartial(
         object.availablePackageRef,
@@ -1815,6 +1899,11 @@ export const AvailablePackageDetail = {
     if (object.maintainers !== undefined && object.maintainers !== null) {
       for (const e of object.maintainers) {
         message.maintainers.push(Maintainer.fromPartial(e));
+      }
+    }
+    if (object.categories !== undefined && object.categories !== null) {
+      for (const e of object.categories) {
+        message.categories.push(e);
       }
     }
     if (object.customDetail !== undefined && object.customDetail !== null) {

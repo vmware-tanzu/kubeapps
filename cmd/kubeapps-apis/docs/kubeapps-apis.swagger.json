@@ -1566,6 +1566,14 @@
           "description": "List of Maintainer",
           "title": "Available package maintainers"
         },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this",
+          "title": "Available package categories"
+        },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
           "description": "Some additional information added by the plugin",
@@ -1615,6 +1623,11 @@
           "description": "The latest version available for this package. Often expected when viewing\na summary of many available packages.",
           "title": "Latest available package version"
         },
+        "latestAppVersion": {
+          "type": "string",
+          "description": "The app version of the latest version available for this package. Often expected\nwhen viewing a summary of many available packages.",
+          "title": "Latest available package app version"
+        },
         "iconUrl": {
           "type": "string",
           "description": "A url for an icon.",
@@ -1629,6 +1642,14 @@
           "type": "string",
           "description": "A short description of the app provided by the package",
           "title": "Available package short description"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this",
+          "title": "Available package categories"
         }
       },
       "description": "An AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages.",
