@@ -81,7 +81,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         } as IReceiveChartsActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, "", 1, defaultSize, "foo"]
+    expectedParams: [cluster, namespace, "", 1, defaultSize, "foo"],
   },
   {
     name: "fetches charts from a repo (first page)",
@@ -99,7 +99,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         } as IReceiveChartsActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 1, defaultSize, undefined]
+    expectedParams: [cluster, namespace, repos, 1, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (middle page)",
@@ -117,7 +117,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         } as IReceiveChartsActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined]
+    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (last page)",
@@ -135,7 +135,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         } as IReceiveChartsActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 3, defaultSize, undefined]
+    expectedParams: [cluster, namespace, repos, 3, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (already processed page)",
@@ -153,7 +153,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         } as IReceiveChartsActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined]
+    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (off-limits page)",
@@ -171,7 +171,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         } as IReceiveChartsActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 4, defaultSize, undefined]
+    expectedParams: [cluster, namespace, repos, 4, defaultSize, undefined],
   },
 ];
 
