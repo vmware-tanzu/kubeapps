@@ -165,6 +165,21 @@ it("disables the create button if not allowed", () => {
   expect(wrapper.find(".flat-btn").first()).toBeDisabled();
 });
 
+it("disables the change context button if namespace is not loaded yet", () => {
+  const clusters = {
+    currentCluster: "foo",
+    clusters: {
+      foo: {
+        currentNamespace: "default",
+        namespaces: [],
+        canCreateNS: false,
+      },
+    },
+  } as IClustersState;
+  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  expect(wrapper.find(CdsButton).filterWhere(b => b.text() === "Change Context")).toBeDisabled();
+});
+
 it("changes the location with the new namespace", () => {
   const push = jest.fn();
   spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
