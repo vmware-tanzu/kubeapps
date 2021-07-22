@@ -16,9 +16,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"path"
 	"strings"
@@ -31,34 +29,28 @@ import (
 // Fetches helm chart details from a gzipped tarball
 //
 func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
-	req, err := http.NewRequest("GET", chartTarballURL, nil)
-	if err != nil {
-		return nil, err
-	}
+	reqHeaders := make(map[string]string)
 	if len(userAgent) > 0 {
-		req.Header.Set("User-Agent", userAgent)
+		reqHeaders["User-Agent"] = userAgent
 	}
-
 	if len(authz) > 0 {
-		req.Header.Set("Authorization", authz)
+		reqHeaders["Authorization"] = authz
 	}
 
-	res, err := netClient.Do(req)
-	if res != nil {
-		defer res.Body.Close()
+	// use our "standard" http-client library
+	reader, _, err := httpclient.GetStream(chartTarballURL, httpclient.New(), reqHeaders)
+	if reader != nil {
+		defer reader.Close()
 	}
+
 	if err != nil {
 		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non OK response code: [%d]", res.StatusCode)
 	}
 
 	// We read the whole chart into memory, this should be okay since the chart
 	// tarball needs to be small enough to fit into a GRPC call (Tiller
 	// requirement)
-	gzf, err := gzip.NewReader(res.Body)
+	gzf, err := gzip.NewReader(reader)
 	if err != nil {
 		return nil, err
 	}

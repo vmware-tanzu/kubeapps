@@ -238,22 +238,15 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
 	}
 
-	if request.PkgVersion != "" {
-		return nil, status.Errorf(
-			codes.Unimplemented,
-			"Not supported yet: version: [%v]",
-			request.PkgVersion)
-	}
-
 	// TODO (gfichtenholt) check if the repo has been indexed, stored in the cache and requested
 	// package is part of it. Otherwise, there is a time window when this scenario can happen:
 	// - GetAvailablePackageSummaries may return {} while a ready repo is being indexed BUT
 	// - GetAvailablePackageDetail may return package detail
-	url, err := s.pullChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace)
+	url, err := s.pullChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Found chart url: [%s]", *url)
+	log.Infof("Found chart url: [%s]", url)
 
 	// unzip and untar .tgz file
 	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
@@ -261,7 +254,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
 	// Flux does the hard work of pulling the bits from remote repo
 	// based on secretRef associated with HelmRepository, if applicable
-	detail, err := tar.FetchChartDetailFromTarball(packageRef.Identifier, *url, "", "", httpclient.New())
+	detail, err := tar.FetchChartDetailFromTarball(packageRef.Identifier, url, "", "", httpclient.New())
 	if err != nil {
 		return nil, err
 	}
@@ -270,16 +263,28 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		AvailablePackageDetail: &corev1.AvailablePackageDetail{
 			AvailablePackageRef: packageRef, // copy just for now
 			Name:                packageIdParts[1],
-			LongDescription:     detail[chart.ReadmeKey],
+			Readme:              detail[chart.ReadmeKey],
+			DefaultValues:       detail[chart.ValuesKey],
+			ValuesSchema:        detail[chart.SchemaKey],
+			// TODO
+			// PkgVersion
+			// AppVersion
+			// DisplayName
+			// IconUrl
+			// ShortDescription
+			// LongDescription
+			// Maintainers
 		},
 	}, nil
 }
 
 // returns the url from which chart .tgz can be downloaded
-func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartName string, namespace string) (*string, error) {
+// here chartVersion string, if specified at all, should be specific, like "14.4.0",
+// not an expression like ">14 <15"
+func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (string, error) {
 	client, err := s.getDynamicClient(ctx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	chartsResource := schema.GroupVersionResource{
@@ -294,35 +299,22 @@ func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartNam
 	// TODO (gfichtenholt):
 	// see https://github.com/kubeapps/kubeapps/pull/2915
 	// for context. It'd be better if we could filter on server-side. The problem is the set of supported
-	// fields in FieldSelector is very small. things like "spec.chart" are certainly not supported.
+	// fields in FieldSelector is very small. things like "spec.chart" or "status.artifact.revision" are
+	// certainly not supported.
 	// see
 	//  - kubernetes/client-go#713 and
 	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
 	//  - https://github.com/kubernetes/kubernetes/issues/53459
 	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	for _, unstructuredChart := range chartList.Items {
-		thisChartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
-		thisRepoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
-
-		// TODO (gfichtenholt) compare chart versions too
-		if err == nil && err2 == nil && found && found2 && repoName == thisRepoName && chartName == thisChartName {
-			done, err := isChartPullComplete(&unstructuredChart)
-			if err != nil {
-				return nil, err
-			} else if done {
-				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
-				if err != nil || !found {
-					return nil, status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
-				}
-				log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
-				return &url, nil
-			}
-			// TODO (gfichtenholt) waitUntilChartPullComplete?
-		}
+	url, err := findUrlForChartInList(chartList, repoName, chartName, chartVersion)
+	if err != nil {
+		return "", err
+	} else if url != "" {
+		return url, nil
 	}
 
 	// did not find the chart, need to create
@@ -331,42 +323,28 @@ func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartNam
 	// 1. HelmChart object needs to be co-located in the same namespace as the HelmRepository it is referencing.
 	// 2. flux impersonates a "super" user when doing this (see fluxv2 plug-in specific notes at the end of
 	//	design doc). We should probably be doing simething similar to avoid RBAC-related problems
-	unstructuredChart := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-			"kind":       fluxHelmChart,
-			"metadata": map[string]interface{}{
-				"generateName": fmt.Sprintf("%s-", chartName),
-			},
-			"spec": map[string]interface{}{
-				"chart": chartName,
-				"sourceRef": map[string]interface{}{
-					"name": repoName,
-					"kind": fluxHelmRepository,
-				},
-				"interval": "10m",
-			},
-		},
-	}
+	unstructuredChart := newFluxHelmChart(chartName, repoName, chartVersion)
 
 	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
 		log.Errorf("error creating chart: %v\n%v", err, unstructuredChart)
-		return nil, err
+		return "", err
 	}
 
-	log.Infof("created chart: [%v]", newChart)
+	log.Infof("created chart: [%v]", prettyPrintMap(newChart.Object))
 
-	// wait until flux reconciles
 	watcher, err := resourceIfc.Watch(ctx, metav1.ListOptions{
 		ResourceVersion: newChart.GetResourceVersion(),
 	})
 	if err != nil {
 		log.Errorf("error creating watch: %v\n%v", err, unstructuredChart)
-		return nil, err
+		return "", err
 	}
 
-	// wait til we have chart url available
+	// wait til wait until flux reconciles and we have chart url available
+	// TODO (gfichtenholt) note that, unlike with ResourceWatcherCache, the
+	// wait time window is very short here so I am not employing the RetryWatcher
+	// technique here for now
 	return waitUntilChartPullComplete(watcher)
 }
 
