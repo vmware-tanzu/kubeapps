@@ -74,8 +74,6 @@ message GetAvailablePackageSummariesRequest {
   // The filters used for the request
   FilterOptions filter_options = 2;
 
-  // PaginationOptions
-  //
   // Pagination options specifying where to start and how many results to include.
   PaginationOptions pagination_options = 3;
 }
@@ -116,8 +114,6 @@ message GetInstalledPackageSummariesRequest {
   // The context (cluster/namespace) for the request.
   Context context = 1;
 
-  // PaginationOptions
-  //
   // Pagination options specifying where to start and how many results to include.
   PaginationOptions pagination_options = 2;
 }
@@ -130,13 +126,13 @@ message GetInstalledPackageSummariesRequest {
 message GetAvailablePackageSummariesResponse {
   // TODO: add example for API docs
   // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-  //   example: '{"available_packages_summaries": [{}]}'
+  //   example: '{"available_package_summaries": [{}]}'
   // };
 
   // Available packages summaries
   //
   // List of AvailablePackageSummary
-  repeated AvailablePackageSummary available_packages_summaries = 1;
+  repeated AvailablePackageSummary available_package_summaries = 1;
 
   // Next page token
   //
@@ -169,11 +165,23 @@ message GetAvailablePackageVersionsResponse {
   //   example: '{"package_app_versions": [{}]}'
   // };
 
+  // Package AppVersion
+  //
   // PackageAppVersion conveys both the package version and the packaged app version.
   message PackageAppVersion {
+    // Package version
+    //
+    // Version of the package itself
     string pkg_version = 1;
+
+    // Application version
+    //
+    // Version of the packaged application
     string app_version = 2;
   };
+
+  // Package app versions
+  //
   // By default (when version_query is empty or ignored) the response
   // should contain an ordered summary of versions including the most recent three
   // patch versions of the most recent three minor versions of the most recent three
@@ -205,9 +213,12 @@ message GetInstalledPackageSummariesResponse {
   // Installed packages summaries
   //
   // List of InstalledPackageSummary
-  repeated InstalledPackageSummary installed_packages_summaries = 1;
+  repeated InstalledPackageSummary installed_package_summaries = 1;
 
-  // The token used to request the next page of results
+  // Next page token
+  //
+  // This field represents the pagination token to retrieve the next page of
+  // results. If the value is "", it means no further results for the request.
   string next_page_token = 2;
 }
 
@@ -588,6 +599,8 @@ message InstalledPackageReference {
 // fields as necessary (such as something similar to Carvel's `prereleases` option
 // to its versionSelection).
 message VersionReference {
+  // Version
+  //
   // The format of the version constraint depends on the backend. For example,
   // for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
   string version = 1;

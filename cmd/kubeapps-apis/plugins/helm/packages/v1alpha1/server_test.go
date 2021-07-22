@@ -513,7 +513,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
 						Name:             "chart-1",
 						DisplayName:      "chart-1",
@@ -561,7 +561,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
 						Name:             "chart-1",
 						DisplayName:      "chart-1",
@@ -651,7 +651,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
 						Name:             "chart-2",
 						DisplayName:      "chart-2",
@@ -692,7 +692,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
 						Name:             "chart-3",
 						DisplayName:      "chart-3",
@@ -1300,7 +1300,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackagesSummaries: []*corev1.InstalledPackageSummary{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
@@ -1359,7 +1359,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackagesSummaries: []*corev1.InstalledPackageSummary{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
@@ -1435,7 +1435,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackagesSummaries: []*corev1.InstalledPackageSummary{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
@@ -1499,7 +1499,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackagesSummaries: []*corev1.InstalledPackageSummary{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{

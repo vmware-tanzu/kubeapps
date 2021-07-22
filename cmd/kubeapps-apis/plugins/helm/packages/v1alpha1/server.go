@@ -224,8 +224,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: responsePackages,
-		NextPageToken:              nextPageToken,
+		AvailablePackageSummaries: responsePackages,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 
@@ -550,7 +550,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	response := &corev1.GetInstalledPackageSummariesResponse{
-		InstalledPackagesSummaries: installedPkgSummaries,
+		InstalledPackageSummaries: installedPkgSummaries,
 	}
 	if len(releases) == cmd.Limit {
 		response.NextPageToken = fmt.Sprintf("%d", cmd.Limit+1)
