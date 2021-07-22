@@ -543,6 +543,30 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		installedPkgSummaries[i] = installedPkgSummaryFromRelease(r)
 	}
 
+	// Fill in the latest package version for each.
+	// TODO(mnelson): Update to do this with a single query rather than iterating and
+	// querying per release.
+	for i, rel := range releases {
+		// Helm does not store a back-reference to the chart used to create a
+		// release (https://github.com/helm/helm/issues/6464), so for each
+		// release, we look up a chart with than name and version available in
+		// the release namespace, and if one is found, pull out the latest chart
+		// version.
+		cq := utils.ChartQuery{
+			Namespace:  rel.Namespace,
+			ChartName:  rel.Chart.Metadata.Name,
+			Version:    rel.Chart.Metadata.Version,
+			AppVersion: rel.Chart.Metadata.AppVersion,
+		}
+		charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
+		}
+		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
+			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
+		}
+	}
+
 	response := &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackagesSummaries: installedPkgSummaries,
 	}
@@ -568,11 +592,5 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 		IconUrl:           r.Chart.Metadata.Icon,
 		PkgDisplayName:    r.Chart.Name(),
 		ShortDescription:  r.Chart.Metadata.Description,
-
-		// LatestMatchingPkgVersion will always be empty for direct helm where there
-		// is no server-sided reconcilliation of upgrades.
-		// TODO(mnelson): LatestPkgVersion should be populated from the latest package
-		// detail for this package.
-		// LatestPkgVersion:
 	}
 }

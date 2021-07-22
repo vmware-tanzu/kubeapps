@@ -1285,6 +1285,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "1.2.3",
 						},
 						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.3",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1299,6 +1300,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "4.5.6",
 						},
 						CurrentPkgVersion: "4.5.6",
+						LatestPkgVersion:  "4.5.6",
 					},
 				},
 			},
@@ -1344,6 +1346,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "1.2.3",
 						},
 						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.3",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1358,6 +1361,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "3.4.5",
 						},
 						CurrentPkgVersion: "3.4.5",
+						LatestPkgVersion:  "3.4.5",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1372,6 +1376,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "4.5.6",
 						},
 						CurrentPkgVersion: "4.5.6",
+						LatestPkgVersion:  "4.5.6",
 					},
 				},
 			},
@@ -1420,6 +1425,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "1.2.3",
 						},
 						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.3",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1434,6 +1440,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "3.4.5",
 						},
 						CurrentPkgVersion: "3.4.5",
+						LatestPkgVersion:  "3.4.5",
 					},
 				},
 				NextPageToken: "3",
@@ -1484,9 +1491,44 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "4.5.6",
 						},
 						CurrentPkgVersion: "4.5.6",
+						LatestPkgVersion:  "4.5.6",
 					},
 				},
 				NextPageToken: "",
+			},
+		},
+		{
+			name: "includes a latest package version when available",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "namespace-1"},
+			},
+			existingReleases: []releaseStub{
+				{
+					name:         "my-release-1",
+					namespace:    "namespace-1",
+					chartVersion: "1.2.3",
+					status:       release.StatusDeployed,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackagesSummaries: []*corev1.InstalledPackageSummary{
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-1",
+							},
+							Identifier: "my-release-1",
+						},
+						Name:    "my-release-1",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "1.2.3",
+						},
+						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.5",
+					},
+				},
 			},
 		},
 	}
@@ -1495,11 +1537,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
 			actionConfig := newActionConfigFixture(t, tc.request.GetContext().GetNamespace(), tc.existingReleases)
-			server, _, cleanup := makeServer(t, authorized, actionConfig)
-			// It is the namespace of the the driver which determines the results. In the prod code,
-			// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
-			// actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.request.GetContext().GetNamespace())
+			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
+
+			if tc.expectedStatusCode == codes.OK {
+				populateAssetDB(t, mock, tc.expectedResponse.InstalledPackagesSummaries)
+			}
 
 			response, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
 
@@ -1515,6 +1558,11 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
 	}
@@ -1538,34 +1586,73 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 	}
 
 	for _, r := range rels {
-		rel := &release.Release{
-			Name:      r.name,
-			Namespace: r.namespace,
-			Version:   r.version,
-			Info: &release.Info{
-				Status: r.status,
-			},
-			Chart: &chart.Chart{
-				Metadata: &chart.Metadata{
-					Version: r.chartVersion,
-					Icon:    "https://example.com/icon.png",
-				},
-			},
-		}
+		rel := releaseForStub(r)
 		err := actionConfig.Releases.Create(rel)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
+	// It is the namespace of the the driver which determines the results. In the prod code,
+	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
 	memDriver.SetNamespace(namespace)
 
 	return actionConfig
 }
 
+func releaseForStub(r releaseStub) *release.Release {
+	return &release.Release{
+		Name:      r.name,
+		Namespace: r.namespace,
+		Version:   r.version,
+		Info: &release.Info{
+			Status: r.status,
+		},
+		Chart: &chart.Chart{
+			Metadata: &chart.Metadata{
+				Version: r.chartVersion,
+				Icon:    "https://example.com/icon.png",
+			},
+		},
+	}
+}
+
+func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
+	chartVersions := []models.ChartVersion{}
+	if pkg.LatestPkgVersion != "" {
+		chartVersions = append(chartVersions, models.ChartVersion{
+			Version: pkg.LatestPkgVersion,
+		})
+	}
+	chartVersions = append(chartVersions, models.ChartVersion{
+		Version: pkg.CurrentPkgVersion,
+	})
+
+	return &models.Chart{
+		Name:          pkg.Name,
+		ChartVersions: chartVersions,
+	}
+}
+
+func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
+	// The code currently executes one query per release in the paginated
+	// results and should receive a single row response.
+	for _, pkg := range pkgs {
+		chartJSON, err := json.Marshal(chartAssetForPackage(pkg))
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		rows := sqlmock.NewRows([]string{"info"})
+		rows.AddRow(string(chartJSON))
+		mock.ExpectQuery("SELECT info FROM").
+			WillReturnRows(rows)
+	}
+}
+
 type releaseStub struct {
-	name         string
-	namespace    string
-	version      int
-	chartVersion string
-	status       release.Status
+	name          string
+	namespace     string
+	version       int
+	chartVersion  string
+	latestVersion string
+	status        release.Status
 }
