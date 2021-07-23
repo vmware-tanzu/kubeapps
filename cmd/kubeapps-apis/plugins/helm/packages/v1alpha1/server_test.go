@@ -1541,7 +1541,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackagesSummaries: []*corev1.InstalledPackageSummary{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
@@ -1570,7 +1570,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			defer cleanup()
 
 			if tc.expectedStatusCode == codes.OK {
-				populateAssetDB(t, mock, tc.expectedResponse.InstalledPackagesSummaries)
+				populateAssetDB(t, mock, tc.expectedResponse.InstalledPackageSummaries)
 			}
 
 			response, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
