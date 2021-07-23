@@ -38,7 +38,7 @@ func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent 
 	}
 
 	// use our "standard" http-client library
-	reader, _, err := httpclient.GetStream(chartTarballURL, httpclient.New(), reqHeaders)
+	reader, _, err := httpclient.GetStream(chartTarballURL, netClient, reqHeaders)
 	if reader != nil {
 		defer reader.Close()
 	}
