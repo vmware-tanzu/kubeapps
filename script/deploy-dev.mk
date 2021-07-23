@@ -31,7 +31,6 @@ deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 		--from-literal=postgresql-postgres-password=dev-only-fake-password \
 		--from-literal=postgresql-password=dev-only-fake-password
 
-
 deploy-dev-kubeapps:
 	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
