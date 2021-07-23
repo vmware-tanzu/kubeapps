@@ -71,10 +71,12 @@ func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent 
 	readmeFileName := fixedName + "/README.md"
 	valuesFileName := fixedName + "/values.yaml"
 	schemaFileName := fixedName + "/values.schema.json"
+	chartYamlFileName := fixedName + "/Chart.yaml"
 	filenames := map[string]string{
-		chart.ValuesKey: valuesFileName,
-		chart.ReadmeKey: readmeFileName,
-		chart.SchemaKey: schemaFileName,
+		chart.ValuesKey:    valuesFileName,
+		chart.ReadmeKey:    readmeFileName,
+		chart.SchemaKey:    schemaFileName,
+		chart.ChartYamlKey: chartYamlFileName,
 	}
 
 	files, err := ExtractFilesFromTarball(filenames, tarf)
@@ -83,9 +85,10 @@ func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent 
 	}
 
 	return map[string]string{
-		chart.ValuesKey: files[chart.ValuesKey],
-		chart.ReadmeKey: files[chart.ReadmeKey],
-		chart.SchemaKey: files[chart.SchemaKey],
+		chart.ValuesKey:    files[chart.ValuesKey],
+		chart.ReadmeKey:    files[chart.ReadmeKey],
+		chart.SchemaKey:    files[chart.SchemaKey],
+		chart.ChartYamlKey: files[chart.ChartYamlKey],
 	}, nil
 }
 

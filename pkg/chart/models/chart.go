@@ -111,7 +111,8 @@ type RepoCheck struct {
 
 // some constant strings used as keys in maps in several modules
 const (
-	ReadmeKey = "readme"
-	ValuesKey = "values"
-	SchemaKey = "schema"
+	ReadmeKey    = "readme"
+	ValuesKey    = "values"
+	SchemaKey    = "schema"
+	ChartYamlKey = "chartYaml"
 )

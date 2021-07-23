@@ -25,7 +25,6 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
-	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 
 	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
@@ -242,7 +241,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// package is part of it. Otherwise, there is a time window when this scenario can happen:
 	// - GetAvailablePackageSummaries may return {} while a ready repo is being indexed BUT
 	// - GetAvailablePackageDetail may return package detail
-	url, err := s.pullChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
+	url, err := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -254,34 +253,27 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
 	// Flux does the hard work of pulling the bits from remote repo
 	// based on secretRef associated with HelmRepository, if applicable
-	detail, err := tar.FetchChartDetailFromTarball(packageRef.Identifier, url, "", "", httpclient.New())
+	chartDetail, err := tar.FetchChartDetailFromTarball(packageRef.Identifier, url, "", "", httpclient.New())
 	if err != nil {
 		return nil, err
 	}
 
+	pkgDetail, err := availablePackageDetailFromTarball(chartDetail)
+	if err != nil {
+		return nil, err
+	}
+
+	// fix up package ref as it is not coming from chart itself
+	pkgDetail.AvailablePackageRef = packageRef // copy just for now
 	return &corev1.GetAvailablePackageDetailResponse{
-		AvailablePackageDetail: &corev1.AvailablePackageDetail{
-			AvailablePackageRef: packageRef, // copy just for now
-			Name:                packageIdParts[1],
-			Readme:              detail[chart.ReadmeKey],
-			DefaultValues:       detail[chart.ValuesKey],
-			ValuesSchema:        detail[chart.SchemaKey],
-			// TODO
-			// PkgVersion
-			// AppVersion
-			// DisplayName
-			// IconUrl
-			// ShortDescription
-			// LongDescription
-			// Maintainers
-		},
+		AvailablePackageDetail: pkgDetail,
 	}, nil
 }
 
 // returns the url from which chart .tgz can be downloaded
 // here chartVersion string, if specified at all, should be specific, like "14.4.0",
 // not an expression like ">14 <15"
-func (s *Server) pullChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (string, error) {
+func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (string, error) {
 	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return "", err

@@ -17,12 +17,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
 
@@ -86,14 +88,12 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 // TODO (gfichtenholt):
 // see https://github.com/kubeapps/kubeapps/pull/2915 for context
 // In the future you might instead want to consider something like
-// passing a results channel (of string urls) to pullChartTarball, so it returns
+// passing a results channel (of string urls) to getChartTarball, so it returns
 // immediately and you wait on the results channel at the call-site, which would mean
 // you could call it for 20 different charts and just wait for the results to come in
 // whatever order they happen to take, rather than serially.
 func waitUntilChartPullComplete(watcher watch.Interface) (string, error) {
 	ch := watcher.ResultChan()
-	// LISTEN TO CHANNEL
-	log.Infof("Waiting for chart pull complete...")
 	for {
 		event := <-ch
 		if event.Type == watch.Modified {
@@ -123,7 +123,7 @@ func waitUntilChartPullComplete(watcher watch.Interface) (string, error) {
 // for each required field described at the Helm website:
 // https://helm.sh/docs/topics/charts/#the-chartyaml-file
 // together with required fields for our model.
-func isValidChart(chart *chart.Chart) (bool, error) {
+func isValidChart(chart *models.Chart) (bool, error) {
 	if chart.Name == "" {
 		return false, status.Errorf(codes.Internal, "required field .Name not found on helm chart: %v", chart)
 	}
@@ -186,7 +186,7 @@ func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, c
 }
 
 // availablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
-func availablePackageSummaryFromChart(chart *chart.Chart) (*corev1.AvailablePackageSummary, error) {
+func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
 	pkg := &corev1.AvailablePackageSummary{}
 
 	isValid, err := isValidChart(chart)
@@ -211,7 +211,7 @@ func availablePackageSummaryFromChart(chart *chart.Chart) (*corev1.AvailablePack
 	return pkg, nil
 }
 
-func passesFilter(chart chart.Chart, filters *corev1.FilterOptions) bool {
+func passesFilter(chart models.Chart, filters *corev1.FilterOptions) bool {
 	if filters == nil {
 		return true
 	}
@@ -282,7 +282,7 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize, pageOffset
 		if packages == nil {
 			continue
 		}
-		typedCharts, ok := packages.([]chart.Chart)
+		typedCharts, ok := packages.([]models.Chart)
 		if !ok {
 			return nil, status.Errorf(
 				codes.Internal,
@@ -333,4 +333,35 @@ func newFluxHelmChart(chartName, repoName, version string) unstructured.Unstruct
 		unstructured.SetNestedField(unstructuredChart.Object, version, "spec", "version")
 	}
 	return unstructuredChart
+}
+
+func availablePackageDetailFromTarball(detail map[string]string) (*corev1.AvailablePackageDetail, error) {
+	chartYaml := detail[models.ChartYamlKey]
+	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?), fall back to chart info from
+	// repo index.yaml
+	var chartMetadata chart.Metadata
+	err := yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	maintainers := []*corev1.Maintainer{}
+	for _, maintainer := range chartMetadata.Maintainers {
+		m := &corev1.Maintainer{Name: maintainer.Name, Email: maintainer.Email}
+		maintainers = append(maintainers, m)
+	}
+
+	return &corev1.AvailablePackageDetail{
+		Name:             chartMetadata.Name,
+		PkgVersion:       chartMetadata.Version,
+		AppVersion:       chartMetadata.AppVersion,
+		IconUrl:          chartMetadata.Icon,
+		DisplayName:      chartMetadata.Name,
+		ShortDescription: chartMetadata.Description,
+		Readme:           detail[models.ReadmeKey],
+		DefaultValues:    detail[models.ValuesKey],
+		ValuesSchema:     detail[models.SchemaKey],
+		Maintainers:      maintainers,
+		// LongDescription ?
+	}, nil
 }

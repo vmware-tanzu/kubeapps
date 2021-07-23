@@ -46,65 +46,56 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		repoNamespace         string
 		chartName             string
 		chartTarGz            string
+		chartRevision         string
 		chartExists           bool
 		expectedPackageDetail *corev1.AvailablePackageDetail
 	}{
-		/*
-			{
-				testName:      "it returns details about the redis package in bitnami repo",
-				repoName:      "bitnami-1",
-				repoNamespace: "default",
-				request: &corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/redis",
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-					}},
-				chartName:  "redis",
-				chartTarGz: "testdata/redis-14.4.0.tgz",
-				expectedPackageDetail: &corev1.AvailablePackageDetail{
-					// TODO (gfichtenholt) other fields
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/redis",
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-					},
-					Name:            "redis",
-					LongDescription: "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-				},
-			},
-			{
-				testName:      "it returns details about the redis package with specific version in bitnami repo",
-				repoName:      "bitnami-1",
-				repoNamespace: "default",
-				request: &corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/redis",
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-					},
-					PkgVersion: "14.4.0",
-				},
-				chartName:  "redis",
-				chartTarGz: "testdata/redis-14.4.0.tgz",
-				expectedPackageDetail: &corev1.AvailablePackageDetail{
-					// TODO (gfichtenholt) other fields
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Identifier: "bitnami-1/redis",
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-					},
-					Name:            "redis",
-					LongDescription: "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-				},
-			},
-		*/
 		{
-			testName:      "it returns details about the redis package with specific version in bitnami repo (2)",
+			testName:      "it returns details about the redis package in bitnami repo",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				}},
+			chartName:     "redis",
+			chartTarGz:    "testdata/redis-14.4.0.tgz",
+			chartRevision: "14.4.0",
+			chartExists:   true,
+			expectedPackageDetail: &corev1.AvailablePackageDetail{
+				// TODO (gfichtenholt) other fields
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				},
+				Name:             "redis",
+				PkgVersion:       "14.4.0",
+				AppVersion:       "6.2.4",
+				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+				DisplayName:      "redis",
+				ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
+				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
+				ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+				Maintainers: []*corev1.Maintainer{
+					{
+						Name:  "Bitnami",
+						Email: "containers@bitnami.com",
+					},
+					{
+						Name:  "desaintmartin",
+						Email: "cedric@desaintmartin.fr",
+					},
+				},
+			},
+		},
+		{
+			testName:      "it returns details about the redis package with specific version in bitnami repo",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
@@ -116,21 +107,36 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 				PkgVersion: "14.3.4",
 			},
-			chartName:   "redis",
-			chartTarGz:  "testdata/redis-14.3.4.tgz",
-			chartExists: false,
+			chartName:     "redis",
+			chartTarGz:    "testdata/redis-14.3.4.tgz",
+			chartRevision: "14.4.0",
+			chartExists:   false,
 			expectedPackageDetail: &corev1.AvailablePackageDetail{
-				// TODO (gfichtenholt) other fields
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
 					Context: &corev1.Context{
 						Namespace: "default",
 					},
 				},
-				Name:          "redis",
-				Readme:        "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-				DefaultValues: "## @param global.imageRegistry Global Docker image registry",
-				ValuesSchema:  "\"$schema\": \"http://json-schema.org/schema#\"",
+				Name:             "redis",
+				PkgVersion:       "14.3.4",
+				AppVersion:       "6.2.4",
+				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+				DisplayName:      "redis",
+				ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
+				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
+				ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+				Maintainers: []*corev1.Maintainer{
+					{
+						Name:  "Bitnami",
+						Email: "containers@bitnami.com",
+					},
+					{
+						Name:  "desaintmartin",
+						Email: "cedric@desaintmartin.fr",
+					},
+				},
 			},
 		},
 		// TODO (gfichtenholt) negative test
@@ -168,7 +174,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					},
 				},
 				"artifact": map[string]interface{}{
-					"revision": "14.4.0",
+					"revision": tc.chartRevision,
 				},
 				"url": ts.URL,
 			}
@@ -184,6 +190,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			if !tc.chartExists {
 				go func() {
+					// TODO (gfichtenholt) yes, I don't like time.Sleep() anymore than the next guy
+					// see if there is a better way to force waitUntilChartPushIsComplete to stop
+					// on the server-side. I think the better way would be to do something similar to
+					// what I did with ResourceWatcherCache - add a sync.WaitGroup into production code
+					// somewhere in GetAvailablePackageDetail() that would only be used from within this
+					// unit test
 					time.Sleep(500 * time.Millisecond)
 					watcher.Modify(chart)
 				}()
@@ -194,9 +206,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{})
 			// these few fields a bit special in that they are all very long strings,
 			// so we'll do a 'Contains' check for these instead of 'Equals'
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{})
 			opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
 			if got, want := response.AvailablePackageDetail, tc.expectedPackageDetail; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))

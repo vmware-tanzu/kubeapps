@@ -20,7 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// calling this file utils.go until I can come up with better name or organize code differently
+//
+// miscellaneous utility funcs
+//
 func prettyPrintObject(o runtime.Object) string {
 	prettyBytes, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
