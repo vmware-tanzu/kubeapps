@@ -21,6 +21,7 @@ import (
 
 	redismock "github.com/go-redis/redismock/v8"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -260,3 +261,6 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }
+
+// misc global vars that get re-used in multiple tests
+var fluxPlugin = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}

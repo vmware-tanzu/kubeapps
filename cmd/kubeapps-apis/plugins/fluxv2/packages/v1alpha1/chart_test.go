@@ -27,6 +27,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -66,18 +67,17 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			chartRevision: "14.4.0",
 			chartExists:   true,
 			expectedPackageDetail: &corev1.AvailablePackageDetail{
-				// TODO (gfichtenholt) other fields
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
+					Context:    &corev1.Context{Namespace: "default"},
+					Plugin:     fluxPlugin,
 				},
 				Name:             "redis",
 				PkgVersion:       "14.4.0",
 				AppVersion:       "6.2.4",
 				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 				DisplayName:      "redis",
+				Categories:       []string{"Database"},
 				ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
 				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
@@ -101,9 +101,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
+					Context:    &corev1.Context{Namespace: "default"},
 				},
 				PkgVersion: "14.3.4",
 			},
@@ -114,15 +112,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			expectedPackageDetail: &corev1.AvailablePackageDetail{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
+					Context:    &corev1.Context{Namespace: "default"},
+					Plugin:     fluxPlugin,
 				},
 				Name:             "redis",
 				PkgVersion:       "14.3.4",
 				AppVersion:       "6.2.4",
 				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 				DisplayName:      "redis",
+				Categories:       []string{"Database"},
 				ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
 				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
@@ -206,7 +204,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{})
 			// these few fields a bit special in that they are all very long strings,
 			// so we'll do a 'Contains' check for these instead of 'Equals'
 			opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")

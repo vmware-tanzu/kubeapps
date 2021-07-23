@@ -263,8 +263,13 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	// fix up package ref as it is not coming from chart itself
-	pkgDetail.AvailablePackageRef = packageRef // copy just for now
+	// fix up package ref as it is not coming from chart tarball itself
+	pkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
+		Identifier: packageRef.Identifier,
+		Plugin:     GetPluginDetail(),
+		Context:    &corev1.Context{Namespace: packageRef.Context.Namespace},
+	}
+
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: pkgDetail,
 	}, nil

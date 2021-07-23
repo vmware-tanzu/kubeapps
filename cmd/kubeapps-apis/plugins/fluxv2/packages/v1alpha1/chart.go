@@ -351,17 +351,26 @@ func availablePackageDetailFromTarball(detail map[string]string) (*corev1.Availa
 		maintainers = append(maintainers, m)
 	}
 
-	return &corev1.AvailablePackageDetail{
+	var categories []string = nil
+	category, found := chartMetadata.Annotations["category"]
+	if found && category != "" {
+		categories = []string{category}
+	}
+
+	pkg := &corev1.AvailablePackageDetail{
 		Name:             chartMetadata.Name,
 		PkgVersion:       chartMetadata.Version,
 		AppVersion:       chartMetadata.AppVersion,
 		IconUrl:          chartMetadata.Icon,
 		DisplayName:      chartMetadata.Name,
 		ShortDescription: chartMetadata.Description,
+		Categories:       categories,
 		Readme:           detail[models.ReadmeKey],
 		DefaultValues:    detail[models.ValuesKey],
 		ValuesSchema:     detail[models.SchemaKey],
 		Maintainers:      maintainers,
-		// LongDescription ?
-	}, nil
+	}
+
+	// TODO: (gfichtenholt) LongDescription?
+	return pkg, nil
 }
