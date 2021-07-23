@@ -142,11 +142,9 @@ func isValidChart(chart *models.Chart) (bool, error) {
 			}
 		}
 	}
-	if chart.Maintainers != nil || len(chart.ChartVersions) != 0 {
-		for _, maintainer := range chart.Maintainers {
-			if maintainer.Name == "" {
-				return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
-			}
+	for _, maintainer := range chart.Maintainers {
+		if maintainer.Name == "" {
+			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
 		}
 	}
 	return true, nil
@@ -265,7 +263,7 @@ func passesFilter(chart models.Chart, filters *corev1.FilterOptions) bool {
 	return ok
 }
 
-func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize, pageOffset int, cachedCharts map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
+func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, pageOffset int, cachedCharts map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
 	// this loop is here for 3 reasons:
 	// 1) to convert from []interface{} which is what the generic cache implementation
 	// returns for cache hits to a typed array object.
@@ -370,7 +368,9 @@ func availablePackageDetailFromTarball(detail map[string]string) (*corev1.Availa
 		ValuesSchema:     detail[models.SchemaKey],
 		Maintainers:      maintainers,
 	}
-
 	// TODO: (gfichtenholt) LongDescription?
+
+	// note the caller will set pkg.AvailablePackageRef as that information
+	// like namespace and repo name is not included in the tarball
 	return pkg, nil
 }

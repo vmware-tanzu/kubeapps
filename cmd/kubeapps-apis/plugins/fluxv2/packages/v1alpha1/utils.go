@@ -15,8 +15,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
+	"strings"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -55,4 +59,18 @@ func pageOffsetFromPageToken(pageToken string) (int, error) {
 	}
 
 	return int(offset), nil
+}
+
+// getUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+func getUnescapedChartID(chartID string) (string, error) {
+	unescapedChartID, err := url.QueryUnescape(chartID)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
+	}
+	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
+	chartIDParts := strings.Split(unescapedChartID, "/")
+	if len(chartIDParts) != 2 {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
+	}
+	return unescapedChartID, nil
 }

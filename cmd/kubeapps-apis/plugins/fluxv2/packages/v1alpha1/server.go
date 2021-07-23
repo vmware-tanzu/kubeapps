@@ -202,7 +202,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), int(pageSize), pageOffset, cachedCharts)
+	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), pageSize, pageOffset, cachedCharts)
 	if err != nil {
 		return nil, err
 	}
@@ -232,10 +232,12 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
 	}
-	packageIdParts := strings.Split(packageRef.Identifier, "/")
-	if len(packageIdParts) != 2 {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid package ref identifier: [%s]", packageRef.Identifier)
+
+	unescapedChartID, err := getUnescapedChartID(request.AvailablePackageRef.Identifier)
+	if err != nil {
+		return nil, err
 	}
+	packageIdParts := strings.Split(unescapedChartID, "/")
 
 	// TODO (gfichtenholt) check if the repo has been indexed, stored in the cache and requested
 	// package is part of it. Otherwise, there is a time window when this scenario can happen:
