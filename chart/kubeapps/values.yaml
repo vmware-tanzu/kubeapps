@@ -445,6 +445,10 @@ dashboard:
   ##   "login-oidc": "Login with my company SSO"
   ##
   customLocale: ""
+  ## @param dashboard.defaultTheme will be used as the default theme for the dashboard instead of window.matchMedia
+  ## enum: [ "light", "dark" ]
+  ##
+  defaultTheme: ""
   ## @param dashboard.replicaCount Number of Dashboard replicas to deploy
   ##
   replicaCount: 2
