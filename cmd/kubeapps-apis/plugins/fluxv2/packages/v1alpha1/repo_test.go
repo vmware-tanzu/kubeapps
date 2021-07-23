@@ -66,7 +66,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_package_summaries,
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_package_summaries,
 			},
 		},
 		{
@@ -102,7 +102,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: append(valid_index_package_summaries, cert_manager_summary),
+				AvailablePackageSummaries: append(valid_index_package_summaries, cert_manager_summary),
 			},
 		},
 		{
@@ -128,7 +128,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					cert_manager_summary,
 				},
 			},
@@ -156,7 +156,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{},
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -176,7 +176,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					elasticsearch_summary,
 				},
 			},
@@ -198,7 +198,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: index_with_categories_summaries,
+				AvailablePackageSummaries: index_with_categories_summaries,
 			},
 		},
 		{
@@ -218,7 +218,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{},
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -238,7 +238,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					ghost_summary,
 				},
 			},
@@ -260,7 +260,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{},
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -280,7 +280,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					elasticsearch_summary,
 				},
 			},
@@ -302,7 +302,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{},
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -322,7 +322,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					elasticsearch_summary,
 				},
 			},
@@ -344,7 +344,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					ghost_summary,
 				},
 			},
@@ -366,7 +366,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{},
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -387,7 +387,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackagesSummaries: []*corev1.AvailablePackageSummary{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					ghost_summary,
 				},
 				NextPageToken: "2",
@@ -517,7 +517,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeUpdate.AvailablePackagesSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -551,7 +551,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if got, want := responsePackagesAfterUpdate.AvailablePackagesSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -613,7 +613,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackagesSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -640,7 +640,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if len(responseAfterDelete.AvailablePackagesSummaries) != 0 {
+		if len(responseAfterDelete.AvailablePackageSummaries) != 0 {
 			t.Errorf("expected empty array, got: %s", responseAfterDelete)
 		}
 
@@ -703,7 +703,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeResync.AvailablePackagesSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -735,7 +735,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if got, want := responseAfterResync.AvailablePackagesSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 	})

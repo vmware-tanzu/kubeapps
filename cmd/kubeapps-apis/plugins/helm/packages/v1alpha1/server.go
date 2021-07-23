@@ -224,8 +224,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: responsePackages,
-		NextPageToken:              nextPageToken,
+		AvailablePackageSummaries: responsePackages,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 
@@ -256,9 +256,13 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
 	}
 
+	pkg.Name = chart.Name
+	// Helm's Chart.yaml (and hence our model) does not include a separate
+	// display name, so the chart name is also used here.
 	pkg.DisplayName = chart.Name
 	pkg.IconUrl = chart.Icon
 	pkg.ShortDescription = chart.Description
+	pkg.Categories = []string{chart.Category}
 
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
 		Identifier: chart.ID,
@@ -268,6 +272,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
+		pkg.LatestAppVersion = chart.ChartVersions[0].AppVersion
 	}
 
 	return pkg, nil
@@ -423,6 +428,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	pkg.IconUrl = chart.Icon
 	pkg.Name = chart.Name
 	pkg.ShortDescription = chart.Description
+	pkg.Categories = []string{chart.Category}
 
 	pkg.Maintainers = []*corev1.Maintainer{}
 	for _, maintainer := range chart.Maintainers {
@@ -543,8 +549,32 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		installedPkgSummaries[i] = installedPkgSummaryFromRelease(r)
 	}
 
+	// Fill in the latest package version for each.
+	// TODO(mnelson): Update to do this with a single query rather than iterating and
+	// querying per release.
+	for i, rel := range releases {
+		// Helm does not store a back-reference to the chart used to create a
+		// release (https://github.com/helm/helm/issues/6464), so for each
+		// release, we look up a chart with than name and version available in
+		// the release namespace, and if one is found, pull out the latest chart
+		// version.
+		cq := utils.ChartQuery{
+			Namespace:  rel.Namespace,
+			ChartName:  rel.Chart.Metadata.Name,
+			Version:    rel.Chart.Metadata.Version,
+			AppVersion: rel.Chart.Metadata.AppVersion,
+		}
+		charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
+		}
+		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
+			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
+		}
+	}
+
 	response := &corev1.GetInstalledPackageSummariesResponse{
-		InstalledPackagesSummaries: installedPkgSummaries,
+		InstalledPackageSummaries: installedPkgSummaries,
 	}
 	if len(releases) == cmd.Limit {
 		response.NextPageToken = fmt.Sprintf("%d", cmd.Limit+1)
@@ -568,11 +598,5 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 		IconUrl:           r.Chart.Metadata.Icon,
 		PkgDisplayName:    r.Chart.Name(),
 		ShortDescription:  r.Chart.Metadata.Description,
-
-		// LatestMatchingPkgVersion will always be empty for direct helm where there
-		// is no server-sided reconcilliation of upgrades.
-		// TODO(mnelson): LatestPkgVersion should be populated from the latest package
-		// detail for this package.
-		// LatestPkgVersion:
 	}
 }

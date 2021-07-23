@@ -178,7 +178,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				t.Errorf("got: %+v, error: %v, want: %+v", got, err, want)
 
 				if got == codes.OK {
-					if len(response.AvailablePackagesSummaries) != 0 {
+					if len(response.AvailablePackageSummaries) != 0 {
 						t.Errorf("unexpected response: %v", response)
 					} else if response != nil {
 						t.Errorf("unexpected response: %v", response)
