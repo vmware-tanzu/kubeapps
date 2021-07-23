@@ -137,7 +137,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 			},
 		},
-		// TODO (gfichtenholt) negative test
 	}
 
 	for _, tc := range testCases {
@@ -226,7 +225,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	negativeTestCases := []struct {
 		testName      string
 		request       *corev1.GetAvailablePackageDetailRequest
@@ -283,12 +284,13 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				"url": "does-not-matter",
 			}
 			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
+
 			s, _, mock, err := newServerWithCharts(chart)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			_, err = s.GetAvailablePackageDetail(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
@@ -298,6 +300,88 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
+			}
+
+			if response != nil {
+				t.Fatalf("want nil, got %v", response)
+			}
+		})
+	}
+}
+
+func TestNegativeGetAvailablePackageDetailInvalidVersion(t *testing.T) {
+	negativeTestCases := []struct {
+		testName      string
+		request       *corev1.GetAvailablePackageDetailRequest
+		repoName      string
+		repoNamespace string
+		chartName     string
+		statusCode    codes.Code
+	}{
+		{
+			testName:      "it fails if request has invalid version",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				}},
+			chartName:  "redis",
+			statusCode: codes.Internal,
+		},
+	}
+
+	for _, tc := range negativeTestCases {
+		t.Run(tc.testName, func(t *testing.T) {
+
+			chartSpec := map[string]interface{}{
+				"chart": tc.chartName,
+				"sourceRef": map[string]interface{}{
+					"name": "bitnami-1",
+					"kind": "HelmRepository",
+				},
+				"interval": "10m",
+			}
+			chartStatus := map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":    "Ready",
+						"status":  "False",
+						"reason":  "ChartPullFailed",
+						"message": "message: no chart version found",
+					},
+				},
+			}
+
+			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
+
+			s, watcher, mock, err := newServerWithCharts()
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			go func() {
+				time.Sleep(500 * time.Millisecond)
+				watcher.Modify(chart)
+			}()
+
+			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			if err == nil {
+				t.Fatalf("got nil, want error")
+			}
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			if response != nil {
+				t.Fatalf("want nil, got %v", response)
 			}
 		})
 	}

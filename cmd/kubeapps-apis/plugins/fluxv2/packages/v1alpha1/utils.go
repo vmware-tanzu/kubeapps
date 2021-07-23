@@ -57,11 +57,11 @@ func pageOffsetFromPageToken(pageToken string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-
 	return int(offset), nil
 }
 
 // getUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+// also checks that the chart ID is in the expected format, namely "repoName/chartName"
 func getUnescapedChartID(chartID string) (string, error) {
 	unescapedChartID, err := url.QueryUnescape(chartID)
 	if err != nil {

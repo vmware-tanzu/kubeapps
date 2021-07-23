@@ -370,6 +370,30 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
+			testName: "it returns only the first page of results",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "0",
+					PageSize:  1,
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					elasticsearch_summary,
+				},
+				NextPageToken: "1",
+			},
+		},
+		{
 			testName: "it returns only the requested page of results and includes the next page token",
 			testRepos: []testRepoStruct{
 				{
@@ -391,6 +415,28 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					ghost_summary,
 				},
 				NextPageToken: "2",
+			},
+		},
+		{
+			testName: "it returns the last page without a next page token",
+			testRepos: []testRepoStruct{
+				{
+					name:      "index-with-categories-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/index-with-categories.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "blah"},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "2",
+					PageSize:  1,
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+				NextPageToken:             "",
 			},
 		},
 	}

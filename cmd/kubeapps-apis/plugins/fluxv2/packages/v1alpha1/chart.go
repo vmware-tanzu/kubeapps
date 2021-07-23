@@ -94,6 +94,7 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 // whatever order they happen to take, rather than serially.
 func waitUntilChartPullComplete(watcher watch.Interface) (string, error) {
 	ch := watcher.ResultChan()
+	log.Infof("Waiting until chart pull is complete...")
 	for {
 		event := <-ch
 		if event.Type == watch.Modified {
@@ -113,7 +114,6 @@ func waitUntilChartPullComplete(watcher watch.Interface) (string, error) {
 				return url, nil
 			}
 		} else {
-			// TODO handle other kinds of events
 			return "", status.Errorf(codes.Internal, "got unexpected event: %v", event)
 		}
 	}
