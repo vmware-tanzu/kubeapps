@@ -13,16 +13,40 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+// see https://blog.golang.org/context
+// this is used exclusively for unit tests to signal conditions between production
+// and unit test code. The key type is unexported to prevent collisions with context
+// keys defined in other packages.
+type contextKey int
+
+// waitGroupKey is the context key for the waitGroup.  Its value of zero is
+// arbitrary.  If this package defined other context keys, they would have
+// different integer values.
+const waitGroupKey contextKey = 0
+
+func fromContext(ctx context.Context) (*sync.WaitGroup, bool) {
+	// ctx.Value returns nil if ctx has no value for the key;
+	// the sync.WaitGroup type assertion returns ok=false for nil.
+	wg, ok := ctx.Value(waitGroupKey).(*sync.WaitGroup)
+	return wg, ok
+}
+
+func newContext(ctx context.Context, wg *sync.WaitGroup) context.Context {
+	return context.WithValue(ctx, waitGroupKey, wg)
+}
 
 //
 // miscellaneous utility funcs

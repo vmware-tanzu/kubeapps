@@ -155,6 +155,10 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	return &c, nil
 }
 
+// note that I am not using pointer receivers on any the methods, because none
+// of them need to modify the ResourceWatcherCache internal state.
+// see https://golang.org/doc/faq#methods_on_values_or_pointers
+
 func (c ResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
 	for {
 		c.receive(watcher.ResultChan())

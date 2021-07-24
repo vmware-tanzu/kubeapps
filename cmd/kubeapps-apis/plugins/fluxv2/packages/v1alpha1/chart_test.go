@@ -20,8 +20,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
-	"time"
 
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
@@ -185,20 +185,17 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
+			wg := sync.WaitGroup{}
+			wg.Add(1)
+
 			if !tc.chartExists {
 				go func() {
-					// TODO (gfichtenholt) yes, I don't like time.Sleep() anymore than the next guy
-					// see if there is a better way to force waitUntilChartPushIsComplete to stop
-					// on the server-side. I think the better way would be to do something similar to
-					// what I did with ResourceWatcherCache - add a sync.WaitGroup into production code
-					// somewhere in GetAvailablePackageDetail() that would only be used from within this
-					// unit test
-					time.Sleep(500 * time.Millisecond)
+					wg.Wait()
 					watcher.Modify(chart)
 				}()
 			}
 
-			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -363,12 +360,15 @@ func TestNegativeGetAvailablePackageDetailInvalidVersion(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
+			wg := sync.WaitGroup{}
+			wg.Add(1)
+
 			go func() {
-				time.Sleep(500 * time.Millisecond)
+				wg.Wait()
 				watcher.Modify(chart)
 			}()
 
-			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}

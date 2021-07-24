@@ -344,7 +344,7 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	// TODO (gfichtenholt) note that, unlike with ResourceWatcherCache, the
 	// wait time window is very short here so I am not employing the RetryWatcher
 	// technique here for now
-	return waitUntilChartPullComplete(watcher)
+	return waitUntilChartPullComplete(ctx, watcher)
 }
 
 // namespace maybe "", in which case repositories from all namespaces are returned

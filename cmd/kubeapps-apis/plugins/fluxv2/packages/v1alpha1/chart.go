@@ -14,6 +14,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -92,9 +93,17 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 // immediately and you wait on the results channel at the call-site, which would mean
 // you could call it for 20 different charts and just wait for the results to come in
 // whatever order they happen to take, rather than serially.
-func waitUntilChartPullComplete(watcher watch.Interface) (string, error) {
+func waitUntilChartPullComplete(ctx context.Context, watcher watch.Interface) (string, error) {
 	ch := watcher.ResultChan()
 	log.Infof("Waiting until chart pull is complete...")
+
+	// unit test-related trigger that allows another concurrently running goroutine to
+	// mock sending a watch Modify event to the channel at this point
+	wg, ok := fromContext(ctx)
+	if ok && wg != nil {
+		wg.Done()
+	}
+
 	for {
 		event := <-ch
 		if event.Type == watch.Modified {
