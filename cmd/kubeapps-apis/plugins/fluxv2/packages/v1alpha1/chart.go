@@ -21,6 +21,8 @@ import (
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -105,7 +107,11 @@ func waitUntilChartPullComplete(ctx context.Context, watcher watch.Interface) (s
 	}
 
 	for {
-		event := <-ch
+		event, ok := <-ch
+		if !ok {
+			// let the user retry
+			return "", status.Errorf(codes.Internal, "operation failed because a channel was closed")
+		}
 		if event.Type == watch.Modified {
 			unstructuredChart, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
@@ -342,12 +348,23 @@ func newFluxHelmChart(chartName, repoName, version string) unstructured.Unstruct
 	return unstructuredChart
 }
 
-func availablePackageDetailFromTarball(detail map[string]string) (*corev1.AvailablePackageDetail, error) {
-	chartYaml := detail[models.ChartYamlKey]
+func availablePackageDetailFromTarball(chartName, url string) (*corev1.AvailablePackageDetail, error) {
+	// fetch, unzip and untar .tgz file
+	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
+	// local cluster, not remote repo.
+	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
+	// Flux does the hard work of pulling the bits from remote repo
+	// based on secretRef associated with HelmRepository, if applicable
+	chartDetail, err := tar.FetchChartDetailFromTarball(chartName, url, "", "", httpclient.New())
+	if err != nil {
+		return nil, err
+	}
+
+	chartYaml := chartDetail[models.ChartYamlKey]
 	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?), fall back to chart info from
 	// repo index.yaml
 	var chartMetadata chart.Metadata
-	err := yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+	err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +375,7 @@ func availablePackageDetailFromTarball(detail map[string]string) (*corev1.Availa
 		maintainers = append(maintainers, m)
 	}
 
-	var categories []string = nil
+	var categories []string
 	category, found := chartMetadata.Annotations["category"]
 	if found && category != "" {
 		categories = []string{category}
@@ -372,9 +389,9 @@ func availablePackageDetailFromTarball(detail map[string]string) (*corev1.Availa
 		DisplayName:      chartMetadata.Name,
 		ShortDescription: chartMetadata.Description,
 		Categories:       categories,
-		Readme:           detail[models.ReadmeKey],
-		DefaultValues:    detail[models.ValuesKey],
-		ValuesSchema:     detail[models.SchemaKey],
+		Readme:           chartDetail[models.ReadmeKey],
+		DefaultValues:    chartDetail[models.ValuesKey],
+		ValuesSchema:     chartDetail[models.SchemaKey],
 		Maintainers:      maintainers,
 	}
 	// TODO: (gfichtenholt) LongDescription?

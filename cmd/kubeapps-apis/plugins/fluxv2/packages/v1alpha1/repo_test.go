@@ -570,7 +570,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		s.cache.eventProcessingWaitGroup.Add(1)
+		s.cache.eventProcessedWaitGroup.Add(1)
 
 		key, bytes, err := redisKeyValueForRuntimeObject(repo)
 		if err != nil {
@@ -581,7 +581,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		watcher.Modify(repo)
 
-		s.cache.eventProcessingWaitGroup.Wait()
+		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -665,13 +665,13 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		// now we are going to simulate the user deleting a HelmRepository CRD which, in turn,
 		// causes k8s server to fire a DELETE event
-		s.cache.eventProcessingWaitGroup.Add(1)
+		s.cache.eventProcessedWaitGroup.Add(1)
 		key := redisKeyForRuntimeObject(repo)
 		mock.ExpectDel(key).SetVal(0)
 
 		watcher.Delete(repo)
 
-		s.cache.eventProcessingWaitGroup.Wait()
+		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -755,13 +755,13 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
 		// a cache resync
-		s.cache.eventProcessingWaitGroup.Add(1)
+		s.cache.eventProcessedWaitGroup.Add(1)
 		key, bytes, _ := redisKeyValueForRuntimeObject(repo)
 		mock.ExpectSet(key, bytes, 0).SetVal("")
 
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
 
-		s.cache.eventProcessingWaitGroup.Wait()
+		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)

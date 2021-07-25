@@ -25,9 +25,6 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-
-	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -143,7 +140,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 			request.Context.Cluster)
 	}
 
-	repos, err := s.getHelmRepos(ctx, request.Context.Namespace)
+	repos, err := s.listReposInCluster(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -233,34 +230,34 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
 	}
 
-	unescapedChartID, err := getUnescapedChartID(request.AvailablePackageRef.Identifier)
+	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 	packageIdParts := strings.Split(unescapedChartID, "/")
 
-	// TODO (gfichtenholt) check if the repo has been indexed, stored in the cache and requested
+	// check if the repo has been indexed, stored in the cache and requested
 	// package is part of it. Otherwise, there is a time window when this scenario can happen:
 	// - GetAvailablePackageSummaries may return {} while a ready repo is being indexed BUT
 	// - GetAvailablePackageDetail may return package detail
+	ok, err := s.repoExistsInCache(packageRef.Context.Namespace, packageIdParts[0])
+	if err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"no package [%s] in namespace [%s] has been found",
+			packageRef.Identifier,
+			packageRef.Context.Namespace)
+	}
+
 	url, err := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
 	if err != nil {
 		return nil, err
 	}
 	log.Infof("Found chart url: [%s]", url)
 
-	// unzip and untar .tgz file
-	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
-	// local cluster, not remote repo.
-	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
-	// Flux does the hard work of pulling the bits from remote repo
-	// based on secretRef associated with HelmRepository, if applicable
-	chartDetail, err := tar.FetchChartDetailFromTarball(packageRef.Identifier, url, "", "", httpclient.New())
-	if err != nil {
-		return nil, err
-	}
-
-	pkgDetail, err := availablePackageDetailFromTarball(chartDetail)
+	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, url)
 	if err != nil {
 		return nil, err
 	}
@@ -345,10 +342,18 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	// wait time window is very short here so I am not employing the RetryWatcher
 	// technique here for now
 	return waitUntilChartPullComplete(ctx, watcher)
+
+	// TODO (gfichtenholt) if failed due to ChartPullFailed then should we delete
+	// the flux HelmChart object? This func created it and if we don't delete it,
+	// we leave a "bad" (or "dangling") chart.
+	// Maybe even delete it regardless of success or failure. At the end of
+	// GetAvailablePackageDetail(), we've already collected the information we need,
+	// so why leave a flux chart chart object hanging around?
+	// Over time, they could accumulate to a very large number...
 }
 
 // namespace maybe "", in which case repositories from all namespaces are returned
-func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return nil, err
@@ -370,4 +375,26 @@ func (s *Server) getHelmRepos(ctx context.Context, namespace string) (*unstructu
 		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
 	}
+}
+
+func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
+	if s.cache == nil {
+		return false, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+	}
+
+	repos, err := s.cache.listKeys([]string{repoName})
+	if err != nil {
+		return false, err
+	}
+
+	for _, key := range repos {
+		thisNamespace, thisName, err := s.cache.fromRedisKey(key)
+		if err != nil {
+			return false, err
+		}
+		if thisNamespace == namespace && thisName == repoName {
+			return true, nil
+		}
+	}
+	return false, nil
 }

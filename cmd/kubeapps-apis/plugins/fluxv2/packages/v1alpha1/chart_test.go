@@ -195,6 +195,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}()
 			}
 
+			redisKey := fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, tc.repoNamespace, tc.repoName)
+			mock.ExpectScan(0, fluxHelmRepositories+":*:"+tc.repoName, 0).SetVal([]string{redisKey}, 0)
+
 			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -306,11 +309,12 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	}
 }
 
-func TestNegativeGetAvailablePackageDetailInvalidVersion(t *testing.T) {
+func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *testing.T) {
 	negativeTestCases := []struct {
 		testName      string
 		request       *corev1.GetAvailablePackageDetailRequest
 		repoName      string
+		repoExists    bool
 		repoNamespace string
 		chartName     string
 		statusCode    codes.Code
@@ -319,6 +323,24 @@ func TestNegativeGetAvailablePackageDetailInvalidVersion(t *testing.T) {
 			testName:      "it fails if request has invalid version",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
+			repoExists:    true,
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				},
+				PkgVersion: "99.99.0",
+			},
+			chartName:  "redis",
+			statusCode: codes.Internal,
+		},
+		{
+			testName:      "it fails if repo does not exist",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			repoExists:    false,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
@@ -326,6 +348,37 @@ func TestNegativeGetAvailablePackageDetailInvalidVersion(t *testing.T) {
 						Namespace: "default",
 					},
 				}},
+			chartName:  "redis",
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			testName:      "it fails if repo does not exist in specified namespace",
+			repoName:      "bitnami-1",
+			repoNamespace: "non-default",
+			repoExists:    true,
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				}},
+			chartName:  "redis",
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			testName:      "it fails if request has invalid chart",
+			repoName:      "bitnami-1",
+			repoNamespace: "default",
+			repoExists:    true,
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/redis-123",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				},
+			},
 			chartName:  "redis",
 			statusCode: codes.Internal,
 		},
@@ -348,7 +401,7 @@ func TestNegativeGetAvailablePackageDetailInvalidVersion(t *testing.T) {
 						"type":    "Ready",
 						"status":  "False",
 						"reason":  "ChartPullFailed",
-						"message": "message: no chart version found",
+						"message": "message: no chart name/version found",
 					},
 				},
 			}
@@ -367,6 +420,13 @@ func TestNegativeGetAvailablePackageDetailInvalidVersion(t *testing.T) {
 				wg.Wait()
 				watcher.Modify(chart)
 			}()
+
+			if tc.repoExists {
+				redisKey := fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, tc.repoNamespace, tc.repoName)
+				mock.ExpectScan(0, fluxHelmRepositories+":*:"+tc.repoName, 0).SetVal([]string{redisKey}, 0)
+			} else {
+				mock.ExpectScan(0, fluxHelmRepositories+":*:"+tc.repoName, 0).SetVal([]string{}, 0)
+			}
 
 			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
 			if err == nil {
