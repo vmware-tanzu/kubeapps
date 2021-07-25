@@ -930,9 +930,11 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
 		func(action k8stesting.Action) (bool, runtime.Object, error) {
 			handled, ret, err := reactor.React(action)
-			ulist, ok := ret.(*unstructured.UnstructuredList)
-			if ok && ulist != nil {
-				ulist.SetResourceVersion("1")
+			if err == nil {
+				ulist, ok := ret.(*unstructured.UnstructuredList)
+				if ok && ulist != nil {
+					ulist.SetResourceVersion("1")
+				}
 			}
 			return handled, ret, err
 		})

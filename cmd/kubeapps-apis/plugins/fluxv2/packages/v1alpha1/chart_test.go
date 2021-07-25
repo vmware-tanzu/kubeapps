@@ -39,6 +39,9 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
+// global variable to keep track of flux helm charts created for the purpose of GetAvailablePackageDetail
+var createdChartCount int
+
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
 		testName              string
@@ -198,6 +201,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			redisKey := fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, tc.repoNamespace, tc.repoName)
 			mock.ExpectScan(0, fluxHelmRepositories+":*:"+tc.repoName, 0).SetVal([]string{redisKey}, 0)
 
+			chartCountBefore := createdChartCount
+
 			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -222,6 +227,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
+			}
+
+			// make sure we've cleaned up after ourselves
+			chartCountAfter := createdChartCount
+			if chartCountBefore != chartCountAfter {
+				t.Fatalf("flux helmchart count (-want +got): -[%d], [%d]", chartCountBefore, chartCountAfter)
 			}
 		})
 	}
@@ -503,9 +514,20 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *watch.FakeWatcher,
 	dynamicClient.Fake.PrependReactor("create", fluxHelmCharts,
 		func(action k8stesting.Action) (bool, runtime.Object, error) {
 			handled, ret, err := reactor.React(action)
-			uobj, ok := ret.(*unstructured.Unstructured)
-			if ok && uobj != nil {
-				uobj.SetResourceVersion("1")
+			if err == nil {
+				uobj, ok := ret.(*unstructured.Unstructured)
+				if ok && uobj != nil {
+					createdChartCount++
+					uobj.SetResourceVersion("1")
+				}
+			}
+			return handled, ret, err
+		})
+	dynamicClient.Fake.PrependReactor("delete", fluxHelmCharts,
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			handled, ret, err := reactor.React(action)
+			if err == nil {
+				createdChartCount--
 			}
 			return handled, ret, err
 		})

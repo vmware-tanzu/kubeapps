@@ -246,16 +246,19 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	} else if !ok {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
-			"no package [%s] in namespace [%s] has been found",
-			packageRef.Identifier,
+			"no fully indexed repository [%s] in namespace [%s] has been found",
+			packageIdParts[0],
 			packageRef.Context.Namespace)
 	}
 
-	url, err := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
+	url, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
+	if cleanUp != nil {
+		defer cleanUp()
+	}
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Found chart url: [%s]", url)
+	log.Infof("Found chart url: [%s] for chart [%s]", url, packageRef.Identifier)
 
 	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, url)
 	if err != nil {
@@ -277,10 +280,10 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 // returns the url from which chart .tgz can be downloaded
 // here chartVersion string, if specified at all, should be specific, like "14.4.0",
 // not an expression like ">14 <15"
-func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (string, error) {
+func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (url string, err error, cleanUp func()) {
 	client, err := s.getDynamicClient(ctx)
 	if err != nil {
-		return "", err
+		return "", err, nil
 	}
 
 	chartsResource := schema.GroupVersionResource{
@@ -303,14 +306,14 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	//  - https://github.com/kubernetes/kubernetes/issues/53459
 	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return "", err
+		return "", err, nil
 	}
 
-	url, err := findUrlForChartInList(chartList, repoName, chartName, chartVersion)
+	url, err = findUrlForChartInList(chartList, repoName, chartName, chartVersion)
 	if err != nil {
-		return "", err
+		return "", err, nil
 	} else if url != "" {
-		return url, nil
+		return url, nil, nil
 	}
 
 	// did not find the chart, need to create
@@ -324,32 +327,39 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
 		log.Errorf("error creating chart: %v\n%v", err, unstructuredChart)
-		return "", err
+		return "", err, nil
 	}
 
 	log.Infof("created chart: [%v]", prettyPrintMap(newChart.Object))
+
+	// Delete the created helm chart regardless of success or failure. At the end of
+	// GetAvailablePackageDetail(), we've already collected the information we need,
+	// so why leave a flux chart chart object hanging around?
+	// Over time, they could accumulate to a very large number...
+	cleanUp = func() {
+		err = resourceIfc.Delete(ctx, newChart.GetName(), metav1.DeleteOptions{})
+		if err != nil {
+			log.Errorf("Failed to delete flux helm chart [%v]", prettyPrintMap(newChart.Object))
+		}
+	}
 
 	watcher, err := resourceIfc.Watch(ctx, metav1.ListOptions{
 		ResourceVersion: newChart.GetResourceVersion(),
 	})
 	if err != nil {
 		log.Errorf("error creating watch: %v\n%v", err, unstructuredChart)
-		return "", err
+		return "", err, cleanUp
 	}
 
 	// wait til wait until flux reconciles and we have chart url available
 	// TODO (gfichtenholt) note that, unlike with ResourceWatcherCache, the
 	// wait time window is very short here so I am not employing the RetryWatcher
 	// technique here for now
-	return waitUntilChartPullComplete(ctx, watcher)
-
-	// TODO (gfichtenholt) if failed due to ChartPullFailed then should we delete
-	// the flux HelmChart object? This func created it and if we don't delete it,
-	// we leave a "bad" (or "dangling") chart.
-	// Maybe even delete it regardless of success or failure. At the end of
-	// GetAvailablePackageDetail(), we've already collected the information we need,
-	// so why leave a flux chart chart object hanging around?
-	// Over time, they could accumulate to a very large number...
+	url, err = waitUntilChartPullComplete(ctx, watcher)
+	watcher.Stop()
+	// only the caller should call cleanUp() when it's done with the url,
+	// if we call it here, the caller will end up with a dangling link
+	return url, err, cleanUp
 }
 
 // namespace maybe "", in which case repositories from all namespaces are returned
