@@ -26,7 +26,7 @@
     "@types/react-router-hash-link": "^2.4.1",
     "@types/react-tabs": "^2.3.3",
     "@types/react-transition-group": "^4.4.2",
-    "@types/semver": "^7.3.7",
+    "@types/semver": "^7.3.8",
     "@types/ws": "^7.4.7",
     "ajv": "^8.6.2",
     "axios": "^0.21.1",
@@ -116,7 +116,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.2.28",
+    "@formatjs/cli": "^4.2.29",
     "@types/enzyme": "^3.10.9",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/jest": "^26.0.24",
