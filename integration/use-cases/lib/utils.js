@@ -59,9 +59,9 @@ module.exports = {
         timeout: 10000,
       });
       await page.click("#submit-login");
-      await expect(page).toClick("button", {
-        text: "Grant Access",
-      });
+      // Additionally click on the new "Grant Access" confirmation.
+      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+      await expect(page).toClick('button.dex-btn[type="submit"]');
       await page.waitForSelector(".kubeapps-header-content", {
         visible: true,
         timeout: 10000,
