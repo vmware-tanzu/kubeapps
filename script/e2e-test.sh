@@ -225,7 +225,7 @@ img_flags=(
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
   "--set" "pinnipedProxy.image.repository=${images[5]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=kubeapps/kubeapps-apis"
+  "--set" "kubeappsapis.image.repository=kubeapps/kubeapps-apis-ci"
   # TODO: uncomment once the image is being built by bitnami
   # "--set" "kubeappsapis.image.repository=${images[6]}"
 )
