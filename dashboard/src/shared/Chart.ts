@@ -5,6 +5,7 @@ import { IChart, IChartCategory, IChartVersion } from "./types";
 import * as URL from "./url";
 
 export default class Chart {
+  private static client = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
   public static async getAvailablePackageSummaries(
     cluster: string,
     namespace: string,
@@ -14,8 +15,8 @@ export default class Chart {
     query?: string,
   ) {
     // TODO(agamez): move to the core 'PackagesServiceClientImpl' when pagination is ready there
-    const client = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
-    return await client.GetAvailablePackageSummaries({
+
+    return await this.client.GetAvailablePackageSummaries({
       // TODO(agamez): add cluster when it is supported
       context: { cluster: "", namespace: namespace },
       filterOptions: {
