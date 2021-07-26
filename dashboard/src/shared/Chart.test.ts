@@ -1,3 +1,4 @@
+import { GetAvailablePackageSummariesResponse } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
 import Chart from "./Chart";
@@ -17,7 +18,7 @@ describe("App", () => {
   });
   afterEach(() => {
     moxios.uninstall(axiosWithAuth as any);
-    jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
   describe("fetchCharts", () => {
     [
@@ -67,9 +68,12 @@ describe("App", () => {
       },
     ].forEach(t => {
       it(t.description, async () => {
-        const mockGetAvailablePackageSummaries = jest
-          .fn()
-          .mockImplementation(() => Promise.resolve({ data: "ok" }));
+        const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            availablePackageSummaries: [{ name: "foo" }],
+            nextPageToken: "",
+          } as GetAvailablePackageSummariesResponse),
+        );
         jest
           .spyOn(Chart, "getAvailablePackageSummaries")
           .mockImplementation(mockGetAvailablePackageSummaries);
@@ -81,7 +85,10 @@ describe("App", () => {
           t.args.size,
           t.args.query,
         );
-        expect(charts).toStrictEqual({ data: "ok" });
+        expect(charts).toStrictEqual({
+          availablePackageSummaries: [{ name: "foo" }],
+          nextPageToken: "",
+        } as GetAvailablePackageSummariesResponse);
         expect(mockGetAvailablePackageSummaries).toHaveBeenCalledWith(...Object.values(t.args));
       });
     });
