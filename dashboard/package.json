@@ -5,8 +5,8 @@
   "homepage": "./",
   "dependencies": {
     "@cds/city": "^1.1.0",
-    "@cds/core": "^5.4.2",
-    "@cds/react": "^5.4.2",
+    "@cds/core": "^5.5.0",
+    "@cds/react": "^5.5.0",
     "@clr/ui": "^5.4.1",
     "@improbable-eng/grpc-web": "^0.14.0",
     "@paciolan/remote-component": "^2.11.0",

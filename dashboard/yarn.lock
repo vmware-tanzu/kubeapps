@@ -1181,10 +1181,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.4.2":
-  version "5.4.2"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.4.2.tgz#d4db6f8c8333ae1a74ade5183a88d9dee530b522"
-  integrity sha512-cpMomSlY3tr6y4srRrd7QUmjXv2MLNERSW5ZTx6AdkIAi9rgLRdYEnxncw/hsjCU7RWouD8vIYY4F0fDvnvxAQ==
+"@cds/core@^5.5.0":
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.0.tgz#f6550f893188a013fa479cb21ec86eba3b01eca6"
+  integrity sha512-puC9gmNNAszumrAALQkkka+WfOyQet1F1g5NlEr2PlIv8Kd3i8Pvt+hy4WzLOpkO0ASwnbQQ3xs4plO3AqSdHA==
   dependencies:
     lit "2.0.0-rc.2"
     ramda "^0.27.1"
@@ -1192,18 +1192,18 @@
   optionalDependencies:
     "@cds/city" "^1.1.0"
     "@types/resize-observer-browser" "^0.1.5"
-    normalize.css "^8.0.1"
+    modern-normalize "1.1.0"
 
-"@cds/react@^5.4.2":
-  version "5.4.2"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.4.2.tgz#301dc8234138c184358ff8b746d4b69d6b2434dd"
-  integrity sha512-QQr7jGiJxZHQbNRmjGGDLEd9Ulj9fuiCSwYS1oQoH42LHbgO0LD38ZYI1GbQELgZbCqVLwv+woBMcxBODyxRIw==
+"@cds/react@^5.5.0":
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.0.tgz#b39deb12b0bd7bb747b4cf416c2317ee46d814d6"
+  integrity sha512-xdtCt1hfutdTqZtnwst1CIW5N/cwBwquaP48fPiakhpseYBvoLtWOFoDZEKW+TTSmgmXFzue5eOFXIwsPdOVTw==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
   optionalDependencies:
     "@cds/city" "^1.1.0"
-    normalize.css "^8.0.1"
+    modern-normalize "^1.1.0"
 
 "@clr/ui@^5.4.1":
   version "5.4.1"
@@ -9770,6 +9770,11 @@ mock-socket@^9.0.3:
   integrity sha512-SxIiD2yE/By79p3cNAAXyLQWTvEFNEzcAO7PH+DzRqKSFaplAPFjiQLmw8ofmpCsZf+Rhfn2/xCJagpdGmYdTw==
   dependencies:
     url-parse "^1.4.4"
+
+modern-normalize@1.1.0, modern-normalize@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/modern-normalize/-/modern-normalize-1.1.0.tgz#da8e80140d9221426bd4f725c6e11283d34f90b7"
+  integrity sha512-2lMlY1Yc1+CUy0gw4H95uNN7vjbpoED7NNRSBHE25nWfLBdmMzFCsPshlzbxHz+gYMcBEUN8V4pU16prcdPSgA==
 
 moo@^0.5.0:
   version "0.5.1"
