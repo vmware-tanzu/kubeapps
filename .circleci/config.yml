@@ -440,7 +440,8 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-
+      # TODO: remove this line once kubeapps-apis got merged in the main branch
+      tail --lines=+10 ./docs/developer/manifests/values.kubeappsapis.yaml >> ./chart/kubeapps/values.yaml
       if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
