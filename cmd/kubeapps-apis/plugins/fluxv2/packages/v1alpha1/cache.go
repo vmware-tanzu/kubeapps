@@ -482,13 +482,14 @@ func (c ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{}
 }
 
 // the opposite of redisKeyFor
+// the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c ResourceWatcherCache) fromRedisKey(key string) (namespace string, name string, err error) {
 	parts := strings.Split(key, ":")
 	if len(parts) != 3 {
-		return "", "", status.Errorf(codes.Internal, "Invalid key [%s]", key)
+		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	if parts[0] != c.config.gvr.Resource {
-		return "", "", status.Errorf(codes.Internal, "Invalid key [%s]", key)
+		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	return parts[1], parts[2], nil
 }

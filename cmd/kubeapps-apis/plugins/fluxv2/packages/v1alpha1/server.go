@@ -130,13 +130,13 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	log.Infof("+fluxv2 GetPackageRepositories(request: [%v])", request)
 
 	if request == nil || request.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "No context provided")
+		return nil, status.Errorf(codes.InvalidArgument, "no context provided")
 	}
 
 	if request.Context.Cluster != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
-			"Not supported yet: request.Context.Cluster: [%v]",
+			"not supported yet: request.Context.Cluster: [%v]",
 			request.Context.Cluster)
 	}
 
@@ -221,7 +221,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
 
 	if request == nil || request.AvailablePackageRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef provided")
+		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
 
 	packageRef := request.AvailablePackageRef
@@ -238,8 +238,10 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	// check if the repo has been indexed, stored in the cache and requested
 	// package is part of it. Otherwise, there is a time window when this scenario can happen:
-	// - GetAvailablePackageSummaries may return {} while a ready repo is being indexed BUT
-	// - GetAvailablePackageDetail may return package detail
+	// - GetAvailablePackageSummaries() may return {} while a ready repo is being indexed
+	//   and said index is cached BUT
+	// - GetAvailablePackageDetail() may return full package detail for one of the packages
+	// in the repo
 	ok, err := s.repoExistsInCache(packageRef.Context.Namespace, packageIdParts[0])
 	if err != nil {
 		return nil, err
@@ -265,12 +267,8 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	// fix up package ref as it is not coming from chart tarball itself
-	pkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
-		Identifier: packageRef.Identifier,
-		Plugin:     GetPluginDetail(),
-		Context:    &corev1.Context{Namespace: packageRef.Context.Namespace},
-	}
+	// fix up namespace as it is not coming from chart tarball itself
+	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
 
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: pkgDetail,
@@ -326,11 +324,11 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 
 	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
-		log.Errorf("error creating chart: %v\n%v", err, unstructuredChart)
+		log.Errorf("Error creating chart: %v\n%v", err, unstructuredChart)
 		return "", err, nil
 	}
 
-	log.Infof("created chart: [%v]", prettyPrintMap(newChart.Object))
+	log.Infof("Created chart: [%v]", prettyPrintMap(newChart.Object))
 
 	// Delete the created helm chart regardless of success or failure. At the end of
 	// GetAvailablePackageDetail(), we've already collected the information we need,
@@ -347,7 +345,7 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 		ResourceVersion: newChart.GetResourceVersion(),
 	})
 	if err != nil {
-		log.Errorf("error creating watch: %v\n%v", err, unstructuredChart)
+		log.Errorf("Error creating watch: %v\n%v", err, unstructuredChart)
 		return "", err, cleanUp
 	}
 

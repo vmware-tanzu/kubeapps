@@ -348,14 +348,14 @@ func newFluxHelmChart(chartName, repoName, version string) unstructured.Unstruct
 	return unstructuredChart
 }
 
-func availablePackageDetailFromTarball(chartName, url string) (*corev1.AvailablePackageDetail, error) {
+func availablePackageDetailFromTarball(chartID, url string) (*corev1.AvailablePackageDetail, error) {
 	// fetch, unzip and untar .tgz file
 	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
 	// local cluster, not remote repo.
 	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
 	// Flux does the hard work of pulling the bits from remote repo
 	// based on secretRef associated with HelmRepository, if applicable
-	chartDetail, err := tar.FetchChartDetailFromTarball(chartName, url, "", "", httpclient.New())
+	chartDetail, err := tar.FetchChartDetailFromTarball(chartID, url, "", "", httpclient.New())
 	if err != nil {
 		return nil, err
 	}
@@ -393,6 +393,11 @@ func availablePackageDetailFromTarball(chartName, url string) (*corev1.Available
 		DefaultValues:    chartDetail[models.ValuesKey],
 		ValuesSchema:     chartDetail[models.SchemaKey],
 		Maintainers:      maintainers,
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: chartID,
+			Plugin:     GetPluginDetail(),
+			Context:    &corev1.Context{},
+		},
 	}
 	// TODO: (gfichtenholt) LongDescription?
 
