@@ -44,7 +44,7 @@ parameters:
     default: "11.12.0-debian-10-r43"
   IMAGES_TO_PUSH:
     type: "string"
-    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy"
+    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
   CI_BOT_USERNAME:
     type: "string"
     default: "kubeapps-bot"
@@ -598,7 +598,7 @@ jobs:
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
-      IMAGES: "kubeops apprepository-controller asset-syncer assetsvc"
+      IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
     <<: *build_images
   build_dashboard:
     docker:
