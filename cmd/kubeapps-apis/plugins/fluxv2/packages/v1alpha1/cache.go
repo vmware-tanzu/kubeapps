@@ -18,11 +18,13 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/go-redis/redis/v8"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +33,9 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-// a type of cache that is based on watching for changes to specified kubernetes resources
+// a type of cache that is based on watching for changes to specified kubernetes resources.
+// The resource is assumed to be namespace-scoped. Cluster-wide resources are not
+// supported at this time
 type ResourceWatcherCache struct {
 	// these expected to be provided by the caller when creating new cache
 	config   cacheConfig
@@ -40,7 +44,7 @@ type ResourceWatcherCache struct {
 	// been 'processed' by the go routine running in the background. The creation of the WaitGroup object
 	// and to call to .Add() is expected to be done by the unit test client. The server-side only signals
 	// .Done() when processing one object is complete
-	eventProcessingWaitGroup *sync.WaitGroup
+	eventProcessedWaitGroup *sync.WaitGroup
 }
 
 type cacheValueSetter func(string, map[string]interface{}) (interface{}, bool, error)
@@ -130,9 +134,9 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	log.Infof("[PING] -> [%s]", pong)
 
 	c := ResourceWatcherCache{
-		config:                   config,
-		redisCli:                 redisCli,
-		eventProcessingWaitGroup: waitGroup,
+		config:                  config,
+		redisCli:                redisCli,
+		eventProcessedWaitGroup: waitGroup,
 	}
 
 	// let's do the initial re-sync and creating a new RetryWatcher here so
@@ -154,6 +158,10 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	go c.watchLoop(watcher)
 	return &c, nil
 }
+
+// note that I am not using pointer receivers on any the methods, because none
+// of them need to modify the ResourceWatcherCache internal state.
+// see https://golang.org/doc/faq#methods_on_values_or_pointers
 
 func (c ResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
 	for {
@@ -192,7 +200,7 @@ func (c ResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface
 	}
 
 	// this will start a watcher on all namespaces
-	return dynamicClient.Resource(c.config.gvr).Namespace("").Watch(ctx, options)
+	return dynamicClient.Resource(c.config.gvr).Namespace(apiv1.NamespaceAll).Watch(ctx, options)
 }
 
 // TODO (gfichtenholt) we may need to introduce a mutex to guard against the scenario
@@ -208,12 +216,14 @@ func (c ResourceWatcherCache) resync() (string, error) {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	// this will list resources from all namespaces
-	// notice, we are not setting resourceVersion in ListOptions, which means
+	// TODO: (gfichtenholt) RBAC check where can list and watch GVR?
+
+	// this will list resources from all namespaces.
+	// Notice, we are not setting resourceVersion in ListOptions, which means
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
 	// For get and list, the semantics of resource version unset are to get the most recent
 	// version
-	listItems, err := dynamicClient.Resource(c.config.gvr).Namespace("").List(ctx, metav1.ListOptions{})
+	listItems, err := dynamicClient.Resource(c.config.gvr).Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -288,8 +298,8 @@ func (c ResourceWatcherCache) receive(ch <-chan watch.Event) {
 // TODO (gfichtenholt) this func should return error if it happens, (see below for)
 func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) error {
 	defer func() {
-		if c.eventProcessingWaitGroup != nil {
-			c.eventProcessingWaitGroup.Done()
+		if c.eventProcessedWaitGroup != nil {
+			c.eventProcessedWaitGroup.Done()
 		}
 	}()
 
@@ -332,8 +342,8 @@ func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string
 // this is effectively a cache DEL operation
 func (c ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) error {
 	defer func() {
-		if c.eventProcessingWaitGroup != nil {
-			c.eventProcessingWaitGroup.Done()
+		if c.eventProcessedWaitGroup != nil {
+			c.eventProcessedWaitGroup.Done()
 		}
 	}()
 
@@ -469,6 +479,19 @@ func (c ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{}
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
 	return fmt.Sprintf("%s:%s:%s", c.config.gvr.Resource, namespace, name), nil
+}
+
+// the opposite of redisKeyFor
+// the goal is to keep the details of what exactly the key looks like localized to one piece of code
+func (c ResourceWatcherCache) fromRedisKey(key string) (namespace string, name string, err error) {
+	parts := strings.Split(key, ":")
+	if len(parts) != 3 {
+		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+	}
+	if parts[0] != c.config.gvr.Resource {
+		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+	}
+	return parts[1], parts[2], nil
 }
 
 // computing a value for a key maybe expensive, e.g. indexing a repo takes a while,

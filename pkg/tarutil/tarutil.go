@@ -16,9 +16,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"path"
 	"strings"
@@ -30,35 +28,31 @@ import (
 //
 // Fetches helm chart details from a gzipped tarball
 //
+// name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
+//
 func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
-	req, err := http.NewRequest("GET", chartTarballURL, nil)
-	if err != nil {
-		return nil, err
-	}
+	reqHeaders := make(map[string]string)
 	if len(userAgent) > 0 {
-		req.Header.Set("User-Agent", userAgent)
+		reqHeaders["User-Agent"] = userAgent
 	}
-
 	if len(authz) > 0 {
-		req.Header.Set("Authorization", authz)
+		reqHeaders["Authorization"] = authz
 	}
 
-	res, err := netClient.Do(req)
-	if res != nil {
-		defer res.Body.Close()
+	// use our "standard" http-client library
+	reader, _, err := httpclient.GetStream(chartTarballURL, netClient, reqHeaders)
+	if reader != nil {
+		defer reader.Close()
 	}
+
 	if err != nil {
 		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non OK response code: [%d]", res.StatusCode)
 	}
 
 	// We read the whole chart into memory, this should be okay since the chart
 	// tarball needs to be small enough to fit into a GRPC call (Tiller
 	// requirement)
-	gzf, err := gzip.NewReader(res.Body)
+	gzf, err := gzip.NewReader(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -79,10 +73,12 @@ func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent 
 	readmeFileName := fixedName + "/README.md"
 	valuesFileName := fixedName + "/values.yaml"
 	schemaFileName := fixedName + "/values.schema.json"
+	chartYamlFileName := fixedName + "/Chart.yaml"
 	filenames := map[string]string{
-		chart.ValuesKey: valuesFileName,
-		chart.ReadmeKey: readmeFileName,
-		chart.SchemaKey: schemaFileName,
+		chart.ValuesKey:    valuesFileName,
+		chart.ReadmeKey:    readmeFileName,
+		chart.SchemaKey:    schemaFileName,
+		chart.ChartYamlKey: chartYamlFileName,
 	}
 
 	files, err := ExtractFilesFromTarball(filenames, tarf)
@@ -91,9 +87,10 @@ func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent 
 	}
 
 	return map[string]string{
-		chart.ValuesKey: files[chart.ValuesKey],
-		chart.ReadmeKey: files[chart.ReadmeKey],
-		chart.SchemaKey: files[chart.SchemaKey],
+		chart.ValuesKey:    files[chart.ValuesKey],
+		chart.ReadmeKey:    files[chart.ReadmeKey],
+		chart.SchemaKey:    files[chart.SchemaKey],
+		chart.ChartYamlKey: files[chart.ChartYamlKey],
 	}, nil
 }
 

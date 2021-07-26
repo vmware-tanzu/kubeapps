@@ -561,7 +561,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
-		assert.Err(t, fmt.Errorf("received non OK response code: [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion))
+		assert.Err(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
