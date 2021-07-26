@@ -49,9 +49,9 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM bitnami/minideb:buster
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeapps-apis /kubeapps-apis
-COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/
-COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/
-COPY --from=builder /helm-packages-v1alpha1-plugin.so /plugins/
+COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/kapp-controller/
+COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/fluxv2/
+COPY --from=builder /helm-packages-v1alpha1-plugin.so /plugins/helm/
 
 EXPOSE 50051
 USER 1001

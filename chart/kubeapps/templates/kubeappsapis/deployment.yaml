@@ -71,8 +71,10 @@ spec:
           command:
             - /kubeapps-apis
           args:
+            {{- range .Values.kubeappsapis.enabledPlugins }}
             - --plugin-dir
-            - /plugins/
+            - /plugins/{{ . }}
+            {{- end }}
             {{- if .Values.clusters }}
             - --clusters-config-path=/config/clusters.conf
             {{- end }}
@@ -86,8 +88,8 @@ spec:
             - name: PORT
               value: {{ .Values.kubeappsapis.containerPort | quote }}
             # REDIS-* vars are required by the plugins for caching functionality
-            # TODO (gfichtenolt) this as required by the kubeapps apis service (which will 
-            # longer-term pass something to the plugins so that the plugins won't need to 
+            # TODO (gfichtenolt) this as required by the kubeapps apis service (which will
+            # longer-term pass something to the plugins so that the plugins won't need to
             # know these details). Currently they're used directly by the flux plugin
             - name: REDIS_ADDR
               value: kubeapps-redis-master.{{ .Release.Namespace }}.svc.cluster.local:6379
