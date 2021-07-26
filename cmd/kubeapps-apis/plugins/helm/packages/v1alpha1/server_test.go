@@ -490,13 +490,14 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name             string
-		charts           []*models.Chart
-		expectDBQuery    bool
-		statusCode       codes.Code
-		request          *corev1.GetAvailablePackageSummariesRequest
-		expectedResponse *corev1.GetAvailablePackageSummariesResponse
-		authorized       bool
+		name               string
+		charts             []*models.Chart
+		expectDBQuery      bool
+		statusCode         codes.Code
+		request            *corev1.GetAvailablePackageSummariesRequest
+		expectedResponse   *corev1.GetAvailablePackageSummariesResponse
+		authorized         bool
+		expectedCategories []*models.ChartCategory
 	}{
 		{
 			name:       "it returns a set of availablePackageSummary from the database (global ns)",
@@ -727,6 +728,46 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectDBQuery: false,
 			statusCode:    codes.InvalidArgument,
 		},
+		{
+			name:       "it returns the chart categories if pageSize=0",
+			authorized: true,
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				// Start on page two with two results per page, which in this input
+				// corresponds only to the third chart.
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "0",
+					PageSize:  -1,
+				},
+			},
+			expectDBQuery: true,
+			charts: []*models.Chart{
+				{
+					Name:     "chart1",
+					Category: "foo",
+				},
+				{
+					Name:     "chart2",
+					Category: "bar",
+				},
+				{
+					Name:     "chart3",
+					Category: "bar",
+				},
+			},
+			expectedCategories: []*models.ChartCategory{{Name: "foo", Count: 1}, {Name: "bar", Count: 2}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					{
+						Categories: []string{"foo", "bar"},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -745,13 +786,24 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			if tc.expectDBQuery {
 				// Checking if the WHERE condtion is properly applied
-				mock.ExpectQuery("SELECT info FROM").
-					WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
-					WillReturnRows(rows)
-				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
-					mock.ExpectQuery("SELECT count").
+				if tc.request.PaginationOptions != nil && tc.request.PaginationOptions.PageSize == -1 {
+					// Use the categories specified in the expectedCategories (we're not testing this logic)
+					catrows := sqlmock.NewRows([]string{"name", "count"})
+					for _, expCat := range tc.expectedCategories {
+						catrows.AddRow(expCat.Name, expCat.Count)
+					}
+					mock.ExpectQuery("SELECT (info ->> 'category')*").
 						WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
-						WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
+						WillReturnRows(catrows)
+				} else {
+					mock.ExpectQuery("SELECT info FROM").
+						WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
+						WillReturnRows(rows)
+					if tc.request.GetPaginationOptions().GetPageSize() > 0 {
+						mock.ExpectQuery("SELECT count").
+							WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
+							WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
+					}
 				}
 			}
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
