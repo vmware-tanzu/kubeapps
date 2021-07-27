@@ -275,6 +275,32 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}, nil
 }
 
+// GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
+func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+	log.Infof("+fluxv2 GetAvailablePackageVersions [%v]", request)
+	packageRef := request.GetAvailablePackageRef()
+	namespace := packageRef.GetContext().GetNamespace()
+	if namespace == "" || packageRef.GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+	}
+
+	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
+	/*
+		chart, err := s.manager.GetChart(namespace, unescapedChartID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
+		}
+		return &corev1.GetAvailablePackageVersionsResponse{
+			PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+		}, nil
+	*/
+}
+
 // returns the url from which chart .tgz can be downloaded
 // here chartVersion string, if specified at all, should be specific, like "14.4.0",
 // not an expression like ">14 <15"
