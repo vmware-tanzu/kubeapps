@@ -16,7 +16,7 @@ export interface IConfig {
   authProxySkipLoginPage: boolean;
   error?: Error;
   clusters: string[];
-  theme: SupportedThemes;
+  theme: string;
 }
 
 export default class Config {
@@ -26,15 +26,34 @@ export default class Config {
     return data;
   }
 
-  public static getTheme() {
-    let theme = localStorage.getItem("theme");
-    if (!theme) {
-      theme =
-        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? SupportedThemes.dark
-          : SupportedThemes.light;
-    }
-    return (theme as SupportedThemes) || SupportedThemes.light;
+  public static getTheme(config: IConfig): SupportedThemes {
+    // Define a ballback theme in case of errors
+    const fallbackTheme = SupportedThemes.light;
+
+    // Retrieve the system theme preference (configurable via Values.dashboard.defaultTheme)
+    const systemTheme = config.theme != null ? SupportedThemes[config.theme] : undefined;
+
+    // Retrieve the user theme preference
+    const userTheme =
+      localStorage.getItem("theme") != null
+        ? SupportedThemes[localStorage.getItem("theme") as string]
+        : undefined;
+
+    // Retrieve the browser theme preference
+    const browserTheme =
+      window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? SupportedThemes.dark
+        : SupportedThemes.light;
+
+    // calculates the chose theme based upon this prelation order: user>system>browser>fallback
+    const chosenTheme = userTheme ?? systemTheme ?? browserTheme ?? fallbackTheme;
+
+    console.log(`1 userTheme: ${userTheme}`);
+    console.log(`2 systemTheme: ${systemTheme}`);
+    console.log(`3 browserTheme: ${browserTheme}`);
+    console.log(`== chosenTheme: ${chosenTheme}`);
+
+    return chosenTheme;
   }
 
   public static setTheme(theme: SupportedThemes) {

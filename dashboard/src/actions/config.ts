@@ -13,14 +13,11 @@ export const receiveConfig = createAction("RECEIVE_CONFIG", resolve => {
 export const receiveTheme = createAction("RECEIVE_THEME", resolve => {
   return (theme: SupportedThemes) => resolve(theme);
 });
-export const setThemeState = createAction("SET_THEME", resolve => {
-  return (theme: SupportedThemes) => resolve(theme);
-});
 export const errorConfig = createAction("ERROR_CONFIG", resolve => {
   return (err: Error) => resolve(err);
 });
 
-const allActions = [requestConfig, receiveConfig, receiveTheme, setThemeState, errorConfig];
+const allActions = [requestConfig, receiveConfig, receiveTheme, errorConfig];
 export type ConfigAction = ActionType<typeof allActions[number]>;
 
 export function getConfig(): ThunkAction<Promise<void>, IStoreState, null, ConfigAction> {
@@ -35,18 +32,28 @@ export function getConfig(): ThunkAction<Promise<void>, IStoreState, null, Confi
   };
 }
 
+// getTheme retrieves the current server configuration, calculates the proper theme
+// and stores it in both the redux state and the user's localstorage
 export function getTheme(): ThunkAction<Promise<void>, IStoreState, null, ConfigAction> {
   return async dispatch => {
-    const theme = Config.getTheme();
-    dispatch(receiveTheme(theme));
+    try {
+      const config = await Config.getConfig();
+      const theme = Config.getTheme(config);
+      Config.setTheme(theme);
+      dispatch(receiveTheme(theme));
+    } catch (e) {
+      dispatch(errorConfig(e));
+    }
   };
 }
 
+// setTheme receives a theme and and stores it
+// in both the redux state and the user's localstorage
 export function setTheme(
   theme: SupportedThemes,
 ): ThunkAction<Promise<void>, IStoreState, null, ConfigAction> {
   return async dispatch => {
     Config.setTheme(theme);
-    dispatch(setThemeState(theme));
+    dispatch(receiveTheme(theme));
   };
 }
