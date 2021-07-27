@@ -31,7 +31,6 @@ const configReducer = (state: IConfigState = initialState, action: ConfigAction)
         ...action.payload,
       };
     case getType(actions.config.receiveTheme):
-      Config.setTheme(action.payload);
       return {
         ...state,
         theme: action.payload,
