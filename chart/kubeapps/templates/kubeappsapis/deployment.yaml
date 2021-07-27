@@ -92,7 +92,6 @@ spec:
             # TODO (gfichtenolt) this as required by the kubeapps apis service (which will
             # longer-term pass something to the plugins so that the plugins won't need to
             # know these details). Currently they're used directly by the flux plugin
-            {{- if .Values.redis.enabled }}
             - name: REDIS_ADDR
               value: kubeapps-redis-master.{{ .Release.Namespace }}.svc.cluster.local:6379
             - name: REDIS_PASSWORD
