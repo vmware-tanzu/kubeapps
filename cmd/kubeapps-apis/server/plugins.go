@@ -283,7 +283,7 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 		}
 	}
 
-	if !serveOpts.UnsafeUseDemoSA {
+	if !serveOpts.UnsafeUseDemoSA && !serveOpts.UnsafeLocalDevKubeconfig {
 		// get the parsed kube.ClustersConfig from the serveOpts
 		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
 		if err != nil {
@@ -339,6 +339,7 @@ func extractToken(ctx context.Context) (string, error) {
 		return "", nil
 	}
 
+	log.Infof("%v", md)
 	// metadata is always lowercased
 	if len(md["authorization"]) > 0 {
 		if strings.HasPrefix(md["authorization"][0], "Bearer ") {

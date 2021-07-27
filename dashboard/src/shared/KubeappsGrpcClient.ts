@@ -7,6 +7,7 @@ import {
 import { FluxV2PackagesServiceClientImpl } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import { HelmPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { KappControllerPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+import { Auth } from "./Auth";
 import * as URL from "./url";
 
 export class KubeappsGrpcClient {
@@ -23,11 +24,27 @@ export class KubeappsGrpcClient {
   private fluxv2PackagesServiceClientImpl!: FluxV2PackagesServiceClientImpl;
 
   constructor(transport?: grpc.TransportFactory) {
-    this.transport = transport ?? grpc.CrossBrowserHttpTransport({});
+    this.transport = transport ?? grpc.CrossBrowserHttpTransport({ withCredentials: true });
   }
 
+  // getClientMetadata, if using token authentication, creates grpc metadata
+  // and the token in the 'authorization' field
+  public getClientMetadata() {
+    return Auth.getAuthToken()
+      ? new grpc.Metadata({ authorization: `Bearer ${Auth.getAuthToken()}` })
+      : undefined;
+  }
+
+  // getGrpcClient returns the already configured grpcWebImpl
+  // if uncreated, it is created and returned
   public getGrpcClient = () => {
-    return this.grpcWebImpl || new GrpcWebImpl(URL.api.kubeappsapis, { transport: this.transport });
+    return (
+      this.grpcWebImpl ||
+      new GrpcWebImpl(URL.api.kubeappsapis, {
+        transport: this.transport,
+        metadata: this.getClientMetadata(),
+      })
+    );
   };
 
   // Core APIs

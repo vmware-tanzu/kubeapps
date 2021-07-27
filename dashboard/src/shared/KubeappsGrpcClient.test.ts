@@ -31,12 +31,19 @@ describe("kubeapps grpc client creation", () => {
 });
 
 describe("kubeapps grpc core plugin service", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   const fakeEmpyTransport = new FakeTransportBuilder().withMessages([]).build();
   const fakeErrorransport = new FakeTransportBuilder()
     .withPreTrailersError(grpc.Code.Internal, "boom")
     .build();
   const fakeUnauthenticatedTransport = new FakeTransportBuilder()
     .withPreTrailersError(grpc.Code.Unauthenticated, "you shall not pass")
+    .build();
+  const fakeAuthTransport = new FakeTransportBuilder()
+    .withHeaders(new grpc.Metadata({ authorization: "Bearer topsecret" }))
     .build();
 
   it("it fails when an internal error is thrown", async () => {
@@ -58,6 +65,25 @@ describe("kubeapps grpc core plugin service", () => {
     const getPluginsServiceClientImpl = kubeappsGrpcClient.getPluginsServiceClientImpl();
     const res = await getPluginsServiceClientImpl.GetConfiguredPlugins({});
     expect(res).toBeNull();
+  });
+
+  it("it set the metadata if using token auth", async () => {
+    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeAuthTransport);
+    jest.spyOn(window.localStorage.__proto__, "getItem").mockReturnValue("topsecret");
+
+    const getClientMetadataMock = jest.spyOn(KubeappsGrpcClient.prototype, "getClientMetadata");
+    kubeappsGrpcClient.getPluginsServiceClientImpl();
+    const expectedMetadata = new grpc.Metadata({ authorization: "Bearer topsecret" });
+    expect(getClientMetadataMock.mock.results[0].value).toEqual(expectedMetadata);
+  });
+
+  it("it doesn't set the metadata if not using token auth", async () => {
+    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeAuthTransport);
+    jest.spyOn(window.localStorage.__proto__, "getItem").mockReturnValue(null);
+
+    const getClientMetadataMock = jest.spyOn(KubeappsGrpcClient.prototype, "getClientMetadata");
+    kubeappsGrpcClient.getPluginsServiceClientImpl();
+    expect(getClientMetadataMock.mock.results[0].value).toBeUndefined();
   });
 
   // TODO(agamez): perform an actual check here.
