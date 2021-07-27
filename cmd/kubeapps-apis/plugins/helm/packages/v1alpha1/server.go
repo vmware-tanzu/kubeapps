@@ -588,6 +588,11 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
 			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
 		}
+		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
+			Ready:  rel.Info.Status == release.StatusDeployed,
+			Reason: rel.Info.Status.String(),
+		}
+		installedPkgSummaries[i].CurrentAppVersion = rel.Chart.Metadata.AppVersion
 	}
 
 	response := &corev1.GetInstalledPackageSummariesResponse{

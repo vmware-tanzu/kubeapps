@@ -1825,6 +1825,28 @@
       "description": "An InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package.",
       "title": "InstalledPackageReference"
     },
+    "v1alpha1InstalledPackageStatus": {
+      "type": "object",
+      "properties": {
+        "ready": {
+          "type": "boolean",
+          "description": "An indication of whether the installation is ready or not",
+          "title": "Ready"
+        },
+        "reason": {
+          "type": "string",
+          "description": "A single word indicating the reason for the current status. For example, \"Pending\",\n\"InstallSucceeded\", or \"InstallFailed\"",
+          "title": "Reason"
+        },
+        "detail": {
+          "type": "string",
+          "description": "Optional detail to return for user context",
+          "title": "Detail"
+        }
+      },
+      "description": "An InstalledPackageStatus reports on the current status of the installation.",
+      "title": "InstalledPackageStatus"
+    },
     "v1alpha1InstalledPackageSummary": {
       "type": "object",
       "properties": {
@@ -1847,6 +1869,11 @@
           "type": "string",
           "description": "The version of the package which is currently installed.",
           "title": "CurrentPkgVersion"
+        },
+        "currentAppVersion": {
+          "type": "string",
+          "description": "The version of the app included in the current package version.",
+          "title": "CurrentAppVersion"
         },
         "iconUrl": {
           "type": "string",
@@ -1872,6 +1899,11 @@
           "type": "string",
           "description": "The latest version available for this package, regardless of the pkg_version_reference.",
           "title": "LatestPkgVersion"
+        },
+        "status": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
+          "description": "The current status of the installed package.",
+          "title": "Status"
         }
       },
       "description": "An InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages.",
