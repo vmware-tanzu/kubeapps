@@ -48,11 +48,6 @@ export default class Config {
     // calculates the chose theme based upon this prelation order: user>system>browser>fallback
     const chosenTheme = userTheme ?? systemTheme ?? browserTheme ?? fallbackTheme;
 
-    console.log(`1 userTheme: ${userTheme}`);
-    console.log(`2 systemTheme: ${systemTheme}`);
-    console.log(`3 browserTheme: ${browserTheme}`);
-    console.log(`== chosenTheme: ${chosenTheme}`);
-
     return chosenTheme;
   }
 

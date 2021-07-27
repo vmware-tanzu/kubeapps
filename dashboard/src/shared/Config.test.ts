@@ -55,7 +55,7 @@ describe("Themes", () => {
   });
 
   it("returns the system theme", () => {
-    let defaultJSONTheme = { ...defaultJSON, theme: SupportedThemes.dark };
+    const defaultJSONTheme = { ...defaultJSON, theme: SupportedThemes.dark };
     expect(Config.getTheme(defaultJSONTheme)).toBe(SupportedThemes.dark);
   });
 
@@ -74,7 +74,7 @@ describe("Themes", () => {
     jest.spyOn(window.localStorage.__proto__, "getItem").mockReturnValue(SupportedThemes.dark);
 
     // System preference = light
-    let defaultJSONTheme = { ...defaultJSON, theme: SupportedThemes.light };
+    const defaultJSONTheme = { ...defaultJSON, theme: SupportedThemes.light };
 
     // Browser preference = dark
     Object.defineProperty(window, "matchMedia", {
@@ -88,7 +88,7 @@ describe("Themes", () => {
 
   it("returns the theme according to the preference (system>browser>fallback)", () => {
     // System preference = light
-    let defaultJSONTheme = { ...defaultJSON, theme: SupportedThemes.light };
+    const defaultJSONTheme = { ...defaultJSON, theme: SupportedThemes.light };
 
     // Browser preference = dark
     Object.defineProperty(window, "matchMedia", {
@@ -102,7 +102,7 @@ describe("Themes", () => {
 
   it("returns the theme according to the preference (browser>fallback)", () => {
     // System preference = N/A
-    let defaultJSONTheme = { ...defaultJSON, theme: "" };
+    const defaultJSONTheme = { ...defaultJSON, theme: "" };
 
     // Browser preference = dark
     Object.defineProperty(window, "matchMedia", {
@@ -116,7 +116,7 @@ describe("Themes", () => {
 
   it("returns the theme according to the preference (fallback)", () => {
     // System preference = N/A
-    let defaultJSONTheme = { ...defaultJSON, theme: "" };
+    const defaultJSONTheme = { ...defaultJSON, theme: "" };
 
     expect(Config.getTheme(defaultJSONTheme)).toBe(SupportedThemes.light);
   });
