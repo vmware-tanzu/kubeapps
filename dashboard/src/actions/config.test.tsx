@@ -57,7 +57,7 @@ describe("setTheme", () => {
     const expectedActions = [
       {
         payload: SupportedThemes.dark,
-        type: getType(actions.config.setThemeState),
+        type: getType(actions.config.receiveTheme),
       },
     ];
 
