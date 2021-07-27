@@ -200,54 +200,47 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
 	}
 
-	// A GetAvailablePackageSummaries request with pageSize=-1 will return a GetAvailablePackageSummariesResponse
-	// with a single empty AvailablePackageSummary containing only the distinct category names considering
-	// the FilterOptions. Otherwise, return the usual response after querying all the available packages
-	if pageSize == -1 {
-		chartCategories, err := s.manager.GetAllChartCategories(cq)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to fetch chart categories: %v", err)
-		}
-
-		var categories []string
-		for _, cat := range chartCategories {
-			categories = append(categories, cat.Name)
-		}
-		return &corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{{Categories: categories}},
-			NextPageToken:             "",
-		}, nil
-
-	} else {
-		// The current assetsvc manager works on a page number (ie. 1 for the first page),
-		// rather than an offset.
-		pageNumber := pageOffset + 1
-		charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, pageNumber, int(pageSize))
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
-		}
-
-		// Convert the charts response into a GetAvailablePackageSummariesResponse
-		responsePackages := []*corev1.AvailablePackageSummary{}
-		for _, chart := range charts {
-			pkg, err := AvailablePackageSummaryFromChart(chart)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
-			}
-			responsePackages = append(responsePackages, pkg)
-		}
-
-		// Only return a next page token if the request was for pagination and
-		// the results are a full page.
-		nextPageToken := ""
-		if pageSize > 0 && len(responsePackages) == int(pageSize) {
-			nextPageToken = fmt.Sprintf("%d", pageOffset+1)
-		}
-		return &corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackageSummaries: responsePackages,
-			NextPageToken:             nextPageToken,
-		}, nil
+	// This plugin will include, as part of the GetAvailablePackageSummariesResponse,
+	// a "Categories" field containing only the distinct category names considering the FilterOptions
+	chartCategories, err := s.manager.GetAllChartCategories(cq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch chart categories: %v", err)
 	}
+
+	var categories []string
+	for _, cat := range chartCategories {
+		categories = append(categories, cat.Name)
+	}
+
+	// The current assetsvc manager works on a page number (ie. 1 for the first page),
+	// rather than an offset.
+	pageNumber := pageOffset + 1
+	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, pageNumber, int(pageSize))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
+	}
+
+	// Convert the charts response into a GetAvailablePackageSummariesResponse
+	responsePackages := []*corev1.AvailablePackageSummary{}
+	for _, chart := range charts {
+		pkg, err := AvailablePackageSummaryFromChart(chart)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
+		}
+		responsePackages = append(responsePackages, pkg)
+	}
+
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(responsePackages) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	}
+	return &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: responsePackages,
+		NextPageToken:             nextPageToken,
+		Categories:                categories,
+	}, nil
 }
 
 // pageOffsetFromPageToken converts a page token to an integer offset
