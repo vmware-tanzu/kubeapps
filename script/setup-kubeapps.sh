@@ -131,7 +131,7 @@ silence kubectl create serviceaccount example --namespace default
 silence kubectl create -n default rolebinding example-edit --clusterrole=edit --serviceaccount default:example
 silence kubectl create -n "$namespace" rolebinding example-kubeapps-repositories-write --clusterrolerole=kubeapps:kubeapps:apprepositories-write --serviceaccount default:example
 echo
-    
+
 info "Use this command for port forwading to Kubeapps Dashboard:"
 info "kubectl port-forward --namespace $namespace svc/kubeapps 8080:80 >/dev/null 2>&1 &"
 info "Kubeapps URL: http://127.0.0.1:8080"

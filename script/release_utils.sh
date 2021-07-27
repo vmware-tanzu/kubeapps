@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o nounset
+set -o pipefail
 
 function commit_list {
   local tag=${1:?}

@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+set -o errexit
+set -o nounset
+set -o pipefail
 
 # Remote github repostories for:
 ## the upstream chart repository fork (CHARTS_REPO)
@@ -169,7 +171,7 @@ commitAndSendExternalPR() {
         echo "Not found any change to commit" > /dev/stderr
         cd -
         return 1
-    fi 
+    fi
     sed -i.bk -e "s/<USER>/`git config user.name`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/`git config user.email`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     git checkout -b $targetBranch

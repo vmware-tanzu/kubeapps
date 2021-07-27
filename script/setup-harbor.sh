@@ -134,7 +134,7 @@ for dep in "${deployments[@]}"; do
     info "Deployment ${dep} ready!"
 done
 echo
-    
+
 info "Use this command for port-forwading to Harbor:"
 info "kubectl port-forward --namespace $namespace svc/harbor 8888:80 >/dev/null 2>&1 &"
 info "Harbor URL: http://127.0.0.1:8888/"
