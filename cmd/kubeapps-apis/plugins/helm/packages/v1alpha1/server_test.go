@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -414,9 +415,9 @@ func makeChart(chart_name, repo_name, namespace string, chart_versions []string)
 		versions = append(versions, models.ChartVersion{
 			Version:    v,
 			AppVersion: DefaultAppVersion,
-			Readme:     "chart readme",
-			Values:     "chart values",
-			Schema:     "chart schema",
+			Readme:     "not-used",
+			Values:     "not-used",
+			Schema:     "not-used",
 		})
 	}
 	ch.ChartVersions = versions
@@ -830,12 +831,18 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 	testCases := []struct {
 		name       string
 		chart      *models.Chart
+		chartFiles *models.ChartFiles
 		expected   *corev1.AvailablePackageDetail
 		statusCode codes.Code
 	}{
 		{
 			name:  "it returns AvailablePackageDetail if the chart is correct",
 			chart: makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}),
+			chartFiles: &models.ChartFiles{
+				Readme: "chart readme",
+				Values: "chart values",
+				Schema: "chart schema",
+			},
 			expected: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
@@ -871,7 +878,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			availablePackageDetail, err := AvailablePackageDetailFromChart(tc.chart)
+			availablePackageDetail, err := AvailablePackageDetailFromChart(tc.chart, tc.chartFiles)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -889,13 +896,12 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
-		name             string
-		charts           []*models.Chart
-		requestedVersion string
-		expectedPackage  *corev1.AvailablePackageDetail
-		statusCode       codes.Code
-		request          *corev1.GetAvailablePackageDetailRequest
-		authorized       bool
+		name            string
+		charts          []*models.Chart
+		expectedPackage *corev1.AvailablePackageDetail
+		statusCode      codes.Code
+		request         *corev1.GetAvailablePackageDetailRequest
+		authorized      bool
 	}{
 		{
 			name:       "it returns an availablePackageDetail from the database (latest version)",
@@ -903,7 +909,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
+					Identifier: "repo-1%2Ffoo",
 				},
 			},
 			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"})},
@@ -936,9 +942,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
 				},
+				PkgVersion: "1.0.0",
 			},
-			requestedVersion: "1.0.0",
-			charts:           []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"})},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
@@ -981,11 +987,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
 				},
+				PkgVersion: "9.9.9",
 			},
-			requestedVersion: "9.9.9",
-			charts:           []*models.Chart{{Name: "foo"}},
-			expectedPackage:  &corev1.AvailablePackageDetail{},
-			statusCode:       codes.Internal,
+			charts:          []*models.Chart{{Name: "foo"}},
+			expectedPackage: &corev1.AvailablePackageDetail{},
+			statusCode:      codes.Internal,
 		},
 		{
 			name:       "it returns an unauthenticated status if the user doesn't have permissions",
@@ -1016,20 +1022,32 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				rows.AddRow(string(chartJSON))
 			}
-			if tc.statusCode != codes.Unauthenticated {
+			if tc.statusCode == codes.OK {
 				// Checking if the WHERE condition is properly applied
-				mock.ExpectQuery("SELECT info FROM").
-					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, tc.request.AvailablePackageRef.Identifier).
+				chartIDUnescaped, err := url.QueryUnescape(tc.request.AvailablePackageRef.Identifier)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mock.ExpectQuery("SELECT info FROM charts").
+					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, chartIDUnescaped).
 					WillReturnRows(rows)
+				fileID := fileIDForChart(chartIDUnescaped, tc.expectedPackage.PkgVersion)
+				fileJSON, err := json.Marshal(models.ChartFiles{
+					Readme: tc.expectedPackage.Readme,
+					Values: tc.expectedPackage.DefaultValues,
+					Schema: tc.expectedPackage.ValuesSchema,
+				})
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				fileRows := sqlmock.NewRows([]string{"info"})
+				fileRows.AddRow(string(fileJSON))
+				mock.ExpectQuery("SELECT info FROM files").
+					WithArgs(tc.request.GetAvailablePackageRef().GetContext().GetNamespace(), fileID).
+					WillReturnRows(fileRows)
 			}
-			req := &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
-				},
-				PkgVersion: tc.requestedVersion,
-			}
-			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), req)
+
+			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
