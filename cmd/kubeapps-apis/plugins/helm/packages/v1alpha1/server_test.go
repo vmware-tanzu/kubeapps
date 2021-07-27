@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -414,9 +415,9 @@ func makeChart(chart_name, repo_name, namespace string, chart_versions []string)
 		versions = append(versions, models.ChartVersion{
 			Version:    v,
 			AppVersion: DefaultAppVersion,
-			Readme:     "chart readme",
-			Values:     "chart values",
-			Schema:     "chart schema",
+			Readme:     "not-used",
+			Values:     "not-used",
+			Schema:     "not-used",
 		})
 	}
 	ch.ChartVersions = versions
@@ -778,12 +779,18 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 	testCases := []struct {
 		name       string
 		chart      *models.Chart
+		chartFiles *models.ChartFiles
 		expected   *corev1.AvailablePackageDetail
 		statusCode codes.Code
 	}{
 		{
 			name:  "it returns AvailablePackageDetail if the chart is correct",
 			chart: makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}),
+			chartFiles: &models.ChartFiles{
+				Readme: "chart readme",
+				Values: "chart values",
+				Schema: "chart schema",
+			},
 			expected: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
@@ -819,7 +826,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			availablePackageDetail, err := AvailablePackageDetailFromChart(tc.chart)
+			availablePackageDetail, err := AvailablePackageDetailFromChart(tc.chart, tc.chartFiles)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -837,13 +844,12 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
-		name             string
-		charts           []*models.Chart
-		requestedVersion string
-		expectedPackage  *corev1.AvailablePackageDetail
-		statusCode       codes.Code
-		request          *corev1.GetAvailablePackageDetailRequest
-		authorized       bool
+		name            string
+		charts          []*models.Chart
+		expectedPackage *corev1.AvailablePackageDetail
+		statusCode      codes.Code
+		request         *corev1.GetAvailablePackageDetailRequest
+		authorized      bool
 	}{
 		{
 			name:       "it returns an availablePackageDetail from the database (latest version)",
@@ -851,7 +857,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
+					Identifier: "repo-1%2Ffoo",
 				},
 			},
 			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"})},
@@ -884,9 +890,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
 				},
+				PkgVersion: "1.0.0",
 			},
-			requestedVersion: "1.0.0",
-			charts:           []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"})},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
@@ -929,11 +935,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
 				},
+				PkgVersion: "9.9.9",
 			},
-			requestedVersion: "9.9.9",
-			charts:           []*models.Chart{{Name: "foo"}},
-			expectedPackage:  &corev1.AvailablePackageDetail{},
-			statusCode:       codes.Internal,
+			charts:          []*models.Chart{{Name: "foo"}},
+			expectedPackage: &corev1.AvailablePackageDetail{},
+			statusCode:      codes.Internal,
 		},
 		{
 			name:       "it returns an unauthenticated status if the user doesn't have permissions",
@@ -964,20 +970,32 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				rows.AddRow(string(chartJSON))
 			}
-			if tc.statusCode != codes.Unauthenticated {
+			if tc.statusCode == codes.OK {
 				// Checking if the WHERE condition is properly applied
-				mock.ExpectQuery("SELECT info FROM").
-					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, tc.request.AvailablePackageRef.Identifier).
+				chartIDUnescaped, err := url.QueryUnescape(tc.request.AvailablePackageRef.Identifier)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mock.ExpectQuery("SELECT info FROM charts").
+					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, chartIDUnescaped).
 					WillReturnRows(rows)
+				fileID := fileIDForChart(chartIDUnescaped, tc.expectedPackage.PkgVersion)
+				fileJSON, err := json.Marshal(models.ChartFiles{
+					Readme: tc.expectedPackage.Readme,
+					Values: tc.expectedPackage.DefaultValues,
+					Schema: tc.expectedPackage.ValuesSchema,
+				})
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				fileRows := sqlmock.NewRows([]string{"info"})
+				fileRows.AddRow(string(fileJSON))
+				mock.ExpectQuery("SELECT info FROM files").
+					WithArgs(tc.request.GetAvailablePackageRef().GetContext().GetNamespace(), fileID).
+					WillReturnRows(fileRows)
 			}
-			req := &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
-				},
-				PkgVersion: tc.requestedVersion,
-			}
-			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), req)
+
+			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1314,6 +1332,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "1.2.3",
 						},
 						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.3",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1328,6 +1347,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "4.5.6",
 						},
 						CurrentPkgVersion: "4.5.6",
+						LatestPkgVersion:  "4.5.6",
 					},
 				},
 			},
@@ -1373,6 +1393,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "1.2.3",
 						},
 						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.3",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1387,6 +1408,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "3.4.5",
 						},
 						CurrentPkgVersion: "3.4.5",
+						LatestPkgVersion:  "3.4.5",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1401,6 +1423,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "4.5.6",
 						},
 						CurrentPkgVersion: "4.5.6",
+						LatestPkgVersion:  "4.5.6",
 					},
 				},
 			},
@@ -1449,6 +1472,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "1.2.3",
 						},
 						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.3",
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1463,6 +1487,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "3.4.5",
 						},
 						CurrentPkgVersion: "3.4.5",
+						LatestPkgVersion:  "3.4.5",
 					},
 				},
 				NextPageToken: "3",
@@ -1513,9 +1538,44 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							Version: "4.5.6",
 						},
 						CurrentPkgVersion: "4.5.6",
+						LatestPkgVersion:  "4.5.6",
 					},
 				},
 				NextPageToken: "",
+			},
+		},
+		{
+			name: "includes a latest package version when available",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "namespace-1"},
+			},
+			existingReleases: []releaseStub{
+				{
+					name:         "my-release-1",
+					namespace:    "namespace-1",
+					chartVersion: "1.2.3",
+					status:       release.StatusDeployed,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					{
+						InstalledPackageRef: &corev1.InstalledPackageReference{
+							Context: &corev1.Context{
+								Namespace: "namespace-1",
+							},
+							Identifier: "my-release-1",
+						},
+						Name:    "my-release-1",
+						IconUrl: "https://example.com/icon.png",
+						PkgVersionReference: &corev1.VersionReference{
+							Version: "1.2.3",
+						},
+						CurrentPkgVersion: "1.2.3",
+						LatestPkgVersion:  "1.2.5",
+					},
+				},
 			},
 		},
 	}
@@ -1524,11 +1584,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
 			actionConfig := newActionConfigFixture(t, tc.request.GetContext().GetNamespace(), tc.existingReleases)
-			server, _, cleanup := makeServer(t, authorized, actionConfig)
-			// It is the namespace of the the driver which determines the results. In the prod code,
-			// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
-			// actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.request.GetContext().GetNamespace())
+			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
+
+			if tc.expectedStatusCode == codes.OK {
+				populateAssetDB(t, mock, tc.expectedResponse.InstalledPackageSummaries)
+			}
 
 			response, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
 
@@ -1544,6 +1605,11 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
 	}
@@ -1567,34 +1633,73 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 	}
 
 	for _, r := range rels {
-		rel := &release.Release{
-			Name:      r.name,
-			Namespace: r.namespace,
-			Version:   r.version,
-			Info: &release.Info{
-				Status: r.status,
-			},
-			Chart: &chart.Chart{
-				Metadata: &chart.Metadata{
-					Version: r.chartVersion,
-					Icon:    "https://example.com/icon.png",
-				},
-			},
-		}
+		rel := releaseForStub(r)
 		err := actionConfig.Releases.Create(rel)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
+	// It is the namespace of the the driver which determines the results. In the prod code,
+	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
 	memDriver.SetNamespace(namespace)
 
 	return actionConfig
 }
 
+func releaseForStub(r releaseStub) *release.Release {
+	return &release.Release{
+		Name:      r.name,
+		Namespace: r.namespace,
+		Version:   r.version,
+		Info: &release.Info{
+			Status: r.status,
+		},
+		Chart: &chart.Chart{
+			Metadata: &chart.Metadata{
+				Version: r.chartVersion,
+				Icon:    "https://example.com/icon.png",
+			},
+		},
+	}
+}
+
+func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
+	chartVersions := []models.ChartVersion{}
+	if pkg.LatestPkgVersion != "" {
+		chartVersions = append(chartVersions, models.ChartVersion{
+			Version: pkg.LatestPkgVersion,
+		})
+	}
+	chartVersions = append(chartVersions, models.ChartVersion{
+		Version: pkg.CurrentPkgVersion,
+	})
+
+	return &models.Chart{
+		Name:          pkg.Name,
+		ChartVersions: chartVersions,
+	}
+}
+
+func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
+	// The code currently executes one query per release in the paginated
+	// results and should receive a single row response.
+	for _, pkg := range pkgs {
+		chartJSON, err := json.Marshal(chartAssetForPackage(pkg))
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		rows := sqlmock.NewRows([]string{"info"})
+		rows.AddRow(string(chartJSON))
+		mock.ExpectQuery("SELECT info FROM").
+			WillReturnRows(rows)
+	}
+}
+
 type releaseStub struct {
-	name         string
-	namespace    string
-	version      int
-	chartVersion string
-	status       release.Status
+	name          string
+	namespace     string
+	version       int
+	chartVersion  string
+	latestVersion string
+	status        release.Status
 }

@@ -328,7 +328,19 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
 	}
 
-	availablePackageDetail, err := AvailablePackageDetailFromChart(&chart)
+	if len(chart.ChartVersions) == 0 {
+		return nil, status.Errorf(codes.Internal, "Chart returned without any versions: %+v", chart)
+	}
+	if version == "" {
+		version = chart.ChartVersions[0].Version
+	}
+	fileID := fileIDForChart(unescapedChartID, chart.ChartVersions[0].Version)
+	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart files: %v", err)
+	}
+
+	availablePackageDetail, err := AvailablePackageDetailFromChart(&chart, &chartFiles)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to parse chart to an availablePackageDetail: %v", err)
 	}
@@ -336,6 +348,11 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: availablePackageDetail,
 	}, nil
+}
+
+// fileIDForChart returns a file ID given a chart id and version.
+func fileIDForChart(id, version string) string {
+	return fmt.Sprintf("%s-%s", id, version)
 }
 
 // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
@@ -416,7 +433,7 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvai
 }
 
 // AvailablePackageDetailFromChart builds an AvailablePackageDetail from a Chart
-func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePackageDetail, error) {
+func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.ChartFiles) (*corev1.AvailablePackageDetail, error) {
 	pkg := &corev1.AvailablePackageDetail{}
 
 	isValid, err := isValidChart(chart)
@@ -448,9 +465,9 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		pkg.PkgVersion = chart.ChartVersions[0].Version
 		pkg.AppVersion = chart.ChartVersions[0].AppVersion
-		pkg.Readme = chart.ChartVersions[0].Readme
-		pkg.DefaultValues = chart.ChartVersions[0].Values
-		pkg.ValuesSchema = chart.ChartVersions[0].Schema
+		pkg.Readme = chartFiles.Readme
+		pkg.DefaultValues = chartFiles.Values
+		pkg.ValuesSchema = chartFiles.Schema
 	}
 	return pkg, nil
 }
@@ -549,6 +566,30 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		installedPkgSummaries[i] = installedPkgSummaryFromRelease(r)
 	}
 
+	// Fill in the latest package version for each.
+	// TODO(mnelson): Update to do this with a single query rather than iterating and
+	// querying per release.
+	for i, rel := range releases {
+		// Helm does not store a back-reference to the chart used to create a
+		// release (https://github.com/helm/helm/issues/6464), so for each
+		// release, we look up a chart with than name and version available in
+		// the release namespace, and if one is found, pull out the latest chart
+		// version.
+		cq := utils.ChartQuery{
+			Namespace:  rel.Namespace,
+			ChartName:  rel.Chart.Metadata.Name,
+			Version:    rel.Chart.Metadata.Version,
+			AppVersion: rel.Chart.Metadata.AppVersion,
+		}
+		charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
+		}
+		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
+			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
+		}
+	}
+
 	response := &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: installedPkgSummaries,
 	}
@@ -574,11 +615,5 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 		IconUrl:           r.Chart.Metadata.Icon,
 		PkgDisplayName:    r.Chart.Name(),
 		ShortDescription:  r.Chart.Metadata.Description,
-
-		// LatestMatchingPkgVersion will always be empty for direct helm where there
-		// is no server-sided reconcilliation of upgrades.
-		// TODO(mnelson): LatestPkgVersion should be populated from the latest package
-		// detail for this package.
-		// LatestPkgVersion:
 	}
 }
