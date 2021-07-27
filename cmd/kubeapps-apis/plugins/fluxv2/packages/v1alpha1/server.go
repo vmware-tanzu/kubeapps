@@ -25,6 +25,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -278,6 +279,13 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageVersions [%v]", request)
+
+	if request.GetPkgVersion() != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.GetPkgVersion(): [%v]",
+			request.GetPkgVersion())
+	}
 	packageRef := request.GetAvailablePackageRef()
 	namespace := packageRef.GetContext().GetNamespace()
 	if namespace == "" || packageRef.GetIdentifier() == "" {
@@ -290,15 +298,29 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 
 	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
-	/*
-		chart, err := s.manager.GetChart(namespace, unescapedChartID)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
+	packageIdParts := strings.Split(unescapedChartID, "/")
+	charts, err := s.cache.fetchForOne(s.cache.keyForNamespaceAndName(namespace, packageIdParts[0]))
+	if err != nil {
+		return nil, err
+	}
+
+	if charts != nil {
+		if typedCharts, ok := charts.([]models.Chart); !ok {
+			return nil, status.Errorf(
+				codes.Internal,
+				"unexpected value fetched from cache: %v", charts)
+		} else {
+			for _, chart := range typedCharts {
+				if chart.Name == packageIdParts[1] {
+					// found it
+					return &corev1.GetAvailablePackageVersionsResponse{
+						PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+					}, nil
+				}
+			}
 		}
-		return &corev1.GetAvailablePackageVersionsResponse{
-			PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
-		}, nil
-	*/
+	}
+	return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
 }
 
 // returns the url from which chart .tgz can be downloaded
@@ -361,8 +383,7 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	// so why leave a flux chart chart object hanging around?
 	// Over time, they could accumulate to a very large number...
 	cleanUp = func() {
-		err = resourceIfc.Delete(ctx, newChart.GetName(), metav1.DeleteOptions{})
-		if err != nil {
+		if err = resourceIfc.Delete(ctx, newChart.GetName(), metav1.DeleteOptions{}); err != nil {
 			log.Errorf("Failed to delete flux helm chart [%v]", prettyPrintMap(newChart.Object))
 		}
 	}
@@ -399,8 +420,7 @@ func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*uns
 		Resource: fluxHelmRepositories,
 	}
 
-	repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
-	if err != nil {
+	if repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{}); err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
 		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
@@ -422,7 +442,7 @@ func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
 	}
 
 	for _, key := range repos {
-		thisNamespace, thisName, err := s.cache.fromRedisKey(key)
+		thisNamespace, thisName, err := s.cache.fromKey(key)
 		if err != nil {
 			return false, err
 		}
