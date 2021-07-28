@@ -28,9 +28,6 @@ export function getConfig(): ThunkAction<Promise<void>, IStoreState, null, Confi
     dispatch(requestConfig());
     try {
       const config = await Config.getConfig();
-      if (config.theme && Object.values(SupportedThemes).includes(config.theme)) {
-        Config.setTheme(config.theme);
-      }
       dispatch(receiveConfig(config));
     } catch (e) {
       dispatch(errorConfig(e));
