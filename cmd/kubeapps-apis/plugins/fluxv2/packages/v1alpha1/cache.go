@@ -303,7 +303,7 @@ func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string
 		}
 	}()
 
-	key, err := c.redisKeyFor(unstructuredObj)
+	key, err := c.keyFor(unstructuredObj)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
 		return nil
@@ -347,7 +347,7 @@ func (c ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) e
 		}
 	}()
 
-	key, err := c.redisKeyFor(unstructuredObj)
+	key, err := c.keyFor(unstructuredObj)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
 		return err
@@ -459,7 +459,7 @@ func (c ResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interf
 
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
-func (c ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{}) (string, error) {
+func (c ResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
 	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
 	if err != nil || !found {
 		return "", status.Errorf(codes.Internal, "required field metadata.name not found on: %v:\n%s",
@@ -474,16 +474,20 @@ func (c ResourceWatcherCache) redisKeyFor(unstructuredObj map[string]interface{}
 			prettyPrintMap(unstructuredObj))
 	}
 
+	return c.keyForNamespaceAndName(namespace, name), nil
+}
+
+func (c ResourceWatcherCache) keyForNamespaceAndName(namespace, name string) string {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s", c.config.gvr.Resource, namespace, name), nil
+	return fmt.Sprintf("%s:%s:%s", c.config.gvr.Resource, namespace, name)
 }
 
-// the opposite of redisKeyFor
+// the opposite of keyFor
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
-func (c ResourceWatcherCache) fromRedisKey(key string) (namespace string, name string, err error) {
+func (c ResourceWatcherCache) fromKey(key string) (namespace string, name string, err error) {
 	parts := strings.Split(key, ":")
 	if len(parts) != 3 {
 		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)

@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
@@ -82,7 +82,7 @@ func isRepoReady(obj map[string]interface{}) (bool, error) {
 	return false, nil
 }
 
-func indexOneRepo(unstructuredRepo map[string]interface{}) ([]chart.Chart, error) {
+func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
 	startTime := time.Now()
 
 	repo, err := newPackageRepository(unstructuredRepo)
@@ -118,7 +118,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]chart.Chart, error
 		return nil, err
 	}
 
-	modelRepo := &chart.Repo{
+	modelRepo := &models.Repo{
 		Namespace: repo.Namespace,
 		Name:      repo.Name,
 		URL:       repo.Url,
@@ -126,7 +126,10 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]chart.Chart, error
 	}
 
 	// this is potentially a very expensive operation for large repos like 'bitnami'
-	charts, err := helm.ChartsFromIndex(bytes, modelRepo, true)
+	// shallow = true  => 8-9 sec
+	// shallow = false => 12-13 sec, so deep copy adds 50% to cost, but we need it to
+	// for GetAvailablePackageVersions()
+	charts, err := helm.ChartsFromIndex(bytes, modelRepo, false)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +199,7 @@ func onGetRepo(key string, value interface{}) (interface{}, error) {
 		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
 	}
 
-	var charts []chart.Chart
+	var charts []models.Chart
 	err := json.Unmarshal(bytes, &charts)
 	if err != nil {
 		return nil, err
