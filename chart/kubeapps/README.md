@@ -178,6 +178,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.customStyle`                           | Custom CSS injected to the Dashboard to customize Kubeapps look and feel                  | `""`                 |
 | `dashboard.customComponents`                      | Custom Form components injected into the BasicDeploymentForm                              | `""`                 |
 | `dashboard.customLocale`                          | Custom translations injected to the Dashboard to customize the strings used in Kubeapps   | `""`                 |
+| `dashboard.defaultTheme`                          | Default theme used in the Dashboard if the user has not selected any theme yet.           | `""`                 |
 | `dashboard.replicaCount`                          | Number of Dashboard replicas to deploy                                                    | `2`                  |
 | `dashboard.extraEnvVars`                          | Array with extra environment variables to add to the Dashboard container                  | `[]`                 |
 | `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Dashboard container          | `nil`                |
