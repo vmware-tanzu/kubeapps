@@ -589,8 +589,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
 		}
 		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
-			Ready:  rel.Info.Status == release.StatusDeployed,
-			Reason: rel.Info.Status.String(),
+			Ready:      rel.Info.Status == release.StatusDeployed,
+			Reason:     statusReasonForHelmStatus(rel.Info.Status),
+			UserReason: rel.Info.Status.String(),
 		}
 		installedPkgSummaries[i].CurrentAppVersion = rel.Chart.Metadata.AppVersion
 	}
@@ -602,6 +603,19 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		response.NextPageToken = fmt.Sprintf("%d", cmd.Limit+1)
 	}
 	return response, nil
+}
+
+func statusReasonForHelmStatus(s release.Status) corev1.InstalledPackageStatus_StatusReason {
+	switch s {
+	case release.StatusDeployed:
+		return corev1.InstalledPackageStatus_INSTALLED
+	case release.StatusFailed:
+		return corev1.InstalledPackageStatus_FAILED
+	case release.StatusPendingInstall, release.StatusPendingRollback, release.StatusPendingUpgrade, release.StatusUninstalling:
+		return corev1.InstalledPackageStatus_PENDING
+	}
+	// Both StatusUninstalled and StatusSuperseded will be unknown.
+	return corev1.InstalledPackageStatus_UNKNOWN
 }
 
 func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackageSummary {

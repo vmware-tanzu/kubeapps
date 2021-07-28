@@ -1335,8 +1335,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "1.2.3",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 					{
@@ -1355,8 +1356,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "4.5.6",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 				},
@@ -1406,8 +1408,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "1.2.3",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 					{
@@ -1426,8 +1429,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "3.4.5",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 					{
@@ -1446,8 +1450,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "4.5.6",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 				},
@@ -1500,8 +1505,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "1.2.3",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 					{
@@ -1520,8 +1526,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "3.4.5",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 				},
@@ -1576,8 +1583,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "4.5.6",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 				},
@@ -1616,8 +1624,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						LatestPkgVersion:  "1.2.5",
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
-							Ready:  true,
-							Reason: "deployed",
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							UserReason: "deployed",
 						},
 					},
 				},

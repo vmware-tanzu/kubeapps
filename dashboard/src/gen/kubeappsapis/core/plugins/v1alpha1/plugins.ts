@@ -50,11 +50,17 @@ export interface Plugin {
 const baseGetConfiguredPluginsRequest: object = {};
 
 export const GetConfiguredPluginsRequest = {
-  encode(_: GetConfiguredPluginsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    _: GetConfiguredPluginsRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetConfiguredPluginsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -83,7 +89,9 @@ export const GetConfiguredPluginsRequest = {
     return obj;
   },
 
-  fromPartial(_: DeepPartial<GetConfiguredPluginsRequest>): GetConfiguredPluginsRequest {
+  fromPartial(
+    _: DeepPartial<GetConfiguredPluginsRequest>
+  ): GetConfiguredPluginsRequest {
     const message = {
       ...baseGetConfiguredPluginsRequest,
     } as GetConfiguredPluginsRequest;
@@ -96,7 +104,7 @@ const baseGetConfiguredPluginsResponse: object = {};
 export const GetConfiguredPluginsResponse = {
   encode(
     message: GetConfiguredPluginsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.plugins) {
       Plugin.encode(v!, writer.uint32(10).fork()).ldelim();
@@ -104,7 +112,10 @@ export const GetConfiguredPluginsResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetConfiguredPluginsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -141,14 +152,18 @@ export const GetConfiguredPluginsResponse = {
   toJSON(message: GetConfiguredPluginsResponse): unknown {
     const obj: any = {};
     if (message.plugins) {
-      obj.plugins = message.plugins.map(e => (e ? Plugin.toJSON(e) : undefined));
+      obj.plugins = message.plugins.map((e) =>
+        e ? Plugin.toJSON(e) : undefined
+      );
     } else {
       obj.plugins = [];
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetConfiguredPluginsResponse>): GetConfiguredPluginsResponse {
+  fromPartial(
+    object: DeepPartial<GetConfiguredPluginsResponse>
+  ): GetConfiguredPluginsResponse {
     const message = {
       ...baseGetConfiguredPluginsResponse,
     } as GetConfiguredPluginsResponse;
@@ -165,7 +180,10 @@ export const GetConfiguredPluginsResponse = {
 const basePlugin: object = { name: "", version: "" };
 
 export const Plugin = {
-  encode(message: Plugin, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: Plugin,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -238,7 +256,7 @@ export interface PluginsService {
   /** GetConfiguredPlugins returns a map of short and longnames for the configured plugins. */
   GetConfiguredPlugins(
     request: DeepPartial<GetConfiguredPluginsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetConfiguredPluginsResponse>;
 }
 
@@ -252,12 +270,12 @@ export class PluginsServiceClientImpl implements PluginsService {
 
   GetConfiguredPlugins(
     request: DeepPartial<GetConfiguredPluginsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetConfiguredPluginsResponse> {
     return this.rpc.unary(
       PluginsServiceGetConfiguredPluginsDesc,
       GetConfiguredPluginsRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 }
@@ -266,29 +284,31 @@ export const PluginsServiceDesc = {
   serviceName: "kubeappsapis.core.plugins.v1alpha1.PluginsService",
 };
 
-export const PluginsServiceGetConfiguredPluginsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetConfiguredPlugins",
-  service: PluginsServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetConfiguredPluginsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetConfiguredPluginsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PluginsServiceGetConfiguredPluginsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetConfiguredPlugins",
+    service: PluginsServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetConfiguredPluginsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetConfiguredPluginsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+interface UnaryMethodDefinitionishR
+  extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -299,7 +319,7 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any>;
 }
 
@@ -319,7 +339,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-    },
+    }
   ) {
     this.host = host;
     this.options = options;
@@ -328,7 +348,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -360,7 +380,14 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>

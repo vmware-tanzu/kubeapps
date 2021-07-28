@@ -1372,6 +1372,19 @@
       "description": "PackageAppVersion conveys both the package version and the packaged app version.",
       "title": "Package AppVersion"
     },
+    "InstalledPackageStatusStatusReason": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "INSTALLED",
+        "UNINSTALLED",
+        "FAILED",
+        "PENDING"
+      ],
+      "default": "UNKNOWN",
+      "description": "Generic reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins.",
+      "title": "StatusReason"
+    },
     "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
       "example": {
@@ -1834,14 +1847,14 @@
           "title": "Ready"
         },
         "reason": {
-          "type": "string",
-          "description": "A single word indicating the reason for the current status. For example, \"Pending\",\n\"InstallSucceeded\", or \"InstallFailed\"",
+          "$ref": "#/definitions/InstalledPackageStatusStatusReason",
+          "description": "An enum indicating the reason for the current status.",
           "title": "Reason"
         },
-        "detail": {
+        "userReason": {
           "type": "string",
-          "description": "Optional detail to return for user context",
-          "title": "Detail"
+          "description": "Optional text to return for user context, which may be plugin specific.",
+          "title": "UserReason"
         }
       },
       "description": "An InstalledPackageStatus reports on the current status of the installation.",

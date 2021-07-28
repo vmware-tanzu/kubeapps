@@ -625,14 +625,25 @@ message InstalledPackageStatus {
   // An indication of whether the installation is ready or not
   bool ready = 1;
 
+  // StatusReason
+  //
+  // Generic reasons why an installed package may be ready or not.
+  // These should make sense across different packaging plugins.
+  enum StatusReason {
+    UNKNOWN = 0;
+    INSTALLED = 1;
+    UNINSTALLED = 2;
+    FAILED = 3;
+    PENDING = 4;
+  }
+
   // Reason
   //
-  // A single word indicating the reason for the current status. For example, "Pending",
-  // "InstallSucceeded", or "InstallFailed"
-  string reason = 2;
+  // An enum indicating the reason for the current status.
+  StatusReason reason = 2;
 
-  // Detail
+  // UserReason
   //
-  // Optional detail to return for user context
-  string detail = 3;
+  // Optional text to return for user context, which may be plugin specific.
+  string user_reason = 3;
 }
