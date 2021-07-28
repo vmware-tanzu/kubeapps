@@ -46,7 +46,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
 
   const toggleTheme = () => {
     const newTheme = theme === SupportedThemes.dark ? SupportedThemes.light : SupportedThemes.dark;
-    dispatch(actions.config.setTheme(newTheme));
+    dispatch(actions.config.setUserTheme(newTheme));
   };
 
   useEffect(() => {

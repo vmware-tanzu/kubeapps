@@ -47,13 +47,13 @@ export function getTheme(): ThunkAction<Promise<void>, IStoreState, null, Config
   };
 }
 
-// setTheme receives a theme and and stores it
+// setUserTheme receives a theme and and stores it
 // in both the redux state and the user's localstorage
-export function setTheme(
+export function setUserTheme(
   theme: SupportedThemes,
 ): ThunkAction<Promise<void>, IStoreState, null, ConfigAction> {
   return async dispatch => {
-    Config.setTheme(theme);
+    Config.setUserTheme(theme);
     dispatch(receiveTheme(theme));
   };
 }

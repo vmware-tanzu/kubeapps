@@ -26,6 +26,7 @@ export default class Config {
     return data;
   }
 
+  // getTheme retrieves the different theme preferences and calculates which one is chosen
   public static getTheme(config: IConfig): SupportedThemes {
     // Define a ballback theme in case of errors
     const fallbackTheme = SupportedThemes.light;
@@ -35,8 +36,8 @@ export default class Config {
 
     // Retrieve the user theme preference
     const userTheme =
-      localStorage.getItem("theme") != null
-        ? SupportedThemes[localStorage.getItem("theme") as string]
+      localStorage.getItem("user-theme") != null
+        ? SupportedThemes[localStorage.getItem("user-theme") as string]
         : undefined;
 
     // Retrieve the browser theme preference
@@ -51,9 +52,17 @@ export default class Config {
     return chosenTheme;
   }
 
+  // setTheme performs a hot change of the current theme modifying the DOM
+  // it's a separate function for testing
   public static setTheme(theme: SupportedThemes) {
     document.body.setAttribute("cds-theme", theme);
-    localStorage.setItem("theme", theme);
+  }
+
+  // setUserTheme changes the current theme and also stores the user's preference in the localStorage
+  // it's a separate function for testing
+  public static setUserTheme(theme: SupportedThemes) {
+    this.setTheme(theme);
+    localStorage.setItem("user-theme", theme);
   }
 
   private static APIEndpoint = "config.json";
