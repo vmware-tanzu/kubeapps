@@ -13,7 +13,8 @@ kubeappsapis:
   unsafeUseDemoSA: false
   enabledPlugins:
     - helm
-    - fluxv2
+    # - fluxv2
+    # - kapp_controller
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
