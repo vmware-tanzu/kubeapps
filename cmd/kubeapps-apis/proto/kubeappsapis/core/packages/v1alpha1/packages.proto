@@ -139,6 +139,11 @@ message GetAvailablePackageSummariesResponse {
   // This field represents the pagination token to retrieve the next page of
   // results. If the value is "", it means no further results for the request.
   string next_page_token = 2;
+
+  // Categories
+  //
+  // This optional field contains the distinct category names considering the FilterOptions.
+  repeated string categories = 3;
 }
 
 // GetAvailablePackageDetailResponse

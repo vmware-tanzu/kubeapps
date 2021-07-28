@@ -1742,6 +1742,14 @@
           "type": "string",
           "description": "This field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request.",
           "title": "Next page token"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "This optional field contains the distinct category names considering the FilterOptions.",
+          "title": "Categories"
         }
       },
       "description": "Response for GetAvailablePackageSummaries",

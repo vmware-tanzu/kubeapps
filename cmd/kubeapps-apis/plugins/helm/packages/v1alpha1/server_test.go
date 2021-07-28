@@ -397,11 +397,11 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 }
 
 // makeChart makes a chart with specific input used in the test and default constants for other relevant data.
-func makeChart(chart_name, repo_name, namespace string, chart_versions []string) *models.Chart {
+func makeChart(chart_name, repo_name, namespace string, chart_versions []string, category string) *models.Chart {
 	ch := &models.Chart{
 		Name:        chart_name,
 		ID:          fmt.Sprintf("%s/%s", repo_name, chart_name),
-		Category:    DefaultChartCategory,
+		Category:    category,
 		Description: DefaultChartDescription,
 		Icon:        DefaultChartIconURL,
 		Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
@@ -491,13 +491,14 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name             string
-		charts           []*models.Chart
-		expectDBQuery    bool
-		statusCode       codes.Code
-		request          *corev1.GetAvailablePackageSummariesRequest
-		expectedResponse *corev1.GetAvailablePackageSummariesResponse
-		authorized       bool
+		name               string
+		charts             []*models.Chart
+		expectDBQuery      bool
+		statusCode         codes.Code
+		request            *corev1.GetAvailablePackageSummariesRequest
+		expectedResponse   *corev1.GetAvailablePackageSummariesResponse
+		authorized         bool
+		expectedCategories []*models.ChartCategory
 	}{
 		{
 			name:       "it returns a set of availablePackageSummary from the database (global ns)",
@@ -510,8 +511,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQuery: true,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -544,6 +545,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 				},
+				Categories: []string{"cat1"},
 			},
 			statusCode: codes.OK,
 		},
@@ -558,8 +560,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQuery: true,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -592,6 +594,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 				},
+				Categories: []string{"cat1"},
 			},
 			statusCode: codes.OK,
 		},
@@ -617,7 +620,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectDBQuery: true,
-			charts:        []*models.Chart{makeChart("chart-1", "repo-1", "my-ns", []string{})},
+			charts:        []*models.Chart{makeChart("chart-1", "repo-1", "my-ns", []string{}, DefaultChartCategory)},
 			statusCode:    codes.Internal,
 		},
 		{
@@ -647,9 +650,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQuery: true,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
-				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -669,6 +672,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 				},
 				NextPageToken: "3",
+				Categories:    []string{"cat1"},
 			},
 		},
 		{
@@ -688,9 +692,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQuery: true,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
-				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -710,6 +714,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 				},
 				NextPageToken: "",
+				Categories:    []string{"cat1"},
 			},
 		},
 		{
@@ -727,6 +732,70 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQuery: false,
 			statusCode:    codes.InvalidArgument,
+		},
+		{
+			name:       "it returns the proper chart categories",
+			authorized: true,
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: "my-ns",
+				},
+			},
+			expectDBQuery: true,
+			charts: []*models.Chart{
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, "foo"),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, "bar"),
+				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}, "bar"),
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					{
+						Name:             "chart-1",
+						DisplayName:      "chart-1",
+						LatestPkgVersion: "3.0.0",
+						LatestAppVersion: DefaultAppVersion,
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{"foo"},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-1",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+					{
+						Name:             "chart-2",
+						DisplayName:      "chart-2",
+						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{"bar"},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+					{
+						Name:             "chart-3",
+						DisplayName:      "chart-3",
+						LatestPkgVersion: "1.0.0",
+						LatestAppVersion: DefaultAppVersion,
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{"bar"},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Namespace: "my-ns"},
+							Identifier: "repo-1/chart-3",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+				},
+				Categories: []string{"foo", "bar"},
+			},
+			statusCode: codes.OK,
 		},
 	}
 
@@ -746,15 +815,34 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			if tc.expectDBQuery {
 				// Checking if the WHERE condtion is properly applied
+
+				// Check returned categories
+				catrows := sqlmock.NewRows([]string{"name", "count"})
+
+				// Generate the categories from the tc.charts input
+				dict := make(map[string]int)
+				for _, chart := range tc.charts {
+					dict[chart.Category] = dict[chart.Category] + 1
+				}
+				for category, count := range dict {
+					catrows.AddRow(category, count)
+				}
+
+				mock.ExpectQuery("SELECT (info ->> 'category')*").
+					WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
+					WillReturnRows(catrows)
+
 				mock.ExpectQuery("SELECT info FROM").
 					WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
 					WillReturnRows(rows)
+
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
 					mock.ExpectQuery("SELECT count").
 						WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
 						WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
 				}
 			}
+
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
@@ -785,7 +873,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 	}{
 		{
 			name:  "it returns AvailablePackageDetail if the chart is correct",
-			chart: makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}),
+			chart: makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 			chartFiles: &models.ChartFiles{
 				Readme: "chart readme",
 				Values: "chart values",
@@ -860,7 +948,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "repo-1%2Ffoo",
 				},
 			},
-			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"})},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory)},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
@@ -892,7 +980,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 				PkgVersion: "1.0.0",
 			},
-			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
@@ -1052,7 +1140,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		},
 		{
 			name:   "it returns the package version summary",
-			charts: []*models.Chart{makeChart("apache", "bitnami", "kubeapps", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			charts: []*models.Chart{makeChart("apache", "bitnami", "kubeapps", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{

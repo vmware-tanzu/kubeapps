@@ -183,7 +183,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				charts = append(charts, chart)
 			}
 
-			s, watcher, mock, err := newServerWithCharts(charts...)
+			s, mock, watcher, err := newServerWithCharts(charts...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -296,7 +296,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			}
 			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
 
-			s, _, mock, err := newServerWithCharts(chart)
+			s, mock, _, err := newServerWithCharts(chart)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -419,7 +419,7 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 
 			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
 
-			s, watcher, mock, err := newServerWithCharts()
+			s, mock, watcher, err := newServerWithCharts()
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -458,6 +458,197 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 	}
 }
 
+func TestNegativeGetAvailablePackageVersions(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.GetAvailablePackageVersionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+	}{
+		{
+			name:               "it returns invalid argument if called without a package reference",
+			request:            nil,
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without namespace",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{},
+					Identifier: "bitnami/apache",
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without an identifier",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, mock, _, err := newServerWithRepos()
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestGetAvailablePackageVersions(t *testing.T) {
+	testCases := []struct {
+		name               string
+		repoIndex          string
+		repoNamespace      string
+		repoName           string
+		request            *corev1.GetAvailablePackageVersionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+	}{
+		{
+			name:          "it returns the package version summary for redis chart in bitnami repo",
+			repoIndex:     "testdata/redis-many-versions.yaml",
+			repoNamespace: "kubeapps",
+			repoName:      "bitnami",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "bitnami/redis",
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
+				PackageAppVersions: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+					{PkgVersion: "14.6.1", AppVersion: "6.2.4"},
+					{PkgVersion: "14.6.0", AppVersion: "6.2.4"},
+					{PkgVersion: "14.5.0", AppVersion: "6.2.4"},
+					{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
+					{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
+					{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
+					{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
+					{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
+					{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
+					{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
+					{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
+					{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
+					{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
+					{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
+				},
+			},
+		},
+		{
+			name:          "it returns error for non-existent chart",
+			repoIndex:     "testdata/redis-many-versions.yaml",
+			repoNamespace: "kubeapps",
+			repoName:      "bitnami",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "bitnami/redis-123",
+				},
+			},
+			expectedStatusCode: codes.Internal,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			indexYAMLBytes, err := ioutil.ReadFile(tc.repoIndex)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			// stand up an http server just for the duration of this test
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, string(indexYAMLBytes))
+			}))
+			defer ts.Close()
+
+			repoSpec := map[string]interface{}{
+				"url":      "https://example.repo.com/charts",
+				"interval": "1m0s",
+			}
+
+			repoStatus := map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Ready",
+						"status": "True",
+						"reason": "IndexationSucceed",
+					},
+				},
+				"url": ts.URL,
+			}
+			repo := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
+
+			s, mock, _, err := newServerWithRepos(repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			mock.ExpectGet(redisKey).SetVal(string(bytes))
+
+			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
 func newChart(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
 		"name":            name,
@@ -488,7 +679,7 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 	}
 }
 
-func newServerWithCharts(charts ...runtime.Object) (*Server, *watch.FakeWatcher, redismock.ClientMock, error) {
+func newServerWithCharts(charts ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -546,5 +737,5 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, *watch.FakeWatcher,
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	return s, watcher, mock, nil
+	return s, mock, watcher, nil
 }

@@ -72,10 +72,10 @@ describe("theme switcher toggle", () => {
   });
 
   it("calls setTheme with the new theme", () => {
-    actions.config.setTheme = jest.fn();
+    actions.config.setUserTheme = jest.fn();
     const wrapper = mountWrapper(defaultStore, <Menu {...defaultProps} />);
     const toggle = wrapper.find("cds-toggle input");
     toggle.simulate("change");
-    expect(actions.config.setTheme).toHaveBeenCalled();
+    expect(actions.config.setUserTheme).toHaveBeenCalled();
   });
 });
