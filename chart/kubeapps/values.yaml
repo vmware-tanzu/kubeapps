@@ -445,12 +445,6 @@ dashboard:
   ##   "login-oidc": "Login with my company SSO"
   ##
   customLocale: ""
-  ## @param dashboard.defaultTheme Default theme used in the Dashboard if the user has not selected any theme yet.
-  ## enum: [ "light", "dark" ]
-  ## e.g:
-  ## defaultTheme: dark
-  ##
-  defaultTheme: ""
   ## @param dashboard.replicaCount Number of Dashboard replicas to deploy
   ##
   replicaCount: 2
@@ -1457,7 +1451,6 @@ clusters:
 ##
 featureFlags:
   invalidateCache: true
-  kubeappsAPIsServer: false
 ## RBAC configuration
 ##
 rbac:
