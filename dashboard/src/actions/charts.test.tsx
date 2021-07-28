@@ -66,7 +66,7 @@ interface IFetchChartsTestCase {
 const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts with query",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "1" },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "1", categories: [] },
     requestedRepos: "",
     requestedPage: 1,
     requestedQuery: "foo",
@@ -85,7 +85,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   },
   {
     name: "fetches charts from a repo (first page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
@@ -103,7 +103,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   },
   {
     name: "fetches charts from a repo (middle page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -121,7 +121,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   },
   {
     name: "fetches charts from a repo (last page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
@@ -139,7 +139,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   },
   {
     name: "fetches charts from a repo (already processed page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -157,7 +157,7 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   },
   {
     name: "fetches charts from a repo (off-limits page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3" },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
