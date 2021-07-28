@@ -178,6 +178,9 @@ installOrUpgradeKubeapps() {
       --set postgresql.replication.enabled=false \
       --set postgresql.postgresqlPassword=password \
       --set redis.auth.password=password \
+      # TODO: remove these lines once kubeapps-apis got merged in the main branch
+      --set featureFlags.kubeappsAPIsServer=true \
+      --set redis.enabled=false \
       --wait)
 
     echo "${cmd[@]}"
@@ -204,6 +207,8 @@ images=(
   "dashboard"
   "kubeops"
   "pinniped-proxy"
+  # TODO: uncomment once the image is being built by bitnami
+  # "kubeappsapis"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -220,6 +225,10 @@ img_flags=(
   "--set" "kubeops.image.repository=${images[4]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
   "--set" "pinnipedProxy.image.repository=${images[5]}"
+  "--set" "kubeappsapis.image.tag=${DEV_TAG}"
+  "--set" "kubeappsapis.image.repository=kubeapps/kubeapps-apis-ci"
+  # TODO: uncomment once the image is being built by bitnami
+  # "--set" "kubeappsapis.image.repository=${images[6]}"
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
@@ -281,6 +290,7 @@ info ""
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-kubeops "$DEV_TAG"
+k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$DEV_TAG"
 
 # Wait for Kubeapps Pods
 info "Waiting for Kubeapps components to be ready..."
@@ -290,6 +300,7 @@ deployments=(
   "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
   "kubeapps-ci-internal-kubeops"
+  "kubeapps-ci-internal-kubeappsapis"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"

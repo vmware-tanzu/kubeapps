@@ -1,7 +1,7 @@
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { ConfigAction } from "../actions/config";
-import Config, { IConfig } from "../shared/Config";
+import { IConfig, SupportedThemes } from "../shared/Config";
 
 export interface IConfigState extends IConfig {
   loaded: boolean;
@@ -17,7 +17,7 @@ export const initialState: IConfigState = {
   oauthLogoutURI: "",
   authProxySkipLoginPage: false,
   clusters: [],
-  theme: Config.getTheme(),
+  theme: SupportedThemes.light,
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
@@ -31,12 +31,6 @@ const configReducer = (state: IConfigState = initialState, action: ConfigAction)
         ...action.payload,
       };
     case getType(actions.config.receiveTheme):
-      Config.setTheme(action.payload);
-      return {
-        ...state,
-        theme: action.payload,
-      };
-    case getType(actions.config.setThemeState):
       return {
         ...state,
         theme: action.payload,

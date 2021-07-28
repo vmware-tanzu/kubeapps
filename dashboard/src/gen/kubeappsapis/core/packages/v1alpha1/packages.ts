@@ -92,6 +92,12 @@ export interface GetAvailablePackageSummariesResponse {
    * results. If the value is "", it means no further results for the request.
    */
   nextPageToken: string;
+  /**
+   * Categories
+   *
+   * This optional field contains the distinct category names considering the FilterOptions.
+   */
+  categories: string[];
 }
 
 /**
@@ -967,7 +973,10 @@ export const GetInstalledPackageSummariesRequest = {
   },
 };
 
-const baseGetAvailablePackageSummariesResponse: object = { nextPageToken: "" };
+const baseGetAvailablePackageSummariesResponse: object = {
+  nextPageToken: "",
+  categories: "",
+};
 
 export const GetAvailablePackageSummariesResponse = {
   encode(
@@ -980,6 +989,9 @@ export const GetAvailablePackageSummariesResponse = {
     if (message.nextPageToken !== "") {
       writer.uint32(18).string(message.nextPageToken);
     }
+    for (const v of message.categories) {
+      writer.uint32(26).string(v!);
+    }
     return writer;
   },
 
@@ -990,6 +1002,7 @@ export const GetAvailablePackageSummariesResponse = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
     message.availablePackageSummaries = [];
+    message.categories = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1000,6 +1013,9 @@ export const GetAvailablePackageSummariesResponse = {
           break;
         case 2:
           message.nextPageToken = reader.string();
+          break;
+        case 3:
+          message.categories.push(reader.string());
           break;
         default:
           reader.skipType(tag & 7);
@@ -1014,6 +1030,7 @@ export const GetAvailablePackageSummariesResponse = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
     message.availablePackageSummaries = [];
+    message.categories = [];
     if (
       object.availablePackageSummaries !== undefined &&
       object.availablePackageSummaries !== null
@@ -1026,6 +1043,11 @@ export const GetAvailablePackageSummariesResponse = {
       message.nextPageToken = String(object.nextPageToken);
     } else {
       message.nextPageToken = "";
+    }
+    if (object.categories !== undefined && object.categories !== null) {
+      for (const e of object.categories) {
+        message.categories.push(String(e));
+      }
     }
     return message;
   },
@@ -1040,6 +1062,11 @@ export const GetAvailablePackageSummariesResponse = {
       obj.availablePackageSummaries = [];
     }
     message.nextPageToken !== undefined && (obj.nextPageToken = message.nextPageToken);
+    if (message.categories) {
+      obj.categories = message.categories.map(e => e);
+    } else {
+      obj.categories = [];
+    }
     return obj;
   },
 
@@ -1050,6 +1077,7 @@ export const GetAvailablePackageSummariesResponse = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
     message.availablePackageSummaries = [];
+    message.categories = [];
     if (
       object.availablePackageSummaries !== undefined &&
       object.availablePackageSummaries !== null
@@ -1062,6 +1090,11 @@ export const GetAvailablePackageSummariesResponse = {
       message.nextPageToken = object.nextPageToken;
     } else {
       message.nextPageToken = "";
+    }
+    if (object.categories !== undefined && object.categories !== null) {
+      for (const e of object.categories) {
+        message.categories.push(e);
+      }
     }
     return message;
   },
