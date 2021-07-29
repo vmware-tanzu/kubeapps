@@ -622,14 +622,14 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 func statusReasonForHelmStatus(s release.Status) corev1.InstalledPackageStatus_StatusReason {
 	switch s {
 	case release.StatusDeployed:
-		return corev1.InstalledPackageStatus_INSTALLED
+		return corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
 	case release.StatusFailed:
-		return corev1.InstalledPackageStatus_FAILED
+		return corev1.InstalledPackageStatus_STATUS_REASON_FAILED
 	case release.StatusPendingInstall, release.StatusPendingRollback, release.StatusPendingUpgrade, release.StatusUninstalling:
-		return corev1.InstalledPackageStatus_PENDING
+		return corev1.InstalledPackageStatus_STATUS_REASON_PENDING
 	}
-	// Both StatusUninstalled and StatusSuperseded will be unknown.
-	return corev1.InstalledPackageStatus_UNKNOWN
+	// Both StatusUninstalled and StatusSuperseded will be unknown/unspecified.
+	return corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED
 }
 
 func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackageSummary {
