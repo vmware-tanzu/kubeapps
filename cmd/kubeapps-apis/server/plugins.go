@@ -339,7 +339,6 @@ func extractToken(ctx context.Context) (string, error) {
 		return "", nil
 	}
 
-	log.Infof("%v", md)
 	// metadata is always lowercased
 	if len(md["authorization"]) > 0 {
 		if strings.HasPrefix(md["authorization"][0], "Bearer ") {
