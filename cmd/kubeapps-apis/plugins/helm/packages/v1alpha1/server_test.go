@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"sort"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -793,7 +794,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 				},
-				Categories: []string{"foo", "bar"},
+				Categories: []string{"bar", "foo"},
 			},
 			statusCode: codes.OK,
 		},
@@ -824,8 +825,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				for _, chart := range tc.charts {
 					dict[chart.Category] = dict[chart.Category] + 1
 				}
-				for category, count := range dict {
-					catrows.AddRow(category, count)
+				// Ensure we've got a fixed order for the results.
+				categories := []string{}
+				for category := range dict {
+					categories = append(categories, category)
+				}
+				sort.Strings(categories)
+				for _, category := range categories {
+					catrows.AddRow(category, dict[category])
 				}
 
 				mock.ExpectQuery("SELECT (info ->> 'category')*").
@@ -1421,6 +1428,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "1.2.3",
 						LatestPkgVersion:  "1.2.3",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1436,6 +1449,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "4.5.6",
 						LatestPkgVersion:  "4.5.6",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 			},
@@ -1482,6 +1501,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "1.2.3",
 						LatestPkgVersion:  "1.2.3",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1497,6 +1522,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "3.4.5",
 						LatestPkgVersion:  "3.4.5",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1512,6 +1543,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "4.5.6",
 						LatestPkgVersion:  "4.5.6",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 			},
@@ -1561,6 +1598,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "1.2.3",
 						LatestPkgVersion:  "1.2.3",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -1576,6 +1619,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "3.4.5",
 						LatestPkgVersion:  "3.4.5",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 				NextPageToken: "3",
@@ -1627,6 +1676,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "4.5.6",
 						LatestPkgVersion:  "4.5.6",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1662,6 +1717,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						CurrentPkgVersion: "1.2.3",
 						LatestPkgVersion:  "1.2.5",
+						CurrentAppVersion: DefaultAppVersion,
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 			},
@@ -1690,7 +1751,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1744,8 +1805,9 @@ func releaseForStub(r releaseStub) *release.Release {
 		},
 		Chart: &chart.Chart{
 			Metadata: &chart.Metadata{
-				Version: r.chartVersion,
-				Icon:    "https://example.com/icon.png",
+				Version:    r.chartVersion,
+				Icon:       "https://example.com/icon.png",
+				AppVersion: DefaultAppVersion,
 			},
 		},
 	}

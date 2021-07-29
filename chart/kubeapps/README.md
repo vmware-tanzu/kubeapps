@@ -491,7 +491,7 @@ helm install kubeapps --namespace kubeapps -f custom-values.yaml bitnami/kubeapp
 
 ### Configuring Initial Repositories
 
-By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts) and the [Kubernetes Service Catalog charts](https://github.com/kubernetes-incubator/service-catalog). To change these defaults, override with your desired parameters the `apprepository.initialRepos` object present in the [values.yaml](values.yaml) file.
+By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts). To change these defaults, override with your desired parameters the `apprepository.initialRepos` object present in the [values.yaml](values.yaml) file.
 
 ### Enabling Operators
 

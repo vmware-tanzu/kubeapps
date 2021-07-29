@@ -8,10 +8,12 @@ import {
   GetAvailablePackageDetailRequest,
   GetAvailablePackageVersionsRequest,
   GetInstalledPackageSummariesRequest,
+  GetInstalledPackageDetailRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
   GetInstalledPackageSummariesResponse,
+  GetInstalledPackageDetailResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -345,6 +347,11 @@ export interface KappControllerPackagesService {
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetInstalledPackageSummariesResponse>;
+  /** GetInstalledPackageDetail returns the requested installed package managed by the 'kapp_controller' plugin */
+  GetInstalledPackageDetail(
+    request: DeepPartial<GetInstalledPackageDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageDetailResponse>;
 }
 
 export class KappControllerPackagesServiceClientImpl implements KappControllerPackagesService {
@@ -357,6 +364,7 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     this.GetPackageRepositories = this.GetPackageRepositories.bind(this);
     this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
+    this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -410,6 +418,17 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     return this.rpc.unary(
       KappControllerPackagesServiceGetInstalledPackageSummariesDesc,
       GetInstalledPackageSummariesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetInstalledPackageDetail(
+    request: DeepPartial<GetInstalledPackageDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageDetailResponse> {
+    return this.rpc.unary(
+      KappControllerPackagesServiceGetInstalledPackageDetailDesc,
+      GetInstalledPackageDetailRequest.fromPartial(request),
       metadata,
     );
   }
@@ -526,6 +545,29 @@ export const KappControllerPackagesServiceGetInstalledPackageSummariesDesc: Unar
       deserializeBinary(data: Uint8Array) {
         return {
           ...GetInstalledPackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
+export const KappControllerPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageDetail",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageDetailResponse.decode(data),
           toObject() {
             return this;
           },
