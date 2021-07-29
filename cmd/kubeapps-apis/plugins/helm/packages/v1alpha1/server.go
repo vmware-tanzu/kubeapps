@@ -540,11 +540,9 @@ func isValidChart(chart *models.Chart) (bool, error) {
 			}
 		}
 	}
-	if chart.Maintainers != nil || len(chart.ChartVersions) != 0 {
-		for _, maintainer := range chart.Maintainers {
-			if maintainer.Name == "" {
-				return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
-			}
+	for _, maintainer := range chart.Maintainers {
+		if maintainer.Name == "" {
+			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
 		}
 	}
 	return true, nil
