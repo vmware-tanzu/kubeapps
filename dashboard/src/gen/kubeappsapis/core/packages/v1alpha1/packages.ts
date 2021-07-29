@@ -642,11 +642,11 @@ export interface InstalledPackageStatus {
  * These should make sense across different packaging plugins.
  */
 export enum InstalledPackageStatus_StatusReason {
-  UNKNOWN = 0,
-  INSTALLED = 1,
-  UNINSTALLED = 2,
-  FAILED = 3,
-  PENDING = 4,
+  STATUS_REASON_UNSPECIFIED = 0,
+  STATUS_REASON_INSTALLED = 1,
+  STATUS_REASON_UNINSTALLED = 2,
+  STATUS_REASON_FAILED = 3,
+  STATUS_REASON_PENDING = 4,
   UNRECOGNIZED = -1,
 }
 
@@ -655,20 +655,20 @@ export function installedPackageStatus_StatusReasonFromJSON(
 ): InstalledPackageStatus_StatusReason {
   switch (object) {
     case 0:
-    case "UNKNOWN":
-      return InstalledPackageStatus_StatusReason.UNKNOWN;
+    case "STATUS_REASON_UNSPECIFIED":
+      return InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED;
     case 1:
-    case "INSTALLED":
-      return InstalledPackageStatus_StatusReason.INSTALLED;
+    case "STATUS_REASON_INSTALLED":
+      return InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED;
     case 2:
-    case "UNINSTALLED":
-      return InstalledPackageStatus_StatusReason.UNINSTALLED;
+    case "STATUS_REASON_UNINSTALLED":
+      return InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED;
     case 3:
-    case "FAILED":
-      return InstalledPackageStatus_StatusReason.FAILED;
+    case "STATUS_REASON_FAILED":
+      return InstalledPackageStatus_StatusReason.STATUS_REASON_FAILED;
     case 4:
-    case "PENDING":
-      return InstalledPackageStatus_StatusReason.PENDING;
+    case "STATUS_REASON_PENDING":
+      return InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -680,16 +680,16 @@ export function installedPackageStatus_StatusReasonToJSON(
   object: InstalledPackageStatus_StatusReason,
 ): string {
   switch (object) {
-    case InstalledPackageStatus_StatusReason.UNKNOWN:
-      return "UNKNOWN";
-    case InstalledPackageStatus_StatusReason.INSTALLED:
-      return "INSTALLED";
-    case InstalledPackageStatus_StatusReason.UNINSTALLED:
-      return "UNINSTALLED";
-    case InstalledPackageStatus_StatusReason.FAILED:
-      return "FAILED";
-    case InstalledPackageStatus_StatusReason.PENDING:
-      return "PENDING";
+    case InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED:
+      return "STATUS_REASON_UNSPECIFIED";
+    case InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED:
+      return "STATUS_REASON_INSTALLED";
+    case InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED:
+      return "STATUS_REASON_UNINSTALLED";
+    case InstalledPackageStatus_StatusReason.STATUS_REASON_FAILED:
+      return "STATUS_REASON_FAILED";
+    case InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING:
+      return "STATUS_REASON_PENDING";
     default:
       return "UNKNOWN";
   }
