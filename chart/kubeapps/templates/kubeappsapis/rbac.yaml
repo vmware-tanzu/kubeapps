@@ -20,6 +20,11 @@ rules:
       - "source.toolkit.fluxcd.io"
     resources: ['*']
     verbs: ['*']
+  # So that our dev user is seen as having access to a namespace.
+  # We'll need to add rbac for our dev user to install later as well.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
 {{- if .Values.kubeappsapis.unsafeUseDemoSA }}
 # Dev-only ClusterRoleBinding to the ServiceAccount
 ---

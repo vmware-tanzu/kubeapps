@@ -1,4 +1,5 @@
 const utils = require("./lib/utils");
+const testName = "03-create-registry";
 
 test("Creates a registry", async () => {
   await utils.login(
@@ -28,9 +29,9 @@ test("Creates a registry", async () => {
     // TODO(andresmgot): In theory, there is no need to refresh but sometimes the repo
     // does not appear
     await expect(page).toClick("a", { text: "my-repo" });
-  });
+  }, testName);
 
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("gitlab-runner");
-  });
+  }, testName);
 });

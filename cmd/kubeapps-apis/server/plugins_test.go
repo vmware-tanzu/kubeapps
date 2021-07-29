@@ -364,12 +364,12 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 					},
 				},
 			}
-			clientGetter, err := createClientGetterWithParams(inClusterConfig, serveOpts, config)
+			configGetter, err := createConfigGetterWithParams(inClusterConfig, serveOpts, config)
 			if err != nil {
-				t.Fatalf("in %s: fail creating the clientGetter:  %+v", tc.name, err)
+				t.Fatalf("in %s: fail creating the configGetter:  %+v", tc.name, err)
 			}
 
-			typedClient, dynamicClient, err := clientGetter(ctx)
+			restConfig, err := configGetter(ctx)
 			if tc.expectedErrMsg != nil && err != nil {
 				if got, want := err.Error(), tc.expectedErrMsg.Error(); !cmp.Equal(want, got) {
 					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
@@ -379,11 +379,8 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 			}
 
 			if tc.shouldCreate {
-				if dynamicClient == nil {
-					t.Errorf("got: nil, want: dynamic.Interface")
-				}
-				if typedClient == nil {
-					t.Errorf("got: nil, want: kubernetes.Interface")
+				if restConfig == nil {
+					t.Errorf("got: nil, want: rest.Config")
 				}
 			}
 		})

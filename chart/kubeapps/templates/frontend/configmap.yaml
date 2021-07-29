@@ -142,7 +142,7 @@ data:
     {{- if .Values.featureFlags.kubeappsAPIsServer }}
       location ~* /apis {
         rewrite ^ $request_uri; # pass the encoded url downstream as is,
-        rewrite /apis([^?]*) $1?$args break;
+        rewrite /apis([^?]*) $1 break;
     {{- if .Values.frontend.proxypassExtraSetHeader }}
         proxy_set_header {{ .Values.frontend.proxypassExtraSetHeader }};
     {{- end }}

@@ -60,18 +60,18 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                      | Description                                     | Value |
 | ------------------------- | ----------------------------------------------- | ----- |
-| `global.imageRegistry`    | Global Docker image registry                    | `nil` |
+| `global.imageRegistry`    | Global Docker image registry                    | `""`  |
 | `global.imagePullSecrets` | Global Docker registry secret names as an array | `[]`  |
-| `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `nil` |
+| `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `""`  |
 
 
 ### Common parameters
 
 | Name                | Description                                        | Value   |
 | ------------------- | -------------------------------------------------- | ------- |
-| `kubeVersion`       | Override Kubernetes version                        | `nil`   |
-| `nameOverride`      | String to partially override common.names.fullname | `nil`   |
-| `fullnameOverride`  | String to fully override common.names.fullname     | `nil`   |
+| `kubeVersion`       | Override Kubernetes version                        | `""`    |
+| `nameOverride`      | String to partially override common.names.fullname | `""`    |
+| `fullnameOverride`  | String to fully override common.names.fullname     | `""`    |
 | `commonLabels`      | Labels to add to all deployed objects              | `{}`    |
 | `commonAnnotations` | Annotations to add to all deployed objects         | `{}`    |
 | `extraDeploy`       | Array of extra objects to deploy with the release  | `[]`    |
@@ -83,7 +83,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | Name                  | Description                                                                                           | Value                    |
 | --------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------ |
 | `ingress.enabled`     | Enable ingress record generation for Kubeapps                                                         | `false`                  |
-| `ingress.apiVersion`  | Force Ingress API version (automatically detected if not set)                                         | `nil`                    |
+| `ingress.apiVersion`  | Force Ingress API version (automatically detected if not set)                                         | `""`                     |
 | `ingress.hostname`    | Default host for the ingress record                                                                   | `kubeapps.local`         |
 | `ingress.path`        | Default path for the ingress record                                                                   | `/`                      |
 | `ingress.pathType`    | Ingress path type                                                                                     | `ImplementationSpecific` |
@@ -108,7 +108,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                  | `[]`                  |
 | `frontend.image.debug`                           | Enable image debug mode                                                                   | `false`               |
 | `frontend.proxypassAccessTokenAsBearer`          | Use access_token as the Bearer when talking to the k8s api server                         | `false`               |
-| `frontend.proxypassExtraSetHeader`               | Set an additional proxy header for all requests proxied via NGINX                         | `nil`                 |
+| `frontend.proxypassExtraSetHeader`               | Set an additional proxy header for all requests proxied via NGINX                         | `""`                  |
 | `frontend.largeClientHeaderBuffers`              | Set large_client_header_buffers in NGINX config                                           | `4 32k`               |
 | `frontend.replicaCount`                          | Number of frontend replicas to deploy                                                     | `2`                   |
 | `frontend.resources.limits.cpu`                  | The CPU limits for the NGINX container                                                    | `250m`                |
@@ -116,8 +116,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `frontend.resources.requests.cpu`                | The requested CPU for the NGINX container                                                 | `25m`                 |
 | `frontend.resources.requests.memory`             | The requested memory for the NGINX container                                              | `32Mi`                |
 | `frontend.extraEnvVars`                          | Array with extra environment variables to add to the NGINX container                      | `[]`                  |
-| `frontend.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the NGINX container              | `nil`                 |
-| `frontend.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the NGINX container                 | `nil`                 |
+| `frontend.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the NGINX container              | `""`                  |
+| `frontend.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the NGINX container                 | `""`                  |
 | `frontend.containerPort`                         | NGINX HTTP container port                                                                 | `8080`                |
 | `frontend.podSecurityContext.enabled`            | Enabled frontend pods' Security Context                                                   | `true`                |
 | `frontend.podSecurityContext.fsGroup`            | Set frontend pod's Security Context fsGroup                                               | `1001`                |
@@ -149,17 +149,17 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `frontend.affinity`                              | Affinity for pod assignment                                                               | `{}`                  |
 | `frontend.nodeSelector`                          | Node labels for pod assignment                                                            | `{}`                  |
 | `frontend.tolerations`                           | Tolerations for pod assignment                                                            | `[]`                  |
-| `frontend.priorityClassName`                     | Priority class name for frontend pods                                                     | `nil`                 |
+| `frontend.priorityClassName`                     | Priority class name for frontend pods                                                     | `""`                  |
 | `frontend.hostAliases`                           | Custom host aliases for frontend pods                                                     | `[]`                  |
 | `frontend.extraVolumes`                          | Optionally specify extra list of additional volumes for frontend pods                     | `[]`                  |
 | `frontend.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for frontend container(s)        | `[]`                  |
-| `frontend.sidecars`                              | Add additional sidecar containers to the frontend pod                                     | `{}`                  |
-| `frontend.initContainers`                        | Add additional init containers to the frontend pods                                       | `{}`                  |
+| `frontend.sidecars`                              | Add additional sidecar containers to the frontend pod                                     | `[]`                  |
+| `frontend.initContainers`                        | Add additional init containers to the frontend pods                                       | `[]`                  |
 | `frontend.service.type`                          | Frontend service type                                                                     | `ClusterIP`           |
 | `frontend.service.port`                          | Frontend service HTTP port                                                                | `80`                  |
-| `frontend.service.nodePort`                      | Node port for HTTP                                                                        | `nil`                 |
-| `frontend.service.clusterIP`                     | Frontend service Cluster IP                                                               | `nil`                 |
-| `frontend.service.loadBalancerIP`                | Frontend service Load Balancer IP                                                         | `nil`                 |
+| `frontend.service.nodePort`                      | Node port for HTTP                                                                        | `""`                  |
+| `frontend.service.clusterIP`                     | Frontend service Cluster IP                                                               | `""`                  |
+| `frontend.service.loadBalancerIP`                | Frontend service Load Balancer IP                                                         | `""`                  |
 | `frontend.service.loadBalancerSourceRanges`      | Frontend service Load Balancer sources                                                    | `[]`                  |
 | `frontend.service.externalTrafficPolicy`         | Frontend service external traffic policy                                                  | `Cluster`             |
 | `frontend.service.annotations`                   | Additional custom annotations for frontend service                                        | `{}`                  |
@@ -178,10 +178,11 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.customStyle`                           | Custom CSS injected to the Dashboard to customize Kubeapps look and feel                  | `""`                 |
 | `dashboard.customComponents`                      | Custom Form components injected into the BasicDeploymentForm                              | `""`                 |
 | `dashboard.customLocale`                          | Custom translations injected to the Dashboard to customize the strings used in Kubeapps   | `""`                 |
+| `dashboard.defaultTheme`                          | Default theme used in the Dashboard if the user has not selected any theme yet.           | `""`                 |
 | `dashboard.replicaCount`                          | Number of Dashboard replicas to deploy                                                    | `2`                  |
 | `dashboard.extraEnvVars`                          | Array with extra environment variables to add to the Dashboard container                  | `[]`                 |
-| `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Dashboard container          | `nil`                |
-| `dashboard.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Dashboard container             | `nil`                |
+| `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Dashboard container          | `""`                 |
+| `dashboard.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Dashboard container             | `""`                 |
 | `dashboard.containerPort`                         | Dashboard HTTP container port                                                             | `8080`               |
 | `dashboard.resources.limits.cpu`                  | The CPU limits for the Dashboard container                                                | `250m`               |
 | `dashboard.resources.limits.memory`               | The memory limits for the Dashboard container                                             | `128Mi`              |
@@ -217,12 +218,12 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.affinity`                              | Affinity for pod assignment                                                               | `{}`                 |
 | `dashboard.nodeSelector`                          | Node labels for pod assignment                                                            | `{}`                 |
 | `dashboard.tolerations`                           | Tolerations for pod assignment                                                            | `[]`                 |
-| `dashboard.priorityClassName`                     | Priority class name for Dashboard pods                                                    | `nil`                |
+| `dashboard.priorityClassName`                     | Priority class name for Dashboard pods                                                    | `""`                 |
 | `dashboard.hostAliases`                           | Custom host aliases for Dashboard pods                                                    | `[]`                 |
 | `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for Dasbhoard pods                    | `[]`                 |
 | `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for Dasbhoard container(s)       | `[]`                 |
-| `dashboard.sidecars`                              | Add additional sidecar containers to the Dasbhoard pod                                    | `{}`                 |
-| `dashboard.initContainers`                        | Add additional init containers to the Dasbhoard pods                                      | `{}`                 |
+| `dashboard.sidecars`                              | Add additional sidecar containers to the Dasbhoard pod                                    | `[]`                 |
+| `dashboard.initContainers`                        | Add additional init containers to the Dasbhoard pods                                      | `[]`                 |
 | `dashboard.service.port`                          | Dasbhoard service HTTP port                                                               | `8080`               |
 | `dashboard.service.annotations`                   | Additional custom annotations for Dasbhoard service                                       | `{}`                 |
 
@@ -243,7 +244,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `apprepository.syncImage.pullSecrets`                 | Kubeapps Asset Syncer image pull secrets                                                  | `[]`                                |
 | `apprepository.initialRepos`                          | Initial chart repositories to configure                                                   | `[]`                                |
 | `apprepository.initialReposProxy`                     | Proxy configuration to access chart repositories                                          | `{}`                                |
-| `apprepository.crontab`                               | Schedule for syncing App repositories (default to 10 minutes)                             | `nil`                               |
+| `apprepository.crontab`                               | Schedule for syncing App repositories (default to 10 minutes)                             | `""`                                |
 | `apprepository.watchAllNamespaces`                    | Watch all namespaces to support separate AppRepositories per namespace                    | `true`                              |
 | `apprepository.replicaCount`                          | Number of AppRepository Controller replicas to deploy                                     | `1`                                 |
 | `apprepository.resources.limits.cpu`                  | The CPU limits for the AppRepository Controller container                                 | `250m`                              |
@@ -266,7 +267,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `apprepository.affinity`                              | Affinity for pod assignment                                                               | `{}`                                |
 | `apprepository.nodeSelector`                          | Node labels for pod assignment                                                            | `{}`                                |
 | `apprepository.tolerations`                           | Tolerations for pod assignment                                                            | `[]`                                |
-| `apprepository.priorityClassName`                     | Priority class name for AppRepository Controller pods                                     | `nil`                               |
+| `apprepository.priorityClassName`                     | Priority class name for AppRepository Controller pods                                     | `""`                                |
 | `apprepository.hostAliases`                           | Custom host aliases for AppRepository Controller pods                                     | `[]`                                |
 
 
@@ -279,15 +280,15 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeops.image.tag`                             | Kubeops image tag (immutable tags are recommended)                                        | `latest`           |
 | `kubeops.image.pullPolicy`                      | Kubeops image pull policy                                                                 | `IfNotPresent`     |
 | `kubeops.image.pullSecrets`                     | Kubeops image pull secrets                                                                | `[]`               |
-| `kubeops.namespaceHeaderName`                   | Additional header name for trusted namespaces                                             | `nil`              |
-| `kubeops.namespaceHeaderPattern`                | Additional header pattern for trusted namespaces                                          | `nil`              |
-| `kubeops.qps`                                   | Kubeops QPS (queries per second) rate                                                     | `nil`              |
-| `kubeops.burst`                                 | Kubeops burst rate                                                                        | `nil`              |
+| `kubeops.namespaceHeaderName`                   | Additional header name for trusted namespaces                                             | `""`               |
+| `kubeops.namespaceHeaderPattern`                | Additional header pattern for trusted namespaces                                          | `""`               |
+| `kubeops.qps`                                   | Kubeops QPS (queries per second) rate                                                     | `""`               |
+| `kubeops.burst`                                 | Kubeops burst rate                                                                        | `""`               |
 | `kubeops.replicaCount`                          | Number of Kubeops replicas to deploy                                                      | `2`                |
 | `kubeops.terminationGracePeriodSeconds`         | The grace time period for sig term                                                        | `300`              |
 | `kubeops.extraEnvVars`                          | Array with extra environment variables to add to the Kubeops container                    | `[]`               |
-| `kubeops.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Kubeops container            | `nil`              |
-| `kubeops.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Kubeops container               | `nil`              |
+| `kubeops.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Kubeops container            | `""`               |
+| `kubeops.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Kubeops container               | `""`               |
 | `kubeops.containerPort`                         | Kubeops HTTP container port                                                               | `8080`             |
 | `kubeops.resources.limits.cpu`                  | The CPU limits for the Kubeops container                                                  | `250m`             |
 | `kubeops.resources.limits.memory`               | The memory limits for the Kubeops container                                               | `256Mi`            |
@@ -323,7 +324,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeops.affinity`                              | Affinity for pod assignment                                                               | `{}`               |
 | `kubeops.nodeSelector`                          | Node labels for pod assignment                                                            | `{}`               |
 | `kubeops.tolerations`                           | Tolerations for pod assignment                                                            | `[]`               |
-| `kubeops.priorityClassName`                     | Priority class name for Kubeops pods                                                      | `nil`              |
+| `kubeops.priorityClassName`                     | Priority class name for Kubeops pods                                                      | `""`               |
 | `kubeops.hostAliases`                           | Custom host aliases for Kubeops pods                                                      | `[]`               |
 | `kubeops.service.port`                          | Kubeops service HTTP port                                                                 | `8080`             |
 | `kubeops.service.annotations`                   | Additional custom annotations for Kubeops service                                         | `{}`               |
@@ -340,8 +341,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `assetsvc.image.pullSecrets`                     | Kubeapps Assetsvc image pull secrets                                                      | `[]`                |
 | `assetsvc.replicaCount`                          | Number of Assetsvc replicas to deploy                                                     | `2`                 |
 | `assetsvc.extraEnvVars`                          | Array with extra environment variables to add to the Assetsvc container                   | `[]`                |
-| `assetsvc.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Assetsvc container           | `nil`               |
-| `assetsvc.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Assetsvc container              | `nil`               |
+| `assetsvc.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Assetsvc container           | `""`                |
+| `assetsvc.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Assetsvc container              | `""`                |
 | `assetsvc.containerPort`                         | Assetsvc HTTP container port                                                              | `8080`              |
 | `assetsvc.resources.limits.cpu`                  | The CPU limits for the Assetsvc container                                                 | `250m`              |
 | `assetsvc.resources.limits.memory`               | The memory limits for the Assetsvc container                                              | `128Mi`             |
@@ -377,7 +378,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `assetsvc.affinity`                              | Affinity for pod assignment                                                               | `{}`                |
 | `assetsvc.nodeSelector`                          | Node labels for pod assignment                                                            | `{}`                |
 | `assetsvc.tolerations`                           | Tolerations for pod assignment                                                            | `[]`                |
-| `assetsvc.priorityClassName`                     | Priority class name for Assetsvc pods                                                     | `nil`               |
+| `assetsvc.priorityClassName`                     | Priority class name for Assetsvc pods                                                     | `""`                |
 | `assetsvc.hostAliases`                           | Custom host aliases for Assetsvc pods                                                     | `[]`                |
 | `assetsvc.service.port`                          | Assetsvc service HTTP port                                                                | `8080`              |
 | `assetsvc.service.annotations`                   | Additional custom annotations for Assetsvc service                                        | `{}`                |
@@ -490,7 +491,7 @@ helm install kubeapps --namespace kubeapps -f custom-values.yaml bitnami/kubeapp
 
 ### Configuring Initial Repositories
 
-By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts) and the [Kubernetes Service Catalog charts](https://github.com/kubernetes-incubator/service-catalog). To change these defaults, override with your desired parameters the `apprepository.initialRepos` object present in the [values.yaml](values.yaml) file.
+By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts). To change these defaults, override with your desired parameters the `apprepository.initialRepos` object present in the [values.yaml](values.yaml) file.
 
 ### Enabling Operators
 
@@ -658,7 +659,7 @@ Besides, if you are using the OAuth2/OIDC login (more information at the [using 
 ```bash
 helm install kubeapps bitnami/kubeapps \
   --namespace kubeapps \
-  # ... other OIDC flags 
+  # ... other OIDC flags
   --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
   --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
   --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
@@ -700,9 +701,9 @@ Kubeapps uses the currently logged-in user credential to retrieve the list of al
 
 To reduce this time, you can increase the number of checks that Kubeapps will perform in parallel (per connection) setting the value: `kubeops.burst=<desired_number>` and `kubeops.QPS=<desired_number>`. The default value, if not set, is 15 burst requests and 10 QPS afterwards.
 
-### More questions? 
+### More questions?
 
-Feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you have any questions! 
+Feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you have any questions!
 
 ## Troubleshooting
 
@@ -810,7 +811,7 @@ Kubeapps 2.3.1 (Chart version 6.0.0) introduces some breaking changes. Helm spec
 1. Kubeapps will no longer create a database secret for you automatically but rather will rely on the default behavior of the PostgreSQL chart. If you try to upgrade Kubeapps and you installed it without setting a password, you will get the following error:
 
 ```console
-Error: UPGRADE FAILED: template: kubeapps/templates/NOTES.txt:73:4: executing "kubeapps/templates/NOTES.txt" at <include "common.errors.upgrade.passwords.empty" (dict "validationErrors" $passwordValidationErrors "context" $)>: error calling include: template: kubeapps/charts/common/templates/_errors.tpl:18:48: executing "common.errors.upgrade.passwords.empty" at <fail>: error calling fail: 
+Error: UPGRADE FAILED: template: kubeapps/templates/NOTES.txt:73:4: executing "kubeapps/templates/NOTES.txt" at <include "common.errors.upgrade.passwords.empty" (dict "validationErrors" $passwordValidationErrors "context" $)>: error calling include: template: kubeapps/charts/common/templates/_errors.tpl:18:48: executing "common.errors.upgrade.passwords.empty" at <fail>: error calling fail:
 PASSWORDS ERROR: you must provide your current passwords when upgrade the release
     'postgresql.postgresqlPassword' must not be empty, please add '--set postgresql.postgresqlPassword=$POSTGRESQL_PASSWORD' to the command. To get the current value:
 ```

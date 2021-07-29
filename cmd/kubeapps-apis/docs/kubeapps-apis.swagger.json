@@ -71,7 +71,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -141,7 +141,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -241,7 +241,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -270,6 +270,69 @@
           {
             "name": "pkgVersion",
             "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
+    "/core/packages/v1alpha1/installedpackagedetails": {
+      "get": {
+        "operationId": "PackagesService_GetInstalledPackageDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -311,7 +374,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -396,7 +459,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -467,7 +530,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -568,7 +631,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -597,6 +660,70 @@
           {
             "name": "pkgVersion",
             "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/installedpackagedetail": {
+      "get": {
+        "summary": "GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin",
+        "operationId": "FluxV2PackagesService_GetInstalledPackageDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -639,7 +766,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -697,7 +824,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -740,7 +867,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -811,7 +938,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -912,7 +1039,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -941,6 +1068,70 @@
           {
             "name": "pkgVersion",
             "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
+    "/plugins/helm/packages/v1alpha1/installedpackagedetail": {
+      "get": {
+        "summary": "GetInstalledPackageDetail returns the requested installed package managed by the 'helm' plugin",
+        "operationId": "HelmPackagesService_GetInstalledPackageDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -983,7 +1174,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1041,7 +1232,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1112,7 +1303,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1213,7 +1404,7 @@
           },
           {
             "name": "availablePackageRef.context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1242,6 +1433,70 @@
           {
             "name": "pkgVersion",
             "description": "Optional version reference for which full version history is required.  By\ndefault a summary of versions is returned as outlined in the response.\nPlugins can choose not to implement this and provide the summary only, it\nis provided for completeness only.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/installedpackagedetail": {
+      "get": {
+        "summary": "GetInstalledPackageDetail returns the requested installed package managed by the 'kapp_controller' plugin",
+        "operationId": "KappControllerPackagesService_GetInstalledPackageDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1284,7 +1539,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1342,7 +1597,7 @@
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1359,13 +1614,31 @@
       "type": "object",
       "properties": {
         "pkgVersion": {
-          "type": "string"
+          "type": "string",
+          "description": "Version of the package itself",
+          "title": "Package version"
         },
         "appVersion": {
-          "type": "string"
+          "type": "string",
+          "description": "Version of the packaged application",
+          "title": "Application version"
         }
       },
-      "description": "PackageAppVersion conveys both the package version and the packaged app version."
+      "description": "PackageAppVersion conveys both the package version and the packaged app version.",
+      "title": "Package AppVersion"
+    },
+    "InstalledPackageStatusStatusReason": {
+      "type": "string",
+      "enum": [
+        "STATUS_REASON_UNSPECIFIED",
+        "STATUS_REASON_INSTALLED",
+        "STATUS_REASON_UNINSTALLED",
+        "STATUS_REASON_FAILED",
+        "STATUS_REASON_PENDING"
+      ],
+      "default": "STATUS_REASON_UNSPECIFIED",
+      "description": "Generic reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins.",
+      "title": "StatusReason"
     },
     "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
@@ -1566,6 +1839,14 @@
           "description": "List of Maintainer",
           "title": "Available package maintainers"
         },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this",
+          "title": "Available package categories"
+        },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
           "description": "Some additional information added by the plugin",
@@ -1615,6 +1896,11 @@
           "description": "The latest version available for this package. Often expected when viewing\na summary of many available packages.",
           "title": "Latest available package version"
         },
+        "latestAppVersion": {
+          "type": "string",
+          "description": "The app version of the latest version available for this package. Often expected\nwhen viewing a summary of many available packages.",
+          "title": "Latest available package app version"
+        },
         "iconUrl": {
           "type": "string",
           "description": "A url for an icon.",
@@ -1629,6 +1915,14 @@
           "type": "string",
           "description": "A short description of the app provided by the package",
           "title": "Available package short description"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this",
+          "title": "Available package categories"
         }
       },
       "description": "An AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages.",
@@ -1644,7 +1938,7 @@
         },
         "namespace": {
           "type": "string",
-          "description": "A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.",
+          "description": "A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
           "title": "Namespace"
         }
       },
@@ -1694,7 +1988,7 @@
       "properties": {
         "availablePackageDetail": {
           "$ref": "#/definitions/v1alpha1AvailablePackageDetail",
-          "description": "List of AvailablePackageDetail",
+          "description": "The requested AvailablePackageDetail",
           "title": "Available package detail"
         }
       },
@@ -1704,7 +1998,7 @@
     "v1alpha1GetAvailablePackageSummariesResponse": {
       "type": "object",
       "properties": {
-        "availablePackagesSummaries": {
+        "availablePackageSummaries": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1alpha1AvailablePackageSummary"
@@ -1716,6 +2010,14 @@
           "type": "string",
           "description": "This field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request.",
           "title": "Next page token"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "This optional field contains the distinct category names considering the FilterOptions.",
+          "title": "Categories"
         }
       },
       "description": "Response for GetAvailablePackageSummaries",
@@ -1729,7 +2031,8 @@
           "items": {
             "$ref": "#/definitions/GetAvailablePackageVersionsResponsePackageAppVersion"
           },
-          "description": "By default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned."
+          "description": "By default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned.",
+          "title": "Package app versions"
         }
       },
       "description": "Response for GetAvailablePackageVersions",
@@ -1758,10 +2061,22 @@
       "description": "Response for GetConfiguredPlugins",
       "title": "GetConfiguredPluginsResponse"
     },
+    "v1alpha1GetInstalledPackageDetailResponse": {
+      "type": "object",
+      "properties": {
+        "installedPackageDetail": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageDetail",
+          "description": "The requested InstalledPackageDetail",
+          "title": "InstalledPackageDetail"
+        }
+      },
+      "description": "Response for GetInstalledPackageDetail",
+      "title": "GetInstalledPackageDetailResponse"
+    },
     "v1alpha1GetInstalledPackageSummariesResponse": {
       "type": "object",
       "properties": {
-        "installedPackagesSummaries": {
+        "installedPackageSummaries": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1alpha1InstalledPackageSummary"
@@ -1771,11 +2086,64 @@
         },
         "nextPageToken": {
           "type": "string",
-          "title": "The token used to request the next page of results"
+          "description": "This field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request.",
+          "title": "Next page token"
         }
       },
       "description": "Response for GetInstalledPackageSummaries",
       "title": "GetInstalledPackageSummariesResponse"
+    },
+    "v1alpha1InstalledPackageDetail": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
+          "description": "A reference uniquely identifying the installed package.",
+          "title": "InstalledPackageReference"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "description": "The package version reference defines a version or constraint limiting\nmatching package versions.",
+          "title": "PkgVersionReference"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name given to the installed package",
+          "title": "Installed package name"
+        },
+        "currentPkgVersion": {
+          "type": "string",
+          "description": "The version of the package which is currently installed.",
+          "title": "CurrentPkgVersion"
+        },
+        "valuesApplied": {
+          "type": "string",
+          "description": "The values applied currently for the installed package.",
+          "title": "ValuesApplied"
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field specifying data common to systems that reconcile\nthe package installation on the cluster asynchronously. In particular,\nthis specifies the service account used to perform the reconcilliation.",
+          "title": "ReconciliationOptions"
+        },
+        "status": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
+          "description": "The current status of the installed package.",
+          "title": "Status"
+        },
+        "postInstallationNotes": {
+          "type": "string",
+          "description": "Optional notes generated by package and intended for the user post installation.",
+          "title": "PostInstallationNotes"
+        },
+        "availablePackageRef": {
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
+          "description": "A reference to the available package for this installation.\nUseful to lookup the package display name, icon and other info.",
+          "title": "Available package reference"
+        }
+      },
+      "description": "An InstalledPackageDetail includes details about the installed package that are\ntypically useful when presenting a single installed package.",
+      "title": "InstalledPackageDetail"
     },
     "v1alpha1InstalledPackageReference": {
       "type": "object",
@@ -1796,6 +2164,28 @@
       },
       "description": "An InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package.",
       "title": "InstalledPackageReference"
+    },
+    "v1alpha1InstalledPackageStatus": {
+      "type": "object",
+      "properties": {
+        "ready": {
+          "type": "boolean",
+          "description": "An indication of whether the installation is ready or not",
+          "title": "Ready"
+        },
+        "reason": {
+          "$ref": "#/definitions/InstalledPackageStatusStatusReason",
+          "description": "An enum indicating the reason for the current status.",
+          "title": "Reason"
+        },
+        "userReason": {
+          "type": "string",
+          "description": "Optional text to return for user context, which may be plugin specific.",
+          "title": "UserReason"
+        }
+      },
+      "description": "An InstalledPackageStatus reports on the current status of the installation.",
+      "title": "InstalledPackageStatus"
     },
     "v1alpha1InstalledPackageSummary": {
       "type": "object",
@@ -1819,6 +2209,11 @@
           "type": "string",
           "description": "The version of the package which is currently installed.",
           "title": "CurrentPkgVersion"
+        },
+        "currentAppVersion": {
+          "type": "string",
+          "description": "The version of the app included in the current package version.",
+          "title": "CurrentAppVersion"
         },
         "iconUrl": {
           "type": "string",
@@ -1844,6 +2239,11 @@
           "type": "string",
           "description": "The latest version available for this package, regardless of the pkg_version_reference.",
           "title": "LatestPkgVersion"
+        },
+        "status": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
+          "description": "The current status of the installed package.",
+          "title": "Status"
         }
       },
       "description": "An InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages.",
@@ -1905,12 +2305,36 @@
       "description": "A plugin can implement multiple services and multiple versions of a service.",
       "title": "Plugin"
     },
+    "v1alpha1ReconciliationOptions": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The interval with which the package is checked for reconciliation (in seconds)",
+          "title": "Reconciliation Interval"
+        },
+        "suspend": {
+          "type": "boolean",
+          "description": "Whether reconciliation should be suspended until otherwise enabled.",
+          "title": "Suspend"
+        },
+        "serviceAccountName": {
+          "type": "string",
+          "description": "A name for a service account in the same namespace which should be used\nto perform the reconciliation.",
+          "title": "ServiceAccountName"
+        }
+      },
+      "description": "ReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage.",
+      "title": "ReconciliationOptions"
+    },
     "v1alpha1VersionReference": {
       "type": "object",
       "properties": {
         "version": {
           "type": "string",
-          "title": "The format of the version constraint depends on the backend. For example,\nfor a flux v2 and Carvel it’s a semver expression, such as \"\u003e=10.3 \u003c 10.4\""
+          "description": "The format of the version constraint depends on the backend. For example,\nfor a flux v2 and Carvel it’s a semver expression, such as \"\u003e=10.3 \u003c 10.4\"",
+          "title": "Version"
         }
       },
       "description": "A VersionReference defines a version or constraint limiting matching versions.\nThe reason it is a separate message is so that in the future we can add other\nfields as necessary (such as something similar to Carvel's `prereleases` option\nto its versionSelection).",

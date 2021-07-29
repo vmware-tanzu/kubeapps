@@ -13,24 +13,44 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+	"net/url"
+	"strconv"
+	"strings"
+	"sync"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/helm"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	log "k8s.io/klog/v2"
 )
 
-// calling this file utils.go until I can come up with better name or organize code differently
+// see https://blog.golang.org/context
+// this is used exclusively for unit tests to signal conditions between production
+// and unit test code. The key type is unexported to prevent collisions with context
+// keys defined in other packages.
+type contextKey int
+
+// waitGroupKey is the context key for the waitGroup.  Its value of zero is
+// arbitrary.  If this package defined other context keys, they would have
+// different integer values.
+const waitGroupKey contextKey = 0
+
+func fromContext(ctx context.Context) (*sync.WaitGroup, bool) {
+	// ctx.Value returns nil if ctx has no value for the key;
+	// the sync.WaitGroup type assertion returns ok=false for nil.
+	wg, ok := ctx.Value(waitGroupKey).(*sync.WaitGroup)
+	return wg, ok
+}
+
+func newContext(ctx context.Context, wg *sync.WaitGroup) context.Context {
+	return context.WithValue(ctx, waitGroupKey, wg)
+}
+
+//
+// miscellaneous utility funcs
+//
 func prettyPrintObject(o runtime.Object) string {
 	prettyBytes, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
@@ -47,145 +67,34 @@ func prettyPrintMap(m map[string]interface{}) string {
 	return string(prettyBytes)
 }
 
-func indexOneRepo(unstructuredRepo map[string]interface{}) ([]*corev1.AvailablePackageSummary, error) {
-	startTime := time.Now()
-
-	repo, err := newPackageRepository(unstructuredRepo)
+// pageOffsetFromPageToken converts a page token to an integer offset
+// representing the page of results.
+// TODO(gfichtenholt): it'd be better if we ensure that the page_token
+// contains an offset to the item, not the page so we can
+// aggregate paginated results. Same as helm hlug-in.
+// Update this when helm plug-in does so
+func pageOffsetFromPageToken(pageToken string) (int, error) {
+	if pageToken == "" {
+		return 1, nil
+	}
+	offset, err := strconv.ParseUint(pageToken, 10, 0)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-
-	ready, err := isRepoReady(unstructuredRepo)
-	if err != nil || !ready {
-		return nil, status.Errorf(codes.Internal,
-			"cannot index repository [%s] because it is not in 'Ready' state:%v\n%s",
-			repo.Name,
-			err,
-			prettyPrintMap(unstructuredRepo))
-	}
-
-	indexUrl, found, err := unstructured.NestedString(unstructuredRepo, "status", "url")
-	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal,
-			"expected field status.url not found on HelmRepository [%s]: %v:\n%s",
-			repo.Name,
-			err,
-			prettyPrintMap(unstructuredRepo))
-	}
-
-	log.Infof("Found repository: [%s], index URL: [%s]", repo.Name, indexUrl)
-
-	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
-	// local cluster, not some remote repo.
-	// e.g. http://source-controller.flux-system.svc.cluster.local./helmrepository/default/bitnami/index.yaml
-	// Flux does the hard work of pulling the index file from remote repo
-	// into local cluster based on secretRef associated with HelmRepository, if applicable
-	bytes, err := httpclient.Get(indexUrl, httpclient.New(), map[string]string{})
-	if err != nil {
-		return nil, err
-	}
-
-	modelRepo := &chart.Repo{
-		Namespace: repo.Namespace,
-		Name:      repo.Name,
-		URL:       repo.Url,
-		Type:      "helm",
-	}
-
-	// this is potentially a very expensive operation for large repos like 'bitnami'
-	charts, err := helm.ChartsFromIndex(bytes, modelRepo, true)
-	if err != nil {
-		return nil, err
-	}
-
-	responsePackages := []*corev1.AvailablePackageSummary{}
-	for _, chart := range charts {
-		pkg := &corev1.AvailablePackageSummary{
-			DisplayName:      chart.Name,
-			LatestPkgVersion: chart.ChartVersions[0].Version,
-			IconUrl:          chart.Icon,
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Context:    &corev1.Context{Namespace: repo.Namespace},
-				Identifier: chart.ID,
-			},
-		}
-		responsePackages = append(responsePackages, pkg)
-	}
-	duration := time.Since(startTime)
-	log.Infof("Indexed [%d] packages in repository [%s] in [%d] ms", len(responsePackages), repo.Name, duration.Milliseconds())
-
-	return responsePackages, nil
+	return int(offset), nil
 }
 
-func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
-	name, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "name")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"required field metadata.name not found on HelmRepository: %v:\n%s", err, prettyPrintMap(unstructuredRepo))
-	}
-	namespace, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "namespace")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"field metadata.namespace not found on HelmRepository: %v:\n%s", err, prettyPrintMap(unstructuredRepo))
-	}
-	url, found, err := unstructured.NestedString(unstructuredRepo, "spec", "url")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"required field spec.url not found on HelmRepository: %v:\n%s", err, prettyPrintMap(unstructuredRepo))
-	}
-	return &v1alpha1.PackageRepository{
-		Name:      name,
-		Namespace: namespace,
-		Url:       url,
-	}, nil
-}
-
-// implements plug-in specific cache-related functionality
-// onAddOrModifyRepo essentially tells the cache what to store for a given key
-func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	ready, err := isRepoReady(unstructuredRepo)
+// getUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+// also checks that the chart ID is in the expected format, namely "repoName/chartName"
+func getUnescapedChartID(chartID string) (string, error) {
+	unescapedChartID, err := url.QueryUnescape(chartID)
 	if err != nil {
-		return nil, false, err
+		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
 	}
-
-	if ready {
-		packages, err := indexOneRepo(unstructuredRepo)
-		if err != nil {
-			return nil, false, err
-		}
-		protoMsg := corev1.GetAvailablePackageSummariesResponse{
-			AvailablePackagesSummaries: packages,
-		}
-		bytes, err := proto.Marshal(&protoMsg)
-		if err != nil {
-			return nil, false, err
-		}
-		return bytes, true, nil
-	} else {
-		// repo is not quite ready to be indexed - not really an error condition,
-		// just skip it eventually there will be another event when it is in ready state
-		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
-		return nil, false, nil
+	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
+	chartIDParts := strings.Split(unescapedChartID, "/")
+	if len(chartIDParts) != 2 {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
 	}
-}
-
-func onGetRepo(key string, value interface{}) (interface{}, error) {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
-	}
-
-	var protoMsg corev1.GetAvailablePackageSummariesResponse
-	err := proto.Unmarshal(bytes, &protoMsg)
-	if err != nil {
-		return nil, err
-	}
-	return protoMsg.AvailablePackagesSummaries, nil
-}
-
-func onDeleteRepo(key string, unstructuredRepo map[string]interface{}) (bool, error) {
-	return true, nil
+	return unescapedChartID, nil
 }

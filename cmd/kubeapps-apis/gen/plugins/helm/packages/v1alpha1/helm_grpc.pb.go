@@ -27,6 +27,8 @@ type HelmPackagesServiceClient interface {
 	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 	// GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
 	GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
+	// GetInstalledPackageDetail returns the requested installed package managed by the 'helm' plugin
+	GetInstalledPackageDetail(ctx context.Context, in *v1alpha1.GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageDetailResponse, error)
 }
 
 type helmPackagesServiceClient struct {
@@ -73,6 +75,15 @@ func (c *helmPackagesServiceClient) GetInstalledPackageSummaries(ctx context.Con
 	return out, nil
 }
 
+func (c *helmPackagesServiceClient) GetInstalledPackageDetail(ctx context.Context, in *v1alpha1.GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageDetailResponse, error) {
+	out := new(v1alpha1.GetInstalledPackageDetailResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageDetail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HelmPackagesServiceServer is the server API for HelmPackagesService service.
 // All implementations should embed UnimplementedHelmPackagesServiceServer
 // for forward compatibility
@@ -85,6 +96,8 @@ type HelmPackagesServiceServer interface {
 	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 	// GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
 	GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
+	// GetInstalledPackageDetail returns the requested installed package managed by the 'helm' plugin
+	GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error)
 }
 
 // UnimplementedHelmPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -102,6 +115,9 @@ func (UnimplementedHelmPackagesServiceServer) GetAvailablePackageVersions(contex
 }
 func (UnimplementedHelmPackagesServiceServer) GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageSummaries not implemented")
+}
+func (UnimplementedHelmPackagesServiceServer) GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageDetail not implemented")
 }
 
 // UnsafeHelmPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -187,6 +203,24 @@ func _HelmPackagesService_GetInstalledPackageSummaries_Handler(srv interface{}, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HelmPackagesService_GetInstalledPackageDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetInstalledPackageDetailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HelmPackagesServiceServer).GetInstalledPackageDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageDetail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HelmPackagesServiceServer).GetInstalledPackageDetail(ctx, req.(*v1alpha1.GetInstalledPackageDetailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HelmPackagesService_ServiceDesc is the grpc.ServiceDesc for HelmPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -209,6 +243,10 @@ var HelmPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInstalledPackageSummaries",
 			Handler:    _HelmPackagesService_GetInstalledPackageSummaries_Handler,
+		},
+		{
+			MethodName: "GetInstalledPackageDetail",
+			Handler:    _HelmPackagesService_GetInstalledPackageDetail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

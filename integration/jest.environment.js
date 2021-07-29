@@ -25,7 +25,7 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
     try {
       // Check the server is up before running the test suite
       console.log(
-        `Waiting ${endpoint} to be ready before running the tests 
+        `Waiting ${endpoint} to be ready before running the tests
         (${waitTimeout / 1000}s)`,
       );
       await waitOn({

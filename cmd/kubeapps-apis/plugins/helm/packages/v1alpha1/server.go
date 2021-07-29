@@ -26,15 +26,22 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/kube"
+	"helm.sh/helm/v3/pkg/release"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 )
+
+type clientGetter func(context.Context) (kubernetes.Interface, dynamic.Interface, error)
+type helmActionConfigGetter func(ctx context.Context, namespace string) (*action.Configuration, error)
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
@@ -51,14 +58,15 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             server.KubernetesClientGetter
+	clientGetter             clientGetter
 	globalPackagingNamespace string
 	manager                  utils.AssetManager
+	actionConfigGetter       helmActionConfigGetter
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(clientGetter server.KubernetesClientGetter) *Server {
+func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
@@ -77,7 +85,47 @@ func NewServer(clientGetter server.KubernetesClientGetter) *Server {
 	}
 
 	return &Server{
-		clientGetter:             clientGetter,
+		clientGetter: func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+			if configGetter == nil {
+				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+			}
+			config, err := configGetter(ctx)
+			if err != nil {
+				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+			}
+			dynamicClient, err := dynamic.NewForConfig(config)
+			if err != nil {
+				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
+			}
+			typedClient, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get typed client : %v", err))
+			}
+			return typedClient, dynamicClient, nil
+		},
+		actionConfigGetter: func(ctx context.Context, namespace string) (*action.Configuration, error) {
+			if configGetter == nil {
+				return nil, status.Errorf(codes.Internal, "configGetter arg required")
+			}
+			config, err := configGetter(ctx)
+			if err != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+			}
+
+			restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
+			clientSet, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to create kubernetes client : %v", err))
+			}
+			// TODO(mnelson): Update to allow different helm storage options.
+			storage := agent.StorageForSecrets(namespace, clientSet)
+			return &action.Configuration{
+				RESTClientGetter: restClientGetter,
+				KubeClient:       kube.New(restClientGetter),
+				Releases:         storage,
+				Log:              log.Infof,
+			}, nil
+		},
 		manager:                  manager,
 		globalPackagingNamespace: kubeappsNamespace,
 	}
@@ -151,7 +199,23 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
 	}
-	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, pageOffset, int(pageSize))
+
+	// This plugin will include, as part of the GetAvailablePackageSummariesResponse,
+	// a "Categories" field containing only the distinct category names considering the FilterOptions
+	chartCategories, err := s.manager.GetAllChartCategories(cq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch chart categories: %v", err)
+	}
+
+	var categories []string
+	for _, cat := range chartCategories {
+		categories = append(categories, cat.Name)
+	}
+
+	// The current assetsvc manager works on a page number (ie. 1 for the first page),
+	// rather than an offset.
+	pageNumber := pageOffset + 1
+	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, pageNumber, int(pageSize))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
 	}
@@ -173,8 +237,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackagesSummaries: responsePackages,
-		NextPageToken:              nextPageToken,
+		AvailablePackageSummaries: responsePackages,
+		NextPageToken:             nextPageToken,
+		Categories:                categories,
 	}, nil
 }
 
@@ -186,7 +251,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 // for a specific plugin when combining).
 func pageOffsetFromPageToken(pageToken string) (int, error) {
 	if pageToken == "" {
-		return 1, nil
+		return 0, nil
 	}
 	offset, err := strconv.ParseUint(pageToken, 10, 0)
 	if err != nil {
@@ -205,9 +270,13 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
 	}
 
+	pkg.Name = chart.Name
+	// Helm's Chart.yaml (and hence our model) does not include a separate
+	// display name, so the chart name is also used here.
 	pkg.DisplayName = chart.Name
 	pkg.IconUrl = chart.Icon
 	pkg.ShortDescription = chart.Description
+	pkg.Categories = []string{chart.Category}
 
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
 		Identifier: chart.ID,
@@ -217,6 +286,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
+		pkg.LatestAppVersion = chart.ChartVersions[0].AppVersion
 	}
 
 	return pkg, nil
@@ -272,7 +342,19 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
 	}
 
-	availablePackageDetail, err := AvailablePackageDetailFromChart(&chart)
+	if len(chart.ChartVersions) == 0 {
+		return nil, status.Errorf(codes.Internal, "Chart returned without any versions: %+v", chart)
+	}
+	if version == "" {
+		version = chart.ChartVersions[0].Version
+	}
+	fileID := fileIDForChart(unescapedChartID, chart.ChartVersions[0].Version)
+	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart files: %v", err)
+	}
+
+	availablePackageDetail, err := AvailablePackageDetailFromChart(&chart, &chartFiles)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to parse chart to an availablePackageDetail: %v", err)
 	}
@@ -282,16 +364,20 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}, nil
 }
 
+// fileIDForChart returns a file ID given a chart id and version.
+func fileIDForChart(id, version string) string {
+	return fmt.Sprintf("%s-%s", id, version)
+}
+
 // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
 
-	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	if namespace == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
 	}
 	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
 	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
-
-	namespace := request.AvailablePackageRef.Context.Namespace
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
 	if err := s.hasAccessToNamespace(ctx, namespace); err != nil {
@@ -361,7 +447,7 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvai
 }
 
 // AvailablePackageDetailFromChart builds an AvailablePackageDetail from a Chart
-func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePackageDetail, error) {
+func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.ChartFiles) (*corev1.AvailablePackageDetail, error) {
 	pkg := &corev1.AvailablePackageDetail{}
 
 	isValid, err := isValidChart(chart)
@@ -373,6 +459,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	pkg.IconUrl = chart.Icon
 	pkg.Name = chart.Name
 	pkg.ShortDescription = chart.Description
+	pkg.Categories = []string{chart.Category}
 
 	pkg.Maintainers = []*corev1.Maintainer{}
 	for _, maintainer := range chart.Maintainers {
@@ -392,9 +479,9 @@ func AvailablePackageDetailFromChart(chart *models.Chart) (*corev1.AvailablePack
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		pkg.PkgVersion = chart.ChartVersions[0].Version
 		pkg.AppVersion = chart.ChartVersions[0].AppVersion
-		pkg.Readme = chart.ChartVersions[0].Readme
-		pkg.DefaultValues = chart.ChartVersions[0].Values
-		pkg.ValuesSchema = chart.ChartVersions[0].Schema
+		pkg.Readme = chartFiles.Readme
+		pkg.DefaultValues = chartFiles.Values
+		pkg.ValuesSchema = chartFiles.Schema
 	}
 	return pkg, nil
 }
@@ -453,12 +540,111 @@ func isValidChart(chart *models.Chart) (bool, error) {
 			}
 		}
 	}
-	if chart.Maintainers != nil || len(chart.ChartVersions) != 0 {
-		for _, maintainer := range chart.Maintainers {
-			if maintainer.Name == "" {
-				return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
-			}
+	for _, maintainer := range chart.Maintainers {
+		if maintainer.Name == "" {
+			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
 		}
 	}
 	return true, nil
+}
+
+// GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
+func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
+	namespace := request.GetContext().GetNamespace()
+	actionConfig, err := s.actionConfigGetter(ctx, namespace)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+	cmd := action.NewList(actionConfig)
+	if namespace == "" {
+		cmd.AllNamespaces = true
+	}
+
+	cmd.Limit = int(request.GetPaginationOptions().GetPageSize())
+	cmd.Offset, err = pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+	}
+
+	// TODO(mnelson): Check whether we need to support ListAll (status == "all" in existing helm support)
+
+	releases, err := cmd.Run()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to run Helm List action: %v", err)
+	}
+
+	installedPkgSummaries := make([]*corev1.InstalledPackageSummary, len(releases))
+	for i, r := range releases {
+		installedPkgSummaries[i] = installedPkgSummaryFromRelease(r)
+	}
+
+	// Fill in the latest package version for each.
+	// TODO(mnelson): Update to do this with a single query rather than iterating and
+	// querying per release.
+	for i, rel := range releases {
+		// Helm does not store a back-reference to the chart used to create a
+		// release (https://github.com/helm/helm/issues/6464), so for each
+		// release, we look up a chart with than name and version available in
+		// the release namespace, and if one is found, pull out the latest chart
+		// version.
+		cq := utils.ChartQuery{
+			Namespace:  rel.Namespace,
+			ChartName:  rel.Chart.Metadata.Name,
+			Version:    rel.Chart.Metadata.Version,
+			AppVersion: rel.Chart.Metadata.AppVersion,
+		}
+		charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
+		}
+		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
+			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
+		}
+		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
+			Ready:      rel.Info.Status == release.StatusDeployed,
+			Reason:     statusReasonForHelmStatus(rel.Info.Status),
+			UserReason: rel.Info.Status.String(),
+		}
+		installedPkgSummaries[i].CurrentAppVersion = rel.Chart.Metadata.AppVersion
+	}
+
+	response := &corev1.GetInstalledPackageSummariesResponse{
+		InstalledPackageSummaries: installedPkgSummaries,
+	}
+	if len(releases) == cmd.Limit {
+		response.NextPageToken = fmt.Sprintf("%d", cmd.Limit+1)
+	}
+	return response, nil
+}
+
+func statusReasonForHelmStatus(s release.Status) corev1.InstalledPackageStatus_StatusReason {
+	switch s {
+	case release.StatusDeployed:
+		return corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
+	case release.StatusFailed:
+		return corev1.InstalledPackageStatus_STATUS_REASON_FAILED
+	case release.StatusPendingInstall, release.StatusPendingRollback, release.StatusPendingUpgrade, release.StatusUninstalling:
+		return corev1.InstalledPackageStatus_STATUS_REASON_PENDING
+	}
+	// Both StatusUninstalled and StatusSuperseded will be unknown/unspecified.
+	return corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED
+}
+
+func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackageSummary {
+	return &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: r.Namespace,
+			},
+			Identifier: r.Name,
+		},
+		Name: r.Name,
+		PkgVersionReference: &corev1.VersionReference{
+			Version: r.Chart.Metadata.Version,
+		},
+		CurrentPkgVersion: r.Chart.Metadata.Version,
+		IconUrl:           r.Chart.Metadata.Icon,
+		PkgDisplayName:    r.Chart.Name(),
+		ShortDescription:  r.Chart.Metadata.Description,
+	}
 }

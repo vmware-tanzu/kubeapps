@@ -39,3 +39,15 @@ plugins:
       - allow_repeated_fields_in_body=true
       # - generate_unbound_methods=true # have to re-check it
       # - json_names_for_fields=false # have to re-check it
+  # ts_proto plugin generates the typescript grpc-web compliant client for each operation
+  # See https://github.com/stephenh/ts-proto
+  - name: ts_proto
+    path: ../../dashboard/node_modules/.bin/protoc-gen-ts_proto
+    out: ../../dashboard/src/gen
+    strategy: all
+    opt:
+      - outputClientImpl=grpc-web # client implementation it generates
+      - esModuleInterop=true # use imports as required in modern ts setups
+      - useOptionals=true # use optional TypeScript properties instead of undefined
+      # - context=true #  Go-style ctx parameters # have to re-check it
+      # - exportCommonSymbols=false # utility types like DeepPartial wont be exported (avoid some import conflicts) # have to re-check it

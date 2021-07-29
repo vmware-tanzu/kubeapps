@@ -27,6 +27,7 @@ function ContextSelector() {
   const canCreateNS = currentCluster.canCreateNS;
   const error = currentCluster.error;
   const [open, setOpen] = useState(false);
+  const [enableChangeContext, setEnableChangeContext] = useState(false);
   const [cluster, setStateCluster] = useState(clusters.currentCluster);
   const [namespace, setStateNamespace] = useState(namespaceSelected);
   const [newNSModalIsOpen, setNewNSModalIsOpen] = useState(false);
@@ -48,6 +49,7 @@ function ContextSelector() {
 
   useEffect(() => {
     setStateNamespace(clusters.clusters[cluster].currentNamespace);
+    setEnableChangeContext(clusters.clusters[cluster].namespaces.length === 0);
   }, [clusters.clusters, cluster]);
 
   const toggleOpen = () => setOpen(!open);
@@ -204,7 +206,12 @@ function ContextSelector() {
             </div>
           </div>
           <div className="dropdown-menu-padding">
-            <CdsButton status="primary" size="sm" onClick={changeContext}>
+            <CdsButton
+              status="primary"
+              size="sm"
+              onClick={changeContext}
+              disabled={enableChangeContext}
+            >
               Change Context
             </CdsButton>
           </div>
