@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
@@ -42,22 +43,11 @@ const (
 	PatchVersionsInSummary = 3
 )
 
-// returns the url from which chart .tgz can be downloaded
-// here chartVersion string, if specified at all, should be specific, like "14.4.0",
-// not an expression like ">14 <15"
-func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (url string, err error, cleanUp func()) {
-	client, err := s.getDynamicClient(ctx)
+func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
 	if err != nil {
-		return "", err, nil
+		return nil, err
 	}
-
-	chartsResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmCharts,
-	}
-
-	resourceIfc := client.Resource(chartsResource).Namespace(namespace)
 
 	// see if we the chart already exists
 	// TODO (gfichtenholt):
@@ -70,6 +60,27 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
 	//  - https://github.com/kubernetes/kubernetes/issues/53459
 	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return chartList, nil
+}
+
+// returns the url from which chart .tgz can be downloaded
+// here chartVersion string, if specified at all, should be specific, like "14.4.0",
+// not an expression like ">14 <15"
+func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (url string, err error, cleanUp func()) {
+	// see if we the chart already exists
+	// TODO (gfichtenholt):
+	// see https://github.com/kubeapps/kubeapps/pull/2915
+	// for context. It'd be better if we could filter on server-side. The problem is the set of supported
+	// fields in FieldSelector is very small. things like "spec.chart" or "status.artifact.revision" are
+	// certainly not supported.
+	// see
+	//  - kubernetes/client-go#713 and
+	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
+	//  - https://github.com/kubernetes/kubernetes/issues/53459
+	chartList, err := s.listChartsInCluster(ctx, namespace)
 	if err != nil {
 		return "", err, nil
 	}
@@ -88,6 +99,11 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	// 2. flux impersonates a "super" user when doing this (see fluxv2 plug-in specific notes at the end of
 	//	design doc). We should probably be doing simething similar to avoid RBAC-related problems
 	unstructuredChart := newFluxHelmChart(chartName, repoName, chartVersion)
+
+	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
+	if err != nil {
+		return "", err, nil
+	}
 
 	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
@@ -124,6 +140,21 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	// only the caller should call cleanUp() when it's done with the url,
 	// if we call it here, the caller will end up with a dangling link
 	return url, err, cleanUp
+}
+
+func (s *Server) getChartsResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+	client, err := s.getDynamicClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	chartsResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmCharts,
+	}
+
+	return client.Resource(chartsResource).Namespace(namespace), nil
 }
 
 // the goal of this fn is to answer whether or not to stop waiting for chart reconciliation
@@ -542,6 +573,5 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvai
 		}
 		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
 	}
-
 	return pav
 }

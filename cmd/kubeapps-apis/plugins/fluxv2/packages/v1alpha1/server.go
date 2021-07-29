@@ -26,6 +26,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
 
@@ -334,17 +335,28 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
-	for _, releaseUnstructured := range releases.Items {
-		summary, err := installedPkgSummaryFromRelease(releaseUnstructured.Object)
+	if len(releases.Items) > 0 {
+		// we're going to need this later
+		// TODO (gfichtenholt) for now we get all charts and later find one that helmrelease is using
+		// there is probably a more efficient way to do this
+		chartList, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
 		if err != nil {
 			return nil, err
 		}
-		installedPkgSummaries = append(installedPkgSummaries, summary)
-	}
 
+		for _, releaseUnstructured := range releases.Items {
+			summary, err := installedPkgSummaryFromRelease(releaseUnstructured.Object, chartList)
+			if err != nil {
+				return nil, err
+			} else if summary == nil {
+				// not ready yet
+				continue
+			}
+			installedPkgSummaries = append(installedPkgSummaries, summary)
+		}
+	}
 	response := &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: installedPkgSummaries,
 	}
-
 	return response, nil
 }
