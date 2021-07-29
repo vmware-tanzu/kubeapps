@@ -6,10 +6,9 @@
 
 [Kubeapps](https://kubeapps.com/) provides a web-based dashboard to deploy, manage, and upgrade applications on a Kubernetes cluster. It is a one-time install that gives you a number of important benefits, including the ability to:
 
-- browse and deploy Helm charts from public or private chart repositories;
+- browse and deploy packaged applications from public or private chart repositories;
 - customize deployments through an intuitive, form-based user interface;
 - upgrade, manage and delete the applications that are deployed in your Kubernetes cluster;
-- browse and provision external services from the Service Catalog and available Service Brokers.
 
 Kubeapps can be configured with public catalogs, such as the [VMware Marketplace™](https://marketplace.cloud.vmware.com/) catalog or the [Bitnami Application Catalog](https://bitnami.com/stacks/helm), or with private Helm repositories such as ChartMuseum or Harbor. It also integrates with [VMware Tanzu™ Application Catalog™ (TAC) for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog), which provides an enterprise-ready Helm chart catalog.
 

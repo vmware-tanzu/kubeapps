@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"sort"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -793,7 +794,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 				},
-				Categories: []string{"foo", "bar"},
+				Categories: []string{"bar", "foo"},
 			},
 			statusCode: codes.OK,
 		},
@@ -824,8 +825,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				for _, chart := range tc.charts {
 					dict[chart.Category] = dict[chart.Category] + 1
 				}
-				for category, count := range dict {
-					catrows.AddRow(category, count)
+				// Ensure we've got a fixed order for the results.
+				categories := []string{}
+				for category := range dict {
+					categories = append(categories, category)
+				}
+				sort.Strings(categories)
+				for _, category := range categories {
+					catrows.AddRow(category, dict[category])
 				}
 
 				mock.ExpectQuery("SELECT (info ->> 'category')*").

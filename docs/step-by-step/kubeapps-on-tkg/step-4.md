@@ -2,7 +2,7 @@
 
 Once Kubeapps has been configured with one or more application repositories, it can be used to manage and deploy applications in the cluster.
 
-The following sections discuss how to perform common tasks related to application management, including deploying an application, upgrading it, listing available applications. performing rollbacks and deleting applications.
+The following sections discuss how to perform common tasks related to application management, including deploying an application, upgrading it, listing available applications, performing rollbacks and deleting applications.
 
 ### Deploy a New Application
 
