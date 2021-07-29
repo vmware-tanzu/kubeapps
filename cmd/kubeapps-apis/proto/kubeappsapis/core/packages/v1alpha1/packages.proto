@@ -715,11 +715,11 @@ message InstalledPackageStatus {
   // Generic reasons why an installed package may be ready or not.
   // These should make sense across different packaging plugins.
   enum StatusReason {
-    UNKNOWN = 0;
-    INSTALLED = 1;
-    UNINSTALLED = 2;
-    FAILED = 3;
-    PENDING = 4;
+    STATUS_REASON_UNSPECIFIED = 0;
+    STATUS_REASON_INSTALLED = 1;
+    STATUS_REASON_UNINSTALLED = 2;
+    STATUS_REASON_FAILED = 3;
+    STATUS_REASON_PENDING = 4;
   }
 
   // Reason

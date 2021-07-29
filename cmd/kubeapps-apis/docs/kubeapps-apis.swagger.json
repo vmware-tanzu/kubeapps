@@ -1438,13 +1438,13 @@
     "InstalledPackageStatusStatusReason": {
       "type": "string",
       "enum": [
-        "UNKNOWN",
-        "INSTALLED",
-        "UNINSTALLED",
-        "FAILED",
-        "PENDING"
+        "STATUS_REASON_UNSPECIFIED",
+        "STATUS_REASON_INSTALLED",
+        "STATUS_REASON_UNINSTALLED",
+        "STATUS_REASON_FAILED",
+        "STATUS_REASON_PENDING"
       ],
-      "default": "UNKNOWN",
+      "default": "STATUS_REASON_UNSPECIFIED",
       "description": "Generic reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins.",
       "title": "StatusReason"
     },

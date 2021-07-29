@@ -1424,7 +1424,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1445,7 +1445,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1497,7 +1497,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1518,7 +1518,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1539,7 +1539,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1594,7 +1594,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1615,7 +1615,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1672,7 +1672,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
@@ -1713,7 +1713,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						CurrentAppVersion: DefaultAppVersion,
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_INSTALLED,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 							UserReason: "deployed",
 						},
 					},
