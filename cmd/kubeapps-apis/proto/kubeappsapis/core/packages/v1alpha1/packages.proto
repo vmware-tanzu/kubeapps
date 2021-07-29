@@ -438,10 +438,9 @@ message InstalledPackageSummary {
   // The package name as displayed to users (provided by the package, eg. "PostgreSQL")
   string pkg_display_name = 7;
 
-  // PkgShortDescription
+  // ShortDescription
   //
   // A short description of the package (provided by the package)
-  // TODO: Rename for consistency.
   string short_description = 8;
 
   // LatestMatchingPkgVersion

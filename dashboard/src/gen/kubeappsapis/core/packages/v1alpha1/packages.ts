@@ -417,10 +417,9 @@ export interface InstalledPackageSummary {
    */
   pkgDisplayName: string;
   /**
-   * PkgShortDescription
+   * ShortDescription
    *
    * A short description of the package (provided by the package)
-   * TODO: Rename for consistency.
    */
   shortDescription: string;
   /**

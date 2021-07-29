@@ -2055,8 +2055,8 @@
         },
         "shortDescription": {
           "type": "string",
-          "description": "A short description of the package (provided by the package)\nTODO: Rename for consistency.",
-          "title": "PkgShortDescription"
+          "description": "A short description of the package (provided by the package)",
+          "title": "ShortDescription"
         },
         "latestMatchingPkgVersion": {
           "type": "string",

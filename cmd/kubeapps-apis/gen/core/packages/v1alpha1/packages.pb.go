@@ -1079,10 +1079,9 @@ type InstalledPackageSummary struct {
 	//
 	// The package name as displayed to users (provided by the package, eg. "PostgreSQL")
 	PkgDisplayName string `protobuf:"bytes,7,opt,name=pkg_display_name,json=pkgDisplayName,proto3" json:"pkg_display_name,omitempty"`
-	// PkgShortDescription
+	// ShortDescription
 	//
 	// A short description of the package (provided by the package)
-	// TODO: Rename for consistency.
 	ShortDescription string `protobuf:"bytes,8,opt,name=short_description,json=shortDescription,proto3" json:"short_description,omitempty"`
 	// LatestMatchingPkgVersion
 	//
