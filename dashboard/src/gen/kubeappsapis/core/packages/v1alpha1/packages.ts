@@ -479,30 +479,6 @@ export interface InstalledPackageDetail {
    */
   currentPkgVersion: string;
   /**
-   * Installed package Icon URL
-   *
-   * A url for an icon.
-   */
-  iconUrl: string;
-  /**
-   * PackageDisplayName
-   *
-   * The package name as displayed to users (provided by the package, eg. "PostgreSQL")
-   */
-  pkgDisplayName: string;
-  /**
-   * PkgShortDescription
-   *
-   * A short description of the package (provided by the package)
-   */
-  pkgShortDescription: string;
-  /**
-   * PkgLongDescription
-   *
-   * A longer description of the package (provided by the package)
-   */
-  pkgLongDescription: string;
-  /**
    * ValuesApplied
    *
    * The values applied currently for the installed application.
@@ -531,7 +507,8 @@ export interface InstalledPackageDetail {
   /**
    * Available package reference
    *
-   * An optional reference to the available package for this installation.
+   * A reference to the available package for this installation.
+   * Useful to lookup the package display name, icon and other info.
    */
   availablePackageRef?: AvailablePackageReference;
 }
@@ -2614,10 +2591,6 @@ export const InstalledPackageSummary = {
 const baseInstalledPackageDetail: object = {
   name: "",
   currentPkgVersion: "",
-  iconUrl: "",
-  pkgDisplayName: "",
-  pkgShortDescription: "",
-  pkgLongDescription: "",
   valuesApplied: "",
   postInstallationNotes: "",
 };
@@ -2639,37 +2612,25 @@ export const InstalledPackageDetail = {
     if (message.currentPkgVersion !== "") {
       writer.uint32(34).string(message.currentPkgVersion);
     }
-    if (message.iconUrl !== "") {
-      writer.uint32(42).string(message.iconUrl);
-    }
-    if (message.pkgDisplayName !== "") {
-      writer.uint32(50).string(message.pkgDisplayName);
-    }
-    if (message.pkgShortDescription !== "") {
-      writer.uint32(58).string(message.pkgShortDescription);
-    }
-    if (message.pkgLongDescription !== "") {
-      writer.uint32(66).string(message.pkgLongDescription);
-    }
     if (message.valuesApplied !== "") {
-      writer.uint32(74).string(message.valuesApplied);
+      writer.uint32(42).string(message.valuesApplied);
     }
     if (message.reconciliationOptions !== undefined) {
       ReconciliationOptions.encode(
         message.reconciliationOptions,
-        writer.uint32(82).fork(),
+        writer.uint32(50).fork(),
       ).ldelim();
     }
     if (message.status !== undefined) {
-      InstalledPackageStatus.encode(message.status, writer.uint32(90).fork()).ldelim();
+      InstalledPackageStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
     }
     if (message.postInstallationNotes !== "") {
-      writer.uint32(98).string(message.postInstallationNotes);
+      writer.uint32(66).string(message.postInstallationNotes);
     }
     if (message.availablePackageRef !== undefined) {
       AvailablePackageReference.encode(
         message.availablePackageRef,
-        writer.uint32(106).fork(),
+        writer.uint32(74).fork(),
       ).ldelim();
     }
     return writer;
@@ -2695,30 +2656,18 @@ export const InstalledPackageDetail = {
           message.currentPkgVersion = reader.string();
           break;
         case 5:
-          message.iconUrl = reader.string();
-          break;
-        case 6:
-          message.pkgDisplayName = reader.string();
-          break;
-        case 7:
-          message.pkgShortDescription = reader.string();
-          break;
-        case 8:
-          message.pkgLongDescription = reader.string();
-          break;
-        case 9:
           message.valuesApplied = reader.string();
           break;
-        case 10:
+        case 6:
           message.reconciliationOptions = ReconciliationOptions.decode(reader, reader.uint32());
           break;
-        case 11:
+        case 7:
           message.status = InstalledPackageStatus.decode(reader, reader.uint32());
           break;
-        case 12:
+        case 8:
           message.postInstallationNotes = reader.string();
           break;
-        case 13:
+        case 9:
           message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
           break;
         default:
@@ -2750,26 +2699,6 @@ export const InstalledPackageDetail = {
       message.currentPkgVersion = String(object.currentPkgVersion);
     } else {
       message.currentPkgVersion = "";
-    }
-    if (object.iconUrl !== undefined && object.iconUrl !== null) {
-      message.iconUrl = String(object.iconUrl);
-    } else {
-      message.iconUrl = "";
-    }
-    if (object.pkgDisplayName !== undefined && object.pkgDisplayName !== null) {
-      message.pkgDisplayName = String(object.pkgDisplayName);
-    } else {
-      message.pkgDisplayName = "";
-    }
-    if (object.pkgShortDescription !== undefined && object.pkgShortDescription !== null) {
-      message.pkgShortDescription = String(object.pkgShortDescription);
-    } else {
-      message.pkgShortDescription = "";
-    }
-    if (object.pkgLongDescription !== undefined && object.pkgLongDescription !== null) {
-      message.pkgLongDescription = String(object.pkgLongDescription);
-    } else {
-      message.pkgLongDescription = "";
     }
     if (object.valuesApplied !== undefined && object.valuesApplied !== null) {
       message.valuesApplied = String(object.valuesApplied);
@@ -2811,12 +2740,6 @@ export const InstalledPackageDetail = {
         : undefined);
     message.name !== undefined && (obj.name = message.name);
     message.currentPkgVersion !== undefined && (obj.currentPkgVersion = message.currentPkgVersion);
-    message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
-    message.pkgDisplayName !== undefined && (obj.pkgDisplayName = message.pkgDisplayName);
-    message.pkgShortDescription !== undefined &&
-      (obj.pkgShortDescription = message.pkgShortDescription);
-    message.pkgLongDescription !== undefined &&
-      (obj.pkgLongDescription = message.pkgLongDescription);
     message.valuesApplied !== undefined && (obj.valuesApplied = message.valuesApplied);
     message.reconciliationOptions !== undefined &&
       (obj.reconciliationOptions = message.reconciliationOptions
@@ -2856,26 +2779,6 @@ export const InstalledPackageDetail = {
       message.currentPkgVersion = object.currentPkgVersion;
     } else {
       message.currentPkgVersion = "";
-    }
-    if (object.iconUrl !== undefined && object.iconUrl !== null) {
-      message.iconUrl = object.iconUrl;
-    } else {
-      message.iconUrl = "";
-    }
-    if (object.pkgDisplayName !== undefined && object.pkgDisplayName !== null) {
-      message.pkgDisplayName = object.pkgDisplayName;
-    } else {
-      message.pkgDisplayName = "";
-    }
-    if (object.pkgShortDescription !== undefined && object.pkgShortDescription !== null) {
-      message.pkgShortDescription = object.pkgShortDescription;
-    } else {
-      message.pkgShortDescription = "";
-    }
-    if (object.pkgLongDescription !== undefined && object.pkgLongDescription !== null) {
-      message.pkgLongDescription = object.pkgLongDescription;
-    } else {
-      message.pkgLongDescription = "";
     }
     if (object.valuesApplied !== undefined && object.valuesApplied !== null) {
       message.valuesApplied = object.valuesApplied;

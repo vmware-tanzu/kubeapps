@@ -1924,26 +1924,6 @@
           "description": "The version of the package which is currently installed.",
           "title": "CurrentPkgVersion"
         },
-        "iconUrl": {
-          "type": "string",
-          "description": "A url for an icon.",
-          "title": "Installed package Icon URL"
-        },
-        "pkgDisplayName": {
-          "type": "string",
-          "description": "The package name as displayed to users (provided by the package, eg. \"PostgreSQL\")",
-          "title": "PackageDisplayName"
-        },
-        "pkgShortDescription": {
-          "type": "string",
-          "description": "A short description of the package (provided by the package)",
-          "title": "PkgShortDescription"
-        },
-        "pkgLongDescription": {
-          "type": "string",
-          "description": "A longer description of the package (provided by the package)",
-          "title": "PkgLongDescription"
-        },
         "valuesApplied": {
           "type": "string",
           "description": "The values applied currently for the installed application.",
@@ -1966,7 +1946,7 @@
         },
         "availablePackageRef": {
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
-          "description": "An optional reference to the available package for this installation.",
+          "description": "A reference to the available package for this installation.\nUseful to lookup the package display name, icon and other info.",
           "title": "Available package reference"
         }
       },
