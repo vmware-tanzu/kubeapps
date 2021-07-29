@@ -1,4 +1,3 @@
-import { uniqBy } from "lodash";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -68,7 +67,7 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         hasFinishedFetching: isLastPage,
-        items: uniqBy([...state.items, ...action.payload.items], "availablePackageRef.identifier"),
+        items: [...state.items, ...action.payload.items],
       };
     }
     case getType(actions.charts.receiveChartCategories):
