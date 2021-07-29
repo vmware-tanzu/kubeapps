@@ -139,6 +139,11 @@ message GetAvailablePackageSummariesResponse {
   // This field represents the pagination token to retrieve the next page of
   // results. If the value is "", it means no further results for the request.
   string next_page_token = 2;
+
+  // Categories
+  //
+  // This optional field contains the distinct category names considering the FilterOptions.
+  repeated string categories = 3;
 }
 
 // GetAvailablePackageDetailResponse
@@ -393,20 +398,25 @@ message InstalledPackageSummary {
   // The version of the package which is currently installed.
   string current_pkg_version = 4;
 
+  // CurrentAppVersion
+  //
+  // The version of the app included in the current package version.
+  string current_app_version = 5;
+
   // Installed package icon URL
   //
   // A url for an icon.
-  string icon_url = 5;
+  string icon_url = 6;
 
   // PackageDisplayName
   //
   // The package name as displayed to users (provided by the package, eg. "PostgreSQL")
-  string pkg_display_name = 6;
+  string pkg_display_name = 7;
 
   // ShortDescription
   //
   // A short description of the package (provided by the package)
-  string short_description = 7;
+  string short_description = 8;
 
   // LatestMatchingPkgVersion
   //
@@ -415,12 +425,17 @@ message InstalledPackageSummary {
   // is installed, then:
   //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
   //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
-  string latest_matching_pkg_version = 8;
+  string latest_matching_pkg_version = 9;
 
   // LatestPkgVersion
   //
   // The latest version available for this package, regardless of the pkg_version_reference.
-  string latest_pkg_version = 9;
+  string latest_pkg_version = 10;
+
+  // Status
+  //
+  // The current status of the installed package.
+  InstalledPackageStatus status = 11;
 }
 
 // -- Start other definitions  --
@@ -604,4 +619,36 @@ message VersionReference {
   // The format of the version constraint depends on the backend. For example,
   // for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
   string version = 1;
+}
+
+// InstalledPackageStatus
+//
+// An InstalledPackageStatus reports on the current status of the installation.
+message InstalledPackageStatus {
+  // Ready
+  //
+  // An indication of whether the installation is ready or not
+  bool ready = 1;
+
+  // StatusReason
+  //
+  // Generic reasons why an installed package may be ready or not.
+  // These should make sense across different packaging plugins.
+  enum StatusReason {
+    STATUS_REASON_UNSPECIFIED = 0;
+    STATUS_REASON_INSTALLED = 1;
+    STATUS_REASON_UNINSTALLED = 2;
+    STATUS_REASON_FAILED = 3;
+    STATUS_REASON_PENDING = 4;
+  }
+
+  // Reason
+  //
+  // An enum indicating the reason for the current status.
+  StatusReason reason = 2;
+
+  // UserReason
+  //
+  // Optional text to return for user context, which may be plugin specific.
+  string user_reason = 3;
 }

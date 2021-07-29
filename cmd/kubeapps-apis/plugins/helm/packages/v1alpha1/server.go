@@ -199,6 +199,19 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
 	}
+
+	// This plugin will include, as part of the GetAvailablePackageSummariesResponse,
+	// a "Categories" field containing only the distinct category names considering the FilterOptions
+	chartCategories, err := s.manager.GetAllChartCategories(cq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch chart categories: %v", err)
+	}
+
+	var categories []string
+	for _, cat := range chartCategories {
+		categories = append(categories, cat.Name)
+	}
+
 	// The current assetsvc manager works on a page number (ie. 1 for the first page),
 	// rather than an offset.
 	pageNumber := pageOffset + 1
@@ -226,6 +239,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: responsePackages,
 		NextPageToken:             nextPageToken,
+		Categories:                categories,
 	}, nil
 }
 
@@ -526,11 +540,9 @@ func isValidChart(chart *models.Chart) (bool, error) {
 			}
 		}
 	}
-	if chart.Maintainers != nil || len(chart.ChartVersions) != 0 {
-		for _, maintainer := range chart.Maintainers {
-			if maintainer.Name == "" {
-				return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
-			}
+	for _, maintainer := range chart.Maintainers {
+		if maintainer.Name == "" {
+			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
 		}
 	}
 	return true, nil
@@ -588,6 +600,12 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
 			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
 		}
+		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
+			Ready:      rel.Info.Status == release.StatusDeployed,
+			Reason:     statusReasonForHelmStatus(rel.Info.Status),
+			UserReason: rel.Info.Status.String(),
+		}
+		installedPkgSummaries[i].CurrentAppVersion = rel.Chart.Metadata.AppVersion
 	}
 
 	response := &corev1.GetInstalledPackageSummariesResponse{
@@ -597,6 +615,19 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		response.NextPageToken = fmt.Sprintf("%d", cmd.Limit+1)
 	}
 	return response, nil
+}
+
+func statusReasonForHelmStatus(s release.Status) corev1.InstalledPackageStatus_StatusReason {
+	switch s {
+	case release.StatusDeployed:
+		return corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
+	case release.StatusFailed:
+		return corev1.InstalledPackageStatus_STATUS_REASON_FAILED
+	case release.StatusPendingInstall, release.StatusPendingRollback, release.StatusPendingUpgrade, release.StatusUninstalling:
+		return corev1.InstalledPackageStatus_STATUS_REASON_PENDING
+	}
+	// Both StatusUninstalled and StatusSuperseded will be unknown/unspecified.
+	return corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED
 }
 
 func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackageSummary {
