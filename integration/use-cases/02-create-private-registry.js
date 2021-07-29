@@ -1,5 +1,6 @@
 const axios = require("axios");
 const utils = require("./lib/utils");
+const testName = "02-create-private-registry";
 
 test("Creates a private registry", async () => {
   var token =
@@ -64,7 +65,7 @@ test("Creates a private registry", async () => {
 
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("apache");
-  });
+  }, testName);
 
   await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
   await expect(page).toClick("a", { text: "apache" });

@@ -1,4 +1,5 @@
 const utils = require("./lib/utils");
+const testName = "07-upgrade";
 
 test("Upgrades an application", async () => {
   await utils.login(
@@ -26,7 +27,7 @@ test("Upgrades an application", async () => {
     const chartVersionValue = await chartVersionElementContent.jsonValue();
     latestChartVersion = chartVersionValue.split(" ")[0];
     expect(latestChartVersion).not.toBe("");
-  });
+  }, testName);
 
   await expect(page).toSelect('select[name="chart-versions"]', "7.3.2");
 
@@ -34,7 +35,7 @@ test("Upgrades an application", async () => {
 
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("7.3.2");
-  });
+  }, testName);
 
   await expect(page).toMatchElement("input[type='number']");
   // Increase the number of replicas
@@ -62,7 +63,7 @@ test("Upgrades an application", async () => {
   // Verify that the form contains the old version
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatch("7.3.2");
-  });
+  }, testName);
 
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
@@ -78,7 +79,7 @@ test("Upgrades an application", async () => {
     const chartVersionElementContent = await chartVersionElement.getProperty("value");
     const chartVersionValue = await chartVersionElementContent.jsonValue();
     expect(chartVersionValue).toEqual(latestChartVersion);
-  });
+  }, testName);
 
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
