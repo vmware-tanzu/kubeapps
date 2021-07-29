@@ -1,4 +1,5 @@
 import { shallow } from "enzyme";
+import { Location } from "history";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import AppUpgrade from "../../components/AppUpgrade";
@@ -6,10 +7,12 @@ import Upgrade from "./AppUpgradeContainer";
 
 const mockStore = configureMockStore([thunk]);
 
-const emptyLocation = {
+const emptyLocation: Location = {
   hash: "",
   pathname: "",
   search: "",
+  state: "",
+  key: "",
 };
 
 const makeStore = (apps: any, repos: any) => {

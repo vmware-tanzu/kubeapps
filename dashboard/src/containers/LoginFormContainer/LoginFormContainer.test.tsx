@@ -57,6 +57,7 @@ const emptyLocation: Location = {
   pathname: "",
   search: "",
   state: "",
+  key: "",
 };
 
 describe("LoginFormContainer props", () => {
