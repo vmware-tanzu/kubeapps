@@ -280,6 +280,69 @@
         ]
       }
     },
+    "/core/packages/v1alpha1/installedpackagedetails": {
+      "get": {
+        "operationId": "PackagesService_GetInstalledPackageDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetInstalledPackageDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/packages/v1alpha1/installedpackagesummaries": {
       "get": {
         "operationId": "PackagesService_GetInstalledPackageSummaries",
@@ -1733,7 +1796,7 @@
       "properties": {
         "availablePackageDetail": {
           "$ref": "#/definitions/v1alpha1AvailablePackageDetail",
-          "description": "List of AvailablePackageDetail",
+          "description": "The requested AvailablePackageDetail",
           "title": "Available package detail"
         }
       },
@@ -1806,6 +1869,18 @@
       "description": "Response for GetConfiguredPlugins",
       "title": "GetConfiguredPluginsResponse"
     },
+    "v1alpha1GetInstalledPackageDetailResponse": {
+      "type": "object",
+      "properties": {
+        "installedPackageDetail": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageDetail",
+          "description": "The requested InstalledPackageDetail",
+          "title": "InstalledPackageDetail"
+        }
+      },
+      "description": "Response for GetInstalledPackageDetail",
+      "title": "GetInstalledPackageDetailResponse"
+    },
     "v1alpha1GetInstalledPackageSummariesResponse": {
       "type": "object",
       "properties": {
@@ -1825,6 +1900,78 @@
       },
       "description": "Response for GetInstalledPackageSummaries",
       "title": "GetInstalledPackageSummariesResponse"
+    },
+    "v1alpha1InstalledPackageDetail": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
+          "description": "A reference uniquely identifying the package.",
+          "title": "InstalledPackageReference"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "description": "The package version reference defines a version or constraint limiting\nmatching package versions.",
+          "title": "PkgVersionReference"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name given to the installed package",
+          "title": "Installed package name"
+        },
+        "currentPkgVersion": {
+          "type": "string",
+          "description": "The version of the package which is currently installed.",
+          "title": "CurrentPkgVersion"
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "A url for an icon.",
+          "title": "Installed package Icon URL"
+        },
+        "pkgDisplayName": {
+          "type": "string",
+          "description": "The package name as displayed to users (provided by the package, eg. \"PostgreSQL\")",
+          "title": "PackageDisplayName"
+        },
+        "pkgShortDescription": {
+          "type": "string",
+          "description": "A short description of the package (provided by the package)",
+          "title": "PkgShortDescription"
+        },
+        "pkgLongDescription": {
+          "type": "string",
+          "description": "A longer description of the package (provided by the package)",
+          "title": "PkgLongDescription"
+        },
+        "valuesApplied": {
+          "type": "string",
+          "description": "The values applied currently for the installed application.",
+          "title": "ValuesApplied"
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field specifying data common to systems that reconcile\nthe package installation on the cluster asynchronously. In particular,\nthis specifies the service account used to perform the reconcilliation.",
+          "title": "ReconciliationOptions"
+        },
+        "status": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
+          "description": "The current status of the installed package.",
+          "title": "Status"
+        },
+        "postInstallationNotes": {
+          "type": "string",
+          "description": "Optional notes generated by package and intended for the user post installation.",
+          "title": "PostInstallationNotes"
+        },
+        "availablePackageRef": {
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
+          "description": "An optional reference to the available package for this installation.",
+          "title": "Available package reference"
+        }
+      },
+      "description": "An InstalledPackageDetail includes details about the installed package that are\ntypically useful when presenting a single installed package.",
+      "title": "InstalledPackageDetail"
     },
     "v1alpha1InstalledPackageReference": {
       "type": "object",
@@ -1908,8 +2055,8 @@
         },
         "shortDescription": {
           "type": "string",
-          "description": "A short description of the package (provided by the package)",
-          "title": "ShortDescription"
+          "description": "A short description of the package (provided by the package)\nTODO: Rename for consistency.",
+          "title": "PkgShortDescription"
         },
         "latestMatchingPkgVersion": {
           "type": "string",
@@ -1985,6 +2132,29 @@
       },
       "description": "A plugin can implement multiple services and multiple versions of a service.",
       "title": "Plugin"
+    },
+    "v1alpha1ReconciliationOptions": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The interval with which the package is checked for reconciliation (in seconds)",
+          "title": "Reconciliation Interval"
+        },
+        "suspend": {
+          "type": "boolean",
+          "description": "Whether reconciliation should be suspended until otherwise enabled.",
+          "title": "Suspend"
+        },
+        "serviceAccountName": {
+          "type": "string",
+          "description": "A name for a service account in the same namespace which should be used\nto perform the reconciliation.",
+          "title": "ServiceAccountName"
+        }
+      },
+      "description": "ReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage.",
+      "title": "ReconciliationOptions"
     },
     "v1alpha1VersionReference": {
       "type": "object",

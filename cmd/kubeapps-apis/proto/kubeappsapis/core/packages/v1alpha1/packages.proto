@@ -35,13 +35,13 @@ service PackagesService {
     };
   }
 
-  // TODO: remaining operations yet to be defined
+  rpc GetInstalledPackageDetail(GetInstalledPackageDetailRequest) returns (GetInstalledPackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/installedpackagedetails"
+    };
+  }
 
-  // rpc GetInstalledPackageDetail(GetInstalledPackageDetailRequest) returns (GetInstalledPackageDetailResponse) {
-  //   option (google.api.http) = {
-  //     get: "/core/packages/v1alpha1/installedpackagedetails"
-  //   };
-  // }
+  // TODO: remaining operations yet to be defined
   // rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
   //   option (google.api.http) = {
   //     post: "/core/packages/v1alpha1/installedpackages"
@@ -109,13 +109,23 @@ message GetAvailablePackageVersionsRequest {
 
 // GetInstalledPackageSummariesRequest
 //
-// Request for GetInstalledPackageSummeraies
+// Request for GetInstalledPackageSummaries
 message GetInstalledPackageSummariesRequest {
   // The context (cluster/namespace) for the request.
   Context context = 1;
 
   // Pagination options specifying where to start and how many results to include.
   PaginationOptions pagination_options = 2;
+}
+
+// GetInstalledPackageDetailRequest
+//
+// Request for GetInstalledPackageDetail
+message GetInstalledPackageDetailRequest {
+  // The information required to uniquely
+  // identify an installed package
+  InstalledPackageReference installed_package_ref = 1;
+
 }
 
 // -- Start definitions of the response messages --
@@ -157,7 +167,7 @@ message GetAvailablePackageDetailResponse {
 
   // Available package detail
   //
-  // List of AvailablePackageDetail
+  // The requested AvailablePackageDetail
   AvailablePackageDetail available_package_detail = 1;
 }
 
@@ -225,6 +235,21 @@ message GetInstalledPackageSummariesResponse {
   // This field represents the pagination token to retrieve the next page of
   // results. If the value is "", it means no further results for the request.
   string next_page_token = 2;
+}
+
+// GetInstalledPackageDetailResponse
+//
+// Response for GetInstalledPackageDetail
+message GetInstalledPackageDetailResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_detail": [{}]}'
+  // };
+
+  // InstalledPackageDetail
+  //
+  // The requested InstalledPackageDetail
+  InstalledPackageDetail installed_package_detail = 1;
 }
 
 // -- Start definitions used in the responses  --
@@ -413,9 +438,10 @@ message InstalledPackageSummary {
   // The package name as displayed to users (provided by the package, eg. "PostgreSQL")
   string pkg_display_name = 7;
 
-  // ShortDescription
+  // PkgShortDescription
   //
   // A short description of the package (provided by the package)
+  // TODO: Rename for consistency.
   string short_description = 8;
 
   // LatestMatchingPkgVersion
@@ -436,6 +462,80 @@ message InstalledPackageSummary {
   //
   // The current status of the installed package.
   InstalledPackageStatus status = 11;
+}
+
+// InstalledPackageDetail
+//
+// An InstalledPackageDetail includes details about the installed package that are
+// typically useful when presenting a single installed package.
+message InstalledPackageDetail {
+  // InstalledPackageReference
+  //
+  // A reference uniquely identifying the package.
+  InstalledPackageReference installed_package_ref = 1;
+
+  // PkgVersionReference
+  //
+  // The package version reference defines a version or constraint limiting
+  // matching package versions.
+  VersionReference pkg_version_reference = 2;
+
+  // Installed package name
+  //
+  // The name given to the installed package
+  string name = 3;
+
+  // CurrentPkgVersion
+  //
+  // The version of the package which is currently installed.
+  string current_pkg_version = 4;
+
+  // Installed package Icon URL
+  //
+  // A url for an icon.
+  string icon_url = 5;
+
+  // PackageDisplayName
+  //
+  // The package name as displayed to users (provided by the package, eg. "PostgreSQL")
+  string pkg_display_name = 6;
+
+  // PkgShortDescription
+  //
+  // A short description of the package (provided by the package)
+  string pkg_short_description = 7;
+
+  // PkgLongDescription
+  //
+  // A longer description of the package (provided by the package)
+  string pkg_long_description = 8;
+
+  // ValuesApplied
+  //
+  // The values applied currently for the installed application.
+  string values_applied = 9;
+
+  // ReconciliationOptions
+  //
+  // An optional field specifying data common to systems that reconcile
+  // the package installation on the cluster asynchronously. In particular,
+  // this specifies the service account used to perform the reconcilliation.
+  ReconciliationOptions reconciliation_options = 10;
+
+  // Status
+  //
+  // The current status of the installed package.
+  InstalledPackageStatus status = 11;
+
+  // PostInstallationNotes
+  //
+  // Optional notes generated by package and intended for the user post installation.
+  string post_installation_notes = 12;
+
+  // Available package reference
+  //
+  // An optional reference to the available package for this installation.
+  AvailablePackageReference available_package_ref = 13;
 }
 
 // -- Start other definitions  --
@@ -651,4 +751,28 @@ message InstalledPackageStatus {
   //
   // Optional text to return for user context, which may be plugin specific.
   string user_reason = 3;
+}
+
+// ReconciliationOptions
+//
+// ReconciliationOptions enable specifying standard fields for backends that continuously
+// reconcile a package install as new matching versions are released. Most of the naming
+// is from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's
+// InstalledPackage.
+message ReconciliationOptions {
+  // Reconciliation Interval
+  //
+  // The interval with which the package is checked for reconciliation (in seconds)
+  int32 interval = 1;
+
+  // Suspend
+  //
+  // Whether reconciliation should be suspended until otherwise enabled.
+  bool suspend = 2;
+
+  // ServiceAccountName
+  //
+  // A name for a service account in the same namespace which should be used
+  // to perform the reconciliation.
+  string service_account_name = 3;
 }
