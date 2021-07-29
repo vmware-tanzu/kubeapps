@@ -372,6 +372,12 @@ export interface InstalledPackageSummary {
    */
   currentPkgVersion: string;
   /**
+   * CurrentAppVersion
+   *
+   * The version of the app included in the current package version.
+   */
+  currentAppVersion: string;
+  /**
    * Installed package icon URL
    *
    * A url for an icon.
@@ -405,6 +411,12 @@ export interface InstalledPackageSummary {
    * The latest version available for this package, regardless of the pkg_version_reference.
    */
   latestPkgVersion: string;
+  /**
+   * Status
+   *
+   * The current status of the installed package.
+   */
+  status?: InstalledPackageStatus;
 }
 
 /**
@@ -595,6 +607,92 @@ export interface VersionReference {
    * for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
    */
   version: string;
+}
+
+/**
+ * InstalledPackageStatus
+ *
+ * An InstalledPackageStatus reports on the current status of the installation.
+ */
+export interface InstalledPackageStatus {
+  /**
+   * Ready
+   *
+   * An indication of whether the installation is ready or not
+   */
+  ready: boolean;
+  /**
+   * Reason
+   *
+   * An enum indicating the reason for the current status.
+   */
+  reason: InstalledPackageStatus_StatusReason;
+  /**
+   * UserReason
+   *
+   * Optional text to return for user context, which may be plugin specific.
+   */
+  userReason: string;
+}
+
+/**
+ * StatusReason
+ *
+ * Generic reasons why an installed package may be ready or not.
+ * These should make sense across different packaging plugins.
+ */
+export enum InstalledPackageStatus_StatusReason {
+  UNKNOWN = 0,
+  INSTALLED = 1,
+  UNINSTALLED = 2,
+  FAILED = 3,
+  PENDING = 4,
+  UNRECOGNIZED = -1,
+}
+
+export function installedPackageStatus_StatusReasonFromJSON(
+  object: any,
+): InstalledPackageStatus_StatusReason {
+  switch (object) {
+    case 0:
+    case "UNKNOWN":
+      return InstalledPackageStatus_StatusReason.UNKNOWN;
+    case 1:
+    case "INSTALLED":
+      return InstalledPackageStatus_StatusReason.INSTALLED;
+    case 2:
+    case "UNINSTALLED":
+      return InstalledPackageStatus_StatusReason.UNINSTALLED;
+    case 3:
+    case "FAILED":
+      return InstalledPackageStatus_StatusReason.FAILED;
+    case 4:
+    case "PENDING":
+      return InstalledPackageStatus_StatusReason.PENDING;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return InstalledPackageStatus_StatusReason.UNRECOGNIZED;
+  }
+}
+
+export function installedPackageStatus_StatusReasonToJSON(
+  object: InstalledPackageStatus_StatusReason,
+): string {
+  switch (object) {
+    case InstalledPackageStatus_StatusReason.UNKNOWN:
+      return "UNKNOWN";
+    case InstalledPackageStatus_StatusReason.INSTALLED:
+      return "INSTALLED";
+    case InstalledPackageStatus_StatusReason.UNINSTALLED:
+      return "UNINSTALLED";
+    case InstalledPackageStatus_StatusReason.FAILED:
+      return "FAILED";
+    case InstalledPackageStatus_StatusReason.PENDING:
+      return "PENDING";
+    default:
+      return "UNKNOWN";
+  }
 }
 
 const baseGetAvailablePackageSummariesRequest: object = {};
@@ -1966,6 +2064,7 @@ export const AvailablePackageDetail = {
 const baseInstalledPackageSummary: object = {
   name: "",
   currentPkgVersion: "",
+  currentAppVersion: "",
   iconUrl: "",
   pkgDisplayName: "",
   shortDescription: "",
@@ -1990,20 +2089,26 @@ export const InstalledPackageSummary = {
     if (message.currentPkgVersion !== "") {
       writer.uint32(34).string(message.currentPkgVersion);
     }
+    if (message.currentAppVersion !== "") {
+      writer.uint32(42).string(message.currentAppVersion);
+    }
     if (message.iconUrl !== "") {
-      writer.uint32(42).string(message.iconUrl);
+      writer.uint32(50).string(message.iconUrl);
     }
     if (message.pkgDisplayName !== "") {
-      writer.uint32(50).string(message.pkgDisplayName);
+      writer.uint32(58).string(message.pkgDisplayName);
     }
     if (message.shortDescription !== "") {
-      writer.uint32(58).string(message.shortDescription);
+      writer.uint32(66).string(message.shortDescription);
     }
     if (message.latestMatchingPkgVersion !== "") {
-      writer.uint32(66).string(message.latestMatchingPkgVersion);
+      writer.uint32(74).string(message.latestMatchingPkgVersion);
     }
     if (message.latestPkgVersion !== "") {
-      writer.uint32(74).string(message.latestPkgVersion);
+      writer.uint32(82).string(message.latestPkgVersion);
+    }
+    if (message.status !== undefined) {
+      InstalledPackageStatus.encode(message.status, writer.uint32(90).fork()).ldelim();
     }
     return writer;
   },
@@ -2030,19 +2135,25 @@ export const InstalledPackageSummary = {
           message.currentPkgVersion = reader.string();
           break;
         case 5:
-          message.iconUrl = reader.string();
+          message.currentAppVersion = reader.string();
           break;
         case 6:
-          message.pkgDisplayName = reader.string();
+          message.iconUrl = reader.string();
           break;
         case 7:
-          message.shortDescription = reader.string();
+          message.pkgDisplayName = reader.string();
           break;
         case 8:
-          message.latestMatchingPkgVersion = reader.string();
+          message.shortDescription = reader.string();
           break;
         case 9:
+          message.latestMatchingPkgVersion = reader.string();
+          break;
+        case 10:
           message.latestPkgVersion = reader.string();
+          break;
+        case 11:
+          message.status = InstalledPackageStatus.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -2076,6 +2187,11 @@ export const InstalledPackageSummary = {
     } else {
       message.currentPkgVersion = "";
     }
+    if (object.currentAppVersion !== undefined && object.currentAppVersion !== null) {
+      message.currentAppVersion = String(object.currentAppVersion);
+    } else {
+      message.currentAppVersion = "";
+    }
     if (object.iconUrl !== undefined && object.iconUrl !== null) {
       message.iconUrl = String(object.iconUrl);
     } else {
@@ -2101,6 +2217,11 @@ export const InstalledPackageSummary = {
     } else {
       message.latestPkgVersion = "";
     }
+    if (object.status !== undefined && object.status !== null) {
+      message.status = InstalledPackageStatus.fromJSON(object.status);
+    } else {
+      message.status = undefined;
+    }
     return message;
   },
 
@@ -2116,12 +2237,15 @@ export const InstalledPackageSummary = {
         ? VersionReference.toJSON(message.pkgVersionReference)
         : undefined);
     message.currentPkgVersion !== undefined && (obj.currentPkgVersion = message.currentPkgVersion);
+    message.currentAppVersion !== undefined && (obj.currentAppVersion = message.currentAppVersion);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
     message.pkgDisplayName !== undefined && (obj.pkgDisplayName = message.pkgDisplayName);
     message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
     message.latestMatchingPkgVersion !== undefined &&
       (obj.latestMatchingPkgVersion = message.latestMatchingPkgVersion);
     message.latestPkgVersion !== undefined && (obj.latestPkgVersion = message.latestPkgVersion);
+    message.status !== undefined &&
+      (obj.status = message.status ? InstalledPackageStatus.toJSON(message.status) : undefined);
     return obj;
   },
 
@@ -2151,6 +2275,11 @@ export const InstalledPackageSummary = {
     } else {
       message.currentPkgVersion = "";
     }
+    if (object.currentAppVersion !== undefined && object.currentAppVersion !== null) {
+      message.currentAppVersion = object.currentAppVersion;
+    } else {
+      message.currentAppVersion = "";
+    }
     if (object.iconUrl !== undefined && object.iconUrl !== null) {
       message.iconUrl = object.iconUrl;
     } else {
@@ -2175,6 +2304,11 @@ export const InstalledPackageSummary = {
       message.latestPkgVersion = object.latestPkgVersion;
     } else {
       message.latestPkgVersion = "";
+    }
+    if (object.status !== undefined && object.status !== null) {
+      message.status = InstalledPackageStatus.fromPartial(object.status);
+    } else {
+      message.status = undefined;
     }
     return message;
   },
@@ -2783,6 +2917,100 @@ export const VersionReference = {
       message.version = object.version;
     } else {
       message.version = "";
+    }
+    return message;
+  },
+};
+
+const baseInstalledPackageStatus: object = {
+  ready: false,
+  reason: 0,
+  userReason: "",
+};
+
+export const InstalledPackageStatus = {
+  encode(message: InstalledPackageStatus, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.ready === true) {
+      writer.uint32(8).bool(message.ready);
+    }
+    if (message.reason !== 0) {
+      writer.uint32(16).int32(message.reason);
+    }
+    if (message.userReason !== "") {
+      writer.uint32(26).string(message.userReason);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageStatus {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.ready = reader.bool();
+          break;
+        case 2:
+          message.reason = reader.int32() as any;
+          break;
+        case 3:
+          message.userReason = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): InstalledPackageStatus {
+    const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
+    if (object.ready !== undefined && object.ready !== null) {
+      message.ready = Boolean(object.ready);
+    } else {
+      message.ready = false;
+    }
+    if (object.reason !== undefined && object.reason !== null) {
+      message.reason = installedPackageStatus_StatusReasonFromJSON(object.reason);
+    } else {
+      message.reason = 0;
+    }
+    if (object.userReason !== undefined && object.userReason !== null) {
+      message.userReason = String(object.userReason);
+    } else {
+      message.userReason = "";
+    }
+    return message;
+  },
+
+  toJSON(message: InstalledPackageStatus): unknown {
+    const obj: any = {};
+    message.ready !== undefined && (obj.ready = message.ready);
+    message.reason !== undefined &&
+      (obj.reason = installedPackageStatus_StatusReasonToJSON(message.reason));
+    message.userReason !== undefined && (obj.userReason = message.userReason);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<InstalledPackageStatus>): InstalledPackageStatus {
+    const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
+    if (object.ready !== undefined && object.ready !== null) {
+      message.ready = object.ready;
+    } else {
+      message.ready = false;
+    }
+    if (object.reason !== undefined && object.reason !== null) {
+      message.reason = object.reason;
+    } else {
+      message.reason = 0;
+    }
+    if (object.userReason !== undefined && object.userReason !== null) {
+      message.userReason = object.userReason;
+    } else {
+      message.userReason = "";
     }
     return message;
   },

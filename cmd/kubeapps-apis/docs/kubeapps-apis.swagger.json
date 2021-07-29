@@ -1372,6 +1372,19 @@
       "description": "PackageAppVersion conveys both the package version and the packaged app version.",
       "title": "Package AppVersion"
     },
+    "InstalledPackageStatusStatusReason": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "INSTALLED",
+        "UNINSTALLED",
+        "FAILED",
+        "PENDING"
+      ],
+      "default": "UNKNOWN",
+      "description": "Generic reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins.",
+      "title": "StatusReason"
+    },
     "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
       "example": {
@@ -1833,6 +1846,28 @@
       "description": "An InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package.",
       "title": "InstalledPackageReference"
     },
+    "v1alpha1InstalledPackageStatus": {
+      "type": "object",
+      "properties": {
+        "ready": {
+          "type": "boolean",
+          "description": "An indication of whether the installation is ready or not",
+          "title": "Ready"
+        },
+        "reason": {
+          "$ref": "#/definitions/InstalledPackageStatusStatusReason",
+          "description": "An enum indicating the reason for the current status.",
+          "title": "Reason"
+        },
+        "userReason": {
+          "type": "string",
+          "description": "Optional text to return for user context, which may be plugin specific.",
+          "title": "UserReason"
+        }
+      },
+      "description": "An InstalledPackageStatus reports on the current status of the installation.",
+      "title": "InstalledPackageStatus"
+    },
     "v1alpha1InstalledPackageSummary": {
       "type": "object",
       "properties": {
@@ -1855,6 +1890,11 @@
           "type": "string",
           "description": "The version of the package which is currently installed.",
           "title": "CurrentPkgVersion"
+        },
+        "currentAppVersion": {
+          "type": "string",
+          "description": "The version of the app included in the current package version.",
+          "title": "CurrentAppVersion"
         },
         "iconUrl": {
           "type": "string",
@@ -1880,6 +1920,11 @@
           "type": "string",
           "description": "The latest version available for this package, regardless of the pkg_version_reference.",
           "title": "LatestPkgVersion"
+        },
+        "status": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
+          "description": "The current status of the installed package.",
+          "title": "Status"
         }
       },
       "description": "An InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages.",
