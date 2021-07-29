@@ -1221,7 +1221,7 @@ type InstalledPackageDetail struct {
 
 	// InstalledPackageReference
 	//
-	// A reference uniquely identifying the package.
+	// A reference uniquely identifying the installed package.
 	InstalledPackageRef *InstalledPackageReference `protobuf:"bytes,1,opt,name=installed_package_ref,json=installedPackageRef,proto3" json:"installed_package_ref,omitempty"`
 	// PkgVersionReference
 	//
@@ -1238,7 +1238,7 @@ type InstalledPackageDetail struct {
 	CurrentPkgVersion string `protobuf:"bytes,4,opt,name=current_pkg_version,json=currentPkgVersion,proto3" json:"current_pkg_version,omitempty"`
 	// ValuesApplied
 	//
-	// The values applied currently for the installed application.
+	// The values applied currently for the installed package.
 	ValuesApplied string `protobuf:"bytes,5,opt,name=values_applied,json=valuesApplied,proto3" json:"values_applied,omitempty"`
 	// ReconciliationOptions
 	//

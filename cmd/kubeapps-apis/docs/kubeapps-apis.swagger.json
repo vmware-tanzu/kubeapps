@@ -1906,7 +1906,7 @@
       "properties": {
         "installedPackageRef": {
           "$ref": "#/definitions/v1alpha1InstalledPackageReference",
-          "description": "A reference uniquely identifying the package.",
+          "description": "A reference uniquely identifying the installed package.",
           "title": "InstalledPackageReference"
         },
         "pkgVersionReference": {
@@ -1926,7 +1926,7 @@
         },
         "valuesApplied": {
           "type": "string",
-          "description": "The values applied currently for the installed application.",
+          "description": "The values applied currently for the installed package.",
           "title": "ValuesApplied"
         },
         "reconciliationOptions": {

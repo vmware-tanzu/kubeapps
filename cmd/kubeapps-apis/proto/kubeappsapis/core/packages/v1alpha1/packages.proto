@@ -470,7 +470,7 @@ message InstalledPackageSummary {
 message InstalledPackageDetail {
   // InstalledPackageReference
   //
-  // A reference uniquely identifying the package.
+  // A reference uniquely identifying the installed package.
   InstalledPackageReference installed_package_ref = 1;
 
   // PkgVersionReference
@@ -491,7 +491,7 @@ message InstalledPackageDetail {
 
   // ValuesApplied
   //
-  // The values applied currently for the installed application.
+  // The values applied currently for the installed package.
   string values_applied = 5;
 
   // ReconciliationOptions

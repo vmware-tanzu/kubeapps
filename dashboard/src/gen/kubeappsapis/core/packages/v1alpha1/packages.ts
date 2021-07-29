@@ -456,7 +456,7 @@ export interface InstalledPackageDetail {
   /**
    * InstalledPackageReference
    *
-   * A reference uniquely identifying the package.
+   * A reference uniquely identifying the installed package.
    */
   installedPackageRef?: InstalledPackageReference;
   /**
@@ -481,7 +481,7 @@ export interface InstalledPackageDetail {
   /**
    * ValuesApplied
    *
-   * The values applied currently for the installed application.
+   * The values applied currently for the installed package.
    */
   valuesApplied: string;
   /**
