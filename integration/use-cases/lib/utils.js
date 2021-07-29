@@ -39,14 +39,6 @@ module.exports = {
   },
   login: async (page, isOIDC, uri, token, username, password) => {
     await page.goto(getUrl(uri));
-    let screenshotFilename = `../../${screenshotsFolder}/login-at-test-start.png`;
-    console.log(`Saving screenshot to ${screenshotFilename}`);
-    await page.screenshot({
-      path: path.join(
-        __dirname,
-        screenshotFilename
-      ),
-    });
     if (isOIDC === "true") {
       await page.waitForNavigation({ waitUntil: "domcontentloaded" });
       await expect(page).toClick("cds-button", {
