@@ -12,9 +12,8 @@ limitations under the License.
 */
 package main
 
-// repo-related utilities
-
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -25,9 +24,61 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	log "k8s.io/klog/v2"
 )
+
+// namespace maybe "", in which case repositories from all namespaces are returned
+func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+	client, err := s.getDynamicClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	repositoriesResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
+	}
+
+	if repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{}); err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
+	} else {
+		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
+		// like we do in GetAvailablePackageSummaries()?
+		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
+		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
+		return repos, nil
+	}
+}
+
+func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
+	if s.cache == nil {
+		return false, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+	}
+
+	repos, err := s.cache.listKeys([]string{repoName})
+	if err != nil {
+		return false, err
+	}
+
+	for _, key := range repos {
+		thisNamespace, thisName, err := s.cache.fromKey(key)
+		if err != nil {
+			return false, err
+		}
+		if thisNamespace == namespace && thisName == repoName {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+//
+// repo-related utilities
+//
 
 func isRepoReady(obj map[string]interface{}) (bool, error) {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
@@ -165,7 +216,10 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 	}, nil
 }
 
+//
 // implements plug-in specific cache-related functionality
+//
+
 // onAddOrModifyRepo essentially tells the cache what to store for a given key
 func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
 	ready, err := isRepoReady(unstructuredRepo)
