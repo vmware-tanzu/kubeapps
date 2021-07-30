@@ -38,6 +38,11 @@ import (
 // chart-related utilities
 
 const (
+	// see docs at https://fluxcd.io/docs/components/source/
+	fluxHelmChart     = "HelmChart"
+	fluxHelmCharts    = "helmcharts"
+	fluxHelmChartList = "HelmChartList"
+
 	MajorVersionsInSummary = 3
 	MinorVersionsInSummary = 3
 	PatchVersionsInSummary = 3

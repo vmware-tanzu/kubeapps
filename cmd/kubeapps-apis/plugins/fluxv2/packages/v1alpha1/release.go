@@ -24,6 +24,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+const (
+	// see docs at https://fluxcd.io/docs/components/helm/api/
+	fluxHelmReleaseGroup   = "helm.toolkit.fluxcd.io"
+	fluxHelmReleaseVersion = "v2beta1"
+	fluxHelmRelease        = "HelmRelease"
+	fluxHelmReleases       = "helmreleases"
+	fluxHelmReleaseList    = "HelmReleaseList"
+)
+
 // namespace maybe "", in which case repositories from all namespaces are returned
 func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	client, err := s.getDynamicClient(ctx)

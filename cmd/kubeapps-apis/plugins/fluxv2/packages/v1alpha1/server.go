@@ -30,22 +30,6 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-const (
-	// see docs at https://fluxcd.io/docs/components/source/ and
-	// https://fluxcd.io/docs/components/helm/api/
-	fluxGroup              = "source.toolkit.fluxcd.io"
-	fluxHelmReleaseGroup   = "helm.toolkit.fluxcd.io"
-	fluxVersion            = "v1beta1"
-	fluxHelmReleaseVersion = "v2beta1"
-	fluxHelmRepository     = "HelmRepository"
-	fluxHelmRepositories   = "helmrepositories"
-	fluxHelmRepositoryList = "HelmRepositoryList"
-	fluxHelmChart          = "HelmChart"
-	fluxHelmCharts         = "helmcharts"
-	fluxHelmChartList      = "HelmChartList"
-	fluxHelmReleases       = "helmreleases"
-)
-
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
@@ -217,6 +201,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: packageSummaries,
 		NextPageToken:             nextPageToken,
+		// TODO (gfichtenholt) Categories?
 	}, nil
 }
 
@@ -333,6 +318,8 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO (gfichtenholt) pagination
 
 	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
 	if len(releases.Items) > 0 {

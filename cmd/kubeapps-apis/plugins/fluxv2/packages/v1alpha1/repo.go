@@ -30,6 +30,16 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+const (
+	// see docs at https://fluxcd.io/docs/components/source/ and
+	// https://fluxcd.io/docs/components/helm/api/
+	fluxGroup              = "source.toolkit.fluxcd.io"
+	fluxVersion            = "v1beta1"
+	fluxHelmRepository     = "HelmRepository"
+	fluxHelmRepositories   = "helmrepositories"
+	fluxHelmRepositoryList = "HelmRepositoryList"
+)
+
 // namespace maybe "", in which case repositories from all namespaces are returned
 func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	client, err := s.getDynamicClient(ctx)
