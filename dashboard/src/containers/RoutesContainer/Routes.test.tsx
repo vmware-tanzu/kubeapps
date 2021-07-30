@@ -14,6 +14,7 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
     pathname: "",
     search: "",
     state: "",
+    key: "",
   },
   match: {
     isExact: false,
@@ -50,7 +51,9 @@ it("should render a redirect to the default cluster and namespace", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual(app.apps.list("default", "default"));
+  expect(wrapper.find(Redirect).prop("to")).toEqual({
+    pathname: app.apps.list("default", "default"),
+  });
 });
 
 it("should render a redirect to the login page", () => {
@@ -65,7 +68,7 @@ it("should render a redirect to the login page", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
+  expect(wrapper.find(Redirect).prop("to")).toEqual({ pathname: "/login" });
 });
 
 it("should render a redirect to the login page (even with cluster or ns info)", () => {
@@ -80,7 +83,7 @@ it("should render a redirect to the login page (even with cluster or ns info)", 
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
+  expect(wrapper.find(Redirect).prop("to")).toEqual({ pathname: "/login" });
 });
 
 it("should render a loading wrapper if authenticated but the cluster and ns info is not populated", () => {
