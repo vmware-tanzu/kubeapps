@@ -1,7 +1,7 @@
 import { JSONSchema4 } from "json-schema";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
-import { IChart, IChartCategory, IChartVersion } from "./types";
+import { IChart, IChartVersion } from "./types";
 import * as URL from "./url";
 
 export default class Chart {
@@ -25,13 +25,6 @@ export default class Chart {
       },
       paginationOptions: { pageSize: size, pageToken: page.toString() },
     });
-  }
-
-  public static async fetchChartCategories(cluster: string, namespace: string) {
-    const { data } = await axiosWithAuth.get<{ data: IChartCategory[] }>(
-      URL.api.charts.getChartCategories(cluster, namespace),
-    );
-    return data.data;
   }
 
   public static async fetchChartVersions(

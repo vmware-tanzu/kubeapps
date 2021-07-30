@@ -72,6 +72,7 @@ describe("App", () => {
           Promise.resolve({
             availablePackageSummaries: [{ name: "foo" }],
             nextPageToken: "",
+            categories: ["foo"],
           } as GetAvailablePackageSummariesResponse),
         );
         jest
@@ -88,27 +89,9 @@ describe("App", () => {
         expect(charts).toStrictEqual({
           availablePackageSummaries: [{ name: "foo" }],
           nextPageToken: "",
+          categories: ["foo"],
         } as GetAvailablePackageSummariesResponse);
         expect(mockGetAvailablePackageSummaries).toHaveBeenCalledWith(...Object.values(t.args));
-      });
-    });
-  });
-  describe("fetchChartCategories", () => {
-    [
-      {
-        description: "fetch chart categories url",
-        args: {
-          cluster: clusterName,
-          namespace: namespaceName,
-        },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts/categories`,
-      },
-    ].forEach(t => {
-      it(t.description, async () => {
-        expect(await Chart.fetchChartCategories(t.args.cluster, t.args.namespace)).toStrictEqual(
-          "ok",
-        );
-        expect(moxios.requests.mostRecent().url).toStrictEqual(t.result);
       });
     });
   });

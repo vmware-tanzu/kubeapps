@@ -45,7 +45,6 @@ interface ICatalogProps {
   cluster: string;
   namespace: string;
   kubeappsNamespace: string;
-  fetchChartCategories: (cluster: string, namespace: string) => void;
   fetchRepos: (namespace: string, listGlobal?: boolean) => void;
   getCSVs: (cluster: string, namespace: string) => void;
   resetRequestCharts: () => void;
@@ -102,7 +101,6 @@ function Catalog(props: ICatalogProps) {
     fetchCharts,
     cluster,
     namespace,
-    fetchChartCategories,
     fetchRepos,
     getCSVs,
     resetRequestCharts,
@@ -180,7 +178,7 @@ function Catalog(props: ICatalogProps) {
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
-      .map(c => categoryToReadable(c.name))
+      .map(c => categoryToReadable(c))
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
@@ -197,9 +195,8 @@ function Catalog(props: ICatalogProps) {
   }, [fetchRepos, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
-    fetchChartCategories(cluster, namespace);
     getCSVs(cluster, namespace);
-  }, [getCSVs, fetchChartCategories, cluster, namespace]);
+  }, [getCSVs, cluster, namespace]);
 
   // detect changes in cluster/ns/repos/search and reset the current chart list
   useEffect(() => {

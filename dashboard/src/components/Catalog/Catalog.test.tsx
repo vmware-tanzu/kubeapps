@@ -27,7 +27,6 @@ const defaultProps = {
   repo: "",
   filter: {},
   fetchCharts: jest.fn(),
-  fetchChartCategories: jest.fn(),
   fetchRepos: jest.fn(),
   resetRequestCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
@@ -605,7 +604,7 @@ describe("filters by category", () => {
         charts={{
           ...defaultChartState,
           items: [chartItem],
-          categories: [{ name: chartItem.categories[0], count: 1 }],
+          categories: [chartItem.categories[0]],
         }}
       />,
     );
@@ -621,10 +620,7 @@ describe("filters by category", () => {
         charts={{
           ...defaultChartState,
           items: [chartItem, chartItem2],
-          categories: [
-            { name: chartItem.categories[0], count: 1 },
-            { name: chartItem2.categories[0], count: 1 },
-          ],
+          categories: [chartItem.categories[0], chartItem2.categories[0]],
         }}
       />,
     );
@@ -649,10 +645,7 @@ describe("filters by category", () => {
         charts={{
           ...defaultChartState,
           items: [chartItem, chartItem2],
-          categories: [
-            { name: chartItem.categories[0], count: 1 },
-            { name: chartItem2.categories[0], count: 1 },
-          ],
+          categories: [chartItem.categories[0], chartItem2.categories[0]],
         }}
         filter={{ [filterNames.CATEGORY]: "Database" }}
       />,

@@ -2,7 +2,7 @@ import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 
-import { IChartCategory, IChartState, IReceiveChartsActionPayload } from "../shared/types";
+import { IChartState, IReceiveChartsActionPayload } from "../shared/types";
 import chartsReducer from "./charts";
 
 describe("chartReducer", () => {
@@ -34,11 +34,6 @@ describe("chartReducer", () => {
       context: { cluster: "", namespace: "chart-namespace" } as Context,
     },
   };
-
-  const chartCategoryItem = {
-    name: "foo",
-    count: 1,
-  } as IChartCategory;
 
   beforeEach(() => {
     initialState = {
@@ -76,24 +71,15 @@ describe("chartReducer", () => {
     ).toEqual({ ...initialState });
   });
 
-  it("requestChartsCategories", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.requestChartsCategories) as any,
-    });
-    expect(state).toEqual({
-      ...initialState,
-    });
-  });
-
   it("receiveChartCategories", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.receiveChartCategories) as any,
-      payload: [chartCategoryItem],
+      payload: ["foo"],
     });
     expect(state).toEqual({
       ...initialState,
       isFetching: false,
-      categories: [chartCategoryItem],
+      categories: ["foo"],
     });
   });
 

@@ -66,7 +66,7 @@ interface IFetchChartsTestCase {
 const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts with query",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "1", categories: [] },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "1", categories: ["foo"] },
     requestedRepos: "",
     requestedPage: 1,
     requestedQuery: "foo",
@@ -80,12 +80,16 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           nextPageToken: "1",
         } as IReceiveChartsActionPayload,
       },
+      {
+        type: getType(actions.charts.receiveChartCategories),
+        payload: ["foo"],
+      },
     ],
     expectedParams: [cluster, namespace, "", 1, defaultSize, "foo"],
   },
   {
     name: "fetches charts from a repo (first page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
@@ -98,12 +102,16 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           nextPageToken: "3",
         } as IReceiveChartsActionPayload,
       },
+      {
+        type: getType(actions.charts.receiveChartCategories),
+        payload: ["foo"],
+      },
     ],
     expectedParams: [cluster, namespace, repos, 1, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (middle page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -116,12 +124,16 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           nextPageToken: "3",
         } as IReceiveChartsActionPayload,
       },
+      {
+        type: getType(actions.charts.receiveChartCategories),
+        payload: ["foo"],
+      },
     ],
     expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (last page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
@@ -134,12 +146,16 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           nextPageToken: "3",
         } as IReceiveChartsActionPayload,
       },
+      {
+        type: getType(actions.charts.receiveChartCategories),
+        payload: ["foo"],
+      },
     ],
     expectedParams: [cluster, namespace, repos, 3, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (already processed page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -152,12 +168,16 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           nextPageToken: "3",
         } as IReceiveChartsActionPayload,
       },
+      {
+        type: getType(actions.charts.receiveChartCategories),
+        payload: ["foo"],
+      },
     ],
     expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (off-limits page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
@@ -169,6 +189,10 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
           page: 4,
           nextPageToken: "3",
         } as IReceiveChartsActionPayload,
+      },
+      {
+        type: getType(actions.charts.receiveChartCategories),
+        payload: ["foo"],
       },
     ],
     expectedParams: [cluster, namespace, repos, 4, defaultSize, undefined],
@@ -253,53 +277,6 @@ describe("fetchCharts", () => {
       actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
     );
     await store.dispatch(actions.charts.clearErrorChart());
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("fetchChartCategories", () => {
-  it("fetches chart categories", async () => {
-    response = { data: [{ id: "foo" }] };
-    const expectedActions = [
-      { type: getType(actions.charts.requestChartsCategories) },
-      { type: getType(actions.charts.receiveChartCategories), payload: response.data },
-    ];
-    await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace));
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/categories`,
-    );
-  });
-
-  it("returns a 404 error", async () => {
-    const expectedActions = [
-      { type: getType(actions.charts.requestChartsCategories) },
-      {
-        type: getType(actions.charts.errorChartCatetories),
-        payload: new FetchError("could not find chart categories"),
-      },
-    ];
-    axiosGetMock = jest.fn(() => {
-      throw new Error("could not find chart categories");
-    });
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("returns a generic error", async () => {
-    const expectedActions = [
-      { type: getType(actions.charts.requestChartsCategories) },
-      {
-        type: getType(actions.charts.errorChartCatetories),
-        payload: new Error("something went wrong"),
-      },
-    ];
-    axiosGetMock = jest.fn(() => {
-      throw new Error("something went wrong");
-    });
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchChartCategories(cluster, namespace));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
