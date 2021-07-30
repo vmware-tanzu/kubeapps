@@ -283,7 +283,7 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 		}
 	}
 
-	if !serveOpts.UnsafeUseDemoSA && !serveOpts.UnsafeLocalDevKubeconfig {
+	if !serveOpts.UnsafeUseDemoSA {
 		// get the parsed kube.ClustersConfig from the serveOpts
 		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
 		if err != nil {
