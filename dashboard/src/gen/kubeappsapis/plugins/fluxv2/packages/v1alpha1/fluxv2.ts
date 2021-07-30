@@ -8,10 +8,12 @@ import {
   GetAvailablePackageDetailRequest,
   GetAvailablePackageVersionsRequest,
   GetInstalledPackageSummariesRequest,
+  GetInstalledPackageDetailRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
   GetInstalledPackageSummariesResponse,
+  GetInstalledPackageDetailResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -345,6 +347,11 @@ export interface FluxV2PackagesService {
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetInstalledPackageSummariesResponse>;
+  /** GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin */
+  GetInstalledPackageDetail(
+    request: DeepPartial<GetInstalledPackageDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageDetailResponse>;
 }
 
 export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
@@ -357,6 +364,7 @@ export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
     this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
     this.GetPackageRepositories = this.GetPackageRepositories.bind(this);
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
+    this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -410,6 +418,17 @@ export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
     return this.rpc.unary(
       FluxV2PackagesServiceGetInstalledPackageSummariesDesc,
       GetInstalledPackageSummariesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetInstalledPackageDetail(
+    request: DeepPartial<GetInstalledPackageDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageDetailResponse> {
+    return this.rpc.unary(
+      FluxV2PackagesServiceGetInstalledPackageDetailDesc,
+      GetInstalledPackageDetailRequest.fromPartial(request),
       metadata,
     );
   }
@@ -521,6 +540,28 @@ export const FluxV2PackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodD
     deserializeBinary(data: Uint8Array) {
       return {
         ...GetInstalledPackageSummariesResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const FluxV2PackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish = {
+  methodName: "GetInstalledPackageDetail",
+  service: FluxV2PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetInstalledPackageDetailRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetInstalledPackageDetailResponse.decode(data),
         toObject() {
           return this;
         },

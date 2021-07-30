@@ -9,14 +9,15 @@ module.exports = {
         await toCheck();
         break;
       } catch (e) {
-        if (testName) {
-          await page.screenshot({
-            path: path.join(
-              __dirname,
-              `../../${screenshotsFolder}/${testName}-${retries - retriesLeft}.png`,
-            ),
-          });
-        }
+        testName = testName || "unknown";
+        let screenshotFilename = `../../${screenshotsFolder}/${testName}-${retries - retriesLeft}.png`;
+        console.log(`Saving screenshot to ${screenshotFilename}`);
+        await page.screenshot({
+          path: path.join(
+            __dirname,
+            screenshotFilename
+          ),
+        });
         if (retriesLeft === 1) {
           // Unable to get it done
           throw e;

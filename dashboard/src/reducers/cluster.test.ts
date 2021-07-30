@@ -1,4 +1,5 @@
 import { LOCATION_CHANGE, RouterActionType, RouterLocation } from "connected-react-router";
+import { Location } from "history";
 import context from "jest-plugin-context";
 import { getType } from "typesafe-actions";
 
@@ -25,10 +26,12 @@ describe("clusterReducer", () => {
     },
   };
   context("when LOCATION CHANGE", () => {
-    const location = {
+    const location: Location = {
       hash: "",
+      pathname: "",
       search: "",
       state: "",
+      key: "",
     };
 
     describe("changes the current stored namespace if it is in the URL", () => {
