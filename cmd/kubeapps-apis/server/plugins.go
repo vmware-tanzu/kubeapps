@@ -283,15 +283,16 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 		}
 	}
 
-	if !serveOpts.UnsafeUseDemoSA {
-		// get the parsed kube.ClustersConfig from the serveOpts
+	if serveOpts.UnsafeUseDemoSA || serveOpts.UnsafeLocalDevKubeconfig {
+		// If an insecure option, just use the priviledged servicceAccount
+		// instead of using the user's config
+		clustersConfig = kube.ClustersConfig{}
+	} else {
+		// otherwise, get the parsed kube.ClustersConfig from the serveOpts
 		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		// Just using the created SA, no user account nor clustersConfig is used here
-		clustersConfig = kube.ClustersConfig{}
 	}
 
 	// return the closure fuction that takes the context, but preserving the required scope,
