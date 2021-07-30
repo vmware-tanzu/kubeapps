@@ -86,6 +86,6 @@ describe("kubeapps grpc core plugin service", () => {
     expect(getClientMetadataMock.mock.results[0].value).toBeUndefined();
   });
 
-  // TODO(agamez): perform an actual check here.
-  // Currently withMessages is not working with our generated sources
+  // TODO(agamez): try to also mock the messages ussing the new FakeTransportBuilder().withMessages([])
+  // More details: https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-882944035
 });

@@ -24,7 +24,7 @@ export class KubeappsGrpcClient {
   private fluxv2PackagesServiceClientImpl!: FluxV2PackagesServiceClientImpl;
 
   constructor(transport?: grpc.TransportFactory) {
-    this.transport = transport ?? grpc.CrossBrowserHttpTransport({ withCredentials: true });
+    this.transport = transport ?? grpc.CrossBrowserHttpTransport({});
   }
 
   // getClientMetadata, if using token authentication, creates grpc metadata
@@ -57,6 +57,7 @@ export class KubeappsGrpcClient {
   }
 
   // Plugins (packages) APIs
+  // TODO(agamez): ideally, these clients should be loaded automatically from a list of configured plugins
   public getHelmPackagesServiceClientImpl() {
     return (
       this.helmPackagesServiceClientImpl || new HelmPackagesServiceClientImpl(this.getGrpcClient())
