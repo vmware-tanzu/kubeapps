@@ -2,17 +2,17 @@ import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
+import { createMemoryHistory } from "history";
 import { cloneDeep } from "lodash";
-
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
+import { Router } from "react-router";
 import { IClustersState } from "reducers/cluster";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import ContextSelector from "./ContextSelector";
 
 let spyOnUseDispatch: jest.SpyInstance;
-let spyOnUseLocation: jest.SpyInstance;
 let spyOnUseHistory: jest.SpyInstance;
 const kubeaActions = { ...actions.operators };
 beforeEach(() => {
@@ -25,9 +25,6 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockImplementation(() => {
-    return { pathname: "/foo", search: "", state: undefined, hash: "" };
-  });
   spyOnUseHistory = jest
     .spyOn(ReactRouter, "useHistory")
     .mockReturnValue({ push: jest.fn() } as any);
@@ -36,7 +33,6 @@ beforeEach(() => {
 afterEach(() => {
   actions.operators = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-  spyOnUseLocation.mockRestore();
   spyOnUseHistory.mockRestore();
 });
 
@@ -183,12 +179,13 @@ it("disables the change context button if namespace is not loaded yet", () => {
 it("changes the location with the new namespace", () => {
   const push = jest.fn();
   spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
-  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockReturnValue({
-    pathname: "/c/default-cluster/ns/ns-bar/catalog",
-    search: "",
-    state: "",
-  } as any);
-  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
+  const history = createMemoryHistory({ initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"] });
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Router history={history}>
+      <ContextSelector />
+    </Router>,
+  );
   wrapper
     .find("select")
     .findWhere(s => s.prop("name") === "namespaces")
@@ -201,18 +198,17 @@ it("changes the location with the new namespace", () => {
         .prop("onClick") as any
     )();
   });
-  expect(push).toHaveBeenCalledWith("/c/default-cluster/ns/other/catalog");
+  expect(history.location.pathname).toBe("/c/default-cluster/ns/other/catalog");
 });
 
 it("changes the location with the new cluster and namespace", () => {
-  const push = jest.fn();
-  spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
-  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockReturnValue({
-    pathname: "/c/default-cluster/ns/ns-bar/catalog",
-    search: "",
-    state: "",
-  } as any);
-  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
+  const history = createMemoryHistory({ initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"] });
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Router history={history}>
+      <ContextSelector />
+    </Router>,
+  );
   wrapper
     .find("select")
     .findWhere(s => s.prop("name") === "clusters")
@@ -229,18 +225,17 @@ it("changes the location with the new cluster and namespace", () => {
         .prop("onClick") as any
     )();
   });
-  expect(push).toHaveBeenCalledWith("/c/second-cluster/ns/other/catalog");
+  expect(history.location.pathname).toBe("/c/second-cluster/ns/other/catalog");
 });
 
 it("don't call push if the pathname is not recognized", () => {
-  const push = jest.fn();
-  spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
-  spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockReturnValue({
-    pathname: "/foo",
-    search: "",
-    state: "",
-  } as any);
-  const wrapper = mountWrapper(defaultStore, <ContextSelector />);
+  const history = createMemoryHistory({ initialEntries: ["/foo"] });
+  const wrapper = mountWrapper(
+    defaultStore,
+    <Router history={history}>
+      <ContextSelector />
+    </Router>,
+  );
   wrapper
     .find("select")
     .findWhere(s => s.prop("name") === "namespaces")
@@ -253,5 +248,5 @@ it("don't call push if the pathname is not recognized", () => {
         .prop("onClick") as any
     )();
   });
-  expect(push).not.toHaveBeenCalled();
+  expect(history.location.pathname).toBe("/foo");
 });

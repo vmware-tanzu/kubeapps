@@ -3,6 +3,7 @@ import { shallow } from "enzyme";
 import Checkbox from ".";
 
 const defaultProps = {
+  id: "test",
   name: "test",
   label: "I agree",
   value: false,

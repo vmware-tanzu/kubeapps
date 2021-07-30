@@ -81,10 +81,14 @@ class Routes extends React.Component<IRoutesProps> {
       if (!this.props.cluster || !this.props.currentNamespace) {
         return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Cluster Info..." />;
       }
-      return <Redirect to={app.apps.list(this.props.cluster, this.props.currentNamespace)} />;
+      return (
+        <Redirect
+          to={{ pathname: app.apps.list(this.props.cluster, this.props.currentNamespace) }}
+        />
+      );
     }
     // There is not a default namespace, redirect to login page
-    return <Redirect to={"/login"} />;
+    return <Redirect to={{ pathname: "/login" }} />;
   };
 }
 

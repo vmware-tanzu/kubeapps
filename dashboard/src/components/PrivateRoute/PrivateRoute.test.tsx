@@ -14,6 +14,7 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
     pathname: "",
     search: "",
     state: "",
+    key: "",
   },
   match: {
     isExact: false,

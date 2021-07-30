@@ -1,14 +1,13 @@
-import context from "jest-plugin-context";
-import React from "react";
-import * as ReactRedux from "react-redux";
-
 import { deepClone } from "@cds/core/internal";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
-import * as qs from "qs";
+import context from "jest-plugin-context";
+import qs from "qs";
+import React from "react";
 import { act } from "react-dom/test-utils";
-import * as ReactRouter from "react-router";
+import * as ReactRedux from "react-redux";
+import { MemoryRouter } from "react-router";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IAppOverview, IStoreState } from "../../shared/types";
@@ -57,7 +56,12 @@ context("when changing props", () => {
     jest.spyOn(qs, "parse").mockReturnValue({
       q: "foo",
     });
-    const wrapper = mountWrapper(defaultStore, <AppList />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <MemoryRouter initialEntries={["/foo?q=foo"]}>
+        <AppList />
+      </MemoryRouter>,
+    );
     expect(wrapper.find(SearchFilter).prop("value")).toEqual("foo");
   });
 
@@ -65,7 +69,12 @@ context("when changing props", () => {
     jest.spyOn(qs, "parse").mockReturnValue({
       allns: "yes",
     });
-    const wrapper = mountWrapper(defaultStore, <AppList />);
+    const wrapper = mountWrapper(
+      defaultStore,
+      <MemoryRouter initialEntries={["/foo?allns=yes"]}>
+        <AppList />
+      </MemoryRouter>,
+    );
     expect(wrapper.find("input[type='checkbox']")).toBeChecked();
   });
 
@@ -92,10 +101,8 @@ context("when changing props", () => {
 
   describe("when store changes", () => {
     let spyOnUseState: jest.SpyInstance;
-    let spyOnUseLocation: jest.SpyInstance;
     afterEach(() => {
       spyOnUseState.mockRestore();
-      spyOnUseLocation.mockRestore();
     });
 
     it("should not set all-ns prop when getting changes in the namespace", async () => {
@@ -111,11 +118,13 @@ context("when changing props", () => {
           }
           return [init, useState];
         });
-      spyOnUseLocation = jest.spyOn(ReactRouter, "useLocation").mockImplementation(() => {
-        return { pathname: "/foo", search: "allns=yes", state: undefined, hash: "" };
-      });
 
-      mountWrapper(defaultStore, <AppList />);
+      mountWrapper(
+        defaultStore,
+        <MemoryRouter initialEntries={["/foo?allns=yes"]}>
+          <AppList />
+        </MemoryRouter>,
+      );
       expect(setAllNS).not.toHaveBeenCalledWith(false);
     });
   });
@@ -231,7 +240,12 @@ context("when apps available", () => {
     jest.spyOn(qs, "parse").mockReturnValue({
       q: "bar",
     });
-    const wrapper = mountWrapper(getStore(state), <AppList />);
+    const wrapper = mountWrapper(
+      getStore(state),
+      <MemoryRouter initialEntries={["/foo?q=bar"]}>
+        <AppList />
+      </MemoryRouter>,
+    );
     expect(wrapper.find(AppListItem).key()).toBe("foobar/bar");
   });
 });
@@ -273,7 +287,12 @@ context("when custom resources available", () => {
     jest.spyOn(qs, "parse").mockReturnValue({
       q: "nop",
     });
-    const wrapper = mountWrapper(getStore(state), <AppList />);
+    const wrapper = mountWrapper(
+      getStore(state),
+      <MemoryRouter initialEntries={["/foo?q=nop"]}>
+        <AppList />
+      </MemoryRouter>,
+    );
     const itemList = wrapper.find(CustomResourceListItem);
     expect(itemList).not.toExist();
   });
