@@ -1,11 +1,11 @@
-import { trimStart } from "lodash";
+import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useMemo } from "react";
 import { getIcon } from "shared/Operators";
-import { IChart, IClusterServiceVersion } from "shared/types";
+import { IClusterServiceVersion, IRepo } from "shared/types";
 import CatalogItem, { ICatalogItemProps } from "./CatalogItem";
 
 interface ICatalogItemsProps {
-  charts: IChart[];
+  charts: AvailablePackageSummary[];
   csvs: IClusterServiceVersion[];
   cluster: string;
   namespace: string;
@@ -28,16 +28,19 @@ export default function CatalogItems({
       charts.map(c => {
         return {
           type: "chart",
-          id: `chart/${c.attributes.repo.name}/${c.id}`,
+          id: `chart/${c.availablePackageRef?.identifier}`,
           item: {
-            id: c.id,
-            name: c.attributes.name,
-            icon: c.attributes.icon
-              ? `api/assetsvc/${trimStart(c.attributes.icon, "/")}`
-              : undefined,
-            version: c.relationships.latestChartVersion.data.app_version,
-            description: c.attributes.description,
-            repo: c.attributes.repo,
+            id: `chart/${c.availablePackageRef?.identifier}/${c.latestPkgVersion}`,
+            name: c.displayName,
+            icon: c.iconUrl,
+            version: c.latestAppVersion,
+            description: c.shortDescription,
+            // TODO(agamez): get the repo name once available
+            // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
+            repo: {
+              name: c.availablePackageRef?.identifier.split("/")[0],
+              namespace: c.availablePackageRef?.context?.namespace,
+            } as IRepo,
             cluster,
             namespace,
           },

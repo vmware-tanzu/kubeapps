@@ -4,7 +4,13 @@ import { getType } from "typesafe-actions";
 import { axiosWithAuth } from "../shared/AxiosInstance";
 
 import actions from ".";
-import { FetchError, IChart, IChartListMeta, NotFoundError } from "../shared/types";
+import { FetchError, IReceiveChartsActionPayload, NotFoundError } from "../shared/types";
+import {
+  AvailablePackageSummary,
+  Context,
+  GetAvailablePackageSummariesResponse,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import Chart from "shared/Chart";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -18,16 +24,19 @@ const repos = "foo";
 const defaultPage = 1;
 const defaultSize = 0;
 
-const chartItem = {
-  id: "foo",
-  attributes: {
-    name: "foo",
-    description: "",
-    category: "",
-    repo: { name: "foo", namespace: "chart-namespace" },
+const chartItem: AvailablePackageSummary = {
+  name: "foo",
+  categories: [""],
+  displayName: "foo",
+  iconUrl: "",
+  latestAppVersion: "v1.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-} as IChart;
+};
 
 beforeEach(() => {
   store = mockStore();
@@ -46,20 +55,18 @@ afterEach(() => {
 
 interface IFetchChartsTestCase {
   name: string;
-  responseData: IChart[];
-  responseMeta: IChartListMeta;
+  response: GetAvailablePackageSummariesResponse;
   requestedRepos: string;
   requestedPage: number;
   requestedQuery?: string;
   expectedActions: any;
-  expectedURL: string;
+  expectedParams: any[];
 }
 
 const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts with query",
-    responseData: [chartItem],
-    responseMeta: { totalPages: 1 },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "1", categories: [] },
     requestedRepos: "",
     requestedPage: 1,
     requestedQuery: "foo",
@@ -70,16 +77,15 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 1,
-          totalPages: 1,
-        },
+          nextPageToken: "1",
+        } as IReceiveChartsActionPayload,
       },
     ],
-    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${defaultPage}&size=${defaultSize}&q=foo`,
+    expectedParams: [cluster, namespace, "", 1, defaultSize, "foo"],
   },
   {
     name: "fetches charts from a repo (first page)",
-    responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
@@ -89,16 +95,15 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 1,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
-    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${1}&size=${defaultSize}&repos=foo`,
+    expectedParams: [cluster, namespace, repos, 1, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (middle page)",
-    responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -108,16 +113,15 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 2,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
-    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
+    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (last page)",
-    responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
@@ -127,16 +131,15 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 3,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
-    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${3}&size=${defaultSize}&repos=${repos}`,
+    expectedParams: [cluster, namespace, repos, 3, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (already processed page)",
-    responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -146,16 +149,15 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 2,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
-    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${2}&size=${defaultSize}&repos=${repos}`,
+    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (off-limits page)",
-    responseData: [chartItem],
-    responseMeta: { totalPages: 3 },
+    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: [] },
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
@@ -165,19 +167,24 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
         payload: {
           items: [chartItem],
           page: 4,
-          totalPages: 3,
-        },
+          nextPageToken: "3",
+        } as IReceiveChartsActionPayload,
       },
     ],
-    expectedURL: `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts?page=${4}&size=${defaultSize}&repos=${repos}`,
+    expectedParams: [cluster, namespace, repos, 4, defaultSize, undefined],
   },
 ];
 
 describe("fetchCharts", () => {
   fetchChartsTestCases.forEach(tc => {
     it(tc.name, async () => {
-      response = { data: tc.responseData, meta: tc.responseMeta };
-      axiosWithAuth.get = axiosGetMock;
+      const mockGetAvailablePackageSummaries = jest
+        .fn()
+        .mockImplementation(() => Promise.resolve(tc.response));
+      jest
+        .spyOn(Chart, "getAvailablePackageSummaries")
+        .mockImplementation(mockGetAvailablePackageSummaries);
+
       await store.dispatch(
         actions.charts.fetchCharts(
           cluster,
@@ -189,7 +196,7 @@ describe("fetchCharts", () => {
         ),
       );
       expect(store.getActions()).toEqual(tc.expectedActions);
-      expect(axiosGetMock.mock.calls[0][0]).toBe(tc.expectedURL);
+      expect(mockGetAvailablePackageSummaries).toHaveBeenCalledWith(...tc.expectedParams);
     });
   });
 
@@ -201,10 +208,12 @@ describe("fetchCharts", () => {
         payload: new FetchError("could not find chart"),
       },
     ];
-    axiosGetMock = jest.fn(() => {
+    const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
       throw new Error("could not find chart");
     });
-    axiosWithAuth.get = axiosGetMock;
+    jest
+      .spyOn(Chart, "getAvailablePackageSummaries")
+      .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
       actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
     );
@@ -216,10 +225,12 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.requestCharts), payload: 1 },
       { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
     ];
-    axiosGetMock = jest.fn(() => {
+    const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
       throw new Error("something went wrong");
     });
-    axiosWithAuth.get = axiosGetMock;
+    jest
+      .spyOn(Chart, "getAvailablePackageSummaries")
+      .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
       actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
     );
@@ -232,10 +243,12 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
       { type: getType(actions.charts.clearErrorChart) },
     ];
-    axiosGetMock = jest.fn(() => {
+    const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
       throw new Error("something went wrong");
     });
-    axiosWithAuth.get = axiosGetMock;
+    jest
+      .spyOn(Chart, "getAvailablePackageSummaries")
+      .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
       actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
     );

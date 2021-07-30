@@ -104,12 +104,19 @@ export function fetchCharts(
   return async dispatch => {
     dispatch(requestCharts(page));
     try {
-      const response = await Chart.fetchCharts(cluster, namespace, repos, page, size, query);
+      const response = await Chart.getAvailablePackageSummaries(
+        cluster,
+        namespace,
+        repos,
+        page,
+        size,
+        query,
+      );
       dispatch(
         receiveCharts({
-          items: response.data,
+          items: response.availablePackageSummaries,
           page,
-          totalPages: response.meta.totalPages,
+          nextPageToken: response.nextPageToken,
         }),
       );
     } catch (e) {

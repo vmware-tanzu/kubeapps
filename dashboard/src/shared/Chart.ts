@@ -1,10 +1,12 @@
 import { JSONSchema4 } from "json-schema";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IChart, IChartCategory, IChartListMeta, IChartVersion } from "./types";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { IChart, IChartCategory, IChartVersion } from "./types";
 import * as URL from "./url";
 
 export default class Chart {
-  public static async fetchCharts(
+  private static client = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+  public static async getAvailablePackageSummaries(
     cluster: string,
     namespace: string,
     repos: string,
@@ -12,10 +14,17 @@ export default class Chart {
     size: number,
     query?: string,
   ) {
-    const { data } = await axiosWithAuth.get<{ data: IChart[]; meta: IChartListMeta }>(
-      URL.api.charts.list(cluster, namespace, repos, page, size, query),
-    );
-    return data;
+    // TODO(agamez): move to the core 'PackagesServiceClientImpl' when pagination is ready there
+
+    return await this.client.GetAvailablePackageSummaries({
+      // TODO(agamez): add cluster when it is supported
+      context: { cluster: "", namespace: namespace },
+      filterOptions: {
+        query: query,
+        repositories: repos.split(","),
+      },
+      paginationOptions: { pageSize: size, pageToken: page.toString() },
+    });
   }
 
   public static async fetchChartCategories(cluster: string, namespace: string) {

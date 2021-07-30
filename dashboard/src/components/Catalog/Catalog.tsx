@@ -117,7 +117,7 @@ function Catalog(props: ICatalogProps) {
 
   const dispatch = useDispatch();
   const [filters, setFilters] = React.useState(initialFilterState());
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(0);
 
   useEffect(() => {
     const newFilters = {};
@@ -203,7 +203,7 @@ function Catalog(props: ICatalogProps) {
 
   // detect changes in cluster/ns/repos/search and reset the current chart list
   useEffect(() => {
-    setPage(1);
+    setPage(0);
     resetRequestCharts();
   }, [resetRequestCharts, cluster, namespace, reposFilter, searchFilter]);
 
@@ -224,12 +224,16 @@ function Catalog(props: ICatalogProps) {
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
-        filters[filterNames.REPO].includes(c.attributes.repo.name),
+        // TODO(agamez): get the repo name once available
+        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
+        filters[filterNames.REPO].includes(c.availablePackageRef?.identifier.split("/")[0]),
     )
     .filter(
       c =>
         filters[filterNames.CATEGORY].length === 0 ||
-        filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
+        c.categories?.some(category =>
+          filters[filterNames.CATEGORY].includes(categoryToReadable(category)),
+        ),
     );
   const filteredCSVs = csvs
     .filter(
@@ -311,7 +315,7 @@ function Catalog(props: ICatalogProps) {
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search charts..."
+            placeholder="search available packages..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}

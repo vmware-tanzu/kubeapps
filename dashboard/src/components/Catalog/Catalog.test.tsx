@@ -2,11 +2,12 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
+import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IAppRepository, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -36,26 +37,32 @@ const defaultProps = {
   csvs: [],
   getCSVs: jest.fn(),
 };
-const chartItem = {
-  id: "foo",
-  attributes: {
-    name: "foo",
-    description: "",
-    category: "",
-    repo: { name: "foo", namespace: "chart-namespace" },
+const chartItem: AvailablePackageSummary = {
+  name: "foo",
+  categories: [""],
+  displayName: "foo",
+  iconUrl: "",
+  latestAppVersion: "v1.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
-} as IChart;
-const chartItem2 = {
-  id: "bar",
-  attributes: {
-    name: "bar",
-    description: "",
-    category: "Database",
-    repo: { name: "bar", namespace: "chart-namespace" },
+};
+const chartItem2: AvailablePackageSummary = {
+  name: "bar",
+  categories: ["Database"],
+  displayName: "bar",
+  iconUrl: "",
+  latestAppVersion: "v2.0.0",
+  latestPkgVersion: "",
+  shortDescription: "",
+  availablePackageRef: {
+    identifier: "bar/bar",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
   },
-  relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
-} as IChart;
+};
 const csv = {
   metadata: {
     name: "test-csv",
@@ -324,7 +331,7 @@ describe("filters by application type", () => {
 describe("pagination and chart fetching", () => {
   let spyOnUseState: jest.SpyInstance;
 
-  it("sets the initial state page to 1 before fetching charts", () => {
+  it("sets the initial state page to 0 before fetching charts", () => {
     const fetchCharts = jest.fn();
     const resetRequestCharts = jest.fn();
 
@@ -345,9 +352,9 @@ describe("pagination and chart fetching", () => {
       />,
     );
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(0);
-    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 1, 20, "");
+    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 0, 20, "");
     expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
 
@@ -371,9 +378,9 @@ describe("pagination and chart fetching", () => {
         }
       />,
     );
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
-    expect(wrapper.find(ChartCatalogItem).length).toBe(0);
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
+    expect(wrapper.find(ChartCatalogItem).length).toBe(1);
+    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
@@ -397,9 +404,9 @@ describe("pagination and chart fetching", () => {
         }
       />,
     );
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(1);
+    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(2);
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 1, 20, "");
+    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
     expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
@@ -420,9 +427,9 @@ describe("pagination and chart fetching", () => {
           // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
           return [true, setState];
         }
-        if (init === 1) {
+        if (init === 0) {
           // Mocking the result of setPage to ensure it's called
-          return [1, setPage];
+          return [0, setPage];
         }
         return [init, setState];
       });
@@ -439,7 +446,7 @@ describe("pagination and chart fetching", () => {
 
     mountWrapper(defaultStore, <Catalog {...populatedProps} charts={charts} />);
     spyOnUseState.mockRestore();
-    expect(setPage).toHaveBeenCalledWith(2);
+    expect(setPage).toHaveBeenCalledWith(1);
   });
 
   // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
@@ -598,7 +605,7 @@ describe("filters by category", () => {
         charts={{
           ...defaultChartState,
           items: [chartItem],
-          categories: [{ name: chartItem.attributes.category, count: 1 }],
+          categories: [{ name: chartItem.categories[0], count: 1 }],
         }}
       />,
     );
@@ -615,8 +622,8 @@ describe("filters by category", () => {
           ...defaultChartState,
           items: [chartItem, chartItem2],
           categories: [
-            { name: chartItem.attributes.category, count: 1 },
-            { name: chartItem2.attributes.category, count: 1 },
+            { name: chartItem.categories[0], count: 1 },
+            { name: chartItem2.categories[0], count: 1 },
           ],
         }}
       />,
@@ -643,8 +650,8 @@ describe("filters by category", () => {
           ...defaultChartState,
           items: [chartItem, chartItem2],
           categories: [
-            { name: chartItem.attributes.category, count: 1 },
-            { name: chartItem2.attributes.category, count: 1 },
+            { name: chartItem.categories[0], count: 1 },
+            { name: chartItem2.categories[0], count: 1 },
           ],
         }}
         filter={{ [filterNames.CATEGORY]: "Database" }}
