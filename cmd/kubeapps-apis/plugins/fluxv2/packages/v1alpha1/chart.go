@@ -162,6 +162,32 @@ func (s *Server) getChartsResourceInterface(ctx context.Context, namespace strin
 	return client.Resource(chartsResource).Namespace(namespace), nil
 }
 
+func (s *Server) fetchChartFromCache(repoNamespace, repoName, chartName string) (*models.Chart, error) {
+	if s.cache == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+	}
+
+	charts, err := s.cache.fetchForOne(s.cache.keyForNamespaceAndName(repoNamespace, repoName))
+	if err != nil {
+		return nil, err
+	}
+
+	if charts != nil {
+		if typedCharts, ok := charts.([]models.Chart); !ok {
+			return nil, status.Errorf(
+				codes.Internal,
+				"unexpected value fetched from cache: %v", charts)
+		} else {
+			for _, chart := range typedCharts {
+				if chart.Name == chartName {
+					return &chart, nil // found it
+				}
+			}
+		}
+	}
+	return nil, nil
+}
+
 // the goal of this fn is to answer whether or not to stop waiting for chart reconciliation
 // which is different from answering whether the chart was pulled successfully
 // TODO (gfichtenholt): As above, hopefully this fn isn't required if we can only list charts that we know are ready.

@@ -196,7 +196,14 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	}
 
 	duration := time.Since(startTime)
-	log.Infof("indexOneRepo: indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
+	msg := fmt.Sprintf("indexOneRepo: indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
+	if len(charts) > 0 {
+		log.Info(msg)
+	} else {
+		// this is kind of a red flag - an index with 0 charts, most likely contents of index.yaml is
+		// messed up and didn't parse but the helm library didn't raise an error
+		log.Warning(msg)
+	}
 	return charts, nil
 }
 

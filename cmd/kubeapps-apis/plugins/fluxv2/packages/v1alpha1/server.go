@@ -23,7 +23,6 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -274,6 +273,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 			"not supported yet: request.GetPkgVersion(): [%v]",
 			request.GetPkgVersion())
 	}
+
 	packageRef := request.GetAvailablePackageRef()
 	namespace := packageRef.GetContext().GetNamespace()
 	if namespace == "" || packageRef.GetIdentifier() == "" {
@@ -287,28 +287,17 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
-	charts, err := s.cache.fetchForOne(s.cache.keyForNamespaceAndName(namespace, packageIdParts[0]))
+	chart, err := s.fetchChartFromCache(namespace, packageIdParts[0], packageIdParts[1])
 	if err != nil {
 		return nil, err
+	} else if chart != nil {
+		// found it
+		return &corev1.GetAvailablePackageVersionsResponse{
+			PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+		}, nil
+	} else {
+		return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
 	}
-
-	if charts != nil {
-		if typedCharts, ok := charts.([]models.Chart); !ok {
-			return nil, status.Errorf(
-				codes.Internal,
-				"unexpected value fetched from cache: %v", charts)
-		} else {
-			for _, chart := range typedCharts {
-				if chart.Name == packageIdParts[1] {
-					// found it
-					return &corev1.GetAvailablePackageVersionsResponse{
-						PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
-					}, nil
-				}
-			}
-		}
-	}
-	return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
 }
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
@@ -326,13 +315,17 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		// we're going to need this later
 		// TODO (gfichtenholt) for now we get all charts and later find one that helmrelease is using
 		// there is probably a more efficient way to do this
-		chartList, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
+		chartsFromCluster, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
 		if err != nil {
 			return nil, err
 		}
 
+		if s.cache == nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+		}
+
 		for _, releaseUnstructured := range releases.Items {
-			summary, err := installedPkgSummaryFromRelease(releaseUnstructured.Object, chartList)
+			summary, err := s.installedPkgSummaryFromRelease(releaseUnstructured.Object, chartsFromCluster)
 			if err != nil {
 				return nil, err
 			} else if summary == nil {

@@ -53,7 +53,7 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*
 	}
 }
 
-func installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, chartList *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
 	observedGeneration, found, err := unstructured.NestedInt64(unstructuredRelease, "status", "observedGeneration")
 	if err != nil || !found {
@@ -90,23 +90,58 @@ func installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, 
 		}
 	}
 
-	// this will only be present if install/upgrade succeeded
-	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease, "status", "lastAppliedRevision")
-
 	repoName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
 	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	chartName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
 	chartVersion, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
 
+	latestPkgVersion := ""
 	var pkgDetail *corev1.AvailablePackageDetail
 	if repoName != "" && repoNamespace != "" && chartName != "" && chartVersion != "" {
-		url, _ := findUrlForChartInList(chartList, repoName, chartName, chartVersion)
+		url, _ := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
 		if url != "" {
 			chartID := fmt.Sprintf("%s/%s", repoName, chartName)
 			pkgDetail, _ = availablePackageDetailFromTarball(chartID, url)
 		}
+
+		chartFromCache, err := s.fetchChartFromCache(repoNamespace, repoName, chartName)
+		if err != nil {
+			return nil, err
+		} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
+			// charts in cache are already sorted with the latest being at position 0
+			latestPkgVersion = chartFromCache.ChartVersions[0].Version
+		}
 	}
 
+	// this will only be present if install/upgrade succeeded
+	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease, "status", "lastAppliedRevision")
+
+	return &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: namespace,
+			},
+			Identifier: name,
+		},
+		Name:                name,
+		PkgVersionReference: pkgVersion,
+		CurrentPkgVersion:   lastAppliedRevision,
+		CurrentAppVersion:   pkgDetail.GetAppVersion(),
+		IconUrl:             pkgDetail.GetIconUrl(),
+		PkgDisplayName:      pkgDetail.GetDisplayName(),
+		ShortDescription:    pkgDetail.GetShortDescription(),
+		Status:              installedSummaryStatusFromUnstructured(unstructuredRelease),
+		LatestPkgVersion:    latestPkgVersion,
+		// TODO (gfichtenholt) LatestMatchingPkgVersion
+		// Only non-empty if an available upgrade matches the specified pkg_version_reference.
+		// For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
+		// is installed, then:
+		//   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
+		//   * if 10.4 is available while >10.3.1 is not, this should remain empty.
+	}, nil
+}
+
+func installedSummaryStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
 	var status *corev1.InstalledPackageStatus
 	if conditions, found, err := unstructured.NestedSlice(unstructuredRelease, "status", "conditions"); found && err == nil {
 		for _, conditionUnstructured := range conditions {
@@ -132,30 +167,5 @@ func installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, 
 			}
 		}
 	}
-
-	return &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: namespace,
-			},
-			Identifier: name,
-		},
-		Name:                name,
-		PkgVersionReference: pkgVersion,
-		CurrentPkgVersion:   lastAppliedRevision,
-		CurrentAppVersion:   pkgDetail.GetAppVersion(),
-		IconUrl:             pkgDetail.GetIconUrl(),
-		PkgDisplayName:      pkgDetail.GetDisplayName(),
-		ShortDescription:    pkgDetail.GetShortDescription(),
-		Status:              status,
-		// LatestMatchingPkgVersion
-		// Only non-empty if an available upgrade matches the specified pkg_version_reference.
-		// For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
-		// is installed, then:
-		//   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
-		//   * if 10.4 is available while >10.3.1 is not, this should remain empty.
-
-		// LatestPkgVersion
-		// The latest version available for this package, regardless of the pkg_version_reference.
-	}, nil
+	return status
 }
