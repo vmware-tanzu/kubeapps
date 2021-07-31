@@ -25,7 +25,6 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	apiv1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
 
@@ -303,40 +302,30 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 // GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
-	releases, err := s.listReleasesInCluster(ctx, request.GetContext().GetNamespace())
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"unable to intepret page token %q: %v",
+			request.GetPaginationOptions().GetPageToken(), err)
+	}
+
+	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO (gfichtenholt) pagination
-
-	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
-	if len(releases.Items) > 0 {
-		// we're going to need this later
-		// TODO (gfichtenholt) for now we get all charts and later find one that helmrelease is using
-		// there is probably a more efficient way to do this
-		chartsFromCluster, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
-		if err != nil {
-			return nil, err
-		}
-
-		if s.cache == nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
-		}
-
-		for _, releaseUnstructured := range releases.Items {
-			summary, err := s.installedPkgSummaryFromRelease(releaseUnstructured.Object, chartsFromCluster)
-			if err != nil {
-				return nil, err
-			} else if summary == nil {
-				// not ready yet
-				continue
-			}
-			installedPkgSummaries = append(installedPkgSummaries, summary)
-		}
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
+
 	response := &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: installedPkgSummaries,
+		NextPageToken:             nextPageToken,
 	}
 	return response, nil
 }

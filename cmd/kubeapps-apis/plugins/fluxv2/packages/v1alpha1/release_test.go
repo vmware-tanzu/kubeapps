@@ -62,52 +62,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				Context: &corev1.Context{Namespace: "namespace-1"},
 			},
 			existingObjs: []testSpecGetInstalledPackageSummaries{
-				{
-					repoName:         "bitnami-1",
-					repoNamespace:    "default",
-					repoIndex:        "testdata/redis-many-versions.yaml",
-					chartName:        "redis",
-					chartTarGz:       "testdata/redis-14.4.0.tgz",
-					chartRevision:    "14.4.0",
-					releaseName:      "my-redis",
-					releaseNamespace: "namespace-1",
-					releaseStatus: map[string]interface{}{
-						"conditions": []interface{}{
-							map[string]interface{}{
-								"type":   "Ready",
-								"status": "False",
-								"reason": "InstallFailed",
-							},
-						},
-						"lastAttemptedRevision": "14.4.0",
-					},
-				},
+				redis_existing_spec_failed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					{
-						InstalledPackageRef: &corev1.InstalledPackageReference{
-							Context: &corev1.Context{
-								Namespace: "namespace-1",
-							},
-							Identifier: "my-redis",
-						},
-						Name:    "my-redis",
-						IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-						PkgVersionReference: &corev1.VersionReference{
-							Version: "14.4.0",
-						},
-						CurrentAppVersion: "6.2.4",
-						PkgDisplayName:    "redis",
-						ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-						Status: &corev1.InstalledPackageStatus{
-							Ready:      false,
-							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
-							UserReason: "InstallFailed",
-						},
-						LatestPkgVersion: "14.6.1",
-					},
+					redis_summary_failed,
 				},
 			},
 		},
@@ -117,52 +77,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				Context: &corev1.Context{Namespace: "namespace-1"},
 			},
 			existingObjs: []testSpecGetInstalledPackageSummaries{
-				{
-					repoName:         "bitnami-1",
-					repoNamespace:    "default",
-					repoIndex:        "testdata/redis-many-versions.yaml",
-					chartName:        "redis",
-					chartTarGz:       "testdata/redis-14.4.0.tgz",
-					chartRevision:    "14.4.0",
-					releaseName:      "my-redis",
-					releaseNamespace: "namespace-1",
-					releaseStatus: map[string]interface{}{
-						"conditions": []interface{}{
-							map[string]interface{}{
-								"type":   "Ready",
-								"status": "Unknown",
-								"reason": "Progressing",
-							},
-						},
-						"lastAttemptedRevision": "14.4.0",
-					},
-				},
+				redis_existing_spec_pending,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					{
-						InstalledPackageRef: &corev1.InstalledPackageReference{
-							Context: &corev1.Context{
-								Namespace: "namespace-1",
-							},
-							Identifier: "my-redis",
-						},
-						Name:    "my-redis",
-						IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-						PkgVersionReference: &corev1.VersionReference{
-							Version: "14.4.0",
-						},
-						CurrentAppVersion: "6.2.4",
-						PkgDisplayName:    "redis",
-						ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-						Status: &corev1.InstalledPackageStatus{
-							Ready:      false,
-							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
-							UserReason: "Progressing",
-						},
-						LatestPkgVersion: "14.6.1",
-					},
+					redis_summary_pending,
 				},
 			},
 		},
@@ -172,54 +92,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				Context: &corev1.Context{Namespace: "namespace-1"},
 			},
 			existingObjs: []testSpecGetInstalledPackageSummaries{
-				{
-					repoName:         "bitnami-1",
-					repoNamespace:    "default",
-					repoIndex:        "testdata/redis-many-versions.yaml",
-					chartName:        "redis",
-					chartTarGz:       "testdata/redis-14.4.0.tgz",
-					chartRevision:    "14.4.0",
-					releaseName:      "my-redis",
-					releaseNamespace: "namespace-1",
-					releaseStatus: map[string]interface{}{
-						"conditions": []interface{}{
-							map[string]interface{}{
-								"type":   "Ready",
-								"status": "True",
-								"reason": "ReconciliationSucceeded",
-							},
-						},
-						"lastAppliedRevision":   "14.4.0",
-						"lastAttemptedRevision": "14.4.0",
-					},
-				},
+				redis_existing_spec_completed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					{
-						InstalledPackageRef: &corev1.InstalledPackageReference{
-							Context: &corev1.Context{
-								Namespace: "namespace-1",
-							},
-							Identifier: "my-redis",
-						},
-						Name:    "my-redis",
-						IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-						PkgVersionReference: &corev1.VersionReference{
-							Version: "14.4.0",
-						},
-						CurrentPkgVersion: "14.4.0",
-						CurrentAppVersion: "6.2.4",
-						PkgDisplayName:    "redis",
-						ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-						Status: &corev1.InstalledPackageStatus{
-							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-							UserReason: "ReconciliationSucceeded",
-						},
-						LatestPkgVersion: "14.6.1",
-					},
+					redis_summary_installed,
 				},
 			},
 		},
@@ -229,278 +107,78 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				Context: &corev1.Context{Namespace: ""},
 			},
 			existingObjs: []testSpecGetInstalledPackageSummaries{
-				{
-					repoName:         "bitnami-1",
-					repoNamespace:    "default",
-					repoIndex:        "testdata/redis-many-versions.yaml",
-					chartName:        "redis",
-					chartTarGz:       "testdata/redis-14.4.0.tgz",
-					chartRevision:    "14.4.0",
-					releaseName:      "my-redis",
-					releaseNamespace: "namespace-1",
-					releaseStatus: map[string]interface{}{
-						"conditions": []interface{}{
-							map[string]interface{}{
-								"type":   "Ready",
-								"status": "True",
-								"reason": "ReconciliationSucceeded",
-							},
-						},
-						"lastAppliedRevision":   "14.4.0",
-						"lastAttemptedRevision": "14.4.0",
-					},
-				},
-				{
-					repoName:         "bitnami-2",
-					repoNamespace:    "default",
-					repoIndex:        "testdata/airflow-many-versions.yaml",
-					chartName:        "airflow",
-					chartTarGz:       "testdata/airflow-6.7.1.tgz",
-					chartRevision:    "6.7.1",
-					releaseName:      "my-airflow",
-					releaseNamespace: "namespace-2",
-					releaseStatus: map[string]interface{}{
-						"conditions": []interface{}{
-							map[string]interface{}{
-								"type":   "Ready",
-								"status": "True",
-								"reason": "ReconciliationSucceeded",
-							},
-						},
-						"lastAppliedRevision":   "6.7.1",
-						"lastAttemptedRevision": "6.7.1",
-					},
-				},
+				redis_existing_spec_completed,
+				airflow_existing_spec_completed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					{
-
-						InstalledPackageRef: &corev1.InstalledPackageReference{
-							Context: &corev1.Context{
-								Namespace: "namespace-1",
-							},
-							Identifier: "my-redis",
-						},
-						Name:    "my-redis",
-						IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-						PkgVersionReference: &corev1.VersionReference{
-							Version: "14.4.0",
-						},
-						CurrentPkgVersion: "14.4.0",
-						CurrentAppVersion: "6.2.4",
-						PkgDisplayName:    "redis",
-						ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-						Status: &corev1.InstalledPackageStatus{
-							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-							UserReason: "ReconciliationSucceeded",
-						},
-						LatestPkgVersion: "14.6.1",
-					},
-					{
-						InstalledPackageRef: &corev1.InstalledPackageReference{
-							Context: &corev1.Context{
-								Namespace: "namespace-2",
-							},
-							Identifier: "my-airflow",
-						},
-						Name:    "my-airflow",
-						IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
-						PkgVersionReference: &corev1.VersionReference{
-							Version: "6.7.1",
-						},
-						CurrentPkgVersion: "6.7.1",
-						LatestPkgVersion:  "10.2.1",
-						CurrentAppVersion: "1.10.12",
-						ShortDescription:  "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
-						PkgDisplayName:    "airflow",
-						Status: &corev1.InstalledPackageStatus{
-							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-							UserReason: "ReconciliationSucceeded",
-						},
-					},
+					redis_summary_installed,
+					airflow_summary_installed,
 				},
 			},
 		},
-		/*
-			{
-				name: "returns limited results",
-				request: &corev1.GetInstalledPackageSummariesRequest{
-					Context: &corev1.Context{Namespace: ""},
-					PaginationOptions: &corev1.PaginationOptions{
-						PageSize: 2,
-					},
-				},
-				existingReleases: []releaseStub{
-					{
-						name:         "my-release-1",
-						namespace:    "namespace-1",
-						chartVersion: "1.2.3",
-						status:       release.StatusDeployed,
-					},
-					{
-						name:         "my-release-2",
-						namespace:    "namespace-2",
-						status:       release.StatusDeployed,
-						chartVersion: "3.4.5",
-					},
-					{
-						name:         "my-release-3",
-						namespace:    "namespace-3",
-						chartVersion: "4.5.6",
-						status:       release.StatusDeployed,
-					},
-				},
-				expectedStatusCode: codes.OK,
-				expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-					InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-						{
-							InstalledPackageRef: &corev1.InstalledPackageReference{
-								Context: &corev1.Context{
-									Namespace: "namespace-1",
-								},
-								Identifier: "my-release-1",
-							},
-							Name:    "my-release-1",
-							IconUrl: "https://example.com/icon.png",
-							PkgVersionReference: &corev1.VersionReference{
-								Version: "1.2.3",
-							},
-							CurrentPkgVersion: "1.2.3",
-							LatestPkgVersion:  "1.2.3",
-							CurrentAppVersion: DefaultAppVersion,
-							Status: &corev1.InstalledPackageStatus{
-								Ready:      true,
-								Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-								UserReason: "deployed",
-							},
-						},
-						{
-							InstalledPackageRef: &corev1.InstalledPackageReference{
-								Context: &corev1.Context{
-									Namespace: "namespace-2",
-								},
-								Identifier: "my-release-2",
-							},
-							Name:    "my-release-2",
-							IconUrl: "https://example.com/icon.png",
-							PkgVersionReference: &corev1.VersionReference{
-								Version: "3.4.5",
-							},
-							CurrentPkgVersion: "3.4.5",
-							LatestPkgVersion:  "3.4.5",
-							CurrentAppVersion: DefaultAppVersion,
-							Status: &corev1.InstalledPackageStatus{
-								Ready:      true,
-								Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-								UserReason: "deployed",
-							},
-						},
-					},
-					NextPageToken: "3",
+		{
+			name: "returns limited results",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "0",
+					PageSize:  1,
 				},
 			},
-			{
-				name: "fetches results from an offset",
-				request: &corev1.GetInstalledPackageSummariesRequest{
-					Context: &corev1.Context{Namespace: ""},
-					PaginationOptions: &corev1.PaginationOptions{
-						PageSize:  2,
-						PageToken: "2",
-					},
+			existingObjs: []testSpecGetInstalledPackageSummaries{
+				redis_existing_spec_completed,
+				airflow_existing_spec_completed,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					redis_summary_installed,
 				},
-				existingReleases: []releaseStub{
-					{
-						name:         "my-release-1",
-						namespace:    "namespace-1",
-						chartVersion: "1.2.3",
-						status:       release.StatusDeployed,
-					},
-					{
-						name:         "my-release-2",
-						namespace:    "namespace-2",
-						status:       release.StatusDeployed,
-						chartVersion: "3.4.5",
-					},
-					{
-						name:         "my-release-3",
-						namespace:    "namespace-3",
-						chartVersion: "4.5.6",
-						status:       release.StatusDeployed,
-					},
-				},
-				expectedStatusCode: codes.OK,
-				expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-					InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-						{
-							InstalledPackageRef: &corev1.InstalledPackageReference{
-								Context: &corev1.Context{
-									Namespace: "namespace-3",
-								},
-								Identifier: "my-release-3",
-							},
-							Name:    "my-release-3",
-							IconUrl: "https://example.com/icon.png",
-							PkgVersionReference: &corev1.VersionReference{
-								Version: "4.5.6",
-							},
-							CurrentPkgVersion: "4.5.6",
-							LatestPkgVersion:  "4.5.6",
-							CurrentAppVersion: DefaultAppVersion,
-							Status: &corev1.InstalledPackageStatus{
-								Ready:      true,
-								Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-								UserReason: "deployed",
-							},
-						},
-					},
-					NextPageToken: "",
+				NextPageToken: "1",
+			},
+		},
+		{
+			name: "fetches results from an offset",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageSize:  1,
+					PageToken: "1",
 				},
 			},
-			{
-				name: "includes a latest package version when available",
-				request: &corev1.GetInstalledPackageSummariesRequest{
-					Context: &corev1.Context{Namespace: "namespace-1"},
+			existingObjs: []testSpecGetInstalledPackageSummaries{
+				redis_existing_spec_completed,
+				airflow_existing_spec_completed,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					airflow_summary_installed,
 				},
-				existingReleases: []releaseStub{
-					{
-						name:         "my-release-1",
-						namespace:    "namespace-1",
-						chartVersion: "1.2.3",
-						status:       release.StatusDeployed,
-					},
-				},
-				expectedStatusCode: codes.OK,
-				expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-					InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-						{
-							InstalledPackageRef: &corev1.InstalledPackageReference{
-								Context: &corev1.Context{
-									Namespace: "namespace-1",
-								},
-								Identifier: "my-release-1",
-							},
-							Name:    "my-release-1",
-							IconUrl: "https://example.com/icon.png",
-							PkgVersionReference: &corev1.VersionReference{
-								Version: "1.2.3",
-							},
-							CurrentPkgVersion: "1.2.3",
-							LatestPkgVersion:  "1.2.5",
-							CurrentAppVersion: DefaultAppVersion,
-							Status: &corev1.InstalledPackageStatus{
-								Ready:      true,
-								Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-								UserReason: "deployed",
-							},
-						},
-					},
+				NextPageToken: "2",
+			},
+		},
+		{
+			name: "fetches results from an offset (2)",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageSize:  1,
+					PageToken: "2",
 				},
 			},
-		*/
+			existingObjs: []testSpecGetInstalledPackageSummaries{
+				redis_existing_spec_completed,
+				airflow_existing_spec_completed,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{},
+				NextPageToken:             "",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -567,7 +245,20 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			for _, existing := range tc.existingObjs {
+			for i, existing := range tc.existingObjs {
+				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
+					pageOffset, err := pageOffsetFromPageToken(tc.request.GetPaginationOptions().GetPageToken())
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+					startAt := int(tc.request.GetPaginationOptions().GetPageSize()) * pageOffset
+					if i < startAt {
+						continue
+					} else if i >= startAt+int(tc.request.GetPaginationOptions().GetPageSize()) {
+						break
+					}
+				}
+
 				indexYAMLBytes, err := ioutil.ReadFile(existing.repoIndex)
 				if err != nil {
 					t.Fatalf("%+v", err)
@@ -695,4 +386,185 @@ func newServerWithChartsAndReleases(chartOrRelease ...runtime.Object) (*Server, 
 		return nil, nil, nil, err
 	}
 	return s, mock, watcher, nil
+}
+
+// misc global vars that get re-used in multiple tests scenarios
+var redis_summary_installed = &corev1.InstalledPackageSummary{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+	},
+	Name:    "my-redis",
+	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	CurrentPkgVersion: "14.4.0",
+	CurrentAppVersion: "6.2.4",
+	PkgDisplayName:    "redis",
+	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded",
+	},
+	LatestPkgVersion: "14.6.1",
+}
+
+var redis_summary_failed = &corev1.InstalledPackageSummary{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+	},
+	Name:    "my-redis",
+	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	CurrentAppVersion: "6.2.4",
+	PkgDisplayName:    "redis",
+	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      false,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+		UserReason: "InstallFailed",
+	},
+	LatestPkgVersion: "14.6.1",
+}
+
+var redis_summary_pending = &corev1.InstalledPackageSummary{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+	},
+	Name:    "my-redis",
+	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	CurrentAppVersion: "6.2.4",
+	PkgDisplayName:    "redis",
+	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      false,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+		UserReason: "Progressing",
+	},
+	LatestPkgVersion: "14.6.1",
+}
+
+var airflow_summary_installed = &corev1.InstalledPackageSummary{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-2",
+		},
+		Identifier: "my-airflow",
+	},
+	Name:    "my-airflow",
+	IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "6.7.1",
+	},
+	CurrentPkgVersion: "6.7.1",
+	LatestPkgVersion:  "10.2.1",
+	CurrentAppVersion: "1.10.12",
+	ShortDescription:  "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+	PkgDisplayName:    "airflow",
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded",
+	},
+}
+
+var redis_existing_spec_completed = testSpecGetInstalledPackageSummaries{
+	repoName:         "bitnami-1",
+	repoNamespace:    "default",
+	repoIndex:        "testdata/redis-many-versions.yaml",
+	chartName:        "redis",
+	chartTarGz:       "testdata/redis-14.4.0.tgz",
+	chartRevision:    "14.4.0",
+	releaseName:      "my-redis",
+	releaseNamespace: "namespace-1",
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "True",
+				"reason": "ReconciliationSucceeded",
+			},
+		},
+		"lastAppliedRevision":   "14.4.0",
+		"lastAttemptedRevision": "14.4.0",
+	},
+}
+
+var redis_existing_spec_failed = testSpecGetInstalledPackageSummaries{
+	repoName:         "bitnami-1",
+	repoNamespace:    "default",
+	repoIndex:        "testdata/redis-many-versions.yaml",
+	chartName:        "redis",
+	chartTarGz:       "testdata/redis-14.4.0.tgz",
+	chartRevision:    "14.4.0",
+	releaseName:      "my-redis",
+	releaseNamespace: "namespace-1",
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "False",
+				"reason": "InstallFailed",
+			},
+		},
+		"lastAttemptedRevision": "14.4.0",
+	},
+}
+
+var airflow_existing_spec_completed = testSpecGetInstalledPackageSummaries{
+	repoName:         "bitnami-2",
+	repoNamespace:    "default",
+	repoIndex:        "testdata/airflow-many-versions.yaml",
+	chartName:        "airflow",
+	chartTarGz:       "testdata/airflow-6.7.1.tgz",
+	chartRevision:    "6.7.1",
+	releaseName:      "my-airflow",
+	releaseNamespace: "namespace-2",
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "True",
+				"reason": "ReconciliationSucceeded",
+			},
+		},
+		"lastAppliedRevision":   "6.7.1",
+		"lastAttemptedRevision": "6.7.1",
+	},
+}
+
+var redis_existing_spec_pending = testSpecGetInstalledPackageSummaries{
+	repoName:         "bitnami-1",
+	repoNamespace:    "default",
+	repoIndex:        "testdata/redis-many-versions.yaml",
+	chartName:        "redis",
+	chartTarGz:       "testdata/redis-14.4.0.tgz",
+	chartRevision:    "14.4.0",
+	releaseName:      "my-redis",
+	releaseNamespace: "namespace-1",
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "Unknown",
+				"reason": "Progressing",
+			},
+		},
+		"lastAttemptedRevision": "14.4.0",
+	},
 }

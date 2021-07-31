@@ -19,6 +19,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,6 +52,46 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*
 	} else {
 		return releases, nil
 	}
+}
+
+func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
+	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
+	if len(releasesFromCluster.Items) > 0 {
+		// we're going to need this later
+		// TODO (gfichtenholt) for now we get all charts and later find one that helmrelease is using
+		// there is probably a more efficient way to do this
+		chartsFromCluster, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
+		if err != nil {
+			return nil, err
+		}
+
+		startAt := -1
+		if pageSize > 0 {
+			startAt = int(pageSize) * pageOffset
+		}
+
+		for i, releaseUnstructured := range releasesFromCluster.Items {
+			if startAt <= i {
+				summary, err := s.installedPkgSummaryFromRelease(releaseUnstructured.Object, chartsFromCluster)
+				if err != nil {
+					return nil, err
+				} else if summary == nil {
+					// not ready yet
+					continue
+				}
+				installedPkgSummaries = append(installedPkgSummaries, summary)
+				if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
+					break
+				}
+			}
+		}
+	}
+	return installedPkgSummaries, nil
 }
 
 func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {

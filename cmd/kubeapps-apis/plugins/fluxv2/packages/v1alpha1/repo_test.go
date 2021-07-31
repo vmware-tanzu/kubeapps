@@ -1046,7 +1046,7 @@ func redisKeyForRuntimeObject(r runtime.Object) string {
 
 }
 
-// misc global vars that get re-used in multiple tests
+// misc global vars that get re-used in multiple tests scenarios
 var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
 		DisplayName:      "acs-engine-autoscaler",
