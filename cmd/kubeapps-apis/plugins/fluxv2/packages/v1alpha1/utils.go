@@ -23,6 +23,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -97,4 +98,16 @@ func getUnescapedChartID(chartID string) (string, error) {
 		return "", status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
 	}
 	return unescapedChartID, nil
+}
+
+func checkGeneration(unstructuredObj map[string]interface{}) bool {
+	observedGeneration, found, err := unstructured.NestedInt64(unstructuredObj, "status", "observedGeneration")
+	if err != nil || !found {
+		return false
+	}
+	generation, found, err := unstructured.NestedInt64(unstructuredObj, "metadata", "generation")
+	if err != nil || !found {
+		return false
+	}
+	return generation == observedGeneration
 }

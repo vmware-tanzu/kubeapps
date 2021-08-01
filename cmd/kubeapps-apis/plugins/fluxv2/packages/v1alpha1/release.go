@@ -96,15 +96,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
-	observedGeneration, found, err := unstructured.NestedInt64(unstructuredRelease, "status", "observedGeneration")
-	if err != nil || !found {
-		return nil, nil // not ready
-	}
-	generation, found, err := unstructured.NestedInt64(unstructuredRelease, "metadata", "generation")
-	if err != nil || !found {
-		return nil, nil
-	}
-	if generation != observedGeneration {
+	if !checkGeneration(unstructuredRelease) {
 		return nil, nil
 	}
 
@@ -184,6 +176,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 
 func installedSummaryStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
 	var status *corev1.InstalledPackageStatus
+
 	if conditions, found, err := unstructured.NestedSlice(unstructuredRelease, "status", "conditions"); found && err == nil {
 		for _, conditionUnstructured := range conditions {
 			if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
@@ -204,6 +197,7 @@ func installedSummaryStatusFromUnstructured(unstructuredRelease map[string]inter
 							status.UserReason = reasonString
 						}
 					}
+					break
 				}
 			}
 		}

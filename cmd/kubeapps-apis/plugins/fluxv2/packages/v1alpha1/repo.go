@@ -93,19 +93,7 @@ func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
 func isRepoReady(obj map[string]interface{}) (bool, error) {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 	// Confirm the state we are observing is for the current generation
-	observedGeneration, found, err := unstructured.NestedInt64(obj, "status", "observedGeneration")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	generation, found, err := unstructured.NestedInt64(obj, "metadata", "generation")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	if generation != observedGeneration {
+	if !checkGeneration(obj) {
 		return false, nil
 	}
 
@@ -137,6 +125,7 @@ func isRepoReady(obj map[string]interface{}) (bool, error) {
 						return false, status.Errorf(codes.Internal, msg)
 					}
 				}
+				break
 			}
 		}
 	}

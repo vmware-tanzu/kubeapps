@@ -194,19 +194,7 @@ func (s *Server) fetchChartFromCache(repoNamespace, repoName, chartName string) 
 func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
 	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
 	// Confirm the state we are observing is for the current generation
-	observedGeneration, found, err := unstructured.NestedInt64(unstructuredChart.Object, "status", "observedGeneration")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	generation, found, err := unstructured.NestedInt64(unstructuredChart.Object, "metadata", "generation")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	if generation != observedGeneration {
+	if !checkGeneration(unstructuredChart.Object) {
 		return false, nil
 	}
 
@@ -237,6 +225,7 @@ func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, er
 						return true, status.Errorf(codes.Internal, msg)
 					}
 				}
+				break
 			}
 		}
 	}
