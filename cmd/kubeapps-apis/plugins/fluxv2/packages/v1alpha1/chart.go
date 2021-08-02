@@ -188,48 +188,17 @@ func (s *Server) fetchChartFromCache(repoNamespace, repoName, chartName string) 
 	return nil, nil
 }
 
-// the goal of this fn is to answer whether or not to stop waiting for chart reconciliation
+// the main goal of this func is to answer whether or not to stop waiting for chart reconciliation
 // which is different from answering whether the chart was pulled successfully
-// TODO (gfichtenholt): As above, hopefully this fn isn't required if we can only list charts that we know are ready.
-func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
+// TODO (gfichtenholt): As above, hopefully this func isn't required if we can only list charts that we know are ready.
+func isChartPullComplete(unstructuredChart map[string]interface{}) (complete, success bool, reason string) {
 	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
 	// Confirm the state we are observing is for the current generation
-	if !checkGeneration(unstructuredChart.Object) {
-		return false, nil
+	if !checkGeneration(unstructuredChart) {
+		return false, false, ""
+	} else {
+		return checkStatusReady(unstructuredChart)
 	}
-
-	conditions, found, err := unstructured.NestedSlice(unstructuredChart.Object, "status", "conditions")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-
-	// check if ready=True
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				if statusString, ok := conditionAsMap["status"]; ok {
-					if statusString == "True" {
-						if reasonString, ok := conditionAsMap["reason"]; !ok || reasonString != "ChartPullSucceeded" {
-							// should not happen
-							log.Infof("unexpected status of HelmChart: %v", *unstructuredChart)
-						}
-						return true, nil
-					} else if statusString == "False" {
-						var msg string
-						if msg, ok = conditionAsMap["message"].(string); !ok {
-							msg = fmt.Sprintf("No message available in condition: %v", conditionAsMap)
-						}
-						// chart pull is done and it's a failure
-						return true, status.Errorf(codes.Internal, msg)
-					}
-				}
-				break
-			}
-		}
-	}
-	return false, nil
 }
 
 // TODO (gfichtenholt):
@@ -262,15 +231,17 @@ func waitUntilChartPullComplete(ctx context.Context, watcher watch.Interface) (s
 				return "", status.Errorf(codes.Internal, "could not cast to unstructured.Unstructured")
 			}
 
-			done, err := isChartPullComplete(unstructuredChart)
-			if err != nil {
-				return "", err
-			} else if done {
-				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
-				if err != nil || !found {
-					return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+			done, success, reason := isChartPullComplete(unstructuredChart.Object)
+			if done {
+				if success {
+					url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+					if err != nil || !found {
+						return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+					}
+					return url, nil
+				} else {
+					return "", status.Errorf(codes.Internal, "Failed to pull chart due to %s", reason)
 				}
-				return url, nil
 			}
 		} else {
 			return "", status.Errorf(codes.Internal, "got unexpected event: %v", event)
@@ -315,26 +286,28 @@ func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, c
 		thisRepoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
 
 		if err == nil && err2 == nil && found && found2 && repoName == thisRepoName && chartName == thisChartName {
-			done, err := isChartPullComplete(&unstructuredChart)
-			if err != nil {
-				return "", err
-			} else if done {
-				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
-				if err != nil || !found {
-					return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
-				}
-				if version != "" {
-					// refer to https://github.com/fluxcd/source-controller/blob/main/api/v1beta1/helmchart_types.go &
-					// https://github.com/fluxcd/source-controller/blob/40a47670aadebc0f4e3a623be47725106bac2d55/api/v1beta1/artifact_types.go#L27
-					chartVersion, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "artifact", "revision")
+			done, success, reason := isChartPullComplete(unstructuredChart.Object)
+			if done {
+				if success {
+					url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
 					if err != nil || !found {
-						return "", status.Errorf(codes.Internal, "expected field status.artifact.revision not found on HelmChart: %v:\n%v", err, unstructuredChart)
-					} else if chartVersion != version {
-						continue
+						return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
 					}
+					if version != "" {
+						// refer to https://github.com/fluxcd/source-controller/blob/main/api/v1beta1/helmchart_types.go &
+						// https://github.com/fluxcd/source-controller/blob/40a47670aadebc0f4e3a623be47725106bac2d55/api/v1beta1/artifact_types.go#L27
+						chartVersion, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "artifact", "revision")
+						if err != nil || !found {
+							return "", status.Errorf(codes.Internal, "expected field status.artifact.revision not found on HelmChart: %v:\n%v", err, unstructuredChart)
+						} else if chartVersion != version {
+							continue
+						}
+					}
+					log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
+					return url, nil
+				} else {
+					return "", status.Errorf(codes.Internal, "Chart pull failed due to %s", reason)
 				}
-				log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
-				return url, nil
 			}
 			// TODO (gfichtenholt) waitUntilChartPullComplete?
 		}

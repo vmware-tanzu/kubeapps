@@ -175,32 +175,17 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 }
 
 func installedSummaryStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
-	var status *corev1.InstalledPackageStatus
-
-	if conditions, found, err := unstructured.NestedSlice(unstructuredRelease, "status", "conditions"); found && err == nil {
-		for _, conditionUnstructured := range conditions {
-			if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-				if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-					status = &corev1.InstalledPackageStatus{
-						Ready: false,
-					}
-					if statusString, ok := conditionAsMap["status"]; ok {
-						if statusString == "True" {
-							status.Ready = true
-							status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
-						} else if statusString == "False" {
-							status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_FAILED
-						} else {
-							status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_PENDING
-						}
-						if reasonString, ok := conditionAsMap["reason"].(string); ok {
-							status.UserReason = reasonString
-						}
-					}
-					break
-				}
-			}
-		}
+	complete, success, reason := checkStatusReady(unstructuredRelease)
+	status := &corev1.InstalledPackageStatus{
+		Ready:      complete && success,
+		UserReason: reason,
+	}
+	if complete && success {
+		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
+	} else if complete && !success {
+		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_FAILED
+	} else {
+		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_PENDING
 	}
 	return status
 }

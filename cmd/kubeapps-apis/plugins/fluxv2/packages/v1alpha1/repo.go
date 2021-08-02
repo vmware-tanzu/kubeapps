@@ -90,46 +90,15 @@ func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
 // repo-related utilities
 //
 
-func isRepoReady(obj map[string]interface{}) (bool, error) {
+func isRepoReady(unstructuredRepo map[string]interface{}) bool {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 	// Confirm the state we are observing is for the current generation
-	if !checkGeneration(obj) {
-		return false, nil
+	if !checkGeneration(unstructuredRepo) {
+		return false
 	}
 
-	conditions, found, err := unstructured.NestedSlice(obj, "status", "conditions")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				if statusString, ok := conditionAsMap["status"]; ok {
-					if statusString == "True" {
-						// note that the current doc on https://fluxcd.io/docs/components/source/helmrepositories/
-						// incorrectly states the example status reason as "IndexationSucceeded".
-						// The actual string is "IndexationSucceed"
-						if reasonString, ok := conditionAsMap["reason"]; !ok || reasonString != "IndexationSucceed" {
-							// should not happen
-							log.Infof("Unexpected status of HelmRepository: %v", obj)
-						}
-						return true, nil
-					} else if statusString == "False" {
-						var msg string
-						if msg, ok = conditionAsMap["message"].(string); !ok {
-							msg = fmt.Sprintf("No message available in condition: %v", conditionAsMap)
-						}
-						return false, status.Errorf(codes.Internal, msg)
-					}
-				}
-				break
-			}
-		}
-	}
-	return false, nil
+	completed, success, _ := checkStatusReady(unstructuredRepo)
+	return completed && success
 }
 
 func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
@@ -140,9 +109,11 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 		return nil, err
 	}
 
-	// TODO: (gfichtenholt) the caller already checks this before invoking, see if I can remove this
-	ready, err := isRepoReady(unstructuredRepo)
-	if err != nil || !ready {
+	// this is just a future-proofing sanity check.
+	// At present, there is only one caller of indexOneRepo() and this check is already done by it,
+	// so this should never really happen
+	ready := isRepoReady(unstructuredRepo)
+	if !ready {
 		return nil, status.Errorf(codes.Internal,
 			"cannot index repository [%s] because it is not in 'Ready' state. error: %v",
 			repo.Name,
@@ -228,12 +199,7 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 
 // onAddOrModifyRepo essentially tells the cache what to store for a given key
 func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	ready, err := isRepoReady(unstructuredRepo)
-	if err != nil {
-		return nil, false, err
-	}
-
-	if ready {
+	if isRepoReady(unstructuredRepo) {
 		charts, err := indexOneRepo(unstructuredRepo)
 		if err != nil {
 			return nil, false, err
