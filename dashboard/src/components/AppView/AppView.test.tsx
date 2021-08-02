@@ -1,11 +1,10 @@
-import * as yaml from "js-yaml";
-import * as ReactRedux from "react-redux";
-import * as ReactRouter from "react-router";
-
 import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
+import * as yaml from "js-yaml";
+import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError, IResource } from "shared/types";
 import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
@@ -22,8 +21,9 @@ const routeParams = {
   namespace: "default",
   releaseName: "mr-sunshine",
 };
+const routePathParam = `/foo/${routeParams.cluster}/${routeParams.namespace}/${routeParams.releaseName}`;
+const routePath = "/foo/:cluster/:namespace/:releaseName";
 let spyOnUseDispatch: jest.SpyInstance;
-let spyOnUseParams: jest.SpyInstance;
 const appActions = { ...actions.apps };
 const kubeaActions = { ...actions.kube };
 
@@ -39,14 +39,12 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseParams = jest.spyOn(ReactRouter, "useParams").mockReturnValue(routeParams);
 });
 
 afterEach(() => {
   actions.apps = { ...appActions };
   actions.kube = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-  spyOnUseParams.mockRestore();
 });
 
 describe("AppViewComponent", () => {
@@ -105,7 +103,11 @@ describe("AppViewComponent", () => {
   it("renders a fetch error only", () => {
     const wrapper = mountWrapper(
       getStore({ apps: { error: new FetchError("boom!") } }),
-      <AppViewComponent />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppViewComponent />
+        </Route>
+      </MemoryRouter>,
     );
     expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(PageHeader)).not.toExist();
@@ -126,7 +128,11 @@ describe("AppViewComponent", () => {
 
       const wrapper = mountWrapper(
         getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppViewComponent />
+          </Route>
+        </MemoryRouter>,
       );
 
       const tabs = wrapper.find(ResourceTabs);
@@ -189,7 +195,11 @@ describe("AppViewComponent", () => {
 
       const wrapper = mountWrapper(
         getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppViewComponent />
+          </Route>
+        </MemoryRouter>,
       );
       expect(watchResource).toHaveBeenCalledWith(depResource);
       expect(watchResource).toHaveBeenCalledWith(svcResource);
@@ -208,7 +218,11 @@ describe("AppViewComponent", () => {
 
       const wrapper = mountWrapper(
         getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppViewComponent />
+          </Route>
+        </MemoryRouter>,
       );
 
       const tabs = wrapper.find(ResourceTabs);
@@ -231,7 +245,11 @@ describe("AppViewComponent", () => {
 
       const wrapper = mountWrapper(
         getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppViewComponent />
+          </Route>
+        </MemoryRouter>,
       );
 
       const tabs = wrapper.find(ResourceTabs);
@@ -255,7 +273,11 @@ describe("AppViewComponent", () => {
       expect(() => {
         mountWrapper(
           getStore({ apps: { selected: { ...appRelease, manifest } } }),
-          <AppViewComponent />,
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppViewComponent />
+            </Route>
+          </MemoryRouter>,
         );
       }).not.toThrow();
     });
@@ -271,7 +293,11 @@ describe("AppViewComponent", () => {
       expect(() => {
         const wrapper = mountWrapper(
           getStore({ apps: { selected: { ...appRelease, manifest } } }),
-          <AppViewComponent />,
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppViewComponent />
+            </Route>
+          </MemoryRouter>,
         );
         const tabs = wrapper.find(ResourceTabs);
         expect(tabs.prop("deployments")[0].name).toEqual("foo");
@@ -293,7 +319,11 @@ describe("AppViewComponent", () => {
     it("renders an error if error prop is set", () => {
       const wrapper = mountWrapper(
         getStore({ ...validState, apps: { ...validState.apps, error: new Error("Boom!") } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppViewComponent />
+          </Route>
+        </MemoryRouter>,
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();
@@ -303,7 +333,11 @@ describe("AppViewComponent", () => {
     it("renders a delete-error", () => {
       const wrapper = mountWrapper(
         getStore({ ...validState, apps: { ...validState.apps, error: new DeleteError("Boom!") } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppViewComponent />
+          </Route>
+        </MemoryRouter>,
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();
@@ -318,10 +352,13 @@ describe("AppViewComponent", () => {
       items: [obj, resources.deployment],
     };
     const manifest = generateYamlManifest([resources.service, list]);
-
     const wrapper = mountWrapper(
       getStore({ apps: { selected: { ...appRelease, manifest } } }),
-      <AppViewComponent />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppViewComponent />
+        </Route>
+      </MemoryRouter>,
     );
 
     const tabs = wrapper.find(ResourceTabs);
@@ -360,7 +397,11 @@ describe("AppViewComponent", () => {
 
     const wrapper = mountWrapper(
       getStore({ apps: { selected: { ...appRelease, manifest } } }),
-      <AppViewComponent />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppViewComponent />
+        </Route>
+      </MemoryRouter>,
     );
 
     const tabs = wrapper.find(ResourceTabs);
@@ -394,7 +435,11 @@ describe("AppViewComponent", () => {
     const manifest = generateYamlManifest(r);
     const wrapper = mountWrapper(
       getStore({ apps: { selected: { ...appRelease, manifest } } }),
-      <AppViewComponent />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppViewComponent />
+        </Route>
+      </MemoryRouter>,
     );
 
     const applicationStatus = wrapper.find(ApplicationStatusContainer);

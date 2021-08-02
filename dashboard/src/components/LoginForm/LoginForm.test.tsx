@@ -12,6 +12,7 @@ const emptyLocation: Location = {
   pathname: "",
   search: "",
   state: "",
+  key: "",
 };
 
 const defaultCluster = "default";
