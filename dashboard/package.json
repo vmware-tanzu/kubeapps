@@ -30,7 +30,7 @@
     "qs": "^6.10.1",
     "raf": "^3.4.1",
     "react": "^16.14.0",
-    "react-ace": "^9.4.1",
+    "react-ace": "^9.4.3",
     "react-compound-slider": "^3.3.1",
     "react-copy-to-clipboard": "^5.0.3",
     "react-diff-viewer": "^3.1.1",
