@@ -100,19 +100,9 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		return nil, nil
 	}
 
-	// see https://fluxcd.io/docs/components/helm/helmreleases/
-	name, found, err := unstructured.NestedString(unstructuredRelease, "metadata", "name")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"required field metadata.name not found on HelmRelease:\n%s, error: %v", prettyPrintMap(unstructuredRelease), err)
-	}
-
-	namespace, found, err := unstructured.NestedString(unstructuredRelease, "metadata", "namespace")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"field metadata.namespace not found on HelmRelease:\n%s, error: %v", prettyPrintMap(unstructuredRelease), err)
+	name, namespace, err := nameAndNamespace(unstructuredRelease)
+	if err != nil {
+		return nil, err
 	}
 
 	var pkgVersion *corev1.VersionReference
@@ -123,6 +113,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		}
 	}
 
+	// see https://fluxcd.io/docs/components/helm/helmreleases/
 	repoName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
 	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	chartName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
@@ -130,9 +121,14 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 
 	latestPkgVersion := ""
 	var pkgDetail *corev1.AvailablePackageDetail
+	// TODO: (gfichtenholt) according to docs chartVersion is optional
 	if repoName != "" && repoNamespace != "" && chartName != "" && chartVersion != "" {
-		url, _ := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
-		if url != "" {
+		// chartName here refers to a chart template, e.g. "nginx", rather than a specific chart instance
+		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
+		// by the HelmRepository (without any aliases), for example: podinfo". So, we can't exactly do a "get"
+		// on the name, but have to iterate the complete list of available charts for a match
+		url, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
+		if err == nil && url != "" {
 			chartID := fmt.Sprintf("%s/%s", repoName, chartName)
 			pkgDetail, _ = availablePackageDetailFromTarball(chartID, url)
 		}

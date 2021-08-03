@@ -168,18 +168,11 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 }
 
 func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
-	name, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "name")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"required field metadata.name not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
+	name, namespace, err := nameAndNamespace(unstructuredRepo)
+	if err != nil {
+		return nil, err
 	}
-	namespace, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "namespace")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"field metadata.namespace not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
-	}
+
 	url, found, err := unstructured.NestedString(unstructuredRepo, "spec", "url")
 	if err != nil || !found {
 		return nil, status.Errorf(

@@ -145,3 +145,22 @@ func checkStatusReady(unstructuredObj map[string]interface{}) (complete bool, su
 	}
 	return false, false, reason
 }
+
+func nameAndNamespace(unstructuredObj map[string]interface{}) (name, namespace string, err error) {
+	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
+	if err != nil || !found {
+		return "", "",
+			status.Errorf(codes.Internal, "required field metadata.name not found on resource: %v:\n%s",
+				err,
+				prettyPrintMap(unstructuredObj))
+	}
+
+	namespace, found, err = unstructured.NestedString(unstructuredObj, "metadata", "namespace")
+	if err != nil || !found {
+		return "", "",
+			status.Errorf(codes.Internal, "required field metadata.namespace not found on resource: %v:\n%s",
+				err,
+				prettyPrintMap(unstructuredObj))
+	}
+	return name, namespace, nil
+}

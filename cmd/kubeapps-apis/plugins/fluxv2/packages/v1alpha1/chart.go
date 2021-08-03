@@ -280,31 +280,43 @@ func isValidChart(chart *models.Chart) (bool, error) {
 	return true, nil
 }
 
-func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, chartName, version string) (string, error) {
+// chartVersion here could be a semver constraint expression, e.g. something like "<= 6.7.1", as opposed to a literal
+// expression which is how findUrlForChartInList is using it
+func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, chartName, chartVersion string) (string, error) {
+	var semVerConstraints *semver.Constraints
+	if chartVersion != "" {
+		var err error
+		if semVerConstraints, err = semver.NewConstraint(chartVersion); err != nil {
+			return "", err
+		}
+	}
 	for _, unstructuredChart := range chartList.Items {
 		thisChartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
 		thisRepoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
 
 		if err == nil && err2 == nil && found && found2 && repoName == thisRepoName && chartName == thisChartName {
-			done, success, reason := isChartPullComplete(unstructuredChart.Object)
-			if done {
+			if done, success, reason := isChartPullComplete(unstructuredChart.Object); done {
 				if success {
-					url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
-					if err != nil || !found {
+					if url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url"); err != nil || !found {
 						return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
-					}
-					if version != "" {
-						// refer to https://github.com/fluxcd/source-controller/blob/main/api/v1beta1/helmchart_types.go &
-						// https://github.com/fluxcd/source-controller/blob/40a47670aadebc0f4e3a623be47725106bac2d55/api/v1beta1/artifact_types.go#L27
-						chartVersion, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "artifact", "revision")
-						if err != nil || !found {
-							return "", status.Errorf(codes.Internal, "expected field status.artifact.revision not found on HelmChart: %v:\n%v", err, unstructuredChart)
-						} else if chartVersion != version {
-							continue
+					} else {
+						if semVerConstraints != nil {
+							// refer to https://github.com/fluxcd/source-controller/blob/main/api/v1beta1/helmchart_types.go &
+							// https://github.com/fluxcd/source-controller/blob/40a47670aadebc0f4e3a623be47725106bac2d55/api/v1beta1/artifact_types.go#L27
+							artifactVerString, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "artifact", "revision")
+							if err != nil || !found {
+								return "", status.Errorf(codes.Internal, "expected field status.artifact.revision not found on HelmChart: %v:\n%v", err, unstructuredChart)
+							} else if artifactVerString != "" && semVerConstraints != nil {
+								if artifactVer, err := semver.NewVersion(artifactVerString); err != nil {
+									return "", err
+								} else if !semVerConstraints.Check(artifactVer) {
+									continue
+								}
+							}
 						}
+						log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
+						return url, nil
 					}
-					log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
-					return url, nil
 				} else {
 					return "", status.Errorf(codes.Internal, "Chart pull failed due to %s", reason)
 				}

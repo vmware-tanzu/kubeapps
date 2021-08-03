@@ -460,20 +460,10 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
 func (c NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
-	if err != nil || !found {
-		return "", status.Errorf(codes.Internal, "required field metadata.name not found on: %v:\n%s",
-			err,
-			prettyPrintMap(unstructuredObj))
+	name, namespace, err := nameAndNamespace(unstructuredObj)
+	if err != nil {
+		return "", err
 	}
-
-	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
-	if err != nil || !found {
-		return "", status.Errorf(codes.Internal, "required field metadata.namespace not found on: %v:\n%s",
-			err,
-			prettyPrintMap(unstructuredObj))
-	}
-
 	return c.keyForNamespaceAndName(namespace, name), nil
 }
 

@@ -37,15 +37,16 @@ import (
 )
 
 type testSpecGetInstalledPackageSummaries struct {
-	repoName         string
-	repoNamespace    string
-	repoIndex        string
-	chartName        string
-	chartTarGz       string
-	chartRevision    string
-	releaseName      string
-	releaseNamespace string
-	releaseStatus    map[string]interface{}
+	repoName             string
+	repoNamespace        string
+	repoIndex            string
+	chartName            string
+	chartTarGz           string
+	chartSpecVersion     string // could be semver, e.g. "<=6.7.1"
+	chartArtifactVersion string // must be specific, e.g. "6.7.1"
+	releaseName          string
+	releaseNamespace     string
+	releaseStatus        map[string]interface{}
 }
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
@@ -179,13 +180,28 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				NextPageToken:             "",
 			},
 		},
+		{
+			name: "returns installed package with semver constraint expression",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+			},
+			existingObjs: []testSpecGetInstalledPackageSummaries{
+				airflow_existing_spec_semver,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					airflow_summary_semver,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs := []runtime.Object{}
-			for _, available := range tc.existingObjs {
-				tarGzBytes, err := ioutil.ReadFile(available.chartTarGz)
+			for _, existing := range tc.existingObjs {
+				tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -198,11 +214,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				defer ts.Close()
 
 				chartSpec := map[string]interface{}{
-					"chart": available.chartName,
+					"chart": existing.chartName,
 					"sourceRef": map[string]interface{}{
-						"name": available.repoName,
+						"name": existing.repoName,
 						"kind": fluxHelmRepository,
 					},
+					"version":  existing.chartSpecVersion,
 					"interval": "10m",
 				}
 				chartStatus := map[string]interface{}{
@@ -214,29 +231,29 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 					},
 					"artifact": map[string]interface{}{
-						"revision": available.chartRevision,
+						"revision": existing.chartArtifactVersion,
 					},
 					"url": ts.URL,
 				}
-				chart := newChart(available.chartName, available.repoNamespace, chartSpec, chartStatus)
+				chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
 				runtimeObjs = append(runtimeObjs, chart)
 
 				releaseSpec := map[string]interface{}{
 					"chart": map[string]interface{}{
 						"spec": map[string]interface{}{
-							"chart":   available.chartName,
-							"version": available.chartRevision,
+							"chart":   existing.chartName,
+							"version": existing.chartSpecVersion,
 							"sourceRef": map[string]interface{}{
-								"name":      available.repoName,
+								"name":      existing.repoName,
 								"kind":      fluxHelmRepository,
-								"namespace": available.repoNamespace,
+								"namespace": existing.repoNamespace,
 							},
 							"interval": "1m",
 						},
 					},
 				}
 
-				release := newRelease(available.releaseName, available.releaseNamespace, releaseSpec, available.releaseStatus)
+				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
 				runtimeObjs = append(runtimeObjs, release)
 			}
 
@@ -483,15 +500,40 @@ var airflow_summary_installed = &corev1.InstalledPackageSummary{
 	},
 }
 
+var airflow_summary_semver = &corev1.InstalledPackageSummary{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-2",
+		},
+		Identifier: "my-airflow",
+	},
+	Name:    "my-airflow",
+	IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "<=6.7.1",
+	},
+	CurrentPkgVersion: "6.7.1",
+	LatestPkgVersion:  "10.2.1",
+	CurrentAppVersion: "1.10.12",
+	ShortDescription:  "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+	PkgDisplayName:    "airflow",
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded",
+	},
+}
+
 var redis_existing_spec_completed = testSpecGetInstalledPackageSummaries{
-	repoName:         "bitnami-1",
-	repoNamespace:    "default",
-	repoIndex:        "testdata/redis-many-versions.yaml",
-	chartName:        "redis",
-	chartTarGz:       "testdata/redis-14.4.0.tgz",
-	chartRevision:    "14.4.0",
-	releaseName:      "my-redis",
-	releaseNamespace: "namespace-1",
+	repoName:             "bitnami-1",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/redis-many-versions.yaml",
+	chartName:            "redis",
+	chartTarGz:           "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:     "14.4.0",
+	chartArtifactVersion: "14.4.0",
+	releaseName:          "my-redis",
+	releaseNamespace:     "namespace-1",
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
@@ -506,14 +548,15 @@ var redis_existing_spec_completed = testSpecGetInstalledPackageSummaries{
 }
 
 var redis_existing_spec_failed = testSpecGetInstalledPackageSummaries{
-	repoName:         "bitnami-1",
-	repoNamespace:    "default",
-	repoIndex:        "testdata/redis-many-versions.yaml",
-	chartName:        "redis",
-	chartTarGz:       "testdata/redis-14.4.0.tgz",
-	chartRevision:    "14.4.0",
-	releaseName:      "my-redis",
-	releaseNamespace: "namespace-1",
+	repoName:             "bitnami-1",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/redis-many-versions.yaml",
+	chartName:            "redis",
+	chartTarGz:           "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:     "14.4.0",
+	chartArtifactVersion: "14.4.0",
+	releaseName:          "my-redis",
+	releaseNamespace:     "namespace-1",
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
@@ -527,14 +570,38 @@ var redis_existing_spec_failed = testSpecGetInstalledPackageSummaries{
 }
 
 var airflow_existing_spec_completed = testSpecGetInstalledPackageSummaries{
-	repoName:         "bitnami-2",
-	repoNamespace:    "default",
-	repoIndex:        "testdata/airflow-many-versions.yaml",
-	chartName:        "airflow",
-	chartTarGz:       "testdata/airflow-6.7.1.tgz",
-	chartRevision:    "6.7.1",
-	releaseName:      "my-airflow",
-	releaseNamespace: "namespace-2",
+	repoName:             "bitnami-2",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/airflow-many-versions.yaml",
+	chartName:            "airflow",
+	chartTarGz:           "testdata/airflow-6.7.1.tgz",
+	chartSpecVersion:     "6.7.1",
+	chartArtifactVersion: "6.7.1",
+	releaseName:          "my-airflow",
+	releaseNamespace:     "namespace-2",
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "True",
+				"reason": "ReconciliationSucceeded",
+			},
+		},
+		"lastAppliedRevision":   "6.7.1",
+		"lastAttemptedRevision": "6.7.1",
+	},
+}
+
+var airflow_existing_spec_semver = testSpecGetInstalledPackageSummaries{
+	repoName:             "bitnami-2",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/airflow-many-versions.yaml",
+	chartName:            "airflow",
+	chartTarGz:           "testdata/airflow-6.7.1.tgz",
+	chartSpecVersion:     "<=6.7.1",
+	chartArtifactVersion: "6.7.1",
+	releaseName:          "my-airflow",
+	releaseNamespace:     "namespace-2",
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
@@ -549,14 +616,15 @@ var airflow_existing_spec_completed = testSpecGetInstalledPackageSummaries{
 }
 
 var redis_existing_spec_pending = testSpecGetInstalledPackageSummaries{
-	repoName:         "bitnami-1",
-	repoNamespace:    "default",
-	repoIndex:        "testdata/redis-many-versions.yaml",
-	chartName:        "redis",
-	chartTarGz:       "testdata/redis-14.4.0.tgz",
-	chartRevision:    "14.4.0",
-	releaseName:      "my-redis",
-	releaseNamespace: "namespace-1",
+	repoName:             "bitnami-1",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/redis-many-versions.yaml",
+	chartName:            "redis",
+	chartTarGz:           "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:     "14.4.0",
+	chartArtifactVersion: "14.4.0",
+	releaseName:          "my-redis",
+	releaseNamespace:     "namespace-1",
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
