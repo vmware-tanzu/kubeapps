@@ -280,8 +280,9 @@ func isValidChart(chart *models.Chart) (bool, error) {
 	return true, nil
 }
 
-// chartVersion here could be a semver constraint expression, e.g. something like "<= 6.7.1", as opposed to a literal
-// expression which is how findUrlForChartInList is using it
+// note that, chartVersion here could be a semver constraint expression, e.g. something like "<= 6.7.1",
+// as opposed to a simple literal expression, like "1.2.3"
+// see https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
 func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, chartName, chartVersion string) (string, error) {
 	var semVerConstraints *semver.Constraints
 	if chartVersion != "" {
