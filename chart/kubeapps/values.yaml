@@ -144,7 +144,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.21.1-debian-10-r4
+    tag: 1.21.1-debian-10-r24
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -445,12 +445,6 @@ dashboard:
   ##   "login-oidc": "Login with my company SSO"
   ##
   customLocale: ""
-  ## @param dashboard.defaultTheme Default theme used in the Dashboard if the user has not selected any theme yet.
-  ## enum: [ "light", "dark" ]
-  ## e.g:
-  ## defaultTheme: dark
-  ##
-  defaultTheme: ""
   ## @param dashboard.replicaCount Number of Dashboard replicas to deploy
   ##
   replicaCount: 2
@@ -1257,7 +1251,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.1.3-debian-10-r63
+    tag: 7.1.3-debian-10-r79
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1457,7 +1451,6 @@ clusters:
 ##
 featureFlags:
   invalidateCache: true
-  kubeappsAPIsServer: false
 ## RBAC configuration
 ##
 rbac:
@@ -1476,7 +1469,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.21.1-debian-10-r4
+  tag: 1.21.1-debian-10-r24
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
