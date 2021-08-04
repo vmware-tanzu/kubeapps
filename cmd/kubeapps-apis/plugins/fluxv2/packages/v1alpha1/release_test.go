@@ -195,6 +195,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "returns installed package with latest '*' version",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+			},
+			existingObjs: []testSpecGetInstalledPackageSummaries{
+				redis_existing_spec_latest,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					redis_summary_latest,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -500,6 +515,30 @@ var airflow_summary_installed = &corev1.InstalledPackageSummary{
 	},
 }
 
+var redis_summary_latest = &corev1.InstalledPackageSummary{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+	},
+	Name:    "my-redis",
+	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "*",
+	},
+	CurrentPkgVersion: "14.4.0",
+	CurrentAppVersion: "6.2.4",
+	PkgDisplayName:    "redis",
+	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded",
+	},
+	LatestPkgVersion: "14.6.1",
+}
+
 var airflow_summary_semver = &corev1.InstalledPackageSummary{
 	InstalledPackageRef: &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
@@ -633,6 +672,29 @@ var redis_existing_spec_pending = testSpecGetInstalledPackageSummaries{
 				"reason": "Progressing",
 			},
 		},
+		"lastAttemptedRevision": "14.4.0",
+	},
+}
+
+var redis_existing_spec_latest = testSpecGetInstalledPackageSummaries{
+	repoName:             "bitnami-1",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/redis-many-versions.yaml",
+	chartName:            "redis",
+	chartTarGz:           "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:     "*",
+	chartArtifactVersion: "14.4.0",
+	releaseName:          "my-redis",
+	releaseNamespace:     "namespace-1",
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "True",
+				"reason": "ReconciliationSucceeded",
+			},
+		},
+		"lastAppliedRevision":   "14.4.0",
 		"lastAttemptedRevision": "14.4.0",
 	},
 }

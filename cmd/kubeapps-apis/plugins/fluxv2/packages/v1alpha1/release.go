@@ -121,7 +121,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 
 	latestPkgVersion := ""
 	var pkgDetail *corev1.AvailablePackageDetail
-	// TODO: (gfichtenholt) according to docs chartVersion is optional
+	// according to docs chartVersion is optional (defaults to '*' i.e. latest when omitted)
 	if repoName != "" && repoNamespace != "" && chartName != "" && chartVersion != "" {
 		// chartName here refers to a chart template, e.g. "nginx", rather than a specific chart instance
 		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
