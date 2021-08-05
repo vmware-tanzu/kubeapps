@@ -48,7 +48,7 @@
     "react-test-renderer": "^16.14.0",
     "react-tooltip": "^4.2.21",
     "react-transition-group": "^4.4.2",
-    "redux": "^4.1.0",
+    "redux": "^4.1.1",
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.3.0",
     "remark-gfm": "^1.0.0",
