@@ -1219,10 +1219,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.5.0":
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.0.tgz#f6550f893188a013fa479cb21ec86eba3b01eca6"
-  integrity sha512-puC9gmNNAszumrAALQkkka+WfOyQet1F1g5NlEr2PlIv8Kd3i8Pvt+hy4WzLOpkO0ASwnbQQ3xs4plO3AqSdHA==
+"@cds/core@^5.5.1":
+  version "5.5.1"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.1.tgz#95032e01ed5b5e1f2ca7c3740016c37cd5bb74a5"
+  integrity sha512-J266dBTDwV4LLWuz6pV/Ie8BuZuAK+Tl1wtqZYw0lKVv41pAs+viC7uWsICefEeoJo5YKseh4r3+Lh+US2eH7w==
   dependencies:
     lit "2.0.0-rc.2"
     ramda "^0.27.1"
@@ -1232,10 +1232,10 @@
     "@types/resize-observer-browser" "^0.1.5"
     modern-normalize "1.1.0"
 
-"@cds/react@^5.5.0":
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.0.tgz#b39deb12b0bd7bb747b4cf416c2317ee46d814d6"
-  integrity sha512-xdtCt1hfutdTqZtnwst1CIW5N/cwBwquaP48fPiakhpseYBvoLtWOFoDZEKW+TTSmgmXFzue5eOFXIwsPdOVTw==
+"@cds/react@^5.5.1":
+  version "5.5.1"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.1.tgz#accee28e62b60feaf205af33998446e69979b759"
+  integrity sha512-N3Epdu8IMe8j7SjHAyHJYD7qzb4k+cjP/l7bQ3wtp12NPl2wjrYvgcEoo8lWoqfmNFggDlqg2s7pd5aLCrvx8A==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
@@ -1243,10 +1243,10 @@
     "@cds/city" "^1.1.0"
     modern-normalize "^1.1.0"
 
-"@clr/ui@^5.4.1":
-  version "5.4.1"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-5.4.1.tgz#686bb3db5b369add42be59e7b24da6c2dd376a0c"
-  integrity sha512-E03VDj43moarX2mp4U48h9Nrx9N6foDPjzqTFqKvjFaAIzEs/5GM8cNlo6EizVBV7y3+MwoM72bT5XJTygRL6w==
+"@clr/ui@^12.0.1":
+  version "12.0.1"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.1.tgz#4844c859c7a83c557b73dd8f4727746488b7067f"
+  integrity sha512-GwJnCx6OCG/D99CHfzySVAlLRxHxiiXSylV9ioo+VZ5VPaEz9GZt2NWNPujLfVD2Lv0tUwMK4zQO/30737XXdA==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -12356,10 +12356,10 @@ redux@=3.7.2:
     loose-envify "^1.1.0"
     symbol-observable "^1.0.3"
 
-redux@^4.0.0, redux@^4.0.5, redux@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/redux/-/redux-4.1.0.tgz#eb049679f2f523c379f1aff345c8612f294c88d4"
-  integrity sha512-uI2dQN43zqLWCt6B/BMGRMY6db7TTY4qeHHfGeKb3EOhmOKjU3KdWvNLJyqaHRksv/ErdNH7cFZWg9jXtewy4g==
+redux@^4.0.0, redux@^4.0.5, redux@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/redux/-/redux-4.1.1.tgz#76f1c439bb42043f985fbd9bf21990e60bd67f47"
+  integrity sha512-hZQZdDEM25UY2P493kPYuKqviVwZ58lEmGQNeQ+gXa+U0gYPUBf7NKYazbe3m+bs/DzM/ahN12DbF+NG8i0CWw==
   dependencies:
     "@babel/runtime" "^7.9.2"
 
@@ -12869,10 +12869,10 @@ sass-loader@^10.0.5:
     schema-utils "^3.0.0"
     semver "^7.3.2"
 
-sass@^1.37.0:
-  version "1.37.0"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.37.0.tgz#f1b03a9d072ee9053a29d125c8130c78e92827c2"
-  integrity sha512-B+Tu6cSAG8ffs/cqsZl/bgSH2pCmavDaPTYAoW8QA1qNHh/RqndNfVKuABKYkLjUQ5aq/BnCENVpE80cqdSM1w==
+sass@^1.37.5:
+  version "1.37.5"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.37.5.tgz#f6838351f7cc814c4fcfe1d9a20e0cabbd1e7b3c"
+  integrity sha512-Cx3ewxz9QB/ErnVIiWg2cH0kiYZ0FPvheDTVC6BsiEGBTZKKZJ1Gq5Kq6jy3PKtL6+EJ8NIoaBW/RSd2R6cZOA==
   dependencies:
     chokidar ">=3.0.0 <4.0.0"
 
@@ -14231,10 +14231,10 @@ ts-proto-descriptors@^1.2.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.82.2:
-  version "1.82.2"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.82.2.tgz#76231b577f81e4832587eaf44116575db341bdf2"
-  integrity sha512-Hceptz4oCnUTeGYbGepNNDg7drYOdv0M+m3LSv8V5hehsilsx5Ca8bhUAYGcQad+CDvbeUDM6PrzW4GGfJXi9A==
+ts-proto@^1.82.5:
+  version "1.82.5"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.82.5.tgz#9dd11785e314e2ae5467c09acdb739de010487b7"
+  integrity sha512-RqlTxosROuYdeWRLa6Qu8Wz9dc3fpAh+R8PELUlhSSZlUiEkTos662SgKHOB8UoJd9CBMSyJPRC7z8k2WvWzhw==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
