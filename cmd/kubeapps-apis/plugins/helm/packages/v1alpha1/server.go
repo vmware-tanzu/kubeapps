@@ -201,8 +201,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	// This plugin will include, as part of the GetAvailablePackageSummariesResponse,
-	// a "Categories" field containing only the distinct category names considering the FilterOptions
-	chartCategories, err := s.manager.GetAllChartCategories(cq)
+	// a "Categories" field containing only the distinct category names considering just the namespace
+	chartCategories, err := s.manager.GetAllChartCategories(utils.ChartQuery{Namespace: namespace})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to fetch chart categories: %v", err)
 	}
