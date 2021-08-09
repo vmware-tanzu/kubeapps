@@ -24,7 +24,7 @@ const repos = "foo";
 const defaultPage = 1;
 const defaultSize = 0;
 
-const chartItem: AvailablePackageSummary = {
+const defaultAvailablePackageSummary: AvailablePackageSummary = {
   name: "foo",
   categories: [""],
   displayName: "foo",
@@ -66,7 +66,11 @@ interface IFetchChartsTestCase {
 const fetchChartsTestCases: IFetchChartsTestCase[] = [
   {
     name: "fetches charts with query",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "1", categories: ["foo"] },
+    response: {
+      availablePackageSummaries: [defaultAvailablePackageSummary],
+      nextPageToken: "1",
+      categories: ["foo"],
+    },
     requestedRepos: "",
     requestedPage: 1,
     requestedQuery: "foo",
@@ -75,21 +79,24 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: [chartItem],
+          response: {
+            availablePackageSummaries: [defaultAvailablePackageSummary],
+            nextPageToken: "1",
+            categories: ["foo"],
+          },
           page: 1,
-          nextPageToken: "1",
         } as IReceiveChartsActionPayload,
-      },
-      {
-        type: getType(actions.charts.receiveChartCategories),
-        payload: ["foo"],
       },
     ],
     expectedParams: [cluster, namespace, "", 1, defaultSize, "foo"],
   },
   {
     name: "fetches charts from a repo (first page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
+    response: {
+      availablePackageSummaries: [defaultAvailablePackageSummary],
+      nextPageToken: "3",
+      categories: ["foo"],
+    },
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
@@ -97,21 +104,24 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: [chartItem],
+          response: {
+            availablePackageSummaries: [defaultAvailablePackageSummary],
+            nextPageToken: "3",
+            categories: ["foo"],
+          },
           page: 1,
-          nextPageToken: "3",
         } as IReceiveChartsActionPayload,
-      },
-      {
-        type: getType(actions.charts.receiveChartCategories),
-        payload: ["foo"],
       },
     ],
     expectedParams: [cluster, namespace, repos, 1, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (middle page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
+    response: {
+      availablePackageSummaries: [defaultAvailablePackageSummary],
+      nextPageToken: "3",
+      categories: ["foo"],
+    },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -119,21 +129,24 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: [chartItem],
+          response: {
+            availablePackageSummaries: [defaultAvailablePackageSummary],
+            nextPageToken: "3",
+            categories: ["foo"],
+          },
           page: 2,
-          nextPageToken: "3",
         } as IReceiveChartsActionPayload,
-      },
-      {
-        type: getType(actions.charts.receiveChartCategories),
-        payload: ["foo"],
       },
     ],
     expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (last page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
+    response: {
+      availablePackageSummaries: [defaultAvailablePackageSummary],
+      nextPageToken: "3",
+      categories: ["foo"],
+    },
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
@@ -141,21 +154,24 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: [chartItem],
+          response: {
+            availablePackageSummaries: [defaultAvailablePackageSummary],
+            nextPageToken: "3",
+            categories: ["foo"],
+          },
           page: 3,
-          nextPageToken: "3",
         } as IReceiveChartsActionPayload,
-      },
-      {
-        type: getType(actions.charts.receiveChartCategories),
-        payload: ["foo"],
       },
     ],
     expectedParams: [cluster, namespace, repos, 3, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (already processed page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
+    response: {
+      availablePackageSummaries: [defaultAvailablePackageSummary],
+      nextPageToken: "3",
+      categories: ["foo"],
+    },
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
@@ -163,21 +179,24 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: [chartItem],
+          response: {
+            availablePackageSummaries: [defaultAvailablePackageSummary],
+            nextPageToken: "3",
+            categories: ["foo"],
+          },
           page: 2,
-          nextPageToken: "3",
         } as IReceiveChartsActionPayload,
-      },
-      {
-        type: getType(actions.charts.receiveChartCategories),
-        payload: ["foo"],
       },
     ],
     expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
     name: "fetches charts from a repo (off-limits page)",
-    response: { availablePackageSummaries: [chartItem], nextPageToken: "3", categories: ["foo"] },
+    response: {
+      availablePackageSummaries: [defaultAvailablePackageSummary],
+      nextPageToken: "3",
+      categories: ["foo"],
+    },
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
@@ -185,14 +204,13 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
-          items: [chartItem],
+          response: {
+            availablePackageSummaries: [defaultAvailablePackageSummary],
+            nextPageToken: "3",
+            categories: ["foo"],
+          },
           page: 4,
-          nextPageToken: "3",
         } as IReceiveChartsActionPayload,
-      },
-      {
-        type: getType(actions.charts.receiveChartCategories),
-        payload: ["foo"],
       },
     ],
     expectedParams: [cluster, namespace, repos, 4, defaultSize, undefined],
