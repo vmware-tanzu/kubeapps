@@ -99,10 +99,13 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 
 	// did not find the chart, need to create
 	// see https://fluxcd.io/docs/components/source/helmcharts/
-	// TODO (gfichtenholt)
+	// notes:
 	// 1. HelmChart object needs to be co-located in the same namespace as the HelmRepository it is referencing.
-	// 2. flux impersonates a "super" user when doing this (see fluxv2 plug-in specific notes at the end of
-	//	design doc). We should probably be doing simething similar to avoid RBAC-related problems
+	// 2. As of the time of this writing, flux impersonates a "super" user when doing this
+	// (see fluxv2 plug-in specific notes at the end of design doc). However, they are backing away from
+	// this model toward this proposal
+	// https://github.com/fluxcd/flux2/blob/1c5a25313561771d585c4192d7f330b45753cd99/docs/proposals/secure-impersonation.md
+	// So we may not necessarily want to follow what flux does today
 	unstructuredChart := newFluxHelmChart(chartName, repoName, chartVersion)
 
 	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
