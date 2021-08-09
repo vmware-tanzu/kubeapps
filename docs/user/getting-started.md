@@ -38,7 +38,7 @@ To retrieve the token,
 ### On Linux/macOS:
 
 ```bash
-kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep kubeapps-operator-token) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
+kubectl get --namespace default secret $(kubectl get --namespace default serviceaccount kubeapps-operator -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep kubeapps-operator-token) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
 ```
 
 ### On Windows:
@@ -48,12 +48,12 @@ Create a file called `GetDashToken.cmd` with the following lines in it:
 ```bat
 @ECHO OFF
 REM Get the Service Account
-kubectl get serviceaccount kubeapps-operator -o jsonpath={.secrets[].name} > s.txt
+kubectl get --namespace default serviceaccount kubeapps-operator -o jsonpath={.secrets[].name} > s.txt
 SET /p ks=<s.txt
 DEL s.txt
 
 REM Get the Base64 encoded token
-kubectl get secret %ks% -o jsonpath={.data.token} > b64.txt
+kubectl get --namespace default secret %ks% -o jsonpath={.data.token} > b64.txt
 
 REM Decode The Token
 DEL token.txt
