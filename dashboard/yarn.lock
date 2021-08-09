@@ -5158,7 +5158,7 @@ detect-port-alt@1.1.6:
     address "^1.0.1"
     debug "^2.6.0"
 
-diff-match-patch@^1.0.4:
+diff-match-patch@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/diff-match-patch/-/diff-match-patch-1.0.5.tgz#abb584d5f10cd1196dfc55aa03701592ae3f7b37"
   integrity sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==
@@ -11806,13 +11806,13 @@ raw-body@2.4.0:
     iconv-lite "0.4.24"
     unpipe "1.0.0"
 
-react-ace@^9.4.1:
-  version "9.4.1"
-  resolved "https://registry.yarnpkg.com/react-ace/-/react-ace-9.4.1.tgz#5f446c2764a0b615e8d00cd251b9b35d95365e37"
-  integrity sha512-vhOFrB5Xy++mcPNc6wc1mwMFP/FZOnYxQPqgRl/dLfkZBbrJf4SAgXaa6PU4AXWu1u5bfxOmRwwHaZPrLb6d9Q==
+react-ace@^9.4.3:
+  version "9.4.3"
+  resolved "https://registry.yarnpkg.com/react-ace/-/react-ace-9.4.3.tgz#4534f4bbbfba4bdc723c8b0cd33e7d876f8d78ed"
+  integrity sha512-WKknvcOZLhMtTSicRll94SjfZe6XEvZO6OpjJQCUGDcygZwfopkizeVntHX2ldMystbcmVES1RrjXUmyw0+wfQ==
   dependencies:
     ace-builds "^1.4.12"
-    diff-match-patch "^1.0.4"
+    diff-match-patch "^1.0.5"
     lodash.get "^4.4.2"
     lodash.isequal "^4.5.0"
     prop-types "^15.7.2"
@@ -12368,10 +12368,10 @@ redux@=3.7.2:
     loose-envify "^1.1.0"
     symbol-observable "^1.0.3"
 
-redux@^4.0.0, redux@^4.0.5, redux@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/redux/-/redux-4.1.0.tgz#eb049679f2f523c379f1aff345c8612f294c88d4"
-  integrity sha512-uI2dQN43zqLWCt6B/BMGRMY6db7TTY4qeHHfGeKb3EOhmOKjU3KdWvNLJyqaHRksv/ErdNH7cFZWg9jXtewy4g==
+redux@^4.0.0, redux@^4.0.5, redux@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/redux/-/redux-4.1.1.tgz#76f1c439bb42043f985fbd9bf21990e60bd67f47"
+  integrity sha512-hZQZdDEM25UY2P493kPYuKqviVwZ58lEmGQNeQ+gXa+U0gYPUBf7NKYazbe3m+bs/DzM/ahN12DbF+NG8i0CWw==
   dependencies:
     "@babel/runtime" "^7.9.2"
 
@@ -12881,10 +12881,10 @@ sass-loader@^10.0.5:
     schema-utils "^3.0.0"
     semver "^7.3.2"
 
-sass@^1.36.0:
-  version "1.36.0"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.36.0.tgz#5912ef9d5d16714171ba11cb17edb274c4bbc07e"
-  integrity sha512-fQzEjipfOv5kh930nu3Imzq3ie/sGDc/4KtQMJlt7RRdrkQSfe37Bwi/Rf/gfuYHsIuE1fIlDMvpyMcEwjnPvg==
+sass@^1.37.5:
+  version "1.37.5"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.37.5.tgz#f6838351f7cc814c4fcfe1d9a20e0cabbd1e7b3c"
+  integrity sha512-Cx3ewxz9QB/ErnVIiWg2cH0kiYZ0FPvheDTVC6BsiEGBTZKKZJ1Gq5Kq6jy3PKtL6+EJ8NIoaBW/RSd2R6cZOA==
   dependencies:
     chokidar ">=3.0.0 <4.0.0"
 
@@ -14243,10 +14243,10 @@ ts-proto-descriptors@^1.2.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.82.2:
-  version "1.82.2"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.82.2.tgz#76231b577f81e4832587eaf44116575db341bdf2"
-  integrity sha512-Hceptz4oCnUTeGYbGepNNDg7drYOdv0M+m3LSv8V5hehsilsx5Ca8bhUAYGcQad+CDvbeUDM6PrzW4GGfJXi9A==
+ts-proto@^1.82.5:
+  version "1.82.5"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.82.5.tgz#9dd11785e314e2ae5467c09acdb739de010487b7"
+  integrity sha512-RqlTxosROuYdeWRLa6Qu8Wz9dc3fpAh+R8PELUlhSSZlUiEkTos662SgKHOB8UoJd9CBMSyJPRC7z8k2WvWzhw==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"

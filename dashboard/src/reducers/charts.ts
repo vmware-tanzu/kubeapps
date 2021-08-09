@@ -62,17 +62,19 @@ const chartsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts): {
       const isLastPage =
-        action.payload.page >= parseInt(action.payload.nextPageToken) ||
-        action.payload.nextPageToken === "";
+        action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
+        action.payload.response.nextPageToken === "";
       return {
         ...state,
         isFetching: false,
         hasFinishedFetching: isLastPage,
-        items: uniqBy([...state.items, ...action.payload.items], "availablePackageRef.identifier"),
+        categories: action.payload.response.categories,
+        items: uniqBy(
+          [...state.items, ...action.payload.response.availablePackageSummaries],
+          "availablePackageRef.identifier",
+        ),
       };
     }
-    case getType(actions.charts.receiveChartCategories):
-      return { ...state, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,

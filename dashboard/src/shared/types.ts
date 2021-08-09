@@ -1,5 +1,8 @@
 import { RouterState } from "connected-react-router";
-import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageSummary,
+  GetAvailablePackageSummariesResponse,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as jsonSchema from "json-schema";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
@@ -45,11 +48,6 @@ export interface IRepo {
   url: string;
 }
 
-export interface IChartCategory {
-  name: string;
-  count: number;
-}
-
 export interface IChartVersion {
   id: string;
   attributes: IChartVersionAttributes;
@@ -77,9 +75,8 @@ export interface IChart {
 }
 
 export interface IReceiveChartsActionPayload {
-  items: AvailablePackageSummary[];
+  response: GetAvailablePackageSummariesResponse;
   page: number;
-  nextPageToken: string;
 }
 
 export interface IChartAttributes {
@@ -115,7 +112,7 @@ export interface IChartState {
     schema?: jsonSchema.JSONSchema4;
   };
   items: AvailablePackageSummary[];
-  categories: IChartCategory[];
+  categories: string[];
   size: number;
 }
 

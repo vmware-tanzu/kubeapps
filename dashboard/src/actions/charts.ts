@@ -6,7 +6,6 @@ import { ActionType, deprecated } from "typesafe-actions";
 import Chart from "../shared/Chart";
 import {
   FetchError,
-  IChartCategory,
   IChartVersion,
   IReceiveChartsActionPayload,
   IStoreState,
@@ -23,12 +22,6 @@ export const requestChart = createAction("REQUEST_CHART");
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
   return (payload: IReceiveChartsActionPayload) => resolve(payload);
-});
-
-export const requestChartsCategories = createAction("REQUEST_CHARTS_CATEGORIES");
-
-export const receiveChartCategories = createAction("RECEIVE_CHART_CATEGORIES", resolve => {
-  return (categories: IChartCategory[]) => resolve(categories);
 });
 
 export const receiveChartVersions = createAction("RECEIVE_CHART_VERSIONS", resolve => {
@@ -78,9 +71,7 @@ const allActions = [
   errorChart,
   clearErrorChart,
   errorChartCatetories,
-  requestChartsCategories,
   receiveCharts,
-  receiveChartCategories,
   receiveChartVersions,
   selectChartVersion,
   requestDeployedChartVersion,
@@ -114,30 +105,12 @@ export function fetchCharts(
       );
       dispatch(
         receiveCharts({
-          items: response.availablePackageSummaries,
+          response,
           page,
-          nextPageToken: response.nextPageToken,
         }),
       );
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));
-    }
-  };
-}
-
-export function fetchChartCategories(
-  cluster: string,
-  namespace: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async dispatch => {
-    dispatch(requestChartsCategories());
-    try {
-      const categories = await Chart.fetchChartCategories(cluster, namespace);
-      if (categories) {
-        dispatch(receiveChartCategories(categories));
-      }
-    } catch (e) {
-      dispatch(errorChartCatetories(new FetchError(e.message)));
     }
   };
 }
