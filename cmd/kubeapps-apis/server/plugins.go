@@ -264,14 +264,9 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 	var clustersConfig kube.ClustersConfig
 	var err error
 
-	if !serveOpts.UnsafeLocalDevKubeconfig {
-		// get the default rest inCluster config for the kube.NewClusterConfig function
-		restConfig, err = rest.InClusterConfig()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
-		}
-	} else {
-		// using the local kubeconfig instead of the inCluster config
+	if serveOpts.UnsafeLocalDevKubeconfig {
+		// if using the local kubeconfig, read it from the KUBECONFIG path and
+		// create the restConfig
 		log.Warningf("Using the local kubeconfig configuration (in KUBECONFIG='%s' envar) since you passed --unsafe-local-dev-kubeconfig=true", os.Getenv("KUBECONFIG"))
 		kubeconfigBytes, err := ioutil.ReadFile(os.Getenv("KUBECONFIG"))
 		if err != nil {
@@ -280,6 +275,12 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 		restConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get local KUBECONFIG='%s' file: %w", os.Getenv("KUBECONFIG"), err)
+		}
+	} else {
+		// otherwise, get the default rest inCluster config for the kube.NewClusterConfig function
+		restConfig, err = rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
 		}
 	}
 
@@ -352,13 +353,15 @@ func extractToken(ctx context.Context) (string, error) {
 // getClustersConfigFromServeOpts get the serveOptions and calls parseClusterConfig with the proper values
 // returning a kube.ClustersConfig
 func getClustersConfigFromServeOpts(serveOpts ServeOptions) (kube.ClustersConfig, error) {
-	// If using a local kubeconfig (dev purposes), this ClusterConfig file is not strictly required
-	if serveOpts.UnsafeLocalDevKubeconfig {
-		return kube.ClustersConfig{}, nil
-	}
 	if serveOpts.ClustersConfigPath == "" {
-		return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+		if serveOpts.UnsafeLocalDevKubeconfig {
+			// if using a local kubeconfig (dev purposes), this ClusterConfig file is not strictly required
+			return kube.ClustersConfig{}, nil
+		} else {
+			return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+		}
 	}
+
 	var cleanupCAFiles func()
 	config, cleanupCAFiles, err := kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
 	if err != nil {
