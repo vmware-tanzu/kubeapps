@@ -264,14 +264,9 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 	var clustersConfig kube.ClustersConfig
 	var err error
 
-	if !serveOpts.UnsafeLocalDevKubeconfig {
-		// get the default rest inCluster config for the kube.NewClusterConfig function
-		restConfig, err = rest.InClusterConfig()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
-		}
-	} else {
-		// using the local kubeconfig instead of the inCluster config
+	if serveOpts.UnsafeLocalDevKubeconfig {
+		// if using the local kubeconfig, read it from the KUBECONFIG path and
+		// create the restConfig
 		log.Warningf("Using the local kubeconfig configuration (in KUBECONFIG='%s' envar) since you passed --unsafe-local-dev-kubeconfig=true", os.Getenv("KUBECONFIG"))
 		kubeconfigBytes, err := ioutil.ReadFile(os.Getenv("KUBECONFIG"))
 		if err != nil {
@@ -281,17 +276,18 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 		if err != nil {
 			return nil, fmt.Errorf("unable to get local KUBECONFIG='%s' file: %w", os.Getenv("KUBECONFIG"), err)
 		}
+	} else {
+		// otherwise, get the default rest inCluster config for the kube.NewClusterConfig function
+		restConfig, err = rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+		}
 	}
 
-	if !serveOpts.UnsafeUseDemoSA {
-		// get the parsed kube.ClustersConfig from the serveOpts
-		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Just using the created SA, no user account nor clustersConfig is used here
-		clustersConfig = kube.ClustersConfig{}
+	// get the parsed kube.ClustersConfig from the serveOpts
+	clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
+	if err != nil {
+		return nil, err
 	}
 
 	// return the closure fuction that takes the context, but preserving the required scope,
@@ -313,16 +309,18 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 		}
 
 		var config *rest.Config
-		if !serveOpts.UnsafeUseDemoSA {
-			// We are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
-			// we should pass the cluster name instead
+
+		if serveOpts.UnsafeUseDemoSA {
+			// If using the priviledged servicceAccount, just use the default inClusterConfig
+			// instead of creating a user config with authentication
+			config = inClusterConfig
+		} else {
+			// TODO(agamez): we are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
+			// we should pass the requested cluster name instead
 			config, err = kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 			}
-		} else {
-			// Just using the created SA, no user account is used
-			config = inClusterConfig
 		}
 		return config, nil
 	}, nil
@@ -356,8 +354,14 @@ func extractToken(ctx context.Context) (string, error) {
 // returning a kube.ClustersConfig
 func getClustersConfigFromServeOpts(serveOpts ServeOptions) (kube.ClustersConfig, error) {
 	if serveOpts.ClustersConfigPath == "" {
-		return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+		if serveOpts.UnsafeLocalDevKubeconfig {
+			// if using a local kubeconfig (dev purposes), this ClusterConfig file is not strictly required
+			return kube.ClustersConfig{}, nil
+		} else {
+			return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+		}
 	}
+
 	var cleanupCAFiles func()
 	config, cleanupCAFiles, err := kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
 	if err != nil {
