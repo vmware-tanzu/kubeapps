@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -33,6 +34,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -646,5 +648,82 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 		IconUrl:           r.Chart.Metadata.Icon,
 		PkgDisplayName:    r.Chart.Name(),
 		ShortDescription:  r.Chart.Metadata.Description,
+	}
+}
+
+// GetInstalledPackageDetail returns the package metadata managed by the 'helm' plugin
+func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
+	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
+	identifier := request.GetInstalledPackageRef().GetIdentifier()
+	actionConfig, err := s.actionConfigGetter(ctx, namespace)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	// First grab the release.
+	getcmd := action.NewGet(actionConfig)
+	release, err := getcmd.Run(identifier)
+	if err != nil {
+		log.Errorf("Error is %+v", err)
+		if err == driver.ErrReleaseNotFound {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+		}
+		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+	}
+	installedPkgDetail := installedPkgDetailFromRelease(release, request.GetInstalledPackageRef())
+
+	// Grab the released values.
+	valuescmd := action.NewGetValues(actionConfig)
+	values, err := valuescmd.Run(identifier)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to get Helm release values: %v", err)
+	}
+	valuesMarshalled, err := json.Marshal(values)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to marshal Helm release values: %v", err)
+	}
+	installedPkgDetail.ValuesApplied = string(valuesMarshalled)
+
+	// Check for a chart matching the installed package.
+	cq := utils.ChartQuery{
+		Namespace:  release.Namespace,
+		ChartName:  release.Chart.Metadata.Name,
+		Version:    release.Chart.Metadata.Version,
+		AppVersion: release.Chart.Metadata.AppVersion,
+	}
+	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
+	}
+	if len(charts) == 1 {
+		log.Errorf("Got chart: %+v", charts[0])
+		installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
+			Identifier: charts[0].ID,
+			Plugin:     GetPluginDetail(),
+		}
+		if charts[0].Repo != nil {
+			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: charts[0].Repo.Namespace}
+		}
+	}
+
+	return &corev1.GetInstalledPackageDetailResponse{
+		InstalledPackageDetail: installedPkgDetail,
+	}, nil
+}
+
+func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPackageReference) *corev1.InstalledPackageDetail {
+	return &corev1.InstalledPackageDetail{
+		InstalledPackageRef: ref,
+		Name:                r.Name,
+		PkgVersionReference: &corev1.VersionReference{
+			Version: r.Chart.Metadata.Version,
+		},
+		CurrentPkgVersion:     r.Chart.Metadata.Version,
+		PostInstallationNotes: r.Info.Notes,
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      r.Info.Status == release.StatusDeployed,
+			Reason:     statusReasonForHelmStatus(r.Info.Status),
+			UserReason: r.Info.Status.String(),
+		},
 	}
 }
