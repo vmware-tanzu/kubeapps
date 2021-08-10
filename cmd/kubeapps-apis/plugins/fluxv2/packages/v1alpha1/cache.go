@@ -36,7 +36,7 @@ import (
 // a type of cache that is based on watching for changes to specified kubernetes resources.
 // The resource is assumed to be namespace-scoped. Cluster-wide resources are not
 // supported at this time
-type ResourceWatcherCache struct {
+type NamespacedResourceWatcherCache struct {
 	// these expected to be provided by the caller when creating new cache
 	config   cacheConfig
 	redisCli *redis.Client
@@ -71,7 +71,7 @@ type cacheConfig struct {
 	onDelete cacheValueDeleter
 }
 
-func newCache(config cacheConfig) (*ResourceWatcherCache, error) {
+func newCache(config cacheConfig) (*NamespacedResourceWatcherCache, error) {
 	log.Infof("+newCache")
 	// TODO (gfichtenholt) small preference for reading all config in the main.go
 	// (whether from env vars or cmd-line options) only in the one spot and passing
@@ -107,7 +107,7 @@ func newCache(config cacheConfig) (*ResourceWatcherCache, error) {
 		nil)
 }
 
-func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGroup *sync.WaitGroup) (*ResourceWatcherCache, error) {
+func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGroup *sync.WaitGroup) (*NamespacedResourceWatcherCache, error) {
 	log.Infof("+newCacheWithRedisClient")
 
 	if redisCli == nil {
@@ -133,7 +133,7 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	}
 	log.Infof("[PING] -> [%s]", pong)
 
-	c := ResourceWatcherCache{
+	c := NamespacedResourceWatcherCache{
 		config:                  config,
 		redisCli:                redisCli,
 		eventProcessedWaitGroup: waitGroup,
@@ -163,7 +163,7 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 // of them need to modify the ResourceWatcherCache internal state.
 // see https://golang.org/doc/faq#methods_on_values_or_pointers
 
-func (c ResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
+func (c NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
 	for {
 		c.receive(watcher.ResultChan())
 		// if we are here, that means the RetryWatcher has stopped processing events
@@ -191,7 +191,7 @@ func (c ResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
 
 // ResourceWatcherCache must implement cache.Watcher interface, which is this:
 // https://pkg.go.dev/k8s.io/client-go@v0.20.8/tools/cache#Watcher
-func (c ResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
+func (c NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
 	dynamicClient, err := c.config.clientGetter(ctx)
@@ -208,7 +208,7 @@ func (c ResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface
 // of a re-sync. It seems the current requirements of kubeapps catalog are pretty loose
 // when it comes to consistency at any given point, as long as EVENTUALLY consistent
 // state is reached, which will be the case
-func (c ResourceWatcherCache) resync() (string, error) {
+func (c NamespacedResourceWatcherCache) resync() (string, error) {
 	ctx := context.Background()
 
 	dynamicClient, err := c.config.clientGetter(ctx)
@@ -250,7 +250,7 @@ func (c ResourceWatcherCache) resync() (string, error) {
 }
 
 // this is loop that waits for new events and processes them when they happen
-func (c ResourceWatcherCache) receive(ch <-chan watch.Event) {
+func (c NamespacedResourceWatcherCache) receive(ch <-chan watch.Event) {
 	for {
 		event, ok := <-ch
 		if !ok {
@@ -296,7 +296,7 @@ func (c ResourceWatcherCache) receive(ch <-chan watch.Event) {
 
 // this is effectively a cache PUT operation
 // TODO (gfichtenholt) this func should return error if it happens, (see below for)
-func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) error {
+func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) error {
 	defer func() {
 		if c.eventProcessedWaitGroup != nil {
 			c.eventProcessedWaitGroup.Done()
@@ -340,7 +340,7 @@ func (c ResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string
 }
 
 // this is effectively a cache DEL operation
-func (c ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) error {
+func (c NamespacedResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) error {
 	defer func() {
 		if c.eventProcessedWaitGroup != nil {
 			c.eventProcessedWaitGroup.Done()
@@ -371,7 +371,7 @@ func (c ResourceWatcherCache) onDelete(unstructuredObj map[string]interface{}) e
 }
 
 // this is effectively a cache GET operation
-func (c ResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
+func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
 	// read back from cache: should be what we previously wrote or Redis.Nil
 	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
 	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
@@ -400,7 +400,7 @@ func (c ResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
 
 // return all keys, optionally matching a given filter (repository list)
 // currently we're caching the index of a repo using the repo name as the key
-func (c ResourceWatcherCache) listKeys(filters []string) ([]string, error) {
+func (c NamespacedResourceWatcherCache) listKeys(filters []string) ([]string, error) {
 	// see https://github.com/redis/redis/issues/3627:
 	// 1) we don't want to use KEYS command
 	// 2) match pattern does not support 'OR'
@@ -445,7 +445,7 @@ func (c ResourceWatcherCache) listKeys(filters []string) ([]string, error) {
 	return resultKeys, nil
 }
 
-func (c ResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
+func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
 	response := make(map[string]interface{})
 	for _, key := range keys {
 		result, err := c.fetchForOne(key)
@@ -459,25 +459,15 @@ func (c ResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interf
 
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
-func (c ResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
-	if err != nil || !found {
-		return "", status.Errorf(codes.Internal, "required field metadata.name not found on: %v:\n%s",
-			err,
-			prettyPrintMap(unstructuredObj))
+func (c NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
+	name, namespace, err := nameAndNamespace(unstructuredObj)
+	if err != nil {
+		return "", err
 	}
-
-	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
-	if err != nil || !found {
-		return "", status.Errorf(codes.Internal, "required field metadata.namespace not found on: %v:\n%s",
-			err,
-			prettyPrintMap(unstructuredObj))
-	}
-
 	return c.keyForNamespaceAndName(namespace, name), nil
 }
 
-func (c ResourceWatcherCache) keyForNamespaceAndName(namespace, name string) string {
+func (c NamespacedResourceWatcherCache) keyForNamespaceAndName(namespace, name string) string {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
@@ -487,7 +477,7 @@ func (c ResourceWatcherCache) keyForNamespaceAndName(namespace, name string) str
 
 // the opposite of keyFor
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
-func (c ResourceWatcherCache) fromKey(key string) (namespace string, name string, err error) {
+func (c NamespacedResourceWatcherCache) fromKey(key string) (namespace string, name string, err error) {
 	parts := strings.Split(key, ":")
 	if len(parts) != 3 {
 		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
@@ -502,7 +492,7 @@ func (c ResourceWatcherCache) fromKey(key string) (namespace string, name string
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
 // returns true if all was ok, false and logs any error(s) otherwise
-func (c ResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
+func (c NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
 

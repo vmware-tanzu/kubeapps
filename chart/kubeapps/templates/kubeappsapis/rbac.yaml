@@ -18,6 +18,7 @@ rules:
       - "packageinstalls.packaging.carvel.dev"
       - "packagerepositories.packaging.carvel.dev"
       - "source.toolkit.fluxcd.io"
+      - "helm.toolkit.fluxcd.io"
     resources: ['*']
     verbs: ['*']
   # So that our dev user is seen as having access to a namespace.

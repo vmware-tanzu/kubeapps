@@ -26,8 +26,11 @@ import (
 	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
@@ -35,64 +38,170 @@ import (
 // chart-related utilities
 
 const (
+	// see docs at https://fluxcd.io/docs/components/source/
+	fluxHelmChart     = "HelmChart"
+	fluxHelmCharts    = "helmcharts"
+	fluxHelmChartList = "HelmChartList"
+
 	MajorVersionsInSummary = 3
 	MinorVersionsInSummary = 3
 	PatchVersionsInSummary = 3
 )
 
-// the goal of this fn is to answer whether or not to stop waiting for chart reconciliation
-// which is different from answering whether the chart was pulled successfully
-// TODO (gfichtenholt): As above, hopefully this fn isn't required if we can only list charts that we know are ready.
-func isChartPullComplete(unstructuredChart *unstructured.Unstructured) (bool, error) {
-	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
-	// Confirm the state we are observing is for the current generation
-	observedGeneration, found, err := unstructured.NestedInt64(unstructuredChart.Object, "status", "observedGeneration")
+func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
 	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	generation, found, err := unstructured.NestedInt64(unstructuredChart.Object, "metadata", "generation")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	if generation != observedGeneration {
-		return false, nil
+		return nil, err
 	}
 
-	conditions, found, err := unstructured.NestedSlice(unstructuredChart.Object, "status", "conditions")
+	// see if we the chart already exists
+	// TODO (gfichtenholt):
+	// see https://github.com/kubeapps/kubeapps/pull/2915
+	// for context. It'd be better if we could filter on server-side. The problem is the set of supported
+	// fields in FieldSelector is very small. things like "spec.chart" or "status.artifact.revision" are
+	// certainly not supported.
+	// see
+	//  - kubernetes/client-go#713 and
+	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
+	//  - https://github.com/kubernetes/kubernetes/issues/53459
+	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
+		return nil, err
+	}
+	return chartList, nil
+}
+
+// returns the url from which chart .tgz can be downloaded
+// here chartVersion string, if specified at all, should be specific, like "14.4.0",
+// not an expression like ">14 <15"
+func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (url string, err error, cleanUp func()) {
+	// see if we the chart already exists
+	// TODO (gfichtenholt):
+	// see https://github.com/kubeapps/kubeapps/pull/2915
+	// for context. It'd be better if we could filter on server-side. The problem is the set of supported
+	// fields in FieldSelector is very small. things like "spec.chart" or "status.artifact.revision" are
+	// certainly not supported.
+	// see
+	//  - kubernetes/client-go#713 and
+	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
+	//  - https://github.com/kubernetes/kubernetes/issues/53459
+	chartList, err := s.listChartsInCluster(ctx, namespace)
+	if err != nil {
+		return "", err, nil
 	}
 
-	// check if ready=True
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				if statusString, ok := conditionAsMap["status"]; ok {
-					if statusString == "True" {
-						if reasonString, ok := conditionAsMap["reason"]; !ok || reasonString != "ChartPullSucceeded" {
-							// should not happen
-							log.Infof("unexpected status of HelmChart: %v", *unstructuredChart)
-						}
-						return true, nil
-					} else if statusString == "False" {
-						var msg string
-						if msg, ok = conditionAsMap["message"].(string); !ok {
-							msg = fmt.Sprintf("No message available in condition: %v", conditionAsMap)
-						}
-						// chart pull is done and it's a failure
-						return true, status.Errorf(codes.Internal, msg)
-					}
+	url, err = findUrlForChartInList(chartList, repoName, chartName, chartVersion)
+	if err != nil {
+		return "", err, nil
+	} else if url != "" {
+		return url, nil, nil
+	}
+
+	// did not find the chart, need to create
+	// see https://fluxcd.io/docs/components/source/helmcharts/
+	// notes:
+	// 1. HelmChart object needs to be co-located in the same namespace as the HelmRepository it is referencing.
+	// 2. As of the time of this writing, flux impersonates a "super" user when doing this
+	// (see fluxv2 plug-in specific notes at the end of design doc). However, they are backing away from
+	// this model toward this proposal
+	// https://github.com/fluxcd/flux2/blob/1c5a25313561771d585c4192d7f330b45753cd99/docs/proposals/secure-impersonation.md
+	// So we may not necessarily want to follow what flux does today
+	unstructuredChart := newFluxHelmChart(chartName, repoName, chartVersion)
+
+	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
+	if err != nil {
+		return "", err, nil
+	}
+
+	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
+	if err != nil {
+		log.Errorf("Error creating chart: %v\n%v", err, unstructuredChart)
+		return "", err, nil
+	}
+
+	log.Infof("Created chart: [%v]", prettyPrintMap(newChart.Object))
+
+	// Delete the created helm chart regardless of success or failure. At the end of
+	// GetAvailablePackageDetail(), we've already collected the information we need,
+	// so why leave a flux chart chart object hanging around?
+	// Over time, they could accumulate to a very large number...
+	cleanUp = func() {
+		if err = resourceIfc.Delete(ctx, newChart.GetName(), metav1.DeleteOptions{}); err != nil {
+			log.Errorf("Failed to delete flux helm chart [%v]", prettyPrintMap(newChart.Object))
+		}
+	}
+
+	watcher, err := resourceIfc.Watch(ctx, metav1.ListOptions{
+		ResourceVersion: newChart.GetResourceVersion(),
+	})
+	if err != nil {
+		log.Errorf("Error creating watch: %v\n%v", err, unstructuredChart)
+		return "", err, cleanUp
+	}
+
+	// wait til wait until flux reconciles and we have chart url available
+	// TODO (gfichtenholt) note that, unlike with ResourceWatcherCache, the
+	// wait time window is very short here so I am not employing the RetryWatcher
+	// technique here for now
+	url, err = waitUntilChartPullComplete(ctx, watcher)
+	watcher.Stop()
+	// only the caller should call cleanUp() when it's done with the url,
+	// if we call it here, the caller will end up with a dangling link
+	return url, err, cleanUp
+}
+
+func (s *Server) getChartsResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+	client, err := s.getDynamicClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	chartsResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmCharts,
+	}
+
+	return client.Resource(chartsResource).Namespace(namespace), nil
+}
+
+func (s *Server) fetchChartFromCache(repoNamespace, repoName, chartName string) (*models.Chart, error) {
+	if s.cache == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+	}
+
+	charts, err := s.cache.fetchForOne(s.cache.keyForNamespaceAndName(repoNamespace, repoName))
+	if err != nil {
+		return nil, err
+	}
+
+	if charts != nil {
+		if typedCharts, ok := charts.([]models.Chart); !ok {
+			return nil, status.Errorf(
+				codes.Internal,
+				"unexpected value fetched from cache: %v", charts)
+		} else {
+			for _, chart := range typedCharts {
+				if chart.Name == chartName {
+					return &chart, nil // found it
 				}
 			}
 		}
 	}
-	return false, nil
+	return nil, nil
+}
+
+// the main goal of this func is to answer whether or not to stop waiting for chart reconciliation
+// which is different from answering whether the chart was pulled successfully
+// TODO (gfichtenholt): As above, hopefully this func isn't required if we can only list charts that we know are ready.
+func isChartPullComplete(unstructuredChart map[string]interface{}) (complete, success bool, reason string) {
+	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
+	// Confirm the state we are observing is for the current generation
+	if !checkGeneration(unstructuredChart) {
+		return false, false, ""
+	} else {
+		return checkStatusReady(unstructuredChart)
+	}
 }
 
 // TODO (gfichtenholt):
@@ -125,15 +234,17 @@ func waitUntilChartPullComplete(ctx context.Context, watcher watch.Interface) (s
 				return "", status.Errorf(codes.Internal, "could not cast to unstructured.Unstructured")
 			}
 
-			done, err := isChartPullComplete(unstructuredChart)
-			if err != nil {
-				return "", err
-			} else if done {
-				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
-				if err != nil || !found {
-					return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+			done, success, reason := isChartPullComplete(unstructuredChart.Object)
+			if done {
+				if success {
+					url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+					if err != nil || !found {
+						return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+					}
+					return url, nil
+				} else {
+					return "", status.Errorf(codes.Internal, "Failed to pull chart due to %s", reason)
 				}
-				return url, nil
 			}
 		} else {
 			return "", status.Errorf(codes.Internal, "got unexpected event: %v", event)
@@ -172,32 +283,47 @@ func isValidChart(chart *models.Chart) (bool, error) {
 	return true, nil
 }
 
-func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, chartName, version string) (string, error) {
+// note that chartVersion here could be a semver constraint expression, e.g. something like "<= 6.7.1",
+// as opposed to a simple literal expression, like "1.2.3"
+// see https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
+func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, chartName, chartVersion string) (string, error) {
+	var semVerConstraints *semver.Constraints
+	if chartVersion != "" {
+		var err error
+		if semVerConstraints, err = semver.NewConstraint(chartVersion); err != nil {
+			return "", err
+		}
+	}
 	for _, unstructuredChart := range chartList.Items {
 		thisChartName, found, err := unstructured.NestedString(unstructuredChart.Object, "spec", "chart")
 		thisRepoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
 
 		if err == nil && err2 == nil && found && found2 && repoName == thisRepoName && chartName == thisChartName {
-			done, err := isChartPullComplete(&unstructuredChart)
-			if err != nil {
-				return "", err
-			} else if done {
-				url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
-				if err != nil || !found {
-					return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
-				}
-				if version != "" {
-					// refer to https://github.com/fluxcd/source-controller/blob/main/api/v1beta1/helmchart_types.go &
-					// https://github.com/fluxcd/source-controller/blob/40a47670aadebc0f4e3a623be47725106bac2d55/api/v1beta1/artifact_types.go#L27
-					chartVersion, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "artifact", "revision")
-					if err != nil || !found {
-						return "", status.Errorf(codes.Internal, "expected field status.artifact.revision not found on HelmChart: %v:\n%v", err, unstructuredChart)
-					} else if chartVersion != version {
-						continue
+			if done, success, reason := isChartPullComplete(unstructuredChart.Object); done {
+				if success {
+					if url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url"); err != nil || !found {
+						return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
+					} else {
+						if semVerConstraints != nil {
+							// refer to https://github.com/fluxcd/source-controller/blob/main/api/v1beta1/helmchart_types.go &
+							// https://github.com/fluxcd/source-controller/blob/40a47670aadebc0f4e3a623be47725106bac2d55/api/v1beta1/artifact_types.go#L27
+							artifactVerString, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "artifact", "revision")
+							if err != nil || !found {
+								return "", status.Errorf(codes.Internal, "expected field status.artifact.revision not found on HelmChart: %v:\n%v", err, unstructuredChart)
+							} else if artifactVerString != "" && semVerConstraints != nil {
+								if artifactVer, err := semver.NewVersion(artifactVerString); err != nil {
+									return "", err
+								} else if !semVerConstraints.Check(artifactVer) {
+									continue
+								}
+							}
+						}
+						log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
+						return url, nil
 					}
+				} else {
+					return "", status.Errorf(codes.Internal, "Chart pull failed due to %s", reason)
 				}
-				log.Infof("Found existing HelmChart for: [%s/%s]", repoName, chartName)
-				return url, nil
 			}
 			// TODO (gfichtenholt) waitUntilChartPullComplete?
 		}
@@ -456,6 +582,5 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvai
 		}
 		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
 	}
-
 	return pav
 }

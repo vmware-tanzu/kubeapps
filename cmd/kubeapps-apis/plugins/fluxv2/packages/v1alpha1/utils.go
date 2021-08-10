@@ -23,6 +23,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -97,4 +98,69 @@ func getUnescapedChartID(chartID string) (string, error) {
 		return "", status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
 	}
 	return unescapedChartID, nil
+}
+
+// Confirm the state we are observing is for the current generation
+// returns true if object's status.observedGeneration == metadata.generation
+// false otherwise
+func checkGeneration(unstructuredObj map[string]interface{}) bool {
+	observedGeneration, found, err := unstructured.NestedInt64(unstructuredObj, "status", "observedGeneration")
+	if err != nil || !found {
+		return false
+	}
+	generation, found, err := unstructured.NestedInt64(unstructuredObj, "metadata", "generation")
+	if err != nil || !found {
+		return false
+	}
+	return generation == observedGeneration
+}
+
+// returns 3 things:
+// - complete whether the operation was completed
+// - success (only applicable when complete == true) whether the operation was successful or failed
+// - reason, if present
+func checkStatusReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
+	conditions, found, err := unstructured.NestedSlice(unstructuredObj, "status", "conditions")
+	if err != nil || !found {
+		return false, false, ""
+	}
+
+	for _, conditionUnstructured := range conditions {
+		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
+			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
+				if reasonString, ok := conditionAsMap["reason"]; ok {
+					reason = fmt.Sprintf("%v", reasonString)
+				}
+				if statusString, ok := conditionAsMap["status"]; ok {
+					if statusString == "True" {
+						return true, true, reason
+					} else if statusString == "False" {
+						return true, false, reason
+					}
+					// statusString == "Unknown" falls in here
+				}
+				break
+			}
+		}
+	}
+	return false, false, reason
+}
+
+func nameAndNamespace(unstructuredObj map[string]interface{}) (name, namespace string, err error) {
+	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
+	if err != nil || !found {
+		return "", "",
+			status.Errorf(codes.Internal, "required field metadata.name not found on resource: %v:\n%s",
+				err,
+				prettyPrintMap(unstructuredObj))
+	}
+
+	namespace, found, err = unstructured.NestedString(unstructuredObj, "metadata", "namespace")
+	if err != nil || !found {
+		return "", "",
+			status.Errorf(codes.Internal, "required field metadata.namespace not found on resource: %v:\n%s",
+				err,
+				prettyPrintMap(unstructuredObj))
+	}
+	return name, namespace, nil
 }
