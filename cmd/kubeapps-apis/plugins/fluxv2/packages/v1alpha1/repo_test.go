@@ -40,7 +40,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
-type testRepoStruct struct {
+type testSpecGetAvailablePackageSummaries struct {
 	name      string
 	namespace string
 	url       string
@@ -49,14 +49,14 @@ type testRepoStruct struct {
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		testName         string
+		name             string
 		request          *corev1.GetAvailablePackageSummariesRequest
-		testRepos        []testRepoStruct
+		repos            []testSpecGetAvailablePackageSummaries
 		expectedResponse *corev1.GetAvailablePackageSummariesResponse
 	}{
 		{
-			testName: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
-			testRepos: []testRepoStruct{
+			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -70,8 +70,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
-			testRepos: []testRepoStruct{
+			name: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -85,8 +85,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
-			testRepos: []testRepoStruct{
+			name: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -106,8 +106,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing repo",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing repo",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -134,8 +134,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing repo",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing repo",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -160,8 +160,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing categories",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing categories",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -182,8 +182,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing categories (2)",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing categories (2)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -202,8 +202,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing categories",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing categories",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -222,8 +222,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing appVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing appVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -244,8 +244,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing appVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing appVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -264,8 +264,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing pkgVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing pkgVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -286,8 +286,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing pkgVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing pkgVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -306,8 +306,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing query text (chart name)",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing query text (chart name)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -328,8 +328,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing query text (chart keywords)",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing query text (chart keywords)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -350,8 +350,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing query text",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing query text",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -370,8 +370,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns only the first page of results",
-			testRepos: []testRepoStruct{
+			name: "it returns only the first page of results",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -394,8 +394,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns only the requested page of results and includes the next page token",
-			testRepos: []testRepoStruct{
+			name: "it returns only the requested page of results and includes the next page token",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -418,8 +418,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns the last page without a next page token",
-			testRepos: []testRepoStruct{
+			name: "it returns the last page without a next page token",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -442,10 +442,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			repos := []runtime.Object{}
 
-			for _, rs := range tc.testRepos {
+			for _, rs := range tc.repos {
 				indexYAMLBytes, err := ioutil.ReadFile(rs.index)
 				if err != nil {
 					t.Fatalf("%+v", err)
@@ -1016,7 +1016,7 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 					keys = append(keys, k)
 				}
 			}
-			mock.ExpectScan(0, "helmrepositories:*:"+r, 0).SetVal(keys, 0)
+			mock.ExpectScan(0, fluxHelmRepositories+":*:"+r, 0).SetVal(keys, 0)
 			for _, k := range keys {
 				mock.ExpectGet(k).SetVal(string(mapVals[k]))
 			}
@@ -1046,7 +1046,7 @@ func redisKeyForRuntimeObject(r runtime.Object) string {
 
 }
 
-// misc global vars that get re-used in multiple tests
+// misc global vars that get re-used in multiple tests scenarios
 var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
 		DisplayName:      "acs-engine-autoscaler",

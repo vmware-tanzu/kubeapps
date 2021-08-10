@@ -1,0 +1,4064 @@
+apiVersion: v1
+entries:
+  airflow:
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.1.0
+    created: "2021-06-18T10:22:07.338610839Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 907a2c94c1e8c3cf387295ecb184892cf10620d0c95a6ed0c3fe7c2efdfae5c4
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.2.1.tgz
+    version: 10.2.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.1.0
+    created: "2021-06-17T08:09:48.263104004Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 63dd9ab6843549cc825acb6ce98d9b058134f6ef362e4501023d5954ce2690af
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.2.0.tgz
+    version: 10.2.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.1.0
+    created: "2021-06-15T11:03:21.624914137Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3ed4f2f213a81d58fb637be7e5229e05dcd066b5f4fadc3acf74cf80b6211534
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.1.1.tgz
+    version: 10.1.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.1.0
+    created: "2021-06-14T20:52:09.393486586Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 50100936645e238a4e816a314eb1231ca4085b6647174173fb80b8ea9df977b6
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.1.0.tgz
+    version: 10.1.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.1.0
+    created: "2021-05-24T13:58:38.828776899Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 1444ec7a88d50da86e52734175cc8080ecf4d7b27f584f0e193a7eade310cb7e
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.0.8.tgz
+    version: 10.0.8
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.2
+    created: "2021-05-23T11:33:58.084469395Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: a05cb405d06f44081002479fcbaa2bafb6934a1664d82551737e386775c6a1f3
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.0.7.tgz
+    version: 10.0.7
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.2
+    created: "2021-05-20T09:08:01.591228215Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 56e202cd666c577125541c1f6601bcb692819844e464f0166baaf85108cdd56a
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.0.6.tgz
+    version: 10.0.6
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.2
+    created: "2021-05-19T09:57:40.378457528Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 1a71f705b22f367b85e69f2e5495a287859e96f4c22d9f04c202c52c12846acd
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.0.5.tgz
+    version: 10.0.5
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.2
+    created: "2021-05-08T03:18:14.757844169Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 1adab1ad23ed703c0895b6a937b7b8778db11575da43e3b114e56b98d9ca04d6
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.0.4.tgz
+    version: 10.0.4
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.2
+    created: "2021-04-29T22:56:06.855056741Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 14.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 0aa2a5c5bab6bf6a8e7697b0a074a02069d07324f40f7d2a950dbd2e8971cccf
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-10.0.1.tgz
+    version: 10.0.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-20T01:43:47.248691228Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 2c959860166a242ec7339e09f177e9ae55fd81b0ee1f5f76561eb9187c8419bc
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-9.0.5.tgz
+    version: 9.0.5
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-13T10:09:37.874439189Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 29c879662443905bc5496b2c47170cd86976f327fdacb0ab02461bedf4a38b49
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-9.0.4.tgz
+    version: 9.0.4
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-12T09:20:17.460043172Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 9f353902656ed6e55ad84f7142a20c837fcf3f5e1af6f3a71bb867b5360518d8
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-9.0.3.tgz
+    version: 9.0.3
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-09T18:28:22.37124417Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b25c9b2213ee22e98feae52fc21d66e39dcec4210969de5d862ecdb3afac9d0e
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-9.0.2.tgz
+    version: 9.0.2
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-09T09:37:01.169973951Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: e362468265a4ccf745f42e696b34629bdb75b89d7e1358bb2b9678682601013a
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-9.0.1.tgz
+    version: 9.0.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-08T01:28:17.831080199Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b5516fc02a5615d22a6bc555bb555a32f8215c996b30ac5b4ed7ae6c5880661c
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-9.0.0.tgz
+    version: 9.0.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-05T23:08:09.93410778Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3b09968931e817d79935b19e6c518acfc00c0c8948fac384414e46c03a3d1ff5
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.2.3.tgz
+    version: 8.2.3
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-05T09:12:28.997303056Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3a71a33634edc99bdade8a8f2545900cc6bdcdd0be62d9981ec4cf0840ba6866
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.2.2.tgz
+    version: 8.2.2
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-04-01T10:36:43.793641792Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c1b86e04d0477be9cf00c9fb622db0988dc759ccf6f2283467372130ab25e09d
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.2.1.tgz
+    version: 8.2.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-31T10:00:28.270564595Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c39fa6f861d877eaee35581b25e58f971914f751324c2f685e872294f8889edc
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.2.0.tgz
+    version: 8.2.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-24T19:58:05.168387693Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b4e9f8de8839ba65dfe52de1f502c49aea155a4d28b0b71e152c5a47957d69e1
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.1.3.tgz
+    version: 8.1.3
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-24T13:42:29.750022441Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 14ad2026b01b4cadd610fc63e3fcec4c255201aa19144e7fdbbb709c6099e656
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.1.2.tgz
+    version: 8.1.2
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-23T18:12:48.14402801Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 1813341cd1ad7fd1aa39d0921fd5c22edfd3cb5a383fffcb4b237753398aff69
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.1.1.tgz
+    version: 8.1.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-22T10:48:33.339863079Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: ba92bd67819ead454c182314292822a66bd544467a8b7e664e9e103382e0e8e1
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.1.0.tgz
+    version: 8.1.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-19T16:14:13.135804195Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 6d1f3f29add189a6d6b4cd6298662793b8ce39f165cced0394bf5e9c49f5f5aa
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.11.tgz
+    version: 8.0.11
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-18T22:27:21.72061693Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b352ccbf111d780756a40aecab0bf507494bad1cc80519c6422f8a6afbd43733
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.10.tgz
+    version: 8.0.10
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-14T18:59:48.746674233Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 314a1d44e0f6d4558d1d443aefeb500bcb9d547d37e70334eeb82a8b23f2a061
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.9.tgz
+    version: 8.0.9
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-11T10:47:48.001272624Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 58fd57b216437cae7684e01a87b5b21981f4eddf5c54858a1237933f97c8ff1b
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.8.tgz
+    version: 8.0.8
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-05T16:44:52.314482784Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c5695710221ec42d83f88d1d22517f88ccef9394d7dba7caf3d477168a760523
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.7.tgz
+    version: 8.0.7
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-03-04T23:09:15.766013824Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3906425fb50b51b2dfa53aa20c6ec39e152a22127ed437a87aae52c3b7a14598
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.6.tgz
+    version: 8.0.6
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-02-23T02:02:01.798348446Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c19d4c63f15d25608a0f00b5a168209db8e6fc652e35f89c4a741d0851f7c450
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.5.tgz
+    version: 8.0.5
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-02-12T18:52:51.679076503Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 878a2c94f839850caee45b0dd2b2b5925581f4996e17cc80af46d7bd3dc277bc
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.4.tgz
+    version: 8.0.4
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.1
+    created: "2021-02-11T16:46:06.170679413Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: d838235d30903fc97eb10fddb329397ce18f75d7c22276cdc107d7ee9828ebf2
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.3.tgz
+    version: 8.0.3
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.0
+    created: "2021-02-03T09:44:25.959463715Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: af7003a5761323b14c58f465e5b1f17a56da5a56f29adc2c8792a7d2cf0c974e
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.2.tgz
+    version: 8.0.2
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.0
+    created: "2021-01-29T16:33:50.476449638Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 12a00109d088adb3a78bbf8306565947ac909b1b6ffa7886c25c9d1df48a78c8
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.1.tgz
+    version: 8.0.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 2.0.0
+    created: "2021-01-29T09:58:25.363022422Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 10c2bb1549ce513077e058bdbeb3f0a96755b7c250d9cf13bbe1a83243b13903
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-8.0.0.tgz
+    version: 8.0.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 1.10.14
+    created: "2021-01-28T00:17:29.938100534Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 40718566fbb5d21baeea67cf079aec905d8b964cf36ad9299dcb917329c57b32
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-7.3.1.tgz
+    version: 7.3.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 1.10.14
+    created: "2021-01-26T11:38:45.207733391Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3c219e95f6a8abbb3fa7b578ff46c206416e6eae5acc69235cbf272a10d40d56
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-7.3.0.tgz
+    version: 7.3.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 1.10.14
+    created: "2021-01-14T17:03:30.953407716Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 2825b8ac51eee05b1f84e63ae784fcb2f3ec4eecadba84e54394424ca89a1dc8
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-7.1.3.tgz
+    version: 7.1.3
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 1.10.14
+    created: "2021-01-09T21:56:11.751725443Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 406dd2d31cb835ce6a203414fd6b18014e757609bac9eb7573a4f946e23c1ec4
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-7.1.1.tgz
+    version: 7.1.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 1.10.14
+    created: "2020-12-31T22:39:19.174147316Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3ca9e6b3e09cbd8ef15903fcea10d12aee8f3f94f13f629345d36ac94ee0388b
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-7.1.0.tgz
+    version: 7.1.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 1.10.13
+    created: "2020-11-27T18:10:15.83673504Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 23ec51c1eb551f7f5838dcbb7b4f1147428dbbf5d4efc07ab02b20e9a0c25ffd
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-7.0.3.tgz
+    version: 7.0.3
+  - annotations:
+      category: WorkFlow
+    apiVersion: v2
+    appVersion: 1.10.13
+    created: "2020-11-26T17:32:15.767838553Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 4217e3afee665af73893c90bbb0caa39ad954a47f5c5bf654e9dd1deae6d5e9e
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-7.0.2.tgz
+    version: 7.0.2
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-11-20T12:53:42.367850879Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 0.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 8.x.x
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.x.x
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: bba7440e28f8649ed6b8d5536817e7cf4ac27e7ea40ed911662d239c8bde6cd4
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.7.2.tgz
+    version: 6.7.2
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-10-21T12:45:44.319748581Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3a1b47be2c591c4201eff6a2b96e6c7a3a05aedaa9d4833b342f9e2d78e06ba7
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.7.1.tgz
+    version: 6.7.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-10-20T08:30:39.695566975Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 22ef0328264143118e3ebe85b53badd595a6a3c77600f95ab0f6d1f2731bedc9
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.7.0.tgz
+    version: 6.7.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-10-06T13:19:09.666377789Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 54fd3490b1ed4e12f9aaa9f2b967025824d0b541bf4f25b5825bcb70bf08a9ca
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.6.1.tgz
+    version: 6.6.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-10-05T15:28:27.814067981Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: ab41fbd28703237435a290e5b5619cafcac16126a35e674afcb99839987b06a5
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.6.0.tgz
+    version: 6.6.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-09-28T12:06:09.11954654Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3ef7b945907cd80c088aed2a6537e7d80fb6390b5616a338e92fa4c3b96a56cb
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.5.1.tgz
+    version: 6.5.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-09-24T15:13:24.250882501Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 11450cf642d9994858acdf2ed3d06c8e2477eeefab7dae6da04bfe2424d0d12c
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.5.0.tgz
+    version: 6.5.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-09-21T12:41:40.264964607Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 4ed6aa68c0fe9127a5b71a667e48736bc817e534ee7bc63b59bf1bf2485f2c3b
+    home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    - https://airflow.apache.org/
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.4.2.tgz
+    version: 6.4.2
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-09-01T15:35:02.518447882Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 4eb4e4b7b9f0f0550756e7851228b5af7eb2bb182b0e21440962210e5020c3d9
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.4.1.tgz
+    version: 6.4.1
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-08-26T14:33:46.39377758Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 1938220c6088327b8a118c0f54823c0609cad4f8111af562ec03e11aa336d8e0
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.4.0.tgz
+    version: 6.4.0
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.12
+    created: "2020-08-26T09:00:46.317908035Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 7c8b5c85146aa8f0fada27fbde32c1bd40a19a1a92d28b2691d443f200d99cb5
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.10.tgz
+    version: 6.3.10
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.11
+    created: "2020-08-07T11:01:05.753223948Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 69e116c77ff5452d8d7bdf8545719ff55e8ec444cd7ad6fb7c529b3e54b9f4ee
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.9.tgz
+    version: 6.3.9
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.11
+    created: "2020-08-06T14:35:02.628025756Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 76209546205aa82ebd816a7217bcfe2b56aac482165df64fccf3357850434c0c
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.8.tgz
+    version: 6.3.8
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.11
+    created: "2020-07-29T23:18:24.396384199Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5b026c7de1f89c9a3c08e7c4da2b5dfcec5204aa117a4dc5d24bd4a4d5a895a7
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.7.tgz
+    version: 6.3.7
+  - annotations:
+      category: WorkFlow
+    apiVersion: v1
+    appVersion: 1.10.11
+    created: "2020-07-27T11:05:44.909107311Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5a9fd0ce4c91329c5de6ffd1d7ef78f69b4cec028e5419a6cdfa09a5d1945614
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.6.tgz
+    version: 6.3.6
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-07-02T07:45:13.7728364Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: d72687d8ca8f85411d7273ad64cee41afb19b007dae0acf1c0d50e96333be2e5
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.5.tgz
+    version: 6.3.5
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-06-28T21:39:48.486454019Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 508f6c22d45963bdcdfbfb26c1b2b1ae5eab2d17522bfccf6f241aabc226bde1
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.4.tgz
+    version: 6.3.4
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-05-29T21:38:51.270218464Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 27dc9a03d1e5a88260f7a80fdf441480cdca7b378f455c9aed06f3e463874118
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.3.tgz
+    version: 6.3.3
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-05-28T12:22:32.950007125Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 0df8b071a67a3c2192c38cc110ce6d110b457c62dd265aa0fe57e6dc6d9b8c61
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.2.tgz
+    version: 6.3.2
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-05-28T09:06:33.739769809Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: e1d88bc1cac5aad86d09c53b605846f3788b443043bdcd5b560750e28e36e98a
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.1.tgz
+    version: 6.3.1
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-05-20T17:59:55.732076212Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 6e2a83e0c8ac50f40f0977faeb140f6ebda4c4f8858fa76d60c5afe61848b396
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.3.0.tgz
+    version: 6.3.0
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-05-15T16:46:41.4091901Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 801b15c7cf19f544cd2b19b154dd66bcef8600650fd9a10d3ea8ae60a884484a
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.2.2.tgz
+    version: 6.2.2
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-05-14T09:47:21.565663347Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: bf4a7ec9d5c09bbc51c69fd8a141252309c540d853937463fb6007772336cde8
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.2.1.tgz
+    version: 6.2.1
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-05-01T17:11:26.133073309Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 1cecab534ef4f798c34d6025dba66560e273f9622603d869668d949b0113710e
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.2.0.tgz
+    version: 6.2.0
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-30T17:31:24.759432833Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: bc81488feb3002601559db8aff072fa12d482886fd07e2d3bface6a861a5abdc
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.9.tgz
+    version: 6.1.9
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-23T10:15:59.832984712Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: eba2ebb4073df143f6c98b6c85205a91aa90a6a479acaa1590f59ab9a8875a76
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.8.tgz
+    version: 6.1.8
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-22T09:20:17.187314376Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b125fbb099011618081daefc72a8d2176b7d35c88f010156b5f8c896cbf5799b
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.7.tgz
+    version: 6.1.7
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-22T03:22:58.537861341Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c28321f737cc5d127ef2ed15c46428e9832642e2074aff3439f667e524206fad
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.6.tgz
+    version: 6.1.6
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-17T16:19:55.479546646Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5aeea747660cbfada3ce003b856f94d555c259b86c2fc22ff8c351a48a443ef2
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.5.tgz
+    version: 6.1.5
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-17T16:13:40.046855424Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: aba0a43f8c48b079f7bc2294df4a9c2affb01d6f1cf0731d0712a54081fb1755
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.4.tgz
+    version: 6.1.4
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-16T19:32:12.929608428Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: f785cc9a33c9f9f272a9aa8fe10bcb8109548c96fe004fd96b3dfdcf5e1bb453
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.3.tgz
+    version: 6.1.3
+  - apiVersion: v1
+    appVersion: 1.10.10
+    created: "2020-04-15T21:54:19.835993861Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 53b9444cc97ec345ab7b1e02578e0afc56b50019ae1caf2e1dada695d0e2647b
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.2.tgz
+    version: 6.1.2
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-04-10T20:00:36.303041853Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3ca52a1b8f8ac9d65b2b6a9463b060e576100ee2f32002e4b6ee4e5785ad2ddf
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.1.tgz
+    version: 6.1.1
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-04-10T19:05:30.823800232Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b233e72ef64c363951c7405dca717d83c69761e00e4b6eea18088b04d48caa2c
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.1.0.tgz
+    version: 6.1.0
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-04-10T16:40:25.750943524Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: ca2ac2e6b375311c37ff92b2283c190655b2a0de128d7063c4cd7e301f58f2a5
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-6.0.0.tgz
+    version: 6.0.0
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-04-09T22:40:37.062026652Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 27e50cdd4348bda3e673ad5af392843a59372862fb9b2cbb990ae7e1098027a0
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-5.0.6.tgz
+    version: 5.0.6
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-03-26T04:09:32.849109787Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 32948f7ba9b65b835e703f73847220b1ed7637d2646ef0b99bde6870df937b69
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-5.0.5.tgz
+    version: 5.0.5
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-03-20T15:58:04.52871061Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 88b5b34d6921a9e5d8d4525ee3a0f104d60e4f5c3511d5db9091b2c8f7d8a224
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-5.0.4.tgz
+    version: 5.0.4
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-03-11T23:35:26.312945924Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5086b5b27906a6fb365fbf60d972be947f639689b88309c2c8712333e21232b0
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-5.0.3.tgz
+    version: 5.0.3
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-03-05T16:55:57.944915859Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 19f185c4371be1c441041363a1ea7df545da0ce5cd8658769f509f928dabee44
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-5.0.1.tgz
+    version: 5.0.1
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-26T11:15:42.102167838Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: e4f3cc71201fb6a01a0e909e19d6670ca9b5994b60b4477efb604c480242812a
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.4.4.tgz
+    version: 4.4.4
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-26T08:04:59.395494669Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 2090cf6f417e2c4c9b06c539caace965bbaa309fcc7c6e2545f18ffa9d32c00b
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.4.3.tgz
+    version: 4.4.3
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-25T09:06:45.540137606Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: eec23e8f4c880b7dea2e980cde38320d7cf1ba2d4ffccabd2a1fa9cf40783c50
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.4.2.tgz
+    version: 4.4.2
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-20T20:10:11.429291715Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b66c2c1f53162f691d175b43f2aaf5dcb306a910c33555a31c06fbddc0d65483
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.4.1.tgz
+    version: 4.4.1
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-19T11:08:42.135851395Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 852522c50eae564f08f6846948e44db97923ad4764001132f8e9f6928a131cb2
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.3.3.tgz
+    version: 4.3.3
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-17T14:13:45.933498582Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: dd0d2c2694aba44ea87b79880d6ce442784356a64d16478d1a99a5984354ffe5
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.3.2.tgz
+    version: 4.3.2
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-17T10:36:31.79302148Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: a01e5bb6bd71a413f1cdf4874426b896eab76ed9c6d64ebe4aac25eb1b36112e
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.3.1.tgz
+    version: 4.3.1
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-11T14:06:06.992997472Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 8d765c31320ddc31d891d9f5ae7d0e0deec26e3613a9f9a800085b00d4e68178
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.3.0.tgz
+    version: 4.3.0
+  - apiVersion: v1
+    appVersion: 1.10.9
+    created: "2020-02-11T07:47:59.425754254Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c275c7b2629c836492f2629b748fb3fc71d21a1af59fa455783551705481dd93
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.2.1.tgz
+    version: 4.2.1
+  - apiVersion: v1
+    appVersion: 1.10.7
+    created: "2020-02-08T02:13:14.645902806Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 73fdb2787f9272887f179ecf05645e6a547ec10437371fee0ca383253ddefaf7
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.2.0.tgz
+    version: 4.2.0
+  - apiVersion: v1
+    appVersion: 1.10.7
+    created: "2020-02-06T08:37:53.064512567Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 1794308ceee3d9bb71ab11a009fccb9e236f3f92b938fc32e660562a8bafd694
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.1.3.tgz
+    version: 4.1.3
+  - apiVersion: v1
+    appVersion: 1.10.7
+    created: "2020-01-24T11:07:08.200908847Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c19b7dc204a04e67d46bbf626ede5dde44a1f343d238fd61fcb8a1f12e7c69a9
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.1.2.tgz
+    version: 4.1.2
+  - apiVersion: v1
+    appVersion: 1.10.7
+    created: "2020-01-21T15:37:10.613063326Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 4f71384a449d36b7d3e2895390ad9c1889c8a3fd68c9e17ba08eb6202da504d4
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.1.1.tgz
+    version: 4.1.1
+  - apiVersion: v1
+    appVersion: 1.10.7
+    created: "2020-01-14T19:37:03.453072342Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 56e280c60b2533f260316cedb3b1961091d28a096565870c5bf94130e7b6e95c
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.1.0.tgz
+    version: 4.1.0
+  - apiVersion: v1
+    appVersion: 1.10.7
+    created: "2020-01-13T10:38:39.081328844Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 9a35df9fc10464aa0cd5d64c44cf9b112abf381c84d16f19e4f8724b9eca4609
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.20.tgz
+    version: 4.0.20
+  - apiVersion: v1
+    appVersion: 1.10.6
+    created: "2019-12-27T14:06:52.627294711Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 471e890ed164f312832930f236fd3d7448eee2bf4529f60270179bfb5350e9e8
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.19.tgz
+    version: 4.0.19
+  - apiVersion: v1
+    appVersion: 1.10.6
+    created: "2019-12-27T03:08:52.286709092Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 707c7dc706fb1bb740007cf0223e99270272f6f3c6c878f32653745a7709e175
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.18.tgz
+    version: 4.0.18
+  - apiVersion: v1
+    appVersion: 1.10.6
+    created: "2019-12-11T08:08:45.597040189Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 932c819c4a20407fe15d58f425fddb5cb44be7d6ca860c951510504b993072b2
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.17.tgz
+    version: 4.0.17
+  - apiVersion: v1
+    appVersion: 1.10.6
+    created: "2019-12-10T08:38:59.255956585Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 33f470f4e2862639e8ac96bc14db5892ce769a25c05c1785bcaca9aeb364506b
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.16.tgz
+    version: 4.0.16
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-15T17:39:52.956382041Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 52298a115f977801503812be75ef4fe7122520fbc49142f2ea9bcb12c203ed46
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.15.tgz
+    version: 4.0.15
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-12T20:35:32.367724Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: bdbf27b97be227f82f20df062be962b4daaaabbb142cdc2b23eb72379ff45434
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.14.tgz
+    version: 4.0.14
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-11T08:35:17.990514028Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5fa93a05748ab2d28f9b15fc9d5441ec461028063d6c2c86ec5fd84c33ee9290
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.13.tgz
+    version: 4.0.13
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-09T08:08:31.878047128Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: f31ff6d0a4fcf6c4e2603d0946168ca1a69756b0f724e95a700a99c1b027818f
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.12.tgz
+    version: 4.0.12
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-07T20:37:03.05407844Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: a2f562f59081dee505607519c94fa1574aef3881d4f0d0c9a90ae9c854609a49
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.11.tgz
+    version: 4.0.11
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-07T12:04:48.83666804Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 502a36133675027d90823c1b5ecccafe94a85c5f757610bfac7e3ad0ab50a51a
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.10.tgz
+    version: 4.0.10
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-06T10:06:56.649848401Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 574eecd9d8c93689fb38c4a6c71d9080c493fd2469ad5bf666c6e818eb781ce3
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.9.tgz
+    version: 4.0.9
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-04T20:36:56.180860778Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 63823da0fec2063d3bd6b811156fe7a4ba6efb44a1dc8c6cc879cbc533f18839
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.8.tgz
+    version: 4.0.8
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-03T13:14:42.259397417Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 976421f26d5b185c36b70d76f21e30d5c33472fa2a528a5268c704e6727dca2c
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.7.tgz
+    version: 4.0.7
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-11-02T06:06:57.426655439Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: e420b85d506365de810df6489e600c85c8c420bdacbfe65bd91f62f7748e056e
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.6.tgz
+    version: 4.0.6
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-31T22:06:54.04818771Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b9733ad0e68919325f35a349449265120c491cc8409b04863080e3210c21f5fa
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.5.tgz
+    version: 4.0.5
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-30T12:36:09.607448832Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: f771a55db29ddbed1e5b28cc956aca89fe52c5a75b8b057c5c735d843b526c60
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.4.tgz
+    version: 4.0.4
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-30T10:35:46.153768339Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: a55769f9707d928c03cec191fd08869be9a2b666b62a3b055873fdd71037bc4a
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.3.tgz
+    version: 4.0.3
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-24T11:37:41.479033079Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 04b66e244c07718c74789633b512dae7c622ed61cba9d439b8de90fdc1812388
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.2.tgz
+    version: 4.0.2
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-24T08:38:27.560390603Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3d971610085e2d69229fd88003d5689f4c98bc4a8fe23d69272dd3311253e6fa
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.1.tgz
+    version: 4.0.1
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-22T14:37:54.909768967Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 672557682df347827d6607c6c24f44fb44ffabbb076dbc7bc55352c833dfbf53
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-4.0.0.tgz
+    version: 4.0.0
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-18T08:36:45.050337565Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 16b7e50e64992795134e0752b5bead769b7e166797923e77305477fb8403393e
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.11.tgz
+    version: 3.1.11
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-09T04:34:47.40178184Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5b33610c13ee42dc1f07594d39aa50f4894b1ef11d738b02f2505d0cc3c07b20
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.10.tgz
+    version: 3.1.10
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-10-03T15:35:33.540092008Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 8a104943ace6396039f46460b22fbe1e8c67471e538dd907c7fd7295c0cbd4af
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.9.tgz
+    version: 3.1.9
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-09-30T08:04:49.683094739Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: a2ca9c596b560389564fe5889fb86296a5141135b39dd5b6ba71254f1580b7d8
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.8.tgz
+    version: 3.1.8
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-09-20T13:37:01.390090548Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 831d02431621728fd8d268697fe501c4d48b6c35718c3f616a0d1a52abd10474
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.7.tgz
+    version: 3.1.7
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-09-09T14:37:02.283695665Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5fffc818e4b69900053a6c0196131d26740a7ddd42bf9078b58d80ecdb8c9218
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.6.tgz
+    version: 3.1.6
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-09-09T09:35:33.368199954Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 99a40b3b7938908661950830f84c5cb47307fd34917d474c3c06bb5580450dcf
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.5.tgz
+    version: 3.1.5
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-09-05T16:08:50.118117654Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: b134b3f46faec2652ee842f398134620996f21928a76818565f85e62861c94e5
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.4.tgz
+    version: 3.1.4
+  - apiVersion: v1
+    appVersion: 1.10.5
+    created: "2019-09-05T15:10:30.606452702Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: c2a135953a62044cf9abc585e5c43fc120f6b1356332127b942446bbde7faa9f
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.3.tgz
+    version: 3.1.3
+  - apiVersion: v1
+    appVersion: 1.10.4
+    created: "2019-09-04T14:06:43.60856459Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 46fc27834f1f4c1a03ab6869aa4d19ee472198821d6246211d7162581f6b956a
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.2.tgz
+    version: 3.1.2
+  - apiVersion: v1
+    appVersion: 1.10.4
+    created: "2019-09-03T10:35:05.677739352Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 19d1370e3bcbde285313794098c75ec7adb355e239a5cdd57b72e328a4125151
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.1.tgz
+    version: 3.1.1
+  - apiVersion: v1
+    appVersion: 1.10.4
+    created: "2019-09-02T13:37:29.903623713Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: e1644f802813c55ff57a81157edb2faa1dd9017ae171267be999618c260e8489
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.1.0.tgz
+    version: 3.1.0
+  - apiVersion: v1
+    appVersion: 1.10.4
+    created: "2019-08-20T09:36:58.692892199Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 98823741d368df6fa892572d5db5efe7a3b5b0d90858fe4f45d1069a59c05b98
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-3.0.0.tgz
+    version: 3.0.0
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-08-19T15:35:23.104250799Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 98e7a5128519a08e8ee3a634506f830370b9464093d62cd02778b9ef98efece5
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-2.1.1.tgz
+    version: 2.1.1
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-08-14T06:33:59.607877023Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 7899d6fab5265e4b1d26f23beeb308597a68367c7951e3712ed104e85ac7888c
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-2.1.0.tgz
+    version: 2.1.0
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-08-12T11:05:10.847182686Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: eb3a416cbf74cd858b3a43d7533eb94d29fb1c769300e62b4b697b117f125852
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-2.0.0.tgz
+    version: 2.0.0
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-07-17T13:33:58.599407598Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 2839422f3ed7c12d7c8a4cf623eb74e542f0a033e2e6a9acd4ba19dde1cfc580
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-07-15T15:05:29.715891066Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 88a8b316e4bd6c7ca24dddc706edfe2835e7bb02160d803659dac799d5402b52
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-07-11T08:34:38.995452012Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 54343ff1cea4c978c0036ce11b6aebd0b77cb0bb5a3b95ff5e9297c31a88d8b8
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-1.0.1.tgz
+    version: 1.0.1
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-07-01T15:06:08.437871102Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 00fb7c260d03a7af945fa6e7ec2fb3d6463db743b695cca0342a80fe920f2e0e
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-1.0.0.tgz
+    version: 1.0.0
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-06-28T07:06:02.780669078Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3f7124f5b5e33b1b42552fd973af6ef135ace03e311dd41a434d6866eef094f3
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.1.6.tgz
+    version: 0.1.6
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-06-10T13:33:29.194114752Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 08963006b6cffe07bdb0f561522c2934645cbe08d6076f1fc662141c7ff09cc4
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.1.5.tgz
+    version: 0.1.5
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-06-10T09:34:45.059220194Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 5d0a82a8ebcb5005f5b3cf67f42e745e8776aac49432c7153e6e2b14b5a6b770
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-06-10T07:04:03.159324352Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 3e10efb856da186940ef564a9a132cef7bcbc506816f885e1e46d50f2850e12a
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.1.3.tgz
+    version: 0.1.3
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-06-07T10:38:20.178981598Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 9cba1998ca9a6f4a53e33a7993154a238bae8c4e3945a63298f4da329e193072
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-05-29T14:33:46.099557549Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 93a37eb471ed95dd16883ef7bd9fdb48c044c0b5d14029cf369dc4a20a967426
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-05-28T08:31:42.497602044Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 6df1913f46ab2d9151bbcfa44866417232c2053468b6a9af1dfb713f64620a4e
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.1.0.tgz
+    version: 0.1.0
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-05-27T11:32:14.045407415Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 986552eef999d7069a21893ccfd07742ea2e7292a617d6f44937c9e8ecf9705d
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.0.4.tgz
+    version: 0.0.4
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-05-13T09:23:44.497135931Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 4a9ec34ea014c2b05644136ffcbbf1c679925476d6758092f57e4c16dfc8b8f0
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.0.3.tgz
+    version: 0.0.3
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-05-10T10:31:51.884816546Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: 43bf16113cd5c9ac0eba5054d8f0445cb8c027d762ab2332270c82bd817df350
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.0.2.tgz
+    version: 0.0.2
+  - apiVersion: v1
+    appVersion: 1.10.3
+    created: "2019-05-07T16:31:50.142943431Z"
+    description: Apache Airflow is a platform to programmatically author, schedule
+      and monitor workflows.
+    digest: d41bb3357cecb7ae3ad414f8d8c9d059eb2d708ebf57afc796517e77f4faa5c3
+    home: https://airflow.apache.org/
+    icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - dag
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: airflow
+    sources:
+    - https://github.com/bitnami/bitnami-docker-airflow
+    urls:
+    - https://charts.bitnami.com/bitnami/airflow-0.0.1.tgz
+    version: 0.0.1

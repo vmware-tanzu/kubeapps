@@ -17,30 +17,15 @@ import (
 	"fmt"
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
-)
-
-const (
-	// see docs at https://fluxcd.io/docs/components/source/
-	fluxGroup              = "source.toolkit.fluxcd.io"
-	fluxVersion            = "v1beta1"
-	fluxHelmRepository     = "HelmRepository"
-	fluxHelmRepositories   = "helmrepositories"
-	fluxHelmRepositoryList = "HelmRepositoryList"
-	fluxHelmChart          = "HelmChart"
-	fluxHelmCharts         = "helmcharts"
-	fluxHelmChartList      = "HelmChartList"
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -57,7 +42,7 @@ type Server struct {
 	// non-test implementation.
 	clientGetter clientGetter
 
-	cache *ResourceWatcherCache
+	cache *NamespacedResourceWatcherCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -214,6 +199,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: packageSummaries,
 		NextPageToken:             nextPageToken,
+		// TODO (gfichtenholt) Categories?
 	}, nil
 }
 
@@ -286,6 +272,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 			"not supported yet: request.GetPkgVersion(): [%v]",
 			request.GetPkgVersion())
 	}
+
 	packageRef := request.GetAvailablePackageRef()
 	namespace := packageRef.GetContext().GetNamespace()
 	if namespace == "" || packageRef.GetIdentifier() == "" {
@@ -299,156 +286,46 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
-	charts, err := s.cache.fetchForOne(s.cache.keyForNamespaceAndName(namespace, packageIdParts[0]))
+	chart, err := s.fetchChartFromCache(namespace, packageIdParts[0], packageIdParts[1])
 	if err != nil {
 		return nil, err
-	}
-
-	if charts != nil {
-		if typedCharts, ok := charts.([]models.Chart); !ok {
-			return nil, status.Errorf(
-				codes.Internal,
-				"unexpected value fetched from cache: %v", charts)
-		} else {
-			for _, chart := range typedCharts {
-				if chart.Name == packageIdParts[1] {
-					// found it
-					return &corev1.GetAvailablePackageVersionsResponse{
-						PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
-					}, nil
-				}
-			}
-		}
-	}
-	return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
-}
-
-// returns the url from which chart .tgz can be downloaded
-// here chartVersion string, if specified at all, should be specific, like "14.4.0",
-// not an expression like ">14 <15"
-func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName string, namespace string, chartVersion string) (url string, err error, cleanUp func()) {
-	client, err := s.getDynamicClient(ctx)
-	if err != nil {
-		return "", err, nil
-	}
-
-	chartsResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmCharts,
-	}
-
-	resourceIfc := client.Resource(chartsResource).Namespace(namespace)
-
-	// see if we the chart already exists
-	// TODO (gfichtenholt):
-	// see https://github.com/kubeapps/kubeapps/pull/2915
-	// for context. It'd be better if we could filter on server-side. The problem is the set of supported
-	// fields in FieldSelector is very small. things like "spec.chart" or "status.artifact.revision" are
-	// certainly not supported.
-	// see
-	//  - kubernetes/client-go#713 and
-	//  - https://github.com/flant/shell-operator/blob/8fa3c3b8cfeb1ddb37b070b7a871561fdffe788b///HOOKS.md#fieldselector and
-	//  - https://github.com/kubernetes/kubernetes/issues/53459
-	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return "", err, nil
-	}
-
-	url, err = findUrlForChartInList(chartList, repoName, chartName, chartVersion)
-	if err != nil {
-		return "", err, nil
-	} else if url != "" {
-		return url, nil, nil
-	}
-
-	// did not find the chart, need to create
-	// see https://fluxcd.io/docs/components/source/helmcharts/
-	// TODO (gfichtenholt)
-	// 1. HelmChart object needs to be co-located in the same namespace as the HelmRepository it is referencing.
-	// 2. flux impersonates a "super" user when doing this (see fluxv2 plug-in specific notes at the end of
-	//	design doc). We should probably be doing simething similar to avoid RBAC-related problems
-	unstructuredChart := newFluxHelmChart(chartName, repoName, chartVersion)
-
-	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
-	if err != nil {
-		log.Errorf("Error creating chart: %v\n%v", err, unstructuredChart)
-		return "", err, nil
-	}
-
-	log.Infof("Created chart: [%v]", prettyPrintMap(newChart.Object))
-
-	// Delete the created helm chart regardless of success or failure. At the end of
-	// GetAvailablePackageDetail(), we've already collected the information we need,
-	// so why leave a flux chart chart object hanging around?
-	// Over time, they could accumulate to a very large number...
-	cleanUp = func() {
-		if err = resourceIfc.Delete(ctx, newChart.GetName(), metav1.DeleteOptions{}); err != nil {
-			log.Errorf("Failed to delete flux helm chart [%v]", prettyPrintMap(newChart.Object))
-		}
-	}
-
-	watcher, err := resourceIfc.Watch(ctx, metav1.ListOptions{
-		ResourceVersion: newChart.GetResourceVersion(),
-	})
-	if err != nil {
-		log.Errorf("Error creating watch: %v\n%v", err, unstructuredChart)
-		return "", err, cleanUp
-	}
-
-	// wait til wait until flux reconciles and we have chart url available
-	// TODO (gfichtenholt) note that, unlike with ResourceWatcherCache, the
-	// wait time window is very short here so I am not employing the RetryWatcher
-	// technique here for now
-	url, err = waitUntilChartPullComplete(ctx, watcher)
-	watcher.Stop()
-	// only the caller should call cleanUp() when it's done with the url,
-	// if we call it here, the caller will end up with a dangling link
-	return url, err, cleanUp
-}
-
-// namespace maybe "", in which case repositories from all namespaces are returned
-func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
-	client, err := s.getDynamicClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	repositoriesResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmRepositories,
-	}
-
-	if repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{}); err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
+	} else if chart != nil {
+		// found it
+		return &corev1.GetAvailablePackageVersionsResponse{
+			PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+		}, nil
 	} else {
-		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
-		// like we do in GetAvailablePackageSummaries()?
-		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
-		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
-		return repos, nil
+		return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
 	}
 }
 
-func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
-	if s.cache == nil {
-		return false, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
-	}
-
-	repos, err := s.cache.listKeys([]string{repoName})
+// GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
+func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
+	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		return false, err
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"unable to intepret page token %q: %v",
+			request.GetPaginationOptions().GetPageToken(), err)
 	}
 
-	for _, key := range repos {
-		thisNamespace, thisName, err := s.cache.fromKey(key)
-		if err != nil {
-			return false, err
-		}
-		if thisNamespace == namespace && thisName == repoName {
-			return true, nil
-		}
+	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
+	if err != nil {
+		return nil, err
 	}
-	return false, nil
+
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	}
+
+	response := &corev1.GetInstalledPackageSummariesResponse{
+		InstalledPackageSummaries: installedPkgSummaries,
+		NextPageToken:             nextPageToken,
+	}
+	return response, nil
 }

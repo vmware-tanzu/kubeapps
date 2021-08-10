@@ -225,8 +225,7 @@ func newServerWithClientGetter(clientGetter clientGetter, repos ...runtime.Objec
 	eventProcessingWaitGroup := &sync.WaitGroup{}
 	for _, r := range repos {
 		eventProcessingWaitGroup.Add(1)
-		ready, ok := isRepoReady(r.(*unstructured.Unstructured).Object)
-		if ready && ok == nil {
+		if isRepoReady(r.(*unstructured.Unstructured).Object) {
 			key, bytes, err := redisKeyValueForRuntimeObject(r)
 			if err != nil {
 				continue

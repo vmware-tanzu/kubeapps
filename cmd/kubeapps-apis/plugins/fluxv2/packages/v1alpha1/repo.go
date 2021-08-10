@@ -12,9 +12,8 @@ limitations under the License.
 */
 package main
 
-// repo-related utilities
-
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -25,61 +24,81 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	log "k8s.io/klog/v2"
 )
 
-func isRepoReady(obj map[string]interface{}) (bool, error) {
-	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
-	// Confirm the state we are observing is for the current generation
-	observedGeneration, found, err := unstructured.NestedInt64(obj, "status", "observedGeneration")
+const (
+	// see docs at https://fluxcd.io/docs/components/source/ and
+	// https://fluxcd.io/docs/components/helm/api/
+	fluxGroup              = "source.toolkit.fluxcd.io"
+	fluxVersion            = "v1beta1"
+	fluxHelmRepository     = "HelmRepository"
+	fluxHelmRepositories   = "helmrepositories"
+	fluxHelmRepositoryList = "HelmRepositoryList"
+)
+
+// namespace maybe "", in which case repositories from all namespaces are returned
+func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+	client, err := s.getDynamicClient(ctx)
 	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	generation, found, err := unstructured.NestedInt64(obj, "metadata", "generation")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
-	}
-	if generation != observedGeneration {
-		return false, nil
+		return nil, err
 	}
 
-	conditions, found, err := unstructured.NestedSlice(obj, "status", "conditions")
-	if err != nil {
-		return false, err
-	} else if !found {
-		return false, nil
+	repositoriesResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
 	}
 
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				if statusString, ok := conditionAsMap["status"]; ok {
-					if statusString == "True" {
-						// note that the current doc on https://fluxcd.io/docs/components/source/helmrepositories/
-						// incorrectly states the example status reason as "IndexationSucceeded".
-						// The actual string is "IndexationSucceed"
-						if reasonString, ok := conditionAsMap["reason"]; !ok || reasonString != "IndexationSucceed" {
-							// should not happen
-							log.Infof("Unexpected status of HelmRepository: %v", obj)
-						}
-						return true, nil
-					} else if statusString == "False" {
-						var msg string
-						if msg, ok = conditionAsMap["message"].(string); !ok {
-							msg = fmt.Sprintf("No message available in condition: %v", conditionAsMap)
-						}
-						return false, status.Errorf(codes.Internal, msg)
-					}
-				}
-			}
+	if repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{}); err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
+	} else {
+		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
+		// like we do in GetAvailablePackageSummaries()?
+		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
+		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
+		return repos, nil
+	}
+}
+
+func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
+	if s.cache == nil {
+		return false, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+	}
+
+	repos, err := s.cache.listKeys([]string{repoName})
+	if err != nil {
+		return false, err
+	}
+
+	for _, key := range repos {
+		thisNamespace, thisName, err := s.cache.fromKey(key)
+		if err != nil {
+			return false, err
+		}
+		if thisNamespace == namespace && thisName == repoName {
+			return true, nil
 		}
 	}
 	return false, nil
+}
+
+//
+// repo-related utilities
+//
+
+func isRepoReady(unstructuredRepo map[string]interface{}) bool {
+	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
+	// Confirm the state we are observing is for the current generation
+	if !checkGeneration(unstructuredRepo) {
+		return false
+	}
+
+	completed, success, _ := checkStatusReady(unstructuredRepo)
+	return completed && success
 }
 
 func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
@@ -90,9 +109,11 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 		return nil, err
 	}
 
-	// TODO: (gfichtenholt) the caller already checks this before invoking, see if I can remove this
-	ready, err := isRepoReady(unstructuredRepo)
-	if err != nil || !ready {
+	// this is just a future-proofing sanity check.
+	// At present, there is only one caller of indexOneRepo() and this check is already done by it,
+	// so this should never really happen
+	ready := isRepoReady(unstructuredRepo)
+	if !ready {
 		return nil, status.Errorf(codes.Internal,
 			"cannot index repository [%s] because it is not in 'Ready' state. error: %v",
 			repo.Name,
@@ -135,23 +156,23 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	}
 
 	duration := time.Since(startTime)
-	log.Infof("indexOneRepo: indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
+	msg := fmt.Sprintf("indexOneRepo: indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
+	if len(charts) > 0 {
+		log.Info(msg)
+	} else {
+		// this is kind of a red flag - an index with 0 charts, most likely contents of index.yaml is
+		// messed up and didn't parse but the helm library didn't raise an error
+		log.Warning(msg)
+	}
 	return charts, nil
 }
 
 func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
-	name, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "name")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"required field metadata.name not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
+	name, namespace, err := nameAndNamespace(unstructuredRepo)
+	if err != nil {
+		return nil, err
 	}
-	namespace, found, err := unstructured.NestedString(unstructuredRepo, "metadata", "namespace")
-	if err != nil || !found {
-		return nil, status.Errorf(
-			codes.Internal,
-			"field metadata.namespace not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
-	}
+
 	url, found, err := unstructured.NestedString(unstructuredRepo, "spec", "url")
 	if err != nil || !found {
 		return nil, status.Errorf(
@@ -165,15 +186,13 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 	}, nil
 }
 
+//
 // implements plug-in specific cache-related functionality
+//
+
 // onAddOrModifyRepo essentially tells the cache what to store for a given key
 func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	ready, err := isRepoReady(unstructuredRepo)
-	if err != nil {
-		return nil, false, err
-	}
-
-	if ready {
+	if isRepoReady(unstructuredRepo) {
 		charts, err := indexOneRepo(unstructuredRepo)
 		if err != nil {
 			return nil, false, err
