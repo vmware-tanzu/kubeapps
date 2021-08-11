@@ -54,6 +54,21 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*
 	}
 }
 
+func (s *Server) getReleaseInCluster(ctx context.Context, name, namespace string) (*unstructured.Unstructured, error) {
+	client, err := s.getDynamicClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	releasesResource := schema.GroupVersionResource{
+		Group:    fluxHelmReleaseGroup,
+		Version:  fluxHelmReleaseVersion,
+		Resource: fluxHelmReleases,
+	}
+
+	return client.Resource(releasesResource).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
 func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
 	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
 	if err != nil {
@@ -151,6 +166,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 				Namespace: namespace,
 			},
 			Identifier: name,
+			Plugin:     GetPluginDetail(),
 		},
 		Name:                name,
 		PkgVersionReference: pkgVersion,
@@ -159,7 +175,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		IconUrl:             pkgDetail.GetIconUrl(),
 		PkgDisplayName:      pkgDetail.GetDisplayName(),
 		ShortDescription:    pkgDetail.GetShortDescription(),
-		Status:              installedSummaryStatusFromUnstructured(unstructuredRelease),
+		Status:              installedPackageStatusFromUnstructured(unstructuredRelease),
 		LatestPkgVersion:    latestPkgVersion,
 		// TODO (gfichtenholt) LatestMatchingPkgVersion
 		// Only non-empty if an available upgrade matches the specified pkg_version_reference.
@@ -170,7 +186,44 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	}, nil
 }
 
-func installedSummaryStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
+func (s *Server) installedPackageDetail(ctx context.Context, name, namespace string) (*corev1.InstalledPackageDetail, error) {
+	unstructuredRelease, err := s.getReleaseInCluster(ctx, name, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pkgVersion *corev1.VersionReference
+	version, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "chart", "spec", "version")
+	if found && err == nil && version != "" {
+		pkgVersion = &corev1.VersionReference{
+			Version: version,
+		}
+	}
+
+	// this will only be present if install/upgrade succeeded
+	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
+
+	return &corev1.InstalledPackageDetail{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: namespace,
+			},
+			Identifier: name,
+			Plugin:     GetPluginDetail(),
+		},
+		Name:                name,
+		PkgVersionReference: pkgVersion,
+		CurrentPkgVersion:   lastAppliedRevision,
+		// TODO (gfichtenholt)
+		//	ValuesApplied
+		//  ReconciliationOptions
+		//	PostInstallationNotes
+		//  AvailablePackageRef
+		Status: installedPackageStatusFromUnstructured(unstructuredRelease.Object),
+	}, nil
+}
+
+func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
 	complete, success, reason := checkStatusReady(unstructuredRelease)
 	status := &corev1.InstalledPackageStatus{
 		Ready:      complete && success,
