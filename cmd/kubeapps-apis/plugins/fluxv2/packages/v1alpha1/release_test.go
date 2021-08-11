@@ -47,6 +47,7 @@ type testSpecGetInstalledPackages struct {
 	chartArtifactVersion string // must be specific, e.g. "6.7.1"
 	releaseName          string
 	releaseNamespace     string
+	releaseValues        map[string]interface{}
 	releaseStatus        map[string]interface{}
 }
 
@@ -268,7 +269,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 					},
 				}
-
+				if len(existing.releaseValues) != 0 {
+					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+				}
 				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
 				runtimeObjs = append(runtimeObjs, release)
 			}
@@ -414,6 +417,39 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				InstalledPackageDetail: redis_detail_completed,
 			},
 		},
+		{
+			name: "returns a 404 if the installed package is not found",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+					Identifier: "dontworrybehappy",
+				},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_completed,
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name: "returns values in package detail",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+					Identifier: "my-redis",
+				},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_completed_with_values,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: redis_detail_completed_with_values,
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -471,7 +507,9 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						},
 					},
 				}
-
+				if len(existing.releaseValues) != 0 {
+					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+				}
 				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
 				runtimeObjs = append(runtimeObjs, release)
 			}
@@ -736,9 +774,58 @@ var redis_existing_spec_completed = testSpecGetInstalledPackages{
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Ready",
-				"status": "True",
-				"reason": "ReconciliationSucceeded",
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "True",
+				"reason":             "ReconciliationSucceeded",
+				"message":            "Release reconciliation succeeded",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Released",
+				"status":             "True",
+				"reason":             "InstallSucceeded",
+				"message":            "Helm install succeeded",
+			},
+		},
+		"lastAppliedRevision":   "14.4.0",
+		"lastAttemptedRevision": "14.4.0",
+	},
+}
+
+var redis_existing_spec_completed_with_values = testSpecGetInstalledPackages{
+	repoName:             "bitnami-1",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/redis-many-versions.yaml",
+	chartName:            "redis",
+	chartTarGz:           "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:     "14.4.0",
+	chartArtifactVersion: "14.4.0",
+	releaseName:          "my-redis",
+	releaseNamespace:     "namespace-1",
+	releaseValues: map[string]interface{}{
+		"replica": []interface{}{
+			map[string]interface{}{
+				"replicaCount":  "1",
+				"configuration": "xyz",
+			},
+		},
+	},
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "True",
+				"reason":             "ReconciliationSucceeded",
+				"message":            "Release reconciliation succeeded",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Released",
+				"status":             "True",
+				"reason":             "InstallSucceeded",
+				"message":            "Helm install succeeded",
 			},
 		},
 		"lastAppliedRevision":   "14.4.0",
@@ -915,4 +1002,25 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded",
 	},
+}
+
+var redis_detail_completed_with_values = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
+	},
+	Name:              "my-redis",
+	CurrentPkgVersion: "14.4.0",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded",
+	},
+	ValuesApplied: "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
 }

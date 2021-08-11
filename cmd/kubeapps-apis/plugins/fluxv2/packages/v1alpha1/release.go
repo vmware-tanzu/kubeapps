@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -189,7 +190,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 func (s *Server) installedPackageDetail(ctx context.Context, name, namespace string) (*corev1.InstalledPackageDetail, error) {
 	unstructuredRelease, err := s.getReleaseInCluster(ctx, name, namespace)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q due to: %v", name, namespace, err)
 	}
 
 	var pkgVersion *corev1.VersionReference
@@ -198,6 +199,16 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 		pkgVersion = &corev1.VersionReference{
 			Version: version,
 		}
+	}
+
+	valuesApplied := ""
+	valuesMap, found, err := unstructured.NestedMap(unstructuredRelease.Object, "spec", "values")
+	if found && err == nil && len(valuesMap) != 0 {
+		bytes, err := json.Marshal(valuesMap)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Unable to marshal Helm release values due to: %v", err)
+		}
+		valuesApplied = string(bytes)
 	}
 
 	// this will only be present if install/upgrade succeeded
@@ -214,8 +225,8 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 		Name:                name,
 		PkgVersionReference: pkgVersion,
 		CurrentPkgVersion:   lastAppliedRevision,
+		ValuesApplied:       valuesApplied,
 		// TODO (gfichtenholt)
-		//	ValuesApplied
 		//  ReconciliationOptions
 		//	PostInstallationNotes
 		//  AvailablePackageRef
