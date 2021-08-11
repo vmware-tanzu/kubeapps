@@ -1737,7 +1737,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			defer cleanup()
 
 			if tc.expectedStatusCode == codes.OK {
-				populateAssetDB(t, mock, tc.expectedResponse.InstalledPackageSummaries)
+				populateAssetDBWithSummaries(t, mock, tc.expectedResponse.InstalledPackageSummaries)
 			}
 
 			response, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
@@ -1752,6 +1752,119 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestGetInstalledPackageDetail(t *testing.T) {
+	const (
+		releaseNamespace = "my-namespace-1"
+		releaseName      = "my-release-1"
+		releaseVersion   = "1.2.3"
+		releaseValues    = "{\"value\":\"new\"}"
+		releaseNotes     = "some notes"
+	)
+	testCases := []struct {
+		name               string
+		existingRelease    releaseStub
+		request            *corev1.GetInstalledPackageDetailRequest
+		expectedResponse   *corev1.GetInstalledPackageDetailResponse
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "returns an installed package detail",
+			existingRelease: releaseStub{
+				name:         releaseName,
+				namespace:    releaseNamespace,
+				chartVersion: releaseVersion,
+				values:       releaseValues,
+				notes:        releaseNotes,
+				status:       release.StatusDeployed,
+			},
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: releaseNamespace,
+					},
+					Identifier: releaseName,
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: &corev1.InstalledPackageDetail{
+					InstalledPackageRef: &corev1.InstalledPackageReference{
+						Context: &corev1.Context{
+							Namespace: releaseNamespace,
+						},
+						Identifier: releaseName,
+					},
+					PkgVersionReference: &corev1.VersionReference{
+						Version: releaseVersion,
+					},
+					Name:                  releaseName,
+					CurrentPkgVersion:     releaseVersion,
+					ValuesApplied:         releaseValues,
+					PostInstallationNotes: releaseNotes,
+					Status: &corev1.InstalledPackageStatus{
+						Ready:      true,
+						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+						UserReason: "deployed",
+					},
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: releaseNamespace,
+						},
+						Identifier: "myrepo/" + releaseName,
+						Plugin:     GetPluginDetail(),
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "returns a 404 if the installed package is not found",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: releaseNamespace,
+					},
+					Identifier: releaseName,
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			authorized := true
+			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), []releaseStub{tc.existingRelease})
+			server, mock, cleanup := makeServer(t, authorized, actionConfig)
+			defer cleanup()
+
+			if tc.expectedStatusCode == codes.OK {
+				populateAssetDBWithDetail(t, mock, tc.expectedResponse.InstalledPackageDetail)
+			}
+
+			response, err := server.GetInstalledPackageDetail(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.AvailablePackageReference{}, plugins.Plugin{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1782,7 +1895,7 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 	}
 
 	for _, r := range rels {
-		rel := releaseForStub(r)
+		rel := releaseForStub(t, r)
 		err := actionConfig.Releases.Create(rel)
 		if err != nil {
 			t.Fatal(err)
@@ -1795,13 +1908,21 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 	return actionConfig
 }
 
-func releaseForStub(r releaseStub) *release.Release {
+func releaseForStub(t *testing.T, r releaseStub) *release.Release {
+	config := map[string]interface{}{}
+	if r.values != "" {
+		err := json.Unmarshal([]byte(r.values), &config)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
 	return &release.Release{
 		Name:      r.name,
 		Namespace: r.namespace,
 		Version:   r.version,
 		Info: &release.Info{
 			Status: r.status,
+			Notes:  r.notes,
 		},
 		Chart: &chart.Chart{
 			Metadata: &chart.Metadata{
@@ -1810,6 +1931,7 @@ func releaseForStub(r releaseStub) *release.Release {
 				AppVersion: DefaultAppVersion,
 			},
 		},
+		Config: config,
 	}
 }
 
@@ -1830,11 +1952,59 @@ func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
 	}
 }
 
-func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
+func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
+	chartVersions := []models.ChartVersion{}
+	if rel.latestVersion != "" {
+		chartVersions = append(chartVersions, models.ChartVersion{
+			Version: rel.latestVersion,
+		})
+	}
+	chartVersions = append(chartVersions, models.ChartVersion{
+		Version: rel.chartVersion,
+	})
+
+	return &models.Chart{
+		Name: rel.name,
+		ID:   rel.chartID,
+		Repo: &models.Repo{
+			Namespace: rel.namespace,
+		},
+		ChartVersions: chartVersions,
+	}
+}
+
+func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
+	rels := []*releaseStub{}
 	for _, pkg := range pkgs {
-		chartJSON, err := json.Marshal(chartAssetForPackage(pkg))
+		rels = append(rels, &releaseStub{
+			name:          pkg.Name,
+			namespace:     pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
+			chartVersion:  pkg.CurrentPkgVersion,
+			latestVersion: pkg.LatestPkgVersion,
+		})
+	}
+	populateAssetDB(t, mock, rels)
+}
+
+func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.InstalledPackageDetail) {
+	// The code currently executes one query per release in the paginated
+	// results and should receive a single row response.
+	rel := &releaseStub{
+		name:         pkg.Name,
+		namespace:    pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
+		chartVersion: pkg.CurrentPkgVersion,
+		chartID:      pkg.AvailablePackageRef.Identifier,
+	}
+	populateAssetDB(t, mock, []*releaseStub{rel})
+}
+
+func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []*releaseStub) {
+	// The code currently executes one query per release in the paginated
+	// results and should receive a single row response.
+	for _, rel := range rels {
+		chartJSON, err := json.Marshal(chartAssetForReleaseStub(rel))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -1850,6 +2020,9 @@ type releaseStub struct {
 	namespace     string
 	version       int
 	chartVersion  string
+	chartID       string
 	latestVersion string
+	values        string
+	notes         string
 	status        release.Status
 }
