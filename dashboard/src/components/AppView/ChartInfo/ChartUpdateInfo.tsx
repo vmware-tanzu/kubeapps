@@ -1,10 +1,10 @@
 import { CdsIcon } from "@cds/react/icon";
-
 import Alert from "components/js/Alert";
 import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";
 import { IChartUpdateInfo, IRelease } from "shared/types";
 import { app as appURL } from "shared/url";
+
 
 interface IChartInfoProps {
   cluster: string;

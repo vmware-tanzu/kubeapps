@@ -1,11 +1,10 @@
-import { useMemo } from "react";
-import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
-
 import { CdsIcon } from "@cds/react/icon";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import ResourceRef from "shared/ResourceRef";
+import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 import { flattenResources } from "shared/utils";
 import { DaemonSetColumns } from "./ResourceData/DaemonSet";
 import { DeploymentColumns } from "./ResourceData/Deployment";
@@ -13,6 +12,7 @@ import { OtherResourceColumns } from "./ResourceData/OtherResource";
 import { SecretColumns } from "./ResourceData/Secret";
 import { ServiceColumns } from "./ResourceData/Service";
 import { StatefulSetColumns } from "./ResourceData/StatefulSet";
+
 
 interface IResourceTableProps {
   id: string;

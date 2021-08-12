@@ -1,4 +1,5 @@
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import Header from "components/Header";
 import ErrorBoundaryContainer from "containers/ErrorBoundaryContainer";
 import React from "react";
@@ -7,9 +8,8 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import Clarity from "./Clarity";
-
-import AlertGroup from "components/AlertGroup";
 import "./Layout.css";
+
 
 function Layout({ children }: any) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();

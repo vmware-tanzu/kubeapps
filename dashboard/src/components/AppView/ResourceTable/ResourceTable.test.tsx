@@ -1,10 +1,10 @@
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
-
 import ResourceRef from "shared/ResourceRef";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IResource } from "shared/types";
 import ResourceTable from "./ResourceTable";
+
 
 const defaultProps = {
   id: "test",

@@ -1,11 +1,11 @@
+import Icon from "components/Icon/Icon";
 import { Link } from "react-router-dom";
+import placeholder from "../../placeholder.png";
 import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
 import Column from "../js/Column";
 import Row from "../js/Row";
-
-import Icon from "components/Icon/Icon";
-import placeholder from "../../placeholder.png";
 import "./InfoCard.css";
+
 
 export interface IInfoCardProps {
   title: string;

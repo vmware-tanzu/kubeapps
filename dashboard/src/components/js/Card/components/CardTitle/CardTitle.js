@@ -1,7 +1,7 @@
-import React from "react";
 import PropTypes from "prop-types";
-
+import React from "react";
 import "./CardTitle.scss";
+
 
 const CardTitle = ({ level, children }) =>
   React.createElement(

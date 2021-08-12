@@ -1,9 +1,9 @@
 import TableRenderer from "components/ChartView/TableRenderer";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
 import HeadingRenderer from "../ChartView/HeadingRenderer";
 import LinkRenderer from "../ChartView/LinkRenderer";
+
 
 interface IOperatorDescriptionProps {
   description: string;

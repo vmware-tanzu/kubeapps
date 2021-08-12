@@ -1,11 +1,11 @@
-import React from "react";
-import AlerTypes from "./Alert.types";
-import PropTypes from "prop-types";
-import Button from "../Button";
-import cs from "classnames";
 import { CdsIcon } from "@cds/react/icon";
-
+import cs from "classnames";
+import PropTypes from "prop-types";
+import React from "react";
+import Button from "../Button";
 import "./Alert.scss";
+import AlerTypes from "./Alert.types";
+
 
 // Constants
 export const AlertThemes = {

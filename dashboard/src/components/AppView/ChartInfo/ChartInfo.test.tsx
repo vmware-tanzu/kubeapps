@@ -1,10 +1,10 @@
 import Alert from "components/js/Alert";
 import context from "jest-plugin-context";
-
 import { hapi } from "shared/hapi/release";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IRelease } from "shared/types";
 import ChartInfo from "./ChartInfo";
+
 
 const defaultProps = {
   app: {

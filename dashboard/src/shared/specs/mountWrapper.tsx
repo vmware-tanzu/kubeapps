@@ -1,7 +1,6 @@
 import { RouterState } from "connected-react-router";
 import { mount } from "enzyme";
-import { merge, cloneDeep } from "lodash";
-
+import { cloneDeep, merge } from "lodash";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
@@ -17,6 +16,7 @@ import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
 import I18n from "shared/I18n";
 import { IStoreState } from "../../shared/types";
+
 
 const mockStore = configureMockStore([thunk]);
 

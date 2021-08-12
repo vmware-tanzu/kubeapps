@@ -1,11 +1,11 @@
+import Tooltip from "components/js/Tooltip";
 import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
 import { IAppOverview } from "../../shared/types";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
-
-import Tooltip from "components/js/Tooltip";
 import "./AppListItem.css";
+
 
 export interface IAppListItemProps {
   app: IAppOverview;

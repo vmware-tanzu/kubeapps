@@ -1,6 +1,6 @@
+import MultiCheckbox from "components/js/MultiCheckbox";
 import React from "react";
 
-import MultiCheckbox from "components/js/MultiCheckbox";
 
 interface IFilterGroupProps {
   name: string;

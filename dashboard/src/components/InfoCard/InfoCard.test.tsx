@@ -1,9 +1,9 @@
 import Icon from "components/Icon/Icon";
 import { shallow } from "enzyme";
 import { Link } from "react-router-dom";
-
 import { CardBlock } from "../js/Card";
 import InfoCard from "./InfoCard";
+
 
 it("should render a Card", () => {
   const wrapper = shallow(

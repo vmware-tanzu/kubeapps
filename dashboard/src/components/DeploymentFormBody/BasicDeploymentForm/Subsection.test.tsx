@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
-
 import { IBasicFormParam } from "shared/types";
 import Subsection, { ISubsectionProps } from "./Subsection";
+
 
 const defaultProps = {
   label: "Enable an external database",

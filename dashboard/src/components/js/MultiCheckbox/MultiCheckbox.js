@@ -1,8 +1,8 @@
-import React from "react";
 import PropTypes from "prop-types";
+import React from "react";
+import "./MultiCheckbox.scss";
 import { assignCssVariables } from "./utils/cssVariables";
 
-import "./MultiCheckbox.scss";
 
 const MultiCheckbox = ({ options, span, value, ...otherProps }) => (
   <div className="multicheckbox-wrapper" style={assignCssVariables(span)}>
