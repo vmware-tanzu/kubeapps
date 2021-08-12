@@ -460,14 +460,14 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
 func (c NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, namespace, err := nameAndNamespace(unstructuredObj)
+	name, err := namespacedName(unstructuredObj)
 	if err != nil {
 		return "", err
 	}
-	return c.keyForNamespaceAndName(namespace, name), nil
+	return c.keyForNamespacedName(name.Namespace, name.Name), nil
 }
 
-func (c NamespacedResourceWatcherCache) keyForNamespaceAndName(namespace, name string) string {
+func (c NamespacedResourceWatcherCache) keyForNamespacedName(namespace, name string) string {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".

@@ -117,7 +117,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		return nil, nil
 	}
 
-	name, namespace, err := nameAndNamespace(unstructuredRelease)
+	name, err := namespacedName(unstructuredRelease)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 
 		// according to docs repoNamespace is optional
 		if repoNamespace == "" {
-			repoNamespace = namespace
+			repoNamespace = name.Namespace
 		}
 		chartFromCache, err := s.fetchChartFromCache(repoNamespace, repoName, chartName)
 		if err != nil {
@@ -169,12 +169,12 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	return &corev1.InstalledPackageSummary{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: namespace,
+				Namespace: name.Namespace,
 			},
-			Identifier: name,
+			Identifier: name.Name,
 			Plugin:     GetPluginDetail(),
 		},
-		Name:                name,
+		Name:                name.Name,
 		PkgVersionReference: pkgVersion,
 		CurrentPkgVersion:   lastAppliedRevision,
 		CurrentAppVersion:   pkgDetail.GetAppVersion(),
@@ -288,11 +288,11 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	// CrossNamespaceObjectReference namespace is optional, so
 	if repoNamespace == "" {
-		_, namespace, err := nameAndNamespace(unstructuredRelease)
+		name, err := namespacedName(unstructuredRelease)
 		if err != nil {
 			return nil, err
 		}
-		repoNamespace = namespace
+		repoNamespace = name.Namespace
 	}
 	return &corev1.AvailablePackageReference{
 		Identifier: fmt.Sprintf("%s/%s", repoName, chartName),
