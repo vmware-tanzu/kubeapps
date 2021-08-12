@@ -210,6 +210,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 		}
 		valuesApplied = string(bytes)
 	}
+	// TODO (gfichtenholt) what about ValuesFrom []ValuesReference `json:"valuesFrom,omitempty"`?
 
 	// this will only be present if install/upgrade succeeded
 	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
