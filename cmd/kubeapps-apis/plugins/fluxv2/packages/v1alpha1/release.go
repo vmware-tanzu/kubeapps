@@ -139,7 +139,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	latestPkgVersion := ""
 	var pkgDetail *corev1.AvailablePackageDetail
 	// according to docs chartVersion is optional (defaults to '*' i.e. latest when omitted)
-	if repoName != "" && repoNamespace != "" && chartName != "" && chartVersion != "" {
+	if repoName != "" && chartName != "" && chartVersion != "" {
 		// chartName here refers to a chart template, e.g. "nginx", rather than a specific chart instance
 		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
 		// by the HelmRepository (without any aliases), for example: podinfo". So, we can't exactly do a "get"
@@ -150,6 +150,10 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 			pkgDetail, _ = availablePackageDetailFromTarball(chartID, url)
 		}
 
+		// according to docs repoNamespace is optional
+		if repoNamespace == "" {
+			repoNamespace = namespace
+		}
 		chartFromCache, err := s.fetchChartFromCache(repoNamespace, repoName, chartName)
 		if err != nil {
 			return nil, err
@@ -213,21 +217,13 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 	}
 	// TODO (gfichtenholt) what about ValuesFrom []ValuesReference `json:"valuesFrom,omitempty"`?
 
-	reconciliationOptions := &corev1.ReconciliationOptions{}
-	if intervalString, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "interval"); found && err == nil {
-		if duration, err := time.ParseDuration(intervalString); err == nil {
-			reconciliationOptions.Interval = int32(duration.Seconds())
-		}
-	}
-	if suspend, found, err := unstructured.NestedBool(unstructuredRelease.Object, "spec", "suspend"); found && err == nil {
-		reconciliationOptions.Suspend = suspend
-	}
-	if serviceAccountName, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "serviceAccountName"); found && err == nil {
-		reconciliationOptions.ServiceAccountName = serviceAccountName
-	}
-
 	// this will only be present if install/upgrade succeeded
 	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
+
+	availablePackageRef, err := installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease.Object)
+	if err != nil {
+		return nil, err
+	}
 
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -241,10 +237,9 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 		PkgVersionReference:   pkgVersion,
 		CurrentPkgVersion:     lastAppliedRevision,
 		ValuesApplied:         valuesApplied,
-		ReconciliationOptions: reconciliationOptions,
-		// TODO (gfichtenholt)
-		//	PostInstallationNotes
-		//  AvailablePackageRef
+		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease.Object),
+		AvailablePackageRef:   availablePackageRef,
+		// TODO (gfichtenholt) PostInstallationNotes
 		Status: installedPackageStatusFromUnstructured(unstructuredRelease.Object),
 	}, nil
 }
@@ -263,4 +258,45 @@ func installedPackageStatusFromUnstructured(unstructuredRelease map[string]inter
 		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_PENDING
 	}
 	return status
+}
+
+func installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.ReconciliationOptions {
+	reconciliationOptions := &corev1.ReconciliationOptions{}
+	if intervalString, found, err := unstructured.NestedString(unstructuredRelease, "spec", "interval"); found && err == nil {
+		if duration, err := time.ParseDuration(intervalString); err == nil {
+			reconciliationOptions.Interval = int32(duration.Seconds())
+		}
+	}
+	if suspend, found, err := unstructured.NestedBool(unstructuredRelease, "spec", "suspend"); found && err == nil {
+		reconciliationOptions.Suspend = suspend
+	}
+	if serviceAccountName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "serviceAccountName"); found && err == nil {
+		reconciliationOptions.ServiceAccountName = serviceAccountName
+	}
+	return reconciliationOptions
+}
+
+func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map[string]interface{}) (*corev1.AvailablePackageReference, error) {
+	repoName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
+	if !found || err != nil {
+		return nil, status.Errorf(codes.Internal, "missing required field spec.chart.spec.sourceRef.name")
+	}
+	chartName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
+	if !found || err != nil {
+		return nil, status.Errorf(codes.Internal, "missing required field spec.chart.spec.chart")
+	}
+	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
+	// CrossNamespaceObjectReference namespace is optional, so
+	if repoNamespace == "" {
+		_, namespace, err := nameAndNamespace(unstructuredRelease)
+		if err != nil {
+			return nil, err
+		}
+		repoNamespace = namespace
+	}
+	return &corev1.AvailablePackageReference{
+		Identifier: fmt.Sprintf("%s/%s", repoName, chartName),
+		Plugin:     GetPluginDetail(),
+		Context:    &corev1.Context{Namespace: repoNamespace},
+	}, nil
 }

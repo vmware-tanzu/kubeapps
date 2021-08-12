@@ -483,14 +483,16 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						"kind": fluxHelmRepository,
 					},
 					"version":  existing.chartSpecVersion,
-					"interval": "10m",
+					"interval": "1m",
 				}
 				chartStatus := map[string]interface{}{
 					"conditions": []interface{}{
 						map[string]interface{}{
-							"type":   "Ready",
-							"status": "True",
-							"reason": "ChartPullSucceeded",
+							"lastTransitionTime": "2021-08-12T03:25:38Z",
+							"message":            "Fetched revision: " + existing.chartSpecVersion,
+							"type":               "Ready",
+							"status":             "True",
+							"reason":             "ChartPullSucceeded",
 						},
 					},
 					"artifact": map[string]interface{}{
@@ -544,7 +546,16 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, plugins.Plugin{}, corev1.ReconciliationOptions{})
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetInstalledPackageDetailResponse{},
+				corev1.InstalledPackageDetail{},
+				corev1.InstalledPackageReference{},
+				corev1.Context{},
+				corev1.VersionReference{},
+				corev1.InstalledPackageStatus{},
+				plugins.Plugin{},
+				corev1.ReconciliationOptions{},
+				corev1.AvailablePackageReference{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -982,6 +993,11 @@ var redis_detail_failed = &corev1.InstalledPackageDetail{
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
 		UserReason: "InstallFailed",
 	},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
+	},
 }
 
 var redis_detail_pending = &corev1.InstalledPackageDetail{
@@ -1003,6 +1019,11 @@ var redis_detail_pending = &corev1.InstalledPackageDetail{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
 		UserReason: "Progressing",
+	},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
 	},
 }
 
@@ -1026,6 +1047,11 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded",
+	},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
 	},
 }
 
@@ -1053,4 +1079,9 @@ var redis_detail_completed_with_values_and_reconciliation_options = &corev1.Inst
 		UserReason: "ReconciliationSucceeded",
 	},
 	ValuesApplied: "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
+	},
 }
