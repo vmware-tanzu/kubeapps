@@ -6,7 +6,6 @@ import Button from "../Button";
 import "./Alert.scss";
 import AlerTypes from "./Alert.types";
 
-
 // Constants
 export const AlertThemes = {
   danger: "danger",

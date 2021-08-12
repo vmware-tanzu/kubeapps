@@ -1,7 +1,6 @@
+import { IChart, IChartCategory, IChartState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-
-import { IChart, IChartCategory, IChartState } from "../shared/types";
 import chartsReducer from "./charts";
 
 describe("chartReducer", () => {

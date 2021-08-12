@@ -6,7 +6,6 @@ import Spinner from "../Spinner";
 // Custom Styles
 import "./Button.scss";
 
-
 // Constants
 export const ButtonThemes = {
   danger: "danger",

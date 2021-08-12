@@ -1,8 +1,7 @@
-import { useEffect } from "react";
-
 import Alert from "components/js/Alert";
 import { RouterAction } from "connected-react-router";
 import { JSONSchema4 } from "json-schema";
+import { useEffect } from "react";
 import {
   FetchError,
   IAppRepository,

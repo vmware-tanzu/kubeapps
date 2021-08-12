@@ -1,10 +1,9 @@
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import { IStoreState } from "shared/types";
 import actions from "../../actions";
 import RollbackButton from "../../components/AppView/AppControls/RollbackButton";
-import { IStoreState } from "../../shared/types";
 
 interface IButtonProps {
   namespace: string;

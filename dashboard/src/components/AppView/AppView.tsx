@@ -1,20 +1,15 @@
-import { assignWith, get } from "lodash";
-
-import { useEffect, useState } from "react";
-import YAML from "yaml";
-import placeholder from "../../placeholder.png";
-
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { assignWith, get } from "lodash";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import ResourceRef from "../../shared/ResourceRef";
+import ResourceRef from "shared/ResourceRef";
 import {
   DeleteError,
   FetchError,
@@ -22,12 +17,15 @@ import {
   IKubeState,
   IResource,
   IStoreState,
-} from "../../shared/types";
+} from "shared/types";
+import YAML from "yaml";
+import ApplicationStatus from "../../containers/ApplicationStatusContainer";
+import placeholder from "../../placeholder.png";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
-import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
+import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";

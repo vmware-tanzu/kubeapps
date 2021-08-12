@@ -6,9 +6,9 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { hapi } from "shared/hapi/release";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { hapi } from "../../../../shared/hapi/release";
 import StatusAwareButton from "../StatusAwareButton";
 
 interface IDeleteButtonProps {

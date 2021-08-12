@@ -1,9 +1,9 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { Operators } from "shared/Operators";
 import { IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { Operators } from "../shared/Operators";
 
 const { operators: operatorActions } = actions;
 const mockStore = configureMockStore([thunk]);

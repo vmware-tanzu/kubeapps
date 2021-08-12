@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 import { useState } from "react";
 import "./Tooltip.scss";
 
-
 // Constants
 export const TooltipPositions = {
   topRight: "top-right",

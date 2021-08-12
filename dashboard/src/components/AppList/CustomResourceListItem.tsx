@@ -1,7 +1,7 @@
+import { findOwnedKind, getIcon } from "shared/Operators";
+import { IClusterServiceVersion, IResource } from "shared/types";
 import { app } from "shared/url";
 import operatorIcon from "../../icons/operator-framework.svg";
-import { findOwnedKind, getIcon } from "../../shared/Operators";
-import { IClusterServiceVersion, IResource } from "../../shared/types";
 import InfoCard from "../InfoCard/InfoCard";
 import Alert from "../js/Alert";
 

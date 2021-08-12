@@ -1,11 +1,10 @@
 import { JSONSchema4 } from "json-schema";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
-import { ActionType, deprecated } from "typesafe-actions";
-import { App } from "../shared/App";
-import Chart from "../shared/Chart";
-import { hapi } from "../shared/hapi/release";
-import { validate } from "../shared/schema";
+import { App } from "shared/App";
+import Chart from "shared/Chart";
+import { hapi } from "shared/hapi/release";
+import { validate } from "shared/schema";
 import {
   CreateError,
   DeleteError,
@@ -18,7 +17,8 @@ import {
   RollbackError,
   UnprocessableEntity,
   UpgradeError,
-} from "../shared/types";
+} from "shared/types";
+import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
 

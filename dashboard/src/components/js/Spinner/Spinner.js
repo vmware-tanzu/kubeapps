@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import React from "react";
 import "./Spinner.scss";
 
-
 /**
  * https://v2.clarity.design/spinners
  */

@@ -1,11 +1,10 @@
+import { CdsIcon } from "@cds/react/icon";
+import actions from "actions";
+import Alert from "components/js/Alert";
 import { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { useDispatch } from "react-redux";
 import remarkGfm from "remark-gfm";
-
-import { CdsIcon } from "@cds/react/icon";
-import actions from "actions";
-import Alert from "components/js/Alert";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import HeadingRenderer from "./HeadingRenderer";
 import LinkRenderer from "./LinkRenderer";

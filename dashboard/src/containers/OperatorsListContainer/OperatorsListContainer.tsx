@@ -3,10 +3,9 @@ import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import { IStoreState } from "shared/types";
 import actions from "../../actions";
 import OperatorList from "../../components/OperatorList";
-import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
   { operators, clusters: { currentCluster, clusters }, config }: IStoreState,

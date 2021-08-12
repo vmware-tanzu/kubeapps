@@ -1,8 +1,8 @@
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
+import ResourceRef from "shared/ResourceRef";
+import { IK8sList, IResource, IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import ResourceRef from "../shared/ResourceRef";
-import { IK8sList, IResource, IStoreState } from "../shared/types";
 
 const { createAction } = deprecated;
 

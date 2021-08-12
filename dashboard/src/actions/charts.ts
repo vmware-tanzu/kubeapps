@@ -1,9 +1,7 @@
 import { JSONSchema4 } from "json-schema";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
-import { ActionType, deprecated } from "typesafe-actions";
-
-import Chart from "../shared/Chart";
+import Chart from "shared/Chart";
 import {
   FetchError,
   IChartCategory,
@@ -11,7 +9,8 @@ import {
   IReceiveChartsActionPayload,
   IStoreState,
   NotFoundError,
-} from "../shared/types";
+} from "shared/types";
+import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
 

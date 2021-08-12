@@ -1,8 +1,9 @@
+// Import ace first
+import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/mode-yaml";
 import "ace-builds/src-noconflict/theme-solarized_dark";
 import "ace-builds/src-noconflict/theme-xcode";
-import AceEditor from "react-ace";
 import { useSelector } from "react-redux";
 import { IStoreState } from "shared/types";
 

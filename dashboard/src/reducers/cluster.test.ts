@@ -1,12 +1,11 @@
 import { LOCATION_CHANGE, RouterActionType, RouterLocation } from "connected-react-router";
 import { Location } from "history";
 import context from "jest-plugin-context";
-import { getType } from "typesafe-actions";
-
 import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
+import { IResource } from "shared/types";
+import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState, initialState } from "./cluster";
 
 describe("clusterReducer", () => {

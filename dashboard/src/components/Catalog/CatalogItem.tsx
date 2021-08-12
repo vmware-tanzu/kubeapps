@@ -1,4 +1,4 @@
-import { IRepo } from "../../shared/types";
+import { IRepo } from "shared/types";
 import ChartCatalogItem from "./ChartCatalogItem";
 import OperatorCatalogItem from "./OperatorCatalogItem";
 

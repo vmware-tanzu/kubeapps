@@ -1,16 +1,15 @@
-import { RouterAction } from "connected-react-router";
-import * as jsonpatch from "fast-json-patch";
-import { JSONSchema4 } from "json-schema";
-import { useEffect, useState } from "react";
-import YAML from "yaml";
-
 import ChartSummary from "components/Catalog/ChartSummary";
 import ChartHeader from "components/ChartView/ChartHeader";
 import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import { RouterAction } from "connected-react-router";
+import * as jsonpatch from "fast-json-patch";
+import { JSONSchema4 } from "json-schema";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import YAML from "yaml";
 import { deleteValue, setValue } from "../../shared/schema";
 import { IChartState, IChartVersion, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";

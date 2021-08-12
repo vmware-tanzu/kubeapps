@@ -1,5 +1,4 @@
 import { mount } from "enzyme";
-
 import ChartHeader from "./ChartHeader";
 
 const testProps: any = {

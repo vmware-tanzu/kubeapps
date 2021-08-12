@@ -15,7 +15,7 @@ import { initialState as reposInitialState } from "reducers/repos";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
 import I18n from "shared/I18n";
-import { IStoreState } from "../../shared/types";
+import { IStoreState } from "shared/types";
 
 const mockStore = configureMockStore([thunk]);
 

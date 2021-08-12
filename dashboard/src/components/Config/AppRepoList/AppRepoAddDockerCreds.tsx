@@ -1,16 +1,14 @@
-import { useEffect, useState } from "react";
-
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
+import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
+import Tooltip from "components/js/Tooltip";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { ISecret, IStoreState } from "../../../shared/types";
-import Tooltip from "components/js/Tooltip";
-
+import { ISecret, IStoreState } from "shared/types";
 import "./AppRepoAddDockerCreds.css";
-import { CdsSelect } from "@cds/react/select";
 
 interface IAppRepoFormProps {
   imagePullSecrets: ISecret[];

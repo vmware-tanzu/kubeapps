@@ -3,7 +3,6 @@ import React from "react";
 import "./MultiCheckbox.scss";
 import { assignCssVariables } from "./utils/cssVariables";
 
-
 const MultiCheckbox = ({ options, span, value, ...otherProps }) => (
   <div className="multicheckbox-wrapper" style={assignCssVariables(span)}>
     {options.map((opt, i) => (

@@ -5,7 +5,7 @@ import SearchFilter from "components/SearchFilter/SearchFilter";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IPackageManifest } from "../../shared/types";
+import { IPackageManifest } from "shared/types";
 import InfoCard from "../InfoCard/InfoCard";
 import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLevel";
 import OLMNotFound from "./OLMNotFound";

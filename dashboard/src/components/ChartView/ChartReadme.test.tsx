@@ -1,9 +1,8 @@
+import actions from "actions";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import ReactMarkdown from "react-markdown";
 import * as ReactRedux from "react-redux";
 import { HashLink as Link } from "react-router-hash-link";
-
-import actions from "actions";
-import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import ChartReadme from "./ChartReadme";
 

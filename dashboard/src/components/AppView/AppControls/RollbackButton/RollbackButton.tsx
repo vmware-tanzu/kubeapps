@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { hapi } from "shared/hapi/release";
 import { IStoreState } from "shared/types";
-import RollbackDialog from "./RollbackDialog";
-import { hapi } from "../../../../shared/hapi/release";
 import StatusAwareButton from "../StatusAwareButton";
+import RollbackDialog from "./RollbackDialog";
 
 export interface IRollbackButtonProps {
   cluster: string;

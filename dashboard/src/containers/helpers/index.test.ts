@@ -1,6 +1,6 @@
+import ResourceRef from "shared/ResourceRef";
+import { IKubeItem, IKubeState, IResource } from "shared/types";
 import { filterByResourceRefs } from ".";
-import ResourceRef from "../../shared/ResourceRef";
-import { IKubeItem, IKubeState, IResource } from "../../shared/types";
 
 const clusterName = "cluster-name";
 

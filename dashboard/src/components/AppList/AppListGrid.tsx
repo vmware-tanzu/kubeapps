@@ -1,8 +1,8 @@
 import Row from "components/js/Row";
 import { Link } from "react-router-dom";
-import { IAppOverview, IClusterServiceVersion, IResource } from "../../shared/types";
-import * as url from "../../shared/url";
-import { escapeRegExp } from "../../shared/utils";
+import { IAppOverview, IClusterServiceVersion, IResource } from "shared/types";
+import * as url from "shared/url";
+import { escapeRegExp } from "shared/utils";
 import Alert from "../js/Alert";
 import "./AppList.css";
 import AppListItem from "./AppListItem";
