@@ -51,24 +51,16 @@ function AppUpgrade() {
     repos: { repo },
   } = useSelector((state: IStoreState) => state);
 
-  const repoName = repo?.metadata?.name || app?.updateInfo?.repository?.namespace;
+  const repoName = repo?.metadata?.name || app?.updateInfo?.repository?.name;
   const repoNamespace = repo?.metadata?.namespace || app?.updateInfo?.repository?.namespace;
+  const chart = app?.chart;
 
   useEffect(() => {
     dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName));
   }, [dispatch, cluster, namespace, releaseName]);
 
-  const chart = app?.chart;
   useEffect(() => {
-    if (
-      repoName &&
-      repoNamespace &&
-      chart &&
-      chart.metadata &&
-      chart.metadata &&
-      chart.metadata.name &&
-      chart.metadata.version
-    ) {
+    if (repoName && repoNamespace && chart?.metadata?.name && chart?.metadata?.version) {
       const chartID = `${repoName}/${chart.metadata.name}`;
       dispatch(
         actions.charts.getDeployedChartVersion(
@@ -85,7 +77,7 @@ function AppUpgrade() {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
   }
 
-  if (appsIsFetching || !app || !app.updateInfo) {
+  if (appsIsFetching && !app?.updateInfo) {
     return (
       <LoadingWrapper
         loadingText={`Fetching ${releaseName}...`}
@@ -95,18 +87,16 @@ function AppUpgrade() {
     );
   }
 
-  const appRepoName = repoName || app.updateInfo.repository.name;
-  const repoNS = repoNamespace || app.updateInfo.repository.namespace;
-  if (app && app.chart && app.chart.metadata && appRepoName) {
+  if (app?.chart?.metadata?.name && app?.chart?.metadata?.version && repoName && repoNamespace) {
     return (
       <div>
         <UpgradeForm
-          appCurrentVersion={app.chart.metadata.version!}
+          appCurrentVersion={app.chart.metadata.version}
           appCurrentValues={(app.config && app.config.raw) || ""}
-          chartName={app.chart.metadata.name!}
+          chartName={app.chart.metadata.name}
           chartsIsFetching={chartsIsFetching}
-          repo={appRepoName}
-          repoNamespace={repoNS}
+          repo={repoName}
+          repoNamespace={repoNamespace}
           namespace={namespace}
           cluster={cluster}
           releaseName={releaseName}
@@ -117,9 +107,12 @@ function AppUpgrade() {
       </div>
     );
   }
-  /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
   return (
-    <SelectRepoForm cluster={cluster} namespace={namespace} chartName={chart?.metadata?.name!} />
+    <SelectRepoForm
+      cluster={cluster}
+      namespace={namespace}
+      chartName={chart?.metadata?.name || ""}
+    />
   );
 }
 

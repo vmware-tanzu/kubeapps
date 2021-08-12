@@ -1,6 +1,7 @@
 import { shallow } from "enzyme";
-import { IChartAttributes } from "shared/types";
-import ChartMaintainers from "./ChartMaintainers";
+
+import { IChartAttributes } from "../../shared/types";
+import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 
 const tests: Array<{
   expectedLinks: Array<string | null>;
@@ -29,7 +30,10 @@ const tests: Array<{
 for (const t of tests) {
   it(`it renders the maintainers list ${t.name}`, () => {
     const wrapper = shallow(
-      <ChartMaintainers maintainers={t.maintainers} githubIDAsNames={t.githubIDAsNames} />,
+      <AvailablePackageMaintainers
+        maintainers={t.maintainers}
+        githubIDAsNames={t.githubIDAsNames}
+      />,
     );
     const list = wrapper.find("li");
     expect(list).toHaveLength(t.maintainers.length);

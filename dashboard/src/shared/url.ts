@@ -1,20 +1,25 @@
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IServiceBroker } from "./ServiceCatalog";
-import { IChartVersion, IRepo } from "./types";
+import { IRepo } from "./types";
 
 export const app = {
   apps: {
     new: (
       cluster: string,
       namespace: string,
-      cv: IChartVersion,
+      availablePackageDetail: AvailablePackageDetail,
       version: string,
       globalNamespace: string,
     ) => {
-      const repoNamespace = cv.relationships.chart.data.repo.namespace;
+      const repoNamespace = availablePackageDetail.availablePackageRef?.context?.namespace;
       const newSegment = globalNamespace !== repoNamespace ? "new" : "new-from-global";
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${
-        cv.relationships.chart.data.repo.name
-      }/${encodeURIComponent(cv.relationships.chart.data.name)}/versions/${version}`;
+      // TODO(agamez): get the repo name once available
+      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
+      const repoName =
+        availablePackageDetail.availablePackageRef?.identifier.split("/")[0] ?? globalNamespace;
+      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${encodeURIComponent(
+        availablePackageDetail.name,
+      )}/versions/${version}`;
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (cluster: string, namespace: string, releaseName: string) =>

@@ -1,6 +1,5 @@
 import actions from "actions";
-import { getChartVersion } from "actions/charts";
-import ChartSummary from "components/Catalog/ChartSummary";
+import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import ChartHeader from "components/ChartView/ChartHeader";
 import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
 import Alert from "components/js/Alert";
@@ -64,17 +63,18 @@ function UpgradeForm({
   selected,
   deployed,
 }: IUpgradeFormProps) {
-  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [appValues, setAppValues] = useState(appCurrentValues || "");
   const [isDeploying, setIsDeploying] = useState(false);
   const [valuesModified, setValuesModified] = useState(false);
   const [modifications, setModifications] = useState(
     undefined as undefined | jsonpatch.Operation[],
   );
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+
   const [deployedValues, setDeployedValues] = useState("");
 
   const chartID = `${repo}/${chartName}`;
-  const { version } = selected;
+  const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
 
   const {
     apps: { isFetching: appsFetching },
@@ -107,27 +107,25 @@ function UpgradeForm({
   }, [deployed.values, modifications]);
 
   useEffect(() => {
-    if (deployed.chartVersion?.attributes.version) {
-      dispatch(
-        actions.charts.getChartVersion(
-          cluster,
-          repoNamespace,
-          chartID,
-          deployed.chartVersion.attributes.version,
-        ),
-      );
-    }
+    dispatch(
+      actions.charts.fetchChartVersion(
+        cluster,
+        repoNamespace,
+        chartID,
+        deployed.chartVersion?.availablePackageDetail?.pkgVersion,
+      ),
+    );
   }, [dispatch, cluster, repoNamespace, chartID, deployed.chartVersion]);
 
   useEffect(() => {
-    if (!valuesModified && selected.values) {
+    if (!valuesModified && values) {
       // Apply modifications to the new selected version
       const newAppValues = modifications?.length
-        ? applyModifications(modifications, selected.values)
-        : selected.values;
+        ? applyModifications(modifications, values)
+        : values;
       setAppValues(newAppValues);
     }
-  }, [selected.values, modifications, valuesModified]);
+  }, [values, modifications, valuesModified]);
 
   const setValuesModifiedTrue = () => {
     setValuesModified(true);
@@ -138,22 +136,24 @@ function UpgradeForm({
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    getChartVersion(cluster, repoNamespace, chartID, e.currentTarget.value);
+    dispatch(
+      actions.charts.fetchChartVersion(cluster, repoNamespace, chartID, e.currentTarget.value),
+    );
   };
 
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsDeploying(true);
-    if (selected.version) {
+    if (availablePackageDetail) {
       const deployedSuccess = await dispatch(
         actions.apps.upgradeApp(
           cluster,
           namespace,
-          selected.version,
+          availablePackageDetail,
           repoNamespace,
           releaseName,
           appValues,
-          selected.schema,
+          schema,
         ),
       );
       setIsDeploying(false);
@@ -163,11 +163,7 @@ function UpgradeForm({
     }
   };
 
-  if (selected?.error) {
-    return <Alert theme="danger">An error occurred: {selected.error?.message}</Alert>;
-  }
-
-  if (selected.versions.length === 0 || !version) {
+  if (versions.length === 0 || !availablePackageDetail) {
     return (
       <LoadingWrapper
         className="margin-t-xxl"
@@ -177,19 +173,17 @@ function UpgradeForm({
     );
   }
 
-  const chartAttrs = version.relationships.chart.data;
-
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <LoadingWrapper loaded={!isFetching}>
         <ChartHeader
           releaseName={releaseName}
-          chartAttrs={chartAttrs}
-          versions={selected.versions}
+          chartAttrs={availablePackageDetail}
+          versions={versions}
           onSelect={selectVersion}
-          currentVersion={deployed.chartVersion?.attributes.version}
-          selectedVersion={selected.version?.attributes.version}
+          currentVersion={deployed.chartVersion?.availablePackageDetail?.pkgVersion}
+          selectedVersion={pkgVersion}
         />
         {isDeploying && (
           <h3 className="center" style={{ marginBottom: "1.2rem" }}>
@@ -200,7 +194,7 @@ function UpgradeForm({
           {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
           <Row>
             <Column span={3}>
-              <ChartSummary version={version} chartAttrs={chartAttrs} />
+              <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
             </Column>
             <Column span={9}>
               <form onSubmit={handleDeploy}>
@@ -209,11 +203,11 @@ function UpgradeForm({
                     Upgrade to Version
                   </label>
                   <ChartVersionSelector
-                    versions={selected.versions}
-                    selectedVersion={selected.version?.attributes.version}
+                    versions={versions}
+                    selectedVersion={pkgVersion}
                     onSelect={selectVersion}
-                    currentVersion={deployed.chartVersion?.attributes.version}
-                    chartAttrs={chartAttrs}
+                    currentVersion={deployed.chartVersion?.availablePackageDetail?.pkgVersion}
+                    chartAttrs={availablePackageDetail}
                   />
                 </div>
                 <DeploymentFormBody

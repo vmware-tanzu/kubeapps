@@ -1,7 +1,8 @@
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { hapi } from "./hapi/release";
-import { IAppOverview, IChartVersion } from "./types";
+import { IAppOverview } from "./types";
 
 export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
 
@@ -10,19 +11,21 @@ export class App {
     cluster: string,
     namespace: string,
     releaseName: string,
-    chartNamespace: string,
-    chartVersion: IChartVersion,
+    availablePackageDetail: AvailablePackageDetail,
     values?: string,
   ) {
-    const chartAttrs = chartVersion.relationships.chart.data;
+    // TODO(agamez): get the repo name once available
+    // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
     const endpoint = url.kubeops.releases.list(cluster, namespace);
     const { data } = await axiosWithAuth.post(endpoint, {
-      appRepositoryResourceName: chartAttrs.repo.name,
-      appRepositoryResourceNamespace: chartNamespace,
-      chartName: decodeURIComponent(chartAttrs.name),
+      appRepositoryResourceName:
+        availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
+      appRepositoryResourceNamespace:
+        availablePackageDetail.availablePackageRef?.context?.namespace,
+      chartName: decodeURIComponent(availablePackageDetail.name),
       releaseName,
       values,
-      version: chartVersion.attributes.version,
+      version: availablePackageDetail.pkgVersion,
     });
     return data;
   }
@@ -32,18 +35,18 @@ export class App {
     namespace: string,
     releaseName: string,
     chartNamespace: string,
-    chartVersion: IChartVersion,
+    availablePackageDetail: AvailablePackageDetail,
     values?: string,
   ) {
-    const chartAttrs = chartVersion.relationships.chart.data;
     const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
     const { data } = await axiosWithAuth.put(endpoint, {
-      appRepositoryResourceName: chartAttrs.repo.name,
+      appRepositoryResourceName:
+        availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
       appRepositoryResourceNamespace: chartNamespace,
-      chartName: decodeURIComponent(chartAttrs.name),
+      chartName: decodeURIComponent(availablePackageDetail.name),
       releaseName,
       values,
-      version: chartVersion.attributes.version,
+      version: availablePackageDetail.pkgVersion,
     });
     return data;
   }

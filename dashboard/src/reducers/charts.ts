@@ -1,3 +1,4 @@
+import { JSONSchemaType } from "ajv";
 import { uniqBy } from "lodash";
 import { IChartState } from "shared/types";
 import { getType } from "typesafe-actions";
@@ -27,15 +28,21 @@ const chartsSelectedReducer = (
         ...state,
         error: undefined,
         readmeError: undefined,
-        version: action.payload.chartVersion,
-        values: action.payload.values,
-        schema: action.payload.schema,
+        availablePackageDetail: action.payload.selectedPackage,
+        pkgVersion: action.payload.selectedPackage.pkgVersion,
+        appVersion: action.payload.selectedPackage.appVersion,
+        readme: action.payload.selectedPackage.readme,
+        values: action.payload.selectedPackage.defaultValues,
+        schema:
+          action.payload.selectedPackage.valuesSchema !== ""
+            ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)
+            : ({} as JSONSchemaType<any>),
       };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
         error: undefined,
-        versions: action.payload,
+        versions: action.payload.packageAppVersions,
       };
     case getType(actions.charts.selectReadme):
       return { ...state, readme: action.payload, readmeError: undefined };
@@ -60,16 +67,20 @@ const chartsReducer = (
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts): {
-      const isLastPage = action.payload.page >= action.payload.totalPages;
+      const isLastPage =
+        action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
+        action.payload.response.nextPageToken === "";
       return {
         ...state,
         isFetching: false,
         hasFinishedFetching: isLastPage,
-        items: uniqBy([...state.items, ...action.payload.items], "id"),
+        categories: action.payload.response.categories,
+        items: uniqBy(
+          [...state.items, ...action.payload.response.availablePackageSummaries],
+          "availablePackageRef.identifier",
+        ),
       };
     }
-    case getType(actions.charts.receiveChartCategories):
-      return { ...state, categories: action.payload };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
@@ -91,7 +102,7 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        deployed: { ...state.deployed, ...action.payload },
+        deployed: { ...state.deployed, ...action.payload.chartVersion },
       };
     case getType(actions.charts.resetRequestCharts):
       return {
@@ -99,7 +110,6 @@ const chartsReducer = (
         hasFinishedFetching: false,
         items: [],
       };
-    case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.selectReadme):
     case getType(actions.charts.errorReadme):
     case getType(actions.charts.errorChart):
@@ -110,18 +120,12 @@ const chartsReducer = (
         items: state.items,
         selected: chartsSelectedReducer(state.selected, action),
       };
+    case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.clearErrorChart):
       return {
         ...state,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.errorChartCatetories):
-      return {
-        ...state,
-        isFetching: false,
-        categories: [],
-      };
-    default:
   }
   return state;
 };

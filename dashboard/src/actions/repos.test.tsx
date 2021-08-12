@@ -1010,7 +1010,7 @@ describe("updateRepo", () => {
 
 describe("checkChart", () => {
   it("dispatches requestRepo and receivedRepo if no error", async () => {
-    Chart.fetchChartVersions = jest.fn();
+    Chart.getAvailablePackageVersions = jest.fn();
     const expectedActions = [
       {
         type: getType(repoActions.requestRepo),
@@ -1025,7 +1025,7 @@ describe("checkChart", () => {
       repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith(
+    expect(Chart.getAvailablePackageVersions).toBeCalledWith(
       "default",
       "other-namespace",
       "my-repo/my-chart",
@@ -1033,7 +1033,7 @@ describe("checkChart", () => {
   });
 
   it("dispatches requestRepo and errorChart if error fetching", async () => {
-    Chart.fetchChartVersions = jest.fn(() => {
+    Chart.getAvailablePackageVersions = jest.fn(() => {
       throw new Error();
     });
 
@@ -1051,7 +1051,7 @@ describe("checkChart", () => {
       repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith(
+    expect(Chart.getAvailablePackageVersions).toBeCalledWith(
       "default",
       "other-namespace",
       "my-repo/my-chart",

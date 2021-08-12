@@ -1,27 +1,22 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
-import ChartSummary from "components/Catalog/ChartSummary";
+import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import LoadingWrapper from "components/LoadingWrapper";
+import { push } from "connected-react-router";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
-import { Dispatch } from "redux";
-import { IChartVersion, IStoreState } from "shared/types";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import ChartHeader from "./ChartHeader";
 import ChartReadme from "./ChartReadme";
-
-function callSelectChartVersion(ver: string, versions: IChartVersion[], dispatch: Dispatch) {
-  const cv = versions.find(v => v.attributes.version === ver);
-  if (cv) {
-    dispatch(actions.charts.selectChartVersion(cv));
-  }
-}
 
 interface IRouteParams {
   cluster: string;
@@ -32,58 +27,63 @@ interface IRouteParams {
   version?: string;
 }
 
-function ChartView() {
-  const {
-    charts: { selected, isFetching },
-    config: { kubeappsNamespace },
-  } = useSelector((state: IStoreState) => state);
+export default function ChartView() {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const {
     cluster,
     namespace,
     repo,
     global,
     id,
-    version: versionStr,
+    version: queryVersion,
   } = ReactRouter.useParams() as IRouteParams;
-  const dispatch = useDispatch();
-  const { version, readme, error, readmeError, versions } = selected;
+  const {
+    config,
+    charts: { isFetching, selected },
+  } = useSelector((state: IStoreState) => state);
+  const { availablePackageDetail, versions, pkgVersion, readmeError, error, readme } = selected;
 
   const chartID = `${repo}/${id}`;
-  const chartNamespace = global === "global" ? kubeappsNamespace : namespace;
+  const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
+  const kubeappsNamespace = config.kubeappsNamespace;
 
-  useEffect(() => {
-    dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(
-        cluster,
-        chartNamespace,
-        chartID,
-        versionStr,
-      ),
-    );
-    return () => {
-      dispatch(actions.charts.resetChartVersion());
-    };
-  }, [cluster, chartNamespace, chartID, versionStr, dispatch]);
+  const location = ReactRouter.useLocation();
 
+  // Fetch the selected/latest version on the initial load
   useEffect(() => {
-    callSelectChartVersion(versionStr || "", versions, dispatch);
-  }, [versions, versionStr, dispatch]);
+    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, chartID, queryVersion));
+    return;
+  }, [dispatch, chartID, chartNamespace, cluster, queryVersion]);
+
+  // Fetch all versions
+  useEffect(() => {
+    dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, chartID));
+  }, [dispatch, chartID, chartNamespace, cluster]);
+
+  // Select version handler
+  const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const versionRegex = /\/versions\/(.*)/;
+    if (versionRegex.test(location.pathname)) {
+      // If the current URL already has the version, replace it
+      dispatch(push(location.pathname.replace(versionRegex, `/versions/${event.target.value}`)));
+    } else {
+      // Otherwise, append the version
+      dispatch(push(location.pathname.concat(`/versions/${event.target.value}`)));
+    }
+  };
 
   if (error) {
     return <Alert theme="danger">Unable to fetch chart: {error.message}</Alert>;
   }
-  if (isFetching || !version) {
+  if (isFetching || !availablePackageDetail) {
     return <LoadingWrapper loaded={false} />;
   }
-  const chartAttrs = version.relationships.chart.data;
-  const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) =>
-    callSelectChartVersion(event.target.value, versions, dispatch);
 
   return (
     <section>
       <div>
         <ChartHeader
-          chartAttrs={chartAttrs}
+          chartAttrs={availablePackageDetail}
           versions={versions}
           onSelect={selectVersion}
           deployButton={
@@ -91,8 +91,8 @@ function ChartView() {
               to={app.apps.new(
                 cluster,
                 namespace,
-                version,
-                version.attributes.version,
+                availablePackageDetail,
+                pkgVersion!,
                 kubeappsNamespace,
               )}
             >
@@ -101,20 +101,20 @@ function ChartView() {
               </CdsButton>
             </Link>
           }
-          selectedVersion={selected.version?.attributes.version}
+          selectedVersion={pkgVersion}
         />
       </div>
 
       <section>
         <Row>
           <Column span={3}>
-            <ChartSummary version={version} chartAttrs={chartAttrs} />
+            <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
           </Column>
           <Column span={9}>
             <ChartReadme
               readme={readme}
               error={readmeError}
-              version={version.attributes.version}
+              version={pkgVersion!}
               cluster={cluster}
               namespace={chartNamespace}
               chartID={chartID}
@@ -124,8 +124,8 @@ function ChartView() {
                 to={app.apps.new(
                   cluster,
                   namespace,
-                  version,
-                  version.attributes.version,
+                  availablePackageDetail,
+                  pkgVersion!,
                   kubeappsNamespace,
                 )}
               >
@@ -140,5 +140,3 @@ function ChartView() {
     </section>
   );
 }
-
-export default ChartView;

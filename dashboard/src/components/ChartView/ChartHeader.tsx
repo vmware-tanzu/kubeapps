@@ -1,15 +1,17 @@
 import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
-import { trimStart } from "lodash";
+import {
+  AvailablePackageDetail,
+  GetAvailablePackageVersionsResponse_PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
-import { IChartAttributes, IChartVersion } from "shared/types";
 import placeholder from "../../placeholder.png";
 import "./ChartHeader.css";
 import ChartVersionSelector from "./ChartVersionSelector";
 
 interface IChartHeaderProps {
-  chartAttrs: IChartAttributes;
-  versions: IChartVersion[];
+  chartAttrs: AvailablePackageDetail;
+  versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
   currentVersion?: string;
@@ -29,12 +31,18 @@ export default function ChartHeader({
   return (
     <PageHeader
       title={
+        // TODO(agamez): get the repo name once available
+        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
         releaseName
-          ? `${releaseName} (${chartAttrs.repo.name}/${decodeURIComponent(chartAttrs.name)})`
-          : `${chartAttrs.repo.name}/${decodeURIComponent(chartAttrs.name)}`
+          ? `${releaseName} (${
+              chartAttrs.availablePackageRef?.identifier.split("/")[0]
+            }/${decodeURIComponent(chartAttrs.name)})`
+          : `${chartAttrs.availablePackageRef?.identifier.split("/")[0]}/${decodeURIComponent(
+              chartAttrs.name,
+            )}`
       }
       titleSize="md"
-      icon={chartAttrs.icon ? `api/assetsvc/${trimStart(chartAttrs.icon, "/")}` : placeholder}
+      icon={chartAttrs.iconUrl ? chartAttrs.iconUrl : placeholder}
       helm={true}
       version={
         <>

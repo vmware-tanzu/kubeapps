@@ -97,6 +97,7 @@
   },
   "devDependencies": {
     "@formatjs/cli": "^4.2.29",
+    "@improbable-eng/grpc-web-fake-transport": "^0.14.0",
     "@types/enzyme": "^3.10.9",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/google-protobuf": "^3.15.3",

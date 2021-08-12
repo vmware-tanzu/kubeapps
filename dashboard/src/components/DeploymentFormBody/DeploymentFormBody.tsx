@@ -4,9 +4,9 @@ import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
 import { isEqual } from "lodash";
 import { useEffect, useState } from "react";
-import { parseValues, retrieveBasicFormParams, setValue } from "shared/schema";
-import { DeploymentEvent, IBasicFormParam, IChartState } from "shared/types";
-import { getValueFromEvent } from "shared/utils";
+import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";
+import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
+import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
@@ -41,7 +41,7 @@ function DeploymentFormBody({
   const [restoreModalIsOpen, setRestoreModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState("");
 
-  const { version, versions, schema, values } = selected;
+  const { availablePackageDetail, versions, schema, values, pkgVersion, error } = selected;
 
   useEffect(() => {
     const params = retrieveBasicFormParams(appValues, schema);
@@ -92,20 +92,20 @@ function DeploymentFormBody({
   };
 
   const restoreDefaultValues = () => {
-    if (selected.values) {
-      setValues(selected.values);
-      setBasicFormParameters(retrieveBasicFormParams(selected.values, selected.schema));
+    if (values) {
+      setValues(values);
+      setBasicFormParameters(retrieveBasicFormParams(values, schema));
     }
     setRestoreModalOpen(false);
   };
-  if (selected.error) {
+  if (error) {
     return (
       <Alert theme="danger">
-        Unable to fetch chart "{chartID}" ({chartVersion}): Got {selected.error.message}
+        Unable to fetch chart "{chartID}" ({chartVersion}): Got {error.message}
       </Alert>
     );
   }
-  if (chartsIsFetching || !version || !versions.length) {
+  if (chartsIsFetching || !availablePackageDetail || !versions.length) {
     return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
   }
   const tabColumns = [
@@ -169,7 +169,7 @@ function DeploymentFormBody({
       </div>
       <div className="deployment-form-control-buttons">
         <CdsButton status="primary" type="submit">
-          <CdsIcon shape="deploy" /> Deploy {version.attributes.version}
+          <CdsIcon shape="deploy" /> Deploy {pkgVersion}
         </CdsButton>
         {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
             https://github.com/vmware/clarity/issues/5038

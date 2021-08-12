@@ -380,7 +380,7 @@ export function checkChart(
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(cluster, repoNamespace, repo);
     try {
-      await Chart.fetchChartVersions(cluster, repoNamespace, `${repo}/${chartName}`);
+      await Chart.getAvailablePackageVersions(cluster, repoNamespace, `${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));
       return true;
     } catch (e) {

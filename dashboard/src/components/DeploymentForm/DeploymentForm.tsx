@@ -1,5 +1,5 @@
 import actions from "actions";
-import ChartSummary from "components/Catalog/ChartSummary";
+import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -44,11 +44,11 @@ export default function DeploymentForm() {
   const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
   const error = apps.error || selected.error;
   const kubeappsNamespace = config.kubeappsNamespace;
+  const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState("");
-  const [appValues, setAppValues] = useState(selected.values || "");
+  const [appValues, setAppValues] = useState(values || "");
   const [valuesModified, setValuesModified] = useState(false);
-  const { version } = selected;
 
   useEffect(() => {
     dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, chartID));
@@ -56,11 +56,12 @@ export default function DeploymentForm() {
 
   useEffect(() => {
     if (!valuesModified) {
-      setAppValues(selected.values || "");
+      setAppValues(values || "");
     }
-  }, [selected.values, valuesModified]);
+  }, [values, valuesModified]);
+
   useEffect(() => {
-    dispatch(actions.charts.getChartVersion(cluster, chartNamespace, chartID, chartVersion));
+    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, chartID, chartVersion!));
   }, [cluster, chartNamespace, chartID, chartVersion, dispatch]);
 
   const handleValuesChange = (value: string) => {
@@ -78,54 +79,54 @@ export default function DeploymentForm() {
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setDeploying(true);
-    if (selected.version) {
+    if (availablePackageDetail) {
       const deployed = await dispatch(
         actions.apps.deployChart(
           cluster,
           namespace,
-          selected.version,
-          chartNamespace,
+          availablePackageDetail,
           releaseName,
           appValues,
-          selected.schema,
+          schema,
         ),
       );
       setDeploying(false);
       if (deployed) {
-        push(url.app.apps.get(cluster, namespace, releaseName));
+        dispatch(push(url.app.apps.get(cluster, namespace, releaseName)));
       }
     }
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    push(
-      url.app.apps.new(
-        cluster,
-        namespace,
-        selected.version!,
-        e.currentTarget.value,
-        kubeappsNamespace,
+    dispatch(
+      push(
+        url.app.apps.new(
+          cluster,
+          namespace,
+          availablePackageDetail!,
+          e.currentTarget.value,
+          kubeappsNamespace,
+        ),
       ),
     );
   };
 
   if (error?.constructor === FetchError) {
     return (
-      error && <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>
+      error && <Alert theme="danger">Unable to retrieve the current app: {"error.message"}</Alert>
     );
   }
 
-  if (!version) {
+  if (!availablePackageDetail) {
     return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
   }
-  const chartAttrs = version.relationships.chart.data;
   return (
     <section>
       <ChartHeader
-        chartAttrs={chartAttrs}
-        versions={selected.versions}
+        chartAttrs={availablePackageDetail}
+        versions={versions}
         onSelect={selectVersion}
-        selectedVersion={selected.version?.attributes.version}
+        selectedVersion={pkgVersion}
       />
       {isDeploying && (
         <h3 className="center" style={{ marginBottom: "1.2rem" }}>
@@ -135,7 +136,7 @@ export default function DeploymentForm() {
       <LoadingWrapper loaded={!isDeploying}>
         <Row>
           <Column span={3}>
-            <ChartSummary version={version} chartAttrs={chartAttrs} />
+            <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
           </Column>
           <Column span={9}>
             {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}

@@ -1,9 +1,12 @@
+import {
+  AvailablePackageDetail,
+  GetAvailablePackageVersionsResponse_PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
-import { IChartAttributes, IChartVersion } from "shared/types";
 
 interface IChartHeaderProps {
-  chartAttrs: IChartAttributes;
-  versions: IChartVersion[];
+  chartAttrs: AvailablePackageDetail;
+  versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
   currentVersion?: string;
@@ -23,20 +26,13 @@ export default function ChartVersionSelector({
         name="chart-versions"
         className="clr-page-size-select"
         onChange={onSelect}
-        value={
-          selectedVersion ||
-          currentVersion ||
-          (versions.length ? versions[0].attributes.version : "")
-        }
+        value={selectedVersion || currentVersion || (versions.length ? versions[0].pkgVersion : "")}
       >
         {versions.map(v => {
           return (
-            <option
-              key={`chart-version-selector-${v.attributes.version}`}
-              value={v.attributes.version}
-            >
-              {v.attributes.version} / App Version {v.attributes.app_version}
-              {currentVersion === v.attributes.version ? " (current)" : ""}
+            <option key={`chart-version-selector-${v.pkgVersion}`} value={v.pkgVersion}>
+              {v.pkgVersion} / App Version {v.appVersion}
+              {currentVersion === v.pkgVersion ? " (current)" : ""}
             </option>
           );
         })}

@@ -1,3 +1,4 @@
+import { GetAvailablePackageSummariesResponse } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
 import Chart from "./Chart";
@@ -6,7 +7,6 @@ const clusterName = "cluster-name";
 const namespaceName = "namespace-name";
 const defaultPage = 1;
 const defaultSize = 0;
-
 describe("App", () => {
   beforeEach(() => {
     // Import as "any" to avoid typescript syntax error
@@ -18,6 +18,7 @@ describe("App", () => {
   });
   afterEach(() => {
     moxios.uninstall(axiosWithAuth as any);
+    jest.restoreAllMocks();
   });
   describe("fetchCharts", () => {
     [
@@ -31,7 +32,6 @@ describe("App", () => {
           size: defaultSize,
           query: "",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}`,
       },
       {
         description: "fetch charts url without repos, with query",
@@ -43,7 +43,6 @@ describe("App", () => {
           size: defaultSize,
           query: "cms",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}&q=cms`,
       },
       {
         description: "fetch charts url with repos, without query",
@@ -55,7 +54,6 @@ describe("App", () => {
           size: defaultSize,
           query: "",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}&repos=repo1,repo2`,
       },
       {
         description: "fetch charts url wtih repos, with query",
@@ -67,40 +65,33 @@ describe("App", () => {
           size: defaultSize,
           query: "cms",
         },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}&q=cms&repos=repo1,repo2`,
       },
     ].forEach(t => {
       it(t.description, async () => {
-        expect(
-          await Chart.fetchCharts(
-            t.args.cluster,
-            t.args.namespace,
-            t.args.repos,
-            t.args.page,
-            t.args.size,
-            t.args.query,
-          ),
-        ).toStrictEqual({ data: "ok" });
-        expect(moxios.requests.mostRecent().url).toStrictEqual(t.result);
-      });
-    });
-  });
-  describe("fetchChartCategories", () => {
-    [
-      {
-        description: "fetch chart categories url",
-        args: {
-          cluster: clusterName,
-          namespace: namespaceName,
-        },
-        result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts/categories`,
-      },
-    ].forEach(t => {
-      it(t.description, async () => {
-        expect(await Chart.fetchChartCategories(t.args.cluster, t.args.namespace)).toStrictEqual(
-          "ok",
+        const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            availablePackageSummaries: [{ name: "foo" }],
+            nextPageToken: "",
+            categories: ["foo"],
+          } as GetAvailablePackageSummariesResponse),
         );
-        expect(moxios.requests.mostRecent().url).toStrictEqual(t.result);
+        jest
+          .spyOn(Chart, "getAvailablePackageSummaries")
+          .mockImplementation(mockGetAvailablePackageSummaries);
+        const charts = await Chart.getAvailablePackageSummaries(
+          t.args.cluster,
+          t.args.namespace,
+          t.args.repos,
+          t.args.page,
+          t.args.size,
+          t.args.query,
+        );
+        expect(charts).toStrictEqual({
+          availablePackageSummaries: [{ name: "foo" }],
+          nextPageToken: "",
+          categories: ["foo"],
+        } as GetAvailablePackageSummariesResponse);
+        expect(mockGetAvailablePackageSummaries).toHaveBeenCalledWith(...Object.values(t.args));
       });
     });
   });
@@ -118,7 +109,7 @@ describe("App", () => {
     ].forEach(t => {
       it(t.description, async () => {
         expect(
-          await Chart.fetchChartVersions(t.args.cluster, t.args.namespace, t.args.id),
+          await Chart.getAvailablePackageVersions(t.args.cluster, t.args.namespace, t.args.id),
         ).toStrictEqual("ok");
         expect(moxios.requests.mostRecent().url).toStrictEqual(t.result);
       });

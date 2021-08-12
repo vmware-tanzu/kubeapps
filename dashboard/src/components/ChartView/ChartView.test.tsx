@@ -3,8 +3,8 @@ import Alert from "components/js/Alert";
 import { set } from "lodash";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IChartVersion } from "shared/types";
-import ChartMaintainers from "./ChartMaintainers";
+import { IChartState, IChartVersion } from "../../shared/types";
+import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 import ChartView, { IChartViewProps } from "./ChartView";
 
 const props: IChartViewProps = {
@@ -179,7 +179,7 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
         defaultStore,
         <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
       );
-      const chartMaintainers = wrapper.find(ChartMaintainers);
+      const chartMaintainers = wrapper.find(AvailablePackageMaintainers);
       expect(chartMaintainers.props().githubIDAsNames).toBe(t.expected);
     });
   }

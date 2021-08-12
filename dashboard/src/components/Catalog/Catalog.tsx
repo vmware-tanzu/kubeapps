@@ -88,7 +88,7 @@ function Catalog(props: ICatalogProps) {
     charts: {
       hasFinishedFetching,
       selected: { error },
-      items: charts,
+      items: availablePackages,
       categories,
       size,
       isFetching,
@@ -168,7 +168,7 @@ function Catalog(props: ICatalogProps) {
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
-      .map(c => categoryToReadable(c.name))
+      .map(c => categoryToReadable(c))
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
@@ -185,14 +185,14 @@ function Catalog(props: ICatalogProps) {
   }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartCategories(cluster, namespace));
     dispatch(actions.operators.getCSVs(cluster, namespace));
   }, [dispatch, cluster, namespace]);
 
   // detect changes in cluster/ns/repos/search and reset the current chart list
   useEffect(() => {
-    setPage(1);
+    setPage(0);
     dispatch(actions.charts.resetRequestCharts());
+    dispatch(actions.charts.resetChartVersion());
   }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
@@ -204,7 +204,7 @@ function Catalog(props: ICatalogProps) {
     pushFilters(newFilters);
   };
 
-  const filteredCharts = charts
+  const filteredCharts = availablePackages
     .filter(
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
@@ -212,12 +212,16 @@ function Catalog(props: ICatalogProps) {
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
-        filters[filterNames.REPO].includes(c.attributes.repo.name),
+        // TODO(agamez): get the repo name once available
+        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
+        filters[filterNames.REPO].includes(c.availablePackageRef?.identifier.split("/")[0]),
     )
     .filter(
       c =>
         filters[filterNames.CATEGORY].length === 0 ||
-        filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
+        c.categories?.some(category =>
+          filters[filterNames.CATEGORY].includes(categoryToReadable(category)),
+        ),
     );
   const filteredCSVs = csvs
     .filter(
@@ -299,7 +303,7 @@ function Catalog(props: ICatalogProps) {
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search charts..."
+            placeholder="search available packages..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}
@@ -320,7 +324,7 @@ function Catalog(props: ICatalogProps) {
       {isEqual(filters, initialFilterState()) &&
       hasFinishedFetching &&
       searchFilter.length === 0 &&
-      charts.length === 0 &&
+      availablePackages.length === 0 &&
       csvs.length === 0 ? (
         <div className="empty-catalog">
           <CdsIcon shape="bundle" />

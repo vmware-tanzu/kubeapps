@@ -1,4 +1,5 @@
 import { JSONSchemaType } from "ajv";
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
 import { App } from "shared/App";
@@ -11,7 +12,6 @@ import {
   FetchError,
   IAppOverview,
   IChartUpdateInfo,
-  IChartVersion,
   IRelease,
   IStoreState,
   RollbackError,
@@ -115,37 +115,51 @@ function getAppUpdateInfo(
   return async (dispatch, getState) => {
     dispatch(requestAppUpdateInfo());
     try {
-      const chartsInfo = await Chart.listWithFilters(
+      // TODO(agamez): remove workaround value once GetInstalledPackageDetail has been implemented
+      // it is fetching the summaries if any matching elements exists. If so, gather its details.
+      const { availablePackageSummaries } = await Chart.getAvailablePackageSummaries(
         cluster,
         namespace,
+        "",
+        0,
+        1,
         chartName,
-        currentVersion,
-        appVersion,
       );
-      let updateInfo: IChartUpdateInfo = {
-        upToDate: true,
-        repository: { name: "", url: "", namespace: "" },
-        chartLatestVersion: "",
-        appLatestVersion: "",
-      };
-      if (chartsInfo.length > 0) {
-        const sortedCharts = chartsInfo.sort((a, b) =>
-          semver.compare(
-            a.relationships.latestChartVersion.data.version,
-            b.relationships.latestChartVersion.data.version,
-          ),
+      if (availablePackageSummaries[0]) {
+        const { availablePackageDetail } = await Chart.getAvailablePackageDetail(
+          cluster,
+          availablePackageSummaries[0].availablePackageRef?.context?.namespace || namespace,
+          availablePackageSummaries[0].availablePackageRef?.identifier || chartName,
         );
-        const chartLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
-        const appLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.app_version;
-        // Initialize updateInfo with the latest chart found
-        updateInfo = {
-          upToDate: semver.gte(currentVersion, chartLatestVersion),
-          chartLatestVersion,
-          appLatestVersion,
-          repository: sortedCharts[0].attributes.repo,
+
+        const repoName =
+          availablePackageDetail?.availablePackageRef?.identifier?.split("/")[0] ?? "";
+        const repoNamespace = availablePackageDetail?.availablePackageRef?.context?.namespace ?? "";
+        let updateInfo: IChartUpdateInfo = {
+          upToDate: true,
+          repository: {
+            name: repoName,
+            namespace: repoNamespace,
+            url: "",
+          },
+          chartLatestVersion: "",
+          appLatestVersion: "",
         };
+
+        if (availablePackageDetail) {
+          // The server response already contains the latest version
+          const chartLatestVersion = availablePackageDetail.pkgVersion;
+          const appLatestVersion = availablePackageDetail.appVersion;
+          // Initialize updateInfo with the latest chart found
+          updateInfo = {
+            ...updateInfo,
+            upToDate: semver.gte(currentVersion, chartLatestVersion),
+            chartLatestVersion,
+            appLatestVersion,
+          };
+        }
+        dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
       }
-      dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
     } catch (e) {
       const updateInfo: IChartUpdateInfo = {
         error: e,
@@ -168,12 +182,9 @@ export function getAppWithUpdateInfo(
     try {
       const app = await dispatch(getApp(cluster, namespace, releaseName));
       if (
-        app &&
-        app.chart &&
-        app.chart.metadata &&
-        app.chart.metadata.name &&
-        app.chart.metadata.version &&
-        app.chart.metadata.appVersion
+        app?.chart?.metadata?.name &&
+        app?.chart?.metadata?.version &&
+        app?.chart?.metadata?.appVersion
       ) {
         dispatch(
           getAppUpdateInfo(
@@ -257,8 +268,7 @@ export function fetchAppsWithUpdateInfo(
 export function deployChart(
   targetCluster: string,
   targetNamespace: string,
-  chartVersion: IChartVersion,
-  chartNamespace: string,
+  availablePackageDetail: AvailablePackageDetail,
   releaseName: string,
   values?: string,
   schema?: JSONSchemaType<any>,
@@ -277,15 +287,10 @@ export function deployChart(
           );
         }
       }
-      await App.create(
-        targetCluster,
-        targetNamespace,
-        releaseName,
-        chartNamespace,
-        chartVersion,
-        values,
-      );
+
+      await App.create(targetCluster, targetNamespace, releaseName, availablePackageDetail, values);
       dispatch(receiveDeployApp());
+
       return true;
     } catch (e) {
       dispatch(errorApp(new CreateError(e.message)));
@@ -297,7 +302,7 @@ export function deployChart(
 export function upgradeApp(
   cluster: string,
   namespace: string,
-  chartVersion: IChartVersion,
+  chartVersion: AvailablePackageDetail,
   chartNamespace: string,
   releaseName: string,
   values?: string,

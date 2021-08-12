@@ -1,5 +1,12 @@
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
+import {
+  AvailablePackageDetail,
+  AvailablePackageSummary,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageVersionsResponse_PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
@@ -46,60 +53,9 @@ export interface IRepo {
   url: string;
 }
 
-export interface IChartCategory {
-  name: string;
-  count: number;
-}
-
-export interface IChartVersion {
-  id: string;
-  attributes: IChartVersionAttributes;
-  relationships: {
-    chart: {
-      data: IChartAttributes;
-    };
-  };
-}
-
-export interface IChartVersionAttributes {
-  version: string;
-  app_version: string;
-  created: string;
-}
-
-export interface IChart {
-  id: string;
-  attributes: IChartAttributes;
-  relationships: {
-    latestChartVersion: {
-      data: IChartVersionAttributes;
-    };
-  };
-}
-
-export interface IChartListMeta {
-  totalPages: number;
-}
-
 export interface IReceiveChartsActionPayload {
-  items: IChart[];
+  response: GetAvailablePackageSummariesResponse;
   page: number;
-  totalPages: number;
-}
-
-export interface IChartAttributes {
-  name: string;
-  description: string;
-  home?: string;
-  icon?: string;
-  keywords: string[];
-  maintainers: Array<{
-    name: string;
-    email?: string;
-  }>;
-  repo: IRepo;
-  sources: string[];
-  category: string;
 }
 
 export interface IChartState {
@@ -107,20 +63,23 @@ export interface IChartState {
   hasFinishedFetching: boolean;
   selected: {
     error?: FetchError | Error;
-    version?: IChartVersion;
-    versions: IChartVersion[];
+    // TODO(agamez): rename this attribute later
+    availablePackageDetail?: AvailablePackageDetail;
+    pkgVersion?: string;
+    appVersion?: string;
+    versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
     readme?: string;
     readmeError?: string;
     values?: string;
-    schema?: any;
+    schema?: JSONSchemaType<any>;
   };
   deployed: {
-    chartVersion?: IChartVersion;
+    chartVersion?: GetAvailablePackageDetailResponse;
     values?: string;
     schema?: JSONSchemaType<any>;
   };
-  items: IChart[];
-  categories: IChartCategory[];
+  items: AvailablePackageSummary[];
+  categories: string[];
   size: number;
 }
 
@@ -130,13 +89,6 @@ export interface IChartUpdateInfo {
   appLatestVersion: string;
   repository: IRepo;
   error?: Error;
-}
-
-export interface IDeployment {
-  metadata: {
-    name: string;
-    namespace: string;
-  };
 }
 
 export interface IServiceSpec {
