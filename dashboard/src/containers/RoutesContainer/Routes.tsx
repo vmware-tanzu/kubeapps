@@ -1,6 +1,7 @@
 import AppList from "components/AppList/AppList";
 import AppView from "components/AppView";
 import AppRepoList from "components/Config/AppRepoList";
+import DeploymentForm from "components/DeploymentForm/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
 import React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
@@ -8,7 +9,6 @@ import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
-import AppNewContainer from "../../containers/AppNewContainer";
 import AppUpgradeContainer from "../../containers/AppUpgradeContainer";
 import CatalogContainer from "../../containers/CatalogContainer";
 import ChartViewContainer from "../../containers/ChartViewContainer";
@@ -27,9 +27,9 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
   "/c/:cluster/ns/:namespace/apps/:releaseName": AppView,
   "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgradeContainer,
-  "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": AppNewContainer,
+  "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": DeploymentForm,
   "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:id/versions/:version":
-    AppNewContainer,
+    DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": CatalogContainer,
   "/c/:cluster/ns/:namespace/catalog/:repo": CatalogContainer,
   "/c/:cluster/ns/:namespace/charts/:repo/:id": ChartViewContainer,
