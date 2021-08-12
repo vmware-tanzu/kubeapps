@@ -6,25 +6,15 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
 import { Dispatch } from "redux";
+import { IChartVersion, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { IChartState, IChartVersion } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import ChartHeader from "./ChartHeader";
 import ChartReadme from "./ChartReadme";
-
-export interface IChartViewProps {
-  chartID: string;
-  chartNamespace: string;
-  isFetching: boolean;
-  selected: IChartState["selected"];
-  namespace: string;
-  cluster: string;
-  version: string | undefined;
-  kubeappsNamespace: string;
-}
 
 function callSelectChartVersion(ver: string, versions: IChartVersion[], dispatch: Dispatch) {
   const cv = versions.find(v => v.attributes.version === ver);
@@ -33,18 +23,34 @@ function callSelectChartVersion(ver: string, versions: IChartVersion[], dispatch
   }
 }
 
-function ChartView({
-  chartID,
-  chartNamespace,
-  version: versionStr,
-  selected,
-  isFetching,
-  cluster,
-  namespace,
-  kubeappsNamespace,
-}: IChartViewProps) {
+interface IRouteParams {
+  cluster: string;
+  namespace: string;
+  repo: string;
+  global: string;
+  id: string;
+  version?: string;
+}
+
+function ChartView() {
+  const {
+    charts: { selected, isFetching },
+    config: { kubeappsNamespace },
+  } = useSelector((state: IStoreState) => state);
+  const {
+    cluster,
+    namespace,
+    repo,
+    global,
+    id,
+    version: versionStr,
+  } = ReactRouter.useParams() as IRouteParams;
   const dispatch = useDispatch();
   const { version, readme, error, readmeError, versions } = selected;
+
+  const chartID = `${repo}/${id}`;
+  const chartNamespace = global === "global" ? kubeappsNamespace : namespace;
+
   useEffect(() => {
     dispatch(
       actions.charts.fetchChartVersionsAndSelectVersion(

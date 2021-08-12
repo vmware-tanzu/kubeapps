@@ -1,5 +1,6 @@
 import AppList from "components/AppList/AppList";
 import AppView from "components/AppView";
+import ChartView from "components/ChartView";
 import AppRepoList from "components/Config/AppRepoList";
 import LoadingWrapper from "components/LoadingWrapper";
 import React from "react";
@@ -11,7 +12,6 @@ import NotFound from "../../components/NotFound";
 import AppNewContainer from "../../containers/AppNewContainer";
 import AppUpgradeContainer from "../../containers/AppUpgradeContainer";
 import CatalogContainer from "../../containers/CatalogContainer";
-import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
 import OperatorInstanceUpdateContainer from "../../containers/OperatorInstanceUpdateContainer";
@@ -32,11 +32,10 @@ const privateRoutes = {
     AppNewContainer,
   "/c/:cluster/ns/:namespace/catalog": CatalogContainer,
   "/c/:cluster/ns/:namespace/catalog/:repo": CatalogContainer,
-  "/c/:cluster/ns/:namespace/charts/:repo/:id": ChartViewContainer,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartViewContainer,
-  "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartViewContainer,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version":
-    ChartViewContainer,
+  "/c/:cluster/ns/:namespace/charts/:repo/:id": ChartView,
+  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartView,
+  "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartView,
+  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version": ChartView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
   "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,
