@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
@@ -212,6 +213,19 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 	}
 	// TODO (gfichtenholt) what about ValuesFrom []ValuesReference `json:"valuesFrom,omitempty"`?
 
+	reconciliationOptions := &corev1.ReconciliationOptions{}
+	if intervalString, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "interval"); found && err == nil {
+		if duration, err := time.ParseDuration(intervalString); err == nil {
+			reconciliationOptions.Interval = int32(duration.Seconds())
+		}
+	}
+	if suspend, found, err := unstructured.NestedBool(unstructuredRelease.Object, "spec", "suspend"); found && err == nil {
+		reconciliationOptions.Suspend = suspend
+	}
+	if serviceAccountName, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "serviceAccountName"); found && err == nil {
+		reconciliationOptions.ServiceAccountName = serviceAccountName
+	}
+
 	// this will only be present if install/upgrade succeeded
 	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
 
@@ -223,12 +237,12 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 			Identifier: name,
 			Plugin:     GetPluginDetail(),
 		},
-		Name:                name,
-		PkgVersionReference: pkgVersion,
-		CurrentPkgVersion:   lastAppliedRevision,
-		ValuesApplied:       valuesApplied,
+		Name:                  name,
+		PkgVersionReference:   pkgVersion,
+		CurrentPkgVersion:     lastAppliedRevision,
+		ValuesApplied:         valuesApplied,
+		ReconciliationOptions: reconciliationOptions,
 		// TODO (gfichtenholt)
-		//  ReconciliationOptions
 		//	PostInstallationNotes
 		//  AvailablePackageRef
 		Status: installedPackageStatusFromUnstructured(unstructuredRelease.Object),

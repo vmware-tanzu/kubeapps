@@ -38,17 +38,19 @@ import (
 )
 
 type testSpecGetInstalledPackages struct {
-	repoName             string
-	repoNamespace        string
-	repoIndex            string
-	chartName            string
-	chartTarGz           string
-	chartSpecVersion     string // could be semver, e.g. "<=6.7.1"
-	chartArtifactVersion string // must be specific, e.g. "6.7.1"
-	releaseName          string
-	releaseNamespace     string
-	releaseValues        map[string]interface{}
-	releaseStatus        map[string]interface{}
+	repoName                  string
+	repoNamespace             string
+	repoIndex                 string
+	chartName                 string
+	chartTarGz                string
+	chartSpecVersion          string // could be semver, e.g. "<=6.7.1"
+	chartArtifactVersion      string // must be specific, e.g. "6.7.1"
+	releaseName               string
+	releaseNamespace          string
+	releaseValues             map[string]interface{}
+	releaseSuspend            bool
+	releaseServiceAccountName string
+	releaseStatus             map[string]interface{}
 }
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
@@ -265,12 +267,18 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								"kind":      fluxHelmRepository,
 								"namespace": existing.repoNamespace,
 							},
-							"interval": "1m",
 						},
 					},
+					"interval": "1m",
 				}
 				if len(existing.releaseValues) != 0 {
 					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+				}
+				if existing.releaseSuspend {
+					unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
+				}
+				if len(existing.releaseServiceAccountName) != 0 {
+					unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
 				}
 				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
 				runtimeObjs = append(runtimeObjs, release)
@@ -433,7 +441,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			expectedStatusCode: codes.NotFound,
 		},
 		{
-			name: "returns values in package detail",
+			name: "returns values and reconciliation options in package detail",
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
@@ -443,11 +451,11 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_completed_with_values,
+				redis_existing_spec_completed_with_values_and_reconciliation_options,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: redis_detail_completed_with_values,
+				InstalledPackageDetail: redis_detail_completed_with_values_and_reconciliation_options,
 			},
 		},
 	}
@@ -503,12 +511,18 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 								"kind":      fluxHelmRepository,
 								"namespace": existing.repoNamespace,
 							},
-							"interval": "1m",
 						},
 					},
+					"interval": "1m",
 				}
 				if len(existing.releaseValues) != 0 {
 					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+				}
+				if existing.releaseSuspend {
+					unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
+				}
+				if len(existing.releaseServiceAccountName) != 0 {
+					unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
 				}
 				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
 				runtimeObjs = append(runtimeObjs, release)
@@ -530,7 +544,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, plugins.Plugin{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, plugins.Plugin{}, corev1.ReconciliationOptions{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -793,16 +807,18 @@ var redis_existing_spec_completed = testSpecGetInstalledPackages{
 	},
 }
 
-var redis_existing_spec_completed_with_values = testSpecGetInstalledPackages{
-	repoName:             "bitnami-1",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/redis-many-versions.yaml",
-	chartName:            "redis",
-	chartTarGz:           "testdata/redis-14.4.0.tgz",
-	chartSpecVersion:     "14.4.0",
-	chartArtifactVersion: "14.4.0",
-	releaseName:          "my-redis",
-	releaseNamespace:     "namespace-1",
+var redis_existing_spec_completed_with_values_and_reconciliation_options = testSpecGetInstalledPackages{
+	repoName:                  "bitnami-1",
+	repoNamespace:             "default",
+	repoIndex:                 "testdata/redis-many-versions.yaml",
+	chartName:                 "redis",
+	chartTarGz:                "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:          "14.4.0",
+	chartArtifactVersion:      "14.4.0",
+	releaseName:               "my-redis",
+	releaseNamespace:          "namespace-1",
+	releaseSuspend:            true,
+	releaseServiceAccountName: "foo",
 	releaseValues: map[string]interface{}{
 		"replica": []interface{}{
 			map[string]interface{}{
@@ -958,6 +974,9 @@ var redis_detail_failed = &corev1.InstalledPackageDetail{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
@@ -976,6 +995,9 @@ var redis_detail_pending = &corev1.InstalledPackageDetail{
 	Name: "my-redis",
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
 	},
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
@@ -997,6 +1019,9 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1004,7 +1029,7 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 	},
 }
 
-var redis_detail_completed_with_values = &corev1.InstalledPackageDetail{
+var redis_detail_completed_with_values_and_reconciliation_options = &corev1.InstalledPackageDetail{
 	InstalledPackageRef: &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
 			Namespace: "namespace-1",
@@ -1016,6 +1041,11 @@ var redis_detail_completed_with_values = &corev1.InstalledPackageDetail{
 	CurrentPkgVersion: "14.4.0",
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval:           60,
+		Suspend:            true,
+		ServiceAccountName: "foo",
 	},
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
