@@ -1,12 +1,39 @@
 import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
-import { hapi } from "./hapi/release";
-import { IAppOverview } from "./types";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
-
 export class App {
+  // TODO(agamez): move to the core 'PackagesServiceClientImpl' when pagination is ready there
+  private static client = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+
+  public static async GetInstalledPackageSummaries(
+    cluster: string,
+    namespace?: string,
+    page?: number,
+    size?: number,
+  ) {
+    return await this.client.GetInstalledPackageSummaries({
+      // TODO(agamez): add cluster when it is supported
+      context: { cluster: "", namespace: namespace },
+      paginationOptions: { pageSize: size || 0, pageToken: page?.toString() || "0" },
+    });
+  }
+
+  public static async GetInstalledPackageDetail(
+    cluster: string,
+    namespace: string,
+    releaseName: string,
+  ) {
+    return await this.client.GetInstalledPackageDetail({
+      installedPackageRef: {
+        identifier: releaseName,
+        context: { cluster: cluster, namespace: namespace },
+      },
+    });
+  }
+
   public static async create(
     cluster: string,
     namespace: string,
@@ -83,21 +110,5 @@ export class App {
     }
     const { data } = await axiosWithAuth.delete(endpoint);
     return data;
-  }
-
-  public static async listApps(cluster: string, namespace?: string) {
-    let endpoint = namespace
-      ? url.kubeops.releases.list(cluster, namespace)
-      : url.kubeops.releases.listAll(cluster);
-    endpoint += "?statuses=all";
-    const { data } = await axiosWithAuth.get<{ data: IAppOverview[] }>(endpoint);
-    return data.data;
-  }
-
-  public static async getRelease(cluster: string, namespace: string, name: string) {
-    const { data } = await axiosWithAuth.get<{ data: hapi.release.Release }>(
-      url.kubeops.releases.get(cluster, namespace, name),
-    );
-    return data.data;
   }
 }

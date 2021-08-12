@@ -40,7 +40,7 @@ export default function DeploymentForm() {
     config,
     charts: { isFetching: chartsIsFetching, selected },
   } = useSelector((state: IStoreState) => state);
-  const chartID = `${repo}/${id}`;
+  const packageId = `${repo}/${id}`;
   const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
   const error = apps.error || selected.error;
   const kubeappsNamespace = config.kubeappsNamespace;
@@ -51,8 +51,8 @@ export default function DeploymentForm() {
   const [valuesModified, setValuesModified] = useState(false);
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, chartID));
-  }, [dispatch, cluster, chartNamespace, chartID]);
+    dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, packageId));
+  }, [dispatch, cluster, chartNamespace, packageId]);
 
   useEffect(() => {
     if (!valuesModified) {
@@ -61,8 +61,8 @@ export default function DeploymentForm() {
   }, [values, valuesModified]);
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, chartID, chartVersion!));
-  }, [cluster, chartNamespace, chartID, chartVersion, dispatch]);
+    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, packageId, chartVersion!));
+  }, [cluster, chartNamespace, packageId, chartVersion, dispatch]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
@@ -118,7 +118,7 @@ export default function DeploymentForm() {
   }
 
   if (!availablePackageDetail) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
+    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
   }
   return (
     <section>
@@ -160,7 +160,7 @@ export default function DeploymentForm() {
               </div>
               <DeploymentFormBody
                 deploymentEvent="install"
-                chartID={chartID}
+                packageId={packageId}
                 chartVersion={chartVersion}
                 chartsIsFetching={chartsIsFetching}
                 selected={selected}

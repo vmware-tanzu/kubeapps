@@ -12,16 +12,16 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { deleteValue, setValue } from "shared/schema";
-import { IChartState, IStoreState } from "shared/types";
-import * as url from "shared/url";
+import { deleteValue, setValue } from "../../shared/schema";
+import { IChartState, IStoreState } from "../../shared/types";
+import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
-  chartName: string;
+  packageId: string;
   chartsIsFetching: boolean;
   namespace: string;
   cluster: string;
@@ -52,7 +52,7 @@ function applyModifications(mods: jsonpatch.Operation[], values: string) {
 function UpgradeForm({
   appCurrentVersion,
   appCurrentValues,
-  chartName,
+  packageId,
   chartsIsFetching,
   namespace,
   cluster,
@@ -73,7 +73,6 @@ function UpgradeForm({
 
   const [deployedValues, setDeployedValues] = useState("");
 
-  const chartID = `${repo}/${chartName}`;
   const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
 
   const {
@@ -83,8 +82,8 @@ function UpgradeForm({
   const isFetching = appsFetching || chartsFetching;
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(cluster, repoNamespace, chartID));
-  }, [dispatch, cluster, repoNamespace, chartID]);
+    dispatch(actions.charts.fetchChartVersions(cluster, repoNamespace, packageId));
+  }, [dispatch, cluster, repoNamespace, packageId]);
 
   useEffect(() => {
     if (deployed.values && !modifications) {
@@ -111,11 +110,11 @@ function UpgradeForm({
       actions.charts.fetchChartVersion(
         cluster,
         repoNamespace,
-        chartID,
+        packageId,
         deployed.chartVersion?.availablePackageDetail?.pkgVersion,
       ),
     );
-  }, [dispatch, cluster, repoNamespace, chartID, deployed.chartVersion]);
+  }, [dispatch, cluster, repoNamespace, packageId, deployed.chartVersion]);
 
   useEffect(() => {
     if (!valuesModified && values) {
@@ -137,7 +136,7 @@ function UpgradeForm({
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.charts.fetchChartVersion(cluster, repoNamespace, chartID, e.currentTarget.value),
+      actions.charts.fetchChartVersion(cluster, repoNamespace, packageId, e.currentTarget.value),
     );
   };
 
@@ -163,11 +162,29 @@ function UpgradeForm({
     }
   };
 
+  if (error && (versions.length === 0 || !availablePackageDetail)) {
+    return (
+      <>
+        <LoadingWrapper>
+          <Alert theme="danger">An error occurred: {error.message}</Alert>
+        </LoadingWrapper>
+      </>
+    );
+  }
+
+  if (error || selected?.error) {
+    return (
+      <Alert theme="danger">
+        An error occurred: {error ? error.message : selected.error?.message}
+      </Alert>
+    );
+  }
+
   if (versions.length === 0 || !availablePackageDetail) {
     return (
       <LoadingWrapper
         className="margin-t-xxl"
-        loadingText={`Fetching ${chartName}...`}
+        loadingText={`Fetching ${packageId}...`}
         loaded={false}
       />
     );
@@ -191,7 +208,7 @@ function UpgradeForm({
           </h3>
         )}
         <LoadingWrapper loaded={!isDeploying}>
-          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+          {error && <Alert theme="danger">An error occurred: {error}</Alert>}
           <Row>
             <Column span={3}>
               <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
@@ -206,13 +223,13 @@ function UpgradeForm({
                     versions={versions}
                     selectedVersion={pkgVersion}
                     onSelect={selectVersion}
-                    currentVersion={deployed.chartVersion?.availablePackageDetail?.pkgVersion}
+                    currentVersion={appCurrentVersion}
                     chartAttrs={availablePackageDetail}
                   />
                 </div>
                 <DeploymentFormBody
                   deploymentEvent="upgrade"
-                  chartID={chartID}
+                  packageId={packageId}
                   chartVersion={appCurrentVersion}
                   deployedValues={deployedValues}
                   chartsIsFetching={chartsIsFetching}

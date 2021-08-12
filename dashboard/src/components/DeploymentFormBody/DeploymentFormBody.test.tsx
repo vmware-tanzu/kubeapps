@@ -7,7 +7,7 @@ import DifferentialSelector from "./DifferentialSelector";
 
 const defaultProps: IDeploymentFormBodyProps = {
   deploymentEvent: "install",
-  chartID: "foo",
+  packageId: "foo",
   chartVersion: "1.0.0",
   chartsIsFetching: false,
   selected: {} as IChartState["selected"],

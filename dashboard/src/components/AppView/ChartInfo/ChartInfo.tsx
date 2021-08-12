@@ -1,41 +1,42 @@
-import { IRelease } from "shared/types";
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import ChartUpdateInfo from "./ChartUpdateInfo";
 
 interface IChartInfoProps {
-  app: IRelease;
+  app: InstalledPackageDetail;
   cluster: string;
 }
 
 function ChartInfo({ app, cluster }: IChartInfoProps) {
-  const metadata = app.chart && app.chart.metadata;
   return (
     <section className="left-menu">
-      {metadata && (
+      {app && (
         <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
           <h5 className="left-menu-subsection-title" id="chartinfo-versions">
             Versions
           </h5>
           <div>
-            {metadata.appVersion && (
+            {/* TODO(agamez): use currentAppVersion when available */}
+            {/* {app.currentAppVersion && (
               <div>
-                App Version: <strong>{metadata.appVersion}</strong>
+                App Version: <strong>{app.currentAppVersion}</strong>
               </div>
-            )}
+            )} */}
             <span>
-              Chart Version: <strong>{metadata.version}</strong>
+              Package Version: <strong>{app.currentPkgVersion}</strong>
             </span>
           </div>
           <ChartUpdateInfo app={app} cluster={cluster} />
         </section>
       )}
-      {metadata && (
+      {/* TODO(agamez): use shortDescription when available */}
+      {/* {app?.shortDescription(
         <section className="left-menu-subsection" aria-labelledby="chartinfo-description">
           <h5 className="left-menu-subsection-title" id="chartinfo-description">
             Description
           </h5>
-          <span>{metadata.description}</span>
+          <span>{app.shortDescription}</span>
         </section>
-      )}
+      )} */}
     </section>
   );
 }

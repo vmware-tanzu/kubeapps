@@ -10,13 +10,13 @@ import TableRenderer from "./TableRenderer";
 interface IChartReadmeProps {
   cluster: string;
   namespace: string;
-  chartID: string;
+  packageId: string;
   version: string;
   error?: string;
   readme?: string;
 }
 
-function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IChartReadmeProps) {
+function ChartReadme({ packageId, error, cluster, namespace, readme, version }: IChartReadmeProps) {
   if (error) {
     if (error.toLocaleLowerCase().includes("not found")) {
       return (
@@ -28,7 +28,7 @@ function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IC
         </div>
       );
     }
-    return <Alert theme="danger">Unable to fetch chart README: {error}</Alert>;
+    return <Alert theme="danger">Unable to fetch package README: {error}</Alert>;
   }
   return (
     <LoadingWrapper

@@ -16,7 +16,7 @@ import DifferentialTab from "./DifferentialTab";
 
 export interface IDeploymentFormBodyProps {
   deploymentEvent: DeploymentEvent;
-  chartID: string;
+  packageId: string;
   chartVersion: string;
   deployedValues?: string;
   chartsIsFetching: boolean;
@@ -28,7 +28,7 @@ export interface IDeploymentFormBodyProps {
 
 function DeploymentFormBody({
   deploymentEvent,
-  chartID,
+  packageId,
   chartVersion,
   deployedValues,
   chartsIsFetching,
@@ -101,12 +101,12 @@ function DeploymentFormBody({
   if (error) {
     return (
       <Alert theme="danger">
-        Unable to fetch chart "{chartID}" ({chartVersion}): Got {error.message}
+        Unable to fetch package "{packageId}" ({chartVersion}): Got {error.message}
       </Alert>
     );
   }
   if (chartsIsFetching || !availablePackageDetail || !versions.length) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
+    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
   }
   const tabColumns = [
     "YAML",
@@ -125,7 +125,7 @@ function DeploymentFormBody({
       key="advanced-deployment-form"
     >
       <p>
-        <b>Note:</b> Only comments from the original chart values will be preserved.
+        <b>Note:</b> Only comments from the original package values will be preserved.
       </p>
     </AdvancedDeploymentForm>,
     <DifferentialSelector
@@ -159,7 +159,7 @@ function DeploymentFormBody({
         modalIsOpen={restoreModalIsOpen}
         loading={false}
         headerText={"Restore defaults"}
-        confirmationText={"Are you sure you want to restore the default chart values?"}
+        confirmationText={"Are you sure you want to restore the default package values?"}
         confirmationButtonText={"Restore"}
         onConfirm={restoreDefaultValues}
         closeModal={closeRestoreDefaultValuesModal}

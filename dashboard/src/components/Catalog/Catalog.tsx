@@ -188,7 +188,7 @@ function Catalog(props: ICatalogProps) {
     dispatch(actions.operators.getCSVs(cluster, namespace));
   }, [dispatch, cluster, namespace]);
 
-  // detect changes in cluster/ns/repos/search and reset the current chart list
+  // detect changes in cluster/ns/repos/search and reset the current package list
   useEffect(() => {
     setPage(0);
     dispatch(actions.charts.resetRequestCharts());
@@ -330,7 +330,7 @@ function Catalog(props: ICatalogProps) {
           <CdsIcon shape="bundle" />
           <p>The current catalog is empty.</p>
           <p>
-            Manage your Helm chart repositories in Kubeapps by visiting the App repositories
+            Manage your Package Repositories in Kubeapps by visiting the App repositories
             configuration page.
           </p>
           <Link to={app.config.apprepositories(cluster, namespace)}>

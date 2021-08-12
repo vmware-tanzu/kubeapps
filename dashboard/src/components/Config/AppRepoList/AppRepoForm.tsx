@@ -15,7 +15,6 @@ import { toFilterRule, toParams } from "shared/jq";
 import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
-
 interface IAppRepoFormProps {
   onSubmit: (
     name: string,

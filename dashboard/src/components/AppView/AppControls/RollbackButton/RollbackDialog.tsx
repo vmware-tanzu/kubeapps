@@ -27,8 +27,9 @@ function RollbackDialog({
   const [targetRevision, setTargetRevision] = useState(currentRevision);
   const [hasUserChanges, setHasUserChanges] = useState(false);
   const options: number[] = [];
-  // If there are no revisions to rollback to, disable
-  const disableRollback = currentRevision === 1;
+  // TODO(agamez): temporary fix for preventing users to rollback if there are no revisions to rollback
+  // because of the API not returning the data
+  const disableRollback = currentRevision === 1 || options.length === 0;
   const selectRevision = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setHasUserChanges(true);
     setTargetRevision(Number(e.target.value));

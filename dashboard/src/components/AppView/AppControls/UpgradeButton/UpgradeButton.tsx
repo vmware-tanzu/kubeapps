@@ -1,14 +1,14 @@
 import { CdsIcon } from "@cds/react/icon";
+import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Link } from "react-router-dom";
-import { hapi } from "shared/hapi/release";
-import * as url from "shared/url";
+import * as url from "../../../../shared/url";
 import StatusAwareButton from "../StatusAwareButton";
 
 interface IUpgradeButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
-  releaseStatus: hapi.release.IStatus | undefined | null;
+  releaseStatus: InstalledPackageStatus | undefined | null;
 }
 
 export default function UpgradeButton({

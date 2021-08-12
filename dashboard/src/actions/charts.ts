@@ -127,7 +127,7 @@ export function fetchChartVersion(
       if (response.availablePackageDetail?.pkgVersion) {
         dispatch(selectChartVersion(response.availablePackageDetail));
       } else {
-        dispatch(errorChart(new FetchError("could not find chart version")));
+        dispatch(errorChart(new FetchError("could not find package version")));
       }
     } catch (e) {
       dispatch(errorChart(new FetchError(e.message)));

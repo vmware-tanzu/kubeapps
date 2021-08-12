@@ -23,7 +23,7 @@ const versions = [
 const defaultProps = {
   appCurrentVersion: "1.0.0",
   appCurrentValues: "foo: bar",
-  chartName: "my-chart",
+  packageId: "my-chart",
   chartsIsFetching: false,
   namespace: "default",
   cluster: "default",
@@ -97,7 +97,7 @@ it("fetches the available versions", () => {
   expect(fetchChartVersions).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.repoNamespace,
-    `${defaultProps.repo}/${defaultProps.chartName}`,
+    `${defaultProps.repo}/${defaultProps.packageId}`,
   );
 });
 
@@ -127,7 +127,7 @@ it("fetches the current chart version even if there is already one in the state"
   expect(getChartVersion).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.repoNamespace,
-    `${defaultProps.repo}/${defaultProps.chartName}`,
+    `${defaultProps.repo}/${defaultProps.packageId}`,
     deployed.chartVersion.attributes.version,
   );
 });
