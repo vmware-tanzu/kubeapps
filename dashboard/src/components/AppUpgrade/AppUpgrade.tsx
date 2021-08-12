@@ -8,7 +8,7 @@ import {
   IChartState,
   IChartVersion,
   IRelease,
-  UpgradeError
+  UpgradeError,
 } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";

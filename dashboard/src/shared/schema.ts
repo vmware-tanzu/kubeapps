@@ -37,7 +37,9 @@ export function retrieveBasicFormParams(
           path: itemPath,
           type,
           value,
-          enum: properties[propertyKey].enum?.map(item => item?.toString() ?? ""),
+          enum: properties[propertyKey].enum?.map(
+            (item: { toString: () => any }) => item?.toString() ?? "",
+          ),
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}/`)
@@ -149,7 +151,7 @@ export function getValue(values: string, path: string, defaultValue?: any) {
 
 export function validate(
   values: string,
-  schema: JSONSchemaType<any>,
+  schema: JSONSchemaType<any> | any,
 ): { valid: boolean; errors: ErrorObject[] | null | undefined } {
   const valid = ajv.validate(schema, yaml.load(values));
   return { valid: !!valid, errors: ajv.errors };

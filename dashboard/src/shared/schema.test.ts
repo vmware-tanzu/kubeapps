@@ -1,4 +1,3 @@
-import { JSONSchemaType } from "ajv";
 import { deleteValue, getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
 import { IBasicFormParam } from "./types";
 
