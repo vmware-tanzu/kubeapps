@@ -1,4 +1,5 @@
 import AppList from "components/AppList/AppList";
+import AppUpgrade from "components/AppUpgrade";
 import AppView from "components/AppView";
 import AppRepoList from "components/Config/AppRepoList";
 import LoadingWrapper from "components/LoadingWrapper";
@@ -9,7 +10,6 @@ import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
 import AppNewContainer from "../../containers/AppNewContainer";
-import AppUpgradeContainer from "../../containers/AppUpgradeContainer";
 import CatalogContainer from "../../containers/CatalogContainer";
 import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
@@ -26,7 +26,7 @@ type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
   "/c/:cluster/ns/:namespace/apps/:releaseName": AppView,
-  "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgradeContainer,
+  "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgrade,
   "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": AppNewContainer,
   "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:id/versions/:version":
     AppNewContainer,

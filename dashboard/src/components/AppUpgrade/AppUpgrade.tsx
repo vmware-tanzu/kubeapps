@@ -1,15 +1,18 @@
-import { JSONSchemaType } from "ajv";
+import actions from "actions";
 import Alert from "components/js/Alert";
-import { RouterAction } from "connected-react-router";
 import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import * as ReactRouter from "react-router";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import {
   FetchError,
   IAppRepository,
   IChartState,
-  IChartVersion,
   IRelease,
+  IStoreState,
   UpgradeError,
-} from "../../shared/types";
+} from "shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
@@ -26,57 +29,34 @@ export interface IAppUpgradeProps {
   repoNamespace?: string;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
-  upgradeApp: (
-    cluster: string,
-    namespace: string,
-    version: IChartVersion,
-    chartNamespace: string,
-    releaseName: string,
-    values?: string,
-    schema?: JSONSchemaType<any>,
-  ) => Promise<boolean>;
-  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
-  getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
-  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
-  getDeployedChartVersion: (
-    cluster: string,
-    namespace: string,
-    id: string,
-    chartVersion: string,
-  ) => void;
-  push: (location: string) => RouterAction;
-  // repo selector properties
   reposIsFetching: boolean;
   repoError?: Error;
   chartsError: Error | undefined;
   repo: IAppRepository;
   repos: IAppRepository[];
-  checkChart: (cluster: string, namespace: string, repo: string, chartName: string) => any;
-  fetchRepositories: (namespace: string) => void;
 }
 
-function AppUpgrade({
-  app,
-  appsIsFetching,
-  chartsIsFetching,
-  error,
-  namespace,
-  cluster,
-  releaseName,
-  repoName,
-  repoNamespace,
-  selected,
-  deployed,
-  upgradeApp,
-  fetchChartVersions,
-  getAppWithUpdateInfo,
-  getChartVersion,
-  getDeployedChartVersion,
-  push,
-}: IAppUpgradeProps) {
+interface IRouteParams {
+  cluster: string;
+  namespace: string;
+  releaseName: string;
+}
+
+function AppUpgrade() {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const { cluster, namespace, releaseName } = ReactRouter.useParams() as IRouteParams;
+  const {
+    apps: { selected: app, isFetching: appsIsFetching, error },
+    charts: { isFetching: chartsIsFetching, selected, deployed },
+    repos: { repo },
+  } = useSelector((state: IStoreState) => state);
+
+  const repoName = repo?.metadata?.name || app?.updateInfo?.repository?.namespace;
+  const repoNamespace = repo?.metadata?.namespace || app?.updateInfo?.repository?.namespace;
+
   useEffect(() => {
-    getAppWithUpdateInfo(cluster, namespace, releaseName);
-  }, [getAppWithUpdateInfo, cluster, namespace, releaseName]);
+    dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName));
+  }, [dispatch, cluster, namespace, releaseName]);
 
   const chart = app?.chart;
   useEffect(() => {
@@ -90,9 +70,16 @@ function AppUpgrade({
       chart.metadata.version
     ) {
       const chartID = `${repoName}/${chart.metadata.name}`;
-      getDeployedChartVersion(cluster, repoNamespace, chartID, chart.metadata.version);
+      dispatch(
+        actions.charts.getDeployedChartVersion(
+          cluster,
+          repoNamespace,
+          chartID,
+          chart.metadata.version,
+        ),
+      );
     }
-  }, [getDeployedChartVersion, app, chart, repoName, repoNamespace, cluster]);
+  }, [dispatch, app, chart, repoName, repoNamespace, cluster]);
 
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
@@ -125,11 +112,7 @@ function AppUpgrade({
           releaseName={releaseName}
           selected={selected}
           deployed={deployed}
-          upgradeApp={upgradeApp}
-          push={push}
           error={error}
-          fetchChartVersions={fetchChartVersions}
-          getChartVersion={getChartVersion}
         />
       </div>
     );
