@@ -7,7 +7,7 @@ import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IChartState, IChartVersion } from "shared/types";
 import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import DeploymentForm, { IDeploymentFormProps } from "./DeploymentForm";
+import DeploymentForm from "./DeploymentForm";
 
 const releaseName = "my-release";
 const defaultProps = {
@@ -24,7 +24,7 @@ const defaultProps = {
   namespace: "default",
   cluster: "default",
   kubeappsNamespace: "kubeapps",
-} as IDeploymentFormProps;
+};
 const versions = [
   { id: "foo", attributes: { version: "1.2.3" }, relationships: { chart: { data: { repo: {} } } } },
 ] as IChartVersion[];

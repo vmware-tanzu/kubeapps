@@ -1,22 +1,24 @@
-import { JSONSchemaType } from "ajv";
+import actions from "actions";
+import { getChartVersion } from "actions/charts";
 import ChartSummary from "components/Catalog/ChartSummary";
 import ChartHeader from "components/ChartView/ChartHeader";
 import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import { RouterAction } from "connected-react-router";
+import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
-import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import * as yaml from "js-yaml";
-import { deleteValue, setValue } from "../../shared/schema";
-import { IChartState, IChartVersion, IStoreState } from "../../shared/types";
-import * as url from "../../shared/url";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { deleteValue, setValue } from "shared/schema";
+import { IChartState, IStoreState } from "shared/types";
+import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
-
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
@@ -30,18 +32,6 @@ export interface IUpgradeFormProps {
   error?: Error;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
-  upgradeApp: (
-    cluster: string,
-    namespace: string,
-    version: IChartVersion,
-    chartNamespace: string,
-    releaseName: string,
-    values?: string,
-    schema?: JSONSchemaType<any>,
-  ) => Promise<boolean>;
-  push: (location: string) => RouterAction;
-  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
-  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -73,11 +63,8 @@ function UpgradeForm({
   error,
   selected,
   deployed,
-  upgradeApp,
-  push,
-  fetchChartVersions,
-  getChartVersion,
 }: IUpgradeFormProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [appValues, setAppValues] = useState(appCurrentValues || "");
   const [isDeploying, setIsDeploying] = useState(false);
   const [valuesModified, setValuesModified] = useState(false);
@@ -96,8 +83,8 @@ function UpgradeForm({
   const isFetching = appsFetching || chartsFetching;
 
   useEffect(() => {
-    fetchChartVersions(cluster, repoNamespace, chartID);
-  }, [fetchChartVersions, cluster, repoNamespace, chartID]);
+    dispatch(actions.charts.fetchChartVersions(cluster, repoNamespace, chartID));
+  }, [dispatch, cluster, repoNamespace, chartID]);
 
   useEffect(() => {
     if (deployed.values && !modifications) {
@@ -121,9 +108,16 @@ function UpgradeForm({
 
   useEffect(() => {
     if (deployed.chartVersion?.attributes.version) {
-      getChartVersion(cluster, repoNamespace, chartID, deployed.chartVersion.attributes.version);
+      dispatch(
+        actions.charts.getChartVersion(
+          cluster,
+          repoNamespace,
+          chartID,
+          deployed.chartVersion.attributes.version,
+        ),
+      );
     }
-  }, [getChartVersion, cluster, repoNamespace, chartID, deployed.chartVersion]);
+  }, [dispatch, cluster, repoNamespace, chartID, deployed.chartVersion]);
 
   useEffect(() => {
     if (!valuesModified && selected.values) {
@@ -151,21 +145,27 @@ function UpgradeForm({
     e.preventDefault();
     setIsDeploying(true);
     if (selected.version) {
-      const deployedSuccess = await upgradeApp(
-        cluster,
-        namespace,
-        selected.version,
-        repoNamespace,
-        releaseName,
-        appValues,
-        selected.schema,
+      const deployedSuccess = await dispatch(
+        actions.apps.upgradeApp(
+          cluster,
+          namespace,
+          selected.version,
+          repoNamespace,
+          releaseName,
+          appValues,
+          selected.schema,
+        ),
       );
       setIsDeploying(false);
       if (deployedSuccess) {
-        push(url.app.apps.get(cluster, namespace, releaseName));
+        dispatch(push(url.app.apps.get(cluster, namespace, releaseName)));
       }
     }
   };
+
+  if (selected?.error) {
+    return <Alert theme="danger">An error occurred: {selected.error?.message}</Alert>;
+  }
 
   if (selected.versions.length === 0 || !version) {
     return (
