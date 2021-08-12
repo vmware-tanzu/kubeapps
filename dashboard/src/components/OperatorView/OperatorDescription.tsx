@@ -4,7 +4,6 @@ import remarkGfm from "remark-gfm";
 import HeadingRenderer from "../ChartView/HeadingRenderer";
 import LinkRenderer from "../ChartView/LinkRenderer";
 
-
 interface IOperatorDescriptionProps {
   description: string;
 }

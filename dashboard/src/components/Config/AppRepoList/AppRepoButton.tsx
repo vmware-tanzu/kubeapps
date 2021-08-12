@@ -9,7 +9,6 @@ import { ThunkDispatch } from "redux-thunk";
 import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "../../../shared/types";
 import { AppRepoForm } from "./AppRepoForm";
 
-
 interface IAppRepoAddButtonProps {
   namespace: string;
   kubeappsNamespace: string;

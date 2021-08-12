@@ -5,7 +5,6 @@ import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IRelease } from "shared/types";
 import ChartInfo from "./ChartInfo";
 
-
 const defaultProps = {
   app: {
     chart: {

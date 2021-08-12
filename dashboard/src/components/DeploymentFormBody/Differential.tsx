@@ -4,7 +4,6 @@ import { SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";
 import "./Differential.css";
 
-
 export interface IDifferentialProps {
   oldValues: string;
   newValues: string;

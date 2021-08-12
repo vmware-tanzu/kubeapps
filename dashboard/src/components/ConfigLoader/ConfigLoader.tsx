@@ -2,9 +2,8 @@ import Alert from "components/js/Alert";
 import React from "react";
 import { useIntl } from "react-intl";
 import LoadingWrapper, {
-    ILoadingWrapperProps
+  ILoadingWrapperProps,
 } from "../../components/LoadingWrapper/LoadingWrapper";
-
 
 interface IConfigLoaderProps extends ILoadingWrapperProps {
   children?: JSX.Element;

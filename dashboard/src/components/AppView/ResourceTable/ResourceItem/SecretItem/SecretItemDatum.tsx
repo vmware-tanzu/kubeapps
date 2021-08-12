@@ -6,7 +6,6 @@ import CopyToClipboard from "react-copy-to-clipboard";
 import ReactTooltip from "react-tooltip";
 import "./SecretItemDatum.css";
 
-
 interface ISecretItemDatumProps {
   name: string;
   value: string;

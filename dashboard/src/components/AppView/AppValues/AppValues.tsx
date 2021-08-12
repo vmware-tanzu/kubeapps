@@ -7,7 +7,6 @@ import { useSelector } from "react-redux";
 import { IStoreState } from "shared/types";
 import "./AppValues.css";
 
-
 interface IAppValuesProps {
   values: string;
 }

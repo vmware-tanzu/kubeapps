@@ -4,7 +4,6 @@ import context from "jest-plugin-context";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import ConfigLoader from ".";
 
-
 it("renders a loading wrapper", () => {
   const wrapper = mountWrapper(defaultStore, <ConfigLoader loaded={false} getConfig={jest.fn()} />);
   expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);

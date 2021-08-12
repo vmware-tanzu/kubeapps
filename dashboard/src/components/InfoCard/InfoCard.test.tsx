@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { CardBlock } from "../js/Card";
 import InfoCard from "./InfoCard";
 
-
 it("should render a Card", () => {
   const wrapper = shallow(
     <InfoCard

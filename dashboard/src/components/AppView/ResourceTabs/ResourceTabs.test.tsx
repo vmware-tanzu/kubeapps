@@ -3,8 +3,6 @@ import { shallow } from "enzyme";
 import ResourceRef from "shared/ResourceRef";
 import ResourceTabs from "./ResourceTabs";
 
-
-
 const sampleResourceRef = {
   apiVersion: "v1",
   kind: "Deployment",

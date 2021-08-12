@@ -9,7 +9,6 @@ import { IStoreState } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./SelectRepoForm.css";
 
-
 interface ISelectRepoFormProps {
   cluster: string;
   namespace: string;

@@ -5,7 +5,6 @@ import React from "react";
 import Input from "../js/Input";
 import "./SearchFilter.css";
 
-
 export interface ISearchFilterProps {
   value: string;
   className?: string;

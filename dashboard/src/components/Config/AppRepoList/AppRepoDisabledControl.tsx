@@ -1,7 +1,6 @@
 import { CdsButton } from "@cds/react/button";
 import "./AppRepoControl.css";
 
-
 export function AppRepoDisabledControl() {
   return (
     <div className="apprepo-control-buttons">

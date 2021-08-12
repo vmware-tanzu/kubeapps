@@ -6,7 +6,6 @@ import Column from "../js/Column";
 import Row from "../js/Row";
 import "./InfoCard.css";
 
-
 export interface IInfoCardProps {
   title: string;
   info: string | JSX.Element;

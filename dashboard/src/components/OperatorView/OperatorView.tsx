@@ -15,7 +15,6 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";
 
-
 interface IOperatorViewProps {
   operatorName: string;
   cluster: string;

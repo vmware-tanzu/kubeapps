@@ -10,7 +10,6 @@ import { IStoreState } from "shared/types";
 import Clarity from "./Clarity";
 import "./Layout.css";
 
-
 function Layout({ children }: any) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const logout = () => dispatch(actions.auth.logout());

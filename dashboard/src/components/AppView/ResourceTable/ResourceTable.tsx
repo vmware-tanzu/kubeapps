@@ -13,7 +13,6 @@ import { SecretColumns } from "./ResourceData/Secret";
 import { ServiceColumns } from "./ResourceData/Service";
 import { StatefulSetColumns } from "./ResourceData/StatefulSet";
 
-
 interface IResourceTableProps {
   id: string;
   title?: string;

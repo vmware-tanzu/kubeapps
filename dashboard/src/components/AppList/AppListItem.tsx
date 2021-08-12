@@ -6,7 +6,6 @@ import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
 import "./AppListItem.css";
 
-
 export interface IAppListItemProps {
   app: IAppOverview;
   cluster: string;

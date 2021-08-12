@@ -4,7 +4,6 @@ import React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
 import "./PrivateRoute.css";
 
-
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 interface IPrivateRouteProps extends IRouteComponentPropsAndRouteProps {

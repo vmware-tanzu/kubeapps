@@ -6,7 +6,6 @@ import { Redirect, RouteComponentProps } from "react-router";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import PrivateRoute from "./PrivateRoute";
 
-
 const emptyRouteComponentProps: RouteComponentProps<{}> = {
   history: createMemoryHistory(),
   location: {

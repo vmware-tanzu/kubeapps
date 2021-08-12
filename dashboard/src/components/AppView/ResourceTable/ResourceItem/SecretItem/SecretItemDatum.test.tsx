@@ -2,7 +2,6 @@ import { CdsIcon } from "@cds/react/icon";
 import { mount } from "enzyme";
 import SecretItemDatum from "./SecretItemDatum";
 
-
 const testProps = {
   name: "foo",
   value: "YmFy", // foo

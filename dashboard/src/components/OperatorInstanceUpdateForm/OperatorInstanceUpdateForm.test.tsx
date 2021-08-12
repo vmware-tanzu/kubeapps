@@ -6,7 +6,7 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError } from "shared/types";
 import OperatorInstanceUpdateForm, {
-    IOperatorInstanceUpgradeFormProps
+  IOperatorInstanceUpgradeFormProps,
 } from "./OperatorInstanceUpdateForm";
 
 const defaultProps: IOperatorInstanceUpgradeFormProps = {

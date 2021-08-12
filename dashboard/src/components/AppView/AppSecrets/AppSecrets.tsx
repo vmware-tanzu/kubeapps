@@ -7,7 +7,6 @@ import { flattenResources } from "shared/utils";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
 import "./AppSecrets.css";
 
-
 interface IResourceTableProps {
   secretRefs: ResourceRef[];
 }

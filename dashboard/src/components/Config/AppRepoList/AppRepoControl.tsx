@@ -9,7 +9,6 @@ import ConfirmDialog from "../../ConfirmDialog/ConfirmDialog";
 import { AppRepoAddButton } from "./AppRepoButton";
 import "./AppRepoControl.css";
 
-
 interface IAppRepoListItemProps {
   repo: IAppRepository;
   kubeappsNamespace: string;

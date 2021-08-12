@@ -5,7 +5,6 @@ import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IResource } from "shared/types";
 import ResourceTable from "./ResourceTable";
 
-
 const defaultProps = {
   id: "test",
   resourceRefs: [],

@@ -5,7 +5,6 @@ import { hapi } from "shared/hapi/release";
 import { IChartUpdateInfo, IRelease } from "shared/types";
 import { app as appURL } from "shared/url";
 
-
 interface IChartInfoProps {
   cluster: string;
   app: IRelease;

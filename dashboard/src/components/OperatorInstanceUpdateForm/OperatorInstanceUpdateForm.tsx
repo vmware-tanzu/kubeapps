@@ -16,7 +16,6 @@ import placeholder from "../../placeholder.png";
 import { IClusterServiceVersionCRD, IResource, IStoreState } from "../../shared/types";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
 
-
 export interface IOperatorInstanceUpgradeFormProps {
   csvName: string;
   crdName: string;

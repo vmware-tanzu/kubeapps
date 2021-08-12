@@ -6,7 +6,6 @@ import AceEditor from "react-ace";
 import { useSelector } from "react-redux";
 import { IStoreState } from "shared/types";
 
-
 export interface IAdvancedDeploymentForm {
   appValues?: string;
   handleValuesChange: (value: string) => void;
