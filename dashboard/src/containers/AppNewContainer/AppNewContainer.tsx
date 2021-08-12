@@ -1,13 +1,11 @@
+import { JSONSchemaType } from "ajv";
 import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
-import { JSONSchema4 } from "json-schema";
 import actions from "../../actions";
 import DeploymentForm from "../../components/DeploymentForm";
 import { IChartVersion, IStoreState } from "../../shared/types";
-
 interface IRouteProps {
   match: {
     params: {
@@ -47,7 +45,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       chartNamespace: string,
       releaseName: string,
       values?: string,
-      schema?: JSONSchema4,
+      schema?: JSONSchemaType<any>,
     ) =>
       dispatch(
         actions.apps.deployChart(

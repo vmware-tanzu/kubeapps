@@ -1,5 +1,5 @@
+import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-import * as jsonSchema from "json-schema";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
@@ -15,7 +15,9 @@ class CustomError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
+
 export class ForbiddenError extends CustomError {}
+
 export class UnauthorizedError extends CustomError {}
 
 export class NotFoundError extends CustomError {}
@@ -115,7 +117,7 @@ export interface IChartState {
   deployed: {
     chartVersion?: IChartVersion;
     values?: string;
-    schema?: jsonSchema.JSONSchema4;
+    schema?: JSONSchemaType<any>;
   };
   items: IChart[];
   categories: IChartCategory[];
@@ -160,9 +162,11 @@ export interface IPort {
 export interface IHTTPIngressPath {
   path: string;
 }
+
 export interface IIngressHTTP {
   paths: IHTTPIngressPath[];
 }
+
 export interface IIngressRule {
   host: string;
   http: IIngressHTTP;
@@ -575,7 +579,7 @@ export interface IKubeState {
 
 export interface IBasicFormParam {
   path: string;
-  type?: jsonSchema.JSONSchema4TypeName | jsonSchema.JSONSchema4TypeName[];
+  type?: "string" | "number" | "integer" | "boolean" | "object" | "array" | "null" | "any";
   value?: any;
   title?: string;
   minimum?: number;

@@ -20,7 +20,6 @@
     "history": "^4.10.1",
     "immutable": "^4.0.0-rc.14",
     "js-yaml": "^4.1.0",
-    "json-schema": "^0.3.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
