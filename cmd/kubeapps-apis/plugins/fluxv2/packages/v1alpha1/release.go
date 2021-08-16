@@ -216,6 +216,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 		valuesApplied = string(bytes)
 	}
 	// TODO (gfichtenholt) what about ValuesFrom []ValuesReference `json:"valuesFrom,omitempty"`?
+	// ValuesReference maybe a config map or a secret
 
 	// this will only be present if install/upgrade succeeded
 	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
@@ -285,9 +286,9 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 	if !found || err != nil {
 		return nil, status.Errorf(codes.Internal, "missing required field spec.chart.spec.chart")
 	}
-	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
+	repoNamespace, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	// CrossNamespaceObjectReference namespace is optional, so
-	if repoNamespace == "" {
+	if !found || err != nil || repoNamespace == "" {
 		name, err := namespacedName(unstructuredRelease)
 		if err != nil {
 			return nil, err
