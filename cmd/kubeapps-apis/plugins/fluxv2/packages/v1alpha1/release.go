@@ -14,7 +14,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
@@ -52,6 +54,21 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*
 	} else {
 		return releases, nil
 	}
+}
+
+func (s *Server) getReleaseInCluster(ctx context.Context, name, namespace string) (*unstructured.Unstructured, error) {
+	client, err := s.getDynamicClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	releasesResource := schema.GroupVersionResource{
+		Group:    fluxHelmReleaseGroup,
+		Version:  fluxHelmReleaseVersion,
+		Resource: fluxHelmReleases,
+	}
+
+	return client.Resource(releasesResource).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
@@ -100,7 +117,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		return nil, nil
 	}
 
-	name, namespace, err := nameAndNamespace(unstructuredRelease)
+	name, err := namespacedName(unstructuredRelease)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +139,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	latestPkgVersion := ""
 	var pkgDetail *corev1.AvailablePackageDetail
 	// according to docs chartVersion is optional (defaults to '*' i.e. latest when omitted)
-	if repoName != "" && repoNamespace != "" && chartName != "" && chartVersion != "" {
+	if repoName != "" && chartName != "" && chartVersion != "" {
 		// chartName here refers to a chart template, e.g. "nginx", rather than a specific chart instance
 		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
 		// by the HelmRepository (without any aliases), for example: podinfo". So, we can't exactly do a "get"
@@ -133,6 +150,10 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 			pkgDetail, _ = availablePackageDetailFromTarball(chartID, url)
 		}
 
+		// according to docs repoNamespace is optional
+		if repoNamespace == "" {
+			repoNamespace = name.Namespace
+		}
 		chartFromCache, err := s.fetchChartFromCache(repoNamespace, repoName, chartName)
 		if err != nil {
 			return nil, err
@@ -148,18 +169,19 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	return &corev1.InstalledPackageSummary{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: namespace,
+				Namespace: name.Namespace,
 			},
-			Identifier: name,
+			Identifier: name.Name,
+			Plugin:     GetPluginDetail(),
 		},
-		Name:                name,
+		Name:                name.Name,
 		PkgVersionReference: pkgVersion,
 		CurrentPkgVersion:   lastAppliedRevision,
 		CurrentAppVersion:   pkgDetail.GetAppVersion(),
 		IconUrl:             pkgDetail.GetIconUrl(),
 		PkgDisplayName:      pkgDetail.GetDisplayName(),
 		ShortDescription:    pkgDetail.GetShortDescription(),
-		Status:              installedSummaryStatusFromUnstructured(unstructuredRelease),
+		Status:              installedPackageStatusFromUnstructured(unstructuredRelease),
 		LatestPkgVersion:    latestPkgVersion,
 		// TODO (gfichtenholt) LatestMatchingPkgVersion
 		// Only non-empty if an available upgrade matches the specified pkg_version_reference.
@@ -170,7 +192,60 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	}, nil
 }
 
-func installedSummaryStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
+func (s *Server) installedPackageDetail(ctx context.Context, name, namespace string) (*corev1.InstalledPackageDetail, error) {
+	unstructuredRelease, err := s.getReleaseInCluster(ctx, name, namespace)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q due to: %v", name, namespace, err)
+	}
+
+	var pkgVersion *corev1.VersionReference
+	version, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "chart", "spec", "version")
+	if found && err == nil && version != "" {
+		pkgVersion = &corev1.VersionReference{
+			Version: version,
+		}
+	}
+
+	valuesApplied := ""
+	valuesMap, found, err := unstructured.NestedMap(unstructuredRelease.Object, "spec", "values")
+	if found && err == nil && len(valuesMap) != 0 {
+		bytes, err := json.Marshal(valuesMap)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Unable to marshal Helm release values due to: %v", err)
+		}
+		valuesApplied = string(bytes)
+	}
+	// TODO (gfichtenholt) what about ValuesFrom []ValuesReference `json:"valuesFrom,omitempty"`?
+	// ValuesReference maybe a config map or a secret
+
+	// this will only be present if install/upgrade succeeded
+	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
+
+	availablePackageRef, err := installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease.Object)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.InstalledPackageDetail{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: namespace,
+			},
+			Identifier: name,
+			Plugin:     GetPluginDetail(),
+		},
+		Name:                  name,
+		PkgVersionReference:   pkgVersion,
+		CurrentPkgVersion:     lastAppliedRevision,
+		ValuesApplied:         valuesApplied,
+		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease.Object),
+		AvailablePackageRef:   availablePackageRef,
+		// TODO (gfichtenholt) PostInstallationNotes
+		Status: installedPackageStatusFromUnstructured(unstructuredRelease.Object),
+	}, nil
+}
+
+func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
 	complete, success, reason := checkStatusReady(unstructuredRelease)
 	status := &corev1.InstalledPackageStatus{
 		Ready:      complete && success,
@@ -184,4 +259,45 @@ func installedSummaryStatusFromUnstructured(unstructuredRelease map[string]inter
 		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_PENDING
 	}
 	return status
+}
+
+func installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.ReconciliationOptions {
+	reconciliationOptions := &corev1.ReconciliationOptions{}
+	if intervalString, found, err := unstructured.NestedString(unstructuredRelease, "spec", "interval"); found && err == nil {
+		if duration, err := time.ParseDuration(intervalString); err == nil {
+			reconciliationOptions.Interval = int32(duration.Seconds())
+		}
+	}
+	if suspend, found, err := unstructured.NestedBool(unstructuredRelease, "spec", "suspend"); found && err == nil {
+		reconciliationOptions.Suspend = suspend
+	}
+	if serviceAccountName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "serviceAccountName"); found && err == nil {
+		reconciliationOptions.ServiceAccountName = serviceAccountName
+	}
+	return reconciliationOptions
+}
+
+func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map[string]interface{}) (*corev1.AvailablePackageReference, error) {
+	repoName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
+	if !found || err != nil {
+		return nil, status.Errorf(codes.Internal, "missing required field spec.chart.spec.sourceRef.name")
+	}
+	chartName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
+	if !found || err != nil {
+		return nil, status.Errorf(codes.Internal, "missing required field spec.chart.spec.chart")
+	}
+	repoNamespace, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
+	// CrossNamespaceObjectReference namespace is optional, so
+	if !found || err != nil || repoNamespace == "" {
+		name, err := namespacedName(unstructuredRelease)
+		if err != nil {
+			return nil, err
+		}
+		repoNamespace = name.Namespace
+	}
+	return &corev1.AvailablePackageReference{
+		Identifier: fmt.Sprintf("%s/%s", repoName, chartName),
+		Plugin:     GetPluginDetail(),
+		Context:    &corev1.Context{Namespace: repoNamespace},
+	}, nil
 }

@@ -168,7 +168,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 }
 
 func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
-	name, namespace, err := nameAndNamespace(unstructuredRepo)
+	name, err := namespacedName(unstructuredRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +180,8 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 			"required field spec.url not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
 	}
 	return &v1alpha1.PackageRepository{
-		Name:      name,
-		Namespace: namespace,
+		Name:      name.Name,
+		Namespace: name.Namespace,
 		Url:       url,
 	}, nil
 }

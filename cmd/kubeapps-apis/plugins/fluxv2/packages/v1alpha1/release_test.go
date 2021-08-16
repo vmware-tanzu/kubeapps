@@ -25,6 +25,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -36,24 +37,27 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
-type testSpecGetInstalledPackageSummaries struct {
-	repoName             string
-	repoNamespace        string
-	repoIndex            string
-	chartName            string
-	chartTarGz           string
-	chartSpecVersion     string // could be semver, e.g. "<=6.7.1"
-	chartArtifactVersion string // must be specific, e.g. "6.7.1"
-	releaseName          string
-	releaseNamespace     string
-	releaseStatus        map[string]interface{}
+type testSpecGetInstalledPackages struct {
+	repoName                  string
+	repoNamespace             string
+	repoIndex                 string
+	chartName                 string
+	chartTarGz                string
+	chartSpecVersion          string // could be semver, e.g. "<=6.7.1"
+	chartArtifactVersion      string // must be specific, e.g. "6.7.1"
+	releaseName               string
+	releaseNamespace          string
+	releaseValues             map[string]interface{}
+	releaseSuspend            bool
+	releaseServiceAccountName string
+	releaseStatus             map[string]interface{}
 }
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
 		request            *corev1.GetInstalledPackageSummariesRequest
-		existingObjs       []testSpecGetInstalledPackageSummaries
+		existingObjs       []testSpecGetInstalledPackages
 		expectedStatusCode codes.Code
 		expectedResponse   *corev1.GetInstalledPackageSummariesResponse
 	}{
@@ -62,7 +66,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: "namespace-1"},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_failed,
 			},
 			expectedStatusCode: codes.OK,
@@ -77,7 +81,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: "namespace-1"},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending,
 			},
 			expectedStatusCode: codes.OK,
@@ -92,7 +96,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: "namespace-1"},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
 			expectedStatusCode: codes.OK,
@@ -107,7 +111,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: ""},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
@@ -128,7 +132,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					PageSize:  1,
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
@@ -149,7 +153,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					PageToken: "1",
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
@@ -170,7 +174,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					PageToken: "2",
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
@@ -185,7 +189,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: ""},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				airflow_existing_spec_semver,
 			},
 			expectedStatusCode: codes.OK,
@@ -200,7 +204,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: ""},
 			},
-			existingObjs: []testSpecGetInstalledPackageSummaries{
+			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_latest,
 			},
 			expectedStatusCode: codes.OK,
@@ -263,11 +267,19 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								"kind":      fluxHelmRepository,
 								"namespace": existing.repoNamespace,
 							},
-							"interval": "1m",
 						},
 					},
+					"interval": "1m",
 				}
-
+				if len(existing.releaseValues) != 0 {
+					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+				}
+				if existing.releaseSuspend {
+					unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
+				}
+				if len(existing.releaseServiceAccountName) != 0 {
+					unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
+				}
 				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
 				runtimeObjs = append(runtimeObjs, release)
 			}
@@ -338,7 +350,212 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, plugins.Plugin{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestGetInstalledPackageDetail(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.GetInstalledPackageDetailRequest
+		existingObjs       []testSpecGetInstalledPackages
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetInstalledPackageDetailResponse
+	}{
+		{
+			name: "returns installed package detail when install fails",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Identifier: "my-redis",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_failed,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: redis_detail_failed,
+			},
+		},
+		{
+			name: "returns installed package detail when install is in progress",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Identifier: "my-redis",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_pending,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: redis_detail_pending,
+			},
+		},
+		{
+			name: "returns installed package detail when install is successful",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Identifier: "my-redis",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_completed,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: redis_detail_completed,
+			},
+		},
+		{
+			name: "returns a 404 if the installed package is not found",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+					Identifier: "dontworrybehappy",
+				},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_completed,
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name: "returns values and reconciliation options in package detail",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+					Identifier: "my-redis",
+				},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_completed_with_values_and_reconciliation_options,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: redis_detail_completed_with_values_and_reconciliation_options,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			runtimeObjs := []runtime.Object{}
+			for _, existing := range tc.existingObjs {
+				tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+
+				// stand up an http server just for the duration of this test
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(200)
+					w.Write(tarGzBytes)
+				}))
+				defer ts.Close()
+
+				chartSpec := map[string]interface{}{
+					"chart": existing.chartName,
+					"sourceRef": map[string]interface{}{
+						"name": existing.repoName,
+						"kind": fluxHelmRepository,
+					},
+					"version":  existing.chartSpecVersion,
+					"interval": "1m",
+				}
+				chartStatus := map[string]interface{}{
+					"conditions": []interface{}{
+						map[string]interface{}{
+							"lastTransitionTime": "2021-08-12T03:25:38Z",
+							"message":            "Fetched revision: " + existing.chartSpecVersion,
+							"type":               "Ready",
+							"status":             "True",
+							"reason":             "ChartPullSucceeded",
+						},
+					},
+					"artifact": map[string]interface{}{
+						"revision": existing.chartArtifactVersion,
+					},
+					"url": ts.URL,
+				}
+				chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
+				runtimeObjs = append(runtimeObjs, chart)
+
+				releaseSpec := map[string]interface{}{
+					"chart": map[string]interface{}{
+						"spec": map[string]interface{}{
+							"chart":   existing.chartName,
+							"version": existing.chartSpecVersion,
+							"sourceRef": map[string]interface{}{
+								"name":      existing.repoName,
+								"kind":      fluxHelmRepository,
+								"namespace": existing.repoNamespace,
+							},
+						},
+					},
+					"interval": "1m",
+				}
+				if len(existing.releaseValues) != 0 {
+					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+				}
+				if existing.releaseSuspend {
+					unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
+				}
+				if len(existing.releaseServiceAccountName) != 0 {
+					unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
+				}
+				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
+				runtimeObjs = append(runtimeObjs, release)
+			}
+
+			s, mock, _, err := newServerWithChartsAndReleases(runtimeObjs...)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			response, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetInstalledPackageDetailResponse{},
+				corev1.InstalledPackageDetail{},
+				corev1.InstalledPackageReference{},
+				corev1.Context{},
+				corev1.VersionReference{},
+				corev1.InstalledPackageStatus{},
+				plugins.Plugin{},
+				corev1.ReconciliationOptions{},
+				corev1.AvailablePackageReference{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -427,6 +644,7 @@ var redis_summary_installed = &corev1.InstalledPackageSummary{
 			Namespace: "namespace-1",
 		},
 		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
 	},
 	Name:    "my-redis",
 	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
@@ -451,6 +669,7 @@ var redis_summary_failed = &corev1.InstalledPackageSummary{
 			Namespace: "namespace-1",
 		},
 		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
 	},
 	Name:    "my-redis",
 	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
@@ -474,6 +693,7 @@ var redis_summary_pending = &corev1.InstalledPackageSummary{
 			Namespace: "namespace-1",
 		},
 		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
 	},
 	Name:    "my-redis",
 	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
@@ -497,6 +717,7 @@ var airflow_summary_installed = &corev1.InstalledPackageSummary{
 			Namespace: "namespace-2",
 		},
 		Identifier: "my-airflow",
+		Plugin:     fluxPlugin,
 	},
 	Name:    "my-airflow",
 	IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
@@ -521,6 +742,7 @@ var redis_summary_latest = &corev1.InstalledPackageSummary{
 			Namespace: "namespace-1",
 		},
 		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
 	},
 	Name:    "my-redis",
 	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
@@ -545,6 +767,7 @@ var airflow_summary_semver = &corev1.InstalledPackageSummary{
 			Namespace: "namespace-2",
 		},
 		Identifier: "my-airflow",
+		Plugin:     fluxPlugin,
 	},
 	Name:    "my-airflow",
 	IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
@@ -563,7 +786,7 @@ var airflow_summary_semver = &corev1.InstalledPackageSummary{
 	},
 }
 
-var redis_existing_spec_completed = testSpecGetInstalledPackageSummaries{
+var redis_existing_spec_completed = testSpecGetInstalledPackages{
 	repoName:             "bitnami-1",
 	repoNamespace:        "default",
 	repoIndex:            "testdata/redis-many-versions.yaml",
@@ -576,9 +799,18 @@ var redis_existing_spec_completed = testSpecGetInstalledPackageSummaries{
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Ready",
-				"status": "True",
-				"reason": "ReconciliationSucceeded",
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "True",
+				"reason":             "ReconciliationSucceeded",
+				"message":            "Release reconciliation succeeded",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Released",
+				"status":             "True",
+				"reason":             "InstallSucceeded",
+				"message":            "Helm install succeeded",
 			},
 		},
 		"lastAppliedRevision":   "14.4.0",
@@ -586,7 +818,49 @@ var redis_existing_spec_completed = testSpecGetInstalledPackageSummaries{
 	},
 }
 
-var redis_existing_spec_failed = testSpecGetInstalledPackageSummaries{
+var redis_existing_spec_completed_with_values_and_reconciliation_options = testSpecGetInstalledPackages{
+	repoName:                  "bitnami-1",
+	repoNamespace:             "default",
+	repoIndex:                 "testdata/redis-many-versions.yaml",
+	chartName:                 "redis",
+	chartTarGz:                "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:          "14.4.0",
+	chartArtifactVersion:      "14.4.0",
+	releaseName:               "my-redis",
+	releaseNamespace:          "namespace-1",
+	releaseSuspend:            true,
+	releaseServiceAccountName: "foo",
+	releaseValues: map[string]interface{}{
+		"replica": []interface{}{
+			map[string]interface{}{
+				"replicaCount":  "1",
+				"configuration": "xyz",
+			},
+		},
+	},
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "True",
+				"reason":             "ReconciliationSucceeded",
+				"message":            "Release reconciliation succeeded",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Released",
+				"status":             "True",
+				"reason":             "InstallSucceeded",
+				"message":            "Helm install succeeded",
+			},
+		},
+		"lastAppliedRevision":   "14.4.0",
+		"lastAttemptedRevision": "14.4.0",
+	},
+}
+
+var redis_existing_spec_failed = testSpecGetInstalledPackages{
 	repoName:             "bitnami-1",
 	repoNamespace:        "default",
 	repoIndex:            "testdata/redis-many-versions.yaml",
@@ -608,7 +882,7 @@ var redis_existing_spec_failed = testSpecGetInstalledPackageSummaries{
 	},
 }
 
-var airflow_existing_spec_completed = testSpecGetInstalledPackageSummaries{
+var airflow_existing_spec_completed = testSpecGetInstalledPackages{
 	repoName:             "bitnami-2",
 	repoNamespace:        "default",
 	repoIndex:            "testdata/airflow-many-versions.yaml",
@@ -631,7 +905,7 @@ var airflow_existing_spec_completed = testSpecGetInstalledPackageSummaries{
 	},
 }
 
-var airflow_existing_spec_semver = testSpecGetInstalledPackageSummaries{
+var airflow_existing_spec_semver = testSpecGetInstalledPackages{
 	repoName:             "bitnami-2",
 	repoNamespace:        "default",
 	repoIndex:            "testdata/airflow-many-versions.yaml",
@@ -654,7 +928,7 @@ var airflow_existing_spec_semver = testSpecGetInstalledPackageSummaries{
 	},
 }
 
-var redis_existing_spec_pending = testSpecGetInstalledPackageSummaries{
+var redis_existing_spec_pending = testSpecGetInstalledPackages{
 	repoName:             "bitnami-1",
 	repoNamespace:        "default",
 	repoIndex:            "testdata/redis-many-versions.yaml",
@@ -676,7 +950,7 @@ var redis_existing_spec_pending = testSpecGetInstalledPackageSummaries{
 	},
 }
 
-var redis_existing_spec_latest = testSpecGetInstalledPackageSummaries{
+var redis_existing_spec_latest = testSpecGetInstalledPackages{
 	repoName:             "bitnami-1",
 	repoNamespace:        "default",
 	repoIndex:            "testdata/redis-many-versions.yaml",
@@ -696,5 +970,118 @@ var redis_existing_spec_latest = testSpecGetInstalledPackageSummaries{
 		},
 		"lastAppliedRevision":   "14.4.0",
 		"lastAttemptedRevision": "14.4.0",
+	},
+}
+
+var redis_detail_failed = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
+	},
+	Name: "my-redis",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      false,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+		UserReason: "InstallFailed",
+	},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
+	},
+}
+
+var redis_detail_pending = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
+	},
+	Name: "my-redis",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      false,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+		UserReason: "Progressing",
+	},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
+	},
+}
+
+var redis_detail_completed = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
+	},
+	Name:              "my-redis",
+	CurrentPkgVersion: "14.4.0",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded",
+	},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
+	},
+}
+
+var redis_detail_completed_with_values_and_reconciliation_options = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
+	},
+	Name:              "my-redis",
+	CurrentPkgVersion: "14.4.0",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval:           60,
+		Suspend:            true,
+		ServiceAccountName: "foo",
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded",
+	},
+	ValuesApplied: "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "bitnami-1/redis",
+		Context:    &corev1.Context{Namespace: "default"},
+		Plugin:     fluxPlugin,
 	},
 }

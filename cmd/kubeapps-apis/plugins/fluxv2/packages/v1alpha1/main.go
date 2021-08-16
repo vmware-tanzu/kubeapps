@@ -24,6 +24,17 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+// Set the pluginDetail once during a module init function so the single struct
+// can be used throughout the plugin.
+var pluginDetail plugins.Plugin
+
+func init() {
+	pluginDetail = plugins.Plugin{
+		Name:    "fluxv2.packages",
+		Version: "v1alpha1",
+	}
+}
+
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter) (interface{}, error) {
@@ -45,8 +56,5 @@ func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux,
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
 func GetPluginDetail() *plugins.Plugin {
-	return &plugins.Plugin{
-		Name:    "fluxv2.packages",
-		Version: "v1alpha1",
-	}
+	return &pluginDetail
 }

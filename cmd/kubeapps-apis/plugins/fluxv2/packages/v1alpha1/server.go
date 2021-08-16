@@ -329,3 +329,27 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 	return response, nil
 }
+
+// GetInstalledPackageDetail returns the package metadata managed by the 'fluxv2' plugin
+func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
+	log.Infof("+fluxv2 GetInstalledPackageDetail [%v]", request)
+
+	if request == nil || request.InstalledPackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+	}
+
+	packageRef := request.InstalledPackageRef
+	// flux CRDs require a namespace, cluster-wide resources are not supported
+	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "InstalledPackageReference is missing required 'namespace' field")
+	}
+
+	pkgDetail, err := s.installedPackageDetail(ctx, packageRef.Identifier, packageRef.Context.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetInstalledPackageDetailResponse{
+		InstalledPackageDetail: pkgDetail,
+	}, nil
+}

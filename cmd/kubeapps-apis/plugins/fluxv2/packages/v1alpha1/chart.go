@@ -170,7 +170,7 @@ func (s *Server) fetchChartFromCache(repoNamespace, repoName, chartName string) 
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	charts, err := s.cache.fetchForOne(s.cache.keyForNamespaceAndName(repoNamespace, repoName))
+	charts, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(repoNamespace, repoName))
 	if err != nil {
 		return nil, err
 	}
