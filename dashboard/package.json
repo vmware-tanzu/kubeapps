@@ -97,7 +97,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.2.29",
+    "@formatjs/cli": "^4.2.31",
     "@types/enzyme": "^3.10.9",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/google-protobuf": "^3.15.3",
