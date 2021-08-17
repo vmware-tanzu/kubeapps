@@ -60,7 +60,11 @@ module.exports = {
       });
       await page.click("#submit-login");
       // Additionally click on the new "Grant Access" confirmation.
-      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+      await page.waitForSelector('.dex-container button[type="submit"]', {
+        text: "Grant Access",
+        visible: true,
+        timeout: 10000,
+      });
       await expect(page).toMatchElement('.dex-container button[type="submit"]', {
         text: "Grant Access",
       });
