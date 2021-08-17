@@ -60,10 +60,12 @@ module.exports = {
       });
       await page.click("#submit-login");
       // Additionally click on the new "Grant Access" confirmation.
+      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
       await expect(page).toMatchElement('.dex-container button[type="submit"]', {
         text: "Grant Access",
       });
       await expect(page).toClick('.dex-container button[type="submit"]');
+      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
       await page.waitForSelector(".kubeapps-header-content", {
         visible: true,
         timeout: 10000,
