@@ -25,6 +25,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 )
 
 const (
@@ -36,8 +38,7 @@ const (
 	fluxHelmReleaseList    = "HelmReleaseList"
 )
 
-// namespace maybe "", in which case repositories from all namespaces are returned
-func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
 	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return nil, err
@@ -49,26 +50,28 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*
 		Resource: fluxHelmReleases,
 	}
 
-	if releases, err := client.Resource(releasesResource).Namespace(namespace).List(ctx, metav1.ListOptions{}); err != nil {
+	return client.Resource(releasesResource).Namespace(namespace), nil
+}
+
+// namespace maybe "", in which case repositories from all namespaces are returned
+func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+	releasesIfc, err := s.getReleasesResourceInterface(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	if releases, err := releasesIfc.List(ctx, metav1.ListOptions{}); err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmreleases: %v", err)
 	} else {
 		return releases, nil
 	}
 }
 
-func (s *Server) getReleaseInCluster(ctx context.Context, name, namespace string) (*unstructured.Unstructured, error) {
-	client, err := s.getDynamicClient(ctx)
+func (s *Server) getReleaseInCluster(ctx context.Context, name types.NamespacedName) (*unstructured.Unstructured, error) {
+	releasesIfc, err := s.getReleasesResourceInterface(ctx, name.Namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	releasesResource := schema.GroupVersionResource{
-		Group:    fluxHelmReleaseGroup,
-		Version:  fluxHelmReleaseVersion,
-		Resource: fluxHelmReleases,
-	}
-
-	return client.Resource(releasesResource).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	return releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
 }
 
 func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
@@ -144,17 +147,18 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
 		// by the HelmRepository (without any aliases), for example: podinfo". So, we can't exactly do a "get"
 		// on the name, but have to iterate the complete list of available charts for a match
-		url, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
-		if err == nil && url != "" {
+		tarUrl, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
+		if err == nil && tarUrl != "" {
 			chartID := fmt.Sprintf("%s/%s", repoName, chartName)
-			pkgDetail, _ = availablePackageDetailFromTarball(chartID, url)
+			pkgDetail, _ = availablePackageDetailFromTarball(chartID, tarUrl, "")
 		}
 
 		// according to docs repoNamespace is optional
 		if repoNamespace == "" {
 			repoNamespace = name.Namespace
 		}
-		chartFromCache, err := s.fetchChartFromCache(repoNamespace, repoName, chartName)
+		repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
+		chartFromCache, err := s.fetchChartFromCache(repo, chartName)
 		if err != nil {
 			return nil, err
 		} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
@@ -192,10 +196,10 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	}, nil
 }
 
-func (s *Server) installedPackageDetail(ctx context.Context, name, namespace string) (*corev1.InstalledPackageDetail, error) {
-	unstructuredRelease, err := s.getReleaseInCluster(ctx, name, namespace)
+func (s *Server) installedPackageDetail(ctx context.Context, name types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
+	unstructuredRelease, err := s.getReleaseInCluster(ctx, name)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q due to: %v", name, namespace, err)
+		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q due to: %v", name, err)
 	}
 
 	var pkgVersion *corev1.VersionReference
@@ -229,18 +233,24 @@ func (s *Server) installedPackageDetail(ctx context.Context, name, namespace str
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: namespace,
+				Namespace: name.Namespace,
 			},
-			Identifier: name,
+			Identifier: name.Name,
 			Plugin:     GetPluginDetail(),
 		},
-		Name:                  name,
+		Name:                  name.Name,
 		PkgVersionReference:   pkgVersion,
 		CurrentPkgVersion:     lastAppliedRevision,
 		ValuesApplied:         valuesApplied,
 		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease.Object),
 		AvailablePackageRef:   availablePackageRef,
 		// TODO (gfichtenholt) PostInstallationNotes
+		// looks like I may have to resort to getting the notes via helm APIs, flux doesn't do it
+		// see discussion in https://cloud-native.slack.com/archives/CLAJ40HV3/p1629244025187100
+		// bottom line: "helm get notes" is a read-only activity that you can replicate in your
+		// own code by copying the implementation, or calling to the library function if there is one
+		// https://github.com/helm/helm/blob/main/cmd/helm/get_notes.go.
+		// Also look at https://gist.github.com/DzeryCZ/c4adf39d4a1a99ae6e594a183628eaee
 		Status: installedPackageStatusFromUnstructured(unstructuredRelease.Object),
 	}, nil
 }

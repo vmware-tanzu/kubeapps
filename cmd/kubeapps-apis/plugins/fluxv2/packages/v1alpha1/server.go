@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -223,33 +224,39 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	packageIdParts := strings.Split(unescapedChartID, "/")
 
+	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
+	repoUrl, err := s.getRepoUrl(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
 	// check if the repo has been indexed, stored in the cache and requested
 	// package is part of it. Otherwise, there is a time window when this scenario can happen:
 	// - GetAvailablePackageSummaries() may return {} while a ready repo is being indexed
 	//   and said index is cached BUT
 	// - GetAvailablePackageDetail() may return full package detail for one of the packages
 	// in the repo
-	ok, err := s.repoExistsInCache(packageRef.Context.Namespace, packageIdParts[0])
+	ok, err := s.repoExistsInCache(name)
 	if err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, status.Errorf(
-			codes.InvalidArgument,
+			codes.NotFound,
 			"no fully indexed repository [%s] in namespace [%s] has been found",
 			packageIdParts[0],
 			packageRef.Context.Namespace)
 	}
 
-	url, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
+	tarUrl, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
 	if cleanUp != nil {
 		defer cleanUp()
 	}
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Found chart url: [%s] for chart [%s]", url, packageRef.Identifier)
+	log.Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
 
-	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, url)
+	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl, repoUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +293,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
-	chart, err := s.fetchChartFromCache(namespace, packageIdParts[0], packageIdParts[1])
+	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
+	chart, err := s.fetchChartFromCache(repo, packageIdParts[1])
 	if err != nil {
 		return nil, err
 	} else if chart != nil {
@@ -344,7 +352,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "InstalledPackageReference is missing required 'namespace' field")
 	}
 
-	pkgDetail, err := s.installedPackageDetail(ctx, packageRef.Identifier, packageRef.Context.Namespace)
+	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
+	pkgDetail, err := s.installedPackageDetail(ctx, name)
 	if err != nil {
 		return nil, err
 	}
