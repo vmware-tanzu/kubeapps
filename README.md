@@ -19,7 +19,7 @@ With Kubeapps you can:
 
 ## Getting started with Kubeapps
 
-Installing Kubeapss is as simple as:
+Installing Kubeapps is as simple as:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
