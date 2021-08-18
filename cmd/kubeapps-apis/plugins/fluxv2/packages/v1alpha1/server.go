@@ -224,27 +224,18 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	packageIdParts := strings.Split(unescapedChartID, "/")
 
-	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
-	repoUrl, err := s.getRepoUrl(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
 	// check if the repo has been indexed, stored in the cache and requested
 	// package is part of it. Otherwise, there is a time window when this scenario can happen:
 	// - GetAvailablePackageSummaries() may return {} while a ready repo is being indexed
 	//   and said index is cached BUT
 	// - GetAvailablePackageDetail() may return full package detail for one of the packages
 	// in the repo
+	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
 	ok, err := s.repoExistsInCache(name)
 	if err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, status.Errorf(
-			codes.NotFound,
-			"no fully indexed repository [%s] in namespace [%s] has been found",
-			packageIdParts[0],
-			packageRef.Context.Namespace)
+		return nil, status.Errorf(codes.NotFound, "no fully indexed repository [%s] has been found", name)
 	}
 
 	tarUrl, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
@@ -256,12 +247,17 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	log.Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
 
-	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl, repoUrl)
+	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	// fix up namespace as it is not coming from chart tarball itself
+	// fix up a couple of fields that don't come from the chart tarball
+	repoUrl, err := s.getRepoUrl(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
 
 	return &corev1.GetAvailablePackageDetailResponse{

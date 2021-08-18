@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
@@ -974,11 +975,17 @@ func redisKeyForRuntimeObject(r runtime.Object) string {
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s",
-		fluxHelmRepositories,
-		r.(*unstructured.Unstructured).GetNamespace(),
-		r.(*unstructured.Unstructured).GetName())
+	return redisKeyForNamespacedName(types.NamespacedName{
+		Namespace: r.(*unstructured.Unstructured).GetNamespace(),
+		Name:      r.(*unstructured.Unstructured).GetName()})
+}
 
+func redisKeyForNamespacedName(name types.NamespacedName) string {
+	// redis convention on key format
+	// https://redis.io/topics/data-types-intro
+	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// We will use "helmrepository:ns:repoName"
+	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name)
 }
 
 func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Server, *unstructured.Unstructured, error) {

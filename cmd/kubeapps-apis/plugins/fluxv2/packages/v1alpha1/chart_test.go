@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
@@ -294,7 +295,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			chartSpec := map[string]interface{}{
 				"chart": tc.chartName,
 				"sourceRef": map[string]interface{}{
-					"name": "does-not-matter-for-now",
+					"name": tc.repoName,
 					"kind": "HelmRepository",
 				},
 				"interval": "10m",
@@ -311,11 +312,11 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			}
 			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
 
-			ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", tc.repoName, tc.repoNamespace)
+			ts, repo, err := newRepoWithIndex("testdata/valid-index.yaml", tc.repoName, tc.repoNamespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-			defer ts2.Close()
+			defer ts.Close()
 
 			s, mock, _, err := newServerWithRepoAndCharts(repo, chart)
 			if err != nil {
@@ -341,22 +342,21 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	}
 }
 
+// TODO: (gfichtenholt) some, if not all, these scenarios probably ought to return
+// codes.NotFound instead of codes.Internal. The spec does not specify yet.
 func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.T) {
 	negativeTestCases := []struct {
-		testName        string
-		request         *corev1.GetAvailablePackageDetailRequest
-		repoName        string
-		repoExists      bool
-		expectCacheMiss bool
-		repoNamespace   string
-		chartName       string
-		statusCode      codes.Code
+		testName      string
+		request       *corev1.GetAvailablePackageDetailRequest
+		repoName      string
+		repoNamespace string
+		chartName     string
+		statusCode    codes.Code
 	}{
 		{
 			testName:      "it fails if request has invalid version",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			repoExists:    true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
@@ -373,7 +373,6 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			testName:      "it fails if repo does not exist",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			repoExists:    false,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
@@ -382,14 +381,12 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 					},
 				}},
 			chartName:  "redis",
-			statusCode: codes.NotFound,
+			statusCode: codes.Internal,
 		},
 		{
-			testName:        "it fails if repo does not exist in specified namespace",
-			repoName:        "bitnami-1",
-			repoNamespace:   "non-default",
-			repoExists:      true,
-			expectCacheMiss: true,
+			testName:      "it fails if repo does not exist in specified namespace",
+			repoName:      "bitnami-1",
+			repoNamespace: "non-default",
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
@@ -404,7 +401,6 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			testName:      "it fails if request has invalid chart",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			repoExists:    true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis-123",
@@ -451,16 +447,21 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				t.Fatalf("%+v", err)
 			}
 
-			if !tc.expectCacheMiss {
+			existingName := types.NamespacedName{Namespace: tc.repoNamespace, Name: tc.repoName}
+			requestedName := types.NamespacedName{
+				Namespace: tc.request.AvailablePackageRef.Context.Namespace,
+				Name:      strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[0],
+			}
+
+			if existingName == requestedName {
 				key, bytes, err := redisKeyValueForRuntimeObject(repo)
-				if tc.repoExists {
-					if err != nil {
-						t.Fatalf("%+v", err)
-					}
-					mock.ExpectGet(key).SetVal(string(bytes))
-				} else {
-					mock.ExpectGet(key).RedisNil()
+				if err != nil {
+					t.Fatalf("%+v", err)
 				}
+				mock.ExpectGet(key).SetVal(string(bytes))
+			} else {
+				key := redisKeyForNamespacedName(requestedName)
+				mock.ExpectGet(key).RedisNil()
 			}
 
 			wg := sync.WaitGroup{}
@@ -617,11 +618,11 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ts2, repo, err := newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace)
+			ts, repo, err := newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-			defer ts2.Close()
+			defer ts.Close()
 
 			s, mock, _, err := newServerWithRepos(repo)
 			if err != nil {
@@ -651,7 +652,9 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageVersionsResponse{},
+				corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}

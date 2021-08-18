@@ -150,7 +150,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		tarUrl, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
 		if err == nil && tarUrl != "" {
 			chartID := fmt.Sprintf("%s/%s", repoName, chartName)
-			pkgDetail, _ = availablePackageDetailFromTarball(chartID, tarUrl, "")
+			pkgDetail, _ = availablePackageDetailFromTarball(chartID, tarUrl)
 		}
 
 		// according to docs repoNamespace is optional

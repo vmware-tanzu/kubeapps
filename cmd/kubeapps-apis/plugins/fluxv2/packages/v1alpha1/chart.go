@@ -482,7 +482,7 @@ func newFluxHelmChart(chartName, repoName, version string) unstructured.Unstruct
 	return unstructuredChart
 }
 
-func availablePackageDetailFromTarball(chartID, tarUrl, repoUrl string) (*corev1.AvailablePackageDetail, error) {
+func availablePackageDetailFromTarball(chartID, tarUrl string) (*corev1.AvailablePackageDetail, error) {
 	// fetch, unzip and untar .tgz file
 	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
 	// local cluster, not remote repo.
@@ -520,7 +520,6 @@ func availablePackageDetailFromTarball(chartID, tarUrl, repoUrl string) (*corev1
 		PkgVersion:       chartMetadata.Version,
 		AppVersion:       chartMetadata.AppVersion,
 		HomeUrl:          chartMetadata.Home,
-		RepoUrl:          repoUrl,
 		IconUrl:          chartMetadata.Icon,
 		DisplayName:      chartMetadata.Name,
 		ShortDescription: chartMetadata.Description,
