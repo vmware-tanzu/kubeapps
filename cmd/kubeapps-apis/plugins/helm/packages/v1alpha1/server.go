@@ -91,7 +91,8 @@ func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 			if configGetter == nil {
 				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
 			}
-			config, err := configGetter(ctx)
+			// Not yet sending cluster.
+			config, err := configGetter(ctx, "")
 			if err != nil {
 				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 			}
@@ -109,7 +110,7 @@ func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 			if configGetter == nil {
 				return nil, status.Errorf(codes.Internal, "configGetter arg required")
 			}
-			config, err := configGetter(ctx)
+			config, err := configGetter(ctx, "")
 			if err != nil {
 				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 			}
