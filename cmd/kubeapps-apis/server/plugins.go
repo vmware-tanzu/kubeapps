@@ -47,7 +47,7 @@ const (
 )
 
 // KubernetesConfigGetter is a function type used by plugins to get a k8s config
-type KubernetesConfigGetter func(context.Context) (*rest.Config, error)
+type KubernetesConfigGetter func(ctx context.Context, cluster string) (*rest.Config, error)
 
 // pkgsPluginWithServer stores the plugin detail together with its implementation.
 type pkgsPluginWithServer struct {
@@ -300,7 +300,7 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (KubernetesConfigGetter, error) {
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return func(ctx context.Context) (*rest.Config, error) {
+	return func(ctx context.Context, cluster string) (*rest.Config, error) {
 		log.Infof("+clientGetter.GetClient")
 		var err error
 		token, err := extractToken(ctx)
@@ -310,14 +310,18 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 
 		var config *rest.Config
 
-		if serveOpts.UnsafeUseDemoSA {
+		// TODO(minelson): Enable existing plugins to pass an empty cluster name
+		// to get the kubeapps cluster for now, until we support (or otherwise
+		// decide) multicluster configuration of all plugins.
+		if cluster == "" {
+			cluster = clustersConfig.KubeappsClusterName
+		}
+		if cluster == clustersConfig.KubeappsClusterName && serveOpts.UnsafeUseDemoSA {
 			// If using the priviledged servicceAccount, just use the default inClusterConfig
 			// instead of creating a user config with authentication
 			config = inClusterConfig
 		} else {
-			// TODO(agamez): we are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
-			// we should pass the requested cluster name instead
-			config, err = kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
+			config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 			}
