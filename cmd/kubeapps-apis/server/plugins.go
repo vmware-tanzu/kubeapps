@@ -310,9 +310,9 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 
 		var config *rest.Config
 
-		// TODO(minelson): Enable existing plugins to pass an empty cluster name
-		// to get the kubeapps cluster for now, until we support (or otherwise
-		// decide) multicluster configuration of all plugins.
+		// Enable existing plugins to pass an empty cluster name to get the
+		// kubeapps cluster for now, until we support (or otherwise decide)
+		// multicluster configuration of all plugins.
 		if cluster == "" {
 			cluster = clustersConfig.KubeappsClusterName
 		}
