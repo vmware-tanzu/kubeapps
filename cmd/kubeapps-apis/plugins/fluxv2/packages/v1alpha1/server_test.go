@@ -198,9 +198,9 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 // utilities
 //
 
-// I wanted to emphasize the fact that this flavor of 'newServer...' is kind of unusual and should only
-// be used directly by tests to test edge cases (in a one-off negative test),
-// such as TestBadClientGetter(), hence the weird name. Most tests should just use newServerWithRepos() flavor
+// This flavor of 'newServer' does not create a kubernetes dynamic client. It is meant to work in conjunction with
+// a call to fake.NewSimpleDynamicClientWithCustomListKinds. repos (unlike charts or releases) are treated special because
+// a new instance of a Server object is only returned once the cache has been synced with indexed repos
 func newServerWithClientGetter(clientGetter clientGetter, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
 	mock.MatchExpectationsInOrder(false)

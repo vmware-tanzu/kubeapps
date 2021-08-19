@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -165,12 +166,12 @@ func (s *Server) getChartsResourceInterface(ctx context.Context, namespace strin
 	return client.Resource(chartsResource).Namespace(namespace), nil
 }
 
-func (s *Server) fetchChartFromCache(repoNamespace, repoName, chartName string) (*models.Chart, error) {
+func (s *Server) fetchChartFromCache(repo types.NamespacedName, chartName string) (*models.Chart, error) {
 	if s.cache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	charts, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(repoNamespace, repoName))
+	charts, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(repo))
 	if err != nil {
 		return nil, err
 	}
@@ -481,14 +482,14 @@ func newFluxHelmChart(chartName, repoName, version string) unstructured.Unstruct
 	return unstructuredChart
 }
 
-func availablePackageDetailFromTarball(chartID, url string) (*corev1.AvailablePackageDetail, error) {
+func availablePackageDetailFromTarball(chartID, tarUrl string) (*corev1.AvailablePackageDetail, error) {
 	// fetch, unzip and untar .tgz file
 	// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
 	// local cluster, not remote repo.
 	// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
 	// Flux does the hard work of pulling the bits from remote repo
 	// based on secretRef associated with HelmRepository, if applicable
-	chartDetail, err := tar.FetchChartDetailFromTarball(chartID, url, "", "", httpclient.New())
+	chartDetail, err := tar.FetchChartDetailFromTarball(chartID, tarUrl, "", "", httpclient.New())
 	if err != nil {
 		return nil, err
 	}
@@ -518,6 +519,7 @@ func availablePackageDetailFromTarball(chartID, url string) (*corev1.AvailablePa
 		Name:             chartMetadata.Name,
 		PkgVersion:       chartMetadata.Version,
 		AppVersion:       chartMetadata.AppVersion,
+		HomeUrl:          chartMetadata.Home,
 		IconUrl:          chartMetadata.Icon,
 		DisplayName:      chartMetadata.Name,
 		ShortDescription: chartMetadata.Description,
@@ -525,6 +527,7 @@ func availablePackageDetailFromTarball(chartID, url string) (*corev1.AvailablePa
 		Readme:           chartDetail[models.ReadmeKey],
 		DefaultValues:    chartDetail[models.ValuesKey],
 		ValuesSchema:     chartDetail[models.SchemaKey],
+		SourceUrls:       chartMetadata.Sources,
 		Maintainers:      maintainers,
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: chartID,

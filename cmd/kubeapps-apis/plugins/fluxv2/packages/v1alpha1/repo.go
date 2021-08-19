@@ -27,6 +27,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
 )
 
@@ -40,8 +42,7 @@ const (
 	fluxHelmRepositoryList = "HelmRepositoryList"
 )
 
-// namespace maybe "", in which case repositories from all namespaces are returned
-func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
 	client, err := s.getDynamicClient(ctx)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,17 @@ func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*uns
 		Resource: fluxHelmRepositories,
 	}
 
-	if repos, err := client.Resource(repositoriesResource).Namespace(namespace).List(ctx, metav1.ListOptions{}); err != nil {
+	return client.Resource(repositoriesResource).Namespace(namespace), nil
+}
+
+// namespace maybe "", in which case repositories from all namespaces are returned
+func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+	resourceIfc, err := s.getRepoResourceInterface(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if repos, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
 	} else {
 		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
@@ -64,26 +75,36 @@ func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*uns
 	}
 }
 
-func (s *Server) repoExistsInCache(namespace, repoName string) (bool, error) {
+func (s *Server) getRepoInCluster(ctx context.Context, name types.NamespacedName) (*unstructured.Unstructured, error) {
+	resourceIfc, err := s.getRepoResourceInterface(ctx, name.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return resourceIfc.Get(ctx, name.Name, metav1.GetOptions{})
+}
+
+func (s *Server) repoExistsInCache(name types.NamespacedName) (bool, error) {
 	if s.cache == nil {
 		return false, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	repos, err := s.cache.listKeys([]string{repoName})
-	if err != nil {
-		return false, err
-	}
+	repo, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(name))
+	return repo != nil, err
+}
 
-	for _, key := range repos {
-		thisNamespace, thisName, err := s.cache.fromKey(key)
-		if err != nil {
-			return false, err
-		}
-		if thisNamespace == namespace && thisName == repoName {
-			return true, nil
-		}
+func (s *Server) getRepoUrl(ctx context.Context, name types.NamespacedName) (string, error) {
+	repoUnstructured, err := s.getRepoInCluster(ctx, name)
+	if err != nil {
+		return "", status.Errorf(codes.NotFound, "Unable to find Helm repository %q due to %v", name, err)
+	} else if repoUnstructured == nil {
+		return "", status.Errorf(codes.NotFound, "Unable to find Helm repository %q", name)
 	}
-	return false, nil
+	repoUrl, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
+	if err != nil || !found {
+		return "", status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", name)
+	}
+	return repoUrl, nil
 }
 
 //

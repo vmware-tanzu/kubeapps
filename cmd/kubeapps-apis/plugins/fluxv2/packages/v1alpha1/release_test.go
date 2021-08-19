@@ -303,33 +303,11 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					}
 				}
 
-				indexYAMLBytes, err := ioutil.ReadFile(existing.repoIndex)
+				ts2, repo, err := newRepoWithIndex(existing.repoIndex, existing.repoName, existing.repoNamespace)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
-
-				// stand up an http server just for the duration of this test
-				ts2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					fmt.Fprintln(w, string(indexYAMLBytes))
-				}))
 				defer ts2.Close()
-
-				repoSpec := map[string]interface{}{
-					"url":      "https://example.repo.com/charts",
-					"interval": "1m0s",
-				}
-
-				repoStatus := map[string]interface{}{
-					"conditions": []interface{}{
-						map[string]interface{}{
-							"type":   "Ready",
-							"status": "True",
-							"reason": "IndexationSucceed",
-						},
-					},
-					"url": ts2.URL,
-				}
-				repo := newRepo(existing.repoName, existing.repoNamespace, repoSpec, repoStatus)
 
 				redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
 				if err != nil {
@@ -350,7 +328,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, plugins.Plugin{})
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetInstalledPackageSummariesResponse{}, 
+				corev1.InstalledPackageSummary{}, 
+				corev1.InstalledPackageReference{}, 
+				corev1.Context{}, 
+				corev1.VersionReference{}, 
+				corev1.InstalledPackageStatus{}, 
+				plugins.Plugin{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}

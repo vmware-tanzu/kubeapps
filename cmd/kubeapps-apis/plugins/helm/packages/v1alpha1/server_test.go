@@ -61,6 +61,7 @@ const (
 	DefaultAppVersion        = "1.2.6"
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
+	DefaultChartHomeURL      = "https://helm.sh/helm"
 	DefaultChartCategory     = "cat1"
 )
 
@@ -399,17 +400,20 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 }
 
 // makeChart makes a chart with specific input used in the test and default constants for other relevant data.
-func makeChart(chart_name, repo_name, namespace string, chart_versions []string, category string) *models.Chart {
+func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions []string, category string) *models.Chart {
 	ch := &models.Chart{
 		Name:        chart_name,
 		ID:          fmt.Sprintf("%s/%s", repo_name, chart_name),
 		Category:    category,
 		Description: DefaultChartDescription,
+		Home:        DefaultChartHomeURL,
 		Icon:        DefaultChartIconURL,
 		Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+		Sources:     []string{"http://source-1"},
 		Repo: &models.Repo{
 			Name:      repo_name,
 			Namespace: namespace,
+			URL:       repo_url,
 		},
 	}
 	versions := []models.ChartVersion{}
@@ -514,9 +518,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
-				makeChart("chart-3-global", "repo-1", globalPackagingNamespace, []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3-global", "repo-1", "http://chart-3", globalPackagingNamespace, []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -577,8 +581,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQueryNamespace: "my-ns",
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -626,8 +630,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -685,7 +689,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			expectDBQueryNamespace: globalPackagingNamespace,
-			charts:                 []*models.Chart{makeChart("chart-1", "repo-1", "my-ns", []string{}, DefaultChartCategory)},
+			charts:                 []*models.Chart{makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{}, DefaultChartCategory)},
 			statusCode:             codes.Internal,
 		},
 		{
@@ -714,9 +718,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
-				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3", "repo-1", "http://chart-3", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -756,9 +760,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
-				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3", "repo-1", "http://chart-3", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -807,9 +811,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQueryNamespace: "my-ns",
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, "foo"),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, "bar"),
-				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}, "bar"),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, "foo"),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, "bar"),
+				makeChart("chart-3", "repo-1", "http://chart-3", "my-ns", []string{"1.0.0"}, "bar"),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -942,7 +946,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 	}{
 		{
 			name:  "it returns AvailablePackageDetail if the chart is correct",
-			chart: makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+			chart: makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 			chartFiles: &models.ChartFiles{
 				Readme: "chart readme",
 				Values: "chart values",
@@ -951,6 +955,8 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 			expected: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
+				RepoUrl:          "http://foo",
+				HomeUrl:          DefaultChartHomeURL,
 				IconUrl:          DefaultChartIconURL,
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
@@ -960,6 +966,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 				Readme:           "chart readme",
 				DefaultValues:    "chart values",
 				ValuesSchema:     "chart schema",
+				SourceUrls:       []string{"http://source-1"},
 				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -1017,19 +1024,21 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "repo-1%2Ffoo",
 				},
 			},
-			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory)},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0"}, DefaultChartCategory)},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
+				HomeUrl:          DefaultChartHomeURL,
+				RepoUrl:          "http://foo",
 				IconUrl:          DefaultChartIconURL,
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
-				LongDescription:  "",
 				PkgVersion:       "3.0.0",
 				AppVersion:       DefaultAppVersion,
 				Readme:           "chart readme",
 				DefaultValues:    "chart values",
 				ValuesSchema:     "chart schema",
+				SourceUrls:       []string{"http://source-1"},
 				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -1049,10 +1058,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 				PkgVersion: "1.0.0",
 			},
-			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
+				HomeUrl:          DefaultChartHomeURL,
+				RepoUrl:          "http://foo",
 				IconUrl:          DefaultChartIconURL,
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
@@ -1062,6 +1073,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Readme:           "chart readme",
 				DefaultValues:    "chart values",
 				ValuesSchema:     "chart schema",
+				SourceUrls:       []string{"http://source-1"},
 				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
@@ -1242,7 +1254,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		},
 		{
 			name:   "it returns the package version summary",
-			charts: []*models.Chart{makeChart("apache", "bitnami", "kubeapps", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
+			charts: []*models.Chart{makeChart("apache", "bitnami", "http://apache", "kubeapps", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{

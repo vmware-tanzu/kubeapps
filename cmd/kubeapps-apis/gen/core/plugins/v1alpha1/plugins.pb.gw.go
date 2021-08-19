@@ -61,7 +61,7 @@ func RegisterPluginsServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.plugins.v1alpha1.PluginsService/GetConfiguredPlugins", runtime.WithHTTPPathPattern("/core/plugins/v1alpha1/configured-plugins"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.plugins.v1alpha1.PluginsService/GetConfiguredPlugins")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -123,7 +123,7 @@ func RegisterPluginsServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.plugins.v1alpha1.PluginsService/GetConfiguredPlugins", runtime.WithHTTPPathPattern("/core/plugins/v1alpha1/configured-plugins"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.plugins.v1alpha1.PluginsService/GetConfiguredPlugins")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

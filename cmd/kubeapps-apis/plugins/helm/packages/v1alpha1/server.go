@@ -479,10 +479,12 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 	}
 
 	pkg.DisplayName = chart.Name
+	pkg.HomeUrl = chart.Home
 	pkg.IconUrl = chart.Icon
 	pkg.Name = chart.Name
 	pkg.ShortDescription = chart.Description
 	pkg.Categories = []string{chart.Category}
+	pkg.SourceUrls = chart.Sources
 
 	pkg.Maintainers = []*corev1.Maintainer{}
 	for _, maintainer := range chart.Maintainers {
@@ -495,6 +497,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 		Plugin:     GetPluginDetail(),
 	}
 	if chart.Repo != nil {
+		pkg.RepoUrl = chart.Repo.URL
 		pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 	}
 
