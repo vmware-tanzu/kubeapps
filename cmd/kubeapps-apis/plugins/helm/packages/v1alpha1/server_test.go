@@ -1512,6 +1512,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1533,6 +1534,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-3",
@@ -1585,6 +1587,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1606,6 +1609,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
@@ -1627,6 +1631,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
@@ -1682,6 +1687,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1703,6 +1709,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
@@ -1760,6 +1767,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
@@ -1801,6 +1809,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",

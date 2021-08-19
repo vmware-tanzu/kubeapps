@@ -575,6 +575,9 @@ func isValidChart(chart *models.Chart) (bool, error) {
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
 	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
@@ -600,6 +603,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	installedPkgSummaries := make([]*corev1.InstalledPackageSummary, len(releases))
 	for i, r := range releases {
 		installedPkgSummaries[i] = installedPkgSummaryFromRelease(r)
+		installedPkgSummaries[i].InstalledPackageRef.Context.Cluster = cluster
 	}
 
 	// Fill in the latest package version for each.
