@@ -57,6 +57,7 @@ import (
 
 const (
 	globalPackagingNamespace = "kubeapps"
+	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
@@ -79,7 +80,7 @@ func TestGetClient(t *testing.T) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	testClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+	testClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 			runtime.NewScheme(),
 			map[schema.GroupVersionResource]string{
@@ -119,7 +120,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:    "it returns failed-precondition when configGetter itself errors",
 			manager: manager,
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+			clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 				return nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCodeClient:  codes.FailedPrecondition,
@@ -136,7 +137,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
-			typedClient, dynamicClient, errClient := s.GetClients(context.Background())
+			typedClient, dynamicClient, errClient := s.GetClients(context.Background(), "")
 
 			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
@@ -473,7 +474,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
 	})
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+	clientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 		return clientSet, dynamicClient, nil
 	}
 
@@ -484,7 +485,8 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		clientGetter:             clientGetter,
 		manager:                  manager,
 		globalPackagingNamespace: globalPackagingNamespace,
-		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
+		globalPackagingCluster:   globalPackagingCluster,
+		actionConfigGetter: func(context.Context, string, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
 	}, mock, cleanup
@@ -492,14 +494,14 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name               string
-		charts             []*models.Chart
-		expectDBQuery      bool
-		statusCode         codes.Code
-		request            *corev1.GetAvailablePackageSummariesRequest
-		expectedResponse   *corev1.GetAvailablePackageSummariesResponse
-		authorized         bool
-		expectedCategories []*models.ChartCategory
+		name                   string
+		charts                 []*models.Chart
+		expectDBQueryNamespace string
+		statusCode             codes.Code
+		request                *corev1.GetAvailablePackageSummariesRequest
+		expectedResponse       *corev1.GetAvailablePackageSummariesResponse
+		authorized             bool
+		expectedCategories     []*models.ChartCategory
 	}{
 		{
 			name:       "it returns a set of availablePackageSummary from the database (global ns)",
@@ -510,10 +512,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
 				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3-global", "repo-1", globalPackagingNamespace, []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
@@ -526,7 +529,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-1",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -540,8 +543,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+					{
+						Name:             "chart-3-global",
+						DisplayName:      "chart-3-global",
+						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: globalPackagingNamespace},
+							Identifier: "repo-1/chart-3-global",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
 					},
@@ -555,11 +572,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
-					Cluster:   "",
 					Namespace: "my-ns",
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: "my-ns",
 			charts: []*models.Chart{
 				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
@@ -575,7 +591,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-1",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -589,7 +605,56 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
+							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+				},
+				Categories: []string{"cat1"},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it returns a set of the global availablePackageSummary from the database (not the specific ns on other cluster)",
+			authorized: true,
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "other",
+					Namespace: "my-ns",
+				},
+			},
+			expectDBQueryNamespace: globalPackagingNamespace,
+			charts: []*models.Chart{
+				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					{
+						Name:             "chart-1",
+						DisplayName:      "chart-1",
+						LatestPkgVersion: "3.0.0",
+						LatestAppVersion: DefaultAppVersion,
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
+							Identifier: "repo-1/chart-1",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+					{
+						Name:             "chart-2",
+						DisplayName:      "chart-2",
+						LatestPkgVersion: "2.0.0",
+						LatestAppVersion: DefaultAppVersion,
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -607,9 +672,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "",
 				},
 			},
-			expectDBQuery: false,
-			charts:        []*models.Chart{},
-			statusCode:    codes.Unimplemented,
+			charts:     []*models.Chart{},
+			statusCode: codes.Unimplemented,
 		},
 		{
 			name:       "it returns an internal error status if response does not contain version",
@@ -620,9 +684,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 			},
-			expectDBQuery: true,
-			charts:        []*models.Chart{makeChart("chart-1", "repo-1", "my-ns", []string{}, DefaultChartCategory)},
-			statusCode:    codes.Internal,
+			expectDBQueryNamespace: globalPackagingNamespace,
+			charts:                 []*models.Chart{makeChart("chart-1", "repo-1", "my-ns", []string{}, DefaultChartCategory)},
+			statusCode:             codes.Internal,
 		},
 		{
 			name:       "it returns an unauthenticated status if the user doesn't have permissions",
@@ -632,9 +696,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "my-ns",
 				},
 			},
-			expectDBQuery: false,
-			charts:        []*models.Chart{{Name: "foo"}},
-			statusCode:    codes.Unauthenticated,
+			charts:     []*models.Chart{{Name: "foo"}},
+			statusCode: codes.Unauthenticated,
 		},
 		{
 			name:       "it returns only the requested page of results and includes the next page token",
@@ -649,7 +712,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					PageSize:  1,
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
 				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
@@ -666,7 +729,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						ShortDescription: DefaultChartDescription,
 						Categories:       []string{DefaultChartCategory},
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -691,7 +754,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					PageSize:  2,
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
 				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
@@ -708,7 +771,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-3",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -731,8 +794,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					PageSize:  2,
 				},
 			},
-			expectDBQuery: false,
-			statusCode:    codes.InvalidArgument,
+			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:       "it returns the proper chart categories",
@@ -743,7 +805,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "my-ns",
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: "my-ns",
 			charts: []*models.Chart{
 				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}, "foo"),
 				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}, "bar"),
@@ -760,7 +822,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{"foo"},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-1",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -774,7 +836,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{"bar"},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -788,7 +850,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Categories:       []string{"bar"},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-3",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
@@ -814,7 +876,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				rows.AddRow(row)
 			}
 
-			if tc.expectDBQuery {
+			if tc.expectDBQueryNamespace != "" {
 				// Checking if the WHERE condtion is properly applied
 
 				// Check returned categories
@@ -836,11 +898,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				}
 
 				mock.ExpectQuery("SELECT (info ->> 'category')*").
-					WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
+					WithArgs(tc.expectDBQueryNamespace, server.globalPackagingNamespace).
 					WillReturnRows(catrows)
 
 				mock.ExpectQuery("SELECT info FROM").
-					WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
+					WithArgs(tc.expectDBQueryNamespace, server.globalPackagingNamespace).
 					WillReturnRows(rows)
 
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
@@ -1010,6 +1072,29 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
+			name:       "it returns an invalid arg error status if no context is provided",
+			authorized: true,
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "foo/bar",
+				},
+			},
+			charts:     []*models.Chart{{Name: "foo"}},
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name:       "it returns an invalid arg error status if cluster is not the global/kubeapps one",
+			authorized: true,
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Cluster: "other-cluster", Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			},
+			charts:     []*models.Chart{{Name: "foo"}},
+			statusCode: codes.InvalidArgument,
+		},
+		{
 			name:       "it returns an internal error status if the chart is invalid",
 			authorized: true,
 			request: &corev1.GetAvailablePackageDetailRequest{
@@ -1141,6 +1226,16 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Context: &corev1.Context{
 						Namespace: "kubeapps",
 					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called with a cluster other than the global/kubeapps one",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Cluster: "other-cluster", Namespace: "kubeapps"},
+					Identifier: "bitnami/apache",
 				},
 			},
 			expectedStatusCode: codes.InvalidArgument,
@@ -1417,6 +1512,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1438,6 +1534,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-3",
@@ -1490,6 +1587,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1511,6 +1609,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
@@ -1532,6 +1631,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
@@ -1587,6 +1687,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1608,6 +1709,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
@@ -1665,6 +1767,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
@@ -1706,6 +1809,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
