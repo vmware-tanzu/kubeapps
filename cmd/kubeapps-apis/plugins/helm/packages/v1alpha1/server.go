@@ -42,8 +42,8 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-type clientGetter func(context.Context) (kubernetes.Interface, dynamic.Interface, error)
-type helmActionConfigGetter func(ctx context.Context, namespace string) (*action.Configuration, error)
+type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
+type helmActionConfigGetter func(ctx context.Context, cluster, namespace string) (*action.Configuration, error)
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
@@ -62,13 +62,14 @@ type Server struct {
 	// non-test implementation.
 	clientGetter             clientGetter
 	globalPackagingNamespace string
+	globalPackagingCluster   string
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter server.KubernetesConfigGetter) *Server {
+func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluster string) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
@@ -87,12 +88,11 @@ func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 	}
 
 	return &Server{
-		clientGetter: func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
 			if configGetter == nil {
 				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
 			}
-			// Not yet sending cluster.
-			config, err := configGetter(ctx, "")
+			config, err := configGetter(ctx, cluster)
 			if err != nil {
 				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 			}
@@ -106,11 +106,11 @@ func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 			}
 			return typedClient, dynamicClient, nil
 		},
-		actionConfigGetter: func(ctx context.Context, namespace string) (*action.Configuration, error) {
+		actionConfigGetter: func(ctx context.Context, cluster, namespace string) (*action.Configuration, error) {
 			if configGetter == nil {
 				return nil, status.Errorf(codes.Internal, "configGetter arg required")
 			}
-			config, err := configGetter(ctx, "")
+			config, err := configGetter(ctx, cluster)
 			if err != nil {
 				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 			}
@@ -131,15 +131,16 @@ func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 		},
 		manager:                  manager,
 		globalPackagingNamespace: kubeappsNamespace,
+		globalPackagingCluster:   globalPackagingCluster,
 	}
 }
 
 // GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
 	if s.clientGetter == nil {
 		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	typedClient, dynamicClient, err := s.clientGetter(ctx)
+	typedClient, dynamicClient, err := s.clientGetter(ctx, cluster)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
@@ -165,12 +166,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	log.Infof("+helm GetAvailablePackageSummaries %s", contextMsg)
 
 	// Check the request context (namespace and cluster)
+	cluster := ""
 	namespace := ""
 	if request.Context != nil {
-		if request.Context.Cluster != "" {
-			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
-		}
 		namespace = request.Context.Namespace
+		cluster = request.Context.Cluster
 	}
 	// Check the requested namespace: if any, return "everything a user can read";
 	// otherwise, first check if the user can access the requested ns
@@ -179,8 +179,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: not including a namespace means that it returns everything a user can read")
 	}
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
-	if err := s.hasAccessToNamespace(ctx, namespace); err != nil {
+	if err := s.hasAccessToNamespace(ctx, cluster, namespace); err != nil {
 		return nil, err
+	}
+
+	// If the request is for available packages on another cluster, we only
+	// return the global packages (ie. kubeapps namespace)
+	if cluster != "" && cluster != s.globalPackagingCluster {
+		namespace = s.globalPackagingNamespace
 	}
 
 	// Create the initial chart query with the namespace
@@ -230,6 +236,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
 		}
+		// We currently support app repositories on the kubeapps cluster only.
+		pkg.AvailablePackageRef.Context.Cluster = s.globalPackagingCluster
 		responsePackages = append(responsePackages, pkg)
 	}
 
@@ -319,10 +327,16 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	// Retrieve namespace, chartID, version from the request
 	namespace := request.AvailablePackageRef.Context.Namespace
+	cluster := request.AvailablePackageRef.Context.Cluster
 	version := request.PkgVersion
 
+	// Currently we support available packages on the kubeapps cluster only.
+	if cluster != "" && cluster != s.globalPackagingCluster {
+		return nil, status.Errorf(codes.InvalidArgument, "Requests for available packages on clusters other than %q not supported.", s.globalPackagingCluster)
+	}
+
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
-	if err := s.hasAccessToNamespace(ctx, namespace); err != nil {
+	if err := s.hasAccessToNamespace(ctx, cluster, namespace); err != nil {
 		return nil, err
 	}
 
@@ -379,15 +393,21 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	if namespace == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
 	}
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	// Currently we support available packages on the kubeapps cluster only.
+	if cluster != "" && cluster != s.globalPackagingCluster {
+		return nil, status.Errorf(codes.InvalidArgument, "Requests for versions of available packages on clusters other than %q not supported.", s.globalPackagingCluster)
+	}
+
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, request.AvailablePackageRef.Context.Namespace)
 	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
-	if err := s.hasAccessToNamespace(ctx, namespace); err != nil {
+	if err := s.hasAccessToNamespace(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
-	unescapedChartID, err := getUnescapedChartID(request.AvailablePackageRef.Identifier)
+	unescapedChartID, err := getUnescapedChartID(request.GetAvailablePackageRef().GetIdentifier())
 	if err != nil {
 		return nil, err
 	}
@@ -490,12 +510,12 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 }
 
 // hasAccessToNamespace returns an error if the client does not have read access to a given namespace
-func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) error {
+func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace string) error {
 	// If checking the global namespace, allow access always
 	if namespace == s.globalPackagingNamespace {
 		return nil
 	}
-	client, _, err := s.GetClients(ctx)
+	client, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return err
 	}
@@ -554,7 +574,8 @@ func isValidChart(chart *models.Chart) (bool, error) {
 // GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	namespace := request.GetContext().GetNamespace()
-	actionConfig, err := s.actionConfigGetter(ctx, namespace)
+	cluster := request.GetContext().GetCluster()
+	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
@@ -655,8 +676,9 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 // GetInstalledPackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
+	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
-	actionConfig, err := s.actionConfigGetter(ctx, namespace)
+	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
@@ -665,7 +687,6 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	getcmd := action.NewGet(actionConfig)
 	release, err := getcmd.Run(identifier)
 	if err != nil {
-		log.Errorf("Error is %+v", err)
 		if err == driver.ErrReleaseNotFound {
 			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
 		}
