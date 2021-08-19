@@ -53,7 +53,7 @@ func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace str
 	return client.Resource(releasesResource).Namespace(namespace), nil
 }
 
-// namespace maybe "", in which case repositories from all namespaces are returned
+// namespace maybe "", in which case releases from all namespaces are returned
 func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	releasesIfc, err := s.getReleasesResourceInterface(ctx, namespace)
 	if err != nil {
@@ -147,10 +147,11 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
 		// by the HelmRepository (without any aliases), for example: podinfo". So, we can't exactly do a "get"
 		// on the name, but have to iterate the complete list of available charts for a match
-		tarUrl, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
-		if err == nil && tarUrl != "" {
+		if tarUrl, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion); err == nil && tarUrl != "" {
 			chartID := fmt.Sprintf("%s/%s", repoName, chartName)
-			pkgDetail, _ = availablePackageDetailFromTarball(chartID, tarUrl)
+			if pkgDetail, err = availablePackageDetailFromTarball(chartID, tarUrl); err != nil {
+				return nil, err
+			}
 		}
 
 		// according to docs repoNamespace is optional
