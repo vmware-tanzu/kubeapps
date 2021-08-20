@@ -21,6 +21,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -235,6 +236,11 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		return nil, err
 	}
 
+	postInstallNotes, err := s.postInstallationNotesFromUnstructured(ctx, name, unstructuredRelease.Object)
+	if err != nil {
+		return nil, err
+	}
+
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
@@ -249,15 +255,40 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		ValuesApplied:         valuesApplied,
 		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease.Object),
 		AvailablePackageRef:   availablePackageRef,
-		// TODO (gfichtenholt) PostInstallationNotes
-		// looks like I may have to resort to getting the notes via helm APIs, flux doesn't do it
-		// see discussion in https://cloud-native.slack.com/archives/CLAJ40HV3/p1629244025187100
-		// bottom line: "helm get notes" is a read-only activity that you can replicate in your
-		// own code by copying the implementation, or calling to the library function if there is one
-		// https://github.com/helm/helm/blob/main/cmd/helm/get_notes.go.
-		// Also look at https://gist.github.com/DzeryCZ/c4adf39d4a1a99ae6e594a183628eaee
-		Status: installedPackageStatusFromUnstructured(unstructuredRelease.Object),
+		PostInstallationNotes: postInstallNotes,
+		Status:                installedPackageStatusFromUnstructured(unstructuredRelease.Object),
 	}, nil
+}
+
+func (s *Server) postInstallationNotesFromUnstructured(ctx context.Context, name types.NamespacedName, unstructuredRelease map[string]interface{}) (string, error) {
+	// post installation notes can only be retrieved via helm APIs, flux doesn't do it
+	// see discussion in https://cloud-native.slack.com/archives/CLAJ40HV3/p1629244025187100
+	if s.actionConfigGetter == nil {
+		return "", status.Errorf(codes.FailedPrecondition, "Server is not configured with actionConfigGetter")
+	}
+
+	helmReleaseName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "ReleaseName")
+	// according to docs ReleaseName is optional and defaults to a composition of
+	// '[TargetNamespace-]Name'.
+	if !found || err != nil || helmReleaseName == "" {
+		targetNamespace, found, err := unstructured.NestedString(unstructuredRelease, "spec", "targetNamespace")
+		// according to docs targetNamespace is optional and defaults to the namespace of the HelmRelease
+		if !found || err != nil || targetNamespace == "" {
+			targetNamespace = name.Namespace
+		}
+		helmReleaseName = fmt.Sprintf("%s-%s", targetNamespace, name.Name)
+	}
+
+	actionConfig, err := s.actionConfigGetter(ctx, name.Namespace)
+	if err != nil || actionConfig == nil {
+		return "", status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+	cmd := action.NewGet(actionConfig)
+	release, err := cmd.Run(helmReleaseName)
+	if err != nil {
+		return "", status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s]: %v", helmReleaseName, err)
+	}
+	return release.Info.Notes, nil
 }
 
 func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {

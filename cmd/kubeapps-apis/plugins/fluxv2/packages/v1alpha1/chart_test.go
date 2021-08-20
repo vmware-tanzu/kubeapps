@@ -746,7 +746,7 @@ func newServerWithRepoAndCharts(repo runtime.Object, charts ...runtime.Object) (
 		fluxHelmCharts,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	s, mock, err := newServerWithClientGetter(clientGetter, repo)
+	s, mock, err := newServer(clientGetter, nil, repo)
 	if err != nil {
 		return nil, nil, nil, err
 	}

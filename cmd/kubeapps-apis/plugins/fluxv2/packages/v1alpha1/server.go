@@ -17,13 +17,17 @@ import (
 	"fmt"
 	"strings"
 
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -33,6 +37,7 @@ import (
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 type clientGetter func(context.Context) (dynamic.Interface, error)
+type helmActionConfigGetter func(ctx context.Context, namespace string) (*action.Configuration, error)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
@@ -41,7 +46,8 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter clientGetter
+	clientGetter       clientGetter
+	actionConfigGetter helmActionConfigGetter
 
 	cache *NamespacedResourceWatcherCache
 }
@@ -66,13 +72,38 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 		}
 		return dynamicClient, nil
 	}
+	actionConfigGetter := func(ctx context.Context, namespace string) (*action.Configuration, error) {
+		if configGetter == nil {
+			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+		}
+		// The Flux plugin currently supports interactions with the default (kubeapps)
+		// cluster only:
+		cluster := ""
+		config, err := configGetter(ctx, cluster)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+		}
 
+		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
+		clientSet, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to create kubernetes client : %v", err))
+		}
+		// TODO(mnelson): Update to allow different helm storage options.
+		storage := agent.StorageForSecrets(namespace, clientSet)
+		return &action.Configuration{
+			RESTClientGetter: restClientGetter,
+			KubeClient:       kube.New(restClientGetter),
+			Releases:         storage,
+			Log:              log.Infof,
+		}, nil
+	}
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories,
 	}
-	config := cacheConfig{
+	cacheConfig := cacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: clientGetter,
 		onAdd:        onAddOrModifyRepo,
@@ -80,13 +111,14 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-	cache, err := newCache(config)
+	cache, err := newCache(cacheConfig)
 	if err != nil {
 		return nil, err
 	}
 	return &Server{
-		clientGetter: clientGetter,
-		cache:        cache,
+		clientGetter:       clientGetter,
+		actionConfigGetter: actionConfigGetter,
+		cache:              cache,
 	}, nil
 }
 

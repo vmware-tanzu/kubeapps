@@ -28,6 +28,13 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -284,7 +291,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				runtimeObjs = append(runtimeObjs, release)
 			}
 
-			s, mock, _, err := newServerWithChartsAndReleases(runtimeObjs...)
+			s, mock, _, err := newServerWithChartsAndReleases(nil, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -329,12 +336,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			opts := cmpopts.IgnoreUnexported(
-				corev1.GetInstalledPackageSummariesResponse{}, 
-				corev1.InstalledPackageSummary{}, 
-				corev1.InstalledPackageReference{}, 
-				corev1.Context{}, 
-				corev1.VersionReference{}, 
-				corev1.InstalledPackageStatus{}, 
+				corev1.GetInstalledPackageSummariesResponse{},
+				corev1.InstalledPackageSummary{},
+				corev1.InstalledPackageReference{},
+				corev1.Context{},
+				corev1.VersionReference{},
+				corev1.InstalledPackageStatus{},
 				plugins.Plugin{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -348,11 +355,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 	}
 }
 
+type helmReleaseStub struct {
+	name         string
+	namespace    string
+	chartVersion string
+	notes        string
+	status       release.Status
+}
+
 func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
 		name               string
 		request            *corev1.GetInstalledPackageDetailRequest
-		existingObjs       []testSpecGetInstalledPackages
+		existingK8sObjs    []testSpecGetInstalledPackages
+		targetNamespace    string // this is where installation would actually place artifacts
+		existingHelmStubs  []helmReleaseStub
 		expectedStatusCode codes.Code
 		expectedResponse   *corev1.GetInstalledPackageDetailResponse
 	}{
@@ -366,8 +383,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					},
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackages{
+			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_failed,
+			},
+			targetNamespace: "test",
+			existingHelmStubs: []helmReleaseStub{
+				redis_existing_stub_failed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
@@ -384,8 +405,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					},
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackages{
+			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending,
+			},
+			targetNamespace: "test",
+			existingHelmStubs: []helmReleaseStub{
+				redis_existing_stub_pending,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
@@ -402,8 +427,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					},
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackages{
+			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
+			},
+			targetNamespace: "test",
+			existingHelmStubs: []helmReleaseStub{
+				redis_existing_stub_completed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
@@ -420,9 +449,10 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Identifier: "dontworrybehappy",
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackages{
+			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
+			targetNamespace:    "test",
 			expectedStatusCode: codes.NotFound,
 		},
 		{
@@ -435,8 +465,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Identifier: "my-redis",
 				},
 			},
-			existingObjs: []testSpecGetInstalledPackages{
+			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed_with_values_and_reconciliation_options,
+			},
+			targetNamespace: "test",
+			existingHelmStubs: []helmReleaseStub{
+				redis_existing_stub_completed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
@@ -448,7 +482,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs := []runtime.Object{}
-			for _, existing := range tc.existingObjs {
+			for _, existing := range tc.existingK8sObjs {
 				tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
 				if err != nil {
 					t.Fatalf("%+v", err)
@@ -500,7 +534,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 							},
 						},
 					},
-					"interval": "1m",
+					"interval":        "1m",
+					"targetNamespace": tc.targetNamespace,
 				}
 				if len(existing.releaseValues) != 0 {
 					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
@@ -515,7 +550,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				runtimeObjs = append(runtimeObjs, release)
 			}
 
-			s, mock, _, err := newServerWithChartsAndReleases(runtimeObjs...)
+			actionConfig := newHelmActionConfig(t, tc.targetNamespace, tc.existingHelmStubs)
+			s, mock, _, err := newServerWithChartsAndReleases(actionConfig, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -583,7 +619,7 @@ func newRelease(name string, namespace string, spec map[string]interface{}, stat
 	}
 }
 
-func newServerWithChartsAndReleases(chartOrRelease ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+func newServerWithChartsAndReleases(actionConfig *action.Configuration, chartOrRelease ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -615,11 +651,57 @@ func newServerWithChartsAndReleases(chartOrRelease ...runtime.Object) (*Server, 
 		fluxHelmCharts,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	s, mock, err := newServerWithClientGetter(clientGetter)
+	s, mock, err := newServer(clientGetter, actionConfig)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	return s, mock, watcher, nil
+}
+
+// newHelmActionConfig returns an action.Configuration with fake clients and memory storage.
+func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub) *action.Configuration {
+	t.Helper()
+
+	memDriver := driver.NewMemory()
+
+	actionConfig := &action.Configuration{
+		Releases:     storage.Init(memDriver),
+		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		Capabilities: chartutil.DefaultCapabilities,
+		Log: func(format string, v ...interface{}) {
+			t.Helper()
+			t.Logf(format, v...)
+		},
+	}
+
+	for _, r := range rels {
+		config := map[string]interface{}{}
+		rel := &release.Release{
+			Name:      r.name,
+			Namespace: r.namespace,
+			Info: &release.Info{
+				Status: r.status,
+				Notes:  r.notes,
+			},
+			Chart: &chart.Chart{
+				Metadata: &chart.Metadata{
+					Version:    r.chartVersion,
+					Icon:       "https://example.com/icon.png",
+					AppVersion: "1.2.3",
+				},
+			},
+			Config: config,
+		}
+		err := actionConfig.Releases.Create(rel)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	// It is the namespace of the the driver which determines the results. In the prod code,
+	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
+	memDriver.SetNamespace(namespace)
+
+	return actionConfig
 }
 
 // misc global vars that get re-used in multiple tests scenarios
@@ -803,6 +885,14 @@ var redis_existing_spec_completed = testSpecGetInstalledPackages{
 	},
 }
 
+var redis_existing_stub_completed = helmReleaseStub{
+	name:         "test-my-redis",
+	namespace:    "test",
+	chartVersion: "14.4.0",
+	notes:        "some notes",
+	status:       release.StatusDeployed,
+}
+
 var redis_existing_spec_completed_with_values_and_reconciliation_options = testSpecGetInstalledPackages{
 	repoName:                  "bitnami-1",
 	repoNamespace:             "default",
@@ -865,6 +955,14 @@ var redis_existing_spec_failed = testSpecGetInstalledPackages{
 		},
 		"lastAttemptedRevision": "14.4.0",
 	},
+}
+
+var redis_existing_stub_failed = helmReleaseStub{
+	name:         "test-my-redis",
+	namespace:    "test",
+	chartVersion: "14.4.0",
+	notes:        "some notes",
+	status:       release.StatusFailed,
 }
 
 var airflow_existing_spec_completed = testSpecGetInstalledPackages{
@@ -935,6 +1033,14 @@ var redis_existing_spec_pending = testSpecGetInstalledPackages{
 	},
 }
 
+var redis_existing_stub_pending = helmReleaseStub{
+	name:         "test-my-redis",
+	namespace:    "test",
+	chartVersion: "14.4.0",
+	notes:        "some notes",
+	status:       release.StatusPendingInstall,
+}
+
 var redis_existing_spec_latest = testSpecGetInstalledPackages{
 	repoName:             "bitnami-1",
 	repoNamespace:        "default",
@@ -983,6 +1089,7 @@ var redis_detail_failed = &corev1.InstalledPackageDetail{
 		Context:    &corev1.Context{Namespace: "default"},
 		Plugin:     fluxPlugin,
 	},
+	PostInstallationNotes: "some notes",
 }
 
 var redis_detail_pending = &corev1.InstalledPackageDetail{
@@ -1010,6 +1117,7 @@ var redis_detail_pending = &corev1.InstalledPackageDetail{
 		Context:    &corev1.Context{Namespace: "default"},
 		Plugin:     fluxPlugin,
 	},
+	PostInstallationNotes: "some notes",
 }
 
 var redis_detail_completed = &corev1.InstalledPackageDetail{
@@ -1038,6 +1146,7 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 		Context:    &corev1.Context{Namespace: "default"},
 		Plugin:     fluxPlugin,
 	},
+	PostInstallationNotes: "some notes",
 }
 
 var redis_detail_completed_with_values_and_reconciliation_options = &corev1.InstalledPackageDetail{
@@ -1069,4 +1178,5 @@ var redis_detail_completed_with_values_and_reconciliation_options = &corev1.Inst
 		Context:    &corev1.Context{Namespace: "default"},
 		Plugin:     fluxPlugin,
 	},
+	PostInstallationNotes: "some notes",
 }
