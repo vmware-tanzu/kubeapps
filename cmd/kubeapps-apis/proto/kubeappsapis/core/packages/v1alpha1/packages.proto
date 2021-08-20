@@ -406,11 +406,6 @@ message InstalledPackageSummary {
   // The version of the package which is currently installed.
   PackageAppVersion current_version = 4;
 
-  // CurrentAppVersion
-  //
-  // The version of the app included in the current package version.
-  string current_app_version = 5;
-
   // Installed package icon URL
   //
   // A url for an icon.
@@ -467,10 +462,10 @@ message InstalledPackageDetail {
   // The name given to the installed package
   string name = 3;
 
-  // CurrentPkgVersion
+  // CurrentVersion
   //
   // The version of the package which is currently installed.
-  string current_pkg_version = 4;
+  PackageAppVersion current_version = 4;
 
   // ValuesApplied
   //
@@ -499,6 +494,20 @@ message InstalledPackageDetail {
   // A reference to the available package for this installation.
   // Useful to lookup the package display name, icon and other info.
   AvailablePackageReference available_package_ref = 9;
+
+  // LatestMatchingVersion
+  //
+  // Only non-empty if an available upgrade matches the specified pkg_version_reference.
+  // For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
+  // is installed, then:
+  //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
+  //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
+  PackageAppVersion latest_matching_version = 9;
+
+  // LatestVersion
+  //
+  // The latest version available for this package, regardless of the pkg_version_reference.
+  PackageAppVersion latest_version = 10;
 }
 
 // -- Start other definitions  --
