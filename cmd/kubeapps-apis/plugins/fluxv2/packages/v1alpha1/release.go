@@ -288,7 +288,11 @@ func (s *Server) postInstallationNotesFromUnstructured(ctx context.Context, name
 	if err != nil {
 		return "", status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s]: %v", helmReleaseName, err)
 	}
-	return release.Info.Notes, nil
+	if release != nil && release.Info != nil {
+		return release.Info.Notes, nil
+	} else {
+		return "", nil
+	}
 }
 
 func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
