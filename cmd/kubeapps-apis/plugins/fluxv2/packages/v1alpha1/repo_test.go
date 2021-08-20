@@ -885,7 +885,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 		return dynamicClient, nil
 	}
 
-	s, mock, err := newServerWithClientGetter(clientGetter, repos...)
+	s, mock, err := newServer(clientGetter, nil, repos...)
 	return s, mock, watcher, err
 }
 
