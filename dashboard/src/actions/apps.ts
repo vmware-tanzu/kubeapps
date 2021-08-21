@@ -172,8 +172,7 @@ export function getAppWithUpdateInfo(
         app.chart &&
         app.chart.metadata &&
         app.chart.metadata.name &&
-        app.chart.metadata.version &&
-        app.chart.metadata.appVersion
+        app.chart.metadata.version
       ) {
         dispatch(
           getAppUpdateInfo(
@@ -182,7 +181,7 @@ export function getAppWithUpdateInfo(
             app.name,
             app.chart.metadata.name,
             app.chart.metadata.version,
-            app.chart.metadata.appVersion,
+            app.chart.metadata.appVersion ? app.chart.metadata.appVersion : "",
           ),
         );
       }
