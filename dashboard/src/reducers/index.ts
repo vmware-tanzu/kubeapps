@@ -1,8 +1,7 @@
+import { connectRouter } from "connected-react-router";
 import { History } from "history";
 import { combineReducers } from "redux";
-
-import { connectRouter } from "connected-react-router";
-import { IStoreState } from "../shared/types";
+import { IStoreState } from "shared/types";
 import appsReducer from "./apps";
 import authReducer from "./auth";
 import chartsReducer from "./charts";

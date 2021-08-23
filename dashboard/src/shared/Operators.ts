@@ -1,5 +1,5 @@
+import * as url from "shared/url";
 import placeholder from "../placeholder.png";
-import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import {
   IClusterServiceVersion,
@@ -11,22 +11,20 @@ import {
 
 export class Operators {
   public static async isOLMInstalled(cluster: string, namespace: string) {
-    const { status } = await axiosWithAuth.get(
-      urls.api.k8s.operators.operators(cluster, namespace),
-    );
+    const { status } = await axiosWithAuth.get(url.api.k8s.operators.operators(cluster, namespace));
     return status === 200;
   }
 
   public static async getOperators(cluster: string, namespace: string) {
     const { data } = await axiosWithAuth.get<IK8sList<IPackageManifest, {}>>(
-      urls.api.k8s.operators.operators(cluster, namespace),
+      url.api.k8s.operators.operators(cluster, namespace),
     );
     return data.items;
   }
 
   public static async getOperator(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<IPackageManifest>(
-      urls.api.k8s.operators.operator(cluster, namespace, name),
+      url.api.k8s.operators.operator(cluster, namespace, name),
     );
     return data;
   }
@@ -34,14 +32,14 @@ export class Operators {
   public static async getCSVs(cluster: string, namespace: string) {
     // Global operators are installed in the "operators" namespace
     const { data } = await axiosWithAuth.get<IK8sList<IClusterServiceVersion, {}>>(
-      urls.api.k8s.operators.clusterServiceVersions(cluster, namespace),
+      url.api.k8s.operators.clusterServiceVersions(cluster, namespace),
     );
     return data.items;
   }
 
   public static async getCSV(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<IClusterServiceVersion>(
-      urls.api.k8s.operators.clusterServiceVersion(cluster, namespace, name),
+      url.api.k8s.operators.clusterServiceVersion(cluster, namespace, name),
     );
     return data;
   }
@@ -54,7 +52,7 @@ export class Operators {
     body: object,
   ) {
     const { data } = await axiosWithAuth.post<IResource>(
-      urls.api.k8s.operators.resources(cluster, namespace, apiVersion, resource),
+      url.api.k8s.operators.resources(cluster, namespace, apiVersion, resource),
       body,
     );
     return data;
@@ -67,7 +65,7 @@ export class Operators {
     resource: string,
   ) {
     const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
-      urls.api.k8s.operators.resources(cluster, namespace, apiVersion, resource),
+      url.api.k8s.operators.resources(cluster, namespace, apiVersion, resource),
     );
     return data;
   }
@@ -80,7 +78,7 @@ export class Operators {
     name: string,
   ) {
     const { data } = await axiosWithAuth.get<IResource>(
-      urls.api.k8s.operators.resource(cluster, namespace, apiVersion, crd, name),
+      url.api.k8s.operators.resource(cluster, namespace, apiVersion, crd, name),
     );
     return data;
   }
@@ -93,7 +91,7 @@ export class Operators {
     name: string,
   ) {
     const { data } = await axiosWithAuth.delete<any>(
-      urls.api.k8s.operators.resource(cluster, namespace, apiVersion, plural, name),
+      url.api.k8s.operators.resource(cluster, namespace, apiVersion, plural, name),
     );
     return data;
   }
@@ -107,7 +105,7 @@ export class Operators {
     body: object,
   ) {
     const { data } = await axiosWithAuth.put<IResource>(
-      urls.api.k8s.operators.resource(cluster, namespace, apiVersion, resource, name),
+      url.api.k8s.operators.resource(cluster, namespace, apiVersion, resource, name),
       body,
     );
     return data;
@@ -125,7 +123,7 @@ export class Operators {
     await this.createOperatorGroupIfNotExists(cluster, namespace);
     // Now create the subscription
     const { data: result } = await axiosWithAuth.post<IResource>(
-      urls.api.k8s.operators.subscription(cluster, namespace, name),
+      url.api.k8s.operators.subscription(cluster, namespace, name),
       {
         apiVersion: "operators.coreos.com/v1alpha1",
         kind: "Subscription",
@@ -148,7 +146,7 @@ export class Operators {
 
   public static async listSubscriptions(cluster: string, namespace: string) {
     const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
-      urls.api.k8s.operators.subscriptions(cluster, namespace),
+      url.api.k8s.operators.subscriptions(cluster, namespace),
     );
     return data;
   }
@@ -167,14 +165,14 @@ export class Operators {
       return;
     }
     const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
-      urls.api.k8s.operators.operatorGroups(cluster, namespace),
+      url.api.k8s.operators.operatorGroups(cluster, namespace),
     );
     if (data.items.length > 0) {
       // An operatorgroup already exists, do nothing
       return;
     }
     const { data: result } = await axiosWithAuth.post<IK8sList<IResource, {}>>(
-      urls.api.k8s.operators.operatorGroups(cluster, namespace),
+      url.api.k8s.operators.operatorGroups(cluster, namespace),
       {
         apiVersion: "operators.coreos.com/v1",
         kind: "OperatorGroup",

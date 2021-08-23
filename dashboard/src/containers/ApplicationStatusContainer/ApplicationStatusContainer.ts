@@ -1,12 +1,11 @@
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import { hapi } from "shared/hapi/release";
+import ResourceRef from "shared/ResourceRef";
+import { IStoreState } from "shared/types";
 import actions from "../../actions";
 import ApplicationStatus from "../../components/ApplicationStatus";
-import { hapi } from "../../shared/hapi/release";
-import ResourceRef from "../../shared/ResourceRef";
-import { IStoreState } from "../../shared/types";
 import { filterByResourceRefs } from "../helpers";
 
 interface IApplicationStatusContainerProps {

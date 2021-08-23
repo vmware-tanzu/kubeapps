@@ -4,9 +4,8 @@ import { trimStart } from "lodash";
 import React from "react";
 import { IChartAttributes, IChartVersion } from "shared/types";
 import placeholder from "../../placeholder.png";
-import ChartVersionSelector from "./ChartVersionSelector";
-
 import "./ChartHeader.css";
+import ChartVersionSelector from "./ChartVersionSelector";
 
 interface IChartHeaderProps {
   chartAttrs: IChartAttributes;

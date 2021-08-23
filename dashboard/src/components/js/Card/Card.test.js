@@ -1,6 +1,6 @@
+import { mount, shallow } from "enzyme";
 import React from "react";
-import { shallow, mount } from "enzyme";
-import Card, { CardTitle, CardBlock, CardHeader, CardText, CardFooter } from ".";
+import Card, { CardBlock, CardFooter, CardHeader, CardText, CardTitle } from ".";
 
 describe(Card, () => {
   it("renders a simple card", () => {

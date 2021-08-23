@@ -6,7 +6,7 @@ import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IAppRepository, IChart, IChartState, IClusterServiceVersion } from "shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";

@@ -1,8 +1,6 @@
-import { shallow } from "enzyme";
-
-import ResourceRef from "shared/ResourceRef";
-
 import Tabs from "components/Tabs";
+import { shallow } from "enzyme";
+import ResourceRef from "shared/ResourceRef";
 import ResourceTabs from "./ResourceTabs";
 
 const sampleResourceRef = {

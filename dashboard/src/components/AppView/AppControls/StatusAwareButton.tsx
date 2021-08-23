@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
-import ReactTooltip from "react-tooltip";
-import { hapi } from "../../../shared/hapi/release";
 import { inRange } from "lodash";
+import ReactTooltip from "react-tooltip";
+import { hapi } from "shared/hapi/release";
 
 export interface IStatusAwareButtonProps {
   id: string;

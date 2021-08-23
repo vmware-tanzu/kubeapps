@@ -1,5 +1,5 @@
 import React from "react";
-import { IChartAttributes } from "../../shared/types";
+import { IChartAttributes } from "shared/types";
 interface IChartMaintainersProps {
   maintainers: IChartAttributes["maintainers"];
   githubIDAsNames?: boolean;

@@ -1,7 +1,7 @@
+import { IConfig, SupportedThemes } from "shared/Config";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { ConfigAction } from "../actions/config";
-import { IConfig, SupportedThemes } from "../shared/Config";
 
 export interface IConfigState extends IConfig {
   loaded: boolean;

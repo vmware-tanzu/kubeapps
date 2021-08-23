@@ -1,14 +1,13 @@
-import { get } from "lodash";
-import { useEffect } from "react";
-
 import actions from "actions";
 import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
+import { get } from "lodash";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ResourceRef from "shared/ResourceRef";
+import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "shared/types";
 import { flattenResources } from "shared/utils";
 import LoadingWrapper from "../../../components/LoadingWrapper/LoadingWrapper";
-import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "../../../shared/types";
 import isSomeResourceLoading from "../helpers";
 import { GetURLItemFromIngress, IsURL } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";

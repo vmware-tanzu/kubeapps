@@ -1,15 +1,14 @@
 import { get } from "lodash";
 import { ThunkAction } from "redux-thunk";
-import { ActionType, deprecated } from "typesafe-actions";
-
-import { Operators } from "../shared/Operators";
+import { Operators } from "shared/Operators";
 import {
   IClusterServiceVersion,
   IClusterServiceVersionCRD,
   IPackageManifest,
   IResource,
   IStoreState,
-} from "../shared/types";
+} from "shared/types";
+import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
 

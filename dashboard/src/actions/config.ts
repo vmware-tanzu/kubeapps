@@ -1,8 +1,7 @@
 import { ThunkAction } from "redux-thunk";
+import Config, { IConfig, SupportedThemes } from "shared/Config";
+import { IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import { IStoreState } from "../shared/types";
-
-import Config, { IConfig, SupportedThemes } from "../shared/Config";
 
 const { createAction } = deprecated;
 

@@ -1,9 +1,8 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
-
+import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
+import { IK8sList, IKubeState, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { KubeAction } from "../actions/kube";
-import { IK8sList, IKubeState, IResource } from "../shared/types";
 
 export const initialKinds = {
   // In case it's not possible to retrieve the api groups (e.g. with lacking permissions)

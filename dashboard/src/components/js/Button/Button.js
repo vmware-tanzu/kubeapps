@@ -1,11 +1,10 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
 import cs from "classnames";
-
+import PropTypes from "prop-types";
+import React from "react";
+import { Link } from "react-router-dom";
+import Spinner from "../Spinner";
 // Custom Styles
 import "./Button.scss";
-import Spinner from "../Spinner";
 
 // Constants
 export const ButtonThemes = {

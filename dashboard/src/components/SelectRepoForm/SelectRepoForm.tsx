@@ -1,12 +1,11 @@
-import { get } from "lodash";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-
 import actions from "actions";
 import Alert from "components/js/Alert";
+import { get } from "lodash";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { IStoreState } from "shared/types";
 import * as url from "shared/url";
-import { IStoreState } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./SelectRepoForm.css";
 

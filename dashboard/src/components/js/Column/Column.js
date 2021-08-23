@@ -1,5 +1,5 @@
-import React from "react";
 import PropTypes from "prop-types";
+import React from "react";
 
 // Constant with the different breakpoints for collapsing rows
 const breakpoints = ["sm", "md", "lg", "xl"];

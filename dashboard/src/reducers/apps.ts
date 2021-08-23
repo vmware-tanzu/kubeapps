@@ -1,9 +1,8 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
-
+import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
+import { IAppState, IRelease } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AppsAction } from "../actions/apps";
-import { IAppState, IRelease } from "../shared/types";
 
 export const initialState: IAppState = {
   isFetching: false,

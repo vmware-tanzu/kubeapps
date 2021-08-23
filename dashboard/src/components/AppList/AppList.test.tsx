@@ -10,7 +10,7 @@ import * as ReactRedux from "react-redux";
 import { MemoryRouter } from "react-router";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IAppOverview, IStoreState } from "../../shared/types";
+import { FetchError, IAppOverview, IStoreState } from "shared/types";
 import Alert from "../js/Alert";
 import AppList from "./AppList";
 import AppListItem from "./AppListItem";

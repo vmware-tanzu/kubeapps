@@ -1,11 +1,10 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { Kube } from "shared/Kube";
+import ResourceRef, { fromCRD } from "shared/ResourceRef";
+import { IClusterServiceVersionCRD, IKubeState, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
-
 import actions from ".";
-import { Kube } from "../shared/Kube";
-import ResourceRef, { fromCRD } from "../shared/ResourceRef";
-import { IClusterServiceVersionCRD, IKubeState, IResource } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 const clusterName = "cluster-name";

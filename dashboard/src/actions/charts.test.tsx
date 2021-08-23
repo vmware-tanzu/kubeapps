@@ -1,10 +1,9 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { axiosWithAuth } from "shared/AxiosInstance";
+import { FetchError, IChart, IChartListMeta, NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
-import { axiosWithAuth } from "../shared/AxiosInstance";
-
 import actions from ".";
-import { FetchError, IChart, IChartListMeta, NotFoundError } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 

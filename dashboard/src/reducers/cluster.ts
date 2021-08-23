@@ -1,13 +1,12 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
-import { getType } from "typesafe-actions";
-
+import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
+import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
 import { getCurrentNamespace } from "shared/Namespace";
+import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
 import { ConfigAction } from "../actions/config";
 import { NamespaceAction } from "../actions/namespace";
-import { Auth } from "../shared/Auth";
 
 export interface IClusterState {
   currentNamespace: string;

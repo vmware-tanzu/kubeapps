@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-
 import AppNotes from "./AppNotes";
 
 it("renders AppNotes", () => {

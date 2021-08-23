@@ -1,12 +1,11 @@
-import { shallow } from "enzyme";
-import * as ReactRedux from "react-redux";
-
 import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
+import { shallow } from "enzyme";
 import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IChartState, IChartVersion } from "../../shared/types";
-import * as url from "../../shared/url";
+import { FetchError, IChartState, IChartVersion } from "shared/types";
+import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm, { IDeploymentFormProps } from "./DeploymentForm";
 

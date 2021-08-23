@@ -1,8 +1,7 @@
+import { Auth } from "shared/Auth";
 import { getType } from "typesafe-actions";
-
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
-import { Auth } from "../shared/Auth";
 
 export interface IAuthState {
   sessionExpired: boolean;
