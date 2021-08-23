@@ -18,6 +18,7 @@ export const initialState: IConfigState = {
   authProxySkipLoginPage: false,
   clusters: [],
   theme: SupportedThemes.light,
+  remoteComponentsUrl: "",
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
