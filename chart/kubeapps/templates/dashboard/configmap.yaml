@@ -76,5 +76,6 @@ data:
       "authProxySkipLoginPage": {{ .Values.authProxy.skipKubeappsLoginPage }},
       "featureFlags": {{ .Values.featureFlags | toJson }},
       "clusters": {{ template "kubeapps.clusterNames" . }},
-      "theme": "{{ .Values.dashboard.defaultTheme }}"
+      "theme": "{{ .Values.dashboard.defaultTheme }}",
+      "remoteComponentsUrl": "{{ .Values.dashboard.remoteComponentsUrl }}"
     }

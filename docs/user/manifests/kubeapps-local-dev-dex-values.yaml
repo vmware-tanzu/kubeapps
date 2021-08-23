@@ -1,4 +1,5 @@
-https: true
+https:
+  enabled: true
 certs:
   web:
     create: false
@@ -10,6 +11,9 @@ config:
   web:
     tlsCert: /etc/dex/tls/https/server/tls.crt
     tlsKey: /etc/dex/tls/https/server/tls.key
+  enablePasswordDB: true
+  storage:
+    type: memory
   # Instead of reading from an external storage, use this list of clients.
   staticClients:
     # The default client is in this setup the client used by Kubeapps'
@@ -93,6 +97,18 @@ config:
 
           # The group name should be the "cn" value.
           nameAttr: cn
-grpc: false
+grpc:
+  enabled: false
 service:
   type: NodePort
+  ports:
+    https:
+      nodePort: 32000
+volumes:
+  - name: https-tls
+    secret:
+      defaultMode: 420
+      secretName: dex-web-server-tls
+volumeMounts:
+  - mountPath: /etc/dex/tls/https/server
+    name: https-tls

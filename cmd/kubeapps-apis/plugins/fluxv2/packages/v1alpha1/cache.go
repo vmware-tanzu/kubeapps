@@ -28,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	watchutil "k8s.io/client-go/tools/watch"
 	log "k8s.io/klog/v2"
@@ -460,32 +461,32 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
 func (c NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, namespace, err := nameAndNamespace(unstructuredObj)
+	name, err := namespacedName(unstructuredObj)
 	if err != nil {
 		return "", err
 	}
-	return c.keyForNamespaceAndName(namespace, name), nil
+	return c.keyForNamespacedName(*name), nil
 }
 
-func (c NamespacedResourceWatcherCache) keyForNamespaceAndName(namespace, name string) string {
+func (c NamespacedResourceWatcherCache) keyForNamespacedName(name types.NamespacedName) string {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s", c.config.gvr.Resource, namespace, name)
+	return fmt.Sprintf("%s:%s:%s", c.config.gvr.Resource, name.Namespace, name.Name)
 }
 
 // the opposite of keyFor
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
-func (c NamespacedResourceWatcherCache) fromKey(key string) (namespace string, name string, err error) {
+func (c NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, ":")
 	if len(parts) != 3 {
-		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	if parts[0] != c.config.gvr.Resource {
-		return "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
-	return parts[1], parts[2], nil
+	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
 // computing a value for a key maybe expensive, e.g. indexing a repo takes a while,

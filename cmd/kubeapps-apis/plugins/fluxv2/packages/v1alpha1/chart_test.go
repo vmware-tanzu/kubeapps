@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
@@ -78,6 +79,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Name:             "redis",
 				PkgVersion:       "14.4.0",
 				AppVersion:       "6.2.4",
+				RepoUrl:          "https://example.repo.com/charts",
+				HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
 				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 				DisplayName:      "redis",
 				Categories:       []string{"Database"},
@@ -85,6 +88,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
 				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
 				ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+				SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
 				Maintainers: []*corev1.Maintainer{
 					{
 						Name:  "Bitnami",
@@ -121,13 +125,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Name:             "redis",
 				PkgVersion:       "14.3.4",
 				AppVersion:       "6.2.4",
+				RepoUrl:          "https://example.repo.com/charts",
 				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+				HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
 				DisplayName:      "redis",
 				Categories:       []string{"Database"},
 				ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
 				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
 				ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+				SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
 				Maintainers: []*corev1.Maintainer{
 					{
 						Name:  "Bitnami",
@@ -156,6 +163,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}))
 			defer ts.Close()
 
+			ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", tc.repoName, tc.repoNamespace)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts2.Close()
+
 			charts := []runtime.Object{}
 			chartSpec := map[string]interface{}{
 				"chart": tc.chartName,
@@ -183,7 +196,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				charts = append(charts, chart)
 			}
 
-			s, mock, watcher, err := newServerWithCharts(charts...)
+			s, mock, watcher, err := newServerWithRepoAndCharts(repo, charts...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -198,10 +211,13 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}()
 			}
 
-			redisKey := fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, tc.repoNamespace, tc.repoName)
-			mock.ExpectScan(0, fluxHelmRepositories+":*:"+tc.repoName, 0).SetVal([]string{redisKey}, 0)
-
 			chartCountBefore := createdChartCount
+
+			key, bytes, err := redisKeyValueForRuntimeObject(repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			mock.ExpectGet(key).SetVal(string(bytes))
 
 			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
 			if err != nil {
@@ -279,7 +295,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			chartSpec := map[string]interface{}{
 				"chart": tc.chartName,
 				"sourceRef": map[string]interface{}{
-					"name": "does-not-matter-for-now",
+					"name": tc.repoName,
 					"kind": "HelmRepository",
 				},
 				"interval": "10m",
@@ -296,7 +312,13 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			}
 			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
 
-			s, mock, _, err := newServerWithCharts(chart)
+			ts, repo, err := newRepoWithIndex("testdata/valid-index.yaml", tc.repoName, tc.repoNamespace)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts.Close()
+
+			s, mock, _, err := newServerWithRepoAndCharts(repo, chart)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -320,12 +342,13 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	}
 }
 
-func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *testing.T) {
+// TODO: (gfichtenholt) some, if not all, these scenarios probably ought to return
+// codes.NotFound instead of codes.Internal. The spec does not specify yet.
+func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.T) {
 	negativeTestCases := []struct {
 		testName      string
 		request       *corev1.GetAvailablePackageDetailRequest
 		repoName      string
-		repoExists    bool
 		repoNamespace string
 		chartName     string
 		statusCode    codes.Code
@@ -334,7 +357,6 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 			testName:      "it fails if request has invalid version",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			repoExists:    true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
@@ -351,7 +373,6 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 			testName:      "it fails if repo does not exist",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			repoExists:    false,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
@@ -360,13 +381,12 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 					},
 				}},
 			chartName:  "redis",
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.Internal,
 		},
 		{
 			testName:      "it fails if repo does not exist in specified namespace",
 			repoName:      "bitnami-1",
 			repoNamespace: "non-default",
-			repoExists:    true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis",
@@ -375,13 +395,12 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 					},
 				}},
 			chartName:  "redis",
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.NotFound,
 		},
 		{
 			testName:      "it fails if request has invalid chart",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			repoExists:    true,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "bitnami-1/redis-123",
@@ -397,7 +416,6 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 
 	for _, tc := range negativeTestCases {
 		t.Run(tc.testName, func(t *testing.T) {
-
 			chartSpec := map[string]interface{}{
 				"chart": tc.chartName,
 				"sourceRef": map[string]interface{}{
@@ -417,11 +435,33 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 				},
 			}
 
-			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
-
-			s, mock, watcher, err := newServerWithCharts()
+			ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", tc.repoName, tc.repoNamespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
+			}
+			defer ts2.Close()
+
+			chart := newChart(tc.chartName, tc.repoNamespace, chartSpec, chartStatus)
+			s, mock, watcher, err := newServerWithRepoAndCharts(repo, chart)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			existingName := types.NamespacedName{Namespace: tc.repoNamespace, Name: tc.repoName}
+			requestedName := types.NamespacedName{
+				Namespace: tc.request.AvailablePackageRef.Context.Namespace,
+				Name:      strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[0],
+			}
+
+			if existingName == requestedName {
+				key, bytes, err := redisKeyValueForRuntimeObject(repo)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				mock.ExpectGet(key).SetVal(string(bytes))
+			} else {
+				key := redisKeyForNamespacedName(requestedName)
+				mock.ExpectGet(key).RedisNil()
 			}
 
 			wg := sync.WaitGroup{}
@@ -431,13 +471,6 @@ func TestNegativeGetAvailablePackageDetailNonExistingRepoOrInvalidPkgVersion(t *
 				wg.Wait()
 				watcher.Modify(chart)
 			}()
-
-			if tc.repoExists {
-				redisKey := fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, tc.repoNamespace, tc.repoName)
-				mock.ExpectScan(0, fluxHelmRepositories+":*:"+tc.repoName, 0).SetVal([]string{redisKey}, 0)
-			} else {
-				mock.ExpectScan(0, fluxHelmRepositories+":*:"+tc.repoName, 0).SetVal([]string{}, 0)
-			}
 
 			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
 			if err == nil {
@@ -585,33 +618,11 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			indexYAMLBytes, err := ioutil.ReadFile(tc.repoIndex)
+			ts, repo, err := newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-
-			// stand up an http server just for the duration of this test
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, string(indexYAMLBytes))
-			}))
 			defer ts.Close()
-
-			repoSpec := map[string]interface{}{
-				"url":      "https://example.repo.com/charts",
-				"interval": "1m0s",
-			}
-
-			repoStatus := map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
-					},
-				},
-				"url": ts.URL,
-			}
-			repo := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
 
 			s, mock, _, err := newServerWithRepos(repo)
 			if err != nil {
@@ -641,7 +652,9 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageVersionsResponse{},
+				corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -649,7 +662,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	}
 }
 
-func newChart(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+func newChart(name, namespace string, spec, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
 		"name":            name,
 		"generation":      int64(1),
@@ -679,14 +692,14 @@ func newChart(name string, namespace string, spec map[string]interface{}, status
 	}
 }
 
-func newServerWithCharts(charts ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+func newServerWithRepoAndCharts(repo runtime.Object, charts ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
 			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}:       fluxHelmChartList,
 			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
 		},
-		charts...)
+		append([]runtime.Object{repo}, charts...)...)
 
 	// here we are essentially adding on to how List() works for HelmRepository objects
 	// this is done so that the the item list returned by List() command with fake client contains
@@ -733,7 +746,7 @@ func newServerWithCharts(charts ...runtime.Object) (*Server, redismock.ClientMoc
 		fluxHelmCharts,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	s, mock, err := newServerWithClientGetter(clientGetter)
+	s, mock, err := newServer(clientGetter, nil, repo)
 	if err != nil {
 		return nil, nil, nil, err
 	}
