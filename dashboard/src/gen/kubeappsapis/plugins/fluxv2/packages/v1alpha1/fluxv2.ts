@@ -81,7 +81,7 @@ const baseGetPackageRepositoriesRequest: object = {};
 export const GetPackageRepositoriesRequest = {
   encode(
     message: GetPackageRepositoriesRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
@@ -89,7 +89,10 @@ export const GetPackageRepositoriesRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoriesRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetPackageRepositoriesRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -124,11 +127,15 @@ export const GetPackageRepositoriesRequest = {
   toJSON(message: GetPackageRepositoriesRequest): unknown {
     const obj: any = {};
     message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+      (obj.context = message.context
+        ? Context.toJSON(message.context)
+        : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesRequest>): GetPackageRepositoriesRequest {
+  fromPartial(
+    object: DeepPartial<GetPackageRepositoriesRequest>
+  ): GetPackageRepositoriesRequest {
     const message = {
       ...baseGetPackageRepositoriesRequest,
     } as GetPackageRepositoriesRequest;
@@ -146,7 +153,7 @@ const baseGetPackageRepositoriesResponse: object = {};
 export const GetPackageRepositoriesResponse = {
   encode(
     message: GetPackageRepositoriesResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.repositories) {
       PackageRepository.encode(v!, writer.uint32(10).fork()).ldelim();
@@ -154,7 +161,10 @@ export const GetPackageRepositoriesResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoriesResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetPackageRepositoriesResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -165,7 +175,9 @@ export const GetPackageRepositoriesResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.repositories.push(PackageRepository.decode(reader, reader.uint32()));
+          message.repositories.push(
+            PackageRepository.decode(reader, reader.uint32())
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -191,8 +203,8 @@ export const GetPackageRepositoriesResponse = {
   toJSON(message: GetPackageRepositoriesResponse): unknown {
     const obj: any = {};
     if (message.repositories) {
-      obj.repositories = message.repositories.map(e =>
-        e ? PackageRepository.toJSON(e) : undefined,
+      obj.repositories = message.repositories.map((e) =>
+        e ? PackageRepository.toJSON(e) : undefined
       );
     } else {
       obj.repositories = [];
@@ -200,7 +212,9 @@ export const GetPackageRepositoriesResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesResponse>): GetPackageRepositoriesResponse {
+  fromPartial(
+    object: DeepPartial<GetPackageRepositoriesResponse>
+  ): GetPackageRepositoriesResponse {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
@@ -217,7 +231,10 @@ export const GetPackageRepositoriesResponse = {
 const basePackageRepository: object = { name: "", namespace: "", url: "" };
 
 export const PackageRepository = {
-  encode(message: PackageRepository, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: PackageRepository,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -325,32 +342,32 @@ export interface FluxV2PackagesService {
   /** GetAvailablePackageSummaries returns the available packages managed by the 'fluxv2' plugin */
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageSummariesResponse>;
   /** GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin */
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageDetailResponse>;
   /** GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin */
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageVersionsResponse>;
   /** GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin */
   GetPackageRepositories(
     request: DeepPartial<GetPackageRepositoriesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetPackageRepositoriesResponse>;
   /** GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin */
   GetInstalledPackageSummaries(
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageSummariesResponse>;
   /** GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin */
   GetInstalledPackageDetail(
     request: DeepPartial<GetInstalledPackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageDetailResponse>;
 }
 
@@ -359,218 +376,229 @@ export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
 
   constructor(rpc: Rpc) {
     this.rpc = rpc;
-    this.GetAvailablePackageSummaries = this.GetAvailablePackageSummaries.bind(this);
+    this.GetAvailablePackageSummaries =
+      this.GetAvailablePackageSummaries.bind(this);
     this.GetAvailablePackageDetail = this.GetAvailablePackageDetail.bind(this);
-    this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
+    this.GetAvailablePackageVersions =
+      this.GetAvailablePackageVersions.bind(this);
     this.GetPackageRepositories = this.GetPackageRepositories.bind(this);
-    this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
+    this.GetInstalledPackageSummaries =
+      this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
   }
 
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageSummariesResponse> {
     return this.rpc.unary(
       FluxV2PackagesServiceGetAvailablePackageSummariesDesc,
       GetAvailablePackageSummariesRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageDetailResponse> {
     return this.rpc.unary(
       FluxV2PackagesServiceGetAvailablePackageDetailDesc,
       GetAvailablePackageDetailRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageVersionsResponse> {
     return this.rpc.unary(
       FluxV2PackagesServiceGetAvailablePackageVersionsDesc,
       GetAvailablePackageVersionsRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetPackageRepositories(
     request: DeepPartial<GetPackageRepositoriesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetPackageRepositoriesResponse> {
     return this.rpc.unary(
       FluxV2PackagesServiceGetPackageRepositoriesDesc,
       GetPackageRepositoriesRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageSummaries(
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageSummariesResponse> {
     return this.rpc.unary(
       FluxV2PackagesServiceGetInstalledPackageSummariesDesc,
       GetInstalledPackageSummariesRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageDetail(
     request: DeepPartial<GetInstalledPackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageDetailResponse> {
     return this.rpc.unary(
       FluxV2PackagesServiceGetInstalledPackageDetailDesc,
       GetInstalledPackageDetailRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 }
 
 export const FluxV2PackagesServiceDesc = {
-  serviceName: "kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService",
+  serviceName:
+    "kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService",
 };
 
-export const FluxV2PackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageSummaries",
-  service: FluxV2PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const FluxV2PackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageSummaries",
+    service: FluxV2PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const FluxV2PackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageDetail",
-  service: FluxV2PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const FluxV2PackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageDetail",
+    service: FluxV2PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const FluxV2PackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageVersions",
-  service: FluxV2PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageVersionsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageVersionsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const FluxV2PackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageVersions",
+    service: FluxV2PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageVersionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageVersionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const FluxV2PackagesServiceGetPackageRepositoriesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetPackageRepositories",
-  service: FluxV2PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetPackageRepositoriesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetPackageRepositoriesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const FluxV2PackagesServiceGetPackageRepositoriesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositories",
+    service: FluxV2PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoriesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoriesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const FluxV2PackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageSummaries",
-  service: FluxV2PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const FluxV2PackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageSummaries",
+    service: FluxV2PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const FluxV2PackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageDetail",
-  service: FluxV2PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const FluxV2PackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageDetail",
+    service: FluxV2PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+interface UnaryMethodDefinitionishR
+  extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -581,7 +609,7 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any>;
 }
 
@@ -601,7 +629,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-    },
+    }
   ) {
     this.host = host;
     this.options = options;
@@ -610,7 +638,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -642,7 +670,14 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>

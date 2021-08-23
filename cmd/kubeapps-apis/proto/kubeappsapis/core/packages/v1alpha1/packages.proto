@@ -502,12 +502,12 @@ message InstalledPackageDetail {
   // is installed, then:
   //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
   //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
-  PackageAppVersion latest_matching_version = 9;
+  PackageAppVersion latest_matching_version = 10;
 
   // LatestVersion
   //
   // The latest version available for this package, regardless of the pkg_version_reference.
-  PackageAppVersion latest_version = 10;
+  PackageAppVersion latest_version = 11;
 }
 
 // -- Start other definitions  --

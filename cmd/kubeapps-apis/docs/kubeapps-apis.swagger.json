@@ -1610,23 +1610,6 @@
     }
   },
   "definitions": {
-    "GetAvailablePackageVersionsResponsePackageAppVersion": {
-      "type": "object",
-      "properties": {
-        "pkgVersion": {
-          "type": "string",
-          "description": "Version of the package itself",
-          "title": "Package version"
-        },
-        "appVersion": {
-          "type": "string",
-          "description": "Version of the packaged application",
-          "title": "Application version"
-        }
-      },
-      "description": "PackageAppVersion conveys both the package version and the packaged app version.",
-      "title": "Package AppVersion"
-    },
     "InstalledPackageStatusStatusReason": {
       "type": "string",
       "enum": [
@@ -1788,15 +1771,10 @@
           "description": "The name of the available package",
           "title": "Available package name"
         },
-        "pkgVersion": {
-          "type": "string",
-          "description": "The version of the package (e.g. chart version)",
-          "title": "Available package version"
-        },
-        "appVersion": {
-          "type": "string",
-          "description": "The version of the packaged application (e.g. wordpress version).",
-          "title": "Available package app version"
+        "version": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
+          "description": "The version of the package and application.",
+          "title": "Available version"
         },
         "repoUrl": {
           "type": "string",
@@ -1906,15 +1884,10 @@
           "description": "The name of the available package",
           "title": "Available package name"
         },
-        "latestPkgVersion": {
-          "type": "string",
+        "latestVersion": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
           "description": "The latest version available for this package. Often expected when viewing\na summary of many available packages.",
-          "title": "Latest available package version"
-        },
-        "latestAppVersion": {
-          "type": "string",
-          "description": "The app version of the latest version available for this package. Often expected\nwhen viewing a summary of many available packages.",
-          "title": "Latest available package app version"
+          "title": "Latest available version"
         },
         "iconUrl": {
           "type": "string",
@@ -2044,7 +2017,7 @@
         "packageAppVersions": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/GetAvailablePackageVersionsResponsePackageAppVersion"
+            "$ref": "#/definitions/v1alpha1PackageAppVersion"
           },
           "description": "By default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned.",
           "title": "Package app versions"
@@ -2126,10 +2099,10 @@
           "description": "The name given to the installed package",
           "title": "Installed package name"
         },
-        "currentPkgVersion": {
-          "type": "string",
+        "currentVersion": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
           "description": "The version of the package which is currently installed.",
-          "title": "CurrentPkgVersion"
+          "title": "CurrentVersion"
         },
         "valuesApplied": {
           "type": "string",
@@ -2155,6 +2128,16 @@
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
           "description": "A reference to the available package for this installation.\nUseful to lookup the package display name, icon and other info.",
           "title": "Available package reference"
+        },
+        "latestMatchingVersion": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
+          "description": "Only non-empty if an available upgrade matches the specified pkg_version_reference.\nFor example, if the pkg_version_reference is \"\u003e10.3.0 \u003c 10.4.0\" and 10.3.1\nis installed, then:\n  * if 10.3.2 is available, latest_matching_version should be 10.3.2, but\n  * if 10.4 is available while \u003e10.3.1 is not, this should remain empty.",
+          "title": "LatestMatchingVersion"
+        },
+        "latestVersion": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
+          "description": "The latest version available for this package, regardless of the pkg_version_reference.",
+          "title": "LatestVersion"
         }
       },
       "description": "An InstalledPackageDetail includes details about the installed package that are\ntypically useful when presenting a single installed package.",
@@ -2220,15 +2203,10 @@
           "description": "The package version reference defines a version or constraint limiting\nmatching package versions.",
           "title": "PkgVersionReference"
         },
-        "currentPkgVersion": {
-          "type": "string",
+        "currentVersion": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
           "description": "The version of the package which is currently installed.",
-          "title": "CurrentPkgVersion"
-        },
-        "currentAppVersion": {
-          "type": "string",
-          "description": "The version of the app included in the current package version.",
-          "title": "CurrentAppVersion"
+          "title": "CurrentVersion"
         },
         "iconUrl": {
           "type": "string",
@@ -2245,15 +2223,15 @@
           "description": "A short description of the package (provided by the package)",
           "title": "ShortDescription"
         },
-        "latestMatchingPkgVersion": {
-          "type": "string",
+        "latestMatchingVersion": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
           "description": "Only non-empty if an available upgrade matches the specified pkg_version_reference.\nFor example, if the pkg_version_reference is \"\u003e10.3.0 \u003c 10.4.0\" and 10.3.1\nis installed, then:\n  * if 10.3.2 is available, latest_matching_version should be 10.3.2, but\n  * if 10.4 is available while \u003e10.3.1 is not, this should remain empty.",
-          "title": "LatestMatchingPkgVersion"
+          "title": "LatestMatchingVersion"
         },
-        "latestPkgVersion": {
-          "type": "string",
+        "latestVersion": {
+          "$ref": "#/definitions/v1alpha1PackageAppVersion",
           "description": "The latest version available for this package, regardless of the pkg_version_reference.",
-          "title": "LatestPkgVersion"
+          "title": "LatestVersion"
         },
         "status": {
           "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
@@ -2280,6 +2258,23 @@
       },
       "description": "Maintainers for the package.",
       "title": "Maintainer"
+    },
+    "v1alpha1PackageAppVersion": {
+      "type": "object",
+      "properties": {
+        "pkgVersion": {
+          "type": "string",
+          "description": "Version of the package itself",
+          "title": "Package version"
+        },
+        "appVersion": {
+          "type": "string",
+          "description": "Version of the packaged application",
+          "title": "Application version"
+        }
+      },
+      "description": "PackageAppVersion conveys both the package version and the packaged app version.",
+      "title": "Package AppVersion"
     },
     "v1alpha1PaginationOptions": {
       "type": "object",
