@@ -750,7 +750,6 @@ var redis_summary_failed = &corev1.InstalledPackageSummary{
 		Version: "14.4.0",
 	},
 	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
 		AppVersion: "6.2.4",
 	},
 	PkgDisplayName:   "redis",
@@ -779,7 +778,6 @@ var redis_summary_pending = &corev1.InstalledPackageSummary{
 		Version: "14.4.0",
 	},
 	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
 		AppVersion: "6.2.4",
 	},
 	PkgDisplayName:   "redis",

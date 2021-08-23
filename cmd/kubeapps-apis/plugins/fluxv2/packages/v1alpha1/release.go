@@ -173,6 +173,9 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		}
 	}
 
+	// this will only be present if install/upgrade succeeded
+	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease, "status", "lastAppliedRevision")
+
 	return &corev1.InstalledPackageSummary{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
@@ -184,7 +187,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		Name:                name.Name,
 		PkgVersionReference: pkgVersion,
 		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: pkgDetail.GetVersion().GetPkgVersion(),
+			PkgVersion: lastAppliedRevision,
 			AppVersion: pkgDetail.GetVersion().GetAppVersion(),
 		},
 		IconUrl:          pkgDetail.GetIconUrl(),
