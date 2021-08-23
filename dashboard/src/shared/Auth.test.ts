@@ -179,6 +179,7 @@ describe("Auth", () => {
         clusters: [],
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
+        remoteComponentsUrl: "",
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -196,6 +197,7 @@ describe("Auth", () => {
         clusters: [],
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
+        remoteComponentsUrl: "",
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

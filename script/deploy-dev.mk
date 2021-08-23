@@ -9,8 +9,8 @@ deploy-dex: devel/dex.crt devel/dex.key
 	kubectl --kubeconfig=${CLUSTER_CONFIG} -n dex create secret tls dex-web-server-tls \
 		--key ./devel/dex.key \
 		--cert ./devel/dex.crt
-	helm --kubeconfig=${CLUSTER_CONFIG} repo add stable https://charts.helm.sh/stable
-	helm --kubeconfig=${CLUSTER_CONFIG} install dex stable/dex --namespace dex  --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+	helm --kubeconfig=${CLUSTER_CONFIG} repo add dex https://charts.dexidp.io
+	helm --kubeconfig=${CLUSTER_CONFIG} install dex dex/dex --version 0.5.0 --namespace dex  --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
 deploy-openldap:
 	kubectl --kubeconfig=${CLUSTER_CONFIG} create namespace ldap
