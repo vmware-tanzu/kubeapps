@@ -180,21 +180,6 @@ message GetAvailablePackageVersionsResponse {
   //   example: '{"package_app_versions": [{}]}'
   // };
 
-  // Package AppVersion
-  //
-  // PackageAppVersion conveys both the package version and the packaged app version.
-  message PackageAppVersion {
-    // Package version
-    //
-    // Version of the package itself
-    string pkg_version = 1;
-
-    // Application version
-    //
-    // Version of the packaged application
-    string app_version = 2;
-  };
-
   // Package app versions
   //
   // By default (when version_query is empty or ignored) the response
@@ -274,17 +259,11 @@ message AvailablePackageSummary {
   // The name of the available package
   string name = 2;
 
-  // Latest available package version
+  // Latest available version
   //
   // The latest version available for this package. Often expected when viewing
   // a summary of many available packages.
-  string latest_pkg_version = 3;
-
-  // Latest available package app version
-  //
-  // The app version of the latest version available for this package. Often expected
-  // when viewing a summary of many available packages.
-  string latest_app_version = 4;
+  PackageAppVersion latest_version = 3;
 
   // Available package Icon URL
   //
@@ -328,15 +307,10 @@ message AvailablePackageDetail {
   // The name of the available package
   string name = 2;
 
-  // Available package version
+  // Available version
   //
-  // The version of the package (e.g. chart version)
-  string pkg_version = 3;
-
-  // Available package app version
-  //
-  // The version of the packaged application (e.g. wordpress version).
-  string app_version = 4;
+  // The version of the package and application.
+  PackageAppVersion version = 3;
 
   // the url of the package repository that contains this package
   string repo_url = 5;
@@ -427,15 +401,10 @@ message InstalledPackageSummary {
   // matching package versions.
   VersionReference pkg_version_reference = 3;
 
-  // CurrentPkgVersion
+  // CurrentVersion
   //
   // The version of the package which is currently installed.
-  string current_pkg_version = 4;
-
-  // CurrentAppVersion
-  //
-  // The version of the app included in the current package version.
-  string current_app_version = 5;
+  PackageAppVersion current_version = 4;
 
   // Installed package icon URL
   //
@@ -452,19 +421,19 @@ message InstalledPackageSummary {
   // A short description of the package (provided by the package)
   string short_description = 8;
 
-  // LatestMatchingPkgVersion
+  // LatestMatchingVersion
   //
   // Only non-empty if an available upgrade matches the specified pkg_version_reference.
   // For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
   // is installed, then:
   //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
   //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
-  string latest_matching_pkg_version = 9;
+  PackageAppVersion latest_matching_version = 9;
 
-  // LatestPkgVersion
+  // LatestVersion
   //
   // The latest version available for this package, regardless of the pkg_version_reference.
-  string latest_pkg_version = 10;
+  PackageAppVersion latest_version = 10;
 
   // Status
   //
@@ -493,10 +462,10 @@ message InstalledPackageDetail {
   // The name given to the installed package
   string name = 3;
 
-  // CurrentPkgVersion
+  // CurrentVersion
   //
   // The version of the package which is currently installed.
-  string current_pkg_version = 4;
+  PackageAppVersion current_version = 4;
 
   // ValuesApplied
   //
@@ -525,6 +494,20 @@ message InstalledPackageDetail {
   // A reference to the available package for this installation.
   // Useful to lookup the package display name, icon and other info.
   AvailablePackageReference available_package_ref = 9;
+
+  // LatestMatchingVersion
+  //
+  // Only non-empty if an available upgrade matches the specified pkg_version_reference.
+  // For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
+  // is installed, then:
+  //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
+  //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
+  PackageAppVersion latest_matching_version = 10;
+
+  // LatestVersion
+  //
+  // The latest version available for this package, regardless of the pkg_version_reference.
+  PackageAppVersion latest_version = 11;
 }
 
 // -- Start other definitions  --
@@ -765,3 +748,18 @@ message ReconciliationOptions {
   // to perform the reconciliation.
   string service_account_name = 3;
 }
+
+// Package AppVersion
+//
+// PackageAppVersion conveys both the package version and the packaged app version.
+message PackageAppVersion {
+  // Package version
+  //
+  // Version of the package itself
+  string pkg_version = 1;
+
+  // Application version
+  //
+  // Version of the packaged application
+  string app_version = 2;
+};

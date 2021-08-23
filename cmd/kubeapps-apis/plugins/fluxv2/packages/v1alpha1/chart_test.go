@@ -76,9 +76,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Context:    &corev1.Context{Namespace: "default"},
 					Plugin:     fluxPlugin,
 				},
-				Name:             "redis",
-				PkgVersion:       "14.4.0",
-				AppVersion:       "6.2.4",
+				Name: "redis",
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "14.4.0",
+					AppVersion: "6.2.4",
+				},
 				RepoUrl:          "https://example.repo.com/charts",
 				HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
 				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
@@ -122,9 +124,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Context:    &corev1.Context{Namespace: "default"},
 					Plugin:     fluxPlugin,
 				},
-				Name:             "redis",
-				PkgVersion:       "14.3.4",
-				AppVersion:       "6.2.4",
+				Name: "redis",
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "14.3.4",
+					AppVersion: "6.2.4",
+				},
 				RepoUrl:          "https://example.repo.com/charts",
 				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 				HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
@@ -224,7 +228,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 			// these few fields a bit special in that they are all very long strings,
 			// so we'll do a 'Contains' check for these instead of 'Equals'
 			opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
@@ -544,7 +548,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -581,7 +585,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+				PackageAppVersions: []*corev1.PackageAppVersion{
 					{PkgVersion: "14.6.1", AppVersion: "6.2.4"},
 					{PkgVersion: "14.6.0", AppVersion: "6.2.4"},
 					{PkgVersion: "14.5.0", AppVersion: "6.2.4"},
@@ -654,7 +658,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			opts := cmpopts.IgnoreUnexported(
 				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+				corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}

@@ -296,8 +296,10 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
-		pkg.LatestAppVersion = chart.ChartVersions[0].AppVersion
+		pkg.LatestVersion = &corev1.PackageAppVersion{
+			PkgVersion: chart.ChartVersions[0].Version,
+			AppVersion: chart.ChartVersions[0].AppVersion,
+		}
 	}
 
 	return pkg, nil
@@ -423,8 +425,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 }
 
 // packageAppVersionsSummary converts the model chart versions into the required version summary.
-func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion {
-	pav := []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{}
+func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.PackageAppVersion {
+	pav := []*corev1.PackageAppVersion{}
 
 	// Use a version map to be able to count how many major, minor and patch versions
 	// we have included.
@@ -455,7 +457,7 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvai
 		}
 
 		// Include the version and update the version map.
-		pav = append(pav, &corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+		pav = append(pav, &corev1.PackageAppVersion{
 			PkgVersion: v.Version,
 			AppVersion: v.AppVersion,
 		})
@@ -503,8 +505,10 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 
 	// We assume that chart.ChartVersions[0] will always contain either: the latest version or the specified version
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.PkgVersion = chart.ChartVersions[0].Version
-		pkg.AppVersion = chart.ChartVersions[0].AppVersion
+		pkg.Version = &corev1.PackageAppVersion{
+			PkgVersion: chart.ChartVersions[0].Version,
+			AppVersion: chart.ChartVersions[0].AppVersion,
+		}
 		pkg.Readme = chartFiles.Readme
 		pkg.DefaultValues = chartFiles.Values
 		pkg.ValuesSchema = chartFiles.Schema
@@ -629,14 +633,20 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
 		}
 		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
-			installedPkgSummaries[i].LatestPkgVersion = charts[0].ChartVersions[0].Version
+			installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
+				PkgVersion: charts[0].ChartVersions[0].Version,
+				AppVersion: charts[0].ChartVersions[0].AppVersion,
+			}
 		}
 		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
 			Ready:      rel.Info.Status == release.StatusDeployed,
 			Reason:     statusReasonForHelmStatus(rel.Info.Status),
 			UserReason: rel.Info.Status.String(),
 		}
-		installedPkgSummaries[i].CurrentAppVersion = rel.Chart.Metadata.AppVersion
+		installedPkgSummaries[i].CurrentVersion = &corev1.PackageAppVersion{
+			PkgVersion: rel.Chart.Metadata.Version,
+			AppVersion: rel.Chart.Metadata.AppVersion,
+		}
 	}
 
 	response := &corev1.GetInstalledPackageSummariesResponse{
@@ -673,10 +683,13 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 		PkgVersionReference: &corev1.VersionReference{
 			Version: r.Chart.Metadata.Version,
 		},
-		CurrentPkgVersion: r.Chart.Metadata.Version,
-		IconUrl:           r.Chart.Metadata.Icon,
-		PkgDisplayName:    r.Chart.Name(),
-		ShortDescription:  r.Chart.Metadata.Description,
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: r.Chart.Metadata.Version,
+			AppVersion: r.Chart.Metadata.AppVersion,
+		},
+		IconUrl:          r.Chart.Metadata.Icon,
+		PkgDisplayName:   r.Chart.Name(),
+		ShortDescription: r.Chart.Metadata.Description,
 	}
 }
 
@@ -725,13 +738,19 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
 	}
 	if len(charts) == 1 {
-		log.Errorf("Got chart: %+v", charts[0])
 		installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
 			Identifier: charts[0].ID,
 			Plugin:     GetPluginDetail(),
 		}
 		if charts[0].Repo != nil {
 			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: charts[0].Repo.Namespace}
+		}
+		if len(charts[0].ChartVersions) > 0 {
+			cv := charts[0].ChartVersions[0]
+			installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
+				PkgVersion: cv.Version,
+				AppVersion: cv.AppVersion,
+			}
 		}
 	}
 
@@ -747,7 +766,10 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 		PkgVersionReference: &corev1.VersionReference{
 			Version: r.Chart.Metadata.Version,
 		},
-		CurrentPkgVersion:     r.Chart.Metadata.Version,
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: r.Chart.Metadata.Version,
+			AppVersion: r.Chart.Metadata.AppVersion,
+		},
 		PostInstallationNotes: r.Info.Notes,
 		Status: &corev1.InstalledPackageStatus{
 			Ready:      r.Info.Status == release.StatusDeployed,
