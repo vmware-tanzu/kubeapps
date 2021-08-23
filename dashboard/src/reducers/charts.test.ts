@@ -1,7 +1,6 @@
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-
 import { IChartState, IReceiveChartsActionPayload } from "../shared/types";
 import chartsReducer from "./charts";
 
