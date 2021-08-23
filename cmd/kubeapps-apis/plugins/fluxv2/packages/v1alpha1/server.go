@@ -17,12 +17,17 @@ import (
 	"fmt"
 	"strings"
 
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -32,6 +37,7 @@ import (
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 type clientGetter func(context.Context) (dynamic.Interface, error)
+type helmActionConfigGetter func(ctx context.Context, namespace string) (*action.Configuration, error)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
@@ -40,7 +46,8 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter clientGetter
+	clientGetter       clientGetter
+	actionConfigGetter helmActionConfigGetter
 
 	cache *NamespacedResourceWatcherCache
 }
@@ -52,7 +59,10 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
-		config, err := configGetter(ctx)
+		// The Flux plugin currently supports interactions with the default (kubeapps)
+		// cluster only:
+		cluster := ""
+		config, err := configGetter(ctx, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 		}
@@ -62,13 +72,38 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 		}
 		return dynamicClient, nil
 	}
+	actionConfigGetter := func(ctx context.Context, namespace string) (*action.Configuration, error) {
+		if configGetter == nil {
+			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+		}
+		// The Flux plugin currently supports interactions with the default (kubeapps)
+		// cluster only:
+		cluster := ""
+		config, err := configGetter(ctx, cluster)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+		}
 
+		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
+		clientSet, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to create kubernetes client : %v", err))
+		}
+		// TODO(mnelson): Update to allow different helm storage options.
+		storage := agent.StorageForSecrets(namespace, clientSet)
+		return &action.Configuration{
+			RESTClientGetter: restClientGetter,
+			KubeClient:       kube.New(restClientGetter),
+			Releases:         storage,
+			Log:              log.Infof,
+		}, nil
+	}
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories,
 	}
-	config := cacheConfig{
+	cacheConfig := cacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: clientGetter,
 		onAdd:        onAddOrModifyRepo,
@@ -76,13 +111,14 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-	cache, err := newCache(config)
+	cache, err := newCache(cacheConfig)
 	if err != nil {
 		return nil, err
 	}
 	return &Server{
-		clientGetter: clientGetter,
-		cache:        cache,
+		clientGetter:       clientGetter,
+		actionConfigGetter: actionConfigGetter,
+		cache:              cache,
 	}, nil
 }
 
@@ -229,32 +265,34 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	//   and said index is cached BUT
 	// - GetAvailablePackageDetail() may return full package detail for one of the packages
 	// in the repo
-	ok, err := s.repoExistsInCache(packageRef.Context.Namespace, packageIdParts[0])
+	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
+	ok, err := s.repoExistsInCache(name)
 	if err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"no fully indexed repository [%s] in namespace [%s] has been found",
-			packageIdParts[0],
-			packageRef.Context.Namespace)
+		return nil, status.Errorf(codes.NotFound, "no fully indexed repository [%s] has been found", name)
 	}
 
-	url, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
+	tarUrl, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
 	if cleanUp != nil {
 		defer cleanUp()
 	}
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Found chart url: [%s] for chart [%s]", url, packageRef.Identifier)
+	log.Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
 
-	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, url)
+	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	// fix up namespace as it is not coming from chart tarball itself
+	// fix up a couple of fields that don't come from the chart tarball
+	repoUrl, err := s.getRepoUrl(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
 
 	return &corev1.GetAvailablePackageDetailResponse{
@@ -286,7 +324,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
-	chart, err := s.fetchChartFromCache(namespace, packageIdParts[0], packageIdParts[1])
+	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
+	chart, err := s.fetchChartFromCache(repo, packageIdParts[1])
 	if err != nil {
 		return nil, err
 	} else if chart != nil {
@@ -328,4 +367,29 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		NextPageToken:             nextPageToken,
 	}
 	return response, nil
+}
+
+// GetInstalledPackageDetail returns the package metadata managed by the 'fluxv2' plugin
+func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
+	log.Infof("+fluxv2 GetInstalledPackageDetail [%v]", request)
+
+	if request == nil || request.InstalledPackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+	}
+
+	packageRef := request.InstalledPackageRef
+	// flux CRDs require a namespace, cluster-wide resources are not supported
+	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "InstalledPackageReference is missing required 'namespace' field")
+	}
+
+	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
+	pkgDetail, err := s.installedPackageDetail(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetInstalledPackageDetailResponse{
+		InstalledPackageDetail: pkgDetail,
+	}, nil
 }

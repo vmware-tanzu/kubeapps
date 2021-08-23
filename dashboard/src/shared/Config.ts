@@ -17,6 +17,7 @@ export interface IConfig {
   error?: Error;
   clusters: string[];
   theme: string;
+  remoteComponentsUrl: string;
 }
 
 export default class Config {

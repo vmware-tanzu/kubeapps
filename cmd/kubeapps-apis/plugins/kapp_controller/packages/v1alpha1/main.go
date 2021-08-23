@@ -21,6 +21,7 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -36,7 +37,7 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter) (interface{}, error) {
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter, clustersConfig kube.ClustersConfig) (interface{}, error) {
 	svr := NewServer(configGetter)
 	v1alpha1.RegisterKappControllerPackagesServiceServer(s, svr)
 	return svr, nil

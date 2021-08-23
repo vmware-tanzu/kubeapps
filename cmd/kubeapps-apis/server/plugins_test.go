@@ -302,40 +302,64 @@ func TestExtractToken(t *testing.T) {
 	}
 }
 
-// TODO(agamez): this test is just testing that the clients (typed and dynamic)
-// are created, but nothing else.
-// As per the PR #2908' comments, we could:
-// use the http_test package to create a fake http server and use it's address as the endpoint you expect,
-// then you could actually use the client to request something (anything),
-// and verify that the token was sent with the request to the expected address
-func TestCreateClientGetterWithParams(t *testing.T) {
+func TestCreateConfigGetterWithParams(t *testing.T) {
+	const (
+		DefaultClusterName = "default"
+		DefaultK8sAPI      = "http://example.com/default/"
+		OtherClusterName   = "other"
+		OtherK8sAPI        = "http://example.com/other/"
+	)
+	inClusterConfig := &rest.Config{
+		Host: DefaultK8sAPI,
+	}
+	clustersConfig := kube.ClustersConfig{
+		KubeappsClusterName: "default",
+		Clusters: map[string]kube.ClusterConfig{
+			DefaultClusterName: {
+				Name:              "default",
+				IsKubeappsCluster: true,
+			},
+			OtherClusterName: {
+				Name:          "other",
+				APIServiceURL: OtherK8sAPI,
+			},
+		},
+	}
 	testCases := []struct {
-		name           string
-		contextKey     string
-		contextValue   string
-		shouldCreate   bool
-		expectedErrMsg error
+		name            string
+		cluster         string
+		contextKey      string
+		contextValue    string
+		expectedAPIHost string
+		expectedErrMsg  error
 	}{
 		{
-			name:           "it creates the clients when passing a valid value for the authorization metadata",
-			contextKey:     "authorization",
-			contextValue:   "Bearer abc",
-			shouldCreate:   true,
-			expectedErrMsg: nil,
+			name:            "it creates the config for the default cluster when passing a valid value for the authorization metadata",
+			contextKey:      "authorization",
+			contextValue:    "Bearer abc",
+			expectedAPIHost: DefaultK8sAPI,
+			expectedErrMsg:  nil,
 		},
 		{
-			name:           "it doesn't create the clients and throws a grpc error when passing an invalid authorization metadata",
+			name:           "it doesn't create the config and throws a grpc error when passing an invalid authorization metadata",
 			contextKey:     "authorization",
 			contextValue:   "Bla",
-			shouldCreate:   false,
 			expectedErrMsg: status.Errorf(codes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
 		},
 		{
-			name:           "it creates the clients when no authorization metadata is passed",
-			contextKey:     "",
-			contextValue:   "",
-			shouldCreate:   true,
-			expectedErrMsg: nil,
+			name:            "it creates the config for the default cluster when no authorization metadata is passed",
+			contextKey:      "",
+			contextValue:    "",
+			expectedAPIHost: DefaultK8sAPI,
+			expectedErrMsg:  nil,
+		},
+		{
+			name:            "it creates the config for the other cluster",
+			contextKey:      "",
+			contextValue:    "",
+			cluster:         OtherClusterName,
+			expectedAPIHost: OtherK8sAPI,
+			expectedErrMsg:  nil,
 		},
 	}
 
@@ -345,31 +369,17 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 				tc.contextKey: tc.contextValue,
 			}))
 
-			inClusterConfig := &rest.Config{}
 			serveOpts := ServeOptions{
 				ClustersConfigPath: "/config.yaml",
 				PinnipedProxyURL:   "http://example.com",
-				UnsafeUseDemoSA:    true,
+				UnsafeUseDemoSA:    false,
 			}
-			config := kube.ClustersConfig{
-				KubeappsClusterName: "default",
-				PinnipedProxyURL:    serveOpts.PinnipedProxyURL,
-				Clusters: map[string]kube.ClusterConfig{
-					"default": {
-						Name: "default",
-						PinnipedConfig: kube.PinnipedConciergeConfig{
-							Enable: true,
-						},
-						IsKubeappsCluster: true,
-					},
-				},
-			}
-			configGetter, err := createConfigGetterWithParams(inClusterConfig, serveOpts, config)
+			configGetter, err := createConfigGetterWithParams(inClusterConfig, serveOpts, clustersConfig)
 			if err != nil {
 				t.Fatalf("in %s: fail creating the configGetter:  %+v", tc.name, err)
 			}
 
-			restConfig, err := configGetter(ctx)
+			restConfig, err := configGetter(ctx, tc.cluster)
 			if tc.expectedErrMsg != nil && err != nil {
 				if got, want := err.Error(), tc.expectedErrMsg.Error(); !cmp.Equal(want, got) {
 					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
@@ -378,9 +388,12 @@ func TestCreateClientGetterWithParams(t *testing.T) {
 				t.Fatalf("in %s: %+v", tc.name, err)
 			}
 
-			if tc.shouldCreate {
+			if tc.expectedErrMsg == nil {
 				if restConfig == nil {
 					t.Errorf("got: nil, want: rest.Config")
+				}
+				if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
 				}
 			}
 		})
