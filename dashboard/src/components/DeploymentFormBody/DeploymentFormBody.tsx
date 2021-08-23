@@ -1,13 +1,12 @@
-import Tabs from "components/Tabs";
-import { useEffect, useState } from "react";
-
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
+import Tabs from "components/Tabs";
 import { isEqual } from "lodash";
-import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";
-import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
-import { getValueFromEvent } from "../../shared/utils";
+import { useEffect, useState } from "react";
+import { parseValues, retrieveBasicFormParams, setValue } from "shared/schema";
+import { DeploymentEvent, IBasicFormParam, IChartState } from "shared/types";
+import { getValueFromEvent } from "shared/utils";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";

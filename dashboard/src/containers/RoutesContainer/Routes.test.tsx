@@ -3,8 +3,8 @@ import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
 import { StaticRouter } from "react-router";
 import { Redirect, RouteComponentProps } from "react-router-dom";
+import { app } from "shared/url";
 import NotFound from "../../components/NotFound";
-import { app } from "../../shared/url";
 import Routes from "./Routes";
 
 const emptyRouteComponentProps: RouteComponentProps<{}> = {

@@ -1,8 +1,8 @@
 import { CdsButton } from "@cds/react/button";
-import { hapi } from "../../../shared/hapi/release";
+import ReactTooltip from "react-tooltip";
+import { hapi } from "shared/hapi/release";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import StatusAwareButton from "./StatusAwareButton";
-import ReactTooltip from "react-tooltip";
 
 it("tests the disabled flag and tooltip for each release status condition", async () => {
   type TProps = {

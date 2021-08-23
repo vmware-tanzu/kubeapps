@@ -1,9 +1,7 @@
-import { JSONSchema4 } from "json-schema";
+import { JSONSchemaType } from "ajv";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
-import { ActionType, deprecated } from "typesafe-actions";
-
-import Chart from "../shared/Chart";
+import Chart from "shared/Chart";
 import {
   FetchError,
   IChartCategory,
@@ -11,7 +9,8 @@ import {
   IReceiveChartsActionPayload,
   IStoreState,
   NotFoundError,
-} from "../shared/types";
+} from "shared/types";
+import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
 
@@ -46,7 +45,7 @@ export const errorChartCatetories = createAction("ERROR_CHART_CATEGORIES", resol
 });
 
 export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve => {
-  return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
+  return (chartVersion: IChartVersion, values?: string, schema?: JSONSchemaType<any>) =>
     resolve({ chartVersion, values, schema });
 });
 
@@ -55,7 +54,7 @@ export const requestDeployedChartVersion = createAction("REQUEST_DEPLOYED_CHART_
 export const receiveDeployedChartVersion = createAction(
   "RECEIVE_DEPLOYED_CHART_VERSION",
   resolve => {
-    return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
+    return (chartVersion: IChartVersion, values?: string, schema?: JSONSchemaType<any>) =>
       resolve({ chartVersion, values, schema });
   },
 );
@@ -157,7 +156,7 @@ export function fetchChartVersions(
 
 async function getChart(cluster: string, namespace: string, id: string, version: string) {
   let values = "";
-  let schema = {};
+  let schema = {} as JSONSchemaType<any>;
   const chartVersion = await Chart.getChartVersion(cluster, namespace, id, version);
   if (chartVersion) {
     try {

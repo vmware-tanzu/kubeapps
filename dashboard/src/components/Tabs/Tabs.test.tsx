@@ -1,5 +1,4 @@
 import { mount } from "enzyme";
-
 import Tabs from "./Tabs";
 
 it("renders several tabs", () => {

@@ -1,9 +1,9 @@
 import ReactDOM from "react-dom";
 import { addAuthHeaders, addErrorHandling, axios, axiosWithAuth } from "shared/AxiosInstance";
-
 import Root from "./containers/Root";
 import "./index.css";
 import store from "./store";
+
 // import registerServiceWorker from "./registerServiceWorker";
 
 // Now that the store has been initialized, initialize axios instances

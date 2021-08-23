@@ -1,5 +1,4 @@
 import { push } from "connected-react-router";
-
 import * as apps from "./apps";
 import * as auth from "./auth";
 import * as catalog from "./catalog";

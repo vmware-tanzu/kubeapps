@@ -1,8 +1,8 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { Kube } from "shared/Kube";
+import Namespace from "shared/Namespace";
 import { getType } from "typesafe-actions";
-import Namespace from "../shared/Namespace";
 import {
   canCreate,
   createNamespace,

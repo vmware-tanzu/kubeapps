@@ -1,8 +1,8 @@
+import { mount } from "enzyme";
+import PropTypes from "prop-types";
 import React, { useRef } from "react";
 import { act } from "react-dom/test-utils";
-import { mount } from "enzyme";
 import useOutsideClick from ".";
-import PropTypes from "prop-types";
 
 const TestComponent = ({ callback, enabled }) => {
   const ref = useRef(null);

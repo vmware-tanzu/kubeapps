@@ -11,9 +11,9 @@ import { flatten, get, intersection, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { IPackageManifest, IPackageManifestStatus, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { IPackageManifest, IPackageManifestStatus, IStoreState } from "../../shared/types";
-import { escapeRegExp } from "../../shared/utils";
+import { escapeRegExp } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import {
   AUTO_PILOT,

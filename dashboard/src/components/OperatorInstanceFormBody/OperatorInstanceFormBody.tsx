@@ -5,7 +5,7 @@ import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
-import { IResource } from "../../shared/types";
+import { IResource } from "shared/types";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import AdvancedDeploymentForm from "../DeploymentFormBody/AdvancedDeploymentForm";
 import Differential from "../DeploymentFormBody/Differential";

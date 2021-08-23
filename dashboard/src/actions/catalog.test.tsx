@@ -1,10 +1,10 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { ServiceBinding } from "shared/ServiceBinding";
+import { IServiceBroker, IServicePlan, ServiceCatalog } from "shared/ServiceCatalog";
+import { IServiceInstance, ServiceInstance } from "shared/ServiceInstance";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { ServiceBinding } from "../shared/ServiceBinding";
-import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
-import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 
 const { catalog: catalogActions } = actions;
 

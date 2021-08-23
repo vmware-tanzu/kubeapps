@@ -1,16 +1,15 @@
-// WARN: yaml doesn't have updated definitions for TypeScript
-// In particular, it doesn't contain definitions for `get` and `set`
-// that are used in this package
-import Ajv, { ErrorObject } from "ajv";
+import Ajv, { ErrorObject, JSONSchemaType } from "ajv";
 import * as jsonpatch from "fast-json-patch";
-import * as jsonSchema from "json-schema";
+import * as yaml from "js-yaml";
 import { isEmpty, set } from "lodash";
+// TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
+import { nullOptions } from "yaml/types";
 import { IBasicFormParam } from "./types";
 
+const ajv = new Ajv({ strict: false });
+
 // Avoid to explicitly add "null" when an element is not defined
-/* eslint-disable @typescript-eslint/no-var-requires */
-const { nullOptions } = require("yaml/types");
 nullOptions.nullStr = "";
 
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
@@ -18,10 +17,11 @@ nullOptions.nullStr = "";
 // It returns a key:value map for easier handling.
 export function retrieveBasicFormParams(
   defaultValues: string,
-  schema?: jsonSchema.JSONSchema4,
+  schema?: JSONSchemaType<any>,
   parentPath?: string,
 ): IBasicFormParam[] {
   let params: IBasicFormParam[] = [];
+
   if (schema && schema.properties) {
     const properties = schema.properties!;
     Object.keys(properties).forEach(propertyKey => {
@@ -37,7 +37,9 @@ export function retrieveBasicFormParams(
           path: itemPath,
           type,
           value,
-          enum: properties[propertyKey].enum?.map(item => item?.toString() ?? ""),
+          enum: properties[propertyKey].enum?.map(
+            (item: { toString: () => any }) => item?.toString() ?? "",
+          ),
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}/`)
@@ -149,9 +151,8 @@ export function getValue(values: string, path: string, defaultValue?: any) {
 
 export function validate(
   values: string,
-  schema: jsonSchema.JSONSchema4,
+  schema: JSONSchemaType<any> | any,
 ): { valid: boolean; errors: ErrorObject[] | null | undefined } {
-  const ajv = new Ajv({ strict: false });
-  const valid = ajv.validate(schema, YAML.parse(values));
+  const valid = ajv.validate(schema, yaml.load(values));
   return { valid: !!valid, errors: ajv.errors };
 }

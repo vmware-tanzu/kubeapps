@@ -1,5 +1,3 @@
-import { JSONSchema4 } from "json-schema";
-
 import { deleteValue, getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
 import { IBasicFormParam } from "./types";
 
@@ -8,7 +6,9 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param",
       values: "user: andres",
-      schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
+      schema: {
+        properties: { user: { type: "string", form: true } },
+      } as any,
       result: [
         {
           path: "user",
@@ -19,7 +19,9 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param without default value",
       values: "user:",
-      schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
+      schema: {
+        properties: { user: { type: "string", form: true } },
+      } as any,
       result: [
         {
           path: "user",
@@ -31,7 +33,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user:",
       schema: {
         properties: { user: { type: "string", form: true, default: "michael" } },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "user",
@@ -44,7 +46,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user: foo",
       schema: {
         properties: { user: { type: "string", form: true, default: "bar" } },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "user",
@@ -57,7 +59,7 @@ describe("retrieveBasicFormParams", () => {
       values: "foo: bar",
       schema: {
         properties: { user: { type: "string", form: true, default: "andres" } },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "user",
@@ -75,7 +77,7 @@ describe("retrieveBasicFormParams", () => {
             properties: { user: { type: "string", form: true } },
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "credentials/user",
@@ -115,7 +117,7 @@ service: ClusterIP
           replicas: { type: "number", form: true },
           service: { type: "string" },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "credentials/admin/user",
@@ -143,7 +145,7 @@ service: ClusterIP
             description: "Title of the blog",
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "blogName",
@@ -172,7 +174,7 @@ externalDatabase:
             },
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "externalDatabase",
@@ -197,7 +199,7 @@ externalDatabase:
         properties: {
           foo: { type: "boolean", form: true },
         },
-      } as JSONSchema4,
+      } as any,
       result: [{ path: "foo", type: "boolean", value: false } as IBasicFormParam],
     },
     {
@@ -211,7 +213,7 @@ externalDatabase:
             enum: ["mariadb", "postgresql"],
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "databaseType",
@@ -424,14 +426,16 @@ describe("validate", () => {
     {
       description: "Should validate a valid object",
       values: "foo: bar\n",
-      schema: { properties: { foo: { type: "string" } } } as JSONSchema4,
+      schema: {
+        properties: { foo: { type: "string" } },
+      },
       valid: true,
       errors: null,
     },
     {
       description: "Should validate an invalid object",
       values: "foo: bar\n",
-      schema: { properties: { foo: { type: "integer" } } } as JSONSchema4,
+      schema: { properties: { foo: { type: "integer" } } },
       valid: false,
       errors: [
         {

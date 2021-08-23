@@ -42,19 +42,15 @@ export default function OperatorSummary() {
   }
   return (
     <div className="left-menu">
-      <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
-        <h5 className="left-menu-subsection-title" id="chartinfo-versions">
-          Capability Level
-        </h5>
+      <section className="left-menu-subsection" aria-labelledby="operatorinfo-capacitylevel">
+        <h5 className="left-menu-subsection-title">Capability Level</h5>
         <div>
           <CapabiliyLevel level={capabilityLevel} />
         </div>
       </section>
       {repository && (
-        <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
-          <h5 className="left-menu-subsection-title" id="chartinfo-versions">
-            Repository
-          </h5>
+        <section className="left-menu-subsection" aria-labelledby="operatorinfo-repository">
+          <h5 className="left-menu-subsection-title">Repository</h5>
           <div>
             <a href={repository} target="_blank" rel="noopener noreferrer">
               {repository}
@@ -63,30 +59,24 @@ export default function OperatorSummary() {
         </section>
       )}
       {provider && (
-        <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
-          <h5 className="left-menu-subsection-title" id="chartinfo-versions">
-            Provider
-          </h5>
+        <section className="left-menu-subsection" aria-labelledby="operatorinfo-provider">
+          <h5 className="left-menu-subsection-title">Provider</h5>
           <div>
             <span>{provider}</span>
           </div>
         </section>
       )}
       {containerImage && (
-        <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
-          <h5 className="left-menu-subsection-title" id="chartinfo-versions">
-            Container Image
-          </h5>
+        <section className="left-menu-subsection" aria-labelledby="operatorinfo-containerimgae">
+          <h5 className="left-menu-subsection-title">Container Image</h5>
           <div>
             <span>{containerImage}</span>
           </div>
         </section>
       )}
       {createdAt && (
-        <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
-          <h5 className="left-menu-subsection-title" id="chartinfo-versions">
-            Created At
-          </h5>
+        <section className="left-menu-subsection" aria-labelledby="operatorinfo-createdat">
+          <h5 className="left-menu-subsection-title">Created At</h5>
           <div>
             <span>{createdAt}</span>
           </div>

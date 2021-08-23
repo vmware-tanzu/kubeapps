@@ -2,13 +2,12 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Alert from "components/js/Alert";
-
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import ReactTooltip from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError } from "shared/types";
 import DeleteButton from "./DeleteButton";
-import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",

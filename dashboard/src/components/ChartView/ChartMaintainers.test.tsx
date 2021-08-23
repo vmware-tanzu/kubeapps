@@ -1,6 +1,5 @@
 import { shallow } from "enzyme";
-
-import { IChartAttributes } from "../../shared/types";
+import { IChartAttributes } from "shared/types";
 import ChartMaintainers from "./ChartMaintainers";
 
 const tests: Array<{
