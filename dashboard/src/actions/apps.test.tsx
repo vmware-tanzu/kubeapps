@@ -266,7 +266,7 @@ describe("deploy chart", () => {
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
-        },
+        } as any,
       ),
     );
     expect(res).toBe(false);
@@ -340,7 +340,7 @@ describe("upgradeApp", () => {
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
-        },
+        } as any,
       ),
     );
 

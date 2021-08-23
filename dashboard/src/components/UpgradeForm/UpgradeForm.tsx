@@ -1,3 +1,4 @@
+import { JSONSchemaType } from "ajv";
 import ChartSummary from "components/Catalog/ChartSummary";
 import ChartHeader from "components/ChartView/ChartHeader";
 import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
@@ -6,10 +7,9 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { RouterAction } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
-import { JSONSchema4 } from "json-schema";
+import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import YAML from "yaml";
 import { deleteValue, setValue } from "../../shared/schema";
 import { IChartState, IChartVersion, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
@@ -37,7 +37,7 @@ export interface IUpgradeFormProps {
     chartNamespace: string,
     releaseName: string,
     values?: string,
-    schema?: JSONSchema4,
+    schema?: JSONSchemaType<any>,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
@@ -102,8 +102,8 @@ function UpgradeForm({
   useEffect(() => {
     if (deployed.values && !modifications) {
       // Calculate modifications from the default values
-      const defaultValuesObj = YAML.parse(deployed.values);
-      const deployedValuesObj = YAML.parse(appCurrentValues || "");
+      const defaultValuesObj = yaml.load(deployed.values) || "";
+      const deployedValuesObj = yaml.load(appCurrentValues || "") || "";
       const newModifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
       const values = applyModifications(newModifications, deployed.values);
       setModifications(newModifications);

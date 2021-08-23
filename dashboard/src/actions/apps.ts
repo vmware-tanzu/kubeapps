@@ -1,4 +1,4 @@
-import { JSONSchema4 } from "json-schema";
+import { JSONSchemaType } from "ajv";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
 import { App } from "shared/App";
@@ -261,7 +261,7 @@ export function deployChart(
   chartNamespace: string,
   releaseName: string,
   values?: string,
-  schema?: JSONSchema4,
+  schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
     dispatch(requestDeployApp());
@@ -301,7 +301,7 @@ export function upgradeApp(
   chartNamespace: string,
   releaseName: string,
   values?: string,
-  schema?: JSONSchema4,
+  schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
     dispatch(requestUpgradeApp());
