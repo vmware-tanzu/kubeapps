@@ -330,66 +330,75 @@ message AvailablePackageDetail {
 
   // Available package version
   //
-  // The version of the package (eg. chart version)
+  // The version of the package (e.g. chart version)
   string pkg_version = 3;
 
   // Available package app version
   //
-  // The version of the packaged application (eg. wordpress version or whatever).
+  // The version of the packaged application (e.g. wordpress version).
   string app_version = 4;
+
+  // the url of the package repository that contains this package
+  string repo_url = 5;
+
+  // the url of the “home” for the package
+  string home_url = 6;
 
   // Available package icon URL
   //
   // A url for an icon.
-  string icon_url = 5;
+  string icon_url = 7;
 
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 6;
+  string display_name = 8;
 
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 7;
+  string short_description = 9;
 
   // Available package long description
   //
   // A longer description of the package, a few sentences.
-  string long_description = 8;
+  string long_description = 10;
 
   // Available package readme
   //
   // A longer README with potentially pages of formatted Markdown.
-  string readme = 9;
+  string readme = 11;
 
   // Available package default values
   //
   // An example of default values used during package templating that can serve
   // as documentation or a starting point for user customization.
-  string default_values = 10;
+  string default_values = 12;
 
   // Available package values schema
   //
   // An optional openapi/json schema that can be used to validate a user-provided values.
 
-  string values_schema = 11;
+  string values_schema = 13;
+
+  // source urls for the package
+  repeated string source_urls = 14;
 
   // Available package maintainers
   //
   // List of Maintainer
-  repeated Maintainer maintainers = 12;
+  repeated Maintainer maintainers = 15;
 
   // Available package categories
   //
   // A user-facing list of category names useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  repeated string categories = 13;
+  repeated string categories = 16;
 
   // Custom data added by the plugin
   //
   // Some additional information added by the plugin
-  google.protobuf.Any custom_detail = 14;
+  google.protobuf.Any custom_detail = 17;
 }
 
 // InstalledPackageSummary

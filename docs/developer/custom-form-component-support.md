@@ -17,6 +17,7 @@ This is an extension to the [basic form support](https://github.com/kubeapps/kub
    ```
 
    Note: The file can be located anywhere on your file system or even a remote source!
+  Alternatively we provide remote loading by setting the `remoteComponentsUrl` value to the URL that is serving your bundle. If this is not set, the configmap will be the default loader.
 
 3. Once the deployment is complete you will need a values json that will signal to Kubeapps that we want to render a custom component and not one fo the provided ones. To do that you will need a `values.json.schema` that has a `customComponent` key, more info [here](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/custom-form-component-support.md#render-a-custom-component).
 
