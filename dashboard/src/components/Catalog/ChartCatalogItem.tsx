@@ -1,9 +1,9 @@
 import { useSelector } from "react-redux";
+import { IRepo, IStoreState } from "shared/types";
+import * as url from "shared/url";
 import { trimDescription } from "shared/utils";
 import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
-import { IRepo, IStoreState } from "../../shared/types";
-import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
 import { IChartCatalogItem } from "./CatalogItem";
 

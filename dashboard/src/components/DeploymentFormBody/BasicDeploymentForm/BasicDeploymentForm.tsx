@@ -1,5 +1,4 @@
 import { DeploymentEvent, IBasicFormParam } from "shared/types";
-
 import "./BasicDeploymentForm.css";
 import Param from "./Param";
 

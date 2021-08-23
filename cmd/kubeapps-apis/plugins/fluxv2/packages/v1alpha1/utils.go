@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // see https://blog.golang.org/context
@@ -146,21 +147,21 @@ func checkStatusReady(unstructuredObj map[string]interface{}) (complete bool, su
 	return false, false, reason
 }
 
-func nameAndNamespace(unstructuredObj map[string]interface{}) (name, namespace string, err error) {
+func namespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedName, error) {
 	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
 	if err != nil || !found {
-		return "", "",
+		return nil,
 			status.Errorf(codes.Internal, "required field metadata.name not found on resource: %v:\n%s",
 				err,
 				prettyPrintMap(unstructuredObj))
 	}
 
-	namespace, found, err = unstructured.NestedString(unstructuredObj, "metadata", "namespace")
+	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
 	if err != nil || !found {
-		return "", "",
+		return nil,
 			status.Errorf(codes.Internal, "required field metadata.namespace not found on resource: %v:\n%s",
 				err,
 				prettyPrintMap(unstructuredObj))
 	}
-	return name, namespace, nil
+	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
 }

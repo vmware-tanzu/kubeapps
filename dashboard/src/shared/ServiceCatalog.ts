@@ -1,5 +1,5 @@
 import { JSONSchema6 } from "json-schema";
-import * as urls from "../shared/url";
+import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { IClusterServiceClass } from "./ClusterServiceClass";
 import { APIBase } from "./Kube";
@@ -26,7 +26,7 @@ export class ServiceCatalog {
 
   public static async syncBroker(cluster: string, broker: IServiceBroker) {
     const { data } = await axiosWithAuth.patch<IStatus>(
-      urls.api.k8s.clusterservicebrokers.sync(cluster, broker),
+      url.api.k8s.clusterservicebrokers.sync(cluster, broker),
       {
         spec: {
           relistRequests: broker.spec.relistRequests + 1,

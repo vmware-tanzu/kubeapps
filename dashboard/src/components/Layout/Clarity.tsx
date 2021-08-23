@@ -33,7 +33,6 @@ import {
   uploadCloudIcon,
 } from "@cds/core/icon";
 import "@cds/core/icon/register.js";
-
 import "@clr/ui/clr-ui.min.css"; // light clarity UI theme
 
 Icons.addIcons(

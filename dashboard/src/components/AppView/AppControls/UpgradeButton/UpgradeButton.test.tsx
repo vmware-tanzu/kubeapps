@@ -1,10 +1,9 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
-
 import * as ReactRedux from "react-redux";
+import ReactTooltip from "react-tooltip";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import UpgradeButton from "./UpgradeButton";
-import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",

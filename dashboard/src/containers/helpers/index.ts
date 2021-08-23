@@ -1,5 +1,5 @@
-import ResourceRef from "../../shared/ResourceRef";
-import { IKubeState } from "../../shared/types";
+import ResourceRef from "shared/ResourceRef";
+import { IKubeState } from "shared/types";
 
 // Takes a set of ResourceRefs and the resources from the Redux state and
 // returns the resources related to the ResourceRefs. ResourceRefs that are not

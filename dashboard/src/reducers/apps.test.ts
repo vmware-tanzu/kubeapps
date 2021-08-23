@@ -1,6 +1,6 @@
+import { IAppState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { IAppState } from "../shared/types";
 import appsReducer from "./apps";
 
 describe("appsReducer", () => {

@@ -1,10 +1,9 @@
 import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
-import { ActionType, deprecated } from "typesafe-actions";
-import { AppRepository } from "../shared/AppRepository";
-import Chart from "../shared/Chart";
-import Secret from "../shared/Secret";
+import { AppRepository } from "shared/AppRepository";
+import Chart from "shared/Chart";
+import Secret from "shared/Secret";
 import {
   IAppRepository,
   IAppRepositoryFilter,
@@ -12,7 +11,8 @@ import {
   ISecret,
   IStoreState,
   NotFoundError,
-} from "../shared/types";
+} from "shared/types";
+import { ActionType, deprecated } from "typesafe-actions";
 import { errorChart } from "./charts";
 
 const { createAction } = deprecated;

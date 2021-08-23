@@ -4,6 +4,7 @@ import AppRepoList from "components/Config/AppRepoList";
 import LoadingWrapper from "components/LoadingWrapper";
 import React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
+import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
@@ -19,7 +20,6 @@ import OperatorNewContainer from "../../containers/OperatorNewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
-import { app } from "../../shared/url";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 

@@ -1,11 +1,10 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { App } from "shared/App";
+import Chart from "shared/Chart";
+import { IAppState, UnprocessableEntity } from "shared/types";
 import { getType } from "typesafe-actions";
-
 import actions from ".";
-import { App } from "../shared/App";
-import Chart from "../shared/Chart";
-import { IAppState, UnprocessableEntity } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -267,7 +266,7 @@ describe("deploy chart", () => {
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
-        },
+        } as any,
       ),
     );
     expect(res).toBe(false);
@@ -341,7 +340,7 @@ describe("upgradeApp", () => {
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
-        },
+        } as any,
       ),
     );
 

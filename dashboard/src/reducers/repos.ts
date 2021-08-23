@@ -1,9 +1,8 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
+import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
+import { IAppRepository, ISecret } from "shared/types";
 import { getType } from "typesafe-actions";
-
 import actions from "../actions";
 import { AppReposAction } from "../actions/repos";
-import { IAppRepository, ISecret } from "../shared/types";
 
 export interface IAppRepositoryState {
   addingRepo: boolean;

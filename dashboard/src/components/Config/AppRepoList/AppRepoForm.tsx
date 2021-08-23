@@ -1,7 +1,6 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsCheckbox } from "@cds/react/checkbox";
 import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
-
 import { CdsInput } from "@cds/react/input";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
 import { CdsTextarea } from "@cds/react/textarea";
@@ -13,7 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { toFilterRule, toParams } from "shared/jq";
-import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "../../../shared/types";
+import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
 

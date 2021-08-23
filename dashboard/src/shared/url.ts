@@ -23,9 +23,6 @@ export const app = {
       `${app.apps.get(cluster, namespace, releaseName)}/upgrade`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
-  repo: (cluster: string, namespace: string, repo: string) =>
-    `${app.catalog(cluster, namespace)}/${repo}`,
-  servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
     get: (
       cluster: string,
@@ -69,7 +66,6 @@ export const app = {
   config: {
     apprepositories: (cluster: string, namespace: string) =>
       `/c/${cluster}/ns/${namespace}/config/repos`,
-    brokers: (cluster: string) => `/c/${cluster}/config/brokers`,
     operators: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
   },
 };

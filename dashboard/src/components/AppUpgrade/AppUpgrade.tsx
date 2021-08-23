@@ -1,8 +1,7 @@
-import { useEffect } from "react";
-
+import { JSONSchemaType } from "ajv";
 import Alert from "components/js/Alert";
 import { RouterAction } from "connected-react-router";
-import { JSONSchema4 } from "json-schema";
+import { useEffect } from "react";
 import {
   FetchError,
   IAppRepository,
@@ -34,7 +33,7 @@ export interface IAppUpgradeProps {
     chartNamespace: string,
     releaseName: string,
     values?: string,
-    schema?: JSONSchema4,
+    schema?: JSONSchemaType<any>,
   ) => Promise<boolean>;
   fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;

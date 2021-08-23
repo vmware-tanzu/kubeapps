@@ -1,10 +1,9 @@
-import * as ReactRedux from "react-redux";
-
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { set } from "lodash";
+import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion } from "shared/types";
 import ChartMaintainers from "./ChartMaintainers";
 import ChartView, { IChartViewProps } from "./ChartView";
 

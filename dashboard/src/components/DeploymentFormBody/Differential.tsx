@@ -2,7 +2,6 @@ import ReactDiffViewer, { DiffMethod } from "react-diff-viewer";
 import { useSelector } from "react-redux";
 import { SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";
-
 import "./Differential.css";
 
 export interface IDifferentialProps {

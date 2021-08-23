@@ -1,16 +1,16 @@
-import configureMockStore from "redux-mock-store";
-import thunk from "redux-thunk";
-import { getType } from "typesafe-actions";
-import { axiosWithAuth } from "../shared/AxiosInstance";
-
-import actions from ".";
-import { FetchError, IReceiveChartsActionPayload, NotFoundError } from "../shared/types";
 import {
   AvailablePackageSummary,
   Context,
   GetAvailablePackageSummariesResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
+import { axiosWithAuth } from "shared/AxiosInstance";
 import Chart from "shared/Chart";
+import { FetchError, NotFoundError } from "shared/types";
+import { getType } from "typesafe-actions";
+import actions from ".";
+import { IReceiveChartsActionPayload } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 

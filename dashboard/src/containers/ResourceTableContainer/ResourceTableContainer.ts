@@ -1,11 +1,10 @@
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import ResourceRef from "shared/ResourceRef";
+import { IStoreState } from "shared/types";
 import actions from "../../actions";
 import ResourceTable from "../../components/AppView/ResourceTable/ResourceTable";
-import ResourceRef from "../../shared/ResourceRef";
-import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({ kube }: IStoreState) {
   return {

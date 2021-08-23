@@ -2,8 +2,8 @@ import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { act } from "react-dom/test-utils";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IChartVersion } from "../../shared/types";
-import * as url from "../../shared/url";
+import { IChartState, IChartVersion } from "shared/types";
+import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
 

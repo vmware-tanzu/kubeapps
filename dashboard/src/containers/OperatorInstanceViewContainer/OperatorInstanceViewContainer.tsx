@@ -2,10 +2,9 @@ import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import { IResource, IStoreState } from "shared/types";
 import actions from "../../actions";
 import OperatorInstance from "../../components/OperatorInstance";
-import { IResource, IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {

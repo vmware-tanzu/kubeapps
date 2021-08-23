@@ -4,10 +4,10 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import ReactTooltip from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { RollbackError } from "shared/types";
 import RollbackButton from "./RollbackButton";
-import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",

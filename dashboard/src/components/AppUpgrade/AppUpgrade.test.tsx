@@ -1,8 +1,7 @@
-import { shallow } from "enzyme";
-import context from "jest-plugin-context";
-
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
+import { shallow } from "enzyme";
+import context from "jest-plugin-context";
 import { hapi } from "shared/hapi/release";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import {

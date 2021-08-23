@@ -1,20 +1,18 @@
-import { RouterAction } from "connected-react-router";
-import { useEffect, useState } from "react";
-
-import { JSONSchema4 } from "json-schema";
-import { CreateError, FetchError, IChartState, IChartVersion } from "../../shared/types";
-import * as url from "../../shared/url";
-import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
-
 import actions from "actions";
+import { JSONSchemaType } from "ajv";
 import ChartSummary from "components/Catalog/ChartSummary";
 import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import { RouterAction } from "connected-react-router";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import "react-tabs/style/react-tabs.css";
+import { CreateError, FetchError, IChartState, IChartVersion } from "../../shared/types";
+import * as url from "../../shared/url";
+import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
+import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 
 export interface IDeploymentFormProps {
   chartNamespace: string;
@@ -31,7 +29,7 @@ export interface IDeploymentFormProps {
     chartNamespace: string,
     releaseName: string,
     values?: string,
-    schema?: JSONSchema4,
+    schema?: JSONSchemaType<any>,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;

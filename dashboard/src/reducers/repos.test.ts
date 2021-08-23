@@ -1,7 +1,6 @@
+import { IAppRepository } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-
-import { IAppRepository } from "shared/types";
 import reposReducer, { IAppRepositoryState } from "./repos";
 
 describe("reposReducer", () => {

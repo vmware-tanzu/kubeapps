@@ -1,14 +1,12 @@
 import { CdsIcon } from "@cds/react/icon";
+import isSomeResourceLoading from "components/AppView/helpers";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { flatten, get } from "lodash";
-
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
-
-import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import ReactTooltip from "react-tooltip";
-import isSomeResourceLoading from "../../components/AppView/helpers";
-import { hapi } from "../../shared/hapi/release";
-import { IK8sList, IKubeItem, IResource } from "../../shared/types";
+import { hapi } from "shared/hapi/release";
+import { IK8sList, IKubeItem, IResource } from "shared/types";
 import "./ApplicationStatus.css";
 
 interface IApplicationStatusProps {

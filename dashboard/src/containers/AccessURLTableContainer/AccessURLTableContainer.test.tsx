@@ -2,11 +2,10 @@ import { shallow } from "enzyme";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-
+import ResourceRef from "shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import AccessURLTableContainer from ".";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
-import ResourceRef from "../../shared/ResourceRef";
 
 const mockStore = configureMockStore([thunk]);
 const clusterName = "cluster-name";

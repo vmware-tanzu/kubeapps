@@ -1,5 +1,4 @@
 import { CdsIcon } from "@cds/react/icon";
-
 import Alert from "components/js/Alert";
 import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";

@@ -1,11 +1,9 @@
+import { get } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
-import { get } from "lodash";
-
+import Namespace, { setStoredNamespace } from "shared/Namespace";
+import { IResource, IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-
-import Namespace, { setStoredNamespace } from "../shared/Namespace";
-import { IResource, IStoreState } from "../shared/types";
 
 const { createAction } = deprecated;
 

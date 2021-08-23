@@ -1,6 +1,3 @@
-import { useEffect } from "react";
-import { Dispatch } from "redux";
-
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
@@ -8,8 +5,10 @@ import ChartSummary from "components/Catalog/ChartSummary";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import { Dispatch } from "redux";
 import { app } from "shared/url";
 import { IChartState, IChartVersion } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";

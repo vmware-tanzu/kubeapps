@@ -1,12 +1,12 @@
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { AppRepository } from "shared/AppRepository";
+import Chart from "shared/Chart";
+import Secret from "shared/Secret";
+import { IAppRepository, NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { AppRepository } from "../shared/AppRepository";
-import Chart from "../shared/Chart";
-import Secret from "../shared/Secret";
-import { IAppRepository, NotFoundError } from "../shared/types";
 
 const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);

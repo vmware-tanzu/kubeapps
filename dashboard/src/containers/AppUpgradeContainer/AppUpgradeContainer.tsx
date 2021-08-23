@@ -2,12 +2,10 @@ import { goBack, push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
 import actions from "../../actions";
-
-import { JSONSchema4 } from "json-schema";
 import AppUpgrade from "../../components/AppUpgrade";
 import { IChartVersion, IStoreState } from "../../shared/types";
+import { JSONSchemaType } from "ajv";
 
 interface IRouteProps {
   match: {
@@ -69,7 +67,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       chartNamespace: string,
       releaseName: string,
       values?: string,
-      schema?: JSONSchema4,
+      schema?: JSONSchemaType<any>,
     ) =>
       dispatch(
         actions.apps.upgradeApp(

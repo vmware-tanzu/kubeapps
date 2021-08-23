@@ -1,8 +1,8 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import Config, { SupportedThemes } from "shared/Config";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import Config, { SupportedThemes } from "../shared/Config";
 
 const mockStore = configureMockStore([thunk]);
 
