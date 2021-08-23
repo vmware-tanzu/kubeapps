@@ -738,13 +738,19 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
 	}
 	if len(charts) == 1 {
-		log.Errorf("Got chart: %+v", charts[0])
 		installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
 			Identifier: charts[0].ID,
 			Plugin:     GetPluginDetail(),
 		}
 		if charts[0].Repo != nil {
 			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: charts[0].Repo.Namespace}
+		}
+		if len(charts[0].ChartVersions) > 0 {
+			cv := charts[0].ChartVersions[0]
+			installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
+				PkgVersion: cv.Version,
+				AppVersion: cv.AppVersion,
+			}
 		}
 	}
 
