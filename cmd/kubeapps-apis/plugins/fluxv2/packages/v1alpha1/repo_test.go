@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
@@ -446,32 +447,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			repos := []runtime.Object{}
 
 			for _, rs := range tc.repos {
-				indexYAMLBytes, err := ioutil.ReadFile(rs.index)
+				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
-
-				// stand up an http server just for the duration of this test
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					fmt.Fprintln(w, string(indexYAMLBytes))
-				}))
-				defer ts.Close()
-
-				repoSpec := map[string]interface{}{
-					"url":      rs.url,
-					"interval": "1m0s",
-				}
-				repoStatus := map[string]interface{}{
-					"conditions": []interface{}{
-						map[string]interface{}{
-							"type":   "Ready",
-							"status": "True",
-							"reason": "IndexationSucceed",
-						},
-					},
-					"url": ts.URL,
-				}
-				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
+				defer ts2.Close()
+				repos = append(repos, repo)
 			}
 
 			s, mock, _, err := newServerWithRepos(repos...)
@@ -609,34 +590,11 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
-		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-
-		// stand up an http server just for the duration of this test
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, string(indexYaml))
-		}))
-		defer ts.Close()
-
-		repoSpec := map[string]interface{}{
-			"url":      "https://example.repo.com/charts",
-			"interval": "1m0s",
-		}
-
-		repoStatus := map[string]interface{}{
-			"conditions": []interface{}{
-				map[string]interface{}{
-					"type":   "Ready",
-					"status": "True",
-					"reason": "IndexationSucceed",
-				},
-			},
-			"url": ts.URL,
-		}
-		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
-
+		defer ts2.Close()
 		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
@@ -699,33 +657,11 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 // test that causes RetryWatcher to stop and the cache needs to resync
 func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
-		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-
-		// stand up an http server just for the duration of this test
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, string(indexYaml))
-		}))
-		defer ts.Close()
-
-		repoSpec := map[string]interface{}{
-			"url":      "https://example.repo.com/charts",
-			"interval": "1m0s",
-		}
-
-		repoStatus := map[string]interface{}{
-			"conditions": []interface{}{
-				map[string]interface{}{
-					"type":   "Ready",
-					"status": "True",
-					"reason": "IndexationSucceed",
-				},
-			},
-			"url": ts.URL,
-		}
-		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
+		defer ts2.Close()
 
 		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
@@ -949,7 +885,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 		return dynamicClient, nil
 	}
 
-	s, mock, err := newServerWithClientGetter(clientGetter, repos...)
+	s, mock, err := newServer(clientGetter, nil, repos...)
 	return s, mock, watcher, err
 }
 
@@ -1039,11 +975,46 @@ func redisKeyForRuntimeObject(r runtime.Object) string {
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s",
-		fluxHelmRepositories,
-		r.(*unstructured.Unstructured).GetNamespace(),
-		r.(*unstructured.Unstructured).GetName())
+	return redisKeyForNamespacedName(types.NamespacedName{
+		Namespace: r.(*unstructured.Unstructured).GetNamespace(),
+		Name:      r.(*unstructured.Unstructured).GetName()})
+}
 
+func redisKeyForNamespacedName(name types.NamespacedName) string {
+	// redis convention on key format
+	// https://redis.io/topics/data-types-intro
+	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// We will use "helmrepository:ns:repoName"
+	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name)
+}
+
+func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Server, *unstructured.Unstructured, error) {
+	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// stand up an http server just for the duration of this test
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, string(indexYAMLBytes))
+	}))
+
+	repoSpec := map[string]interface{}{
+		"url":      "https://example.repo.com/charts",
+		"interval": "1m0s",
+	}
+
+	repoStatus := map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "True",
+				"reason": "IndexationSucceed",
+			},
+		},
+		"url": ts.URL,
+	}
+	return ts, newRepo(repoName, repoNamespace, repoSpec, repoStatus), nil
 }
 
 // misc global vars that get re-used in multiple tests scenarios

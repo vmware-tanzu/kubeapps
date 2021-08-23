@@ -1790,13 +1790,21 @@
         },
         "pkgVersion": {
           "type": "string",
-          "description": "The version of the package (eg. chart version)",
+          "description": "The version of the package (e.g. chart version)",
           "title": "Available package version"
         },
         "appVersion": {
           "type": "string",
-          "description": "The version of the packaged application (eg. wordpress version or whatever).",
+          "description": "The version of the packaged application (e.g. wordpress version).",
           "title": "Available package app version"
+        },
+        "repoUrl": {
+          "type": "string",
+          "title": "the url of the package repository that contains this package"
+        },
+        "homeUrl": {
+          "type": "string",
+          "title": "the url of the “home” for the package"
         },
         "iconUrl": {
           "type": "string",
@@ -1830,6 +1838,13 @@
         },
         "valuesSchema": {
           "type": "string"
+        },
+        "sourceUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "source urls for the package"
         },
         "maintainers": {
           "type": "array",
