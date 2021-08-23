@@ -212,37 +212,12 @@ export interface IResource {
   metadata: IResourceMetadata;
 }
 
-export interface IOwnerReference {
-  apiVersion: string;
-  blockOwnerDeletion: boolean;
-  kind: string;
-  name: string;
-  uid: string;
-}
-
 export interface ISecret {
   apiVersion: string;
   kind: string;
   type: string;
   data: { [s: string]: string };
   metadata: IResourceMetadata;
-}
-
-export interface IDeploymentStatus {
-  replicas: number;
-  updatedReplicas: number;
-  availableReplicas: number;
-}
-
-export interface IStatefulsetStatus {
-  replicas: number;
-  updatedReplicas: number;
-  readyReplicas: number;
-}
-
-export interface IDaemonsetStatus {
-  currentNumberScheduled: number;
-  numberReady: number;
 }
 
 export interface IRelease extends hapi.release.Release {
@@ -471,15 +446,6 @@ export interface ICreateAppRepositoryResponse {
   appRepository: IAppRepository;
 }
 
-export type IAppRepositoryList = IK8sList<
-  IAppRepository,
-  {
-    continue: string;
-    resourceVersion: string;
-    selfLink: string;
-  }
->;
-
 export interface IAppRepositoryKey {
   name: string;
   namespace: string;
@@ -513,28 +479,6 @@ interface IStatusCause {
   field: string;
   message: string;
   reason: string;
-}
-
-export interface IRouterPathname {
-  router: {
-    location: {
-      pathname: string;
-    };
-  };
-}
-
-export interface IRuntimeVersion {
-  name: string;
-  version: string;
-  runtimeImage: string;
-  initImage: string;
-}
-
-export interface IRuntime {
-  ID: string;
-  versions: IRuntimeVersion[];
-  depName: string;
-  fileNameSuffix: string;
 }
 
 export interface IRBACRole {

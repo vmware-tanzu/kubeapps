@@ -1,5 +1,4 @@
 import { IRelease } from "shared/types";
-import "./ChartInfo.css";
 import ChartUpdateInfo from "./ChartUpdateInfo";
 
 interface IChartInfoProps {
