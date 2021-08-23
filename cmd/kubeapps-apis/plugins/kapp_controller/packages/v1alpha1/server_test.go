@@ -219,12 +219,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					DisplayName:      "another.foo.example.com",
-					LatestPkgVersion: "1.2.5",
+					DisplayName:   "another.foo.example.com",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
 				},
 				{
-					DisplayName:      "tetris.foo.example.com",
-					LatestPkgVersion: "1.2.3",
+					DisplayName:   "tetris.foo.example.com",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
 				},
 			},
 		},
@@ -250,7 +250,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{}, corev1.PackageAppVersion{})
 			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 			}
