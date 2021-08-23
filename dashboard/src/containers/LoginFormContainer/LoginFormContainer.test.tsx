@@ -38,6 +38,7 @@ const makeStore = (
     clusters: [],
     authProxySkipLoginPage: false,
     theme: SupportedThemes.light,
+    remoteComponentsUrl: "",
   };
   const clusters: IClustersState = {
     currentCluster: "default",
