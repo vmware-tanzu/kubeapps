@@ -29,8 +29,7 @@ const defaultAvailablePackageSummary: AvailablePackageSummary = {
   categories: [""],
   displayName: "foo",
   iconUrl: "",
-  latestAppVersion: "v1.0.0",
-  latestPkgVersion: "",
+  latestVersion: { appVersion: "v1.0.0", pkgVersion: "" },
   shortDescription: "",
   availablePackageRef: {
     identifier: "foo/foo",
