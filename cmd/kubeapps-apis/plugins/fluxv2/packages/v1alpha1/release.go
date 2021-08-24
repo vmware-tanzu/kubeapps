@@ -186,13 +186,17 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		},
 		Name:                name.Name,
 		PkgVersionReference: pkgVersion,
-		CurrentPkgVersion:   lastAppliedRevision,
-		CurrentAppVersion:   pkgDetail.GetAppVersion(),
-		IconUrl:             pkgDetail.GetIconUrl(),
-		PkgDisplayName:      pkgDetail.GetDisplayName(),
-		ShortDescription:    pkgDetail.GetShortDescription(),
-		Status:              installedPackageStatusFromUnstructured(unstructuredRelease),
-		LatestPkgVersion:    latestPkgVersion,
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: lastAppliedRevision,
+			AppVersion: pkgDetail.GetVersion().GetAppVersion(),
+		},
+		IconUrl:          pkgDetail.GetIconUrl(),
+		PkgDisplayName:   pkgDetail.GetDisplayName(),
+		ShortDescription: pkgDetail.GetShortDescription(),
+		Status:           installedPackageStatusFromUnstructured(unstructuredRelease),
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: latestPkgVersion,
+		},
 		// TODO (gfichtenholt) LatestMatchingPkgVersion
 		// Only non-empty if an available upgrade matches the specified pkg_version_reference.
 		// For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
@@ -249,9 +253,11 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 			Identifier: name.Name,
 			Plugin:     GetPluginDetail(),
 		},
-		Name:                  name.Name,
-		PkgVersionReference:   pkgVersion,
-		CurrentPkgVersion:     lastAppliedRevision,
+		Name:                name.Name,
+		PkgVersionReference: pkgVersion,
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: lastAppliedRevision,
+		},
 		ValuesApplied:         valuesApplied,
 		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease.Object),
 		AvailablePackageRef:   availablePackageRef,

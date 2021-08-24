@@ -4,7 +4,6 @@ import {
   AvailablePackageSummary,
   GetAvailablePackageSummariesResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import * as jsonSchema from "json-schema";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
