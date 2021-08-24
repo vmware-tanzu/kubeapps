@@ -41,12 +41,13 @@ service PackagesService {
     };
   }
 
+  rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
+    option (google.api.http) = {
+      post: "/core/packages/v1alpha1/installedpackages"
+    };
+  }
+
   // TODO: remaining operations yet to be defined
-  // rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
-  //   option (google.api.http) = {
-  //     post: "/core/packages/v1alpha1/installedpackages"
-  //   };
-  // }
   // rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
   //   option (google.api.http) = {
   //     put: "/core/packages/v1alpha1/installedpackages"
@@ -125,7 +126,34 @@ message GetInstalledPackageDetailRequest {
   // The information required to uniquely
   // identify an installed package
   InstalledPackageReference installed_package_ref = 1;
+}
 
+// CreateInstalledPackageRequest
+//
+// Request for CreateInstalledPackage
+message CreateInstalledPackageRequest {
+  // A reference uniquely identifying the package available for installation.
+  AvailablePackageReference available_package_ref = 1;
+
+  // The target context where the package is intended to be installed.
+  Context target_context = 2;
+
+  // A user-provided name for the installed package (eg. project-x-db)
+  string name = 3;
+
+  // For helm this will be the exact version in VersionReference.version
+  // For other plugins we can extend the VersionReference as needed.
+  VersionReference pkg_version_reference = 4;
+
+  // An optional serialized values string to be included when templating a package
+  // in the format expected by the plugin. Included when the backend format doesn't
+  // use secrets or configmaps for values or supports both. These values are layered
+  // on top of any values refs above, when relevant.
+  string values = 5;
+
+  // An optional field for specifying data common to systems that reconcile
+  // the package on the cluster.
+  ReconciliationOptions reconciliation_options = 6;
 }
 
 // -- Start definitions of the response messages --
@@ -235,6 +263,18 @@ message GetInstalledPackageDetailResponse {
   //
   // The requested InstalledPackageDetail
   InstalledPackageDetail installed_package_detail = 1;
+}
+
+// CreateInstalledPackageResponse
+//
+// Response for CreateInstalledPackage
+message CreateInstalledPackageResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_ref": {}}'
+  // };
+
+  InstalledPackageReference installed_package_ref = 1;
 }
 
 // -- Start definitions used in the responses  --

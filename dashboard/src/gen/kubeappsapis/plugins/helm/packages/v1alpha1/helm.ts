@@ -8,11 +8,13 @@ import {
   GetAvailablePackageVersionsRequest,
   GetInstalledPackageSummariesRequest,
   GetInstalledPackageDetailRequest,
+  CreateInstalledPackageRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
   GetInstalledPackageSummariesResponse,
   GetInstalledPackageDetailResponse,
+  CreateInstalledPackageResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { BrowserHeaders } from "browser-headers";
 
@@ -44,6 +46,11 @@ export interface HelmPackagesService {
     request: DeepPartial<GetInstalledPackageDetailRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetInstalledPackageDetailResponse>;
+  /** CreateInstalledPackage creates an installed package based on the request. */
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse>;
 }
 
 export class HelmPackagesServiceClientImpl implements HelmPackagesService {
@@ -56,6 +63,7 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
+    this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -109,6 +117,17 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     return this.rpc.unary(
       HelmPackagesServiceGetInstalledPackageDetailDesc,
       GetInstalledPackageDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse> {
+    return this.rpc.unary(
+      HelmPackagesServiceCreateInstalledPackageDesc,
+      CreateInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -220,6 +239,28 @@ export const HelmPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefini
     deserializeBinary(data: Uint8Array) {
       return {
         ...GetInstalledPackageDetailResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "CreateInstalledPackage",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CreateInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CreateInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },

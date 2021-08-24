@@ -87,6 +87,37 @@ export interface GetInstalledPackageDetailRequest {
 }
 
 /**
+ * CreateInstalledPackageRequest
+ *
+ * Request for CreateInstalledPackage
+ */
+export interface CreateInstalledPackageRequest {
+  /** A reference uniquely identifying the package available for installation. */
+  availablePackageRef?: AvailablePackageReference;
+  /** The target context where the package is intended to be installed. */
+  targetContext?: Context;
+  /** A user-provided name for the installed package (eg. project-x-db) */
+  name: string;
+  /**
+   * For helm this will be the exact version in VersionReference.version
+   * For other plugins we can extend the VersionReference as needed.
+   */
+  pkgVersionReference?: VersionReference;
+  /**
+   * An optional serialized values string to be included when templating a package
+   * in the format expected by the plugin. Included when the backend format doesn't
+   * use secrets or configmaps for values or supports both. These values are layered
+   * on top of any values refs above, when relevant.
+   */
+  values: string;
+  /**
+   * An optional field for specifying data common to systems that reconcile
+   * the package on the cluster.
+   */
+  reconciliationOptions?: ReconciliationOptions;
+}
+
+/**
  * GetAvailablePackageSummariesResponse
  *
  * Response for GetAvailablePackageSummaries
@@ -194,6 +225,15 @@ export interface GetInstalledPackageDetailResponse {
    * The requested InstalledPackageDetail
    */
   installedPackageDetail?: InstalledPackageDetail;
+}
+
+/**
+ * CreateInstalledPackageResponse
+ *
+ * Response for CreateInstalledPackage
+ */
+export interface CreateInstalledPackageResponse {
+  installedPackageRef?: InstalledPackageReference;
 }
 
 /**
@@ -1272,6 +1312,177 @@ export const GetInstalledPackageDetailRequest = {
   },
 };
 
+const baseCreateInstalledPackageRequest: object = { name: "", values: "" };
+
+export const CreateInstalledPackageRequest = {
+  encode(
+    message: CreateInstalledPackageRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.availablePackageRef !== undefined) {
+      AvailablePackageReference.encode(
+        message.availablePackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    if (message.targetContext !== undefined) {
+      Context.encode(message.targetContext, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
+    }
+    if (message.pkgVersionReference !== undefined) {
+      VersionReference.encode(message.pkgVersionReference, writer.uint32(34).fork()).ldelim();
+    }
+    if (message.values !== "") {
+      writer.uint32(42).string(message.values);
+    }
+    if (message.reconciliationOptions !== undefined) {
+      ReconciliationOptions.encode(
+        message.reconciliationOptions,
+        writer.uint32(50).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateInstalledPackageRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseCreateInstalledPackageRequest,
+    } as CreateInstalledPackageRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.targetContext = Context.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.name = reader.string();
+          break;
+        case 4:
+          message.pkgVersionReference = VersionReference.decode(reader, reader.uint32());
+          break;
+        case 5:
+          message.values = reader.string();
+          break;
+        case 6:
+          message.reconciliationOptions = ReconciliationOptions.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateInstalledPackageRequest {
+    const message = {
+      ...baseCreateInstalledPackageRequest,
+    } as CreateInstalledPackageRequest;
+    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
+      message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
+    } else {
+      message.availablePackageRef = undefined;
+    }
+    if (object.targetContext !== undefined && object.targetContext !== null) {
+      message.targetContext = Context.fromJSON(object.targetContext);
+    } else {
+      message.targetContext = undefined;
+    }
+    if (object.name !== undefined && object.name !== null) {
+      message.name = String(object.name);
+    } else {
+      message.name = "";
+    }
+    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
+      message.pkgVersionReference = VersionReference.fromJSON(object.pkgVersionReference);
+    } else {
+      message.pkgVersionReference = undefined;
+    }
+    if (object.values !== undefined && object.values !== null) {
+      message.values = String(object.values);
+    } else {
+      message.values = "";
+    }
+    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
+      message.reconciliationOptions = ReconciliationOptions.fromJSON(object.reconciliationOptions);
+    } else {
+      message.reconciliationOptions = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: CreateInstalledPackageRequest): unknown {
+    const obj: any = {};
+    message.availablePackageRef !== undefined &&
+      (obj.availablePackageRef = message.availablePackageRef
+        ? AvailablePackageReference.toJSON(message.availablePackageRef)
+        : undefined);
+    message.targetContext !== undefined &&
+      (obj.targetContext = message.targetContext
+        ? Context.toJSON(message.targetContext)
+        : undefined);
+    message.name !== undefined && (obj.name = message.name);
+    message.pkgVersionReference !== undefined &&
+      (obj.pkgVersionReference = message.pkgVersionReference
+        ? VersionReference.toJSON(message.pkgVersionReference)
+        : undefined);
+    message.values !== undefined && (obj.values = message.values);
+    message.reconciliationOptions !== undefined &&
+      (obj.reconciliationOptions = message.reconciliationOptions
+        ? ReconciliationOptions.toJSON(message.reconciliationOptions)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateInstalledPackageRequest>): CreateInstalledPackageRequest {
+    const message = {
+      ...baseCreateInstalledPackageRequest,
+    } as CreateInstalledPackageRequest;
+    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
+      message.availablePackageRef = AvailablePackageReference.fromPartial(
+        object.availablePackageRef,
+      );
+    } else {
+      message.availablePackageRef = undefined;
+    }
+    if (object.targetContext !== undefined && object.targetContext !== null) {
+      message.targetContext = Context.fromPartial(object.targetContext);
+    } else {
+      message.targetContext = undefined;
+    }
+    if (object.name !== undefined && object.name !== null) {
+      message.name = object.name;
+    } else {
+      message.name = "";
+    }
+    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
+      message.pkgVersionReference = VersionReference.fromPartial(object.pkgVersionReference);
+    } else {
+      message.pkgVersionReference = undefined;
+    }
+    if (object.values !== undefined && object.values !== null) {
+      message.values = object.values;
+    } else {
+      message.values = "";
+    }
+    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
+      message.reconciliationOptions = ReconciliationOptions.fromPartial(
+        object.reconciliationOptions,
+      );
+    } else {
+      message.reconciliationOptions = undefined;
+    }
+    return message;
+  },
+};
+
 const baseGetAvailablePackageSummariesResponse: object = {
   nextPageToken: "",
   categories: "",
@@ -1721,6 +1932,78 @@ export const GetInstalledPackageDetailResponse = {
       );
     } else {
       message.installedPackageDetail = undefined;
+    }
+    return message;
+  },
+};
+
+const baseCreateInstalledPackageResponse: object = {};
+
+export const CreateInstalledPackageResponse = {
+  encode(
+    message: CreateInstalledPackageResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.installedPackageRef !== undefined) {
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateInstalledPackageResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseCreateInstalledPackageResponse,
+    } as CreateInstalledPackageResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateInstalledPackageResponse {
+    const message = {
+      ...baseCreateInstalledPackageResponse,
+    } as CreateInstalledPackageResponse;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: CreateInstalledPackageResponse): unknown {
+    const obj: any = {};
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateInstalledPackageResponse>): CreateInstalledPackageResponse {
+    const message = {
+      ...baseCreateInstalledPackageResponse,
+    } as CreateInstalledPackageResponse;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromPartial(
+        object.installedPackageRef,
+      );
+    } else {
+      message.installedPackageRef = undefined;
     }
     return message;
   },
@@ -3664,6 +3947,10 @@ export interface PackagesService {
     request: DeepPartial<GetInstalledPackageDetailRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetInstalledPackageDetailResponse>;
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse>;
 }
 
 export class PackagesServiceClientImpl implements PackagesService {
@@ -3676,6 +3963,7 @@ export class PackagesServiceClientImpl implements PackagesService {
     this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
+    this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -3729,6 +4017,17 @@ export class PackagesServiceClientImpl implements PackagesService {
     return this.rpc.unary(
       PackagesServiceGetInstalledPackageDetailDesc,
       GetInstalledPackageDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse> {
+    return this.rpc.unary(
+      PackagesServiceCreateInstalledPackageDesc,
+      CreateInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -3840,6 +4139,28 @@ export const PackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinition
     deserializeBinary(data: Uint8Array) {
       return {
         ...GetInstalledPackageDetailResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const PackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "CreateInstalledPackage",
+  service: PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CreateInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CreateInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },
