@@ -24,7 +24,8 @@ const appsReducer = (
       return {
         ...state,
         isFetching: false,
-        selected: action.payload.app,
+        // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
+        selected: { ...action.payload.app, manifest: action.payload.manifest },
         selectedDetails: action.payload.details,
       };
     case getType(actions.apps.listApps):

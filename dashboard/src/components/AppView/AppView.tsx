@@ -18,6 +18,8 @@ import {
   IResource,
   IStoreState,
 } from "shared/types";
+// TODO(agamez): check if we can replace this package by js-yaml or vice-versa
+import YAML from "yaml";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import ResourceRef from "../../shared/ResourceRef";
@@ -138,6 +140,7 @@ export default function AppView() {
     apps: { error, selected: app, selectedDetails: appDetails },
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
+
   useEffect(() => {
     dispatch(actions.apps.getApp(cluster, namespace, releaseName));
   }, [cluster, dispatch, namespace, releaseName]);
@@ -152,9 +155,9 @@ export default function AppView() {
       return;
     }
 
-    let parsedManifest: IResource[] = yaml
-      .loadAll(app["manifest"])
-      .map((doc: any) => JSON.parse(doc));
+    let parsedManifest: IResource[] = YAML.parseAllDocuments(app.manifest).map(
+      (doc: YAML.Document) => doc.toJSON(),
+    );
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
@@ -249,25 +252,14 @@ export default function AppView() {
             <div className="appview-separator">
               <AppNotes notes={app?.postInstallationNotes} />
             </div>
-            <>
-              {Object.keys(resourceRefs).every(r => resourceRefs[r].length > 0) && (
-                <div className="appview-separator">
-                  <ResourceTabs
-                    {...{
-                      deployments,
-                      statefulsets,
-                      daemonsets,
-                      secrets,
-                      services,
-                      otherResources,
-                    }}
-                  />
-                </div>
-              )}
-            </>
+            <div className="appview-separator">
+              <ResourceTabs
+                {...{ deployments, statefulsets, daemonsets, secrets, services, otherResources }}
+              />
+            </div>
             <div className="appview-separator">
               <AppValues
-                values={app?.valuesApplied ? yaml.dump(JSON.parse(app.valuesApplied)) : ""}
+                values={app?.valuesApplied ? yaml.dump(yaml.load(app.valuesApplied)) : ""}
               />
             </div>
           </Column>

@@ -132,12 +132,12 @@ export default function ApplicationStatus({
   }
   if (info && info.status) {
     // If the status code is different than "Deployed", display that status
-    const helmStatus = codeToString(info.status);
-    if (helmStatus !== "Deployed") {
+    const packageStatus = codeToString(info.status);
+    if (info.status.reason !== InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED) {
       return (
         <div className="center">
           <div className="color-icon-warning">
-            <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> Status: {helmStatus}
+            <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> Status: {packageStatus}
           </div>
         </div>
       );

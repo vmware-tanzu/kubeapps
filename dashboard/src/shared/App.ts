@@ -110,4 +110,12 @@ export class App {
     const { data } = await axiosWithAuth.delete(endpoint);
     return data;
   }
+
+  // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
+  public static async getRelease(cluster: string, namespace: string, name: string) {
+    const { data } = await axiosWithAuth.get<{ data: { manifest: any } }>(
+      url.kubeops.releases.get(cluster, namespace, name),
+    );
+    return data.data;
+  }
 }

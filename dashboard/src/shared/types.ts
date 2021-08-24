@@ -295,7 +295,7 @@ export interface IAppState {
   error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
   items: InstalledPackageDetail[];
   listOverview?: InstalledPackageSummary[];
-  selected?: InstalledPackageDetail;
+  selected?: CustomInstalledPackageDetail;
   // TODO(agamez): add tests for this new state field
   selectedDetails?: AvailablePackageDetail;
 }
@@ -480,4 +480,8 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMax?: number;
   sliderStep?: number;
   sliderUnit?: string;
+}
+
+export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
+  manifest: any;
 }

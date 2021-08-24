@@ -55,8 +55,9 @@ export const errorApp = createAction("ERROR_APP", resolve => {
 });
 
 export const selectApp = createAction("SELECT_APP", resolve => {
-  return (app: InstalledPackageDetail, details?: AvailablePackageDetail) =>
-    resolve({ app, details });
+  // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
+  return (app: InstalledPackageDetail, manifest: any, details?: AvailablePackageDetail) =>
+    resolve({ app, manifest, details });
 });
 
 const allActions = [
@@ -82,10 +83,12 @@ export function getApp(
   cluster: string,
   namespace: string,
   releaseName: string,
-): ThunkAction<Promise<InstalledPackageDetail | undefined>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
     try {
+      // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
+      const legacyResponse = await App.getRelease(cluster, namespace, releaseName);
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(
         cluster,
@@ -106,14 +109,14 @@ export function getApp(
           );
           availablePackageDetail = resp.availablePackageDetail;
         }
-        dispatch(selectApp(installedPackageDetail, availablePackageDetail));
+        dispatch(
+          selectApp(installedPackageDetail, legacyResponse.manifest, availablePackageDetail),
+        );
       } else {
         dispatch(errorApp(new FetchError("Package not found")));
       }
-      return installedPackageDetail;
     } catch (e) {
       dispatch(errorApp(new FetchError(e.message)));
-      return;
     }
   };
 }
