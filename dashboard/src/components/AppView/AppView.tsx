@@ -26,7 +26,7 @@ import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
-import AppNotes from "./AppNotes";
+import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
 import ChartInfo from "./ChartInfo/ChartInfo";

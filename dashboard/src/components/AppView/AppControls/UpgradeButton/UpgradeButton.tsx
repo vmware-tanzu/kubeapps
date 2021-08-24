@@ -2,7 +2,7 @@ import { CdsIcon } from "@cds/react/icon";
 import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Link } from "react-router-dom";
 import * as url from "../../../../shared/url";
-import StatusAwareButton from "../StatusAwareButton";
+import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 
 interface IUpgradeButtonProps {
   cluster: string;

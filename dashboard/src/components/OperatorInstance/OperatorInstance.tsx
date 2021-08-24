@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
-import AppNotes from "components/AppView/AppNotes";
+import AppNotes from "components/AppView/AppNotes/AppNotes";
 import AppSecrets from "components/AppView/AppSecrets";
 import { IAppViewResourceRefs } from "components/AppView/AppView";
 import Alert from "components/js/Alert";

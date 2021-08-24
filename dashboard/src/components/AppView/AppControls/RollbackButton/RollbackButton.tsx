@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
-import StatusAwareButton from "../StatusAwareButton";
+import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 import RollbackDialog from "./RollbackDialog";
 
 export interface IRollbackButtonProps {

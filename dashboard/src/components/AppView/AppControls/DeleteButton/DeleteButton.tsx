@@ -9,7 +9,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import StatusAwareButton from "../StatusAwareButton";
+import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 
 interface IDeleteButtonProps {
   cluster: string;
