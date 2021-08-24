@@ -352,7 +352,10 @@ func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestPkgVersion = chart.ChartVersions[0].Version
+		pkg.LatestVersion = &corev1.PackageAppVersion{
+			PkgVersion: chart.ChartVersions[0].Version,
+			AppVersion: chart.ChartVersions[0].AppVersion,
+		}
 	}
 
 	return pkg, nil
@@ -516,9 +519,11 @@ func availablePackageDetailFromTarball(chartID, tarUrl string) (*corev1.Availabl
 	}
 
 	pkg := &corev1.AvailablePackageDetail{
-		Name:             chartMetadata.Name,
-		PkgVersion:       chartMetadata.Version,
-		AppVersion:       chartMetadata.AppVersion,
+		Name: chartMetadata.Name,
+		Version: &corev1.PackageAppVersion{
+			PkgVersion: chartMetadata.Version,
+			AppVersion: chartMetadata.AppVersion,
+		},
 		HomeUrl:          chartMetadata.Home,
 		IconUrl:          chartMetadata.Icon,
 		DisplayName:      chartMetadata.Name,
@@ -543,8 +548,8 @@ func availablePackageDetailFromTarball(chartID, tarUrl string) (*corev1.Availabl
 }
 
 // packageAppVersionsSummary converts the model chart versions into the required version summary.
-func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion {
-	pav := []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{}
+func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.PackageAppVersion {
+	pav := []*corev1.PackageAppVersion{}
 
 	// Use a version map to be able to count how many major, minor and patch versions
 	// we have included.
@@ -575,7 +580,7 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.GetAvai
 		}
 
 		// Include the version and update the version map.
-		pav = append(pav, &corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+		pav = append(pav, &corev1.PackageAppVersion{
 			PkgVersion: v.Version,
 			AppVersion: v.AppVersion,
 		})

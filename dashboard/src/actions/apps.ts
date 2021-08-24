@@ -193,7 +193,7 @@ export function getAppWithUpdateInfo(
             app.name,
             app.chart.metadata.name,
             app.chart.metadata.version,
-            app.chart.metadata.appVersion,
+            app.chart.metadata.appVersion ? app.chart.metadata.appVersion : "",
           ),
         );
       }

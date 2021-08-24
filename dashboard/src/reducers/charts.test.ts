@@ -11,8 +11,7 @@ describe("chartReducer", () => {
     categories: [""],
     displayName: "foo",
     iconUrl: "",
-    latestAppVersion: "v1.0.0",
-    latestPkgVersion: "",
+    latestVersion: { appVersion: "v1.0.0", pkgVersion: "" },
     shortDescription: "",
     availablePackageRef: {
       identifier: "foo/foo",
@@ -25,8 +24,7 @@ describe("chartReducer", () => {
     categories: ["Database"],
     displayName: "bar",
     iconUrl: "",
-    latestAppVersion: "v2.0.0",
-    latestPkgVersion: "",
+    latestVersion: { appVersion: "v2.0.0", pkgVersion: "" },
     shortDescription: "",
     availablePackageRef: {
       identifier: "bar/bar",

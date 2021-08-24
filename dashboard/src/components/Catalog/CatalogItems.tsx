@@ -30,10 +30,10 @@ export default function CatalogItems({
           type: "chart",
           id: `chart/${c.availablePackageRef?.identifier}`,
           item: {
-            id: `chart/${c.availablePackageRef?.identifier}/${c.latestPkgVersion}`,
+            id: `chart/${c.availablePackageRef?.identifier}/${c.latestVersion?.pkgVersion}`,
             name: c.displayName,
             icon: c.iconUrl,
-            version: c.latestAppVersion,
+            version: c.latestVersion?.pkgVersion ?? "",
             description: c.shortDescription,
             // TODO(agamez): get the repo name once available
             // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
