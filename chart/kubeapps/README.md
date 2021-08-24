@@ -167,65 +167,66 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Dashboard parameters
 
-| Name                                              | Description                                                                               | Value                |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------- |
-| `dashboard.image.registry`                        | Dashboard image registry                                                                  | `docker.io`          |
-| `dashboard.image.repository`                      | Dashboard image repository                                                                | `kubeapps/dashboard` |
-| `dashboard.image.tag`                             | Dashboard image tag (immutable tags are recommended)                                      | `latest`             |
-| `dashboard.image.pullPolicy`                      | Dashboard image pull policy                                                               | `IfNotPresent`       |
-| `dashboard.image.pullSecrets`                     | Dashboard image pull secrets                                                              | `[]`                 |
-| `dashboard.image.debug`                           | Enable image debug mode                                                                   | `false`              |
-| `dashboard.customStyle`                           | Custom CSS injected to the Dashboard to customize Kubeapps look and feel                  | `""`                 |
-| `dashboard.customComponents`                      | Custom Form components injected into the BasicDeploymentForm                              | `""`                 |
-| `dashboard.customLocale`                          | Custom translations injected to the Dashboard to customize the strings used in Kubeapps   | `""`                 |
-| `dashboard.defaultTheme`                          | Default theme used in the Dashboard if the user has not selected any theme yet.           | `""`                 |
-| `dashboard.replicaCount`                          | Number of Dashboard replicas to deploy                                                    | `2`                  |
-| `dashboard.extraEnvVars`                          | Array with extra environment variables to add to the Dashboard container                  | `[]`                 |
-| `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Dashboard container          | `""`                 |
-| `dashboard.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Dashboard container             | `""`                 |
-| `dashboard.containerPort`                         | Dashboard HTTP container port                                                             | `8080`               |
-| `dashboard.resources.limits.cpu`                  | The CPU limits for the Dashboard container                                                | `250m`               |
-| `dashboard.resources.limits.memory`               | The memory limits for the Dashboard container                                             | `128Mi`              |
-| `dashboard.resources.requests.cpu`                | The requested CPU for the Dashboard container                                             | `25m`                |
-| `dashboard.resources.requests.memory`             | The requested memory for the Dashboard container                                          | `32Mi`               |
-| `dashboard.podSecurityContext.enabled`            | Enabled Dashboard pods' Security Context                                                  | `true`               |
-| `dashboard.podSecurityContext.fsGroup`            | Set Dashboard pod's Security Context fsGroup                                              | `1001`               |
-| `dashboard.containerSecurityContext.enabled`      | Enabled Dashboard containers' Security Context                                            | `true`               |
-| `dashboard.containerSecurityContext.runAsUser`    | Set Dashboard container's Security Context runAsUser                                      | `1001`               |
-| `dashboard.containerSecurityContext.runAsNonRoot` | Set Dashboard container's Security Context runAsNonRoot                                   | `true`               |
-| `dashboard.livenessProbe.enabled`                 | Enable livenessProbe                                                                      | `true`               |
-| `dashboard.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                   | `60`                 |
-| `dashboard.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                          | `10`                 |
-| `dashboard.livenessProbe.timeoutSeconds`          | Timeout seconds for livenessProbe                                                         | `5`                  |
-| `dashboard.livenessProbe.failureThreshold`        | Failure threshold for livenessProbe                                                       | `6`                  |
-| `dashboard.livenessProbe.successThreshold`        | Success threshold for livenessProbe                                                       | `1`                  |
-| `dashboard.readinessProbe.enabled`                | Enable readinessProbe                                                                     | `true`               |
-| `dashboard.readinessProbe.initialDelaySeconds`    | Initial delay seconds for readinessProbe                                                  | `0`                  |
-| `dashboard.readinessProbe.periodSeconds`          | Period seconds for readinessProbe                                                         | `10`                 |
-| `dashboard.readinessProbe.timeoutSeconds`         | Timeout seconds for readinessProbe                                                        | `5`                  |
-| `dashboard.readinessProbe.failureThreshold`       | Failure threshold for readinessProbe                                                      | `6`                  |
-| `dashboard.readinessProbe.successThreshold`       | Success threshold for readinessProbe                                                      | `1`                  |
-| `dashboard.customLivenessProbe`                   | Custom livenessProbe that overrides the default one                                       | `{}`                 |
-| `dashboard.customReadinessProbe`                  | Custom readinessProbe that overrides the default one                                      | `{}`                 |
-| `dashboard.lifecycleHooks`                        | Custom lifecycle hooks for Dashboard containers                                           | `{}`                 |
-| `dashboard.podLabels`                             | Extra labels for Dasbhoard pods                                                           | `{}`                 |
-| `dashboard.podAnnotations`                        | Annotations for Dasbhoard pods                                                            | `{}`                 |
-| `dashboard.podAffinityPreset`                     | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`       | `""`                 |
-| `dashboard.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`  | `soft`               |
-| `dashboard.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard` | `""`                 |
-| `dashboard.nodeAffinityPreset.key`                | Node label key to match. Ignored if `affinity` is set                                     | `""`                 |
-| `dashboard.nodeAffinityPreset.values`             | Node label values to match. Ignored if `affinity` is set                                  | `[]`                 |
-| `dashboard.affinity`                              | Affinity for pod assignment                                                               | `{}`                 |
-| `dashboard.nodeSelector`                          | Node labels for pod assignment                                                            | `{}`                 |
-| `dashboard.tolerations`                           | Tolerations for pod assignment                                                            | `[]`                 |
-| `dashboard.priorityClassName`                     | Priority class name for Dashboard pods                                                    | `""`                 |
-| `dashboard.hostAliases`                           | Custom host aliases for Dashboard pods                                                    | `[]`                 |
-| `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for Dasbhoard pods                    | `[]`                 |
-| `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for Dasbhoard container(s)       | `[]`                 |
-| `dashboard.sidecars`                              | Add additional sidecar containers to the Dasbhoard pod                                    | `[]`                 |
-| `dashboard.initContainers`                        | Add additional init containers to the Dasbhoard pods                                      | `[]`                 |
-| `dashboard.service.port`                          | Dasbhoard service HTTP port                                                               | `8080`               |
-| `dashboard.service.annotations`                   | Additional custom annotations for Dasbhoard service                                       | `{}`                 |
+| Name                                              | Description                                                                                | Value                |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------- |
+| `dashboard.image.registry`                        | Dashboard image registry                                                                   | `docker.io`          |
+| `dashboard.image.repository`                      | Dashboard image repository                                                                 | `kubeapps/dashboard` |
+| `dashboard.image.tag`                             | Dashboard image tag (immutable tags are recommended)                                       | `latest`             |
+| `dashboard.image.pullPolicy`                      | Dashboard image pull policy                                                                | `IfNotPresent`       |
+| `dashboard.image.pullSecrets`                     | Dashboard image pull secrets                                                               | `[]`                 |
+| `dashboard.image.debug`                           | Enable image debug mode                                                                    | `false`              |
+| `dashboard.customStyle`                           | Custom CSS injected to the Dashboard to customize Kubeapps look and feel                   | `""`                 |
+| `dashboard.customComponents`                      | Custom Form components injected into the BasicDeploymentForm                               | `""`                 |
+| `dashboard.remoteComponentsUrl`                   | Remote URL that can be used to load custom components vs loading from the local filesystem | `""`                 |
+| `dashboard.customLocale`                          | Custom translations injected to the Dashboard to customize the strings used in Kubeapps    | `""`                 |
+| `dashboard.defaultTheme`                          | Default theme used in the Dashboard if the user has not selected any theme yet.            | `""`                 |
+| `dashboard.replicaCount`                          | Number of Dashboard replicas to deploy                                                     | `2`                  |
+| `dashboard.extraEnvVars`                          | Array with extra environment variables to add to the Dashboard container                   | `[]`                 |
+| `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Dashboard container           | `""`                 |
+| `dashboard.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Dashboard container              | `""`                 |
+| `dashboard.containerPort`                         | Dashboard HTTP container port                                                              | `8080`               |
+| `dashboard.resources.limits.cpu`                  | The CPU limits for the Dashboard container                                                 | `250m`               |
+| `dashboard.resources.limits.memory`               | The memory limits for the Dashboard container                                              | `128Mi`              |
+| `dashboard.resources.requests.cpu`                | The requested CPU for the Dashboard container                                              | `25m`                |
+| `dashboard.resources.requests.memory`             | The requested memory for the Dashboard container                                           | `32Mi`               |
+| `dashboard.podSecurityContext.enabled`            | Enabled Dashboard pods' Security Context                                                   | `true`               |
+| `dashboard.podSecurityContext.fsGroup`            | Set Dashboard pod's Security Context fsGroup                                               | `1001`               |
+| `dashboard.containerSecurityContext.enabled`      | Enabled Dashboard containers' Security Context                                             | `true`               |
+| `dashboard.containerSecurityContext.runAsUser`    | Set Dashboard container's Security Context runAsUser                                       | `1001`               |
+| `dashboard.containerSecurityContext.runAsNonRoot` | Set Dashboard container's Security Context runAsNonRoot                                    | `true`               |
+| `dashboard.livenessProbe.enabled`                 | Enable livenessProbe                                                                       | `true`               |
+| `dashboard.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                    | `60`                 |
+| `dashboard.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                           | `10`                 |
+| `dashboard.livenessProbe.timeoutSeconds`          | Timeout seconds for livenessProbe                                                          | `5`                  |
+| `dashboard.livenessProbe.failureThreshold`        | Failure threshold for livenessProbe                                                        | `6`                  |
+| `dashboard.livenessProbe.successThreshold`        | Success threshold for livenessProbe                                                        | `1`                  |
+| `dashboard.readinessProbe.enabled`                | Enable readinessProbe                                                                      | `true`               |
+| `dashboard.readinessProbe.initialDelaySeconds`    | Initial delay seconds for readinessProbe                                                   | `0`                  |
+| `dashboard.readinessProbe.periodSeconds`          | Period seconds for readinessProbe                                                          | `10`                 |
+| `dashboard.readinessProbe.timeoutSeconds`         | Timeout seconds for readinessProbe                                                         | `5`                  |
+| `dashboard.readinessProbe.failureThreshold`       | Failure threshold for readinessProbe                                                       | `6`                  |
+| `dashboard.readinessProbe.successThreshold`       | Success threshold for readinessProbe                                                       | `1`                  |
+| `dashboard.customLivenessProbe`                   | Custom livenessProbe that overrides the default one                                        | `{}`                 |
+| `dashboard.customReadinessProbe`                  | Custom readinessProbe that overrides the default one                                       | `{}`                 |
+| `dashboard.lifecycleHooks`                        | Custom lifecycle hooks for Dashboard containers                                            | `{}`                 |
+| `dashboard.podLabels`                             | Extra labels for Dasbhoard pods                                                            | `{}`                 |
+| `dashboard.podAnnotations`                        | Annotations for Dasbhoard pods                                                             | `{}`                 |
+| `dashboard.podAffinityPreset`                     | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`        | `""`                 |
+| `dashboard.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`   | `soft`               |
+| `dashboard.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`  | `""`                 |
+| `dashboard.nodeAffinityPreset.key`                | Node label key to match. Ignored if `affinity` is set                                      | `""`                 |
+| `dashboard.nodeAffinityPreset.values`             | Node label values to match. Ignored if `affinity` is set                                   | `[]`                 |
+| `dashboard.affinity`                              | Affinity for pod assignment                                                                | `{}`                 |
+| `dashboard.nodeSelector`                          | Node labels for pod assignment                                                             | `{}`                 |
+| `dashboard.tolerations`                           | Tolerations for pod assignment                                                             | `[]`                 |
+| `dashboard.priorityClassName`                     | Priority class name for Dashboard pods                                                     | `""`                 |
+| `dashboard.hostAliases`                           | Custom host aliases for Dashboard pods                                                     | `[]`                 |
+| `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for Dasbhoard pods                     | `[]`                 |
+| `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for Dasbhoard container(s)        | `[]`                 |
+| `dashboard.sidecars`                              | Add additional sidecar containers to the Dasbhoard pod                                     | `[]`                 |
+| `dashboard.initContainers`                        | Add additional init containers to the Dasbhoard pods                                       | `[]`                 |
+| `dashboard.service.port`                          | Dasbhoard service HTTP port                                                                | `8080`               |
+| `dashboard.service.annotations`                   | Additional custom annotations for Dasbhoard service                                        | `{}`                 |
 
 
 ### AppRepository Controller parameters
@@ -469,6 +470,66 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `postgresql.resources.limits`          | The resources limits for the PostreSQL container                             | `{}`     |
 | `postgresql.resources.requests.cpu`    | The requested CPU for the PostreSQL container                                | `250m`   |
 | `postgresql.resources.requests.memory` | The requested memory for the PostreSQL container                             | `256Mi`  |
+
+
+### kubeappsapis parameters
+
+| Name                                                 | Description                                                                                                             | Value                    |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `kubeappsapis.unsafeUseDemoSA`                       | If true, replace the user's credentials by a full-granted demo service account. Just intented for development purposes. | `false`                  |
+| `kubeappsapis.enabledPlugins`                        | Enabled plugins for the Kubeapps-APIs service                                                                           | `[]`                     |
+| `kubeappsapis.image.registry`                        | Kubeapps-APIs image registry                                                                                            | `docker.io`              |
+| `kubeappsapis.image.repository`                      | Kubeapps-APIs image repository                                                                                          | `kubeapps/kubeapps-apis` |
+| `kubeappsapis.image.tag`                             | Kubeapps-APIs image tag (immutable tags are recommended)                                                                | `latest`                 |
+| `kubeappsapis.image.pullPolicy`                      | Kubeapps-APIs image pull policy                                                                                         | `IfNotPresent`           |
+| `kubeappsapis.image.pullSecrets`                     | Kubeapps-APIs image pull secrets                                                                                        | `[]`                     |
+| `kubeappsapis.replicaCount`                          | Number of frontend replicas to deploy                                                                                   | `1`                      |
+| `kubeappsapis.terminationGracePeriodSeconds`         | The grace time period for sig term                                                                                      | `300`                    |
+| `kubeappsapis.extraEnvVars`                          | Array with extra environment variables to add to the KubeappsAPIs container                                             | `[]`                     |
+| `kubeappsapis.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the KubeappsAPIs container                                     | `nil`                    |
+| `kubeappsapis.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the KubeappsAPIs container                                        | `nil`                    |
+| `kubeappsapis.containerPort`                         | KubeappsAPIs HTTP container port                                                                                        | `50051`                  |
+| `kubeappsapis.resources.limits.cpu`                  | The CPU limits for the KubeappsAPIs container                                                                           | `250m`                   |
+| `kubeappsapis.resources.limits.memory`               | The memory limits for the KubeappsAPIs container                                                                        | `256Mi`                  |
+| `kubeappsapis.resources.requests.cpu`                | The requested CPU for the KubeappsAPIs container                                                                        | `25m`                    |
+| `kubeappsapis.resources.requests.memory`             | The requested memory for the KubeappsAPIs container                                                                     | `32Mi`                   |
+| `kubeappsapis.podSecurityContext.enabled`            | Enabled KubeappsAPIs pods' Security Context                                                                             | `true`                   |
+| `kubeappsapis.podSecurityContext.fsGroup`            | Set KubeappsAPIs pod's Security Context fsGroup                                                                         | `1001`                   |
+| `kubeappsapis.containerSecurityContext.enabled`      | Enabled KubeappsAPIs containers' Security Context                                                                       | `true`                   |
+| `kubeappsapis.containerSecurityContext.runAsUser`    | Set KubeappsAPIs container's Security Context runAsUser                                                                 | `1001`                   |
+| `kubeappsapis.containerSecurityContext.runAsNonRoot` | Set KubeappsAPIs container's Security Context runAsNonRoot                                                              | `true`                   |
+| `kubeappsapis.livenessProbe.enabled`                 | Enable livenessProbe                                                                                                    | `false`                  |
+| `kubeappsapis.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                                                 | `60`                     |
+| `kubeappsapis.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                                                        | `10`                     |
+| `kubeappsapis.livenessProbe.timeoutSeconds`          | Timeout seconds for livenessProbe                                                                                       | `5`                      |
+| `kubeappsapis.livenessProbe.failureThreshold`        | Failure threshold for livenessProbe                                                                                     | `6`                      |
+| `kubeappsapis.livenessProbe.successThreshold`        | Success threshold for livenessProbe                                                                                     | `1`                      |
+| `kubeappsapis.readinessProbe.enabled`                | Enable readinessProbe                                                                                                   | `false`                  |
+| `kubeappsapis.readinessProbe.initialDelaySeconds`    | Initial delay seconds for readinessProbe                                                                                | `0`                      |
+| `kubeappsapis.readinessProbe.periodSeconds`          | Period seconds for readinessProbe                                                                                       | `10`                     |
+| `kubeappsapis.readinessProbe.timeoutSeconds`         | Timeout seconds for readinessProbe                                                                                      | `5`                      |
+| `kubeappsapis.readinessProbe.failureThreshold`       | Failure threshold for readinessProbe                                                                                    | `6`                      |
+| `kubeappsapis.readinessProbe.successThreshold`       | Success threshold for readinessProbe                                                                                    | `1`                      |
+| `kubeappsapis.customLivenessProbe`                   | Custom livenessProbe that overrides the default one                                                                     | `{}`                     |
+| `kubeappsapis.customReadinessProbe`                  | Custom readinessProbe that overrides the default one                                                                    | `{}`                     |
+| `kubeappsapis.lifecycleHooks`                        | Custom lifecycle hooks for KubeappsAPIs containers                                                                      | `{}`                     |
+| `kubeappsapis.podLabels`                             | Extra labels for KubeappsAPIs pods                                                                                      | `{}`                     |
+| `kubeappsapis.podAnnotations`                        | Annotations for KubeappsAPIs pods                                                                                       | `{}`                     |
+| `kubeappsapis.podAffinityPreset`                     | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                     | `""`                     |
+| `kubeappsapis.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                | `soft`                   |
+| `kubeappsapis.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                               | `""`                     |
+| `kubeappsapis.nodeAffinityPreset.key`                | Node label key to match. Ignored if `affinity` is set                                                                   | `""`                     |
+| `kubeappsapis.nodeAffinityPreset.values`             | Node label values to match. Ignored if `affinity` is set                                                                | `[]`                     |
+| `kubeappsapis.affinity`                              | Affinity for pod assignment                                                                                             | `{}`                     |
+| `kubeappsapis.nodeSelector`                          | Node labels for pod assignment                                                                                          | `{}`                     |
+| `kubeappsapis.tolerations`                           | Tolerations for pod assignment                                                                                          | `[]`                     |
+| `kubeappsapis.priorityClassName`                     | Priority class name for KubeappsAPIs pods                                                                               | `nil`                    |
+| `kubeappsapis.hostAliases`                           | Custom host aliases for KubeappsAPIs pods                                                                               | `[]`                     |
+| `kubeappsapis.service.port`                          | KubeappsAPIs service HTTP port                                                                                          | `8080`                   |
+| `kubeappsapis.service.annotations`                   | Additional custom annotations for KubeappsAPIs service                                                                  | `{}`                     |
+| `redis.redisPassword`                                | Password used in Redis&trade;                                                                                           | `""`                     |
+| `redis.enabled`                                      | Enable the redis deployment when deploying Kubeapps APIs.                                                               | `false`                  |
+| `redis.replica.replicaCount`                         | Number of Redis&trade; replicas to deploy                                                                               | `0`                      |
 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
