@@ -2292,22 +2292,22 @@ export const InstalledPackageSummary = {
       PackageAppVersion.encode(message.currentVersion, writer.uint32(34).fork()).ldelim();
     }
     if (message.iconUrl !== "") {
-      writer.uint32(50).string(message.iconUrl);
+      writer.uint32(42).string(message.iconUrl);
     }
     if (message.pkgDisplayName !== "") {
-      writer.uint32(58).string(message.pkgDisplayName);
+      writer.uint32(50).string(message.pkgDisplayName);
     }
     if (message.shortDescription !== "") {
-      writer.uint32(66).string(message.shortDescription);
+      writer.uint32(58).string(message.shortDescription);
     }
     if (message.latestMatchingVersion !== undefined) {
-      PackageAppVersion.encode(message.latestMatchingVersion, writer.uint32(74).fork()).ldelim();
+      PackageAppVersion.encode(message.latestMatchingVersion, writer.uint32(66).fork()).ldelim();
     }
     if (message.latestVersion !== undefined) {
-      PackageAppVersion.encode(message.latestVersion, writer.uint32(82).fork()).ldelim();
+      PackageAppVersion.encode(message.latestVersion, writer.uint32(74).fork()).ldelim();
     }
     if (message.status !== undefined) {
-      InstalledPackageStatus.encode(message.status, writer.uint32(90).fork()).ldelim();
+      InstalledPackageStatus.encode(message.status, writer.uint32(82).fork()).ldelim();
     }
     return writer;
   },
@@ -2333,22 +2333,22 @@ export const InstalledPackageSummary = {
         case 4:
           message.currentVersion = PackageAppVersion.decode(reader, reader.uint32());
           break;
-        case 6:
+        case 5:
           message.iconUrl = reader.string();
           break;
-        case 7:
+        case 6:
           message.pkgDisplayName = reader.string();
           break;
-        case 8:
+        case 7:
           message.shortDescription = reader.string();
           break;
-        case 9:
+        case 8:
           message.latestMatchingVersion = PackageAppVersion.decode(reader, reader.uint32());
           break;
-        case 10:
+        case 9:
           message.latestVersion = PackageAppVersion.decode(reader, reader.uint32());
           break;
-        case 11:
+        case 10:
           message.status = InstalledPackageStatus.decode(reader, reader.uint32());
           break;
         default:
