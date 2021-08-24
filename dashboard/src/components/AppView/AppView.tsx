@@ -135,7 +135,7 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: app },
+    apps: { error, selected: app, selectedDetails: appDetails },
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
   useEffect(() => {
@@ -186,8 +186,7 @@ export default function AppView() {
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
     resourceRefs;
-  // TODO(agamez): get icon from installedPackageDetails once available
-  const icon = placeholder;
+  const icon = appDetails?.iconUrl ?? placeholder;
   const revision = app?.installedPackageRef?.identifier.split("/")[1] ?? "0";
   return (
     <section>
@@ -232,7 +231,7 @@ export default function AppView() {
       ) : (
         <Row>
           <Column span={3}>
-            <ChartInfo app={app} cluster={cluster} />
+            <ChartInfo app={app} appDetails={appDetails!} cluster={cluster} />
           </Column>
           <Column span={9}>
             <div className="appview-separator">

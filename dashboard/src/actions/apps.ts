@@ -5,6 +5,7 @@ import {
   InstalledPackageSummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
+import Chart from "shared/Chart";
 import {
   CreateError,
   DeleteError,
@@ -54,7 +55,8 @@ export const errorApp = createAction("ERROR_APP", resolve => {
 });
 
 export const selectApp = createAction("SELECT_APP", resolve => {
-  return (app: InstalledPackageDetail) => resolve(app);
+  return (app: InstalledPackageDetail, details?: AvailablePackageDetail) =>
+    resolve({ app, details });
 });
 
 const allActions = [
@@ -84,13 +86,23 @@ export function getApp(
   return async dispatch => {
     dispatch(requestApps());
     try {
+      // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(
         cluster,
         namespace,
         releaseName,
       );
-      if (installedPackageDetail) {
-        dispatch(selectApp(installedPackageDetail));
+      if (installedPackageDetail?.availablePackageRef?.identifier) {
+        // Get the details of the available package that corresponds to the installed package
+        const { availablePackageDetail } = await Chart.getAvailablePackageDetail(
+          installedPackageDetail.availablePackageRef.context?.cluster ?? cluster,
+          installedPackageDetail.availablePackageRef.context?.namespace ?? namespace,
+          installedPackageDetail.availablePackageRef.identifier,
+          installedPackageDetail.currentVersion?.pkgVersion,
+        );
+        dispatch(selectApp(installedPackageDetail, availablePackageDetail));
+      } else {
+        dispatch(errorApp(new FetchError("Package not found")));
       }
       return installedPackageDetail;
     } catch (e) {

@@ -1,12 +1,16 @@
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  InstalledPackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import ChartUpdateInfo from "./ChartUpdateInfo";
 
 interface IChartInfoProps {
   app: InstalledPackageDetail;
+  appDetails?: AvailablePackageDetail;
   cluster: string;
 }
 
-function ChartInfo({ app, cluster }: IChartInfoProps) {
+function ChartInfo({ app, appDetails, cluster }: IChartInfoProps) {
   return (
     <section className="left-menu">
       {app && (
@@ -27,15 +31,17 @@ function ChartInfo({ app, cluster }: IChartInfoProps) {
           <ChartUpdateInfo app={app} cluster={cluster} />
         </section>
       )}
-      {/* TODO(agamez): use shortDescription when available */}
-      {/* {app?.shortDescription(
-        <section className="left-menu-subsection" aria-labelledby="chartinfo-description">
-          <h5 className="left-menu-subsection-title" id="chartinfo-description">
-            Description
-          </h5>
-          <span>{app.shortDescription}</span>
-        </section>
-      )} */}
+      {appDetails && (
+        <>
+          <section className="left-menu-subsection" aria-labelledby="chartinfo-description">
+            <h5 className="left-menu-subsection-title" id="chartinfo-description">
+              Description
+            </h5>
+            <span>{appDetails.shortDescription}</span>
+          </section>
+          ,
+        </>
+      )}
     </section>
   );
 }

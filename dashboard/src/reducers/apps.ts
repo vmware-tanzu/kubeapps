@@ -21,7 +21,12 @@ const appsReducer = (
     case getType(actions.apps.errorApp):
       return { ...state, isFetching: false, error: action.payload };
     case getType(actions.apps.selectApp):
-      return { ...state, isFetching: false, selected: action.payload };
+      return {
+        ...state,
+        isFetching: false,
+        selected: action.payload.app,
+        selectedDetails: action.payload.details,
+      };
     case getType(actions.apps.listApps):
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveAppList):

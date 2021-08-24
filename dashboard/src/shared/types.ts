@@ -296,6 +296,8 @@ export interface IAppState {
   items: InstalledPackageDetail[];
   listOverview?: InstalledPackageSummary[];
   selected?: InstalledPackageDetail;
+  // TODO(agamez): add tests for this new state field
+  selectedDetails?: AvailablePackageDetail;
 }
 
 export interface IStoreState {
