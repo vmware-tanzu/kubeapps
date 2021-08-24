@@ -2008,6 +2008,10 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						PkgVersion: releaseVersion,
 						AppVersion: DefaultAppVersion,
 					},
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: releaseVersion,
+						AppVersion: DefaultAppVersion,
+					},
 					ValuesApplied:         releaseValues,
 					PostInstallationNotes: releaseNotes,
 					Status: &corev1.InstalledPackageStatus{
@@ -2158,7 +2162,8 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 		})
 	}
 	chartVersions = append(chartVersions, models.ChartVersion{
-		Version: rel.chartVersion,
+		Version:    rel.chartVersion,
+		AppVersion: DefaultAppVersion,
 	})
 
 	return &models.Chart{
