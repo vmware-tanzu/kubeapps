@@ -1749,16 +1749,16 @@ export const AvailablePackageSummary = {
       PackageAppVersion.encode(message.latestVersion, writer.uint32(26).fork()).ldelim();
     }
     if (message.iconUrl !== "") {
-      writer.uint32(42).string(message.iconUrl);
+      writer.uint32(34).string(message.iconUrl);
     }
     if (message.displayName !== "") {
-      writer.uint32(50).string(message.displayName);
+      writer.uint32(42).string(message.displayName);
     }
     if (message.shortDescription !== "") {
-      writer.uint32(58).string(message.shortDescription);
+      writer.uint32(50).string(message.shortDescription);
     }
     for (const v of message.categories) {
-      writer.uint32(66).string(v!);
+      writer.uint32(58).string(v!);
     }
     return writer;
   },
@@ -1782,16 +1782,16 @@ export const AvailablePackageSummary = {
         case 3:
           message.latestVersion = PackageAppVersion.decode(reader, reader.uint32());
           break;
-        case 5:
+        case 4:
           message.iconUrl = reader.string();
           break;
-        case 6:
+        case 5:
           message.displayName = reader.string();
           break;
-        case 7:
+        case 6:
           message.shortDescription = reader.string();
           break;
-        case 8:
+        case 7:
           message.categories.push(reader.string());
           break;
         default:
@@ -1943,43 +1943,43 @@ export const AvailablePackageDetail = {
       PackageAppVersion.encode(message.version, writer.uint32(26).fork()).ldelim();
     }
     if (message.repoUrl !== "") {
-      writer.uint32(42).string(message.repoUrl);
+      writer.uint32(34).string(message.repoUrl);
     }
     if (message.homeUrl !== "") {
-      writer.uint32(50).string(message.homeUrl);
+      writer.uint32(42).string(message.homeUrl);
     }
     if (message.iconUrl !== "") {
-      writer.uint32(58).string(message.iconUrl);
+      writer.uint32(50).string(message.iconUrl);
     }
     if (message.displayName !== "") {
-      writer.uint32(66).string(message.displayName);
+      writer.uint32(58).string(message.displayName);
     }
     if (message.shortDescription !== "") {
-      writer.uint32(74).string(message.shortDescription);
+      writer.uint32(66).string(message.shortDescription);
     }
     if (message.longDescription !== "") {
-      writer.uint32(82).string(message.longDescription);
+      writer.uint32(74).string(message.longDescription);
     }
     if (message.readme !== "") {
-      writer.uint32(90).string(message.readme);
+      writer.uint32(82).string(message.readme);
     }
     if (message.defaultValues !== "") {
-      writer.uint32(98).string(message.defaultValues);
+      writer.uint32(90).string(message.defaultValues);
     }
     if (message.valuesSchema !== "") {
-      writer.uint32(106).string(message.valuesSchema);
+      writer.uint32(98).string(message.valuesSchema);
     }
     for (const v of message.sourceUrls) {
-      writer.uint32(114).string(v!);
+      writer.uint32(106).string(v!);
     }
     for (const v of message.maintainers) {
-      Maintainer.encode(v!, writer.uint32(122).fork()).ldelim();
+      Maintainer.encode(v!, writer.uint32(114).fork()).ldelim();
     }
     for (const v of message.categories) {
-      writer.uint32(130).string(v!);
+      writer.uint32(122).string(v!);
     }
     if (message.customDetail !== undefined) {
-      Any.encode(message.customDetail, writer.uint32(138).fork()).ldelim();
+      Any.encode(message.customDetail, writer.uint32(130).fork()).ldelim();
     }
     return writer;
   },
@@ -2003,43 +2003,43 @@ export const AvailablePackageDetail = {
         case 3:
           message.version = PackageAppVersion.decode(reader, reader.uint32());
           break;
-        case 5:
+        case 4:
           message.repoUrl = reader.string();
           break;
-        case 6:
+        case 5:
           message.homeUrl = reader.string();
           break;
-        case 7:
+        case 6:
           message.iconUrl = reader.string();
           break;
-        case 8:
+        case 7:
           message.displayName = reader.string();
           break;
-        case 9:
+        case 8:
           message.shortDescription = reader.string();
           break;
-        case 10:
+        case 9:
           message.longDescription = reader.string();
           break;
-        case 11:
+        case 10:
           message.readme = reader.string();
           break;
-        case 12:
+        case 11:
           message.defaultValues = reader.string();
           break;
-        case 13:
+        case 12:
           message.valuesSchema = reader.string();
           break;
-        case 14:
+        case 13:
           message.sourceUrls.push(reader.string());
           break;
-        case 15:
+        case 14:
           message.maintainers.push(Maintainer.decode(reader, reader.uint32()));
           break;
-        case 16:
+        case 15:
           message.categories.push(reader.string());
           break;
-        case 17:
+        case 16:
           message.customDetail = Any.decode(reader, reader.uint32());
           break;
         default:

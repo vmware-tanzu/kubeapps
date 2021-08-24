@@ -268,23 +268,23 @@ message AvailablePackageSummary {
   // Available package Icon URL
   //
   // A url for an icon.
-  string icon_url = 5;
+  string icon_url = 4;
 
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 6;
+  string display_name = 5;
 
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 7;
+  string short_description = 6;
 
   // Available package categories
   //
   // A user-facing list of category names useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  repeated string categories = 8;
+  repeated string categories = 7;
 }
 
 // AvailablePackageDetail
@@ -313,66 +313,66 @@ message AvailablePackageDetail {
   PackageAppVersion version = 3;
 
   // the url of the package repository that contains this package
-  string repo_url = 5;
+  string repo_url = 4;
 
   // the url of the “home” for the package
-  string home_url = 6;
+  string home_url = 5;
 
   // Available package icon URL
   //
   // A url for an icon.
-  string icon_url = 7;
+  string icon_url = 6;
 
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 8;
+  string display_name = 7;
 
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 9;
+  string short_description = 8;
 
   // Available package long description
   //
   // A longer description of the package, a few sentences.
-  string long_description = 10;
+  string long_description = 9;
 
   // Available package readme
   //
   // A longer README with potentially pages of formatted Markdown.
-  string readme = 11;
+  string readme = 10;
 
   // Available package default values
   //
   // An example of default values used during package templating that can serve
   // as documentation or a starting point for user customization.
-  string default_values = 12;
+  string default_values = 11;
 
   // Available package values schema
   //
   // An optional openapi/json schema that can be used to validate a user-provided values.
 
-  string values_schema = 13;
+  string values_schema = 12;
 
   // source urls for the package
-  repeated string source_urls = 14;
+  repeated string source_urls = 13;
 
   // Available package maintainers
   //
   // List of Maintainer
-  repeated Maintainer maintainers = 15;
+  repeated Maintainer maintainers = 14;
 
   // Available package categories
   //
   // A user-facing list of category names useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  repeated string categories = 16;
+  repeated string categories = 15;
 
   // Custom data added by the plugin
   //
   // Some additional information added by the plugin
-  google.protobuf.Any custom_detail = 17;
+  google.protobuf.Any custom_detail = 16;
 }
 
 // InstalledPackageSummary
