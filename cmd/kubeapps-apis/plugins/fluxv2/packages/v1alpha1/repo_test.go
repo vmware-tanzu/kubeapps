@@ -473,7 +473,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -542,7 +542,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -615,7 +615,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -683,7 +683,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -1020,8 +1020,11 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Serv
 // misc global vars that get re-used in multiple tests scenarios
 var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
-		DisplayName:      "acs-engine-autoscaler",
-		LatestPkgVersion: "2.1.1",
+		DisplayName: "acs-engine-autoscaler",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "2.1.1",
+			AppVersion: "2.1.1",
+		},
 		IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 		ShortDescription: "Scales worker nodes within agent pools",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1031,8 +1034,11 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 		},
 	},
 	{
-		DisplayName:      "wordpress",
-		LatestPkgVersion: "0.7.5",
+		DisplayName: "wordpress",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "0.7.5",
+			AppVersion: "4.9.1",
+		},
 		IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 		ShortDescription: "new description!",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1044,8 +1050,11 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 }
 
 var cert_manager_summary = &corev1.AvailablePackageSummary{
-	DisplayName:      "cert-manager",
-	LatestPkgVersion: "v1.4.0",
+	DisplayName: "cert-manager",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "v1.4.0",
+		AppVersion: "v1.4.0",
+	},
 	IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
 	ShortDescription: "A Helm chart for cert-manager",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1056,8 +1065,11 @@ var cert_manager_summary = &corev1.AvailablePackageSummary{
 }
 
 var elasticsearch_summary = &corev1.AvailablePackageSummary{
-	DisplayName:      "elasticsearch",
-	LatestPkgVersion: "15.5.0",
+	DisplayName: "elasticsearch",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "15.5.0",
+		AppVersion: "7.13.2",
+	},
 	IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
 	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1068,8 +1080,11 @@ var elasticsearch_summary = &corev1.AvailablePackageSummary{
 }
 
 var ghost_summary = &corev1.AvailablePackageSummary{
-	DisplayName:      "ghost",
-	LatestPkgVersion: "13.0.14",
+	DisplayName: "ghost",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "13.0.14",
+		AppVersion: "4.7.0",
+	},
 	IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
 	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1086,8 +1101,10 @@ var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
 
 var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 	{
-		DisplayName:      "alpine",
-		LatestPkgVersion: "0.2.0",
+		DisplayName: "alpine",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "0.2.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1097,8 +1114,10 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 		},
 	},
 	{
-		DisplayName:      "nginx",
-		LatestPkgVersion: "1.1.0",
+		DisplayName: "nginx",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "1.1.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1111,8 +1130,10 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 
 var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 	{
-		DisplayName:      "alpine",
-		LatestPkgVersion: "0.3.0",
+		DisplayName: "alpine",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "0.3.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1122,8 +1143,10 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 		},
 	},
 	{
-		DisplayName:      "nginx",
-		LatestPkgVersion: "1.1.0",
+		DisplayName: "nginx",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "1.1.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
