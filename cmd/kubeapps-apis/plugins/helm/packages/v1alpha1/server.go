@@ -677,7 +677,7 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 			Context: &corev1.Context{
 				Namespace: r.Namespace,
 			},
-			Identifier: r.Name,
+			Identifier: fmt.Sprintf("%s/%d", r.Name, r.Version),
 		},
 		Name: r.Name,
 		PkgVersionReference: &corev1.VersionReference{
@@ -703,9 +703,24 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
+	// If the identifier is just the release name, default to fetching the latest release
+	// version (Helm will do this if the release version is 0), otherwise fetch the specific
+	// release version from the identifier.
+	identifierParts := strings.Split(identifier, "/")
+	releaseName := identifierParts[0]
+	releaseVersion := 0
+	if len(identifierParts) == 2 {
+		version, err := strconv.ParseUint(identifierParts[1], 10, 0)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Unable to parse helm release version in %q", identifier)
+		}
+		releaseVersion = int(version)
+	}
+
 	// First grab the release.
 	getcmd := action.NewGet(actionConfig)
-	release, err := getcmd.Run(identifier)
+	getcmd.Version = releaseVersion
+	release, err := getcmd.Run(releaseName)
 	if err != nil {
 		if err == driver.ErrReleaseNotFound {
 			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
@@ -716,7 +731,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	// Grab the released values.
 	valuescmd := action.NewGetValues(actionConfig)
-	values, err := valuescmd.Run(identifier)
+	valuescmd.Version = releaseVersion
+	values, err := valuescmd.Run(releaseName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to get Helm release values: %v", err)
 	}
@@ -760,6 +776,13 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 }
 
 func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPackageReference) *corev1.InstalledPackageDetail {
+	// If the request reference did not specify a helm release version, we will
+	// have fetched the most recent and want to ensure it is set for the
+	// returned detail.
+	parts := strings.Split(ref.GetIdentifier(), "/")
+	if len(parts) == 1 {
+		ref.Identifier = fmt.Sprintf("%s/%d", ref.GetIdentifier(), r.Version)
+	}
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: ref,
 		Name:                r.Name,
