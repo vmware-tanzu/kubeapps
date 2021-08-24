@@ -405,7 +405,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
-	if err := s.hasAccessToNamespace(ctx, namespace, cluster); err != nil {
+	if err := s.hasAccessToNamespace(ctx, cluster, namespace); err != nil {
 		return nil, err
 	}
 
