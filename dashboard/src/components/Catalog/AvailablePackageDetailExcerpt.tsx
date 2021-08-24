@@ -5,18 +5,17 @@ interface AvailablePackageDetailExcerptProps {
   pkg: AvailablePackageDetail;
 }
 
-/* TODO(agamez): https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-882943900 */
-// function isKubernetesCharts(repoURL: string) {
-//   return (
-//     repoURL === "https://kubernetes-charts.storage.googleapis.com" ||
-//     repoURL === "https://kubernetes-charts-incubator.storage.googleapis.com"
-//   );
-// }
+function isKubernetesCharts(repoURL: string) {
+  return (
+    repoURL === "https://kubernetes-charts.storage.googleapis.com" ||
+    repoURL === "https://kubernetes-charts-incubator.storage.googleapis.com"
+  );
+}
 
 export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageDetailExcerptProps) {
   return (
     <div className="left-menu">
-      {pkg.appVersion && (
+      {pkg.version?.appVersion && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-appversion"
@@ -24,10 +23,10 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           <h5 className="left-menu-subsection-title" id="availablePackageDetailExcerpt-appversion">
             App Version
           </h5>
-          <div>{pkg.appVersion}</div>
+          <div>{pkg.version?.appVersion}</div>
         </section>
       )}
-      {pkg.pkgVersion && (
+      {pkg.version?.pkgVersion && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-pkgversion"
@@ -35,7 +34,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           <h5 className="left-menu-subsection-title" id="availablePackageDetailExcerpt-pkgversion">
             Package Version
           </h5>
-          <div>{pkg.pkgVersion}</div>
+          <div>{pkg.version?.pkgVersion}</div>
         </section>
       )}
       {pkg.categories?.length > 0 && pkg.categories[0] !== "" && (
@@ -55,8 +54,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           </div>
         </section>
       )}
-      {/* TODO(agamez): https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-882943900 */}
-      {/* {pkg.home && (
+      {pkg.homeUrl && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-home"
@@ -65,12 +63,12 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
             Home
           </h5>
           <div>
-            <a href={pkg.home} target="_blank" rel="noopener noreferrer">
-              {pkg.home}
+            <a href={pkg.homeUrl} target="_blank" rel="noopener noreferrer">
+              {pkg.homeUrl}
             </a>
           </div>
         </section>
-      )} */}
+      )}
       {pkg.maintainers?.length > 0 && (
         <section
           className="left-menu-subsection"
@@ -82,14 +80,12 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           <div>
             <AvailablePackageMaintainers
               maintainers={pkg.maintainers}
-              // TODO(agamez): https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-882943900
-              // githubIDAsNames={isKubernetesCharts(pkg.repo.url)}
+              githubIDAsNames={isKubernetesCharts(pkg.repoUrl)}
             />
           </div>
         </section>
       )}
-      {/* TODO(agamez): https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-882943900 */}
-      {/* {pkg.sources?.length > 0 && (
+      {pkg.sourceUrls?.length > 0 && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-sources"
@@ -99,7 +95,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           </h5>
           <div>
             <ul>
-              {pkg.sources.map((s, i) => (
+              {pkg.sourceUrls.map((s, i) => (
                 <li key={i}>
                   <a href={s} target="_blank" rel="noopener noreferrer">
                     {s}
@@ -109,7 +105,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
             </ul>
           </div>
         </section>
-      )} */}
+      )}
     </div>
   );
 }

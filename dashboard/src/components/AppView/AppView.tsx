@@ -143,7 +143,6 @@ export default function AppView() {
   }, [cluster, dispatch, namespace, releaseName]);
 
   useEffect(() => {
-    // TODO(agamez): replace "manifest" with the proper object property once available
     if (!app || !app["manifest"]) {
       return;
     }
@@ -154,7 +153,6 @@ export default function AppView() {
     }
 
     let parsedManifest: IResource[] = yaml
-      // TODO(agamez): replace "manifest" with the proper object property once available
       .loadAll(app["manifest"])
       .map((doc: any) => JSON.parse(doc));
     // Filter out elements in the manifest that does not comply

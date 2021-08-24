@@ -17,28 +17,11 @@ function AppListItem(props: IAppListItemProps) {
   const icon = app.iconUrl ?? placeholder;
   const appStatus = app.status?.userReason?.toLocaleLowerCase();
   let tooltip = <></>;
-  // TODO(agamez): API currently checks for pkg version updates, not app.version
-  // TODO(agamez): do we want to display all possible updates (just app, just pkg or both) or just one one?
   if (
-    app.latestMatchingPkgVersion &&
-    semver.gt(app.latestMatchingPkgVersion, app.currentPkgVersion)
+    app.latestVersion?.pkgVersion &&
+    app.currentVersion?.pkgVersion &&
+    semver.gt(app.latestVersion?.pkgVersion, app.currentVersion?.pkgVersion)
   ) {
-    tooltip = (
-      <div className="color-icon-info">
-        <Tooltip
-          label="update-tooltip"
-          id={`${app.name}-update-tooltip`}
-          icon="circle-arrow"
-          position="top-left"
-          iconProps={{ solid: true, size: "md", color: "blue" }}
-        >
-          A new matching package version is available:{" "}
-          <strong>{app.latestMatchingPkgVersion}</strong>{" "}
-          <em>(now using {app.currentPkgVersion})</em>
-        </Tooltip>
-      </div>
-    );
-  } else if (app.latestPkgVersion && semver.gt(app.latestPkgVersion, app.currentPkgVersion)) {
     tooltip = (
       <div className="color-icon-info">
         <Tooltip
@@ -48,8 +31,8 @@ function AppListItem(props: IAppListItemProps) {
           position="top-left"
           iconProps={{ solid: true, size: "md" }}
         >
-          A new package version is available: <strong>{app.latestPkgVersion}</strong>{" "}
-          <em>(now using {app.currentPkgVersion})</em>
+          A new package version is available: <strong>{app.latestVersion?.pkgVersion}</strong>{" "}
+          <em>(now using {app.currentVersion?.pkgVersion})</em>
         </Tooltip>
       </div>
     );
@@ -64,10 +47,12 @@ function AppListItem(props: IAppListItemProps) {
         <div>
           <span>
             App: {app.pkgDisplayName}{" "}
-            {app.currentAppVersion ? `v${app.currentAppVersion.replace(/^v/, "")}` : ""}
+            {app.currentVersion?.appVersion
+              ? `v${app.currentVersion.appVersion.replace(/^v/, "")}`
+              : ""}
           </span>
           <br />
-          <span>Package: {app.currentPkgVersion}</span>
+          <span>Package: {app.currentVersion?.pkgVersion}</span>
         </div>
       }
       description={app.shortDescription}

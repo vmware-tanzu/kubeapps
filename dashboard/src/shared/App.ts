@@ -15,8 +15,7 @@ export class App {
     size?: number,
   ) {
     return await this.client.GetInstalledPackageSummaries({
-      // TODO(agamez): add cluster when it is supported
-      context: { cluster: "", namespace: namespace },
+      context: { cluster: cluster, namespace: namespace },
       paginationOptions: { pageSize: size || 0, pageToken: page?.toString() || "0" },
     });
   }
@@ -41,10 +40,10 @@ export class App {
     availablePackageDetail: AvailablePackageDetail,
     values?: string,
   ) {
-    // TODO(agamez): get the repo name once available
-    // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
     const endpoint = url.kubeops.releases.list(cluster, namespace);
     const { data } = await axiosWithAuth.post(endpoint, {
+      // TODO(agamez): get the repo name once available
+      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
       appRepositoryResourceName:
         availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
       appRepositoryResourceNamespace:
@@ -52,7 +51,7 @@ export class App {
       chartName: decodeURIComponent(availablePackageDetail.name),
       releaseName,
       values,
-      version: availablePackageDetail.pkgVersion,
+      version: availablePackageDetail.version?.pkgVersion,
     });
     return data;
   }
@@ -73,7 +72,7 @@ export class App {
       chartName: decodeURIComponent(availablePackageDetail.name),
       releaseName,
       values,
-      version: availablePackageDetail.pkgVersion,
+      version: availablePackageDetail.version?.pkgVersion,
     });
     return data;
   }

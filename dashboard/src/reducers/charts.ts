@@ -1,5 +1,4 @@
 import { JSONSchemaType } from "ajv";
-import { uniqBy } from "lodash";
 import { IChartState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -29,8 +28,8 @@ const chartsSelectedReducer = (
         error: undefined,
         readmeError: undefined,
         availablePackageDetail: action.payload.selectedPackage,
-        pkgVersion: action.payload.selectedPackage.pkgVersion,
-        appVersion: action.payload.selectedPackage.appVersion,
+        pkgVersion: action.payload.selectedPackage.version?.pkgVersion,
+        appVersion: action.payload.selectedPackage.version?.appVersion,
         readme: action.payload.selectedPackage.readme,
         values: action.payload.selectedPackage.defaultValues,
         schema:
@@ -75,10 +74,7 @@ const chartsReducer = (
         isFetching: false,
         hasFinishedFetching: isLastPage,
         categories: action.payload.response.categories,
-        items: uniqBy(
-          [...state.items, ...action.payload.response.availablePackageSummaries],
-          "availablePackageRef.identifier",
-        ),
+        items: [...state.items, ...action.payload.response.availablePackageSummaries],
       };
     }
     case getType(actions.charts.receiveChartVersions):

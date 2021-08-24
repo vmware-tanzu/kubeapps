@@ -124,7 +124,7 @@ export function fetchChartVersion(
   return async dispatch => {
     try {
       const response = await Chart.getAvailablePackageDetail(cluster, namespace, id, version);
-      if (response.availablePackageDetail?.pkgVersion) {
+      if (response.availablePackageDetail?.version?.pkgVersion) {
         dispatch(selectChartVersion(response.availablePackageDetail));
       } else {
         dispatch(errorChart(new FetchError("could not find package version")));

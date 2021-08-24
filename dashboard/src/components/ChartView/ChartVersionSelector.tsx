@@ -1,12 +1,12 @@
 import {
   AvailablePackageDetail,
-  GetAvailablePackageVersionsResponse_PackageAppVersion,
+  PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 
 interface IChartHeaderProps {
   chartAttrs: AvailablePackageDetail;
-  versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
+  versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
   currentVersion?: string;

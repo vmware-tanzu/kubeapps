@@ -53,13 +53,13 @@ function AppUpgrade() {
   }, [dispatch, cluster, namespace, releaseName]);
 
   useEffect(() => {
-    if (repoNamespace && app?.availablePackageRef?.identifier && app?.currentPkgVersion) {
+    if (repoNamespace && app?.availablePackageRef?.identifier && app?.currentVersion?.pkgVersion) {
       dispatch(
         actions.charts.getDeployedChartVersion(
           cluster,
           repoNamespace,
           app.availablePackageRef?.identifier,
-          app.currentPkgVersion,
+          app?.currentVersion?.pkgVersion,
         ),
       );
     }
@@ -79,11 +79,16 @@ function AppUpgrade() {
     );
   }
 
-  if (app?.availablePackageRef?.identifier && app?.currentPkgVersion && repoName && repoNamespace) {
+  if (
+    app?.availablePackageRef?.identifier &&
+    app?.currentVersion?.pkgVersion &&
+    repoName &&
+    repoNamespace
+  ) {
     return (
       <div>
         <UpgradeForm
-          appCurrentVersion={app.currentPkgVersion}
+          appCurrentVersion={app.currentVersion.pkgVersion}
           appCurrentValues={app.valuesApplied}
           packageId={app.availablePackageRef.identifier}
           chartsIsFetching={chartsIsFetching}

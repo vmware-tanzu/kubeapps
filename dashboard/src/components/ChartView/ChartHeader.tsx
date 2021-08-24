@@ -2,7 +2,7 @@ import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import {
   AvailablePackageDetail,
-  GetAvailablePackageVersionsResponse_PackageAppVersion,
+  PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 import placeholder from "../../placeholder.png";
@@ -11,7 +11,7 @@ import ChartVersionSelector from "./ChartVersionSelector";
 
 interface IChartHeaderProps {
   chartAttrs: AvailablePackageDetail;
-  versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
+  versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
   currentVersion?: string;

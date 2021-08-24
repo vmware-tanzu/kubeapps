@@ -5,7 +5,7 @@ import {
   AvailablePackageSummary,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
-  GetAvailablePackageVersionsResponse_PackageAppVersion,
+  PackageAppVersion,
   InstalledPackageDetail,
   InstalledPackageSummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -63,11 +63,10 @@ export interface IChartState {
   hasFinishedFetching: boolean;
   selected: {
     error?: FetchError | Error;
-    // TODO(agamez): rename this attribute later
     availablePackageDetail?: AvailablePackageDetail;
     pkgVersion?: string;
     appVersion?: string;
-    versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
+    versions: PackageAppVersion[];
     readme?: string;
     readmeError?: string;
     values?: string;

@@ -111,7 +111,7 @@ function UpgradeForm({
         cluster,
         repoNamespace,
         packageId,
-        deployed.chartVersion?.availablePackageDetail?.pkgVersion,
+        deployed.chartVersion?.availablePackageDetail?.version?.pkgVersion,
       ),
     );
   }, [dispatch, cluster, repoNamespace, packageId, deployed.chartVersion]);
@@ -199,7 +199,7 @@ function UpgradeForm({
           chartAttrs={availablePackageDetail}
           versions={versions}
           onSelect={selectVersion}
-          currentVersion={deployed.chartVersion?.availablePackageDetail?.pkgVersion}
+          currentVersion={deployed.chartVersion?.availablePackageDetail?.version?.pkgVersion}
           selectedVersion={pkgVersion}
         />
         {isDeploying && (

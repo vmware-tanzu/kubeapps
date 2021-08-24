@@ -15,14 +15,13 @@ function ChartInfo({ app, cluster }: IChartInfoProps) {
             Versions
           </h5>
           <div>
-            {/* TODO(agamez): use currentAppVersion when available */}
-            {/* {app.currentAppVersion && (
+            {app.currentVersion?.appVersion && (
               <div>
-                App Version: <strong>{app.currentAppVersion}</strong>
+                App Version: <strong>{app.currentVersion?.appVersion}</strong>
               </div>
-            )} */}
+            )}
             <span>
-              Package Version: <strong>{app.currentPkgVersion}</strong>
+              Package Version: <strong>{app.currentVersion?.pkgVersion}</strong>
             </span>
           </div>
           <ChartUpdateInfo app={app} cluster={cluster} />
