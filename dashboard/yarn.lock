@@ -1243,10 +1243,10 @@
     "@cds/city" "^1.1.0"
     modern-normalize "^1.1.0"
 
-"@clr/ui@^12.0.1":
-  version "12.0.1"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.1.tgz#4844c859c7a83c557b73dd8f4727746488b7067f"
-  integrity sha512-GwJnCx6OCG/D99CHfzySVAlLRxHxiiXSylV9ioo+VZ5VPaEz9GZt2NWNPujLfVD2Lv0tUwMK4zQO/30737XXdA==
+"@clr/ui@^12.0.2":
+  version "12.0.2"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.2.tgz#5b77cb2700a70ee803b49c3adfd943b2101b45b0"
+  integrity sha512-/FPixRTOBg0VnPBY3P4+TDL5HmKqaE3uQ/6a0PtxXT9ng7LhdhN55dA+i9vNeiKzP9+H/BMiiJbWyk0IlW3fFQ==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
