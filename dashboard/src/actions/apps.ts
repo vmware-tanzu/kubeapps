@@ -92,14 +92,20 @@ export function getApp(
         namespace,
         releaseName,
       );
-      if (installedPackageDetail?.availablePackageRef?.identifier) {
-        // Get the details of the available package that corresponds to the installed package
-        const { availablePackageDetail } = await Chart.getAvailablePackageDetail(
-          installedPackageDetail.availablePackageRef.context?.cluster ?? cluster,
-          installedPackageDetail.availablePackageRef.context?.namespace ?? namespace,
-          installedPackageDetail.availablePackageRef.identifier,
-          installedPackageDetail.currentVersion?.pkgVersion,
-        );
+      // For local packages with no references to any available packages (eg.a local chart for development)
+      // we aren't able to get the details, but still want to display the available data so far
+      let availablePackageDetail;
+      if (installedPackageDetail) {
+        if (installedPackageDetail?.availablePackageRef?.identifier) {
+          // Get the details of the available package that corresponds to the installed package
+          const resp = await Chart.getAvailablePackageDetail(
+            installedPackageDetail.availablePackageRef.context?.cluster ?? cluster,
+            installedPackageDetail.availablePackageRef.context?.namespace ?? namespace,
+            installedPackageDetail.availablePackageRef.identifier,
+            installedPackageDetail.currentVersion?.pkgVersion,
+          );
+          availablePackageDetail = resp.availablePackageDetail;
+        }
         dispatch(selectApp(installedPackageDetail, availablePackageDetail));
       } else {
         dispatch(errorApp(new FetchError("Package not found")));
