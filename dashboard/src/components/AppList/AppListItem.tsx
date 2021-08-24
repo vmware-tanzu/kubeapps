@@ -16,27 +16,46 @@ function AppListItem(props: IAppListItemProps) {
   const { app, cluster } = props;
   const icon = app.iconUrl ?? placeholder;
   const appStatus = app.status?.userReason?.toLocaleLowerCase();
-  let tooltip = <></>;
+  let tooltipContent;
+
   if (
+    app.latestVersion?.appVersion &&
+    app.currentVersion?.appVersion &&
+    semver.gt(app.latestVersion?.appVersion, app.currentVersion?.appVersion)
+  ) {
+    tooltipContent = (
+      <>
+        A new app version is available: <strong>{app.latestVersion?.appVersion}</strong>
+      </>
+    );
+  } else if (
     app.latestVersion?.pkgVersion &&
     app.currentVersion?.pkgVersion &&
     semver.gt(app.latestVersion?.pkgVersion, app.currentVersion?.pkgVersion)
   ) {
-    tooltip = (
-      <div className="color-icon-info">
-        <Tooltip
-          label="update-tooltip"
-          id={`${app.name}-update-tooltip`}
-          icon="circle-arrow"
-          position="top-left"
-          iconProps={{ solid: true, size: "md" }}
-        >
-          A new package version is available: <strong>{app.latestVersion?.pkgVersion}</strong>{" "}
-          <em>(now using {app.currentVersion?.pkgVersion})</em>
-        </Tooltip>
-      </div>
+    tooltipContent = (
+      <>
+        A new package version is available: <strong>{app.latestVersion?.pkgVersion}</strong>
+      </>
     );
   }
+
+  const tooltip = tooltipContent ? (
+    <div className="color-icon-info">
+      <Tooltip
+        label="update-tooltip"
+        id={`${app.name}-update-tooltip`}
+        icon="circle-arrow"
+        position="top-left"
+        iconProps={{ solid: true, size: "md" }}
+      >
+        {tooltipContent}
+      </Tooltip>
+    </div>
+  ) : (
+    <></>
+  );
+
   return (
     <InfoCard
       key={app.installedPackageRef?.identifier}
