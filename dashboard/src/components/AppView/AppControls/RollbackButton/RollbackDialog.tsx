@@ -9,7 +9,7 @@ import "./RollbackDialog.css";
 
 interface IRollbackDialogProps {
   loading: boolean;
-  currentRevision: number;
+  currentRevision: string;
   onConfirm: (revision: number) => Promise<any>;
   closeModal: () => void;
   error?: Error;
@@ -27,24 +27,22 @@ function RollbackDialog({
   const [targetRevision, setTargetRevision] = useState(currentRevision);
   const [hasUserChanges, setHasUserChanges] = useState(false);
   const options: number[] = [];
-  // TODO(agamez): temporary fix for preventing users to rollback if there are no revisions to rollback
-  // because of the API not returning the data
-  const disableRollback = currentRevision === 1 || options.length === 0;
+  const disableRollback = currentRevision === "1";
   const selectRevision = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setHasUserChanges(true);
-    setTargetRevision(Number(e.target.value));
+    setTargetRevision(e.target.value);
   };
   const onClick = () => {
-    onConfirm(targetRevision);
+    onConfirm(Number(targetRevision));
   };
   // Use as options the number of versions without the latest
-  for (let i = currentRevision - 1; i > 0; i--) {
+  for (let i = Number(currentRevision) - 1; i > 0; i--) {
     options.push(i);
   }
 
   useEffect(() => {
     if (!hasUserChanges) {
-      setTargetRevision(currentRevision - 1);
+      setTargetRevision((Number(currentRevision) - 1).toString());
     }
   }, [hasUserChanges, currentRevision]);
 

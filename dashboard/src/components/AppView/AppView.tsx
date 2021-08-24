@@ -188,6 +188,7 @@ export default function AppView() {
     resourceRefs;
   // TODO(agamez): get icon from installedPackageDetails once available
   const icon = placeholder;
+  const revision = app?.installedPackageRef?.identifier.split("/")[1] ?? "0";
   return (
     <section>
       <PageHeader
@@ -208,8 +209,7 @@ export default function AppView() {
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
-            // TODO(agamez): add revision or sth once we figure out how to handle rollbacks
-            revision={0}
+            revision={revision}
             releaseStatus={app?.status}
           />,
           <DeleteButton

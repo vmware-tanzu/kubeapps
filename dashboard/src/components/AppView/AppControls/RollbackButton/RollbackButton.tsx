@@ -13,7 +13,7 @@ export interface IRollbackButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
-  revision: number;
+  revision: string;
   releaseStatus: InstalledPackageStatus | undefined | null;
 }
 
