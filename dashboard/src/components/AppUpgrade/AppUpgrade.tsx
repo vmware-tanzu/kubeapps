@@ -58,8 +58,8 @@ function AppUpgrade() {
         actions.charts.getDeployedChartVersion(
           cluster,
           repoNamespace,
-          app.availablePackageRef?.identifier,
-          app?.currentVersion?.pkgVersion,
+          app.availablePackageRef.identifier,
+          app.currentVersion.pkgVersion,
         ),
       );
     }
