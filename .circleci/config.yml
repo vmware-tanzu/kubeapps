@@ -121,7 +121,7 @@ workflows:
             - build_pinniped_proxy
       - sync_chart_from_bitnami:
           <<: *build_on_master
-      - GKE_1_18_MASTER:
+      - GKE_1_20_MASTER:
           <<: *build_on_tag
           requires:
             - test_go
@@ -130,7 +130,7 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_18_LATEST_RELEASE:
+      - GKE_1_20_LATEST_RELEASE:
           <<: *build_on_tag
           requires:
             - test_go
@@ -165,16 +165,16 @@ workflows:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_18_MASTER
-            - GKE_1_18_LATEST_RELEASE
+            - GKE_1_20_MASTER
+            - GKE_1_20_LATEST_RELEASE
             - GKE_1_19_MASTER
             - GKE_1_19_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_18_MASTER
-            - GKE_1_18_LATEST_RELEASE
+            - GKE_1_20_MASTER
+            - GKE_1_20_LATEST_RELEASE
             - GKE_1_19_MASTER
             - GKE_1_19_LATEST_RELEASE
 
@@ -635,17 +635,17 @@ jobs:
       number:
         type: string
     <<: *local_e2e_steps
-  GKE_1_18_MASTER:
+  GKE_1_20_MASTER:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.18"
+      GKE_BRANCH: "1.20"
       KUBEAPPS_DB: "postgresql"
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_18_LATEST_RELEASE:
+  GKE_1_20_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.18"
+      GKE_BRANCH: "1.20"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
