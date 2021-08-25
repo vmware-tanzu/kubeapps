@@ -178,6 +178,9 @@ installOrUpgradeKubeapps() {
       --set postgresql.replication.enabled=false \
       --set postgresql.postgresqlPassword=password \
       --set redis.auth.password=password \
+      # TODO: remove these lines once kubeapps-apis got merged in the main branch
+      --set featureFlags.kubeappsAPIsServer=true \
+      --set redis.enabled=false \
       --wait)
 
     echo "${cmd[@]}"
