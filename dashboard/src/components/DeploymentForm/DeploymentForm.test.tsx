@@ -1,6 +1,7 @@
 import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import { shallow } from "enzyme";
+import { PackageAppVersion } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -25,9 +26,7 @@ const defaultProps = {
   cluster: "default",
   kubeappsNamespace: "kubeapps",
 };
-const versions = [
-  { id: "foo", attributes: { version: "1.2.3" }, relationships: { chart: { data: { repo: {} } } } },
-] as IChartVersion[];
+const versions = [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }] as PackageAppVersion[];
 
 let spyOnUseDispatch: jest.SpyInstance;
 beforeEach(() => {
@@ -60,8 +59,8 @@ describe("renders an error", () => {
         {...defaultProps}
         selected={
           {
-            version: { attributes: {}, relationships: { chart: { data: {} } } },
-            versions: [{ id: "foo", attributes: {} }],
+            version: {} as PackageAppVersion,
+            versions: [{} as PackageAppVersion],
           } as IChartState["selected"]
         }
         error={new Error("wrong format!")}
@@ -77,8 +76,8 @@ describe("renders an error", () => {
         {...defaultProps}
         selected={
           {
-            version: { attributes: {}, relationships: { chart: { data: {} } } },
-            versions: [{ id: "foo", attributes: {} }],
+            version: {} as PackageAppVersion,
+            versions: [{} as PackageAppVersion],
           } as IChartState["selected"]
         }
         error={new FetchError("not found")}

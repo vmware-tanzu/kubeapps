@@ -1,28 +1,34 @@
 import { shallow } from "enzyme";
+import { Maintainer } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
-import { IChartAttributes } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 
 const tests: Array<{
   expectedLinks: Array<string | null>;
   githubIDAsNames?: boolean;
-  maintainers: IChartAttributes["maintainers"];
+  maintainers: Maintainer[];
   name: string;
 }> = [
   {
     expectedLinks: [null],
-    maintainers: [{ name: "Test Author" }],
+    maintainers: [{ name: "Test Author", email: "" }],
     name: "with no email",
   },
   {
     expectedLinks: [null, "mailto:test@example.com"],
-    maintainers: [{ name: "Test Author" }, { name: "Test Author 2", email: "test@example.com" }],
+    maintainers: [
+      { name: "Test Author", email: "" },
+      { name: "Test Author 2", email: "test@example.com" },
+    ],
     name: "with email",
   },
   {
     expectedLinks: ["https://github.com/test1", "https://github.com/test2"],
     githubIDAsNames: true,
-    maintainers: [{ name: "test1" }, { name: "test2", email: "test@example.com" }],
+    maintainers: [
+      { name: "test1", email: "" },
+      { name: "test2", email: "test@example.com" },
+    ],
     name: "with github ids",
   },
 ];

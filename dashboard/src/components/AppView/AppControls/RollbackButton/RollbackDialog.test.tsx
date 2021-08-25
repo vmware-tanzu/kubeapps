@@ -6,7 +6,7 @@ import RollbackDialog from "./RollbackDialog";
 
 const defaultProps = {
   loading: false,
-  currentRevision: 2,
+  currentRevision: "2",
   modalIsOpen: true,
   onConfirm: jest.fn(),
   closeModal: jest.fn(),
@@ -36,11 +36,11 @@ it("should submit the current revision", () => {
     (submit.prop("onClick") as any)();
   });
   wrapper.update();
-  expect(onConfirm).toBeCalledWith(currentRevision - 1);
+  expect(onConfirm).toBeCalledWith((Number(currentRevision) - 1).toString());
 });
 
 it("should disable the rollback button if there are no revisions", () => {
-  const wrapper = mount(<RollbackDialog {...defaultProps} currentRevision={1} />);
+  const wrapper = mount(<RollbackDialog {...defaultProps} currentRevision={"1"} />);
   expect(wrapper).toIncludeText("it's not possible to rollback");
   const submit = wrapper.find(CdsButton).filterWhere(b => b.text() === "Rollback");
   expect(submit).toBeDisabled();

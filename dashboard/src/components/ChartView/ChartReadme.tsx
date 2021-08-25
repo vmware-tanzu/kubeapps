@@ -8,15 +8,11 @@ import LinkRenderer from "./LinkRenderer";
 import TableRenderer from "./TableRenderer";
 
 interface IChartReadmeProps {
-  cluster: string;
-  namespace: string;
-  packageId: string;
-  version: string;
   error?: string;
   readme?: string;
 }
 
-function ChartReadme({ packageId, error, cluster, namespace, readme, version }: IChartReadmeProps) {
+function ChartReadme({ error, readme }: IChartReadmeProps) {
   if (error) {
     if (error.toLocaleLowerCase().includes("not found")) {
       return (

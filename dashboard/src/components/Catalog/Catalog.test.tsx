@@ -336,8 +336,6 @@ describe("pagination and chart fetching", () => {
       defaultStore,
       <Catalog
         {...populatedProps}
-        fetchCharts={fetchCharts}
-        resetRequestCharts={resetRequestCharts}
         charts={
           {
             ...defaultChartState,
@@ -363,8 +361,6 @@ describe("pagination and chart fetching", () => {
       defaultStore,
       <Catalog
         {...populatedProps}
-        fetchCharts={fetchCharts}
-        resetRequestCharts={resetRequestCharts}
         charts={
           {
             ...defaultChartState,
@@ -389,8 +385,6 @@ describe("pagination and chart fetching", () => {
       defaultStore,
       <Catalog
         {...populatedProps}
-        fetchCharts={fetchCharts}
-        resetRequestCharts={resetRequestCharts}
         charts={
           {
             ...defaultChartState,
@@ -469,7 +463,7 @@ describe("filters by application repository", () => {
   it("push filter for repo", () => {
     const store = getStore({ repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] } });
     const fetchRepos = jest.fn();
-    const wrapper = mountWrapper(store, <Catalog {...populatedProps} fetchRepos={fetchRepos} />);
+    const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
     // The repo name is "foo"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
     input.simulate("change", { target: { value: "foo" } });
@@ -491,7 +485,7 @@ it("push filter for repo", () => {
     repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
   });
   const fetchRepos = jest.fn();
-  const wrapper = mountWrapper(store, <Catalog {...populatedProps} fetchRepos={fetchRepos} />);
+  const wrapper = mountWrapper(store, <Catalog {...populatedProps} />);
   // The repo name is "foo"
   const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
   input.simulate("change", { target: { value: "foo" } });
@@ -512,10 +506,7 @@ it("push filter for repo in other ns", () => {
     repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
   });
   const fetchRepos = jest.fn();
-  const wrapper = mountWrapper(
-    store,
-    <Catalog {...populatedProps} namespace={"my-ns"} fetchRepos={fetchRepos} />,
-  );
+  const wrapper = mountWrapper(store, <Catalog {...populatedProps} namespace={"my-ns"} />);
   // The repo name is "foo", the ns name is "my-ns"
   const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
   input.simulate("change", { target: { value: "foo" } });

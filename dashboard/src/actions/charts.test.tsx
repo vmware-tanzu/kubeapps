@@ -327,7 +327,7 @@ describe("getChartVersion", () => {
         },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions/1.0.0`,
@@ -348,7 +348,7 @@ describe("getChartVersion", () => {
       },
     ];
     await store.dispatch(
-      actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
+      actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
@@ -385,7 +385,7 @@ describe("getChartVersion", () => {
         payload: { chartVersion: { id: "foo" }, values: "foo: bar", schema: { properties: "foo" } },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -414,7 +414,7 @@ describe("getChartVersion", () => {
         payload: { chartVersion: { id: "foo" }, values: "", schema: {} },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -441,12 +441,12 @@ describe("getChartVersion", () => {
       { type: getType(actions.charts.requestChart) },
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
     ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
-describe("fetchChartVersionsAndSelectVersion", () => {
+describe("fetchChartVersion", () => {
   it("fetches charts and select a version", async () => {
     response = { data: [{ id: "foo", attributes: { version: "1.0.0" } }] };
     const expectedActions = [
@@ -457,9 +457,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
         payload: { chartVersion: response.data[0] },
       },
     ];
-    await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", "1.0.0"),
-    );
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
@@ -479,9 +477,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       throw new Error("could not find chart");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", "1.0.0"),
-    );
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
@@ -503,9 +499,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
         payload: { chartVersion: response.data[1] },
       },
     ];
-    await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", ""),
-    );
+    await store.dispatch(actions.charts.fetchChartVersions(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,

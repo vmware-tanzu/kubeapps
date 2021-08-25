@@ -1,3 +1,4 @@
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
@@ -29,7 +30,7 @@ describe("fetches applications", () => {
   let listAppsMock: jest.Mock;
   beforeEach(() => {
     listAppsMock = jest.fn(() => []);
-    App.listApps = listAppsMock;
+    App.GetInstalledPackageSummaries = listAppsMock;
   });
   afterEach(() => {
     jest.clearAllMocks();
@@ -39,18 +40,18 @@ describe("fetches applications", () => {
       { type: getType(actions.apps.listApps) },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default"));
+    await store.dispatch(actions.apps.fetchApps("default-cluster", "default"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default"]);
   });
   it("fetches applications, ignore when no data", async () => {
-    App.listApps = jest.fn();
+    App.GetInstalledPackageSummaries = jest.fn();
     const expectedActions = [
       { type: getType(actions.apps.listApps) },
       { type: getType(actions.apps.receiveAppList), payload: undefined },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default"));
-    App.listApps = listAppsMock;
+    await store.dispatch(actions.apps.fetchApps("default-cluster", "default"));
+    App.GetInstalledPackageSummaries = listAppsMock;
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toBeUndefined();
   });
@@ -72,28 +73,15 @@ describe("fetches applications", () => {
           },
         },
       ];
-      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
-      App.listApps = jest.fn().mockReturnValue(appsResponse);
+      Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps) },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestAppUpdateInfo) },
-        {
-          type: getType(actions.apps.receiveAppUpdateInfo),
-          payload: {
-            releaseName: "foobar",
-            updateInfo: {
-              upToDate: false,
-              appLatestVersion: "1.0.0",
-              chartLatestVersion: "1.1.0",
-              repository: { name: "bar" },
-            },
-          },
-        },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
+      await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
       // It should use the app namespace
-      expect(Chart.listWithFilters).toHaveBeenCalledWith(
+      expect(Chart.getAvailablePackageSummaries).toHaveBeenCalledWith(
         "default-c",
         "ns-1",
         "foo",
@@ -118,26 +106,13 @@ describe("fetches applications", () => {
           },
         },
       ];
-      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
-      App.listApps = jest.fn().mockReturnValue(appsResponse);
+      Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps) },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestAppUpdateInfo) },
-        {
-          type: getType(actions.apps.receiveAppUpdateInfo),
-          payload: {
-            releaseName: "foobar",
-            updateInfo: {
-              upToDate: true,
-              appLatestVersion: "0.1.0",
-              chartLatestVersion: "1.0.0",
-              repository: { name: "bar" },
-            },
-          },
-        },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
+      await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
       expect(store.getActions()).toEqual(expectedActions);
     });
 
@@ -154,27 +129,13 @@ describe("fetches applications", () => {
           relationships: { latestChartVersion: { data: { version: "1.0" } } },
         },
       ];
-      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
-      App.listApps = jest.fn().mockReturnValue(appsResponse);
+      Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps) },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestAppUpdateInfo) },
-        {
-          type: getType(actions.apps.receiveAppUpdateInfo),
-          payload: {
-            releaseName: "foobar",
-            updateInfo: {
-              error: new Error("Invalid Version: 1.0"),
-              upToDate: false,
-              chartLatestVersion: "",
-              appLatestVersion: "",
-              repository: { name: "", url: "", namespace: "" },
-            },
-          },
-        },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
+      await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -260,8 +221,7 @@ describe("deploy chart", () => {
       actions.apps.deployChart(
         "target-cluster",
         "default",
-        "my-version" as any,
-        "chart-namespace",
+        { name: "my-version" } as AvailablePackageDetail,
         "my-release",
         "foo: 1",
         {

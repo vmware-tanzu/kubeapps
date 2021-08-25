@@ -3,11 +3,11 @@ import Alert from "components/js/Alert";
 import { set } from "lodash";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
-import ChartView, { IChartViewProps } from "./ChartView";
+import ChartView from "./ChartView";
 
-const props: IChartViewProps = {
+const props = {
   chartID: "testrepo/test",
   chartNamespace: "kubeapps-namespace",
   isFetching: false,
@@ -45,7 +45,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.charts = {
     ...actions.charts,
-    fetchChartVersionsAndSelectVersion: jest.fn(),
+    fetchChartVersions: jest.fn(),
     resetChartVersion: jest.fn(),
     selectChartVersion: jest.fn(),
   };
@@ -58,9 +58,9 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
+it("triggers the fetchChartVersions when mounting", () => {
   const spy = jest.fn();
-  actions.charts.fetchChartVersionsAndSelectVersion = spy;
+  actions.charts.fetchChartVersions = spy;
   mountWrapper(defaultStore, <ChartView {...props} />);
   expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, "testrepo/test", undefined);
 });

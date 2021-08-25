@@ -2,6 +2,15 @@ import { deepClone } from "@cds/core/internal";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
+import {
+  Context,
+  InstalledPackageReference,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+  InstalledPackageSummary,
+  PackageAppVersion,
+  VersionReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import context from "jest-plugin-context";
 import qs from "qs";
 import React from "react";
@@ -10,7 +19,7 @@ import * as ReactRedux from "react-redux";
 import { MemoryRouter } from "react-router";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IAppOverview, IStoreState } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import Alert from "../js/Alert";
 import AppList from "./AppList";
 import AppListItem from "./AppListItem";
@@ -26,7 +35,7 @@ beforeEach(() => {
   };
   actions.apps = {
     ...actions.apps,
-    fetchAppsWithUpdateInfo: jest.fn(),
+    fetchApps: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -43,12 +52,12 @@ afterEach(() => {
 
 context("when changing props", () => {
   it("should fetch apps in the new namespace", async () => {
-    const fetchAppsWithUpdateInfo = jest.fn();
+    const fetchApps = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchAppsWithUpdateInfo = fetchAppsWithUpdateInfo;
+    actions.apps.fetchApps = fetchApps;
     actions.operators.getResources = getCustomResources;
     mountWrapper(defaultStore, <AppList />);
-    expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("default-cluster", "default");
+    expect(fetchApps).toHaveBeenCalledWith("default-cluster", "default");
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "default");
   });
 
@@ -79,15 +88,15 @@ context("when changing props", () => {
   });
 
   it("should fetch apps in all namespaces", async () => {
-    const fetchAppsWithUpdateInfo = jest.fn();
+    const fetchApps = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchAppsWithUpdateInfo = fetchAppsWithUpdateInfo;
+    actions.apps.fetchApps = fetchApps;
     actions.operators.getResources = getCustomResources;
     const wrapper = mountWrapper(defaultStore, <AppList />);
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });
-    expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("default-cluster", "");
+    expect(fetchApps).toHaveBeenCalledWith("default-cluster", "");
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "");
   });
 
@@ -192,15 +201,21 @@ context("when apps available", () => {
   beforeEach(() => {
     state.apps.listOverview = [
       {
-        releaseName: "foo",
-        namespace: "bar",
-        chartMetadata: {
-          name: "bar",
-          version: "1.0.0",
-          appVersion: "0.1.0",
-        },
-        status: "deployed",
-      } as IAppOverview,
+        name: "foo",
+        installedPackageRef: {
+          identifier: "apache/1",
+          pkgVersion: "1.0.0",
+          context: { cluster: "", namespace: "foobar" } as Context,
+        } as InstalledPackageReference,
+        status: {
+          ready: true,
+          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          userReason: "deployed",
+        } as InstalledPackageStatus,
+        latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        pkgVersionReference: { version: "1" } as VersionReference,
+      } as InstalledPackageSummary,
     ];
   });
   afterEach(() => {
@@ -217,25 +232,37 @@ context("when apps available", () => {
   it("filters apps", () => {
     state.apps.listOverview = [
       {
-        releaseName: "foo",
-        namespace: "foobar",
-        chartMetadata: {
-          name: "foobar",
-          version: "1.0.0",
-          appVersion: "0.1.0",
-        },
-        status: "deployed",
-      } as IAppOverview,
+        name: "foo",
+        installedPackageRef: {
+          identifier: "apache/1",
+          pkgVersion: "1.0.0",
+          context: { cluster: "", namespace: "foobar" } as Context,
+        } as InstalledPackageReference,
+        status: {
+          ready: true,
+          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          userReason: "deployed",
+        } as InstalledPackageStatus,
+        latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        pkgVersionReference: { version: "1" } as VersionReference,
+      } as InstalledPackageSummary,
       {
-        releaseName: "bar",
-        namespace: "foobar",
-        chartMetadata: {
-          name: "foobar",
-          version: "1.0.0",
-          appVersion: "0.1.0",
-        },
-        status: "deployed",
-      } as IAppOverview,
+        name: "bar",
+        installedPackageRef: {
+          identifier: "apache/1",
+          pkgVersion: "1.0.0",
+          context: { cluster: "", namespace: "foobar" } as Context,
+        } as InstalledPackageReference,
+        status: {
+          ready: true,
+          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          userReason: "deployed",
+        } as InstalledPackageStatus,
+        latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        pkgVersionReference: { version: "1" } as VersionReference,
+      } as InstalledPackageSummary,
     ];
     jest.spyOn(qs, "parse").mockReturnValue({
       q: "bar",

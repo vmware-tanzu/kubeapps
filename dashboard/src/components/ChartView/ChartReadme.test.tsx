@@ -1,53 +1,29 @@
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import ReactMarkdown from "react-markdown";
-import * as ReactRedux from "react-redux";
 import { HashLink as Link } from "react-router-hash-link";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import ChartReadme from "./ChartReadme";
 
-const cluster = "default";
-const namespace = "chart-namespace";
-const version = "1.2.3";
 const defaultProps = {
-  cluster,
-  namespace,
-  version,
-  chartID: "stable/wordpress",
-  getChartReadme: jest.fn(),
+  error: undefined,
+  readme: "",
 };
 
-let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.charts = {
     ...actions.charts,
-    getChartReadme: jest.fn(),
   };
-  const mockDispatch = jest.fn();
-  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
 });
 
 afterEach(() => {
   actions.kube = { ...kubeaActions };
-  spyOnUseDispatch.mockRestore();
 });
 
 it("behaves as a loading component", () => {
   const wrapper = mountWrapper(defaultStore, <ChartReadme {...defaultProps} />);
   expect(wrapper.find(LoadingWrapper)).toExist();
-});
-
-describe("getChartReadme", () => {
-  it("gets triggered when mounting", () => {
-    mountWrapper(defaultStore, <ChartReadme {...defaultProps} />);
-    expect(actions.charts.getChartReadme).toHaveBeenCalledWith(
-      cluster,
-      namespace,
-      defaultProps.chartID,
-      version,
-    );
-  });
 });
 
 it("renders the ReactMarkdown content is readme is present", () => {

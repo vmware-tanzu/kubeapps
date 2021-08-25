@@ -111,14 +111,7 @@ export default function ChartView() {
             <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
           </Column>
           <Column span={9}>
-            <ChartReadme
-              readme={readme}
-              error={readmeError}
-              version={pkgVersion!}
-              cluster={cluster}
-              namespace={chartNamespace}
-              packageId={packageId}
-            />
+            <ChartReadme readme={readme} error={readmeError} />
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(

@@ -1,6 +1,8 @@
+import { JSONSchemaType } from "ajv";
+import { PackageAppVersion } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IChartVersion } from "shared/types";
+import { IChartState } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import DeploymenetFormBody, { IDeploymentFormBodyProps } from "./DeploymentFormBody";
 import DifferentialSelector from "./DifferentialSelector";
@@ -18,9 +20,7 @@ const defaultProps: IDeploymentFormBodyProps = {
 
 jest.useFakeTimers();
 
-const versions = [
-  { id: "foo", attributes: { version: "1.2.3" }, relationships: { chart: { data: { repo: {} } } } },
-] as IChartVersion[];
+const versions = [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }] as PackageAppVersion[];
 
 // Note that most of the tests that cover DeploymentFormBody component are in
 // in the DeploymentForm and UpgradeForm parent components
@@ -32,13 +32,15 @@ it("should modify the original values of the differential component if parsed as
 
 c: d
 `;
-  const schema = { properties: { a: { type: "string", form: true } } };
+  const schema = {
+    properties: { a: { type: "string", form: true } },
+  } as unknown as JSONSchemaType<any>;
   const selected = {
     values: oldValues,
     schema,
-    versions: [versions[0], { ...versions[0], attributes: { version: "1.2.4" } } as IChartVersion],
+    versions: [versions[0], { ...versions[0], pkgVersion: "1.2.4" } as PackageAppVersion],
     version: versions[0],
-  };
+  } as IChartState["selected"];
 
   const wrapper = mountWrapper(
     defaultStore,

@@ -1,27 +1,36 @@
 import { CdsButton } from "@cds/react/button";
+import {
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import ReactTooltip from "react-tooltip";
-import { hapi } from "shared/hapi/release";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import StatusAwareButton from "./StatusAwareButton";
 
 it("tests the disabled flag and tooltip for each release status condition", async () => {
   type TProps = {
-    code: hapi.release.Status.Code | null | undefined;
+    code: InstalledPackageStatus_StatusReason | null | undefined;
     disabled: boolean;
     tooltip?: string;
   };
 
   // this should cover all conditions
   const testsProps: TProps[] = [
-    { code: 0, disabled: false, tooltip: undefined },
-    { code: 1, disabled: false, tooltip: undefined },
-    { code: 2, disabled: false, tooltip: undefined },
-    { code: 3, disabled: false, tooltip: undefined },
-    { code: 4, disabled: false, tooltip: undefined },
-    { code: 5, disabled: true, tooltip: "deleted" },
-    { code: 6, disabled: true, tooltip: "installation" },
-    { code: 7, disabled: true, tooltip: "upgrade" },
-    { code: 8, disabled: true, tooltip: "rollback" },
+    {
+      code: InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED,
+      disabled: false,
+      tooltip: "STATUS_REASON_UNSPECIFIED",
+    },
+    {
+      code: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      disabled: false,
+      tooltip: "The application is pending installation.",
+    },
+    {
+      code: InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
+      disabled: false,
+      tooltip: "The application is being deleted.",
+    },
     { code: undefined, disabled: true, tooltip: undefined },
     { code: null, disabled: true, tooltip: undefined },
   ];
@@ -37,8 +46,8 @@ it("tests the disabled flag and tooltip for each release status condition", asyn
         break;
       default:
         releaseStatus = {
-          code: testProps.code,
-        };
+          reason: testProps.code,
+        } as InstalledPackageStatus;
     }
     const disabled = testProps.disabled;
     const tooltip = testProps.tooltip;
