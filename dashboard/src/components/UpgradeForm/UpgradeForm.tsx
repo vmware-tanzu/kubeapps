@@ -88,9 +88,9 @@ function UpgradeForm({
   useEffect(() => {
     if (deployed.values && !modifications) {
       // Calculate modifications from the default values
-      const defaultValuesObj = yaml.load(deployed.values) || "";
-      const deployedValuesObj = yaml.load(appCurrentValues || "") || "";
-      const newModifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
+      const defaultValuesObj = yaml.load(deployed.values);
+      const deployedValuesObj = yaml.load(appCurrentValues || "");
+      const newModifications = jsonpatch.compare(defaultValuesObj as any, deployedValuesObj as any);
       const values = applyModifications(newModifications, deployed.values);
       setModifications(newModifications);
       setAppValues(values);

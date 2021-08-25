@@ -8,13 +8,19 @@
 featureFlags:
   kubeappsAPIsServer: true
 
+## @section kubeappsapis parameters
 kubeappsapis:
   ## @param kubeappsapis.unsafeUseDemoSA If true, replace the user's credentials by a full-granted demo service account. Just intented for development purposes.
   unsafeUseDemoSA: false
+  ## @param kubeappsapis.enabledPlugins Enabled plugins for the Kubeapps-APIs service
+  ## e.g:
+  ## enabledPlugins:
+  ## - helm
+  ## - fluxv2
+  ## - kapp_controller
+  ##
   enabledPlugins:
     - helm
-    # - fluxv2
-    # - kapp_controller
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
@@ -40,6 +46,8 @@ kubeappsapis:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
+  ## @param kubeappsapis.replicaCount Number of frontend replicas to deploy
+  ##
   replicaCount: 1
   ## @param kubeappsapis.terminationGracePeriodSeconds The grace time period for sig term
   ## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
@@ -204,13 +212,11 @@ kubeappsapis:
     ## @param kubeappsapis.service.annotations Additional custom annotations for KubeappsAPIs service
     ##
     annotations: {}
-
-## Redis chart configuration
-## ref: https://github.com/helm/charts/blob/master/stable/redis/values.yaml
-## Redis server to satisfy the applications caching requirements
+## Redis&trade; chart configuration
+## ref: https://github.com/bitnami/charts/blob/master/bitnami/redis/values.yaml
 ##
 redis:
-  ## @param redis.redisPassword Password
+  ## @param redis.redisPassword Password used in Redis&trade;
   ## ref: https://github.com/bitnami/bitnami-docker-redis/blob/master/README.md#setting-the-server-password-on-first-run
   ##
   redisPassword: ""
@@ -220,7 +226,7 @@ redis:
   ## plugin cache support has been generalised so all plugins use Redis, we'll need
   ## to manually enable this in dev while ensuring it is false for releases (as it
   ## is a conditional dependency in the Chart.yaml).
-  enabled: true
-  # In dev, just like postgres we don't need replicas.
+  enabled: false
   replica:
+    ## @param redis.replica.replicaCount Number of Redis&trade; replicas to deploy
     replicaCount: 0
