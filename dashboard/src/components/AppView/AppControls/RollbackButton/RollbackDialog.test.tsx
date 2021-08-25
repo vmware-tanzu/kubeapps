@@ -36,7 +36,7 @@ it("should submit the current revision", () => {
     (submit.prop("onClick") as any)();
   });
   wrapper.update();
-  expect(onConfirm).toBeCalledWith((Number(currentRevision) - 1).toString());
+  expect(onConfirm).toBeCalledWith((Number(currentRevision) - 1));
 });
 
 it("should disable the rollback button if there are no revisions", () => {

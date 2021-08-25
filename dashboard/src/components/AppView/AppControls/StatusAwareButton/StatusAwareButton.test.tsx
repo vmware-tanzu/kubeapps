@@ -17,18 +17,13 @@ it("tests the disabled flag and tooltip for each release status condition", asyn
   // this should cover all conditions
   const testsProps: TProps[] = [
     {
-      code: InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED,
-      disabled: false,
-      tooltip: "STATUS_REASON_UNSPECIFIED",
-    },
-    {
       code: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
-      disabled: false,
+      disabled: true,
       tooltip: "The application is pending installation.",
     },
     {
       code: InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
-      disabled: false,
+      disabled: true,
       tooltip: "The application is being deleted.",
     },
     { code: undefined, disabled: true, tooltip: undefined },

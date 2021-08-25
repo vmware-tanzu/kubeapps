@@ -12,18 +12,16 @@ export interface IStatusAwareButtonProps {
 
 export default function StatusAwareButton<T extends IStatusAwareButtonProps>(props: T) {
   const { id, releaseStatus, ...otherProps } = props;
-  // Disable the button if: the status code is undefined or null OR the status code is (unspecified, uninstalled or pending)
+  // Disable the button if: the status code is undefined or null OR the status code is (uninstalled or pending)
   const disabled =
     releaseStatus?.reason == null
       ? true
       : [
-          InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED,
           InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
           InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
         ].includes(releaseStatus.reason);
 
   const tooltips = {
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED]: "STATUS_REASON_UNSPECIFIED",
     [InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED]:
       "The application is being deleted.",
     [InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING]:

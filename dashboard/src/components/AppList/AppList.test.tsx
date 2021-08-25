@@ -203,7 +203,7 @@ context("when apps available", () => {
       {
         name: "foo",
         installedPackageRef: {
-          identifier: "apache/1",
+          identifier: "bar/foo",
           pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "foobar" } as Context,
         } as InstalledPackageReference,
@@ -214,6 +214,7 @@ context("when apps available", () => {
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
         latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        currentVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
         pkgVersionReference: { version: "1" } as VersionReference,
       } as InstalledPackageSummary,
     ];
@@ -234,7 +235,7 @@ context("when apps available", () => {
       {
         name: "foo",
         installedPackageRef: {
-          identifier: "apache/1",
+          identifier: "foo/bar",
           pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "foobar" } as Context,
         } as InstalledPackageReference,
@@ -245,12 +246,13 @@ context("when apps available", () => {
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
         latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        currentVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
         pkgVersionReference: { version: "1" } as VersionReference,
       } as InstalledPackageSummary,
       {
         name: "bar",
         installedPackageRef: {
-          identifier: "apache/1",
+          identifier: "foobar/bar",
           pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "foobar" } as Context,
         } as InstalledPackageReference,
@@ -261,6 +263,7 @@ context("when apps available", () => {
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
         latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        currentVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
         pkgVersionReference: { version: "1" } as VersionReference,
       } as InstalledPackageSummary,
     ];
