@@ -147,8 +147,10 @@ export function fetchApps(
 ): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(listApps());
+    let installedPackageSummaries;
     try {
-      const { installedPackageSummaries } = await App.GetInstalledPackageSummaries(cluster, ns);
+      const res = await App.GetInstalledPackageSummaries(cluster, ns);
+      installedPackageSummaries = res?.installedPackageSummaries;
       dispatch(receiveAppList(installedPackageSummaries));
       return installedPackageSummaries;
     } catch (e) {
