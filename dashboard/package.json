@@ -37,7 +37,7 @@
     "react-helmet": "^6.1.0",
     "react-intl": "^5.20.10",
     "react-jsonschema-form": "^1.8.1",
-    "react-markdown": "^6.0.2",
+    "react-markdown": "^7.0.0",
     "react-minimal-pie-chart": "^8.2.0",
     "react-redux": "^7.2.4",
     "react-router-dom": "^5.2.0",
