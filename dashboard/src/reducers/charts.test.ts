@@ -68,17 +68,6 @@ describe("chartReducer", () => {
     ).toEqual({ ...initialState });
   });
 
-  it("errorChartCatetories", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.errorChartCatetories) as any,
-    });
-    expect(state).toEqual({
-      ...initialState,
-      isFetching: false,
-      categories: [],
-    });
-  });
-
   it("requestCharts (without page)", () => {
     const state = chartsReducer(undefined, {
       type: getType(actions.charts.requestCharts) as any,
@@ -228,39 +217,6 @@ describe("chartReducer", () => {
     expect(state2.items.length).toBe(2);
   });
 
-  it("two receiveCharts should add items (remove dups)", () => {
-    const state1 = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "2",
-          categories: ["foo"],
-        },
-        page: 1,
-      } as IReceiveChartsActionPayload,
-    });
-    const state2 = chartsReducer(state1, {
-      type: getType(actions.charts.receiveCharts) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "2",
-          categories: ["foo"],
-        },
-        page: 2,
-      } as IReceiveChartsActionPayload,
-    });
-    expect(state2).toEqual({
-      ...initialState,
-      isFetching: false,
-      hasFinishedFetching: true,
-      categories: ["foo"],
-      items: [availablePackageSummary1],
-    });
-    expect(state2.items.length).toBe(1);
-  });
-
   it("requestCharts and receiveCharts with multiple pages", () => {
     const stateReq1 = chartsReducer(initialState, {
       type: getType(actions.charts.requestCharts) as any,
@@ -346,7 +302,8 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: true,
       categories: ["foo"],
-      items: [availablePackageSummary1, availablePackageSummary2],
+      // we are not filtering out dups currently
+      items: [availablePackageSummary1, availablePackageSummary2, availablePackageSummary1],
     });
   });
 
