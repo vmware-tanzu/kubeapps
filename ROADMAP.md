@@ -27,10 +27,10 @@ The following table includes the current roadmap for Kubeapps. If you have any q
 Last Updated: August 2021
 Theme|Description|Timeline|
 |--|--|--|
-|Pluggable architecture |Kubeapps moves forward to define a plugin interface for further package support |Aug 2021|
-|Kubeapps API service |Description |Aug 2021|
-|UI integration for pluggable API|The UI interacts with a single service (Kubeapps APIs) for all packaging functionality|Aug 2021|
-|direct-helm plugin |The direct-Helm plugin aims at just replacing the current logic (mostly implemented by the assetsvc) to the plugin. |Aug 2021|
-|flux plugin |Description |Sep 2021|
+|Pluggable architecture |Kubeapps moves forward to define a plugin interface for further package support |Q3 - 2021|
+|Kubeapps API service |Description |Q3 - 2021|
+|UI integration for pluggable API|The UI interacts with a single service (Kubeapps APIs) for all packaging functionality|Q3 - 2021|
+|direct-helm plugin |The direct-Helm plugin aims at just replacing the current logic (mostly implemented by the assetsvc) to the plugin. |Q3 - 2021|
+|flux plugin |Description |Q3 2021|
 |kapp-controller plugin |Description |Exploring/Ongoing|
 |Improve our CI/CD systems |Description |Exploring/Ongoing|
