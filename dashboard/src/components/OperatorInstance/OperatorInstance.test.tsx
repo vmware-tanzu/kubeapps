@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import AccessURLTable from "components/AppView/AccessURLTable/AccessURLTable";
-import AppNotes from "components/AppView/AppNotes";
+import AppNotes from "components/AppView/AppNotes/AppNotes";
 import AppSecrets from "components/AppView/AppSecrets";
 import AppValues from "components/AppView/AppValues/AppValues";
 import ResourceTabs from "components/AppView/ResourceTabs";
