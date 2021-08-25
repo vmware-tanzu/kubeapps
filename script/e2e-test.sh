@@ -207,7 +207,8 @@ images=(
   "dashboard"
   "kubeops"
   "pinniped-proxy"
-  "kubeappsapis"
+  # TODO: uncomment once the image is being built by bitnami
+  # "kubeappsapis"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -225,7 +226,9 @@ img_flags=(
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
   "--set" "pinnipedProxy.image.repository=${images[5]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[6]}"
+  "--set" "kubeappsapis.image.repository=kubeapps/kubeapps-apis-ci"
+  # TODO: uncomment once the image is being built by bitnami
+  # "--set" "kubeappsapis.image.repository=${images[6]}"
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
