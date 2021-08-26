@@ -66,7 +66,7 @@ it("uses the first version as default in the select input", () => {
       pkgVersion: "1.2.4",
       appVersion: "10.0.0",
     },
-  ]
+  ];
   const wrapper = mount(<ChartHeader {...testProps} versions={versions} />);
   expect(wrapper.find("select").prop("value")).toBe("1.2.3");
 });

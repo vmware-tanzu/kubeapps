@@ -317,9 +317,7 @@ describe("fetchCharts", () => {
 });
 
 describe("fetchChartVersions", () => {
-  const packageAppVersions = [
-    { pkgVersion: "1.2.3", appVersion: "4.5.6" },
-  ];
+  const packageAppVersions = [{ pkgVersion: "1.2.3", appVersion: "4.5.6" }];
   const availableVersionsResponse: GetAvailablePackageVersionsResponse = {
     packageAppVersions,
   };
@@ -350,13 +348,11 @@ describe("fetchChartVersion", () => {
     const response: GetAvailablePackageDetailResponse = {
       availablePackageDetail: defaultAvailablePackageDetail,
     };
-    mockGetAvailablePackageDetail = jest
-      .fn()
-      .mockImplementation(() => Promise.resolve(response));
+    mockGetAvailablePackageDetail = jest.fn().mockImplementation(() => Promise.resolve(response));
     jest
       .spyOn(Chart, "getAvailablePackageDetail")
       .mockImplementation(mockGetAvailablePackageDetail);
-  })
+  });
 
   it("gets a chart version", async () => {
     const expectedActions = [
@@ -369,7 +365,12 @@ describe("fetchChartVersion", () => {
     ];
     await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([cluster, namespace, "foo", "1.0.0"]);
+    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
+      cluster,
+      namespace,
+      "foo",
+      "1.0.0",
+    ]);
   });
 
   it("gets a chart version with tag", async () => {
@@ -385,13 +386,18 @@ describe("fetchChartVersion", () => {
       actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"]);
+    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
+      cluster,
+      namespace,
+      "foo",
+      "1.0.0-alpha+1.2.3-beta2",
+    ]);
   });
 
   it("dispatches an error if it's unexpected", async () => {
-    jest
-      .spyOn(Chart, "getAvailablePackageDetail")
-      .mockImplementation(() => { throw new Error("Boom!")});
+    jest.spyOn(Chart, "getAvailablePackageDetail").mockImplementation(() => {
+      throw new Error("Boom!");
+    });
 
     const expectedActions = [
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
@@ -430,6 +436,11 @@ describe("getDeployedChartVersion", () => {
     );
 
     expect(store.getActions()).toEqual(expectedActions);
-    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([cluster, namespace, "foo", "1.0.0"]);
+    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
+      cluster,
+      namespace,
+      "foo",
+      "1.0.0",
+    ]);
   });
 });
