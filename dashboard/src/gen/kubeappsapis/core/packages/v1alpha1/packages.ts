@@ -334,7 +334,11 @@ export interface AvailablePackageDetail {
   /**
    * Custom data added by the plugin
    *
-   * Some additional information added by the plugin
+   * A plugin can define custom details for data which is not yet, or never will
+   * be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+   * of an `Any` field means that each plugin can define the structure of this
+   * message as required, while still satisfying the core interface.
+   * See https://developers.google.com/protocol-buffers/docs/proto3#any
    */
   customDetail?: Any;
 }
@@ -494,6 +498,16 @@ export interface InstalledPackageDetail {
    * The latest version available for this package, regardless of the pkg_version_reference.
    */
   latestVersion?: PackageAppVersion;
+  /**
+   * Custom data added by the plugin
+   *
+   * A plugin can define custom details for data which is not yet, or never will
+   * be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+   * of an `Any` field means that each plugin can define the structure of this
+   * message as required, while still satisfying the core interface.
+   * See https://developers.google.com/protocol-buffers/docs/proto3#any
+   */
+  customDetail?: Any;
 }
 
 /**
@@ -2557,6 +2571,9 @@ export const InstalledPackageDetail = {
     if (message.latestVersion !== undefined) {
       PackageAppVersion.encode(message.latestVersion, writer.uint32(90).fork()).ldelim();
     }
+    if (message.customDetail !== undefined) {
+      Any.encode(message.customDetail, writer.uint32(114).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -2599,6 +2616,9 @@ export const InstalledPackageDetail = {
           break;
         case 11:
           message.latestVersion = PackageAppVersion.decode(reader, reader.uint32());
+          break;
+        case 14:
+          message.customDetail = Any.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -2665,6 +2685,11 @@ export const InstalledPackageDetail = {
     } else {
       message.latestVersion = undefined;
     }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromJSON(object.customDetail);
+    } else {
+      message.customDetail = undefined;
+    }
     return message;
   },
 
@@ -2704,6 +2729,8 @@ export const InstalledPackageDetail = {
       (obj.latestVersion = message.latestVersion
         ? PackageAppVersion.toJSON(message.latestVersion)
         : undefined);
+    message.customDetail !== undefined &&
+      (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
     return obj;
   },
 
@@ -2769,6 +2796,11 @@ export const InstalledPackageDetail = {
       message.latestVersion = PackageAppVersion.fromPartial(object.latestVersion);
     } else {
       message.latestVersion = undefined;
+    }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromPartial(object.customDetail);
+    } else {
+      message.customDetail = undefined;
     }
     return message;
   },
