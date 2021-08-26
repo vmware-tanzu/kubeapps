@@ -2,13 +2,13 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.16.5"
+    default: "1.16.7"
   NODE_VERSION:
     type: string
     default: "14"
   RUST_VERSION:
     type: string
-    default: "1.53.0"
+    default: "1.54.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.6"
@@ -17,19 +17,19 @@ parameters:
     default: "v3.1.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.6.2"
+    default: "v3.6.3"
   OLM_VERSION:
     type: "string"
-    default: "v0.18.2"
+    default: "v0.18.3"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.21.2"
+    default: "v1.22.1"
   GITHUB_VERSION:
     type: "string"
-    default: "1.12.1"
+    default: "1.14.0"
   SEMVER_VERSION:
     type: "string"
     default: "3.2.0"
@@ -38,10 +38,10 @@ parameters:
     default: "v0.11.1"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.20.7@sha256:cbeaf907fc78ac97ce7b625e4bf0de16e3ea725daf6b04f930bd14c67c671ff9"
+    default: "v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "11.12.0-debian-10-r43"
+    default: "11.13.0-debian-10-r0"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -121,7 +121,7 @@ workflows:
             - build_pinniped_proxy
       - sync_chart_from_bitnami:
           <<: *build_on_master
-      - GKE_1_18_MASTER:
+      - GKE_1_20_MASTER:
           <<: *build_on_tag
           requires:
             - test_go
@@ -130,7 +130,7 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_18_LATEST_RELEASE:
+      - GKE_1_20_LATEST_RELEASE:
           <<: *build_on_tag
           requires:
             - test_go
@@ -165,16 +165,16 @@ workflows:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_18_MASTER
-            - GKE_1_18_LATEST_RELEASE
+            - GKE_1_20_MASTER
+            - GKE_1_20_LATEST_RELEASE
             - GKE_1_19_MASTER
             - GKE_1_19_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_18_MASTER
-            - GKE_1_18_LATEST_RELEASE
+            - GKE_1_20_MASTER
+            - GKE_1_20_LATEST_RELEASE
             - GKE_1_19_MASTER
             - GKE_1_19_LATEST_RELEASE
 
@@ -635,17 +635,17 @@ jobs:
       number:
         type: string
     <<: *local_e2e_steps
-  GKE_1_18_MASTER:
+  GKE_1_20_MASTER:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.18"
+      GKE_BRANCH: "1.20"
       KUBEAPPS_DB: "postgresql"
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_18_LATEST_RELEASE:
+  GKE_1_20_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.18"
+      GKE_BRANCH: "1.20"
       KUBEAPPS_DB: "postgresql"
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"

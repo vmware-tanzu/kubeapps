@@ -342,6 +342,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				corev1.Context{},
 				corev1.VersionReference{},
 				corev1.InstalledPackageStatus{},
+				corev1.PackageAppVersion{},
 				plugins.Plugin{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -574,6 +575,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				corev1.Context{},
 				corev1.VersionReference{},
 				corev1.InstalledPackageStatus{},
+				corev1.PackageAppVersion{},
 				plugins.Plugin{},
 				corev1.ReconciliationOptions{},
 				corev1.AvailablePackageReference{})
@@ -718,16 +720,21 @@ var redis_summary_installed = &corev1.InstalledPackageSummary{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
-	CurrentPkgVersion: "14.4.0",
-	CurrentAppVersion: "6.2.4",
-	PkgDisplayName:    "redis",
-	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "6.2.4",
+	},
+	PkgDisplayName:   "redis",
+	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded",
 	},
-	LatestPkgVersion: "14.6.1",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
+	},
 }
 
 var redis_summary_failed = &corev1.InstalledPackageSummary{
@@ -743,15 +750,21 @@ var redis_summary_failed = &corev1.InstalledPackageSummary{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
-	CurrentAppVersion: "6.2.4",
-	PkgDisplayName:    "redis",
-	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "6.2.4",
+	},
+	PkgDisplayName:   "redis",
+	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
 		UserReason: "InstallFailed",
 	},
-	LatestPkgVersion: "14.6.1",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
+	},
 }
 
 var redis_summary_pending = &corev1.InstalledPackageSummary{
@@ -767,15 +780,21 @@ var redis_summary_pending = &corev1.InstalledPackageSummary{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
-	CurrentAppVersion: "6.2.4",
-	PkgDisplayName:    "redis",
-	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "6.2.4",
+	},
+	PkgDisplayName:   "redis",
+	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
 		UserReason: "Progressing",
 	},
-	LatestPkgVersion: "14.6.1",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
+	},
 }
 
 var airflow_summary_installed = &corev1.InstalledPackageSummary{
@@ -791,11 +810,16 @@ var airflow_summary_installed = &corev1.InstalledPackageSummary{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "6.7.1",
 	},
-	CurrentPkgVersion: "6.7.1",
-	LatestPkgVersion:  "10.2.1",
-	CurrentAppVersion: "1.10.12",
-	ShortDescription:  "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
-	PkgDisplayName:    "airflow",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "6.7.1",
+		AppVersion: "1.10.12",
+	},
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "10.2.1",
+		AppVersion: "2.1.0",
+	},
+	ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+	PkgDisplayName:   "airflow",
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -816,16 +840,21 @@ var redis_summary_latest = &corev1.InstalledPackageSummary{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "*",
 	},
-	CurrentPkgVersion: "14.4.0",
-	CurrentAppVersion: "6.2.4",
-	PkgDisplayName:    "redis",
-	ShortDescription:  "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "6.2.4",
+	},
+	PkgDisplayName:   "redis",
+	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded",
 	},
-	LatestPkgVersion: "14.6.1",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
+	},
 }
 
 var airflow_summary_semver = &corev1.InstalledPackageSummary{
@@ -841,11 +870,16 @@ var airflow_summary_semver = &corev1.InstalledPackageSummary{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "<=6.7.1",
 	},
-	CurrentPkgVersion: "6.7.1",
-	LatestPkgVersion:  "10.2.1",
-	CurrentAppVersion: "1.10.12",
-	ShortDescription:  "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
-	PkgDisplayName:    "airflow",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "6.7.1",
+		AppVersion: "1.10.12",
+	},
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "10.2.1",
+		AppVersion: "2.1.0",
+	},
+	ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+	PkgDisplayName:   "airflow",
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1076,6 +1110,10 @@ var redis_detail_failed = &corev1.InstalledPackageDetail{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "1.2.3",
+	},
 	ReconciliationOptions: &corev1.ReconciliationOptions{
 		Interval: 60,
 	},
@@ -1104,6 +1142,10 @@ var redis_detail_pending = &corev1.InstalledPackageDetail{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "1.2.3",
+	},
 	ReconciliationOptions: &corev1.ReconciliationOptions{
 		Interval: 60,
 	},
@@ -1128,8 +1170,11 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 		Identifier: "my-redis",
 		Plugin:     fluxPlugin,
 	},
-	Name:              "my-redis",
-	CurrentPkgVersion: "14.4.0",
+	Name: "my-redis",
+	CurrentVersion: &corev1.PackageAppVersion{
+		AppVersion: "1.2.3",
+		PkgVersion: "14.4.0",
+	},
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
@@ -1157,8 +1202,11 @@ var redis_detail_completed_with_values_and_reconciliation_options = &corev1.Inst
 		Identifier: "my-redis",
 		Plugin:     fluxPlugin,
 	},
-	Name:              "my-redis",
-	CurrentPkgVersion: "14.4.0",
+	Name: "my-redis",
+	CurrentVersion: &corev1.PackageAppVersion{
+		AppVersion: "1.2.3",
+		PkgVersion: "14.4.0",
+	},
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
