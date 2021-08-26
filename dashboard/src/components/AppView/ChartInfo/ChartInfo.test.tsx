@@ -1,5 +1,6 @@
 import Alert from "components/js/Alert";
 import {
+  AvailablePackageDetail,
   AvailablePackageReference,
   Context,
   InstalledPackageDetail,
@@ -38,10 +39,11 @@ const defaultProps = {
       userReason: "deployed",
     } as InstalledPackageStatus,
   } as InstalledPackageDetail,
+  appDetails: {} as AvailablePackageDetail,
   cluster: "default",
 };
 
-it("renders a app item", () => {
+it("renders an app item", () => {
   const wrapper = mountWrapper(defaultStore, <ChartInfo {...defaultProps} />);
   // Renders info about the description and versions
   const subsections = wrapper.find(".left-menu-subsection");
@@ -63,34 +65,29 @@ context("ChartUpdateInfo: when information about updates is available", () => {
   it("renders an new version found message if the chart latest version is newer", () => {
     const appWithUpdates = {
       ...defaultProps.app,
-      updateInfo: { upToDate: false, appLatestVersion: "0.0.1", chartLatestVersion: "1.0.0" },
+      latestVersion: {
+        pkgVersion: "1.0.1",
+        appVersion: "0.0.1",
+      },
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
       defaultStore,
       <ChartInfo {...defaultProps} app={appWithUpdates} />,
     );
-    expect(wrapper.find(Alert).text()).toContain("A new chart version is available: 1.0.0");
+    expect(wrapper.find(Alert).text()).toContain("A new package version is available: 1.0.1");
   });
   it("renders an new version found message if the app latest version is newer", () => {
     const appWithUpdates = {
       ...defaultProps.app,
-      updateInfo: { upToDate: false, appLatestVersion: "1.1.0", chartLatestVersion: "1.0.0" },
+      latestVersion: {
+        pkgVersion: "1.0.1",
+        appVersion: "10.1.0",
+      },
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
       defaultStore,
       <ChartInfo {...defaultProps} app={appWithUpdates} />,
     );
-    expect(wrapper.find(Alert).text()).toContain("A new app version is available: 1.1.0");
-  });
-  it("renders a warning if there are errors with the update info", () => {
-    const appWithUpdates = {
-      ...defaultProps.app,
-      updateInfo: { error: new Error("Boom!"), upToDate: false, chartLatestVersion: "" },
-    } as InstalledPackageDetail;
-    const wrapper = mountWrapper(
-      defaultStore,
-      <ChartInfo {...defaultProps} app={appWithUpdates} />,
-    );
-    expect(wrapper.find(Alert).text()).toContain("Update check failed. Boom!");
+    expect(wrapper.find(Alert).text()).toContain("A new app version is available: 10.1.0");
   });
 });
