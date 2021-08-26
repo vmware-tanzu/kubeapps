@@ -57,7 +57,7 @@ it("renders a not found error when error is set", () => {
 
 it("renders an alert when error is set", () => {
   const wrapper = mountWrapper(defaultStore, <ChartReadme {...defaultProps} error={"Boom!"} />);
-  expect(wrapper.text()).toContain("Unable to fetch chart README: Boom!");
+  expect(wrapper.text()).toContain("Unable to fetch package README: Boom!");
 });
 
 it("renders the ReactMarkdown content adding IDs for the titles", () => {

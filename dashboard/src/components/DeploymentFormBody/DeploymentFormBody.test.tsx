@@ -1,5 +1,8 @@
 import { JSONSchemaType } from "ajv";
-import { PackageAppVersion } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChartState } from "shared/types";
@@ -39,7 +42,7 @@ c: d
     values: oldValues,
     schema,
     versions: [versions[0], { ...versions[0], pkgVersion: "1.2.4" } as PackageAppVersion],
-    version: versions[0],
+    availablePackageDetail: { name: "my-version" } as AvailablePackageDetail,
   } as IChartState["selected"];
 
   const wrapper = mountWrapper(
