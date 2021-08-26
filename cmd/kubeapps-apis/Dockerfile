@@ -1,12 +1,12 @@
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.16.5 as builder
+FROM bitnami/golang:1.16.7 as builder
 WORKDIR /go/src/github.com/kubeapps/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
 COPY cmd cmd
 
-ARG BUF_VERSION="0.43.2"
+ARG BUF_VERSION="0.52.0"
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
 
 # With the trick below, Go's build cache is kept between builds.
