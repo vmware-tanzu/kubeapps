@@ -484,4 +484,5 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
 
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
   manifest: any;
+  revision: number;
 }

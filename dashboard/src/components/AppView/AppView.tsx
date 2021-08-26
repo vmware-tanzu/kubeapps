@@ -146,7 +146,7 @@ export default function AppView() {
   }, [cluster, dispatch, namespace, releaseName]);
 
   useEffect(() => {
-    if (!app || !app["manifest"]) {
+    if (!app || !app.manifest) {
       return;
     }
 
@@ -189,8 +189,8 @@ export default function AppView() {
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
     resourceRefs;
+  const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
-  const revision = app?.installedPackageRef?.identifier.split("/")[1] ?? "0";
   return (
     <section>
       <PageHeader

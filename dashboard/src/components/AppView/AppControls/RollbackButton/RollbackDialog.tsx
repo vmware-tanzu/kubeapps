@@ -9,7 +9,7 @@ import "./RollbackDialog.css";
 
 interface IRollbackDialogProps {
   loading: boolean;
-  currentRevision: string;
+  currentRevision: number;
   onConfirm: (revision: number) => Promise<any>;
   closeModal: () => void;
   error?: Error;
@@ -27,10 +27,10 @@ function RollbackDialog({
   const [targetRevision, setTargetRevision] = useState(currentRevision);
   const [hasUserChanges, setHasUserChanges] = useState(false);
   const options: number[] = [];
-  const disableRollback = currentRevision === "1";
+  const disableRollback = currentRevision === 1;
   const selectRevision = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setHasUserChanges(true);
-    setTargetRevision(e.target.value);
+    setTargetRevision(Number(e.target.value));
   };
   const onClick = () => {
     onConfirm(Number(targetRevision));
@@ -42,7 +42,7 @@ function RollbackDialog({
 
   useEffect(() => {
     if (!hasUserChanges) {
-      setTargetRevision((Number(currentRevision) - 1).toString());
+      setTargetRevision(currentRevision - 1);
     }
   }, [hasUserChanges, currentRevision]);
 
