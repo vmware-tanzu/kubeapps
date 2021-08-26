@@ -17,8 +17,6 @@ const appsReducer = (
   switch (action.type) {
     case getType(actions.apps.requestApps):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveApps):
-      return { ...state, isFetching: false, items: action.payload };
     case getType(actions.apps.errorApp):
       return { ...state, isFetching: false, error: action.payload };
     case getType(actions.apps.selectApp):

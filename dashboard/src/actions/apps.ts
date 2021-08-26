@@ -23,10 +23,6 @@ const { createAction } = deprecated;
 
 export const requestApps = createAction("REQUEST_APPS");
 
-export const receiveApps = createAction("RECEIVE_APPS", resolve => {
-  return (apps: InstalledPackageDetail[]) => resolve(apps);
-});
-
 export const listApps = createAction("REQUEST_APP_LIST");
 
 export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
@@ -63,7 +59,6 @@ export const selectApp = createAction("SELECT_APP", resolve => {
 const allActions = [
   listApps,
   requestApps,
-  receiveApps,
   receiveAppList,
   requestDeleteApp,
   receiveDeleteApp,
