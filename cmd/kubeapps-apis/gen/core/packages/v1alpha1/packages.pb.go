@@ -897,7 +897,11 @@ type AvailablePackageDetail struct {
 	Categories []string `protobuf:"bytes,15,rep,name=categories,proto3" json:"categories,omitempty"`
 	// Custom data added by the plugin
 	//
-	// Some additional information added by the plugin
+	// A plugin can define custom details for data which is not yet, or never will
+	// be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+	// of an `Any` field means that each plugin can define the structure of this
+	// message as required, while still satisfying the core interface.
+	// See https://developers.google.com/protocol-buffers/docs/proto3#any
 	CustomDetail *anypb.Any `protobuf:"bytes,16,opt,name=custom_detail,json=customDetail,proto3" json:"custom_detail,omitempty"`
 }
 
@@ -1264,6 +1268,8 @@ type InstalledPackageDetail struct {
 	//
 	// The latest version available for this package, regardless of the pkg_version_reference.
 	LatestVersion *PackageAppVersion `protobuf:"bytes,11,opt,name=latest_version,json=latestVersion,proto3" json:"latest_version,omitempty"`
+	// Custom data added by the plugin
+	//
 	// A plugin can define custom details for data which is not yet, or never will
 	// be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
 	// of an `Any` field means that each plugin can define the structure of this

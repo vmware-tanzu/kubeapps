@@ -19,10 +19,17 @@ import { BrowserHeaders } from "browser-headers";
 export const protobufPackage = "kubeappsapis.plugins.helm.packages.v1alpha1";
 
 /**
+ * InstalledPackageDetailCustomDataHelm
+ *
  * InstalledPackageDetailCustomDataHelm is a message type used for the
  * InstalledPackageDetail.CustomDetail field by the helm plugin.
  */
 export interface InstalledPackageDetailCustomDataHelm {
+  /**
+   * ReleaseRevision
+   *
+   * A number identifying the Helm revision
+   */
   releaseRevision: number;
 }
 

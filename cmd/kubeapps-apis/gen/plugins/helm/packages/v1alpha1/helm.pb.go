@@ -24,6 +24,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// InstalledPackageDetailCustomDataHelm
+//
 // InstalledPackageDetailCustomDataHelm is a message type used for the
 // InstalledPackageDetail.CustomDetail field by the helm plugin.
 type InstalledPackageDetailCustomDataHelm struct {
@@ -31,6 +33,9 @@ type InstalledPackageDetailCustomDataHelm struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// ReleaseRevision
+	//
+	// A number identifying the Helm revision
 	ReleaseRevision int32 `protobuf:"varint,1,opt,name=release_revision,json=releaseRevision,proto3" json:"release_revision,omitempty"`
 }
 

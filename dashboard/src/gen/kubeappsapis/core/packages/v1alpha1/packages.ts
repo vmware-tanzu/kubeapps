@@ -334,7 +334,11 @@ export interface AvailablePackageDetail {
   /**
    * Custom data added by the plugin
    *
-   * Some additional information added by the plugin
+   * A plugin can define custom details for data which is not yet, or never will
+   * be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+   * of an `Any` field means that each plugin can define the structure of this
+   * message as required, while still satisfying the core interface.
+   * See https://developers.google.com/protocol-buffers/docs/proto3#any
    */
   customDetail?: Any;
 }
@@ -495,6 +499,8 @@ export interface InstalledPackageDetail {
    */
   latestVersion?: PackageAppVersion;
   /**
+   * Custom data added by the plugin
+   *
    * A plugin can define custom details for data which is not yet, or never will
    * be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
    * of an `Any` field means that each plugin can define the structure of this
