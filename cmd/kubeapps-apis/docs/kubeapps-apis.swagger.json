@@ -2138,6 +2138,10 @@
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
           "description": "The latest version available for this package, regardless of the pkg_version_reference.",
           "title": "LatestVersion"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "title": "A plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any"
         }
       },
       "description": "An InstalledPackageDetail includes details about the installed package that are\ntypically useful when presenting a single installed package.",

@@ -43,3 +43,9 @@ service HelmPackagesService {
     };
   }
 }
+
+// InstalledPackageDetailCustomDataHelm is a message type used for the
+// InstalledPackageDetail.CustomDetail field by the helm plugin.
+message InstalledPackageDetailCustomDataHelm {
+  int32 release_revision = 1;
+}

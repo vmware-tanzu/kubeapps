@@ -508,6 +508,13 @@ message InstalledPackageDetail {
   //
   // The latest version available for this package, regardless of the pkg_version_reference.
   PackageAppVersion latest_version = 11;
+
+  // A plugin can define custom details for data which is not yet, or never will
+  // be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+  // of an `Any` field means that each plugin can define the structure of this
+  // message as required, while still satisfying the core interface.
+  // See https://developers.google.com/protocol-buffers/docs/proto3#any
+  google.protobuf.Any custom_detail = 14;
 }
 
 // -- Start other definitions  --
