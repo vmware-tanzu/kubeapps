@@ -733,6 +733,7 @@ var redis_summary_installed = &corev1.InstalledPackageSummary{
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
 	},
 }
 
@@ -750,6 +751,7 @@ var redis_summary_failed = &corev1.InstalledPackageSummary{
 		Version: "14.4.0",
 	},
 	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
 		AppVersion: "6.2.4",
 	},
 	PkgDisplayName:   "redis",
@@ -761,6 +763,7 @@ var redis_summary_failed = &corev1.InstalledPackageSummary{
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
 	},
 }
 
@@ -778,6 +781,7 @@ var redis_summary_pending = &corev1.InstalledPackageSummary{
 		Version: "14.4.0",
 	},
 	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
 		AppVersion: "6.2.4",
 	},
 	PkgDisplayName:   "redis",
@@ -789,6 +793,7 @@ var redis_summary_pending = &corev1.InstalledPackageSummary{
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
 	},
 }
 
@@ -811,6 +816,7 @@ var airflow_summary_installed = &corev1.InstalledPackageSummary{
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "10.2.1",
+		AppVersion: "2.1.0",
 	},
 	ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
 	PkgDisplayName:   "airflow",
@@ -847,6 +853,7 @@ var redis_summary_latest = &corev1.InstalledPackageSummary{
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
 	},
 }
 
@@ -869,6 +876,7 @@ var airflow_summary_semver = &corev1.InstalledPackageSummary{
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "10.2.1",
+		AppVersion: "2.1.0",
 	},
 	ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
 	PkgDisplayName:   "airflow",
@@ -1102,6 +1110,10 @@ var redis_detail_failed = &corev1.InstalledPackageDetail{
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
 	},
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "1.2.3",
+	},
 	ReconciliationOptions: &corev1.ReconciliationOptions{
 		Interval: 60,
 	},
@@ -1116,7 +1128,6 @@ var redis_detail_failed = &corev1.InstalledPackageDetail{
 		Plugin:     fluxPlugin,
 	},
 	PostInstallationNotes: "some notes",
-	CurrentVersion:        &corev1.PackageAppVersion{},
 }
 
 var redis_detail_pending = &corev1.InstalledPackageDetail{
@@ -1130,6 +1141,10 @@ var redis_detail_pending = &corev1.InstalledPackageDetail{
 	Name: "my-redis",
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "14.4.0",
+	},
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "1.2.3",
 	},
 	ReconciliationOptions: &corev1.ReconciliationOptions{
 		Interval: 60,
@@ -1145,7 +1160,6 @@ var redis_detail_pending = &corev1.InstalledPackageDetail{
 		Plugin:     fluxPlugin,
 	},
 	PostInstallationNotes: "some notes",
-	CurrentVersion:        &corev1.PackageAppVersion{},
 }
 
 var redis_detail_completed = &corev1.InstalledPackageDetail{
@@ -1158,6 +1172,7 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 	},
 	Name: "my-redis",
 	CurrentVersion: &corev1.PackageAppVersion{
+		AppVersion: "1.2.3",
 		PkgVersion: "14.4.0",
 	},
 	PkgVersionReference: &corev1.VersionReference{
@@ -1189,6 +1204,7 @@ var redis_detail_completed_with_values_and_reconciliation_options = &corev1.Inst
 	},
 	Name: "my-redis",
 	CurrentVersion: &corev1.PackageAppVersion{
+		AppVersion: "1.2.3",
 		PkgVersion: "14.4.0",
 	},
 	PkgVersionReference: &corev1.VersionReference{
