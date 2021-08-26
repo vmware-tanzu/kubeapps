@@ -407,7 +407,11 @@ message InstalledPackageSummary {
 
   // CurrentVersion
   //
-  // The version of the package which is currently installed.
+  // The current version of the package being reconciled, which may be
+  // in one of these states:
+  //  - has been successfully installed/upgraded or 
+  //  - is currently being installed/upgraded or 
+  //  - has failed to install/upgrade
   PackageAppVersion current_version = 4;
 
   // Installed package icon URL
