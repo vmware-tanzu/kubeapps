@@ -59,7 +59,6 @@ const (
 	globalPackagingNamespace = "kubeapps"
 	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
-	DefaultReleaseRevision   = 1
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
 	DefaultChartHomeURL      = "https://helm.sh/helm"
@@ -1540,20 +1539,17 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
-					version:      2,
 				},
 				{
 					name:      "my-release-2",
 					namespace: "other-namespace",
 					status:    release.StatusDeployed,
-					version:   4,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-1",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
-					version:      6,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1565,7 +1561,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
-							Identifier: "my-release-1/2",
+							Identifier: "my-release-1",
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1592,7 +1588,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
-							Identifier: "my-release-3/6",
+							Identifier: "my-release-3",
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1617,67 +1613,6 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "returns the latest release version for a release regardless of status",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
-			},
-			existingReleases: []releaseStub{
-				{
-					name:         "my-release",
-					namespace:    "namespace-1",
-					chartVersion: "1.2.3",
-					status:       release.StatusDeployed,
-					version:      3,
-				},
-				{
-					name:         "my-release",
-					namespace:    "namespace-1",
-					chartVersion: "1.2.3",
-					status:       release.StatusDeployed,
-					version:      2,
-				},
-				{
-					name:         "my-release",
-					namespace:    "namespace-1",
-					chartVersion: "1.2.3",
-					status:       release.StatusSuperseded,
-					version:      1,
-				},
-			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					{
-						InstalledPackageRef: &corev1.InstalledPackageReference{
-							Context: &corev1.Context{
-								Cluster:   globalPackagingCluster,
-								Namespace: "namespace-1",
-							},
-							Identifier: "my-release/3",
-						},
-						Name:    "my-release",
-						IconUrl: "https://example.com/icon.png",
-						PkgVersionReference: &corev1.VersionReference{
-							Version: "1.2.3",
-						},
-						CurrentVersion: &corev1.PackageAppVersion{
-
-							PkgVersion: "1.2.3",
-							AppVersion: DefaultAppVersion,
-						},
-						LatestVersion: &corev1.PackageAppVersion{
-							PkgVersion: "1.2.3",
-						},
-						Status: &corev1.InstalledPackageStatus{
-							Ready:      true,
-							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-							UserReason: "deployed",
-						},
-					},
-				},
-			},
-		},
-		{
 			name: "returns installed packages across all namespaces",
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: ""},
@@ -1688,21 +1623,18 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
-					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
-					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
-					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1714,7 +1646,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
-							Identifier: "my-release-1/1",
+							Identifier: "my-release-1",
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1741,7 +1673,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
-							Identifier: "my-release-2/1",
+							Identifier: "my-release-2",
 						},
 						Name:    "my-release-2",
 						IconUrl: "https://example.com/icon.png",
@@ -1768,7 +1700,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
-							Identifier: "my-release-3/1",
+							Identifier: "my-release-3",
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1806,21 +1738,18 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
-					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
-					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
-					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1832,7 +1761,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
-							Identifier: "my-release-1/1",
+							Identifier: "my-release-1",
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1859,7 +1788,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
-							Identifier: "my-release-2/1",
+							Identifier: "my-release-2",
 						},
 						Name:    "my-release-2",
 						IconUrl: "https://example.com/icon.png",
@@ -1899,21 +1828,18 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
-					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
-					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
-					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1925,7 +1851,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
-							Identifier: "my-release-3/1",
+							Identifier: "my-release-3",
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1961,7 +1887,6 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
-					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1973,7 +1898,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
-							Identifier: "my-release-1/1",
+							Identifier: "my-release-1",
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -2044,100 +1969,20 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	)
 	testCases := []struct {
 		name               string
-		existingReleases   []releaseStub
+		existingRelease    releaseStub
 		request            *corev1.GetInstalledPackageDetailRequest
 		expectedResponse   *corev1.GetInstalledPackageDetailResponse
 		expectedStatusCode codes.Code
 	}{
 		{
-			name: "returns an installed package detail for the specified identifier",
-			existingReleases: []releaseStub{
-				{
-					name:         releaseName,
-					namespace:    releaseNamespace,
-					chartVersion: releaseVersion,
-					values:       releaseValues,
-					notes:        releaseNotes,
-					status:       release.StatusSuperseded,
-					version:      1,
-				},
-				{
-					name:         releaseName,
-					namespace:    releaseNamespace,
-					chartVersion: releaseVersion,
-					values:       releaseValues,
-					notes:        releaseNotes,
-					status:       release.StatusDeployed,
-					version:      2,
-				},
-			},
-			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: releaseNamespace,
-					},
-					Identifier: releaseName + "/1",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: &corev1.InstalledPackageDetail{
-					InstalledPackageRef: &corev1.InstalledPackageReference{
-						Context: &corev1.Context{
-							Namespace: releaseNamespace,
-						},
-						Identifier: releaseName + "/1",
-					},
-					PkgVersionReference: &corev1.VersionReference{
-						Version: releaseVersion,
-					},
-					Name: releaseName,
-					CurrentVersion: &corev1.PackageAppVersion{
-						PkgVersion: releaseVersion,
-						AppVersion: DefaultAppVersion,
-					},
-					LatestVersion: &corev1.PackageAppVersion{
-						PkgVersion: releaseVersion,
-						AppVersion: DefaultAppVersion,
-					},
-					ValuesApplied:         releaseValues,
-					PostInstallationNotes: releaseNotes,
-					Status: &corev1.InstalledPackageStatus{
-						Ready:      false,
-						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED,
-						UserReason: "superseded",
-					},
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: releaseNamespace,
-						},
-						Identifier: "myrepo/" + releaseName,
-						Plugin:     GetPluginDetail(),
-					},
-				},
-			},
-			expectedStatusCode: codes.OK,
-		},
-		{
-			name: "returns an installed package detail for the latest release if identifier does not include the release version",
-			existingReleases: []releaseStub{
-				{
-					name:         releaseName,
-					namespace:    releaseNamespace,
-					chartVersion: releaseVersion,
-					values:       releaseValues,
-					notes:        releaseNotes,
-					status:       release.StatusDeployed,
-					version:      1,
-				},
-				{
-					name:         releaseName,
-					namespace:    releaseNamespace,
-					chartVersion: releaseVersion,
-					values:       releaseValues,
-					notes:        releaseNotes,
-					status:       release.StatusDeployed,
-					version:      2,
-				},
+			name: "returns an installed package detail",
+			existingRelease: releaseStub{
+				name:         releaseName,
+				namespace:    releaseNamespace,
+				chartVersion: releaseVersion,
+				values:       releaseValues,
+				notes:        releaseNotes,
+				status:       release.StatusDeployed,
 			},
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -2153,7 +1998,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Context: &corev1.Context{
 							Namespace: releaseNamespace,
 						},
-						Identifier: releaseName + "/2",
+						Identifier: releaseName,
 					},
 					PkgVersionReference: &corev1.VersionReference{
 						Version: releaseVersion,
@@ -2197,24 +2042,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			},
 			expectedStatusCode: codes.NotFound,
 		},
-		{
-			name: "returns an invalid argument if the installed package identifier is invalid",
-			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: releaseNamespace,
-					},
-					Identifier: releaseName + "/not an int",
-				},
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases)
+			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), []releaseStub{tc.existingRelease})
 			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
 
@@ -2353,7 +2186,6 @@ func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*co
 			namespace:     pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
 			chartVersion:  pkg.CurrentVersion.PkgVersion,
 			latestVersion: pkg.LatestVersion.PkgVersion,
-			version:       DefaultReleaseRevision,
 		})
 	}
 	populateAssetDB(t, mock, rels)
@@ -2367,7 +2199,6 @@ func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.I
 		namespace:    pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
 		chartVersion: pkg.CurrentVersion.PkgVersion,
 		chartID:      pkg.AvailablePackageRef.Identifier,
-		version:      DefaultReleaseRevision,
 	}
 	populateAssetDB(t, mock, []*releaseStub{rel})
 }
