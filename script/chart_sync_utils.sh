@@ -153,9 +153,12 @@ updateRepoWithRemoteChanges() {
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
     git -C "${targetRepo}" pull upstream master
-    export GIT_SSH_COMMAND="ssh -i ~/.ssh/${forkSSHKeyFilename}"
-    echo "Pushing using GIT_SSH_COMMAND=${GIT_SSH_COMMAND}"
+
+    git -C "${targetRepo}" config --local core.sshCommand "ssh -v -i ~/.ssh/${forkSSHKeyFilename}"
+    echo "Pushing in repo ${targetRepo} using GIT_SSH_COMMAND=${GIT_SSH_COMMAND} and this local configuration"
+    git -C "${targetRepo}" config --local --list
     git -C "${targetRepo}" push origin master
+
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
     # Update Chart.yaml with new version
