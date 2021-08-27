@@ -144,7 +144,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.21.1-debian-10-r24
+    tag: 1.21.1-debian-10-r46
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1260,7 +1260,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.1.3-debian-10-r79
+    tag: 7.1.3-debian-10-r100
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1479,7 +1479,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.21.1-debian-10-r24
+  tag: 1.21.1-debian-10-r46
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1541,7 +1541,7 @@ postgresql:
 
 ## @section kubeappsapis parameters
 kubeappsapis:
-  ## @param kubeappsapis.unsafeUseDemoSA If true, replace the user's credentials by a full-granted demo service account. Just intended for development purposes.
+  ## @param kubeappsapis.unsafeUseDemoSA If true, replace the user's credentials by a full-granted demo service account. Just intented for development purposes.
   unsafeUseDemoSA: false
   ## @param kubeappsapis.enabledPlugins Enabled plugins for the Kubeapps-APIs service
   ## e.g:
@@ -1593,10 +1593,10 @@ kubeappsapis:
   extraEnvVars: []
   ## @param kubeappsapis.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for the KubeappsAPIs container
   ##
-  extraEnvVarsCM:
+  extraEnvVarsCM: ""
   ## @param kubeappsapis.extraEnvVarsSecret Name of existing Secret containing extra env vars for the KubeappsAPIs container
   ##
-  extraEnvVarsSecret:
+  extraEnvVarsSecret: ""
   ## @param kubeappsapis.containerPort KubeappsAPIs HTTP container port
   ##
   containerPort: 50051
@@ -1645,9 +1645,9 @@ kubeappsapis:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
   ##
   livenessProbe:
-    enabled: true
+    enabled: false
     httpGet:
-      path: /core/plugins/v1alpha1/configured-plugins
+      path: /live
       port: 50051
     initialDelaySeconds: 60
     periodSeconds: 10
@@ -1663,9 +1663,9 @@ kubeappsapis:
   ## @param kubeappsapis.readinessProbe.successThreshold Success threshold for readinessProbe
   ##
   readinessProbe:
-    enabled: true
+    enabled: false
     httpGet:
-      path: /core/plugins/v1alpha1/configured-plugins
+      path: /ready
       port: 50051
     initialDelaySeconds: 0
     periodSeconds: 10
@@ -1729,7 +1729,7 @@ kubeappsapis:
   tolerations: []
   ## @param kubeappsapis.priorityClassName Priority class name for KubeappsAPIs pods
   ##
-  priorityClassName:
+  priorityClassName: ""
   ## @param kubeappsapis.hostAliases Custom host aliases for KubeappsAPIs pods
   ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
   ##
@@ -1743,7 +1743,8 @@ kubeappsapis:
     ## @param kubeappsapis.service.annotations Additional custom annotations for KubeappsAPIs service
     ##
     annotations: {}
-## Redis&trade; chart configuration
+
+## @section Redis&trade; chart configuration
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/redis/values.yaml
 ##
 redis:
@@ -1751,7 +1752,7 @@ redis:
   ## ref: https://github.com/bitnami/bitnami-docker-redis/blob/master/README.md#setting-the-server-password-on-first-run
   ##
   redisPassword: ""
-  ## @param redis.enabled Enable the redis deployment when deploying Kubeapps APIs.
+  ## @param redis.enabled Enable the Redis&trade; deployment when deploying Kubeapps APIs.
   ## We currently have the situation that Redis is required for the fluxv2 plugin only.
   ## Until such a point that we're releasing with the fluxv2 plugin enabled, or the
   ## plugin cache support has been generalised so all plugins use Redis, we'll need
