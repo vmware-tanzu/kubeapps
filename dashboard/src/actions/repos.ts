@@ -105,7 +105,7 @@ export const deleteRepo = (
     try {
       await AppRepository.delete(currentCluster, namespace, name);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "delete"));
       return false;
     }
@@ -122,7 +122,7 @@ export const resyncRepo = (
     } = getState();
     try {
       await AppRepository.resync(currentCluster, namespace, name);
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "update"));
     }
   };
@@ -131,7 +131,7 @@ export const resyncRepo = (
 export const resyncAllRepos = (
   repos: IAppRepositoryKey[],
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     repos.forEach(repo => {
       dispatch(resyncRepo(repo.name, repo.namespace));
     });
@@ -149,7 +149,7 @@ export const fetchRepoSecret = (
     try {
       const secret = await Secret.get(currentCluster, namespace, name);
       dispatch(receiveReposSecret(secret));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
     }
   };
@@ -178,7 +178,7 @@ export const fetchRepos = (
         totalRepos = uniqBy(totalRepos.concat(globalRepos.items), "metadata.uid");
         dispatch(receiveRepos(totalRepos));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
     }
   };
@@ -235,7 +235,7 @@ export const installRepo = (
       dispatch(addedRepo(data.appRepository));
 
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "create"));
       return false;
     }
@@ -300,7 +300,7 @@ export const updateRepo = (
         }
       }
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "update"));
       return false;
     }
@@ -343,7 +343,7 @@ export const validateRepo = (
         dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
         return false;
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "validate"));
       return false;
     }
@@ -356,14 +356,14 @@ export function checkChart(
   repo: string,
   chartName: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(cluster, repoNamespace, repo);
     try {
       await Chart.getAvailablePackageVersions(cluster, repoNamespace, `${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(
         errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
@@ -390,7 +390,7 @@ export function fetchImagePullSecrets(
         "type=kubernetes.io/dockerconfigjson",
       );
       dispatch(receiveImagePullSecrets(secrets.items));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
     }
   };
@@ -420,7 +420,7 @@ export function createDockerRegistrySecret(
       );
       dispatch(createImagePullSecret(secret));
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
       return false;
     }

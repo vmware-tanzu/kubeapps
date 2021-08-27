@@ -7,7 +7,7 @@ interface IErrorBoundaryProps {
 }
 
 function mapStateToProps(
-  { clusters: { currentCluster, clusters }, config }: IStoreState,
+  { clusters: { currentCluster, clusters } }: IStoreState,
   { children }: IErrorBoundaryProps,
 ) {
   const cluster = clusters[currentCluster];

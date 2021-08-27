@@ -110,7 +110,7 @@ export function getApp(
       } else {
         dispatch(errorApp(new FetchError("Package not found")));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
     }
   };
@@ -128,7 +128,7 @@ export function deleteApp(
       await App.delete(cluster, namespace, releaseName, purge);
       dispatch(receiveDeleteApp());
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new DeleteError(e.message)));
       return false;
     }
@@ -163,7 +163,7 @@ export function deployChart(
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestDeployApp());
     try {
       if (values && schema) {
@@ -182,7 +182,7 @@ export function deployChart(
       dispatch(receiveDeployApp());
 
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new CreateError(e.message)));
       return false;
     }
@@ -198,7 +198,7 @@ export function upgradeApp(
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestUpgradeApp());
     try {
       if (values && schema) {
@@ -215,7 +215,7 @@ export function upgradeApp(
       await App.upgrade(cluster, namespace, releaseName, chartNamespace, chartVersion, values);
       dispatch(receiveUpgradeApp());
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new UpgradeError(e.message)));
       return false;
     }
@@ -228,14 +228,14 @@ export function rollbackApp(
   releaseName: string,
   revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestRollbackApp());
     try {
       await App.rollback(cluster, namespace, releaseName, revision);
       dispatch(receiveRollbackApp());
       // dispatch(getAppWithUpdateInfo(cluster, namespace, releaseName));
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new RollbackError(e.message)));
       return false;
     }

@@ -156,7 +156,7 @@ describe("oauth login form", () => {
     const props2 = {
       ...props,
       checkCookieAuthentication: jest.fn().mockReturnValue({
-        then: jest.fn(f => false),
+        then: jest.fn(() => false),
       }),
     };
     const wrapper = mountWrapper(defaultStore, <LoginForm {...props2} />);

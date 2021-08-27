@@ -20,7 +20,7 @@ describe("appsReducer", () => {
 
   describe("reducer actions", () => {
     it("sets isFetching when requesting an app", () => {
-      [true, false].forEach(e => {
+      [true, false].forEach(_e => {
         expect(
           appsReducer(undefined, {
             type: actionTypes.requestApps as any,

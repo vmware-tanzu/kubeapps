@@ -116,7 +116,7 @@ export function fetchChartVersion(
       } else {
         dispatch(errorChart(new FetchError("could not find package version")));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
@@ -141,7 +141,7 @@ export function getDeployedChartVersion(
           ),
         );
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
