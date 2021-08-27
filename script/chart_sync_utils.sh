@@ -47,6 +47,7 @@ configUser() {
     git config user.signingkey "$gpg"
     git config --global commit.gpgSign true
     git config --global tag.gpgSign true
+    git config pull.rebase false
     cd -
 }
 
@@ -152,7 +153,9 @@ updateRepoWithRemoteChanges() {
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
     git -C "${targetRepo}" pull upstream master
-    GIT_SSH_COMMAND="ssh -i ~/.ssh/${forkSSHKeyFilename}" git -C "${targetRepo}" push origin master
+    export GIT_SSH_COMMAND="ssh -i ~/.ssh/${forkSSHKeyFilename}"
+    echo "Pushing using GIT_SSH_COMMAND=${GIT_SSH_COMMAND}"
+    git -C "${targetRepo}" push origin master
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
     # Update Chart.yaml with new version
