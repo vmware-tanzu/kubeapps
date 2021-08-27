@@ -154,9 +154,8 @@ updateRepoWithRemoteChanges() {
     git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
     git -C "${targetRepo}" pull upstream master
 
-    git -C "${targetRepo}" config --local core.sshCommand "ssh -v -i ~/.ssh/${forkSSHKeyFilename}"
-    echo "Pushing in repo ${targetRepo} using GIT_SSH_COMMAND=${GIT_SSH_COMMAND} and this local configuration"
-    git -C "${targetRepo}" config --local --list
+    # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
+    git -C "${targetRepo}" config --local core.sshCommand "ssh -i ~/.ssh/${forkSSHKeyFilename} -F /dev/null"
     git -C "${targetRepo}" push origin master
 
     rm -rf "${KUBEAPPS_CHART_DIR}"
