@@ -18,7 +18,7 @@ Discussion on the roadmap can take place in threads under [Issues](https://githu
 
 **How to add an item to the roadmap?**
 
-Please open an issue to track any initiative on the roadmap of Kubeapps (usually driven by new feature requests). We will work with and rely on our community to focus our efforts to improve Kubeapps.
+Please [open an issue](https://github.com/kubeapps/kubeapps/issues/new) to track any initiative on the roadmap of Kubeapps (usually driven by new feature requests). We will work with and rely on our community to focus our efforts to improve Kubeapps.
 
 ###
 
