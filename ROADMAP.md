@@ -4,7 +4,9 @@
 
 **About this document**
 
-This document provides a link to the[ Kubeapps Project issues](https://github.com/kubeapps/kubeapps/issues) list that serves as the up to date description of items that are in the Kubeapps release pipeline. This should serve as a reference point for Kubeapps users and contributors to understand where the project is heading, and help determine if a contribution could be conflicting with a longer term plan.
+This aims at providing a higher-level picture of the [Kubeapps Project Board](https://github.com/kubeapps/kubeapps/issues), which serves as the source of truth of the current backlog of issues. These tasks are moved in accordance with our issue [triage process](./docs/developer/issue-triage-process.md).
+
+Therefore, this document is intended to be a reference point for Kubeapps users and contributors to understand where the project is heading, and help determine if a contribution might conflict with a longer-term plan.
 
 ###
 
