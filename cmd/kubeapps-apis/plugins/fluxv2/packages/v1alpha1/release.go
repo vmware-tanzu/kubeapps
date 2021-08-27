@@ -22,6 +22,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -140,7 +142,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 	chartName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
 	chartVersion, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
 
-	latestPkgVersion := ""
+	var latestPkgVersion *corev1.PackageAppVersion
 	var pkgDetail *corev1.AvailablePackageDetail
 	// according to docs chartVersion is optional (defaults to '*' i.e. latest when omitted)
 	if repoName != "" && chartName != "" && chartVersion != "" {
@@ -169,12 +171,12 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 			return nil, err
 		} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
 			// charts in cache are already sorted with the latest being at position 0
-			latestPkgVersion = chartFromCache.ChartVersions[0].Version
+			latestPkgVersion = &corev1.PackageAppVersion{
+				PkgVersion: chartFromCache.ChartVersions[0].Version,
+				AppVersion: chartFromCache.ChartVersions[0].AppVersion,
+			}
 		}
 	}
-
-	// this will only be present if install/upgrade succeeded
-	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease, "status", "lastAppliedRevision")
 
 	return &corev1.InstalledPackageSummary{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -186,17 +188,12 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		},
 		Name:                name.Name,
 		PkgVersionReference: pkgVersion,
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: lastAppliedRevision,
-			AppVersion: pkgDetail.GetVersion().GetAppVersion(),
-		},
-		IconUrl:          pkgDetail.GetIconUrl(),
-		PkgDisplayName:   pkgDetail.GetDisplayName(),
-		ShortDescription: pkgDetail.GetShortDescription(),
-		Status:           installedPackageStatusFromUnstructured(unstructuredRelease),
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: latestPkgVersion,
-		},
+		CurrentVersion:      pkgDetail.GetVersion(),
+		IconUrl:             pkgDetail.GetIconUrl(),
+		PkgDisplayName:      pkgDetail.GetDisplayName(),
+		ShortDescription:    pkgDetail.GetShortDescription(),
+		Status:              installedPackageStatusFromUnstructured(unstructuredRelease),
+		LatestVersion:       latestPkgVersion,
 		// TODO (gfichtenholt) LatestMatchingPkgVersion
 		// Only non-empty if an available upgrade matches the specified pkg_version_reference.
 		// For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
@@ -212,10 +209,10 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q due to: %v", name, err)
 	}
 
-	var pkgVersion *corev1.VersionReference
+	var pkgVersionRef *corev1.VersionReference
 	version, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "chart", "spec", "version")
 	if found && err == nil && version != "" {
-		pkgVersion = &corev1.VersionReference{
+		pkgVersionRef = &corev1.VersionReference{
 			Version: version,
 		}
 	}
@@ -233,16 +230,30 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	// ValuesReference maybe a config map or a secret
 
 	// this will only be present if install/upgrade succeeded
-	lastAppliedRevision, _, _ := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
+	pkgVersion, found, err := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
+	if !found || err != nil || pkgVersion == "" {
+		// this is the back-up option: will be there if the reconciliation is in progress or has failed
+		pkgVersion, _, _ = unstructured.NestedString(unstructuredRelease.Object, "status", "lastAttemptedRevision")
+	}
 
 	availablePackageRef, err := installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease.Object)
 	if err != nil {
 		return nil, err
 	}
 
-	postInstallNotes, err := s.postInstallationNotesFromUnstructured(ctx, name, unstructuredRelease.Object)
+	release, err := s.helmReleaseFromUnstructured(ctx, name, unstructuredRelease.Object)
 	if err != nil {
 		return nil, err
+	}
+
+	// a couple of fields only available via helm API
+	appVersion := ""
+	postInstallNotes := ""
+	if release != nil {
+		appVersion = release.Chart.AppVersion()
+		if release.Info != nil {
+			postInstallNotes = release.Info.Notes
+		}
 	}
 
 	return &corev1.InstalledPackageDetail{
@@ -254,9 +265,10 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 			Plugin:     GetPluginDetail(),
 		},
 		Name:                name.Name,
-		PkgVersionReference: pkgVersion,
+		PkgVersionReference: pkgVersionRef,
 		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: lastAppliedRevision,
+			PkgVersion: pkgVersion,
+			AppVersion: appVersion,
 		},
 		ValuesApplied:         valuesApplied,
 		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease.Object),
@@ -266,11 +278,11 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	}, nil
 }
 
-func (s *Server) postInstallationNotesFromUnstructured(ctx context.Context, name types.NamespacedName, unstructuredRelease map[string]interface{}) (string, error) {
+func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.NamespacedName, unstructuredRelease map[string]interface{}) (*release.Release, error) {
 	// post installation notes can only be retrieved via helm APIs, flux doesn't do it
 	// see discussion in https://cloud-native.slack.com/archives/CLAJ40HV3/p1629244025187100
 	if s.actionConfigGetter == nil {
-		return "", status.Errorf(codes.FailedPrecondition, "Server is not configured with actionConfigGetter")
+		return nil, status.Errorf(codes.FailedPrecondition, "Server is not configured with actionConfigGetter")
 	}
 
 	helmReleaseName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "ReleaseName")
@@ -287,18 +299,17 @@ func (s *Server) postInstallationNotesFromUnstructured(ctx context.Context, name
 
 	actionConfig, err := s.actionConfigGetter(ctx, name.Namespace)
 	if err != nil || actionConfig == nil {
-		return "", status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 	cmd := action.NewGet(actionConfig)
 	release, err := cmd.Run(helmReleaseName)
 	if err != nil {
-		return "", status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s]: %v", helmReleaseName, err)
+		if err == driver.ErrReleaseNotFound {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release [%s]", helmReleaseName)
+		}
+		return nil, status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s]: %v", helmReleaseName, err)
 	}
-	if release != nil && release.Info != nil {
-		return release.Info.Notes, nil
-	} else {
-		return "", nil
-	}
+	return release, nil
 }
 
 func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {

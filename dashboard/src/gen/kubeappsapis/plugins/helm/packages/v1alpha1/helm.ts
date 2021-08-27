@@ -20,6 +20,87 @@ import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.plugins.helm.packages.v1alpha1";
 
+/**
+ * InstalledPackageDetailCustomDataHelm
+ *
+ * InstalledPackageDetailCustomDataHelm is a message type used for the
+ * InstalledPackageDetail.CustomDetail field by the helm plugin.
+ */
+export interface InstalledPackageDetailCustomDataHelm {
+  /**
+   * ReleaseRevision
+   *
+   * A number identifying the Helm revision
+   */
+  releaseRevision: number;
+}
+
+const baseInstalledPackageDetailCustomDataHelm: object = { releaseRevision: 0 };
+
+export const InstalledPackageDetailCustomDataHelm = {
+  encode(
+    message: InstalledPackageDetailCustomDataHelm,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.releaseRevision !== 0) {
+      writer.uint32(8).int32(message.releaseRevision);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageDetailCustomDataHelm {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.releaseRevision = reader.int32();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): InstalledPackageDetailCustomDataHelm {
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = Number(object.releaseRevision);
+    } else {
+      message.releaseRevision = 0;
+    }
+    return message;
+  },
+
+  toJSON(message: InstalledPackageDetailCustomDataHelm): unknown {
+    const obj: any = {};
+    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<InstalledPackageDetailCustomDataHelm>,
+  ): InstalledPackageDetailCustomDataHelm {
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = object.releaseRevision;
+    } else {
+      message.releaseRevision = 0;
+    }
+    return message;
+  },
+};
+
 export interface HelmPackagesService {
   /** GetAvailablePackageSummaries returns the available packages managed by the 'helm' plugin */
   GetAvailablePackageSummaries(
