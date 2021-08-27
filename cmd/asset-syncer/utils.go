@@ -428,7 +428,7 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 				}
 			}
 		default:
-			// Unkown type, ignore
+			// Unknown type, ignore
 		}
 	}
 	return result, nil
