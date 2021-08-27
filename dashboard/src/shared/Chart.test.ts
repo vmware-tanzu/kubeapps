@@ -56,7 +56,7 @@ describe("App", () => {
         },
       },
       {
-        description: "fetch charts url wtih repos, with query",
+        description: "fetch charts url with repos, with query",
         args: {
           cluster: clusterName,
           namespace: namespaceName,

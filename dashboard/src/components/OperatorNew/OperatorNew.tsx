@@ -43,7 +43,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     undefined as IPackageManifestChannel | undefined,
   );
   const [updateChannelGlobal, setUpdateChannelGlobal] = useState(false);
-  // Instalation mode: true for global, false for namespaced
+  // Installation mode: true for global, false for namespaced
   const [installationModeGlobal, setInstallationModeGlobal] = useState(false);
   // Approval strategy: true for automatic, false for manual
   const [approvalStrategyAutomatic, setApprovalStrategyAutomatic] = useState(true);

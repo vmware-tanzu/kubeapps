@@ -403,7 +403,7 @@ describe("deleteValue", () => {
 `,
     },
     {
-      description: "should leave the document emtpy",
+      description: "should leave the document empty",
       values: "foo: bar",
       path: "foo",
       result: "\n",

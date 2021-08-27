@@ -178,9 +178,6 @@ installOrUpgradeKubeapps() {
       --set postgresql.replication.enabled=false \
       --set postgresql.postgresqlPassword=password \
       --set redis.auth.password=password \
-      # TODO: remove these lines once kubeapps-apis got merged in the main branch
-      --set featureFlags.kubeappsAPIsServer=true \
-      --set redis.enabled=false \
       --wait)
 
     echo "${cmd[@]}"
@@ -199,7 +196,8 @@ info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVers
 
 # Use dev images or Bitnami if testing the latest release
 image_prefix="kubeapps/"
-[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-"
+kubeapps_apis_image="kubeapps-apis"
+[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-" && kubeapps_apis_image="apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
@@ -207,8 +205,7 @@ images=(
   "dashboard"
   "kubeops"
   "pinniped-proxy"
-  # TODO: uncomment once the image is being built by bitnami
-  # "kubeappsapis"
+  "${kubeapps_apis_image}"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -226,16 +223,8 @@ img_flags=(
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
   "--set" "pinnipedProxy.image.repository=${images[5]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=kubeapps/kubeapps-apis-ci"
-  # TODO: uncomment once the image is being built by bitnami
-  # "--set" "kubeappsapis.image.repository=${images[6]}"
+  "--set" "kubeappsapis.image.repository=${images[6]}"
 )
-
-# TODO(andresmgot): Remove this condition with the parameter in the next version
-invalidateCacheFlag=""
-if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
-  invalidateCacheFlag="--set featureFlags.invalidateCache=true"
-fi
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ] ; then
   multiclusterFlags=(
@@ -355,7 +344,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
   fi
-  info "Helm tests succeded!!"
+  info "Helm tests succeeded!!"
 fi
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -420,4 +409,4 @@ if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRA
   kubectl cp "${pod}:/app/reports" ./reports
   exit 1
 fi
-info "Integration tests succeded!!"
+info "Integration tests succeeded!!"

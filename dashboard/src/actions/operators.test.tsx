@@ -17,7 +17,7 @@ beforeEach(() => {
 afterEach(jest.resetAllMocks);
 
 describe("checkOLMInstalled", () => {
-  it("dispatches OLM_INSTALLED when succeded", async () => {
+  it("dispatches OLM_INSTALLED when succeeded", async () => {
     Operators.isOLMInstalled = jest.fn().mockReturnValue(true);
     const expectedActions = [
       {

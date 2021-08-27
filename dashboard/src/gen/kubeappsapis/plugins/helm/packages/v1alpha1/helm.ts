@@ -8,15 +8,98 @@ import {
   GetAvailablePackageVersionsRequest,
   GetInstalledPackageSummariesRequest,
   GetInstalledPackageDetailRequest,
+  CreateInstalledPackageRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
   GetInstalledPackageSummariesResponse,
   GetInstalledPackageDetailResponse,
+  CreateInstalledPackageResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.plugins.helm.packages.v1alpha1";
+
+/**
+ * InstalledPackageDetailCustomDataHelm
+ *
+ * InstalledPackageDetailCustomDataHelm is a message type used for the
+ * InstalledPackageDetail.CustomDetail field by the helm plugin.
+ */
+export interface InstalledPackageDetailCustomDataHelm {
+  /**
+   * ReleaseRevision
+   *
+   * A number identifying the Helm revision
+   */
+  releaseRevision: number;
+}
+
+const baseInstalledPackageDetailCustomDataHelm: object = { releaseRevision: 0 };
+
+export const InstalledPackageDetailCustomDataHelm = {
+  encode(
+    message: InstalledPackageDetailCustomDataHelm,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.releaseRevision !== 0) {
+      writer.uint32(8).int32(message.releaseRevision);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageDetailCustomDataHelm {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.releaseRevision = reader.int32();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): InstalledPackageDetailCustomDataHelm {
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = Number(object.releaseRevision);
+    } else {
+      message.releaseRevision = 0;
+    }
+    return message;
+  },
+
+  toJSON(message: InstalledPackageDetailCustomDataHelm): unknown {
+    const obj: any = {};
+    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<InstalledPackageDetailCustomDataHelm>,
+  ): InstalledPackageDetailCustomDataHelm {
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = object.releaseRevision;
+    } else {
+      message.releaseRevision = 0;
+    }
+    return message;
+  },
+};
 
 export interface HelmPackagesService {
   /** GetAvailablePackageSummaries returns the available packages managed by the 'helm' plugin */
@@ -44,6 +127,11 @@ export interface HelmPackagesService {
     request: DeepPartial<GetInstalledPackageDetailRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetInstalledPackageDetailResponse>;
+  /** CreateInstalledPackage creates an installed package based on the request. */
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse>;
 }
 
 export class HelmPackagesServiceClientImpl implements HelmPackagesService {
@@ -56,6 +144,7 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
+    this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -109,6 +198,17 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     return this.rpc.unary(
       HelmPackagesServiceGetInstalledPackageDetailDesc,
       GetInstalledPackageDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse> {
+    return this.rpc.unary(
+      HelmPackagesServiceCreateInstalledPackageDesc,
+      CreateInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -220,6 +320,28 @@ export const HelmPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefini
     deserializeBinary(data: Uint8Array) {
       return {
         ...GetInstalledPackageDetailResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "CreateInstalledPackage",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CreateInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CreateInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },

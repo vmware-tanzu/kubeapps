@@ -41,12 +41,13 @@ service PackagesService {
     };
   }
 
+  rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
+    option (google.api.http) = {
+      post: "/core/packages/v1alpha1/installedpackages"
+    };
+  }
+
   // TODO: remaining operations yet to be defined
-  // rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
-  //   option (google.api.http) = {
-  //     post: "/core/packages/v1alpha1/installedpackages"
-  //   };
-  // }
   // rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
   //   option (google.api.http) = {
   //     put: "/core/packages/v1alpha1/installedpackages"
@@ -125,7 +126,34 @@ message GetInstalledPackageDetailRequest {
   // The information required to uniquely
   // identify an installed package
   InstalledPackageReference installed_package_ref = 1;
+}
 
+// CreateInstalledPackageRequest
+//
+// Request for CreateInstalledPackage
+message CreateInstalledPackageRequest {
+  // A reference uniquely identifying the package available for installation.
+  AvailablePackageReference available_package_ref = 1;
+
+  // The target context where the package is intended to be installed.
+  Context target_context = 2;
+
+  // A user-provided name for the installed package (eg. project-x-db)
+  string name = 3;
+
+  // For helm this will be the exact version in VersionReference.version
+  // For other plugins we can extend the VersionReference as needed.
+  VersionReference pkg_version_reference = 4;
+
+  // An optional serialized values string to be included when templating a package
+  // in the format expected by the plugin. Included when the backend format doesn't
+  // use secrets or configmaps for values or supports both. These values are layered
+  // on top of any values refs above, when relevant.
+  string values = 5;
+
+  // An optional field for specifying data common to systems that reconcile
+  // the package on the cluster.
+  ReconciliationOptions reconciliation_options = 6;
 }
 
 // -- Start definitions of the response messages --
@@ -235,6 +263,18 @@ message GetInstalledPackageDetailResponse {
   //
   // The requested InstalledPackageDetail
   InstalledPackageDetail installed_package_detail = 1;
+}
+
+// CreateInstalledPackageResponse
+//
+// Response for CreateInstalledPackage
+message CreateInstalledPackageResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_ref": {}}'
+  // };
+
+  InstalledPackageReference installed_package_ref = 1;
 }
 
 // -- Start definitions used in the responses  --
@@ -371,7 +411,11 @@ message AvailablePackageDetail {
 
   // Custom data added by the plugin
   //
-  // Some additional information added by the plugin
+  // A plugin can define custom details for data which is not yet, or never will
+  // be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+  // of an `Any` field means that each plugin can define the structure of this
+  // message as required, while still satisfying the core interface.
+  // See https://developers.google.com/protocol-buffers/docs/proto3#any
   google.protobuf.Any custom_detail = 16;
 }
 
@@ -403,23 +447,27 @@ message InstalledPackageSummary {
 
   // CurrentVersion
   //
-  // The version of the package which is currently installed.
+  // The current version of the package being reconciled, which may be
+  // in one of these states:
+  //  - has been successfully installed/upgraded or 
+  //  - is currently being installed/upgraded or 
+  //  - has failed to install/upgrade
   PackageAppVersion current_version = 4;
 
   // Installed package icon URL
   //
   // A url for an icon.
-  string icon_url = 6;
+  string icon_url = 5;
 
   // PackageDisplayName
   //
   // The package name as displayed to users (provided by the package, eg. "PostgreSQL")
-  string pkg_display_name = 7;
+  string pkg_display_name = 6;
 
   // ShortDescription
   //
   // A short description of the package (provided by the package)
-  string short_description = 8;
+  string short_description = 7;
 
   // LatestMatchingVersion
   //
@@ -428,17 +476,17 @@ message InstalledPackageSummary {
   // is installed, then:
   //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
   //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
-  PackageAppVersion latest_matching_version = 9;
+  PackageAppVersion latest_matching_version = 8;
 
   // LatestVersion
   //
   // The latest version available for this package, regardless of the pkg_version_reference.
-  PackageAppVersion latest_version = 10;
+  PackageAppVersion latest_version = 9;
 
   // Status
   //
   // The current status of the installed package.
-  InstalledPackageStatus status = 11;
+  InstalledPackageStatus status = 10;
 }
 
 // InstalledPackageDetail
@@ -508,6 +556,15 @@ message InstalledPackageDetail {
   //
   // The latest version available for this package, regardless of the pkg_version_reference.
   PackageAppVersion latest_version = 11;
+
+  // Custom data added by the plugin
+  //
+  // A plugin can define custom details for data which is not yet, or never will
+  // be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+  // of an `Any` field means that each plugin can define the structure of this
+  // message as required, while still satisfying the core interface.
+  // See https://developers.google.com/protocol-buffers/docs/proto3#any
+  google.protobuf.Any custom_detail = 14;
 }
 
 // -- Start other definitions  --

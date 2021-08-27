@@ -42,10 +42,7 @@ deploy-dev-kubeapps-with-apis:
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--values ./docs/developer/manifests/values.kubeappsapis.yaml \
-		--set kubeappsapis.unsafeUseDemoSA=true \
-		--set redis.enabled=false \
-		--set kubeappsapis.image.tag=latest
+		--set kubeappsapis.unsafeUseDemoSA=true
 
 
 deploy-dev: deploy-dependencies deploy-dev-kubeapps
@@ -68,7 +65,7 @@ deploy-kapp-controller:
 
 # Add the flux controllers used for testing the kubeapps-apis integration.
 deploy-flux-controllers:
-	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.16.1/install.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.16.2/install.yaml
 
 reset-dev:
 	helm --kubeconfig=${CLUSTER_CONFIG} -n kubeapps delete kubeapps  || true

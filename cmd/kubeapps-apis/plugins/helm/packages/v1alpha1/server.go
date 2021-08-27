@@ -26,11 +26,13 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
@@ -712,7 +714,10 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		}
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
-	installedPkgDetail := installedPkgDetailFromRelease(release, request.GetInstalledPackageRef())
+	installedPkgDetail, err := installedPkgDetailFromRelease(release, request.GetInstalledPackageRef())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create installed package detail from release: %v", err)
+	}
 
 	// Grab the released values.
 	valuescmd := action.NewGetValues(actionConfig)
@@ -759,7 +764,13 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	}, nil
 }
 
-func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPackageReference) *corev1.InstalledPackageDetail {
+func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPackageReference) (*corev1.InstalledPackageDetail, error) {
+	customDetailHelm, err := anypb.New(&helmv1.InstalledPackageDetailCustomDataHelm{
+		ReleaseRevision: int32(r.Version),
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: ref,
 		Name:                r.Name,
@@ -776,5 +787,6 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 			Reason:     statusReasonForHelmStatus(r.Info.Status),
 			UserReason: r.Info.Status.String(),
 		},
-	}
+		CustomDetail: customDetailHelm,
+	}, nil
 }

@@ -49,6 +49,13 @@ service KappControllerPackagesService {
       get: "/plugins/kapp_controller/packages/v1alpha1/installedpackagedetail"
     };
   }
+
+  // CreateInstalledPackage creates an installed package based on the request.
+  rpc CreateInstalledPackage(kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse) {
+    option (google.api.http) = {
+      post: "/plugins/kapp_controller/packages/v1alpha1/installedpackages"
+    };
+  }
 }
 
 // Specific messages used by the 'kapp_controller' plugin

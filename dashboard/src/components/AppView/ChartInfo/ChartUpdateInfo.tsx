@@ -21,7 +21,7 @@ function getUpdateInfo(
     // Unable to get info, return error
     return (
       <Alert theme="danger">
-        <CdsIcon shape="exclamation-triange" size="md" solid={true} /> Update check failed.{" "}
+        <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> Update check failed.{" "}
         {updateInfo.error.message}
       </Alert>
     );
