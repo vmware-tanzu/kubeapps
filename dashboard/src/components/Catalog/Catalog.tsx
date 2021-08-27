@@ -57,12 +57,11 @@ export function filtersToQuery(filters: any) {
     // get parameters from the parsed and decoded query params
     // since some search filters could eventually have a ','
     // we need to temporary replace it by other arbitrary string '__'.
-    const filterQueries = activeFilters.map(
-      filter =>
-        `${filter}=${filters[filter]
-          .map((f: string) => encodeURIComponent(f.replace(commaRegex, tmpStr)))
-          .join(",")}`,
-    );
+    const filterQueries = activeFilters.map(filter => {
+      return `${filter}=${filters[filter]
+        .map((f: string) => encodeURIComponent(f?.replace(commaRegex, tmpStr)))
+        .join(",")}`;
+    });
     query = "?" + filterQueries.join("&");
   }
   return query;
@@ -73,7 +72,7 @@ interface IRouteParams {
   namespace: string;
 }
 
-function Catalog() {
+export default function Catalog() {
   const {
     charts: {
       hasFinishedFetching,
@@ -451,5 +450,3 @@ function Catalog() {
     </section>
   );
 }
-
-export default Catalog;
