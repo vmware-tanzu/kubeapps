@@ -343,6 +343,32 @@
         ]
       }
     },
+    "/core/packages/v1alpha1/installedpackages": {
+      "post": {
+        "operationId": "PackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/packages/v1alpha1/installedpackagesummaries": {
       "get": {
         "operationId": "PackagesService_GetInstalledPackageSummaries",
@@ -729,6 +755,33 @@
             "type": "string"
           }
         ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/installedpackages": {
+      "post": {
+        "summary": "CreateInstalledPackage creates an installed package based on the request.",
+        "operationId": "FluxV2PackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "tags": [
           "FluxV2PackagesService"
         ]
@@ -1142,6 +1195,33 @@
         ]
       }
     },
+    "/plugins/helm/packages/v1alpha1/installedpackages": {
+      "post": {
+        "summary": "CreateInstalledPackage creates an installed package based on the request.",
+        "operationId": "HelmPackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
     "/plugins/helm/packages/v1alpha1/installedpackagesummaries": {
       "get": {
         "summary": "GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin",
@@ -1502,6 +1582,33 @@
             "type": "string"
           }
         ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/installedpackages": {
+      "post": {
+        "summary": "CreateInstalledPackage creates an installed package based on the request.",
+        "operationId": "KappControllerPackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "tags": [
           "KappControllerPackagesService"
         ]
@@ -1933,6 +2040,16 @@
       "description": "A Context specifies the context of the message",
       "title": "Context"
     },
+    "v1alpha1CreateInstalledPackageResponse": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference"
+        }
+      },
+      "description": "Response for CreateInstalledPackage",
+      "title": "CreateInstalledPackageResponse"
+    },
     "v1alpha1FilterOptions": {
       "type": "object",
       "properties": {
@@ -2210,7 +2327,7 @@
         },
         "currentVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The version of the package which is currently installed.",
+          "description": "The current version of the package being reconciled, which may be\nin one of these states:\n - has been successfully installed/upgraded or \n - is currently being installed/upgraded or \n - has failed to install/upgrade",
           "title": "CurrentVersion"
         },
         "iconUrl": {
