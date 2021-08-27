@@ -12,7 +12,7 @@ Therefore, this document is intended to be a reference point for Kubeapps users 
 
 **How to help?**
 
-Discussion on the roadmap can take place in threads under [Issues](https://github.com/kubeapps/kubeapps/issues). Please open and comment on an issue if you want to provide suggestions and feedback to an item in the roadmap. Please review the roadmap to avoid potential duplicated effort.
+Discussion on the roadmap can take place in threads under [Issues](https://github.com/kubeapps/kubeapps/issues). Please open and comment on an issue if you want to provide suggestions and feedback to an item in the roadmap. Please review the roadmap to avoid potential duplicated efforts. Anyways, you can always reach out to us in the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) on the Kubernetes Slack server.
 
 ###
 
