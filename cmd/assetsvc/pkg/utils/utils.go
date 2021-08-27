@@ -31,7 +31,7 @@ type AssetManager interface {
 	GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
 }
 
-// ChartQuery is a container for passing the supported query paramters for generating the WHERE query
+// ChartQuery is a container for passing the supported query parameters for generating the WHERE query
 type ChartQuery struct {
 	Namespace   string
 	ChartName   string

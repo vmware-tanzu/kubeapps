@@ -63,7 +63,7 @@ func New() *http.Client {
 	}
 }
 
-// creates a new instance of Client, given a path to addtional certificates
+// creates a new instance of Client, given a path to additional certificates
 // certFile may be empty string, which means no additional certs will be used
 func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 	// If additionalCA exists, load it
@@ -84,7 +84,7 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 	return client, nil
 }
 
-// creates a new instance of Client, given bytes for addtional certificates
+// creates a new instance of Client, given bytes for additional certificates
 func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 	// create cert pool
 	caCertPool, err := GetCertPool(certs)

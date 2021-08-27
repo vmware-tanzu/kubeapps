@@ -487,7 +487,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	for k, v := range jobLabels(apprepo) {
 		podTemplateSpec.ObjectMeta.Labels[k] = v
 	}
-	// If there's an issue, will restart pod until sucessful or replaced
+	// If there's an issue, will restart pod until successful or replaced
 	// by another instance of the job scheduled by the cronjob
 	// see: cronJobSpec.concurrencyPolicy
 	podTemplateSpec.Spec.RestartPolicy = "OnFailure"
