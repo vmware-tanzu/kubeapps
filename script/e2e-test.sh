@@ -196,7 +196,8 @@ info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVers
 
 # Use dev images or Bitnami if testing the latest release
 image_prefix="kubeapps/"
-[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-"
+kubeapps_apis_image="kubeapps-apis"
+[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-" && kubeapps_apis_image="apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
@@ -204,7 +205,7 @@ images=(
   "dashboard"
   "kubeops"
   "pinniped-proxy"
-  "apis"
+  "${kubeapps_apis_image}"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
