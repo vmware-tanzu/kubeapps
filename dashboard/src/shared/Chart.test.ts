@@ -58,7 +58,7 @@ describe("App", () => {
         result: `api/assetsvc/v1/clusters/${clusterName}/namespaces/${namespaceName}/charts?page=${defaultPage}&size=${defaultSize}&repos=repo1,repo2`,
       },
       {
-        description: "fetch charts url wtih repos, with query",
+        description: "fetch charts url with repos, with query",
         args: {
           cluster: clusterName,
           namespace: namespaceName,

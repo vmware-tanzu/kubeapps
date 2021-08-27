@@ -14,7 +14,7 @@ Though it is possible to use a JS/TypeScript client, it is also possible to use 
 
 Together, this enables the best of both worlds: a well known and used Interface Definition Language for defining extensible APIs that can also be exposed via a rest-like http interface.
 
-Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatability.
+Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatibility.
 
 ## Plug-able
 

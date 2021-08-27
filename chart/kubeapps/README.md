@@ -476,7 +476,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                                                 | Description                                                                                                             | Value                    |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `kubeappsapis.unsafeUseDemoSA`                       | If true, replace the user's credentials by a full-granted demo service account. Just intented for development purposes. | `false`                  |
+| `kubeappsapis.unsafeUseDemoSA`                       | If true, replace the user's credentials by a full-granted demo service account. Just intended for development purposes. | `false`                  |
 | `kubeappsapis.enabledPlugins`                        | Enabled plugins for the Kubeapps-APIs service                                                                           | `[]`                     |
 | `kubeappsapis.image.registry`                        | Kubeapps-APIs image registry                                                                                            | `docker.io`              |
 | `kubeappsapis.image.repository`                      | Kubeapps-APIs image repository                                                                                          | `kubeapps/kubeapps-apis` |

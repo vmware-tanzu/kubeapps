@@ -344,7 +344,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
   fi
-  info "Helm tests succeded!!"
+  info "Helm tests succeeded!!"
 fi
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -409,4 +409,4 @@ if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRA
   kubectl cp "${pod}:/app/reports" ./reports
   exit 1
 fi
-info "Integration tests succeded!!"
+info "Integration tests succeeded!!"

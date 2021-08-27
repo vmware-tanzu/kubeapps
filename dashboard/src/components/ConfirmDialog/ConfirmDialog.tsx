@@ -33,7 +33,7 @@ function ConfirmDialog({
       {modalIsOpen && (
         <CdsModal size={size || "default"} closable={true} onCloseChange={closeModal}>
           {headerText && <CdsModalHeader>{headerText}</CdsModalHeader>}
-          {error && <Alert theme="danger">An error ocurred: {error.message}</Alert>}
+          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
           {loading === true ? (
             <div className="center">
               <CdsModalContent>

@@ -11,7 +11,7 @@ const { catalog: catalogActions } = actions;
 const mockStore = configureMockStore([thunk]);
 const broker = { metadata: { name: "wall-street" } } as IServiceBroker;
 const servicePlan = { metadata: { name: "bubble-it-up" } } as IServicePlan;
-const serviceInstance = { metadata: { name: "25-years-morgage" } } as IServiceInstance;
+const serviceInstance = { metadata: { name: "25-years-mortgage" } } as IServiceInstance;
 const bindingWithSecret = { binding: "binding", secret: "secret" } as any;
 const clusterClass = { metadata: { name: "cluster-class" } } as any;
 
