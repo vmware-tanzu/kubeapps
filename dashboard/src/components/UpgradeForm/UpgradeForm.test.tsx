@@ -6,11 +6,9 @@ import {
   Maintainer,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { act } from "react-dom/test-utils";
 import Chart from "shared/Chart";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IChartState } from "shared/types";
-import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
 
