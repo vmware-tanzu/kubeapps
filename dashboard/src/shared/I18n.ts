@@ -37,7 +37,7 @@ export default class I18n {
         throw new Error("Empty custom locale");
       }
       return { locale: lang, messages: customMessages };
-    } catch (err) {
+    } catch (e: any) {
       if (lang && ISupportedLangs[lang]) {
         return this.getConfig(lang);
       } else {

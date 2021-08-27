@@ -32,8 +32,8 @@ export default class Namespace {
         url.api.k8s.namespace(cluster, namespace),
       );
       return data;
-    } catch (err) {
-      switch (err.constructor) {
+    } catch (e: any) {
+      switch (e.constructor) {
         case ForbiddenError:
           throw new ForbiddenError(
             `You don't have sufficient permissions to use the namespace ${namespace}`,
@@ -41,7 +41,7 @@ export default class Namespace {
         case NotFoundError:
           throw new NotFoundError(`Namespace ${namespace} not found. Create it before using it.`);
         default:
-          throw err;
+          throw e;
       }
     }
   }
@@ -55,7 +55,7 @@ function parseStoredNS() {
   let parsedNS = {};
   try {
     parsedNS = JSON.parse(ns);
-  } catch (e) {
+  } catch (e: any) {
     // The stored value should be a json object, if not, ignore it
   }
   return parsedNS;

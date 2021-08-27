@@ -43,7 +43,7 @@ export class ClusterServiceClass {
     return data;
   }
 
-  public static async list(cluster: string, namespace?: string): Promise<IClusterServiceClass[]> {
+  public static async list(cluster: string): Promise<IClusterServiceClass[]> {
     const instances = await ServiceCatalog.getItems<IClusterServiceClass>(
       cluster,
       "serviceinstances",

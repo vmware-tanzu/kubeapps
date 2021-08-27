@@ -61,7 +61,7 @@ export class Auth {
       await Axios.get(url.api.k8s.base(cluster) + "/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-    } catch (e) {
+    } catch (e: any) {
       const res = e.response as AxiosResponse;
       if (res.status === 401) {
         throw new Error("invalid token");
@@ -110,7 +110,7 @@ export class Auth {
   public static async isAuthenticatedWithCookie(cluster: string): Promise<boolean> {
     try {
       await Axios.get(url.api.k8s.base(cluster) + "/");
-    } catch (e) {
+    } catch (e: any) {
       const response = e.response as AxiosResponse;
       // The only error response which can possibly mean we did authenticate is
       // a 403 from the k8s api server (ie. we got through to k8s api server

@@ -91,7 +91,7 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
                   .join("; ")}`,
               ),
             );
-          } catch (e) {
+          } catch (e: any) {
             // Subcase 4:
             //   A non-parseable 403 error.
             //   Do not require reauthentication and display error (ie. edge cases of proxy auth)

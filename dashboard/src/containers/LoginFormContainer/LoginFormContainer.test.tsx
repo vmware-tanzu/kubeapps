@@ -16,7 +16,7 @@ const makeStore = (
   authenticating: boolean,
   oidcAuthenticated: boolean,
   authenticationError: string,
-  defaultNamespace: string,
+  _defaultNamespace: string,
   authProxyEnabled: boolean,
   oauthLoginURI: string,
 ) => {
