@@ -3,11 +3,10 @@ import { RouterState } from "connected-react-router";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
-  GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
-  PackageAppVersion,
   InstalledPackageDetail,
   InstalledPackageSummary,
+  PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
@@ -73,7 +72,7 @@ export interface IChartState {
     schema?: JSONSchemaType<any>;
   };
   deployed: {
-    chartVersion?: GetAvailablePackageDetailResponse;
+    chartVersion?: AvailablePackageDetail;
     values?: string;
     schema?: JSONSchemaType<any>;
   };

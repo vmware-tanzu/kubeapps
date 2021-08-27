@@ -109,7 +109,7 @@ function UpgradeForm({
         cluster,
         repoNamespace,
         packageId,
-        deployed.chartVersion?.availablePackageDetail?.version?.pkgVersion,
+        deployed.chartVersion?.version?.pkgVersion,
       ),
     );
   }, [dispatch, cluster, repoNamespace, packageId, deployed.chartVersion]);
@@ -178,7 +178,7 @@ function UpgradeForm({
     );
   }
 
-  if (versions.length === 0 || !availablePackageDetail) {
+  if (versions?.length === 0 || !availablePackageDetail) {
     return (
       <LoadingWrapper
         className="margin-t-xxl"
@@ -197,7 +197,7 @@ function UpgradeForm({
           chartAttrs={availablePackageDetail}
           versions={versions}
           onSelect={selectVersion}
-          currentVersion={deployed.chartVersion?.availablePackageDetail?.version?.pkgVersion}
+          currentVersion={deployed.chartVersion?.version?.pkgVersion}
           selectedVersion={pkgVersion}
         />
         {isDeploying && (
