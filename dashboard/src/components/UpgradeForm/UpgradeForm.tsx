@@ -26,7 +26,6 @@ export interface IUpgradeFormProps {
   namespace: string;
   cluster: string;
   releaseName: string;
-  repo: string;
   repoNamespace: string;
   error?: Error;
   selected: IChartState["selected"];
@@ -57,7 +56,6 @@ function UpgradeForm({
   namespace,
   cluster,
   releaseName,
-  repo,
   repoNamespace,
   error,
   selected,

@@ -17,7 +17,6 @@ import { IReceiveChartsActionPayload } from "../shared/types";
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-let response: any;
 
 const namespace = "chart-namespace";
 const cluster = "default";

@@ -7,12 +7,12 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
-import qs, { ParsedQs } from "qs";
+import qs from "qs";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
-import { IChartState, IClusterServiceVersion, IStoreState } from "shared/types";
+import { IClusterServiceVersion, IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { escapeRegExp } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -29,16 +29,6 @@ function getOperatorCategories(c: IClusterServiceVersion): string[] {
   return get(c, "metadata.annotations.categories", "")
     .split(",")
     .map((category: string) => categoryToReadable(category));
-}
-
-interface ICatalogProps {
-  charts: IChartState;
-  repo: string;
-  filter: ParsedQs;
-  cluster: string;
-  namespace: string;
-  kubeappsNamespace: string;
-  csvs: IClusterServiceVersion[];
 }
 
 export const filterNames = {
@@ -83,7 +73,7 @@ interface IRouteParams {
   namespace: string;
 }
 
-function Catalog(props: ICatalogProps) {
+function Catalog() {
   const {
     charts: {
       hasFinishedFetching,

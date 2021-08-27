@@ -17,7 +17,7 @@ const defaultProps = {
   cluster: "default",
   namespace: "kubeapps",
   releaseName: "foo",
-  revision: "3",
+  revision: 3,
   releaseStatus: null,
 };
 

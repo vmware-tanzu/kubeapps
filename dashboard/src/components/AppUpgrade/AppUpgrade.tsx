@@ -92,7 +92,6 @@ function AppUpgrade() {
           appCurrentValues={app.valuesApplied}
           packageId={app.availablePackageRef.identifier}
           chartsIsFetching={chartsIsFetching}
-          repo={repoName}
           repoNamespace={repoNamespace}
           namespace={namespace}
           cluster={cluster}

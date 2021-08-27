@@ -113,7 +113,11 @@ export default function DeploymentForm() {
 
   if (error?.constructor === FetchError) {
     return (
-      error && <Alert theme="danger">Unable to retrieve the current app: {error?.message}</Alert>
+      error && (
+        <Alert theme="danger">
+          Unable to retrieve the current app: {(error as FetchError).message}
+        </Alert>
+      )
     );
   }
 

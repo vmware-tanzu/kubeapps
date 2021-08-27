@@ -80,7 +80,7 @@ export function fetchCharts(
         query,
       );
       dispatch(receiveCharts({ response, page }));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
@@ -96,7 +96,7 @@ export function fetchChartVersions(
     try {
       const response = await Chart.getAvailablePackageVersions(cluster, namespace, id);
       dispatch(receiveChartVersions(response));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };

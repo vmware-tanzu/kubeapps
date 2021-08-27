@@ -148,7 +148,7 @@ export function fetchApps(
       installedPackageSummaries = res?.installedPackageSummaries;
       dispatch(receiveAppList(installedPackageSummaries));
       return installedPackageSummaries;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
       return [];
     }

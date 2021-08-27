@@ -12,7 +12,6 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError } from "shared/types";
-import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
