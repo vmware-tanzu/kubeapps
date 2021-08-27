@@ -16,7 +16,6 @@ const makeStore = (
   authenticating: boolean,
   oidcAuthenticated: boolean,
   authenticationError: string,
-  _defaultNamespace: string,
   authProxyEnabled: boolean,
   oauthLoginURI: string,
 ) => {
@@ -70,7 +69,6 @@ describe("LoginFormContainer props", () => {
       true,
       true,
       "It's a trap",
-      "",
       authProxyEnabled,
       "/myoauth/start",
     );
@@ -92,7 +90,6 @@ describe("LoginFormContainer props", () => {
       true,
       true,
       "It's a trap",
-      "",
       authProxyEnabled,
       "/myoauth/start",
     );
