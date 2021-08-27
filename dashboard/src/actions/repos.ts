@@ -151,7 +151,7 @@ export const resyncRepo = (
 export const resyncAllRepos = (
   repos: IAppRepositoryKey[],
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch) => {
+  return async dispatch => {
     repos.forEach(repo => {
       dispatch(resyncRepo(repo.name, repo.namespace));
     });

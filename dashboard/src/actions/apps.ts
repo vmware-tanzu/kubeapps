@@ -112,7 +112,7 @@ function getAppUpdateInfo(
   currentVersion: string,
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
-  return async (dispatch) => {
+  return async dispatch => {
     dispatch(requestAppUpdateInfo());
     try {
       const chartsInfo = await Chart.listWithFilters(
@@ -262,7 +262,7 @@ export function deployChart(
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch) => {
+  return async dispatch => {
     dispatch(requestDeployApp());
     try {
       if (values && schema) {
@@ -302,7 +302,7 @@ export function upgradeApp(
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch) => {
+  return async dispatch => {
     dispatch(requestUpgradeApp());
     try {
       if (values && schema) {
@@ -332,7 +332,7 @@ export function rollbackApp(
   releaseName: string,
   revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch) => {
+  return async dispatch => {
     dispatch(requestRollbackApp());
     try {
       await App.rollback(cluster, namespace, releaseName, revision);
