@@ -79,7 +79,7 @@ Pros:
 Cons:
 
 - As described above, advanced queries cannot be done.
-- We still need to handle persistence and upgardes.
+- We still need to handle persistence and upgrades.
 - As in the previous option, we would still need a database for hub.kubeapps.com
 - While there is [a plugin for JSON handling](https://redislabs.com/blog/redis-as-a-json-store/), it requires a different version of the official image so we won't be able to use it.
 
@@ -98,7 +98,7 @@ Pros:
 
 Cons:
 
-- We still need to handle persistence and upgardes.
+- We still need to handle persistence and upgrades.
 
 ### 4. FoundationDB Document Layer
 

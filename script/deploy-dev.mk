@@ -42,10 +42,7 @@ deploy-dev-kubeapps-with-apis:
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--values ./docs/developer/manifests/values.kubeappsapis.yaml \
-		--set kubeappsapis.unsafeUseDemoSA=true \
-		--set redis.enabled=false \
-		--set kubeappsapis.image.tag=latest
+		--set kubeappsapis.unsafeUseDemoSA=true
 
 
 deploy-dev: deploy-dependencies deploy-dev-kubeapps

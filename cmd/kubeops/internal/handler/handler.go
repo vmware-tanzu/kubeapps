@@ -66,7 +66,7 @@ type Config struct {
 func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-			// Don't assume the cluster name was in the url for backwards compatability
+			// Don't assume the cluster name was in the url for backwards compatibility
 			// for now.
 			cluster, ok := params[clusterParam]
 			if !ok {

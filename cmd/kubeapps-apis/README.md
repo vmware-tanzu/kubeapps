@@ -14,7 +14,7 @@ Though it is possible to use a JS/TypeScript client, it is also possible to use 
 
 Together, this enables the best of both worlds: a well known and used Interface Definition Language for defining extensible APIs that can also be exposed via a rest-like http interface.
 
-Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatability.
+Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatibility.
 
 ## Plug-able
 
@@ -96,7 +96,7 @@ and make that image available on your cluster somehow. If using kind, you can si
 kind load docker-image kubeapps/kubeapps-apis:dev1 --name kubeapps
 ```
 
-When you deploy or upgrade Kubeapps, be sure to include the values file at `docs/developer/manifests/values.kubeappsapis.yaml` which provides the configuration to include the kubeapps-apis deployment and service etc. You can edit that file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match, such as:
+You can edit the values file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match, such as:
 
 ```bash
 kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=kubeapps/kubeapps-apis:dev1 --record
@@ -165,9 +165,9 @@ Of course, you will need to have the appropriate Flux HelmRepository or Carvel P
 
 A few extra tools will be needed to contribute to the development of this service.
 
-### GOPATH env variable 
+### GOPATH env variable
 
-Make sure your GOPATH environment variable is set. 
+Make sure your GOPATH environment variable is set.
 You can use the value of command
 ```bash
 go env GOPATH

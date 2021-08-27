@@ -29,10 +29,12 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -59,6 +61,7 @@ const (
 	globalPackagingNamespace = "kubeapps"
 	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
+	DefaultReleaseRevision   = 1
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
 	DefaultChartHomeURL      = "https://helm.sh/helm"
@@ -1539,17 +1542,20 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      2,
 				},
 				{
 					name:      "my-release-2",
 					namespace: "other-namespace",
 					status:    release.StatusDeployed,
+					version:   4,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-1",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      6,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1623,18 +1629,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1738,18 +1747,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1828,18 +1840,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1887,6 +1902,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1960,6 +1976,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 }
 
 func TestGetInstalledPackageDetail(t *testing.T) {
+	customDetailRevision2, err := anypb.New(&helmv1.InstalledPackageDetailCustomDataHelm{
+		ReleaseRevision: 2,
+	})
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
 	const (
 		releaseNamespace = "my-namespace-1"
 		releaseName      = "my-release-1"
@@ -1969,20 +1991,32 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	)
 	testCases := []struct {
 		name               string
-		existingRelease    releaseStub
+		existingReleases   []releaseStub
 		request            *corev1.GetInstalledPackageDetailRequest
 		expectedResponse   *corev1.GetInstalledPackageDetailResponse
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "returns an installed package detail",
-			existingRelease: releaseStub{
-				name:         releaseName,
-				namespace:    releaseNamespace,
-				chartVersion: releaseVersion,
-				values:       releaseValues,
-				notes:        releaseNotes,
-				status:       release.StatusDeployed,
+			existingReleases: []releaseStub{
+				{
+					name:         releaseName,
+					namespace:    releaseNamespace,
+					chartVersion: releaseVersion,
+					values:       releaseValues,
+					notes:        releaseNotes,
+					status:       release.StatusSuperseded,
+					version:      1,
+				},
+				{
+					name:         releaseName,
+					namespace:    releaseNamespace,
+					chartVersion: releaseVersion,
+					values:       releaseValues,
+					notes:        releaseNotes,
+					status:       release.StatusDeployed,
+					version:      2,
+				},
 			},
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -2026,6 +2060,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Identifier: "myrepo/" + releaseName,
 						Plugin:     GetPluginDetail(),
 					},
+					CustomDetail: customDetailRevision2,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -2047,7 +2082,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), []releaseStub{tc.existingRelease})
+			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases)
 			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
 
@@ -2066,7 +2101,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.AvailablePackageReference{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.AvailablePackageReference{}, plugins.Plugin{}, corev1.PackageAppVersion{}, anypb.Any{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -2186,6 +2221,7 @@ func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*co
 			namespace:     pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
 			chartVersion:  pkg.CurrentVersion.PkgVersion,
 			latestVersion: pkg.LatestVersion.PkgVersion,
+			version:       DefaultReleaseRevision,
 		})
 	}
 	populateAssetDB(t, mock, rels)
@@ -2199,6 +2235,7 @@ func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.I
 		namespace:    pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
 		chartVersion: pkg.CurrentVersion.PkgVersion,
 		chartID:      pkg.AvailablePackageRef.Identifier,
+		version:      DefaultReleaseRevision,
 	}
 	populateAssetDB(t, mock, []*releaseStub{rel})
 }
