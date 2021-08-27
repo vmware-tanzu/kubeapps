@@ -96,7 +96,7 @@ and make that image available on your cluster somehow. If using kind, you can si
 kind load docker-image kubeapps/kubeapps-apis:dev1 --name kubeapps
 ```
 
-When you deploy or upgrade Kubeapps, be sure to include the values file at `docs/developer/manifests/values.kubeappsapis.yaml` which provides the configuration to include the kubeapps-apis deployment and service etc. You can edit that file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match, such as:
+You can edit the values file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match, such as:
 
 ```bash
 kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=kubeapps/kubeapps-apis:dev1 --record
@@ -165,9 +165,9 @@ Of course, you will need to have the appropriate Flux HelmRepository or Carvel P
 
 A few extra tools will be needed to contribute to the development of this service.
 
-### GOPATH env variable 
+### GOPATH env variable
 
-Make sure your GOPATH environment variable is set. 
+Make sure your GOPATH environment variable is set.
 You can use the value of command
 ```bash
 go env GOPATH

@@ -343,6 +343,32 @@
         ]
       }
     },
+    "/core/packages/v1alpha1/installedpackages": {
+      "post": {
+        "operationId": "PackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/packages/v1alpha1/installedpackagesummaries": {
       "get": {
         "operationId": "PackagesService_GetInstalledPackageSummaries",
@@ -729,6 +755,33 @@
             "type": "string"
           }
         ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/installedpackages": {
+      "post": {
+        "summary": "CreateInstalledPackage creates an installed package based on the request.",
+        "operationId": "FluxV2PackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "tags": [
           "FluxV2PackagesService"
         ]
@@ -1142,6 +1195,33 @@
         ]
       }
     },
+    "/plugins/helm/packages/v1alpha1/installedpackages": {
+      "post": {
+        "summary": "CreateInstalledPackage creates an installed package based on the request.",
+        "operationId": "HelmPackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
     "/plugins/helm/packages/v1alpha1/installedpackagesummaries": {
       "get": {
         "summary": "GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin",
@@ -1507,6 +1587,33 @@
         ]
       }
     },
+    "/plugins/kapp_controller/packages/v1alpha1/installedpackages": {
+      "post": {
+        "summary": "CreateInstalledPackage creates an installed package based on the request.",
+        "operationId": "KappControllerPackagesService_CreateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
     "/plugins/kapp_controller/packages/v1alpha1/installedpackagesummaries": {
       "get": {
         "summary": "GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin",
@@ -1842,7 +1949,7 @@
         },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
-          "description": "Some additional information added by the plugin",
+          "description": "A plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any",
           "title": "Custom data added by the plugin"
         }
       },
@@ -1932,6 +2039,16 @@
       },
       "description": "A Context specifies the context of the message",
       "title": "Context"
+    },
+    "v1alpha1CreateInstalledPackageResponse": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference"
+        }
+      },
+      "description": "Response for CreateInstalledPackage",
+      "title": "CreateInstalledPackageResponse"
     },
     "v1alpha1FilterOptions": {
       "type": "object",
@@ -2138,6 +2255,11 @@
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
           "description": "The latest version available for this package, regardless of the pkg_version_reference.",
           "title": "LatestVersion"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "description": "A plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any",
+          "title": "Custom data added by the plugin"
         }
       },
       "description": "An InstalledPackageDetail includes details about the installed package that are\ntypically useful when presenting a single installed package.",
@@ -2205,7 +2327,7 @@
         },
         "currentVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The version of the package which is currently installed.",
+          "description": "The current version of the package being reconciled, which may be\nin one of these states:\n - has been successfully installed/upgraded or \n - is currently being installed/upgraded or \n - has failed to install/upgrade",
           "title": "CurrentVersion"
         },
         "iconUrl": {
