@@ -8,17 +8,17 @@ import { createMemoryHistory } from "history";
 import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
 import ChartCatalogItem from "./ChartCatalogItem";
-import * as ReactRouter from "react-router";
 
 const defaultChartState = {
   isFetching: false,
@@ -381,7 +381,7 @@ describe("pagination and chart fetching", () => {
   it("sets the initial state page to 0 before fetching charts", () => {
     const fetchCharts = jest.fn();
     actions.charts.fetchCharts = fetchCharts;
-    const resetRequestCharts = jest.fn();
+    // const resetRequestCharts = jest.fn();
     actions.charts.fetchCharts = fetchCharts;
     const charts = {
       ...defaultChartState,
@@ -408,7 +408,7 @@ describe("pagination and chart fetching", () => {
   it("sets the state page when fetching charts", () => {
     const fetchCharts = jest.fn();
     actions.charts.fetchCharts = fetchCharts;
-    const resetRequestCharts = jest.fn();
+    // const resetRequestCharts = jest.fn();
 
     const charts = {
       ...defaultChartState,
@@ -435,7 +435,7 @@ describe("pagination and chart fetching", () => {
   it("items are translated to CatalogItems after fetching charts", () => {
     const fetchCharts = jest.fn();
     actions.charts.fetchCharts = fetchCharts;
-    const resetRequestCharts = jest.fn();
+    // const resetRequestCharts = jest.fn();
 
     const charts = {
       ...defaultChartState,
