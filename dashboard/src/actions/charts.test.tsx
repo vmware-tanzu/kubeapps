@@ -9,10 +9,9 @@ import {
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import Chart from "shared/Chart";
-import { FetchError } from "shared/types";
+import { FetchError, IReceiveChartsActionPayload } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { IReceiveChartsActionPayload } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -408,7 +407,7 @@ describe("fetchChartVersion", () => {
 
 describe("getDeployedChartVersion", () => {
   it("should request a deployed chart", async () => {
-    let response: GetAvailablePackageDetailResponse = {
+    const response: GetAvailablePackageDetailResponse = {
       availablePackageDetail: defaultAvailablePackageDetail,
     };
     const mockGetAvailablePackageDetail = jest

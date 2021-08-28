@@ -43,7 +43,7 @@ it("renders an app item", () => {
     icon: "placeholder.png",
     link: app.apps.get(
       defaultProps.cluster,
-      defaultProps.app.installedPackageRef?.context?.namespace!,
+      defaultProps.app.installedPackageRef?.context?.namespace ?? "",
       defaultProps.app.name,
     ),
     tag1Class: "label-success",
