@@ -1,3 +1,4 @@
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import {
@@ -9,6 +10,9 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import * as ReactRedux from "react-redux";
+import * as ReactRouter from "react-router";
+import { MemoryRouter, Route } from "react-router";
 import { IAppRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
@@ -22,19 +26,28 @@ import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 import AppUpgrade from "./AppUpgrade";
 
+const defaultProps = {
+  pkgName: "foo",
+  cluster: "default",
+  namespace: "default",
+  repoNamespace: "stable",
+  repo: "repo",
+  releaseName: "my-release",
+};
+
 const installedPackage1 = {
   name: "test",
   postInstallationNotes: "test",
   valuesApplied: "test",
   availablePackageRef: {
-    identifier: "apache/1",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    identifier: "stable/bar",
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
   } as AvailablePackageReference,
   currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   installedPackageRef: {
-    identifier: "apache/1",
+    identifier: "stable/bar",
     pkgVersion: "1.0.0",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
   } as InstalledPackageReference,
   latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -47,36 +60,32 @@ const installedPackage1 = {
   } as InstalledPackageStatus,
 } as CustomInstalledPackageDetail;
 
-const repo1 = { metadata: { name: "stable", namespace: "default" } } as IAppRepository;
+const repo1 = {
+  metadata: {
+    name: defaultProps.repo,
+    namespace: defaultProps.repoNamespace,
+  },
+} as IAppRepository;
+
+let spyOnUseDispatch: jest.SpyInstance;
+let spyOnUseHistory: jest.SpyInstance;
 
 beforeEach(() => {
-  jest.resetAllMocks();
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  spyOnUseHistory = jest
+    .spyOn(ReactRouter, "useHistory")
+    .mockReturnValue({ push: jest.fn() } as any);
 });
 
-// TODO(agamez): temporarily for reference until we get the rest of the test working
-// const FULL_STATE = {
-//   apps: {
-//     isFetching: false,
-//     error: undefined,
-//     items: [installedPackage1],
-//     listOverview: [installedPackageSummary1],
-//     selected: installedPackage1,
-//     selectedDetails: availablePackageDetail1,
-//   } as IAppState,
-//   repos: {
-//     repo: repo1,
-//     repos: [repo1],
-//     isFetching: false,
-//   } as IAppRepositoryState,
-//   charts: {
-//     isFetching: false,
-//     selected: {
-//       versions: [{ appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion],
-//       availablePackageDetail: { name: "test" } as AvailablePackageDetail,
-//       pkgVersion: "",
-//     },
-//   } as IChartState,
-// };
+afterEach(() => {
+  jest.resetAllMocks();
+  spyOnUseDispatch.mockRestore();
+  spyOnUseHistory.mockRestore();
+});
+
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/${defaultProps.releaseName}/upgrade`;
+const routePath = "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade";
 
 it("renders the repo selection form if not introduced", () => {
   const state = {
@@ -218,61 +227,73 @@ it("skips the repo selection form if the app contains upgrade info", () => {
   expect(wrapper.find(SelectRepoForm)).not.toExist();
 });
 
-// describe("when receiving new props", () => {
+describe("when receiving new props", () => {
+  it("should request the deployed chart when the app and repo are populated", () => {
+    const getDeployedChartVersion = jest.fn();
+    actions.charts.getDeployedChartVersion = getDeployedChartVersion;
 
-// TODO(agamez): Test temporarily commented out
-//   it("should request the deployed chart when the app and repo are populated", () => {
-//     const app = {
-//       chart: {
-//         metadata: {
-//           name: "bar",
-//           version: "1.0.0",
-//         },
-//       },
-//     } as IRelease;
-//     const getDeployedChartVersion = jest.fn();
-//     mountWrapper(
-//       defaultStore,
-//       <AppUpgrade
-//         {...defaultProps}
-//         getDeployedChartVersion={getDeployedChartVersion}
-//         repoName="stable"
-//         app={app}
-//       />,
-//     );
-//     expect(getDeployedChartVersion).toHaveBeenCalledWith(
-//       defaultProps.cluster,
-//       defaultProps.repoNamespace,
-//       "stable/bar",
-//       "1.0.0",
-//     );
-//   });
+    const state = {
+      apps: {
+        selected: installedPackage1,
+      } as IAppState,
+      repos: {
+        repo: repo1,
+        repos: [repo1],
+        isFetching: false,
+      } as IAppRepositoryState,
+    };
+    mountWrapper(
+      getStore({
+        ...defaultStore,
+        apps: { ...state.apps },
+        repos: { ...state.repos },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
+    );
 
-// TODO(agamez): Test temporarily commented out
-//   it("should request the deployed chart when the repo is populated later", () => {
-//     const app = {
-//       chart: {
-//         metadata: {
-//           name: "bar",
-//           version: "1.0.0",
-//         },
-//       },
-//     } as IRelease;
-//     const getDeployedChartVersion = jest.fn();
-//     mountWrapper(
-//       defaultStore,
-//       <AppUpgrade
-//         {...defaultProps}
-//         app={app}
-//         getDeployedChartVersion={getDeployedChartVersion}
-//         repoName="stable"
-//       />,
-//     );
-//     expect(getDeployedChartVersion).toHaveBeenCalledWith(
-//       defaultProps.cluster,
-//       defaultProps.repoNamespace,
-//       "stable/bar",
-//       "1.0.0",
-//     );
-//   });
-// });
+    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
+      defaultProps.repoNamespace,
+      "stable/bar",
+      "1.0.0",
+    );
+  });
+
+  it("should request the deployed chart when the repo is populated later", () => {
+    const getDeployedChartVersion = jest.fn();
+    actions.charts.getDeployedChartVersion = getDeployedChartVersion;
+
+    const state = {
+      apps: {
+        selected: installedPackage1,
+      } as IAppState,
+      repos: {
+        repo: repo1,
+        repos: [repo1],
+        isFetching: false,
+      } as IAppRepositoryState,
+    };
+    mountWrapper(
+      getStore({
+        ...defaultStore,
+        apps: { ...state.apps },
+        repos: { ...state.repos },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
+    );
+    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.cluster,
+      defaultProps.repoNamespace,
+      "stable/bar",
+      "1.0.0",
+    );
+  });
+});
