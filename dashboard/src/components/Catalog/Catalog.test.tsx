@@ -14,7 +14,7 @@ import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IAppRepository, IChartState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -330,21 +330,22 @@ describe("filters by application type", () => {
   });
 
   // TODO(agamez): Test temporarily commented out
-  // it("push filter for only charts", () => {
-  //   const wrapper = mountWrapper(
-  //     getStore(populatedState),
-  //     <Router history={createMemoryHistory({ initialEntries: [routePathParam] })}>
-  //       <Route path={routePath}>
-  //         <Catalog />
-  //       </Route>
-  //     </Router>,
-  //   );
-  //   const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
-  //   input.simulate("change", { target: { value: "Charts" } });
-  //   input.simulate("change", { target: { checked: true } });
-  //   // It should have pushed with the filter
-  //   expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Type=Charts");
-  // });
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("push filter for only charts", () => {
+    const wrapper = mountWrapper(
+      getStore(populatedState),
+      <Router history={createMemoryHistory({ initialEntries: [routePathParam] })}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </Router>,
+    );
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
+    input.simulate("change", { target: { value: "Charts" } });
+    input.simulate("change", { target: { checked: true } });
+    // It should have pushed with the filter
+    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Type=Charts");
+  });
 
   it("filters only operators", () => {
     const wrapper = mountWrapper(
@@ -359,22 +360,23 @@ describe("filters by application type", () => {
   });
 
   // TODO(agamez): Test temporarily commented out
-  // it("push filter for only operators", () => {
-  //   const store = getStore(populatedState);
-  //   const wrapper = mountWrapper(
-  //     store,
-  //     <Router history={createMemoryHistory({ initialEntries: [routePathParam] })}>
-  //       <Route path={routePath}>
-  //         <Catalog />
-  //       </Route>
-  //     </Router>,
-  //   );
-  //   const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
-  //     input.simulate("change", { target: { value: "Operators" } });
-  //     input.simulate("change", { target: { checked: true } });
-  //   // It should have pushed with the filter
-  //   expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Type=Operators");
-  // });
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("push filter for only operators", () => {
+    const store = getStore(populatedState);
+    const wrapper = mountWrapper(
+      store,
+      <Router history={createMemoryHistory({ initialEntries: [routePathParam] })}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </Router>,
+    );
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
+    input.simulate("change", { target: { value: "Operators" } });
+    input.simulate("change", { target: { checked: true } });
+    // It should have pushed with the filter
+    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Type=Operators");
+  });
 });
 
 describe("pagination and chart fetching", () => {
@@ -460,54 +462,55 @@ describe("pagination and chart fetching", () => {
   });
 
   // TODO(agamez): Test temporarily commented out
-  // it("changes page", () => {
-  //   const setState = jest.fn();
-  //   const setPage = jest.fn();
-  //   let spyOnUseState = jest
-  //     .spyOn(React, "useState")
-  //     /* @ts-expect-error: Argument of type '(init: any) => any' is not assignable to parameter of type '() => [unknown, Dispatch<unknown>]' */
-  //     .mockImplementation((init: any) => {
-  //       if (init === false) {
-  //         // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
-  //         return [true, setState];
-  //       }
-  //       if (init === 0) {
-  //         // Mocking the result of setPage to ensure it's called
-  //         return [0, setPage];
-  //       }
-  //       return [init, setState];
-  //     });
-  //   try {
-  //     const charts = {
-  //       ...defaultChartState,
-  //       hasFinishedFetching: false,
-  //       isFetching: false,
-  //       items: [],
-  //     } as any;
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("changes page", () => {
+    const setState = jest.fn();
+    const setPage = jest.fn();
+    const spyOnUseState = jest
+      .spyOn(React, "useState")
+      /* @ts-expect-error: Argument of type '(init: any) => any' is not assignable to parameter of type '() => [unknown, Dispatch<unknown>]' */
+      .mockImplementation((init: any) => {
+        if (init === false) {
+          // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
+          return [true, setState];
+        }
+        if (init === 0) {
+          // Mocking the result of setPage to ensure it's called
+          return [0, setPage];
+        }
+        return [init, setState];
+      });
+    try {
+      const charts = {
+        ...defaultChartState,
+        hasFinishedFetching: false,
+        isFetching: false,
+        items: [],
+      } as any;
 
-  //     // Mock intersection observer
-  //     const observe = jest.fn();
-  //     const unobserve = jest.fn();
+      // Mock intersection observer
+      const observe = jest.fn();
+      const unobserve = jest.fn();
 
-  //     window.IntersectionObserver = jest.fn(callback => {
-  //       (callback as (e: any) => void)([{ isIntersecting: true }]);
-  //       return { observe, unobserve } as any;
-  //     });
-  //     window.IntersectionObserverEntry = jest.fn();
+      window.IntersectionObserver = jest.fn(callback => {
+        (callback as (e: any) => void)([{ isIntersecting: true }]);
+        return { observe, unobserve } as any;
+      });
+      window.IntersectionObserverEntry = jest.fn();
 
-  //     mountWrapper(
-  //       getStore({ ...populatedState, charts: charts }),
-  //       <MemoryRouter initialEntries={[routePathParam]}>
-  //         <Route path={routePath}>
-  //           <Catalog />
-  //         </Route>
-  //       </MemoryRouter>,
-  //     );
-  //     expect(setPage).toHaveBeenCalledWith(1);
-  //   } finally {
-  //     spyOnUseState.mockRestore();
-  //   }
-  // });
+      mountWrapper(
+        getStore({ ...populatedState, charts: charts }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <Catalog />
+          </Route>
+        </MemoryRouter>,
+      );
+      expect(setPage).toHaveBeenCalledWith(1);
+    } finally {
+      spyOnUseState.mockRestore();
+    }
+  });
 
   // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
   // https://github.com/kubeapps/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
@@ -534,73 +537,76 @@ describe("filters by application repository", () => {
   });
 
   // TODO(agamez): Test temporarily commented out
-  // it("push filter for repo", () => {
-  //   const fetchRepos = jest.fn();
-  //   const wrapper = mountWrapper(
-  //     getStore({
-  //       ...populatedState,
-  //       repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-  //     }),
-  //     <MemoryRouter initialEntries={[routePathParam]}>
-  //       <Route path={routePath}>
-  //         <Catalog />
-  //       </Route>
-  //     </MemoryRouter>,
-  //   );
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("push filter for repo", () => {
+    const fetchRepos = jest.fn();
+    const wrapper = mountWrapper(
+      getStore({
+        ...populatedState,
+        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
 
-  //   // The repo name is "foo"
-  //   const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
-  //   input.simulate("change", { target: { value: "foo" } });
-  //   // It should have pushed with the filter
-  //   expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
-  //   expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Repository=foo");
-  // });
+    // The repo name is "foo"
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+    input.simulate("change", { target: { value: "foo" } });
+    // It should have pushed with the filter
+    expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
+    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Repository=foo");
+  });
 });
 
 // TODO(agamez): Test temporarily commented out
-// it("push filter for repo", () => {
-//   const fetchRepos = jest.fn();
-//   const wrapper = mountWrapper(
-//     getStore({
-//       ...populatedState,
-//       repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-//     }),
-//     <MemoryRouter initialEntries={[routePathParam]}>
-//       <Route path={routePath}>
-//         <Catalog />
-//       </Route>
-//     </MemoryRouter>,
-//   );
-//   // The repo name is "foo"
-//   const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
-//   input.simulate("change", { target: { value: "foo" } });
-//   // It should have pushed with the filter
-//   expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
-//   expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Repository=foo");
-// });
+// eslint-disable-next-line jest/no-disabled-tests
+it.skip("push filter for repo", () => {
+  const fetchRepos = jest.fn();
+  const wrapper = mountWrapper(
+    getStore({
+      ...populatedState,
+      repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+    }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <Catalog />
+      </Route>
+    </MemoryRouter>,
+  );
+  // The repo name is "foo"
+  const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+  input.simulate("change", { target: { value: "foo" } });
+  // It should have pushed with the filter
+  expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
+  expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Repository=foo");
+});
 
 // TODO(agamez): Test temporarily commented out
-// it("push filter for repo in other ns", () => {
-//   const fetchRepos = jest.fn();
-//   const wrapper = mountWrapper(
-//     getStore({
-//       ...populatedState,
-//       repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-//     }),
-//     <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
-//       <Route path={routePath}>
-//         <Catalog />
-//       </Route>
-//     </MemoryRouter>,
-//   );
+// eslint-disable-next-line jest/no-disabled-tests
+it.skip("push filter for repo in other ns", () => {
+  const fetchRepos = jest.fn();
+  const wrapper = mountWrapper(
+    getStore({
+      ...populatedState,
+      repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+    }),
+    <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
+      <Route path={routePath}>
+        <Catalog />
+      </Route>
+    </MemoryRouter>,
+  );
 
-//   // The repo name is "foo", the ns name is "my-ns"
-//   const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
-//   input.simulate("change", { target: { value: "foo" } });
-//   // It should have pushed with the filter
-//   expect(fetchRepos).toHaveBeenCalledWith("my-ns", true);
-//   expect(history.location.pathname).toBe("/c/default-cluster/ns/my-ns/catalog?Repository=foo");
-// });
+  // The repo name is "foo", the ns name is "my-ns"
+  const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+  input.simulate("change", { target: { value: "foo" } });
+  // It should have pushed with the filter
+  expect(fetchRepos).toHaveBeenCalledWith("my-ns", true);
+  expect(history.location.pathname).toBe("/c/default-cluster/ns/my-ns/catalog?Repository=foo");
+});
 
 describe("filters by operator provider", () => {
   it("doesn't show the filter if there are no csvs", () => {
@@ -623,44 +629,46 @@ describe("filters by operator provider", () => {
   } as any;
 
   // TODO(agamez): Test temporarily commented out
-  // it("push filter for operator provider", () => {
-  //   const wrapper = mountWrapper(
-  //     getStore({
-  //       ...populatedState,
-  //       operators: { csvs: [csv, csv2] },
-  //     }),
-  //     <MemoryRouter initialEntries={[routePathParam + "?Provider=you"]}>
-  //       <Route path={routePath}>
-  //         <Catalog />
-  //       </Route>
-  //     </MemoryRouter>,
-  //   );
-  //   const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
-  //   input.simulate("change", { target: { value: "you" } });
-  //   // It should have pushed with the filter
-  //   expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Provider=you");
-  // });
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("push filter for operator provider", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...populatedState,
+        operators: { csvs: [csv, csv2] },
+      }),
+      <MemoryRouter initialEntries={[routePathParam + "?Provider=you"]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
+    input.simulate("change", { target: { value: "you" } });
+    // It should have pushed with the filter
+    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Provider=you");
+  });
 
   // TODO(agamez): Test temporarily commented out
-  // it("push filter for operator provider with comma", () => {
-  //   const wrapper = mountWrapper(
-  //     getStore({
-  //       ...populatedState,
-  //       operators: { csvs: [csv, csv2] },
-  //     }),
-  //     <MemoryRouter initialEntries={[routePathParam]}>
-  //       <Route path={routePath}>
-  //         <Catalog />
-  //       </Route>
-  //     </MemoryRouter>,
-  //   );
-  //   const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
-  //   input.simulate("change", { target: { value: "you, inc" } });
-  //   // It should have pushed with the filter
-  //   expect(history.location.pathname).toBe(
-  //     "/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc",
-  //   );
-  // });
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("push filter for operator provider with comma", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...populatedState,
+        operators: { csvs: [csv, csv2] },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
+    input.simulate("change", { target: { value: "you, inc" } });
+    // It should have pushed with the filter
+    expect(history.location.pathname).toBe(
+      "/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc",
+    );
+  });
 
   it("filters by operator provider", () => {
     const wrapper = mountWrapper(
@@ -697,29 +705,30 @@ describe("filters by category", () => {
   });
 
   // TODO(agamez): Test temporarily commented out
-  // it("push filter for category", () => {
-  //   const charts = {
-  //     ...defaultChartState,
-  //     items: [availablePkgSummary1, availablePkgSummary2],
-  //     categories: [availablePkgSummary1.categories[0], availablePkgSummary2.categories[0]],
-  //   };
-  //   const store = getStore({ ...defaultState, charts: charts });
-  //   const wrapper = mountWrapper(
-  //     store,
-  //     <MemoryRouter initialEntries={[routePathParam]}>
-  //       <Route path={routePath}>
-  //         <Catalog />
-  //       </Route>
-  //     </MemoryRouter>,
-  //   );
-  //   expect(wrapper.find(InfoCard)).toHaveLength(2);
-  //   const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
-  //   input.simulate("change", { target: { value: "Database" } });
-  //   // It should have pushed with the filter
-  //   expect(history.location.pathname).toBe(
-  //     "/c/default-cluster/ns/kubeapps/catalog?Category=Database",
-  //   );
-  // });
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("push filter for category", () => {
+    const charts = {
+      ...defaultChartState,
+      items: [availablePkgSummary1, availablePkgSummary2],
+      categories: [availablePkgSummary1.categories[0], availablePkgSummary2.categories[0]],
+    };
+    const store = getStore({ ...defaultState, charts: charts });
+    const wrapper = mountWrapper(
+      store,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(2);
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
+    input.simulate("change", { target: { value: "Database" } });
+    // It should have pushed with the filter
+    expect(history.location.pathname).toBe(
+      "/c/default-cluster/ns/kubeapps/catalog?Category=Database",
+    );
+  });
 
   it("filters a category", () => {
     const charts = {

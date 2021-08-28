@@ -2,6 +2,7 @@ import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
+import Chart from "shared/Chart";
 import { IAppState, UnprocessableEntity } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -77,92 +78,95 @@ describe("fetches applications", () => {
 
   // TODO(agamez): Check the current implemented logic, now it's no longer required to
   // perform additional calls for fetching the latest versions. Perhaps delete some tests here, not sure yet.
-  //   describe("fetches chart updates", () => {
-  //     // TODO(agamez): Test temporarily commented out
-  //     it("gets a chart latest version", async () => {
-  //       const appsResponse = [
-  //         {
-  //           releaseName: "foobar",
-  //           namespace: "ns-1",
-  //           chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
-  //         },
-  //       ];
-  //       const chartUpdatesResponse = [
-  //         {
-  //           attributes: { repo: { name: "bar" } },
-  //           relationships: {
-  //             latestChartVersion: { data: { app_version: "1.0.0", version: "1.1.0" } },
-  //           },
-  //         },
-  //       ];
-  //       Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
-  //       App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
-  //       const expectedActions = [
-  //         { type: getType(actions.apps.listApps) },
-  //         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-  //       ];
-  //       await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
-  //       // It should use the app namespace
-  //       expect(Chart.getAvailablePackageSummaries).toHaveBeenCalledWith(
-  //         "default-c",
-  //         "ns-1",
-  //         "foo",
-  //         "1.0.0",
-  //         "0.1.0",
-  //       );
-  //       expect(store.getActions()).toEqual(expectedActions);
-  //     });
+  describe("fetches chart updates", () => {
+    // TODO(agamez): Test temporarily commented out
+    // eslint-disable-next-line jest/no-disabled-tests
+    it.skip("gets a chart latest version", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          namespace: "ns-1",
+          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: {
+            latestChartVersion: { data: { app_version: "1.0.0", version: "1.1.0" } },
+          },
+        },
+      ];
+      Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps) },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+      ];
+      await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
+      // It should use the app namespace
+      expect(Chart.getAvailablePackageSummaries).toHaveBeenCalledWith(
+        "default-c",
+        "ns-1",
+        "foo",
+        "1.0.0",
+        "0.1.0",
+      );
+      expect(store.getActions()).toEqual(expectedActions);
+    });
 
-  //     // TODO(agamez): Test temporarily commented out
-  //     it("set up upToDate=true if the application is up to date", async () => {
-  //       const appsResponse = [
-  //         {
-  //           releaseName: "foobar",
-  //           chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
-  //         },
-  //       ];
-  //       const chartUpdatesResponse = [
-  //         {
-  //           attributes: { repo: { name: "bar" } },
-  //           relationships: {
-  //             latestChartVersion: { data: { app_version: "0.1.0", version: "1.0.0" } },
-  //           },
-  //         },
-  //       ];
-  //       Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
-  //       App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
-  //       const expectedActions = [
-  //         { type: getType(actions.apps.listApps) },
-  //         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-  //       ];
-  //       await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
-  //       expect(store.getActions()).toEqual(expectedActions);
-  //     });
+    // TODO(agamez): Test temporarily commented out
+    // eslint-disable-next-line jest/no-disabled-tests
+    it.skip("set up upToDate=true if the application is up to date", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: {
+            latestChartVersion: { data: { app_version: "0.1.0", version: "1.0.0" } },
+          },
+        },
+      ];
+      Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps) },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+      ];
+      await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
+      expect(store.getActions()).toEqual(expectedActions);
+    });
 
-  //     // TODO(agamez): Test temporarily commented out
-  //     it("set an error if the application version is not semver compatible", async () => {
-  //       const appsResponse = [
-  //         {
-  //           releaseName: "foobar",
-  //           chartMetadata: { name: "foo", version: "1.0", appVersion: "0.1.0" },
-  //         },
-  //       ];
-  //       const chartUpdatesResponse = [
-  //         {
-  //           attributes: { repo: { name: "bar" } },
-  //           relationships: { latestChartVersion: { data: { version: "1.0" } } },
-  //         },
-  //       ];
-  //       Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
-  //       App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
-  //       const expectedActions = [
-  //         { type: getType(actions.apps.listApps) },
-  //         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-  //       ];
-  //       await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
-  //       expect(store.getActions()).toEqual(expectedActions);
-  //     });
-  //   });
+    // TODO(agamez): Test temporarily commented out
+    // eslint-disable-next-line jest/no-disabled-tests
+    it.skip("set an error if the application version is not semver compatible", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: { latestChartVersion: { data: { version: "1.0" } } },
+        },
+      ];
+      Chart.getAvailablePackageSummaries = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.GetInstalledPackageSummaries = jest.fn().mockReturnValue(appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps) },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+      ];
+      await store.dispatch(actions.apps.fetchApps("default-c", "default-ns"));
+      expect(store.getActions()).toEqual(expectedActions);
+    });
+  });
 });
 
 describe("delete applications", () => {
