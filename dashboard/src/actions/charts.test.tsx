@@ -7,10 +7,9 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { axiosWithAuth } from "shared/AxiosInstance";
 import Chart from "shared/Chart";
-import { FetchError, NotFoundError } from "shared/types";
+import { FetchError, NotFoundError, IReceiveChartsActionPayload } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { IReceiveChartsActionPayload } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
