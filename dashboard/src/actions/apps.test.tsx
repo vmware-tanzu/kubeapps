@@ -1,7 +1,11 @@
-import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  InstalledPackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
+import Chart from "shared/Chart";
 import { IAppState, UnprocessableEntity } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -259,21 +263,48 @@ describe("rollbackApp", () => {
   const provisionCMD = actions.apps.rollbackApp("default-c", "default-ns", "my-release", 1);
 
   it("success and re-request apps info", async () => {
+    const installedPackageDetail = {
+      availablePackageRef: {
+        context: { cluster: "default", namespace: "my-ns" },
+        identifier: "test",
+      },
+      currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
+    } as InstalledPackageDetail;
+
+    const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
+
     App.rollback = jest.fn().mockImplementationOnce(() => true);
-    App.getRelease = jest.fn().mockImplementationOnce(() => true);
+    App.getRelease = jest.fn().mockReturnValue({ manifest: {} });
+    App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
+      installedPackageDetail: installedPackageDetail,
+    });
+    Chart.getAvailablePackageDetail = jest.fn().mockReturnValue({
+      availablePackageDetail: availablePackageDetail,
+    });
     const res = await store.dispatch(provisionCMD);
     expect(res).toBe(true);
+
+    const selectCMD = actions.apps.selectApp(
+      installedPackageDetail as any,
+      {},
+      availablePackageDetail,
+    );
+    const res2 = await store.dispatch(selectCMD);
+    expect(res2).not.toBeNull();
 
     const expectedActions = [
       { type: getType(actions.apps.requestRollbackApp) },
       { type: getType(actions.apps.receiveRollbackApp) },
-      // TODO(agamez): check if we really should dispatch this requestApps action after a rollback
-      // { type: getType(actions.apps.requestApps) },
-      // { type: getType(actions.apps.selectApp), payload: true },
+      { type: getType(actions.apps.requestApps) },
+      {
+        type: getType(actions.apps.selectApp),
+        payload: { app: installedPackageDetail, manifest: {}, details: availablePackageDetail },
+      },
     ];
+
     expect(store.getActions()).toEqual(expectedActions);
     expect(App.rollback).toHaveBeenCalledWith("default-c", "default-ns", "my-release", 1);
-    // expect(App.getRelease).toHaveBeenCalledWith("default-c", "default-ns", "my-release");
+    expect(App.getRelease).toHaveBeenCalledWith("default-c", "default-ns", "my-release");
   });
 
   it("dispatches an error", async () => {
