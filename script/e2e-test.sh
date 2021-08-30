@@ -271,8 +271,8 @@ installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
-pushChart apache 7.3.15 admin password
-pushChart apache 7.3.16 admin password
+pushChart apache 8.6.2 admin password
+pushChart apache 8.6.3 admin password
 
 # Ensure that we are testing the correct image
 info ""
