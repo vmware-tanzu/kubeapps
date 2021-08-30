@@ -88,7 +88,7 @@ const defaultState = {
   charts: defaultChartState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
   repos: { repos: [] } as Partial<IAppRepositoryState>,
-  config: { kubeappsCluster: "default", kubeappsNamespace: "kubeapps" } as IConfigState,
+  config: { kubeappsCluster: defaultProps.cluster, kubeappsNamespace: defaultProps.kubeappsNamespace } as IConfigState,
 };
 
 const populatedChartState = {
@@ -310,6 +310,18 @@ describe("filters by the searched item", () => {
 });
 
 describe("filters by application type", () => {
+  let spyOnUseDispatch: jest.SpyInstance;
+  const mockDispatch = jest.fn();
+
+  beforeEach(() => {
+    spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  });
+
+  afterEach(() => {
+    spyOnUseDispatch.mockRestore();
+    mockDispatch.mockReset();
+  });
+
   it("doesn't show the filter if there are no csvs", () => {
     const wrapper = mountWrapper(getStore(defaultState), <Catalog />);
     expect(
@@ -329,22 +341,27 @@ describe("filters by application type", () => {
     expect(wrapper.find(InfoCard)).toHaveLength(2);
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("push filter for only charts", () => {
+  it("push filter for only charts", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
-      <Router history={createMemoryHistory({ initialEntries: [routePathParam] })}>
+      <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
         </Route>
-      </Router>,
+      </MemoryRouter>,
     );
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
-    input.simulate("change", { target: { value: "Charts" } });
-    input.simulate("change", { target: { checked: true } });
+    expect(input).toHaveLength(1);
+    input.simulate("change", { target: { value: "Charts", checked: true } });
+
     // It should have pushed with the filter
-    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Type=Charts");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Charts"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
   });
 
   it("filters only operators", () => {
@@ -359,23 +376,27 @@ describe("filters by application type", () => {
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("push filter for only operators", () => {
-    const store = getStore(populatedState);
+  it("push filter for only operators", () => {
     const wrapper = mountWrapper(
-      store,
-      <Router history={createMemoryHistory({ initialEntries: [routePathParam] })}>
+      getStore(populatedState),
+      <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
         </Route>
-      </Router>,
+      </MemoryRouter>,
     );
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
-    input.simulate("change", { target: { value: "Operators" } });
-    input.simulate("change", { target: { checked: true } });
+    expect(input).toHaveLength(1);
+    input.simulate("change", { target: { value: "Operators", checked: true } });
+
     // It should have pushed with the filter
-    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Type=Operators");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Operators"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
   });
 });
 
@@ -384,7 +405,7 @@ describe("pagination and chart fetching", () => {
     const fetchCharts = jest.fn();
     actions.charts.fetchCharts = fetchCharts;
     // const resetRequestCharts = jest.fn();
-    actions.charts.fetchCharts = fetchCharts;
+
     const charts = {
       ...defaultChartState,
       hasFinishedFetching: false,
@@ -461,8 +482,6 @@ describe("pagination and chart fetching", () => {
     // expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
   it.skip("changes page", () => {
     const setState = jest.fn();
     const setPage = jest.fn();
@@ -517,8 +536,34 @@ describe("pagination and chart fetching", () => {
 });
 
 describe("filters by application repository", () => {
+  const mockDispatch = jest.fn();
+  let spyOnUseDispatch: jest.SpyInstance;
+  let fetchRepos: jest.SpyInstance;
+
+  beforeEach(() => {
+    spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+    // Can't just assign a mock fn to actions.repos.fetchRepos because it is (correctly) exported
+    // as a const fn.
+    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(
+     () => { return jest.fn(); }
+    );
+  });
+
+  afterEach(() => {
+    mockDispatch.mockReset();
+    spyOnUseDispatch.mockReset();
+    fetchRepos.mockReset();
+  })
+
   it("doesn't show the filter if there are no apps", () => {
-    const wrapper = mountWrapper(getStore(defaultState), <Catalog />);
+    const wrapper = mountWrapper(
+      getStore(defaultState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
     expect(
       wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.REPO),
     ).not.toExist();
@@ -536,10 +581,7 @@ describe("filters by application repository", () => {
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("push filter for repo", () => {
-    const fetchRepos = jest.fn();
+  it("push filter for repo", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
@@ -557,58 +599,56 @@ describe("filters by application repository", () => {
     input.simulate("change", { target: { value: "foo" } });
     // It should have pushed with the filter
     expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
-    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Repository=foo");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Repository=foo"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
+  });
+
+  it("push filter for repo in other ns", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...populatedState,
+        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+      }),
+      <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    // The repo name is "foo", the ns name is "my-ns"
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
+    input.simulate("change", { target: { value: "foo" } });
+
+    // It should have pushed with the filter
+    expect(fetchRepos).toHaveBeenCalledWith("my-ns", true);
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/my-ns/catalog?Repository=foo"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
   });
 });
 
-// TODO(agamez): Test temporarily commented out
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("push filter for repo", () => {
-  const fetchRepos = jest.fn();
-  const wrapper = mountWrapper(
-    getStore({
-      ...populatedState,
-      repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-    }),
-    <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <Catalog />
-      </Route>
-    </MemoryRouter>,
-  );
-  // The repo name is "foo"
-  const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
-  input.simulate("change", { target: { value: "foo" } });
-  // It should have pushed with the filter
-  expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
-  expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Repository=foo");
-});
-
-// TODO(agamez): Test temporarily commented out
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("push filter for repo in other ns", () => {
-  const fetchRepos = jest.fn();
-  const wrapper = mountWrapper(
-    getStore({
-      ...populatedState,
-      repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-    }),
-    <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
-      <Route path={routePath}>
-        <Catalog />
-      </Route>
-    </MemoryRouter>,
-  );
-
-  // The repo name is "foo", the ns name is "my-ns"
-  const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
-  input.simulate("change", { target: { value: "foo" } });
-  // It should have pushed with the filter
-  expect(fetchRepos).toHaveBeenCalledWith("my-ns", true);
-  expect(history.location.pathname).toBe("/c/default-cluster/ns/my-ns/catalog?Repository=foo");
-});
 
 describe("filters by operator provider", () => {
+  const mockDispatch = jest.fn();
+
+  beforeEach(() => {
+    spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  });
+  afterEach(() => {
+    spyOnUseDispatch.mockReset();
+    mockDispatch.mockReset();
+  })
+
   it("doesn't show the filter if there are no csvs", () => {
     const wrapper = mountWrapper(getStore(defaultState), <Catalog />);
     expect(
@@ -628,15 +668,13 @@ describe("filters by operator provider", () => {
     },
   } as any;
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("push filter for operator provider", () => {
+  it("push filter for operator provider", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
         operators: { csvs: [csv, csv2] },
       }),
-      <MemoryRouter initialEntries={[routePathParam + "?Provider=you"]}>
+      <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
         </Route>
@@ -645,12 +683,16 @@ describe("filters by operator provider", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you" } });
     // It should have pushed with the filter
-    expect(history.location.pathname).toBe("/c/default-cluster/ns/kubeapps/catalog?Provider=you");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("push filter for operator provider with comma", () => {
+  it("push filter for operator provider with comma", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
@@ -665,9 +707,13 @@ describe("filters by operator provider", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you, inc" } });
     // It should have pushed with the filter
-    expect(history.location.pathname).toBe(
-      "/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc",
-    );
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
   });
 
   it("filters by operator provider", () => {
@@ -687,6 +733,15 @@ describe("filters by operator provider", () => {
 });
 
 describe("filters by category", () => {
+  const mockDispatch = jest.fn();
+
+  beforeEach(() => {
+    spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  });
+  afterEach(() => {
+    spyOnUseDispatch.mockReset();
+    mockDispatch.mockReset();
+  })
   it("renders a Unknown category if not set", () => {
     const charts = {
       ...defaultChartState,
@@ -704,9 +759,7 @@ describe("filters by category", () => {
     expect(wrapper.find("input").findWhere(i => i.prop("value") === "Unknown")).toExist();
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("push filter for category", () => {
+  it("push filter for category", () => {
     const charts = {
       ...defaultChartState,
       items: [availablePkgSummary1, availablePkgSummary2],
@@ -725,9 +778,13 @@ describe("filters by category", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
     input.simulate("change", { target: { value: "Database" } });
     // It should have pushed with the filter
-    expect(history.location.pathname).toBe(
-      "/c/default-cluster/ns/kubeapps/catalog?Category=Database",
-    );
+    expect(mockDispatch).toHaveBeenCalledWith({
+      payload: {
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Category=Database"],
+        method: "push",
+      },
+      type: "@@router/CALL_HISTORY_METHOD",
+    });
   });
 
   it("filters a category", () => {
