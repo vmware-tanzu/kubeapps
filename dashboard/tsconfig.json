@@ -8,7 +8,7 @@
       "dom.iterable",
       "esnext"
     ], /* Specify a set of bundled library declaration files that describe the target runtime environment. */
-    "target": "es6", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "target": "ES2020", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     /* Modules */
     "baseUrl": "src", /* Specify the base directory to resolve non-relative module names. */
     "module": "esnext", /* Specify what module code is generated. */
