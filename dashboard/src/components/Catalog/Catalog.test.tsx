@@ -517,7 +517,7 @@ describe("pagination and chart fetching", () => {
     });
 
     afterEach(() => {
-      spyOnUseState.mockRestore()
+      spyOnUseState.mockRestore();
     });
 
     it("changes page", () => {
