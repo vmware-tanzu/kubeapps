@@ -17,6 +17,7 @@ import AppListItem, { IAppListItemProps } from "./AppListItem";
 const defaultProps = {
   app: {
     name: "foo",
+    pkgDisplayName: "foo",
     installedPackageRef: {
       identifier: "apache/1",
       pkgVersion: "1.0.0",
@@ -80,9 +81,7 @@ it("should add a second label with the app update available", () => {
   expect(tooltip.text()).toBe("A new app version is available: 1.1.0");
 });
 
-// TODO(agamez): Test temporarily commented out
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("doesn't include a double v prefix", () => {
+it("doesn't include a double v prefix", () => {
   const props = {
     ...defaultProps,
     app: {
