@@ -98,7 +98,7 @@ const populatedProps = {
     appVersion: testVersion.appVersion,
     readme: "readme",
     readmeError: undefined,
-    values: "values:",
+    values: "initial: values",
     versions: [testVersion],
     schema: schema as any,
   } as IChartState["selected"],
@@ -225,14 +225,14 @@ it("forwards the appValues when modified", () => {
       .prop("setValues");
     handleValuesChange("foo: bar");
   })
-  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("values: \nfoo: bar\n");
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("initial: values\nfoo: bar\n");
 });
 
 it("triggers an upgrade when submitting the form", async () => {
   const mockDispatch = jest.fn().mockReturnValue(true);
   jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const { namespace, releaseName } = defaultProps;
-  const appValues = "values: \nfoo: bar\n";
+  const appValues = "initial: values\nfoo: bar\n";
   const upgradeApp = jest.spyOn(actions.apps, "upgradeApp").mockImplementation(() => { return jest.fn(); });
   const wrapper = mountWrapper(
     defaultStore,
@@ -276,7 +276,7 @@ describe("when receiving new props", () => {
       <UpgradeForm {...populatedProps} appCurrentValues={currentValues} />,
     );
     wrapper.setProps({ deployed: { values: defaultValues } });
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("values: \n" + currentValues);
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("initial: values\n" + currentValues);
   });
 
   it("should apply modifications if a new version is selected", () => {
