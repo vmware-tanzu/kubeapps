@@ -69,7 +69,7 @@ export function fetchNamespaces(
       }
       dispatch(receiveNamespaces(cluster, namespaceStrings));
       return namespaceStrings;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorNamespaces(cluster, e, "list"));
       return [];
     }
@@ -86,7 +86,7 @@ export function createNamespace(
       dispatch(postNamespace(cluster, ns));
       dispatch(fetchNamespaces(cluster));
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorNamespaces(cluster, e, "create"));
       return false;
     }
@@ -103,7 +103,7 @@ export function getNamespace(
       const namespace = await Namespace.get(cluster, ns);
       dispatch(receiveNamespace(cluster, namespace));
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorNamespaces(cluster, e, "get"));
       return false;
     }
@@ -127,7 +127,7 @@ export function canCreate(
     try {
       const allowed = await Kube.canI(cluster, "", "namespaces", "create", "");
       dispatch(setAllowCreate(cluster, allowed));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorNamespaces(cluster, e, "get"));
     }
   };

@@ -77,7 +77,7 @@ export function getResourceKinds(
       const groups = await Kube.getAPIGroups(cluster);
       const kinds = await Kube.getResourceKinds(cluster, groups);
       dispatch(receiveResourceKinds(kinds));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(receiveKindsError(e));
     }
   };
@@ -108,7 +108,7 @@ export function getResource(
     try {
       const r = await ref.getResource();
       dispatch(receiveResource({ key, resource: r as IResource }));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(receiveResourceError({ key, error: e }));
     }
   };

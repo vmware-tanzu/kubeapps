@@ -144,7 +144,7 @@ export class Kube {
         namespace,
       });
       return data?.allowed ? data.allowed : false;
-    } catch (err) {
+    } catch (e: any) {
       return false;
     }
   }

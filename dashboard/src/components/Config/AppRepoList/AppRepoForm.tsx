@@ -263,21 +263,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     setOCIRepositories(e.target.value);
     setValidated(undefined);
   };
-  const handleSkipTLSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSkipTLSChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setSkipTLS(!skipTLS);
     setValidated(undefined);
   };
-  const handlePassCredentialsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePassCredentialsChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setPassCredentials(!passCredentials);
     setValidated(undefined);
   };
   const handleFilterNames = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setFilterNames(e.target.value);
   };
-  const handleFilterRegex = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterRegex = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterRegex(!filterRegex);
   };
-  const handleFilterExclude = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterExclude = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterExclude(!filterExclude);
   };
 
@@ -292,7 +292,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       if (parsedMessage.code && parsedMessage.message) {
         message = `Code: ${parsedMessage.code}. Message: ${parsedMessage.message}`;
       }
-    } catch (e) {
+    } catch (e: any) {
       // Not a json message
     }
     return message;

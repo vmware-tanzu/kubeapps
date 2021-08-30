@@ -166,7 +166,6 @@ export default function DeploymentFormBody({
             <p>{crd?.description}</p>
             <OperatorInstanceFormBody
               isFetching={isFetching}
-              namespace={namespace}
               handleDeploy={handleDeploy}
               defaultValues={defaultValues}
             />

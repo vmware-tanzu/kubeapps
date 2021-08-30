@@ -111,7 +111,7 @@ export function fetchCharts(
           totalPages: response.meta.totalPages,
         }),
       );
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
@@ -128,7 +128,7 @@ export function fetchChartCategories(
       if (categories) {
         dispatch(receiveChartCategories(categories));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChartCatetories(new FetchError(e.message)));
     }
   };
@@ -147,7 +147,7 @@ export function fetchChartVersions(
         dispatch(receiveChartVersions(versions));
       }
       return versions;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
       return [];
     }
@@ -162,7 +162,7 @@ async function getChart(cluster: string, namespace: string, id: string, version:
     try {
       values = await Chart.getValues(cluster, namespace, id, version);
       schema = await Chart.getSchema(cluster, namespace, id, version);
-    } catch (e) {
+    } catch (e: any) {
       if (e.constructor !== NotFoundError) {
         throw e;
       }
@@ -184,7 +184,7 @@ export function getChartVersion(
       if (chartVersion) {
         dispatch(selectChartVersion(chartVersion, values, schema));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
@@ -203,7 +203,7 @@ export function getDeployedChartVersion(
       if (chartVersion) {
         dispatch(receiveDeployedChartVersion(chartVersion, values, schema));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
@@ -245,7 +245,7 @@ export function getChartReadme(
     try {
       const readme = await Chart.getReadme(cluster, namespace, id, version);
       dispatch(selectReadme(readme));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorReadme(e.toString()));
     }
   };

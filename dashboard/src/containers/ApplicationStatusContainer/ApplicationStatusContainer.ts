@@ -15,7 +15,7 @@ interface IApplicationStatusContainerProps {
   info?: hapi.release.IInfo;
 }
 
-function mapStateToProps({ kube, config }: IStoreState, props: IApplicationStatusContainerProps) {
+function mapStateToProps({ kube }: IStoreState, props: IApplicationStatusContainerProps) {
   const { deployRefs, statefulsetRefs, daemonsetRefs, info } = props;
   return {
     deployments: filterByResourceRefs(deployRefs, kube.items),

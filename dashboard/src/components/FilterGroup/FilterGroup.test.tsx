@@ -18,7 +18,7 @@ it("renders a multicheckbox", () => {
 
 it("calls onChange function", () => {
   const currentFilters: string[] = [];
-  const onAddFilter = jest.fn((n, f) => currentFilters.push(f));
+  const onAddFilter = jest.fn((_n, f) => currentFilters.push(f));
   const onRemoveFilter = jest.fn();
   const wrapper = mountWrapper(
     defaultStore,
