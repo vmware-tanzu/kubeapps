@@ -105,7 +105,7 @@ export function getApp(
           availablePackageDetail = resp.availablePackageDetail;
         }
         dispatch(
-          selectApp(installedPackageDetail, legacyResponse.manifest, availablePackageDetail),
+          selectApp(installedPackageDetail, legacyResponse?.manifest, availablePackageDetail),
         );
       } else {
         dispatch(errorApp(new FetchError("Package not found")));
@@ -233,7 +233,7 @@ export function rollbackApp(
     try {
       await App.rollback(cluster, namespace, releaseName, revision);
       dispatch(receiveRollbackApp());
-      // dispatch(getAppWithUpdateInfo(cluster, namespace, releaseName));
+      dispatch(getApp(cluster, namespace, releaseName));
       return true;
     } catch (e: any) {
       dispatch(errorApp(new RollbackError(e.message)));
