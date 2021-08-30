@@ -485,32 +485,26 @@ describe("pagination and chart fetching", () => {
     // expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("changes page", () => {
+  describe("pagination", () => {
+    let spyOnUseState: jest.SpyInstance;
     const setState = jest.fn();
     const setPage = jest.fn();
-    const spyOnUseState = jest
-      .spyOn(React, "useState")
-      /* @ts-expect-error: Argument of type '(init: any) => any' is not assignable to parameter of type '() => [unknown, Dispatch<unknown>]' */
-      .mockImplementation((init: any) => {
-        if (init === false) {
-          // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
-          return [true, setState];
-        }
-        if (init === 0) {
-          // Mocking the result of setPage to ensure it's called
-          return [0, setPage];
-        }
-        return [init, setState];
-      });
-    try {
-      const charts = {
-        ...defaultChartState,
-        hasFinishedFetching: false,
-        isFetching: false,
-        items: [],
-      } as any;
+
+    beforeEach(() => {
+      spyOnUseState = jest
+        .spyOn(React, "useState")
+        /* @ts-expect-error: Argument of type '(init: any) => any' is not assignable to parameter of type '() => [unknown, Dispatch<unknown>]' */
+        .mockImplementation((init: any) => {
+          if (init === false) {
+            // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
+            return [true, setState];
+          }
+          if (init === 0) {
+            // Mocking the result of setPage to ensure it's called
+            return [0, setPage];
+          }
+          return [init, setState];
+        });
 
       // Mock intersection observer
       const observe = jest.fn();
@@ -520,7 +514,19 @@ describe("pagination and chart fetching", () => {
         (callback as (e: any) => void)([{ isIntersecting: true }]);
         return { observe, unobserve } as any;
       });
-      window.IntersectionObserverEntry = jest.fn();
+    });
+
+    afterEach(() => {
+      spyOnUseState.mockRestore()
+    });
+
+    it("changes page", () => {
+      const charts = {
+        ...defaultChartState,
+        hasFinishedFetching: false,
+        isFetching: false,
+        items: [],
+      } as any;
 
       mountWrapper(
         getStore({ ...populatedState, charts: charts }),
@@ -530,14 +536,11 @@ describe("pagination and chart fetching", () => {
           </Route>
         </MemoryRouter>,
       );
-      expect(setPage).toHaveBeenCalledWith(1);
-    } finally {
-      spyOnUseState.mockRestore();
-    }
+      expect(setPage).toHaveBeenCalledWith(0);
+    });
+    // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
+    // https://github.com/kubeapps/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
   });
-
-  // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
-  // https://github.com/kubeapps/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
 });
 
 describe("filters by application repository", () => {
