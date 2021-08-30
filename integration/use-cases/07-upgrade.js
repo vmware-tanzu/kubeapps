@@ -11,8 +11,7 @@ test("Upgrades an application", async () => {
     "password",
   );
 
-  await expect(page).toMatch("apache", { timeout: 60000 });
-
+  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
   await expect(page).toClick("a", { text: "apache" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
@@ -29,12 +28,12 @@ test("Upgrades an application", async () => {
     expect(latestChartVersion).not.toBe("");
   }, testName);
 
-  await expect(page).toSelect('select[name="chart-versions"]', "7.3.2");
+  await expect(page).toSelect('select[name="chart-versions"]', "7.3.15");
 
   await new Promise(r => setTimeout(r, 500));
 
   await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("7.3.2");
+    await expect(page).toMatch("7.3.15");
   }, testName);
 
   await expect(page).toMatchElement("input[type='number']");
@@ -62,7 +61,7 @@ test("Upgrades an application", async () => {
 
   // Verify that the form contains the old version
   await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("7.3.2");
+    await expect(page).toMatch("7.3.15");
   }, testName);
 
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
