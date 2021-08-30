@@ -8,7 +8,6 @@ import OperatorInstanceFormBody, { IOperatorInstanceFormProps } from "./Operator
 
 const defaultProps: IOperatorInstanceFormProps = {
   isFetching: false,
-  namespace: "kubeapps",
   handleDeploy: jest.fn(),
   defaultValues: "",
 };

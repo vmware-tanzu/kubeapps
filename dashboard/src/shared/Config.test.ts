@@ -62,7 +62,7 @@ describe("Themes", () => {
   it("returns the default browser theme", () => {
     Object.defineProperty(window, "matchMedia", {
       writable: true,
-      value: jest.fn().mockImplementation(query => ({
+      value: jest.fn().mockImplementation(() => ({
         matches: true,
       })),
     });
@@ -79,7 +79,7 @@ describe("Themes", () => {
     // Browser preference = dark
     Object.defineProperty(window, "matchMedia", {
       writable: true,
-      value: jest.fn().mockImplementation(query => ({
+      value: jest.fn().mockImplementation(() => ({
         matches: true,
       })),
     });
@@ -93,7 +93,7 @@ describe("Themes", () => {
     // Browser preference = dark
     Object.defineProperty(window, "matchMedia", {
       writable: true,
-      value: jest.fn().mockImplementation(query => ({
+      value: jest.fn().mockImplementation(() => ({
         matches: true,
       })),
     });
@@ -107,7 +107,7 @@ describe("Themes", () => {
     // Browser preference = dark
     Object.defineProperty(window, "matchMedia", {
       writable: true,
-      value: jest.fn().mockImplementation(query => ({
+      value: jest.fn().mockImplementation(() => ({
         matches: true,
       })),
     });

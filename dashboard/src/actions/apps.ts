@@ -97,7 +97,7 @@ export function getApp(
       const app = await App.getRelease(cluster, namespace, releaseName);
       dispatch(selectApp(app));
       return app;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
       return;
     }
@@ -112,7 +112,7 @@ function getAppUpdateInfo(
   currentVersion: string,
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestAppUpdateInfo());
     try {
       // TODO(agamez): remove workaround value once GetInstalledPackageDetail has been implemented
@@ -160,7 +160,7 @@ function getAppUpdateInfo(
         }
         dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
       }
-    } catch (e) {
+    } catch (e: any) {
       const updateInfo: IChartUpdateInfo = {
         error: e,
         upToDate: false,
@@ -197,7 +197,7 @@ export function getAppWithUpdateInfo(
           ),
         );
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
     }
   };
@@ -215,7 +215,7 @@ export function deleteApp(
       await App.delete(cluster, namespace, releaseName, purge);
       dispatch(receiveDeleteApp());
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new DeleteError(e.message)));
       return false;
     }
@@ -233,7 +233,7 @@ export function fetchApps(
       const apps = await App.listApps(cluster, ns);
       dispatch(receiveAppList(apps));
       return apps;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
       return [];
     }
@@ -259,7 +259,7 @@ export function fetchAppsWithUpdateInfo(
           ),
         ),
       );
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
     }
   };
@@ -273,7 +273,7 @@ export function deployChart(
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestDeployApp());
     try {
       if (values && schema) {
@@ -292,7 +292,7 @@ export function deployChart(
       dispatch(receiveDeployApp());
 
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new CreateError(e.message)));
       return false;
     }
@@ -308,7 +308,7 @@ export function upgradeApp(
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestUpgradeApp());
     try {
       if (values && schema) {
@@ -325,7 +325,7 @@ export function upgradeApp(
       await App.upgrade(cluster, namespace, releaseName, chartNamespace, chartVersion, values);
       dispatch(receiveUpgradeApp());
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new UpgradeError(e.message)));
       return false;
     }
@@ -338,14 +338,14 @@ export function rollbackApp(
   releaseName: string,
   revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestRollbackApp());
     try {
       await App.rollback(cluster, namespace, releaseName, revision);
       dispatch(receiveRollbackApp());
       dispatch(getAppWithUpdateInfo(cluster, namespace, releaseName));
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorApp(new RollbackError(e.message)));
       return false;
     }
