@@ -1,7 +1,4 @@
-import {
-  AvailablePackageDetail,
-  InstalledPackageSummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as moxios from "moxios";
 import { App, KUBEOPS_ROOT_URL } from "./App";
 import { axiosWithAuth } from "./AxiosInstance";
@@ -35,34 +32,6 @@ describe("App", () => {
   afterEach(() => {
     moxios.uninstall(axiosWithAuth as any);
     jest.resetAllMocks();
-  });
-
-  describe("listApps", () => {
-    const apps = [{ name: "foo" } as InstalledPackageSummary];
-    beforeEach(() => {
-      moxios.stubRequest(/.*/, {
-        response: { data: apps },
-        status: 200,
-      });
-    });
-    [
-      {
-        description: "should request all the releases if no namespace is given",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/releases?statuses=all`,
-      },
-      {
-        description: "should request the releases of a namespace with any status",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/default/releases?statuses=all`,
-        namespace: "default",
-      },
-    ].forEach(t => {
-      // TODO(agamez): Test temporarily commented out
-      // eslint-disable-next-line jest/no-disabled-tests
-      it.skip(t.description, async () => {
-        expect(await App.GetInstalledPackageSummaries("defaultc", t.namespace)).toEqual(apps);
-        expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
-      });
-    });
   });
 
   describe("create", () => {
