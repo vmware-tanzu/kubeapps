@@ -2,7 +2,6 @@ import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
-import Chart from "shared/Chart";
 import { IAppState, UnprocessableEntity } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";

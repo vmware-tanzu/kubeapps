@@ -61,7 +61,7 @@ describe("App", () => {
         },
       },
       {
-        description: "fetch availablePackageSummaries wtih repos, with query",
+        description: "fetch availablePackageSummaries with repos, with query",
         args: {
           cluster: clusterName,
           namespace: namespaceName,

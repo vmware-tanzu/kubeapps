@@ -88,7 +88,10 @@ const defaultState = {
   charts: defaultChartState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
   repos: { repos: [] } as Partial<IAppRepositoryState>,
-  config: { kubeappsCluster: defaultProps.cluster, kubeappsNamespace: defaultProps.kubeappsNamespace } as IConfigState,
+  config: {
+    kubeappsCluster: defaultProps.cluster,
+    kubeappsNamespace: defaultProps.kubeappsNamespace,
+  } as IConfigState,
 };
 
 const populatedChartState = {
@@ -424,7 +427,7 @@ describe("pagination and chart fetching", () => {
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(0);
     expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 0, 20, "");
-    // TODO(agamez): check wether it should be called
+    // TODO(agamez): check whether it should be called
     // expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
 
@@ -451,7 +454,7 @@ describe("pagination and chart fetching", () => {
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(1);
     expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
-    // TODO(agamez): check wether it should be called
+    // TODO(agamez): check whether it should be called
     // expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
@@ -478,10 +481,12 @@ describe("pagination and chart fetching", () => {
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(2);
     expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
-    // TODO(agamez): check wether it should be called
+    // TODO(agamez): check whether it should be called
     // expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
+  // TODO(agamez): Test temporarily commented out
+  // eslint-disable-next-line jest/no-disabled-tests
   it.skip("changes page", () => {
     const setState = jest.fn();
     const setPage = jest.fn();
@@ -544,16 +549,16 @@ describe("filters by application repository", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
     // Can't just assign a mock fn to actions.repos.fetchRepos because it is (correctly) exported
     // as a const fn.
-    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(
-     () => { return jest.fn(); }
-    );
+    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(() => {
+      return jest.fn();
+    });
   });
 
   afterEach(() => {
     mockDispatch.mockReset();
     spyOnUseDispatch.mockReset();
     fetchRepos.mockReset();
-  })
+  });
 
   it("doesn't show the filter if there are no apps", () => {
     const wrapper = mountWrapper(
@@ -637,7 +642,6 @@ describe("filters by application repository", () => {
   });
 });
 
-
 describe("filters by operator provider", () => {
   const mockDispatch = jest.fn();
 
@@ -647,7 +651,7 @@ describe("filters by operator provider", () => {
   afterEach(() => {
     spyOnUseDispatch.mockReset();
     mockDispatch.mockReset();
-  })
+  });
 
   it("doesn't show the filter if there are no csvs", () => {
     const wrapper = mountWrapper(getStore(defaultState), <Catalog />);
@@ -741,7 +745,7 @@ describe("filters by category", () => {
   afterEach(() => {
     spyOnUseDispatch.mockReset();
     mockDispatch.mockReset();
-  })
+  });
   it("renders a Unknown category if not set", () => {
     const charts = {
       ...defaultChartState,

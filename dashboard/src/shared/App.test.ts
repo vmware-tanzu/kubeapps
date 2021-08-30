@@ -1,7 +1,4 @@
-import {
-  AvailablePackageDetail,
-  InstalledPackageSummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as moxios from "moxios";
 import { App, KUBEOPS_ROOT_URL } from "./App";
 import { axiosWithAuth } from "./AxiosInstance";

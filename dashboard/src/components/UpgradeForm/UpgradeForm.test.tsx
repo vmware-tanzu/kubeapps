@@ -8,13 +8,13 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
 import Chart from "shared/Chart";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IChartState } from "shared/types";
 import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
-import * as ReactRedux from "react-redux";
 
 const testVersion: PackageAppVersion = {
   pkgVersion: "1.2.3",
@@ -224,7 +224,7 @@ it("forwards the appValues when modified", () => {
       .find(DeploymentFormBody)
       .prop("setValues");
     handleValuesChange("foo: bar");
-  })
+  });
   expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("initial: values\nfoo: bar\n");
 });
 
@@ -233,7 +233,9 @@ it("triggers an upgrade when submitting the form", async () => {
   jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const { namespace, releaseName } = defaultProps;
   const appValues = "initial: values\nfoo: bar\n";
-  const upgradeApp = jest.spyOn(actions.apps, "upgradeApp").mockImplementation(() => { return jest.fn(); });
+  const upgradeApp = jest.spyOn(actions.apps, "upgradeApp").mockImplementation(() => {
+    return jest.fn();
+  });
   const wrapper = mountWrapper(
     defaultStore,
     <UpgradeForm {...populatedProps} namespace={namespace} />,
@@ -276,7 +278,9 @@ describe("when receiving new props", () => {
       <UpgradeForm {...populatedProps} appCurrentValues={currentValues} />,
     );
     wrapper.setProps({ deployed: { values: defaultValues } });
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("initial: values\n" + currentValues);
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(
+      "initial: values\n" + currentValues,
+    );
   });
 
   it("should apply modifications if a new version is selected", () => {
@@ -355,14 +359,9 @@ describe("when receiving new props", () => {
     - foo1:
       bar1: value1
 `,
-      result: [
-        `foo:`,
-        `  - foo1: `,
-        `    bar1: value1`,
-        `  - foo2: `,
-        `    bar2: value2`,
-        ``,
-      ].join("\n")
+      result: [`foo:`, `  - foo1: `, `    bar1: value1`, `  - foo2: `, `    bar2: value2`, ``].join(
+        "\n",
+      ),
     },
     {
       description: "should delete an element in an array",
@@ -382,12 +381,7 @@ describe("when receiving new props", () => {
   - foo2:
     bar2: value2
 `,
-      result: [
-        `foo:`,
-        `  - foo1: `,
-        `    bar1: value1`,
-        ``,
-      ].join("\n")
+      result: [`foo:`, `  - foo1: `, `    bar1: value1`, ``].join("\n"),
     },
     {
       description: "set a value with dots and slashes in the key",
