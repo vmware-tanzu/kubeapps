@@ -1,21 +1,21 @@
 import {
   AvailablePackageSummary,
+  AvailablePackageDetail,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageVersionsResponse,
   Context,
   GetAvailablePackageSummariesResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { axiosWithAuth } from "shared/AxiosInstance";
 import Chart from "shared/Chart";
-import { FetchError, NotFoundError, IReceiveChartsActionPayload } from "shared/types";
+import { FetchError, IReceiveChartsActionPayload } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
 const mockStore = configureMockStore([thunk]);
 
-let axiosGetMock = jest.fn();
 let store: any;
-let response: any;
 
 const namespace = "chart-namespace";
 const cluster = "default";
@@ -36,19 +36,36 @@ const defaultAvailablePackageSummary: AvailablePackageSummary = {
   },
 };
 
+const defaultAvailablePackageDetail: AvailablePackageDetail = {
+  name: "foo",
+  categories: [""],
+  displayName: "foo",
+  iconUrl: "",
+  repoUrl: "",
+  homeUrl: "",
+  sourceUrls: [],
+  shortDescription: "",
+  longDescription: "",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
+  },
+  valuesSchema: "",
+  defaultValues: "",
+  maintainers: [],
+  readme: "",
+  version: {
+    pkgVersion: "1.2.3",
+    appVersion: "4.5.6",
+  },
+};
+
 beforeEach(() => {
   store = mockStore();
-  axiosGetMock.mockImplementation(() => {
-    return {
-      status: 200,
-      data: response,
-    };
-  });
-  axiosWithAuth.get = axiosGetMock;
 });
 
 afterEach(() => {
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 interface IFetchChartsTestCase {
@@ -298,237 +315,130 @@ describe("fetchCharts", () => {
 });
 
 describe("fetchChartVersions", () => {
+  const packageAppVersions = [{ pkgVersion: "1.2.3", appVersion: "4.5.6" }];
+  const availableVersionsResponse: GetAvailablePackageVersionsResponse = {
+    packageAppVersions,
+  };
+  let mockGetAvailablePackageVersions: jest.Mock;
+  beforeEach(() => {
+    mockGetAvailablePackageVersions = jest
+      .fn()
+      .mockImplementation(() => Promise.resolve(availableVersionsResponse));
+    jest
+      .spyOn(Chart, "getAvailablePackageVersions")
+      .mockImplementation(mockGetAvailablePackageVersions);
+  });
+
   it("fetches chart versions", async () => {
-    response = { data: [{ id: "foo" }] };
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveChartVersions), payload: response.data },
+      { type: getType(actions.charts.receiveChartVersions), payload: availableVersionsResponse },
     ];
     await store.dispatch(actions.charts.fetchChartVersions(cluster, namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
-    );
+    expect(mockGetAvailablePackageVersions.mock.calls[0]).toEqual([cluster, namespace, "foo"]);
   });
 });
 
-describe("getChartVersion", () => {
+describe("fetchChartVersion", () => {
+  let mockGetAvailablePackageDetail: jest.Mock;
+  beforeEach(() => {
+    const response: GetAvailablePackageDetailResponse = {
+      availablePackageDetail: defaultAvailablePackageDetail,
+    };
+    mockGetAvailablePackageDetail = jest.fn().mockImplementation(() => Promise.resolve(response));
+    jest
+      .spyOn(Chart, "getAvailablePackageDetail")
+      .mockImplementation(mockGetAvailablePackageDetail);
+  });
+
   it("gets a chart version", async () => {
-    response = { data: { id: "foo" } };
     const expectedActions = [
-      { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
         payload: {
-          chartVersion: response.data,
-          schema: { data: response.data },
-          values: { data: response.data },
+          selectedPackage: defaultAvailablePackageDetail,
         },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions/1.0.0`,
-    );
+    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
+      cluster,
+      namespace,
+      "foo",
+      "1.0.0",
+    ]);
   });
 
   it("gets a chart version with tag", async () => {
-    response = { data: { id: "foo" } };
     const expectedActions = [
-      { type: getType(actions.charts.requestChart) },
       {
         type: getType(actions.charts.selectChartVersion),
         payload: {
-          chartVersion: response.data,
-          schema: { data: response.data },
-          values: { data: response.data },
+          selectedPackage: defaultAvailablePackageDetail,
         },
       },
     ];
     await store.dispatch(
-      actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
+      actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions/1.0.0-alpha%2B1.2.3-beta2`,
-    );
-  });
-
-  it("gets a chart version with values and schema", async () => {
-    // Call to get the chart version
-    axiosGetMock.mockImplementationOnce(() => {
-      return {
-        status: 200,
-        data: { data: { id: "foo" } },
-      };
-    });
-    // Call to get the chart values
-    axiosGetMock.mockImplementationOnce(() => {
-      return {
-        status: 200,
-        data: "foo: bar",
-      };
-    });
-    // Call to get the chart schema
-    axiosGetMock.mockImplementationOnce(() => {
-      return {
-        status: 200,
-        data: { properties: "foo" },
-      };
-    });
-    const expectedActions = [
-      { type: getType(actions.charts.requestChart) },
-      {
-        type: getType(actions.charts.selectChartVersion),
-        payload: { chartVersion: { id: "foo" }, values: "foo: bar", schema: { properties: "foo" } },
-      },
-    ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("returns an empty schema if not found", async () => {
-    // Call to get the chart version
-    axiosGetMock.mockImplementationOnce(() => {
-      return {
-        status: 200,
-        data: {
-          data: { id: "foo" },
-        },
-      };
-    });
-    // Call to get the chart values
-    axiosGetMock.mockImplementationOnce(() => {
-      throw new NotFoundError();
-    });
-    // Call to get the chart schema
-    axiosGetMock.mockImplementationOnce(() => {
-      throw new NotFoundError();
-    });
-    const expectedActions = [
-      { type: getType(actions.charts.requestChart) },
-      {
-        type: getType(actions.charts.selectChartVersion),
-        payload: { chartVersion: { id: "foo" }, values: "", schema: {} },
-      },
-    ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
-    expect(store.getActions()).toEqual(expectedActions);
+    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
+      cluster,
+      namespace,
+      "foo",
+      "1.0.0-alpha+1.2.3-beta2",
+    ]);
   });
 
   it("dispatches an error if it's unexpected", async () => {
-    // Call to get the chart version
-    axiosGetMock.mockImplementationOnce(() => {
-      return {
-        status: 200,
-        data: {
-          data: { id: "foo" },
-        },
-      };
-    });
-    // Call to get the chart values
-    axiosGetMock.mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
-    // Call to get the chart schema
-    axiosGetMock.mockImplementationOnce(() => {
+    jest.spyOn(Chart, "getAvailablePackageDetail").mockImplementation(() => {
       throw new Error("Boom!");
     });
 
     const expectedActions = [
-      { type: getType(actions.charts.requestChart) },
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
     ];
-    await store.dispatch(actions.charts.getChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("fetchChartVersionsAndSelectVersion", () => {
-  it("fetches charts and select a version", async () => {
-    response = { data: [{ id: "foo", attributes: { version: "1.0.0" } }] };
-    const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveChartVersions), payload: response.data },
-      {
-        type: getType(actions.charts.selectChartVersion),
-        payload: { chartVersion: response.data[0] },
-      },
-    ];
-    await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", "1.0.0"),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
-    );
-  });
-
-  it("returns a not found error", async () => {
-    response = { data: [{ id: "foo", attributes: { version: "1.0.0" } }] };
-    const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
-      {
-        type: getType(actions.charts.errorChart),
-        payload: new FetchError("could not find chart"),
-      },
-    ];
-    axiosGetMock = jest.fn(() => {
-      throw new Error("could not find chart");
-    });
-    axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", "1.0.0"),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
-    );
-  });
-
-  it("selects the latest version by default", async () => {
-    response = {
-      data: [
-        { id: "foo", attributes: { version: "1.0.0" } },
-        { id: "foo", attributes: { version: "1.0.0" } },
-      ],
-    };
-    const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveChartVersions), payload: response.data },
-      {
-        type: getType(actions.charts.selectChartVersion),
-        payload: { chartVersion: response.data[1] },
-      },
-    ];
-    await store.dispatch(
-      actions.charts.fetchChartVersionsAndSelectVersion(cluster, namespace, "foo", ""),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}/charts/foo/versions`,
-    );
   });
 });
 
 describe("getDeployedChartVersion", () => {
   it("should request a deployed chart", async () => {
-    response = { data: { id: "foo" } };
+    const response: GetAvailablePackageDetailResponse = {
+      availablePackageDetail: defaultAvailablePackageDetail,
+    };
+    const mockGetAvailablePackageDetail = jest
+      .fn()
+      .mockImplementation(() => Promise.resolve(response));
+    jest
+      .spyOn(Chart, "getAvailablePackageDetail")
+      .mockImplementation(mockGetAvailablePackageDetail);
+
     const expectedActions = [
       { type: getType(actions.charts.requestDeployedChartVersion) },
       {
         type: getType(actions.charts.receiveDeployedChartVersion),
         payload: {
-          chartVersion: response.data,
-          schema: { data: response.data },
-          values: { data: response.data },
+          chartVersion: defaultAvailablePackageDetail,
+          schema: defaultAvailablePackageDetail.valuesSchema,
+          values: defaultAvailablePackageDetail.defaultValues,
         },
       },
     ];
+
     await store.dispatch(
       actions.charts.getDeployedChartVersion(cluster, namespace, "foo", "1.0.0"),
     );
+
     expect(store.getActions()).toEqual(expectedActions);
+    expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
+      cluster,
+      namespace,
+      "foo",
+      "1.0.0",
+    ]);
   });
 });

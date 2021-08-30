@@ -1484,7 +1484,7 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
-"@improbable-eng/grpc-web-fake-transport@^0.14.0":
+"@improbable-eng/grpc-web-fake-transport@^0.14.1":
   version "0.14.1"
   resolved "https://registry.yarnpkg.com/@improbable-eng/grpc-web-fake-transport/-/grpc-web-fake-transport-0.14.1.tgz#d995a0238a4169f377afde108cba3cb39ce25fc8"
   integrity sha512-i/XyUvj0I6ceeMJhaCETyPyxfFTgH8b3vEYLgskYB+w/SEQZs9fWbodlPHq0kl2OeQ52UfKU1kM6He19cdjMBg==

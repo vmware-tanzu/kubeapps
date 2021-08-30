@@ -37,10 +37,6 @@ export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
 });
 
-export const receiveReposSecrets = createAction("RECEIVE_REPOS_SECRETS", resolve => {
-  return (secrets: ISecret[]) => resolve(secrets);
-});
-
 export const receiveReposSecret = createAction("RECEIVE_REPOS_SECRET", resolve => {
   return (secret: ISecret) => resolve(secret);
 });
@@ -54,16 +50,6 @@ export const repoValidating = createAction("REPO_VALIDATING");
 export const repoValidated = createAction("REPO_VALIDATED", resolve => {
   return (data: any) => resolve(data);
 });
-
-// Clear repo is basically receiving an empty repo
-export const clearRepo = createAction("RECEIVE_REPO", resolve => {
-  return () => resolve({} as IAppRepository);
-});
-
-export const showForm = createAction("SHOW_FORM");
-export const hideForm = createAction("HIDE_FORM");
-export const resetForm = createAction("RESET_FORM");
-export const submitForm = createAction("SUBMIT_FROM");
 
 export const redirect = createAction("REDIRECT", resolve => {
   return (path: string) => resolve(path);
@@ -93,19 +79,13 @@ const allActions = [
   repoUpdated,
   repoValidating,
   repoValidated,
-  clearRepo,
   errorRepos,
   requestRepos,
   receiveRepo,
   receiveRepos,
-  receiveReposSecrets,
   receiveReposSecret,
-  resetForm,
   errorChart,
   requestRepo,
-  submitForm,
-  showForm,
-  hideForm,
   redirect,
   redirected,
   requestImagePullSecrets,

@@ -84,8 +84,6 @@ const reposReducer = (
         repo: action.payload,
         errors: {},
       };
-    case getType(actions.repos.receiveReposSecrets):
-      return { ...state, repoSecrets: action.payload };
     case getType(actions.repos.receiveReposSecret): {
       const secret = action.payload;
       const existingSecret = state.repoSecrets.findIndex(
@@ -127,12 +125,6 @@ const reposReducer = (
       return { ...state, validating: true };
     case getType(actions.repos.repoValidated):
       return { ...state, validating: false, errors: { ...state.errors, validate: undefined } };
-    case getType(actions.repos.resetForm):
-      return { ...state, form: { ...state.form, name: "", namespace: "", url: "" } };
-    case getType(actions.repos.showForm):
-      return { ...state, form: { ...state.form, show: true } };
-    case getType(actions.repos.hideForm):
-      return { ...state, form: { ...state.form, show: false } };
     case getType(actions.repos.redirect):
       return { ...state, redirectTo: action.payload };
     case getType(actions.repos.redirected):

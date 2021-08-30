@@ -18,8 +18,7 @@ export default class Chart {
     query?: string,
   ): Promise<GetAvailablePackageSummariesResponse> {
     return await this.client.GetAvailablePackageSummaries({
-      // TODO(agamez): add cluster when it is supported
-      context: { cluster: "", namespace: namespace },
+      context: { cluster: cluster, namespace: namespace },
       filterOptions: {
         query: query,
         repositories: repos.split(","),
@@ -35,8 +34,7 @@ export default class Chart {
   ): Promise<GetAvailablePackageVersionsResponse> {
     return await this.client.GetAvailablePackageVersions({
       availablePackageRef: {
-        // TODO(agamez): add cluster when it is supported
-        context: { cluster: "", namespace: namespace },
+        context: { cluster: cluster, namespace: namespace },
         identifier: id,
       },
     });
@@ -51,8 +49,7 @@ export default class Chart {
     return await this.client.GetAvailablePackageDetail({
       pkgVersion: version,
       availablePackageRef: {
-        // TODO(agamez): add cluster when it is supported
-        context: { cluster: "", namespace: namespace },
+        context: { cluster: cluster, namespace: namespace },
         identifier: id,
       },
     });

@@ -27,17 +27,16 @@ function RollbackDialog({
   const [targetRevision, setTargetRevision] = useState(currentRevision);
   const [hasUserChanges, setHasUserChanges] = useState(false);
   const options: number[] = [];
-  // If there are no revisions to rollback to, disable
   const disableRollback = currentRevision === 1;
   const selectRevision = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setHasUserChanges(true);
     setTargetRevision(Number(e.target.value));
   };
   const onClick = () => {
-    onConfirm(targetRevision);
+    onConfirm(Number(targetRevision));
   };
   // Use as options the number of versions without the latest
-  for (let i = currentRevision - 1; i > 0; i--) {
+  for (let i = Number(currentRevision) - 1; i > 0; i--) {
     options.push(i);
   }
 

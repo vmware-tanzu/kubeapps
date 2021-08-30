@@ -25,7 +25,7 @@ export default function DifferentialSelector({
     // If it's a new deployment, we show the different from the default
     // values for the selected version
     oldValues = defaultValues || "";
-    emptyDiffText = "No changes detected from chart defaults.";
+    emptyDiffText = "No changes detected from the package defaults.";
   }
   return <Differential oldValues={oldValues} newValues={appValues} emptyDiffText={emptyDiffText} />;
 }

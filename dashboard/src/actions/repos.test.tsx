@@ -51,7 +51,7 @@ beforeEach(() => {
   });
 });
 
-afterEach(jest.resetAllMocks);
+afterEach(jest.restoreAllMocks);
 
 // Regular action creators
 interface ITestCase {
@@ -70,11 +70,6 @@ const actionTestCases: ITestCase[] = [
   { name: "receiveRepos", action: repoActions.receiveRepos, args: [[repo]], payload: [repo] },
   { name: "requestRepo", action: repoActions.requestRepo },
   { name: "receiveRepo", action: repoActions.receiveRepo, args: repo, payload: repo },
-  { name: "clearRepo", action: repoActions.clearRepo, payload: {} },
-  { name: "showForm", action: repoActions.showForm },
-  { name: "hideForm", action: repoActions.hideForm },
-  { name: "resetForm", action: repoActions.resetForm },
-  { name: "submitForm", action: repoActions.submitForm },
   { name: "redirect", action: repoActions.redirect, args: "/foo", payload: "/foo" },
   { name: "redirected", action: repoActions.redirected },
   {

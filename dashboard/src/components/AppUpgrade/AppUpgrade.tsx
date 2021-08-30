@@ -1,24 +1,18 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import {
-  FetchError,
-  IAppRepository,
-  IChartState,
-  IRelease,
-  IStoreState,
-  UpgradeError,
-} from "shared/types";
+import { FetchError, IAppRepository, IChartState, IStoreState, UpgradeError } from "shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 
 export interface IAppUpgradeProps {
-  app?: IRelease;
+  app?: InstalledPackageDetail;
   appsIsFetching: boolean;
   chartsIsFetching: boolean;
   error?: FetchError | UpgradeError;
@@ -51,33 +45,31 @@ function AppUpgrade() {
     repos: { repo },
   } = useSelector((state: IStoreState) => state);
 
-  const repoName = repo?.metadata?.name || app?.updateInfo?.repository?.name;
-  const repoNamespace = repo?.metadata?.namespace || app?.updateInfo?.repository?.namespace;
-  const chart = app?.chart;
+  const repoName = repo?.metadata?.name || app?.availablePackageRef?.context?.namespace;
+  const repoNamespace = repo?.metadata?.namespace || app?.availablePackageRef?.context?.namespace;
 
   useEffect(() => {
-    dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName));
+    dispatch(actions.apps.getApp(cluster, namespace, releaseName));
   }, [dispatch, cluster, namespace, releaseName]);
 
   useEffect(() => {
-    if (repoName && repoNamespace && chart?.metadata?.name && chart?.metadata?.version) {
-      const chartID = `${repoName}/${chart.metadata.name}`;
+    if (repoNamespace && app?.availablePackageRef?.identifier && app?.currentVersion?.pkgVersion) {
       dispatch(
         actions.charts.getDeployedChartVersion(
           cluster,
           repoNamespace,
-          chartID,
-          chart.metadata.version,
+          app.availablePackageRef.identifier,
+          app.currentVersion.pkgVersion,
         ),
       );
     }
-  }, [dispatch, app, chart, repoName, repoNamespace, cluster]);
+  }, [dispatch, app, repoName, repoNamespace, cluster]);
 
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
   }
 
-  if (appsIsFetching && !app?.updateInfo) {
+  if (appsIsFetching) {
     return (
       <LoadingWrapper
         loadingText={`Fetching ${releaseName}...`}
@@ -87,15 +79,19 @@ function AppUpgrade() {
     );
   }
 
-  if (app?.chart?.metadata?.name && app?.chart?.metadata?.version && repoName && repoNamespace) {
+  if (
+    app?.availablePackageRef?.identifier &&
+    app?.currentVersion?.pkgVersion &&
+    repoName &&
+    repoNamespace
+  ) {
     return (
       <div>
         <UpgradeForm
-          appCurrentVersion={app.chart.metadata.version}
-          appCurrentValues={(app.config && app.config.raw) || ""}
-          chartName={app.chart.metadata.name}
+          appCurrentVersion={app.currentVersion.pkgVersion}
+          appCurrentValues={app.valuesApplied}
+          packageId={app.availablePackageRef.identifier}
           chartsIsFetching={chartsIsFetching}
-          repo={repoName}
           repoNamespace={repoNamespace}
           namespace={namespace}
           cluster={cluster}
@@ -111,7 +107,7 @@ function AppUpgrade() {
     <SelectRepoForm
       cluster={cluster}
       namespace={namespace}
-      chartName={chart?.metadata?.name || ""}
+      chartName={app?.availablePackageRef?.identifier || ""}
     />
   );
 }

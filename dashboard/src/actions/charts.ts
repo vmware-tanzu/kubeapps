@@ -13,8 +13,6 @@ export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
   return (page?: number) => resolve(page);
 });
 
-export const requestChart = createAction("REQUEST_CHART");
-
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
   return (payload: IReceiveChartsActionPayload) => resolve(payload);
 });
@@ -47,17 +45,8 @@ export const resetChartVersion = createAction("RESET_CHART_VERSION");
 
 export const resetRequestCharts = createAction("RESET_REQUEST_CHARTS");
 
-export const selectReadme = createAction("SELECT_README", resolve => {
-  return (readme: string) => resolve(readme);
-});
-
-export const errorReadme = createAction("ERROR_README", resolve => {
-  return (message: string) => resolve(message);
-});
-
 const allActions = [
   requestCharts,
-  requestChart,
   errorChart,
   clearErrorChart,
   receiveCharts,
@@ -67,8 +56,6 @@ const allActions = [
   receiveDeployedChartVersion,
   resetChartVersion,
   resetRequestCharts,
-  selectReadme,
-  errorReadme,
 ];
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
@@ -93,7 +80,7 @@ export function fetchCharts(
         query,
       );
       dispatch(receiveCharts({ response, page }));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
@@ -109,7 +96,7 @@ export function fetchChartVersions(
     try {
       const response = await Chart.getAvailablePackageVersions(cluster, namespace, id);
       dispatch(receiveChartVersions(response));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
   };
@@ -124,10 +111,10 @@ export function fetchChartVersion(
   return async dispatch => {
     try {
       const response = await Chart.getAvailablePackageDetail(cluster, namespace, id, version);
-      if (response.availablePackageDetail?.pkgVersion) {
+      if (response.availablePackageDetail?.version?.pkgVersion) {
         dispatch(selectChartVersion(response.availablePackageDetail));
       } else {
-        dispatch(errorChart(new FetchError("could not find chart version")));
+        dispatch(errorChart(new FetchError("could not find package version")));
       }
     } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));

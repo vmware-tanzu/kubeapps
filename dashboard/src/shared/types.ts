@@ -3,17 +3,16 @@ import { RouterState } from "connected-react-router";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
-  GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
-  GetAvailablePackageVersionsResponse_PackageAppVersion,
+  InstalledPackageDetail,
+  InstalledPackageSummary,
+  PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
-import { hapi } from "./hapi/release";
-
 class CustomError extends Error {
   // The constructor is defined so we can later on compare the returned object
   // via err.contructor  == FOO
@@ -63,32 +62,23 @@ export interface IChartState {
   hasFinishedFetching: boolean;
   selected: {
     error?: FetchError | Error;
-    // TODO(agamez): rename this attribute later
     availablePackageDetail?: AvailablePackageDetail;
     pkgVersion?: string;
     appVersion?: string;
-    versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
+    versions: PackageAppVersion[];
     readme?: string;
     readmeError?: string;
     values?: string;
     schema?: JSONSchemaType<any>;
   };
   deployed: {
-    chartVersion?: GetAvailablePackageDetailResponse;
+    chartVersion?: AvailablePackageDetail;
     values?: string;
     schema?: JSONSchemaType<any>;
   };
   items: AvailablePackageSummary[];
   categories: string[];
   size: number;
-}
-
-export interface IChartUpdateInfo {
-  upToDate: boolean;
-  chartLatestVersion: string;
-  appLatestVersion: string;
-  repository: IRepo;
-  error?: Error;
 }
 
 export interface IServiceSpec {
@@ -170,10 +160,6 @@ export interface ISecret {
   type: string;
   data: { [s: string]: string };
   metadata: IResourceMetadata;
-}
-
-export interface IRelease extends hapi.release.Release {
-  updateInfo?: IChartUpdateInfo;
 }
 
 export interface IPackageManifestChannel {
@@ -306,10 +292,11 @@ export interface IAppRepositoryFilter {
 export interface IAppState {
   isFetching: boolean;
   error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
-  // currently items are always Helm releases
-  items: IRelease[];
-  listOverview?: IAppOverview[];
-  selected?: IRelease;
+  items: InstalledPackageDetail[];
+  listOverview?: InstalledPackageSummary[];
+  selected?: CustomInstalledPackageDetail;
+  // TODO(agamez): add tests for this new state field
+  selectedDetails?: AvailablePackageDetail;
 }
 
 export interface IStoreState {
@@ -441,18 +428,6 @@ export interface IRBACRole {
   verbs: string[];
 }
 
-export interface IAppOverview {
-  releaseName: string;
-  namespace: string;
-  version: string;
-  icon?: string;
-  status: string;
-  chart: string;
-  chartMetadata: hapi.chart.Metadata;
-  // UpdateInfo is internally populated
-  updateInfo?: IChartUpdateInfo;
-}
-
 export interface IKubeItem<T> {
   isFetching: boolean;
   item?: T;
@@ -504,4 +479,9 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMax?: number;
   sliderStep?: number;
   sliderUnit?: string;
+}
+
+export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
+  manifest: any;
+  revision: number;
 }

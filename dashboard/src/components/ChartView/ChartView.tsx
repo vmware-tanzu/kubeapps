@@ -43,7 +43,7 @@ export default function ChartView() {
   } = useSelector((state: IStoreState) => state);
   const { availablePackageDetail, versions, pkgVersion, readmeError, error, readme } = selected;
 
-  const chartID = `${repo}/${id}`;
+  const packageId = `${repo}/${id}`;
   const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
   const kubeappsNamespace = config.kubeappsNamespace;
 
@@ -51,14 +51,14 @@ export default function ChartView() {
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, chartID, queryVersion));
+    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, packageId, queryVersion));
     return;
-  }, [dispatch, chartID, chartNamespace, cluster, queryVersion]);
+  }, [dispatch, packageId, chartNamespace, cluster, queryVersion]);
 
   // Fetch all versions
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, chartID));
-  }, [dispatch, chartID, chartNamespace, cluster]);
+    dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, packageId));
+  }, [dispatch, packageId, chartNamespace, cluster]);
 
   // Select version handler
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -73,7 +73,7 @@ export default function ChartView() {
   };
 
   if (error) {
-    return <Alert theme="danger">Unable to fetch chart: {error.message}</Alert>;
+    return <Alert theme="danger">Unable to fetch package: {error.message}</Alert>;
   }
   if (isFetching || !availablePackageDetail) {
     return <LoadingWrapper loaded={false} />;
@@ -111,14 +111,7 @@ export default function ChartView() {
             <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
           </Column>
           <Column span={9}>
-            <ChartReadme
-              readme={readme}
-              error={readmeError}
-              version={pkgVersion!}
-              cluster={cluster}
-              namespace={chartNamespace}
-              chartID={chartID}
-            />
+            <ChartReadme readme={readme} error={readmeError} />
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(

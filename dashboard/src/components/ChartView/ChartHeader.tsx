@@ -2,7 +2,7 @@ import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import {
   AvailablePackageDetail,
-  GetAvailablePackageVersionsResponse_PackageAppVersion,
+  PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 import placeholder from "../../placeholder.png";
@@ -11,7 +11,7 @@ import ChartVersionSelector from "./ChartVersionSelector";
 
 interface IChartHeaderProps {
   chartAttrs: AvailablePackageDetail;
-  versions: GetAvailablePackageVersionsResponse_PackageAppVersion[];
+  versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
   currentVersion?: string;
@@ -47,14 +47,14 @@ export default function ChartHeader({
       version={
         <>
           <label className="header-version-label" htmlFor="chart-versions">
-            Chart Version{" "}
+            Package Version{" "}
             <Tooltip
               label="chart-versions-tooltip"
               id="chart-versions-tooltip"
               position="bottom-left"
               iconProps={{ solid: true, size: "sm" }}
             >
-              Chart and App versions can be increased independently.{" "}
+              Package and application versions can be increased independently.{" "}
               <a
                 href="https://helm.sh/docs/topics/charts/#charts-and-versioning"
                 target="_blank"

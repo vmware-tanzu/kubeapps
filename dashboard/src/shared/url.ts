@@ -112,42 +112,6 @@ export const kubeops = {
 };
 
 export const api = {
-  charts: {
-    base: (cluster: string, namespace: string) =>
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}`,
-    get: (cluster: string, namespace: string, id: string) =>
-      `${api.charts.base(cluster, namespace)}/charts/${id}`,
-    getVersion: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.get(cluster, namespace, id)}/versions/${encodeURIComponent(version)}`,
-    list: (
-      cluster: string,
-      namespace: string,
-      repos: string,
-      page: number,
-      size: number,
-      query?: string,
-    ) =>
-      `${api.charts.base(cluster, namespace)}/charts?page=${page}&size=${size}${
-        query ? "&q=" + query : ""
-      }${repos ? `&repos=${repos}` : ""}`,
-    getChartCategories: (cluster: string, namespace: string) =>
-      `${api.charts.base(cluster, namespace)}/charts/categories`,
-    listVersions: (cluster: string, namespace: string, id: string) =>
-      `${api.charts.get(cluster, namespace, id)}/versions`,
-    getReadme: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
-        version,
-      )}/README.md`,
-    getValues: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
-        version,
-      )}/values.yaml`,
-    getSchema: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
-        version,
-      )}/values.schema.json`,
-  },
-
   // URLs which are accessing the k8s API server directly are grouped together
   // so we can clearly differentiate and possibly begin to remove.
   // Note that this list is not yet exhaustive (search for APIBase to find other call-sites which

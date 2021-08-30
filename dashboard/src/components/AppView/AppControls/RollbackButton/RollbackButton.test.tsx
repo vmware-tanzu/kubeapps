@@ -2,6 +2,10 @@ import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
+import {
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import ReactTooltip from "react-tooltip";
@@ -78,8 +82,10 @@ it("should render a disabled button if when passing an in-progress status", asyn
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
-      code: 6,
-    },
+      ready: false,
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      userReason: "Pending",
+    } as InstalledPackageStatus,
   };
   const wrapper = mountWrapper(defaultStore, <RollbackButton {...disabledProps} />);
 

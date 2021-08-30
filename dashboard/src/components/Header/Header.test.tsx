@@ -18,7 +18,7 @@ beforeEach(() => {
 
 afterEach(() => {
   spyOnUseDispatch.mockRestore();
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 const defaultState = {
