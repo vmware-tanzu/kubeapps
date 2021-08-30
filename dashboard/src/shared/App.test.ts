@@ -31,7 +31,7 @@ describe("App", () => {
   });
   afterEach(() => {
     moxios.uninstall(axiosWithAuth as any);
-    jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe("create", () => {

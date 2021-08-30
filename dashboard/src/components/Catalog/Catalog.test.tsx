@@ -116,7 +116,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
   spyOnUseDispatch.mockRestore();
   spyOnUseHistory.mockRestore();
 });
@@ -322,7 +322,7 @@ describe("filters by application type", () => {
 
   afterEach(() => {
     spyOnUseDispatch.mockRestore();
-    mockDispatch.mockReset();
+    mockDispatch.mockRestore();
   });
 
   it("doesn't show the filter if there are no csvs", () => {
@@ -558,9 +558,9 @@ describe("filters by application repository", () => {
   });
 
   afterEach(() => {
-    mockDispatch.mockReset();
-    spyOnUseDispatch.mockReset();
-    fetchRepos.mockReset();
+    mockDispatch.mockRestore();
+    spyOnUseDispatch.mockRestore();
+    fetchRepos.mockRestore();
   });
 
   it("doesn't show the filter if there are no apps", () => {
@@ -652,8 +652,8 @@ describe("filters by operator provider", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   });
   afterEach(() => {
-    spyOnUseDispatch.mockReset();
-    mockDispatch.mockReset();
+    spyOnUseDispatch.mockRestore();
+    mockDispatch.mockRestore();
   });
 
   it("doesn't show the filter if there are no csvs", () => {
@@ -746,8 +746,8 @@ describe("filters by category", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   });
   afterEach(() => {
-    spyOnUseDispatch.mockReset();
-    mockDispatch.mockReset();
+    spyOnUseDispatch.mockRestore();
+    mockDispatch.mockRestore();
   });
   it("renders a Unknown category if not set", () => {
     const charts = {

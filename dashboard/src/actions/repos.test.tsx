@@ -51,7 +51,7 @@ beforeEach(() => {
   });
 });
 
-afterEach(jest.resetAllMocks);
+afterEach(jest.restoreAllMocks);
 
 // Regular action creators
 interface ITestCase {

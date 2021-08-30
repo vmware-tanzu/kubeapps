@@ -117,7 +117,7 @@ describe("ResourceRef", () => {
       Kube.getResourceURL = kubeGetResourceURLMock;
     });
     afterEach(() => {
-      jest.resetAllMocks();
+      jest.restoreAllMocks();
     });
     it("calls Kube.getResourceURL with the correct arguments", () => {
       const r = {
@@ -150,7 +150,7 @@ describe("ResourceRef", () => {
       Kube.watchResourceURL = kubeWatchResourceURLMock;
     });
     afterEach(() => {
-      jest.resetAllMocks();
+      jest.restoreAllMocks();
     });
     it("calls Kube.watchResourceURL with the correct arguments", () => {
       const r = {
@@ -185,7 +185,7 @@ describe("ResourceRef", () => {
       Kube.getResource = kubeGetResourceMock;
     });
     afterEach(() => {
-      jest.resetAllMocks();
+      jest.restoreAllMocks();
     });
     it("calls Kube.getResource with the correct arguments", () => {
       const r = {
@@ -230,7 +230,7 @@ describe("ResourceRef", () => {
       Kube.watchResource = kubeWatchResourceMock;
     });
     afterEach(() => {
-      jest.resetAllMocks();
+      jest.restoreAllMocks();
     });
     it("calls Kube.watchResource with the correct arguments", () => {
       const r = {

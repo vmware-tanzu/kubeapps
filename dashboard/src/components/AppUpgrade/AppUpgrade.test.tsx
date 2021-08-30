@@ -79,7 +79,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
   spyOnUseDispatch.mockRestore();
   spyOnUseHistory.mockRestore();
 });

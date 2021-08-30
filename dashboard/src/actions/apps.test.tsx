@@ -32,7 +32,7 @@ describe("fetches applications", () => {
     App.GetInstalledPackageSummaries = listAppsMock;
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
   it("fetches applications", async () => {
     const expectedActions = [
