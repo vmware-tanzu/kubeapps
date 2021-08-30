@@ -1,3 +1,4 @@
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import {
@@ -13,6 +14,7 @@ import { FetchError, IChartState } from "shared/types";
 import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
+import * as ReactRedux from "react-redux";
 
 const testVersion: PackageAppVersion = {
   pkgVersion: "1.2.3",
@@ -96,14 +98,14 @@ const populatedProps = {
     appVersion: testVersion.appVersion,
     readme: "readme",
     readmeError: undefined,
-    values: "values",
+    values: "values:",
     versions: [testVersion],
     schema: schema as any,
-  },
+  } as IChartState["selected"],
   deployed: {
     chartVersion: availablePkgDetails[0],
     schema: schema as any,
-    values: "foo",
+    values: "foo:",
   } as IChartState["deployed"],
 };
 
@@ -207,10 +209,7 @@ describe("renders an error", () => {
   });
 });
 
-// TODO(agamez): Test temporarily commented out
-// perhaps it's an actual error with the YAML dependency
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("defaults the upgrade version to the current version", () => {
+it("defaults the upgrade version to the current version", () => {
   // helm upgrade is the only way to update the values.yaml, so upgrade is
   // often used by users to update values only, so we can't default to the
   // latest version on the assumption that they always want to upgrade.
@@ -218,38 +217,35 @@ it.skip("defaults the upgrade version to the current version", () => {
   expect(wrapper.find(DeploymentFormBody).prop("chartVersion")).toBe("1.0.0");
 });
 
-// TODO(agamez): Test temporarily commented out
-// perhaps it's an actual error with the YAML dependency
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("forwards the appValues when modified", () => {
+it("forwards the appValues when modified", () => {
   const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
-  const handleValuesChange: (v: string) => void = wrapper
-    .find(DeploymentFormBody)
-    .prop("setValues");
-  handleValuesChange("foo: bar");
-  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+  act(() => {
+    const handleValuesChange: (v: string) => void = wrapper
+      .find(DeploymentFormBody)
+      .prop("setValues");
+    handleValuesChange("foo: bar");
+  })
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("values: \nfoo: bar\n");
 });
 
-// TODO(agamez): Test temporarily commented out
-// perhaps it's an actual error with the YAML dependency
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("triggers an upgrade when submitting the form", async () => {
+it("triggers an upgrade when submitting the form", async () => {
+  const mockDispatch = jest.fn().mockReturnValue(true);
+  jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const { namespace, releaseName } = defaultProps;
-  const appValues = "foo: bar";
-  const upgradeApp = jest.fn().mockReturnValue(true);
-  const push = jest.fn();
+  const appValues = "values: \nfoo: bar\n";
+  const upgradeApp = jest.spyOn(actions.apps, "upgradeApp").mockImplementation(() => { return jest.fn(); });
   const wrapper = mountWrapper(
     defaultStore,
     <UpgradeForm {...populatedProps} namespace={namespace} />,
   );
-  const handleValuesChange: (v: string) => void = wrapper
-    .find(DeploymentFormBody)
-    .prop("setValues");
-  handleValuesChange(appValues);
 
   await act(async () => {
+    const handleValuesChange: (v: string) => void = wrapper
+      .find(DeploymentFormBody)
+      .prop("setValues");
+    handleValuesChange(appValues);
     // Simulating "submit" causes a console.warning
-    await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<void>)({
+    (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<void>)({
       preventDefault: jest.fn(),
     });
   });
@@ -262,14 +258,17 @@ it.skip("triggers an upgrade when submitting the form", async () => {
     appValues,
     schema,
   );
-  expect(push).toHaveBeenCalledWith(url.app.apps.get(defaultProps.cluster, namespace, releaseName));
+  expect(mockDispatch).toHaveBeenCalledWith({
+    payload: {
+      args: [url.app.apps.get(defaultProps.cluster, namespace, releaseName)],
+      method: "push",
+    },
+    type: "@@router/CALL_HISTORY_METHOD",
+  });
 });
 
 describe("when receiving new props", () => {
-  // TODO(agamez): Test temporarily commented out
-  // perhaps it's an actual error with the YAML dependency
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("should calculate the modifications from the default and the current values", () => {
+  it("should calculate the modifications from the default and the current values", () => {
     const currentValues = "a: b\nc: d\n";
     const defaultValues = "a: b\n";
     const wrapper = mountWrapper(
@@ -277,7 +276,7 @@ describe("when receiving new props", () => {
       <UpgradeForm {...populatedProps} appCurrentValues={currentValues} />,
     );
     wrapper.setProps({ deployed: { values: defaultValues } });
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(currentValues);
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("values: \n" + currentValues);
   });
 
   it("should apply modifications if a new version is selected", () => {
@@ -300,10 +299,7 @@ describe("when receiving new props", () => {
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("a: b\nc: d\n");
   });
 
-  // TODO(agamez): Test temporarily commented out
-  // perhaps it's an actual error with the YAML dependency
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("won't apply changes if the values have been manually modified", () => {
+  it("won't apply changes if the values have been manually modified", () => {
     const userValues = "a: b\n";
     const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
     act(() => {
@@ -350,21 +346,23 @@ describe("when receiving new props", () => {
     bar1: value1
 `,
       deployedValues: `foo:
-  - foo1: 
+  - foo1:
     bar1: value1
-  - foo2: 
+  - foo2:
     bar2: value2
 `,
       newDefaultValues: `foo:
     - foo1:
       bar1: value1
 `,
-      result: `foo:
-  - foo1: 
-    bar1: value1
-  - foo2: 
-    bar2: value2
-`,
+      result: [
+        `foo:`,
+        `  - foo1: `,
+        `    bar1: value1`,
+        `  - foo2: `,
+        `    bar2: value2`,
+        ``,
+      ].join("\n")
     },
     {
       description: "should delete an element in an array",
@@ -375,7 +373,7 @@ describe("when receiving new props", () => {
     bar2: value2
 `,
       deployedValues: `foo:
-  - foo1: 
+  - foo1:
     bar1: value1
 `,
       newDefaultValues: `foo:
@@ -384,10 +382,12 @@ describe("when receiving new props", () => {
   - foo2:
     bar2: value2
 `,
-      result: `foo:
-  - foo1: 
-    bar1: value1
-`,
+      result: [
+        `foo:`,
+        `  - foo1: `,
+        `    bar1: value1`,
+        ``,
+      ].join("\n")
     },
     {
       description: "set a value with dots and slashes in the key",
@@ -421,10 +421,7 @@ describe("when receiving new props", () => {
   });
 });
 
-// TODO(agamez): Test temporarily commented out
-// perhaps it's an actual error with the YAML dependency
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("shows, by default, the default values of the deployed chart plus any modification", () => {
+it("shows, by default, the default values of the deployed chart plus any modification", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <UpgradeForm
