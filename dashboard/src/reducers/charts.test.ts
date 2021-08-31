@@ -302,10 +302,11 @@ describe("chartReducer", () => {
       isFetching: false,
       hasFinishedFetching: true,
       categories: ["foo"],
-      // we are not filtering out dups currently
-      items: [availablePackageSummary1, availablePackageSummary2, availablePackageSummary1],
+      items: [availablePackageSummary1, availablePackageSummary2],
     });
   });
+
+  // TODO(agamez): check whether or not we really want to filter out duplicates. If so, add some deleted tests back
 
   it("two receiveCharts and then errorChart", () => {
     const state1 = chartsReducer(undefined, {
