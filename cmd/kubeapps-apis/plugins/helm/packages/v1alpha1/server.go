@@ -742,19 +742,25 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
 	}
-	if len(charts) == 1 {
-		installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
-			Identifier: charts[0].ID,
-			Plugin:     GetPluginDetail(),
-		}
-		if charts[0].Repo != nil {
-			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: charts[0].Repo.Namespace}
-		}
-		if len(charts[0].ChartVersions) > 0 {
-			cv := charts[0].ChartVersions[0]
-			installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
-				PkgVersion: cv.Version,
-				AppVersion: cv.AppVersion,
+	// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
+	// Example: global + namespaced repo including an overlapping subset.
+	if len(charts) > 0 {
+		// Ensure the chosen chart contains the pkg and app version used in the installed package
+		chart := selectFirstMatchingChart(charts, release.Chart.Metadata.Version, release.Chart.Metadata.AppVersion)
+		if chart != nil {
+			installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
+				Identifier: chart.ID,
+				Plugin:     GetPluginDetail(),
+			}
+			if chart.Repo != nil {
+				installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
+			}
+			if len(chart.ChartVersions) > 0 {
+				cv := chart.ChartVersions[0]
+				installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: cv.Version,
+					AppVersion: cv.AppVersion,
+				}
 			}
 		}
 	}
@@ -762,6 +768,18 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	return &corev1.GetInstalledPackageDetailResponse{
 		InstalledPackageDetail: installedPkgDetail,
 	}, nil
+}
+
+// selectFirstMatchingChart selects the first chart matching the pkg and app versions
+func selectFirstMatchingChart(charts []*models.Chart, pkgVersion, appVersion string) *models.Chart {
+	for _, c := range charts {
+		for _, cv := range c.ChartVersions {
+			if cv.Version == pkgVersion && cv.AppVersion == appVersion {
+				return c
+			}
+		}
+	}
+	return nil
 }
 
 func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPackageReference) (*corev1.InstalledPackageDetail, error) {
