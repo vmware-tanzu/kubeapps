@@ -1,76 +1,71 @@
 import actions from "actions";
-import { JSONSchemaType } from "ajv";
-import ChartSummary from "components/Catalog/ChartSummary";
+import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import { RouterAction } from "connected-react-router";
+import { push } from "connected-react-router";
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import * as ReactRouter from "react-router";
 import "react-tabs/style/react-tabs.css";
-import { CreateError, FetchError, IChartState, IChartVersion } from "../../shared/types";
-import * as url from "../../shared/url";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+import { FetchError, IStoreState } from "shared/types";
+import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 
-export interface IDeploymentFormProps {
-  chartNamespace: string;
+interface IRouteParams {
   cluster: string;
-  chartID: string;
-  chartVersion: string;
-  error: FetchError | CreateError | undefined;
-  chartsIsFetching: boolean;
-  selected: IChartState["selected"];
-  deployChart: (
-    targetCluster: string,
-    targetNamespace: string,
-    version: IChartVersion,
-    chartNamespace: string,
-    releaseName: string,
-    values?: string,
-    schema?: JSONSchemaType<any>,
-  ) => Promise<boolean>;
-  push: (location: string) => RouterAction;
-  fetchChartVersions: (cluster: string, namespace: string, id: string) => Promise<IChartVersion[]>;
-  getChartVersion: (cluster: string, namespace: string, id: string, chartVersion: string) => void;
   namespace: string;
-  kubeappsNamespace: string;
+  repo: string;
+  global: string;
+  id: string;
+  version?: any;
 }
 
-function DeploymentForm({
-  chartNamespace,
-  cluster,
-  chartID,
-  chartVersion,
-  error,
-  chartsIsFetching,
-  selected,
-  deployChart,
-  push,
-  fetchChartVersions,
-  namespace,
-  kubeappsNamespace,
-}: IDeploymentFormProps) {
+export default function DeploymentForm() {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const {
+    cluster,
+    namespace,
+    repo,
+    global,
+    id,
+    version: chartVersion,
+  } = ReactRouter.useParams() as IRouteParams;
+  const {
+    apps,
+    config,
+    charts: { isFetching: chartsIsFetching, selected },
+  } = useSelector((state: IStoreState) => state);
+  const packageId = `${repo}/${id}`;
+  const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
+  const chartCluster = global === "global" ? config.kubeappsCluster : cluster;
+  const error = apps.error || selected.error;
+  const kubeappsNamespace = config.kubeappsNamespace;
+  const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState("");
-  const [appValues, setAppValues] = useState(selected.values || "");
+  const [appValues, setAppValues] = useState(values || "");
   const [valuesModified, setValuesModified] = useState(false);
-  const { version } = selected;
-  const dispatch = useDispatch();
 
   useEffect(() => {
-    fetchChartVersions(cluster, chartNamespace, chartID);
-  }, [fetchChartVersions, cluster, chartNamespace, chartID]);
+    dispatch(actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId));
+  }, [dispatch, chartCluster, chartNamespace, packageId]);
 
   useEffect(() => {
     if (!valuesModified) {
-      setAppValues(selected.values || "");
+      setAppValues(values || "");
     }
-  }, [selected.values, valuesModified]);
+  }, [values, valuesModified]);
+
   useEffect(() => {
-    dispatch(actions.charts.getChartVersion(cluster, chartNamespace, chartID, chartVersion));
-  }, [cluster, chartNamespace, chartID, chartVersion, dispatch]);
+    dispatch(
+      actions.charts.fetchChartVersion(chartCluster, chartNamespace, packageId, chartVersion),
+    );
+  }, [chartCluster, chartNamespace, packageId, chartVersion, dispatch]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
@@ -87,50 +82,58 @@ function DeploymentForm({
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setDeploying(true);
-    if (selected.version) {
-      const deployed = await deployChart(
-        cluster,
-        namespace,
-        selected.version,
-        chartNamespace,
-        releaseName,
-        appValues,
-        selected.schema,
+    if (availablePackageDetail) {
+      const deployed = await dispatch(
+        actions.apps.deployChart(
+          cluster,
+          namespace,
+          availablePackageDetail,
+          releaseName,
+          appValues,
+          schema,
+        ),
       );
       setDeploying(false);
       if (deployed) {
-        push(url.app.apps.get(cluster, namespace, releaseName));
+        dispatch(push(url.app.apps.get(cluster, namespace, releaseName)));
       }
     }
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    push(
-      url.app.apps.new(
-        cluster,
-        namespace,
-        selected.version!,
-        e.currentTarget.value,
-        kubeappsNamespace,
+    dispatch(
+      push(
+        url.app.apps.new(
+          cluster,
+          namespace,
+          availablePackageDetail!,
+          e.currentTarget.value,
+          kubeappsNamespace,
+        ),
       ),
     );
   };
 
-  if (error && error.constructor === FetchError) {
-    return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
+  if (error?.constructor === FetchError) {
+    return (
+      error && (
+        <Alert theme="danger">
+          Unable to retrieve the current app: {(error as FetchError).message}
+        </Alert>
+      )
+    );
   }
 
-  if (!version) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
+  if (!availablePackageDetail) {
+    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
   }
-  const chartAttrs = version.relationships.chart.data;
   return (
     <section>
       <ChartHeader
-        chartAttrs={chartAttrs}
-        versions={selected.versions}
+        chartAttrs={availablePackageDetail}
+        versions={versions}
         onSelect={selectVersion}
-        selectedVersion={selected.version?.attributes.version}
+        selectedVersion={pkgVersion}
       />
       {isDeploying && (
         <h3 className="center" style={{ marginBottom: "1.2rem" }}>
@@ -140,7 +143,7 @@ function DeploymentForm({
       <LoadingWrapper loaded={!isDeploying}>
         <Row>
           <Column span={3}>
-            <ChartSummary version={version} chartAttrs={chartAttrs} />
+            <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
           </Column>
           <Column span={9}>
             {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
@@ -164,7 +167,7 @@ function DeploymentForm({
               </div>
               <DeploymentFormBody
                 deploymentEvent="install"
-                chartID={chartID}
+                packageId={packageId}
                 chartVersion={chartVersion}
                 chartsIsFetching={chartsIsFetching}
                 selected={selected}
@@ -179,5 +182,3 @@ function DeploymentForm({
     </section>
   );
 }
-
-export default DeploymentForm;

@@ -37,17 +37,11 @@ describe("reposReducer", () => {
       repoUpdated: getType(actions.repos.repoUpdated),
       requestRepos: getType(actions.repos.requestRepos),
       receiveRepos: getType(actions.repos.receiveRepos),
-      receiveReposSecrets: getType(actions.repos.receiveReposSecrets),
       receiveReposSecret: getType(actions.repos.receiveReposSecret),
       requestRepo: getType(actions.repos.requestRepo),
       receiveRepo: getType(actions.repos.receiveRepo),
       repoValidating: getType(actions.repos.repoValidating),
       repoValidated: getType(actions.repos.repoValidated),
-      clearRepo: getType(actions.repos.clearRepo),
-      showForm: getType(actions.repos.showForm),
-      hideForm: getType(actions.repos.hideForm),
-      resetForm: getType(actions.repos.resetForm),
-      submitForm: getType(actions.repos.submitForm),
       redirect: getType(actions.repos.redirect),
       redirected: getType(actions.repos.redirected),
       errorRepos: getType(actions.repos.errorRepos),
@@ -104,16 +98,6 @@ describe("reposReducer", () => {
           }),
         ).toEqual({ ...initialState, repo });
       });
-    });
-
-    it("receives repo secrets", () => {
-      const secret = { metadata: { name: "foo" } };
-      expect(
-        reposReducer(undefined, {
-          type: actionTypes.receiveReposSecrets as any,
-          payload: [secret],
-        }),
-      ).toEqual({ ...initialState, repoSecrets: [secret] });
     });
 
     it("receives a repo secret", () => {

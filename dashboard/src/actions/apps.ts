@@ -1,43 +1,32 @@
 import { JSONSchemaType } from "ajv";
+import {
+  AvailablePackageDetail,
+  InstalledPackageDetail,
+  InstalledPackageSummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
-import * as semver from "semver";
-import { App } from "shared/App";
 import Chart from "shared/Chart";
-import { hapi } from "shared/hapi/release";
-import { validate } from "shared/schema";
 import {
   CreateError,
   DeleteError,
   FetchError,
-  IAppOverview,
-  IChartUpdateInfo,
-  IChartVersion,
-  IRelease,
   IStoreState,
   RollbackError,
   UnprocessableEntity,
   UpgradeError,
 } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
+import { App } from "../shared/App";
+import { validate } from "../shared/schema";
 
 const { createAction } = deprecated;
 
 export const requestApps = createAction("REQUEST_APPS");
 
-export const receiveApps = createAction("RECEIVE_APPS", resolve => {
-  return (apps: hapi.release.Release[]) => resolve(apps);
-});
-
 export const listApps = createAction("REQUEST_APP_LIST");
 
 export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
-  return (apps: IAppOverview[]) => resolve(apps);
-});
-
-export const requestAppUpdateInfo = createAction("REQUEST_APP_UPDATE_INFO");
-
-export const receiveAppUpdateInfo = createAction("RECEIVE_APP_UPDATE_INFO", resolve => {
-  return (payload: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(payload);
+  return (apps: InstalledPackageSummary[]) => resolve(apps);
 });
 
 export const requestDeleteApp = createAction("REQUEST_DELETE_APP");
@@ -62,16 +51,15 @@ export const errorApp = createAction("ERROR_APP", resolve => {
 });
 
 export const selectApp = createAction("SELECT_APP", resolve => {
-  return (app: IRelease) => resolve(app);
+  // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
+  return (app: InstalledPackageDetail, manifest: any, details?: AvailablePackageDetail) =>
+    resolve({ app, manifest, details });
 });
 
 const allActions = [
   listApps,
   requestApps,
-  receiveApps,
   receiveAppList,
-  requestAppUpdateInfo,
-  receiveAppUpdateInfo,
   requestDeleteApp,
   receiveDeleteApp,
   requestDeployApp,
@@ -90,100 +78,37 @@ export function getApp(
   cluster: string,
   namespace: string,
   releaseName: string,
-): ThunkAction<Promise<hapi.release.Release | undefined>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
     try {
-      const app = await App.getRelease(cluster, namespace, releaseName);
-      dispatch(selectApp(app));
-      return app;
-    } catch (e: any) {
-      dispatch(errorApp(new FetchError(e.message)));
-      return;
-    }
-  };
-}
-
-function getAppUpdateInfo(
-  cluster: string,
-  namespace: string,
-  releaseName: string,
-  chartName: string,
-  currentVersion: string,
-  appVersion: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
-  return async dispatch => {
-    dispatch(requestAppUpdateInfo());
-    try {
-      const chartsInfo = await Chart.listWithFilters(
+      // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
+      const legacyResponse = await App.getRelease(cluster, namespace, releaseName);
+      // Get the details of an installed package
+      const { installedPackageDetail } = await App.GetInstalledPackageDetail(
         cluster,
         namespace,
-        chartName,
-        currentVersion,
-        appVersion,
+        releaseName,
       );
-      let updateInfo: IChartUpdateInfo = {
-        upToDate: true,
-        repository: { name: "", url: "", namespace: "" },
-        chartLatestVersion: "",
-        appLatestVersion: "",
-      };
-      if (chartsInfo.length > 0) {
-        const sortedCharts = chartsInfo.sort((a, b) =>
-          semver.compare(
-            a.relationships.latestChartVersion.data.version,
-            b.relationships.latestChartVersion.data.version,
-          ),
-        );
-        const chartLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
-        const appLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.app_version;
-        // Initialize updateInfo with the latest chart found
-        updateInfo = {
-          upToDate: semver.gte(currentVersion, chartLatestVersion),
-          chartLatestVersion,
-          appLatestVersion,
-          repository: sortedCharts[0].attributes.repo,
-        };
-      }
-      dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
-    } catch (e: any) {
-      const updateInfo: IChartUpdateInfo = {
-        error: e,
-        upToDate: false,
-        repository: { name: "", url: "", namespace: "" },
-        chartLatestVersion: "",
-        appLatestVersion: "",
-      };
-      dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
-    }
-  };
-}
-
-export function getAppWithUpdateInfo(
-  cluster: string,
-  namespace: string,
-  releaseName: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
-  return async dispatch => {
-    try {
-      const app = await dispatch(getApp(cluster, namespace, releaseName));
-      if (
-        app &&
-        app.chart &&
-        app.chart.metadata &&
-        app.chart.metadata.name &&
-        app.chart.metadata.version
-      ) {
+      // For local packages with no references to any available packages (eg.a local chart for development)
+      // we aren't able to get the details, but still want to display the available data so far
+      let availablePackageDetail;
+      if (installedPackageDetail) {
+        if (installedPackageDetail?.availablePackageRef?.identifier) {
+          // Get the details of the available package that corresponds to the installed package
+          const resp = await Chart.getAvailablePackageDetail(
+            installedPackageDetail.availablePackageRef.context?.cluster ?? cluster,
+            installedPackageDetail.availablePackageRef.context?.namespace ?? namespace,
+            installedPackageDetail.availablePackageRef.identifier,
+            installedPackageDetail.currentVersion?.pkgVersion,
+          );
+          availablePackageDetail = resp.availablePackageDetail;
+        }
         dispatch(
-          getAppUpdateInfo(
-            cluster,
-            namespace,
-            app.name,
-            app.chart.metadata.name,
-            app.chart.metadata.version,
-            app.chart.metadata.appVersion ? app.chart.metadata.appVersion : "",
-          ),
+          selectApp(installedPackageDetail, legacyResponse?.manifest, availablePackageDetail),
         );
+      } else {
+        dispatch(errorApp(new FetchError("Package not found")));
       }
     } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
@@ -214,13 +139,15 @@ export function deleteApp(
 export function fetchApps(
   cluster: string,
   ns?: string,
-): ThunkAction<Promise<IAppOverview[]>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(listApps());
+    let installedPackageSummaries;
     try {
-      const apps = await App.listApps(cluster, ns);
-      dispatch(receiveAppList(apps));
-      return apps;
+      const res = await App.GetInstalledPackageSummaries(cluster, ns);
+      installedPackageSummaries = res?.installedPackageSummaries;
+      dispatch(receiveAppList(installedPackageSummaries));
+      return installedPackageSummaries;
     } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
       return [];
@@ -228,36 +155,10 @@ export function fetchApps(
   };
 }
 
-export function fetchAppsWithUpdateInfo(
-  cluster: string,
-  namespaceOrAll: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
-  return async dispatch => {
-    try {
-      const apps = await dispatch(fetchApps(cluster, namespaceOrAll));
-      apps?.forEach(app =>
-        dispatch(
-          getAppUpdateInfo(
-            cluster,
-            app.namespace,
-            app.releaseName,
-            app.chartMetadata.name,
-            app.chartMetadata.version,
-            app.chartMetadata.appVersion,
-          ),
-        ),
-      );
-    } catch (e: any) {
-      dispatch(errorApp(new FetchError(e.message)));
-    }
-  };
-}
-
 export function deployChart(
   targetCluster: string,
   targetNamespace: string,
-  chartVersion: IChartVersion,
-  chartNamespace: string,
+  availablePackageDetail: AvailablePackageDetail,
   releaseName: string,
   values?: string,
   schema?: JSONSchemaType<any>,
@@ -276,15 +177,10 @@ export function deployChart(
           );
         }
       }
-      await App.create(
-        targetCluster,
-        targetNamespace,
-        releaseName,
-        chartNamespace,
-        chartVersion,
-        values,
-      );
+
+      await App.create(targetCluster, targetNamespace, releaseName, availablePackageDetail, values);
       dispatch(receiveDeployApp());
+
       return true;
     } catch (e: any) {
       dispatch(errorApp(new CreateError(e.message)));
@@ -296,7 +192,7 @@ export function deployChart(
 export function upgradeApp(
   cluster: string,
   namespace: string,
-  chartVersion: IChartVersion,
+  chartVersion: AvailablePackageDetail,
   chartNamespace: string,
   releaseName: string,
   values?: string,
@@ -337,7 +233,7 @@ export function rollbackApp(
     try {
       await App.rollback(cluster, namespace, releaseName, revision);
       dispatch(receiveRollbackApp());
-      dispatch(getAppWithUpdateInfo(cluster, namespace, releaseName));
+      dispatch(getApp(cluster, namespace, releaseName));
       return true;
     } catch (e: any) {
       dispatch(errorApp(new RollbackError(e.message)));

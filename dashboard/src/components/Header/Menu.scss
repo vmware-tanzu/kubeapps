@@ -82,6 +82,9 @@ div .dropdown-menu .dropdown-divider {
     margin-right: 0.5rem;
     max-width: 20px;
   }
+  cds-icon {
+    margin-right: 0.5rem;
+  }
   &:hover {
     transform: translateY(-0.1rem);
     transition: border 0.2s ease, transform 0.2s;
