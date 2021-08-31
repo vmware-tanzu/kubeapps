@@ -64,11 +64,9 @@ test("Creates a private registry", async () => {
   await expect(page).toClick("a", { text: repoName });
 
   await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("apache");
+    await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 10000 });
   }, testName);
-
-  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-  await expect(page).toClick("a", { text: "apache" });
+  await expect(page).toClick("a", { text: "Apache HTTP Server" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
@@ -80,7 +78,9 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Update Now", { timeout: 60000 });
+  await utils.retryAndRefresh(page, 2, async () => {
+    await expect(page).toMatch("Update Now", { timeout: 60000 });
+  }, testName);
 
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the kubernetes API to get info of the

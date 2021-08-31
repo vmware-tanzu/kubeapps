@@ -1,6 +1,7 @@
 const utils = require("./lib/utils");
+const testName = "08-rollback";
 
-test("Upgrades an application", async () => {
+test("Rolls back an application", async () => {
   await utils.login(
     page,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -11,8 +12,8 @@ test("Upgrades an application", async () => {
   );
 
   // Deploy the app
-  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-  await expect(page).toClick("a", { text: "apache" });
+  await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
+  await expect(page).toClick("a", { text: "Apache HTTP Server" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
@@ -34,8 +35,9 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   // Increase the number of replicas
-  await expect(page).toMatchElement("input[type='number']");
-  await page.focus("input[type='number']");
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatchElement("input[type='number']");
+  }, testName);
   await page.keyboard.press("Backspace");
   await page.keyboard.type("2");
 
@@ -43,7 +45,9 @@ test("Upgrades an application", async () => {
 
   await expect(page).toClick("li", { text: "Changes" });
   await expect(page).toMatch("replicaCount: 2");
-  await expect(page).toMatchElement("input[type='number']", { value: 2 });
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatchElement("input[type='number']", { value: 2 });
+  }, testName);
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
