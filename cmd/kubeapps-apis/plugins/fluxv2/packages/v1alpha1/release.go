@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -312,6 +313,21 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 	return release, nil
 }
 
+func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference) (*corev1.InstalledPackageReference, error) {
+	// just for now assume HelmRelease CRD lives in the kubeapps namespace
+	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = resourceIfc.Create(ctx, newFluxHelmRelease("podinfo"), metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
 	complete, success, reason := checkStatusReady(unstructuredRelease)
 	status := &corev1.InstalledPackageStatus{
@@ -367,4 +383,36 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 		Plugin:     GetPluginDetail(),
 		Context:    &corev1.Context{Namespace: repoNamespace},
 	}, nil
+}
+
+func newFluxHelmRelease(chartName string) *unstructured.Unstructured {
+	unstructuredRel := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
+			"kind":       fluxHelmRelease,
+			"metadata": map[string]interface{}{
+				"generateName": fmt.Sprintf("%s-", chartName),
+			},
+			"spec": map[string]interface{}{
+				"chart": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"chart":   "podinfo",
+						"version": "*",
+						"sourceRef": map[string]interface{}{
+							"name":      "podinfo",
+							"kind":      fluxHelmRepository,
+							"namespace": "default",
+						},
+					},
+				},
+				"interval": "1m",
+				"install": map[string]interface{}{
+					"createNamespace": "true",
+				},
+				"targetNamespace": "test",
+				// TODO: values
+			},
+		},
+	}
+	return &unstructuredRel
 }

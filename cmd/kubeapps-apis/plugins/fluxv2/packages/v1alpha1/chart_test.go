@@ -30,6 +30,8 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -740,8 +742,10 @@ func newServerWithRepoAndCharts(repo runtime.Object, charts ...runtime.Object) (
 			return handled, ret, err
 		})
 
-	clientGetter := func(context.Context) (dynamic.Interface, error) {
-		return dynamicClient, nil
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+
+	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+		return dynamicClient, apiextIfc, nil
 	}
 
 	watcher := watch.NewFake()

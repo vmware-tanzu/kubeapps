@@ -19,6 +19,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -36,7 +37,7 @@ import (
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
-type clientGetter func(context.Context) (dynamic.Interface, error)
+type clientGetter func(context.Context) (dynamic.Interface, apiext.Interface, error)
 type helmActionConfigGetter func(ctx context.Context, namespace string) (*action.Configuration, error)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
@@ -55,22 +56,26 @@ type Server struct {
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
-	clientGetter := func(ctx context.Context) (dynamic.Interface, error) {
+	clientGetter := func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
 		if configGetter == nil {
-			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
 		// The Flux plugin currently supports interactions with the default (kubeapps)
 		// cluster only:
 		cluster := ""
 		config, err := configGetter(ctx, cluster)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+			return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 		}
 		dynamicClient, err := dynamic.NewForConfig(config)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
+			return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
 		}
-		return dynamicClient, nil
+		apiExtensions, err := apiext.NewForConfig(config)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get api extensions client : %v", err))
+		}
+		return dynamicClient, apiExtensions, nil
 	}
 	actionConfigGetter := func(ctx context.Context, namespace string) (*action.Configuration, error) {
 		if configGetter == nil {
@@ -127,7 +132,7 @@ func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error
 	if s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	dynamicClient, err := s.clientGetter(ctx)
+	dynamicClient, _, err := s.clientGetter(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -391,5 +396,23 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	return &corev1.GetInstalledPackageDetailResponse{
 		InstalledPackageDetail: pkgDetail,
+	}, nil
+}
+
+// CreateInstalledPackage creates an installed package based on the request.
+func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
+	log.Infof("+fluxv2 CreateInstalledPackage [%v]", request)
+
+	if request == nil || request.AvailablePackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+	}
+
+	installedRef, err := s.newRelease(ctx, request.AvailablePackageRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.CreateInstalledPackageResponse{
+		InstalledPackageRef: installedRef,
 	}, nil
 }

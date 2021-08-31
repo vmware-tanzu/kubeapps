@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -73,7 +74,7 @@ type cacheConfig struct {
 }
 
 func newCache(config cacheConfig) (*NamespacedResourceWatcherCache, error) {
-	log.Infof("+newCache")
+	log.Infof("+newCache(%v)", config.gvr)
 	// TODO (gfichtenholt) small preference for reading all config in the main.go
 	// (whether from env vars or cmd-line options) only in the one spot and passing
 	// explicitly to functions (so functions are less dependent on env state).
@@ -96,7 +97,7 @@ func newCache(config cacheConfig) (*NamespacedResourceWatcherCache, error) {
 	}
 
 	// TODO (gfichtenholt) do not log plain text password
-	log.Infof("newCache: addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB_NUM)
+	log.Infof("newCache: redis addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB_NUM)
 
 	return newCacheWithRedisClient(
 		config,
@@ -113,10 +114,6 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
-	}
-
-	if config.gvr.Empty() {
-		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with valid GVR")
 	}
 
 	if config.clientGetter == nil {
@@ -140,6 +137,11 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 		eventProcessedWaitGroup: waitGroup,
 	}
 
+	// sanity check that the specified GVR is a valid registered CRD
+	if err = c.isGvrValid(); err != nil {
+		return nil, err
+	}
+
 	// let's do the initial re-sync and creating a new RetryWatcher here so
 	// bootstrap errors, if any, are flagged early synchronously and the
 	// caller does not end up with a partially initialized cache
@@ -158,6 +160,33 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 
 	go c.watchLoop(watcher)
 	return &c, nil
+}
+
+func (c NamespacedResourceWatcherCache) isGvrValid() error {
+	if c.config.gvr.Empty() {
+		return status.Errorf(codes.FailedPrecondition, "server configured with empty GVR")
+	}
+	// sanity check that CRD for GVR has been registered
+	ctx := context.Background()
+	_, apiExt, err := c.config.clientGetter(ctx)
+	if err != nil {
+		return status.Errorf(codes.FailedPrecondition, "clientGetter failed due to: %v", err)
+	} else if apiExt == nil {
+		return status.Errorf(codes.FailedPrecondition, "clientGetter returned invalid data")
+	}
+
+	name := fmt.Sprintf("%s.%s", c.config.gvr.Resource, c.config.gvr.Group)
+	crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	for _, condition := range crd.Status.Conditions {
+		if condition.Type == apiextv1.Established &&
+			condition.Status == apiextv1.ConditionTrue {
+			return nil
+		}
+	}
+	return status.Errorf(codes.FailedPrecondition, "CRD [%s] is not valid", c.config.gvr)
 }
 
 // note that I am not using pointer receivers on any the methods, because none
@@ -195,7 +224,7 @@ func (c NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatche
 func (c NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
-	dynamicClient, err := c.config.clientGetter(ctx)
+	dynamicClient, _, err := c.config.clientGetter(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -212,12 +241,12 @@ func (c NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch
 func (c NamespacedResourceWatcherCache) resync() (string, error) {
 	ctx := context.Background()
 
-	dynamicClient, err := c.config.clientGetter(ctx)
+	dynamicClient, _, err := c.config.clientGetter(ctx)
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	// TODO: (gfichtenholt) RBAC check where can list and watch GVR?
+	// TODO: (gfichtenholt) RBAC check whether I list and watch specified GVR?
 
 	// this will list resources from all namespaces.
 	// Notice, we are not setting resourceVersion in ListOptions, which means

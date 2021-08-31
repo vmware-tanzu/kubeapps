@@ -35,6 +35,8 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -631,8 +633,10 @@ func newServerWithChartsAndReleases(actionConfig *action.Configuration, chartOrR
 		},
 		chartOrRelease...)
 
-	clientGetter := func(context.Context) (dynamic.Interface, error) {
-		return dynamicClient, nil
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+
+	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+		return dynamicClient, apiextIfc, nil
 	}
 
 	watcher := watch.NewFake()
