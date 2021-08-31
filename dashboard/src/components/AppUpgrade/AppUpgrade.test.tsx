@@ -172,7 +172,11 @@ describe("when an error exists", () => {
         ...defaultStore,
         apps: { ...state.apps },
       }),
-      <AppUpgrade />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
     );
     expect(wrapper.find(UpgradeForm)).toExist();
     expect(wrapper.find(UpgradeForm).prop("error")).toEqual(upgradeError);
@@ -196,7 +200,11 @@ it("renders the upgrade form when the repo is available", () => {
       apps: { ...state.apps },
       repos: { ...state.repos },
     }),
-    <AppUpgrade />,
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
@@ -220,7 +228,11 @@ it("skips the repo selection form if the app contains upgrade info", () => {
       apps: { ...state.apps },
       repos: { ...state.repos },
     }),
-    <AppUpgrade />,
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
