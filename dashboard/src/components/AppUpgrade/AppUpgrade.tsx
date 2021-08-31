@@ -103,13 +103,7 @@ function AppUpgrade() {
       </div>
     );
   }
-  return (
-    <SelectRepoForm
-      cluster={cluster}
-      namespace={namespace}
-      chartName={app?.availablePackageRef?.identifier || ""}
-    />
-  );
+  return <SelectRepoForm cluster={cluster} namespace={namespace} app={app} />;
 }
 
 export default AppUpgrade;

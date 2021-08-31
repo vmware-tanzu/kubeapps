@@ -1,3 +1,4 @@
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
@@ -350,22 +351,41 @@ export const validateRepo = (
   };
 };
 
-export function checkChart(
+export function findPackageInRepo(
   cluster: string,
   repoNamespace: string,
-  repo: string,
-  chartName: string,
+  repoName: string,
+  app?: InstalledPackageDetail,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async dispatch => {
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(cluster, repoNamespace, repo);
-    try {
-      await Chart.getAvailablePackageVersions(cluster, repoNamespace, `${repo}/${chartName}`);
-      dispatch(receiveRepo(appRepository));
-      return true;
-    } catch (e: any) {
+    if (app?.availablePackageRef?.context?.namespace && app?.availablePackageRef?.identifier) {
+      const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
+      try {
+        await Chart.getAvailablePackageVersions(
+          cluster,
+          repoNamespace,
+          app.availablePackageRef.identifier,
+        );
+        dispatch(receiveRepo(appRepository));
+        return true;
+      } catch (e: any) {
+        dispatch(
+          errorChart(
+            new NotFoundError(
+              `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+            ),
+          ),
+        );
+        return false;
+      }
+    } else {
       dispatch(
-        errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
+        errorChart(
+          new NotFoundError(
+            `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
+          ),
+        ),
       );
       return false;
     }

@@ -1,6 +1,7 @@
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
-import { get } from "lodash";
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
@@ -12,10 +13,10 @@ import "./SelectRepoForm.css";
 interface ISelectRepoFormProps {
   cluster: string;
   namespace: string;
-  chartName: string;
+  app?: InstalledPackageDetail;
 }
 
-function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps) {
+function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   const dispatch = useDispatch();
   const {
     repos: {
@@ -30,7 +31,8 @@ function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps)
     config: { kubeappsNamespace, kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
-  const [repoName, setRepoName] = useState(get(repo, "metadata.name", ""));
+  const [userRepoName, setUserRepoName] = useState(repo?.metadata?.name ?? "");
+  const [userRepoNamespace, setUserRepoNamepace] = useState(repo?.metadata?.namespace ?? "");
 
   useEffect(() => {
     if (namespace !== kubeappsNamespace) {
@@ -42,10 +44,20 @@ function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps)
     }
   }, [dispatch, namespace, kubeappsNamespace]);
 
-  const handleChartRepoNameChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const [ns, name] = e.target.value.split("/");
-    dispatch(actions.repos.checkChart(kubeappsCluster, ns, name, chartName));
-    setRepoName(e.currentTarget.value);
+  const handleRepoNameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value) {
+      const [ns, name] = e.target.value.split("/");
+      setUserRepoName(name);
+      setUserRepoNamepace(ns);
+    }
+  };
+
+  const handleRepoNameSelection = async () => {
+    if (userRepoNamespace && userRepoName) {
+      dispatch(
+        actions.repos.findPackageInRepo(kubeappsCluster, userRepoNamespace, userRepoName, app),
+      );
+    }
   };
 
   const findRepo = (ns: string, name: string) => {
@@ -66,8 +78,8 @@ function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps)
       {fetchError && <Alert theme="danger">An error occurred: {fetchError.message}</Alert>}
       {!fetchError && repos.length === 0 && (
         <Alert theme="warning">
-          <h5>Chart repositories not found.</h5>
-          Manage your Helm chart repositories in Kubeapps by visiting the{" "}
+          <h5>Repositories not found.</h5>
+          Manage your repositories in Kubeapps by visiting the{" "}
           <Link to={url.app.config.apprepositories(cluster, namespace)}>
             App repositories configuration
           </Link>{" "}
@@ -77,19 +89,21 @@ function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps)
       {repos.length > 0 && (
         <div className="select-repo-form">
           {chartError && <Alert theme="danger">An error occurred: {chartError.message}</Alert>}
-          <h2>Select the source repository of {chartName}</h2>
-          <label className="select-repo-form-label" htmlFor="chartRepoName">
-            Chart Repository Name *
+          <h2>
+            Select the source repository of '{app?.availablePackageRef?.identifier ?? app?.name}'
+          </h2>
+          <label className="select-repo-form-label" htmlFor="repoNameSelector">
+            Repository Name *
           </label>
           <div className="clr-select-wrapper">
             <select
-              id="chartRepoName"
-              onChange={handleChartRepoNameChange}
-              value={repoName}
+              id="repoNameSelector"
+              onChange={handleRepoNameChange}
+              value={`${userRepoNamespace}/${userRepoName}`}
               required={true}
               className="clr-page-size-select"
             >
-              {!repoName && <option key="" value="" />}
+              {!userRepoName && <option key="" value="" />}
               {repos.map(r => {
                 const value = `${r.metadata.namespace}/${r.metadata.name}`;
                 return (
@@ -99,10 +113,14 @@ function SelectRepoForm({ cluster, namespace, chartName }: ISelectRepoFormProps)
                 );
               })}
             </select>
+            <CdsButton size="sm" action="flat" onClick={handleRepoNameSelection} type="button">
+              Select
+            </CdsButton>
           </div>
           <p>
             {" "}
-            * If the repository containing {chartName} is not in the list add it{" "}
+            * If the repository containing '{app?.availablePackageRef?.identifier ?? app?.name}' is
+            not in the list, add it{" "}
             <Link to={url.app.config.apprepositories(cluster, namespace)}>here</Link>.{" "}
           </p>
         </div>

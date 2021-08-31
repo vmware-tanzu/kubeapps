@@ -1,3 +1,4 @@
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -1003,7 +1004,13 @@ describe("updateRepo", () => {
   });
 });
 
-describe("checkChart", () => {
+describe("findPackageInRepo", () => {
+  const installedPackageDetail = {
+    availablePackageRef: {
+      context: { cluster: "default", namespace: "my-ns" },
+      identifier: "my-repo/my-chart",
+    },
+  } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
     Chart.getAvailablePackageVersions = jest.fn();
     const expectedActions = [
@@ -1015,9 +1022,13 @@ describe("checkChart", () => {
         payload: appRepo,
       },
     ];
-
     await store.dispatch(
-      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+      repoActions.findPackageInRepo(
+        "default",
+        "other-namespace",
+        "my-repo",
+        installedPackageDetail,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(Chart.getAvailablePackageVersions).toBeCalledWith(
@@ -1038,12 +1049,19 @@ describe("checkChart", () => {
       },
       {
         type: getType(actions.charts.errorChart),
-        payload: new NotFoundError("Chart my-chart not found in the repository my-repo."),
+        payload: new NotFoundError(
+          "Package my-repo/my-chart not found in the repository other-namespace.",
+        ),
       },
     ];
 
     await store.dispatch(
-      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+      repoActions.findPackageInRepo(
+        "default",
+        "other-namespace",
+        "my-repo",
+        installedPackageDetail,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(Chart.getAvailablePackageVersions).toBeCalledWith(
