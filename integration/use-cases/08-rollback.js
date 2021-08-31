@@ -37,15 +37,13 @@ test("Rolls back an application", async () => {
   // Increase the number of replicas
   await utils.retryAndRefresh(page, 3, async () => {
     await expect(page).toMatchElement("input[type='number']");
-  }, testName);
-  await page.keyboard.press("Backspace");
-  await page.keyboard.type("2");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.type("2");
 
-  await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 500));
 
-  await expect(page).toClick("li", { text: "Changes" });
-  await expect(page).toMatch("replicaCount: 2");
-  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toClick("li", { text: "Changes" });
+    await expect(page).toMatch("replicaCount: 2");
     await expect(page).toMatchElement("input[type='number']", { value: 2 });
   }, testName);
 
