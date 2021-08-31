@@ -748,7 +748,10 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 			Plugin:     GetPluginDetail(),
 		}
 		if charts[0].Repo != nil {
-			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: charts[0].Repo.Namespace}
+			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{
+				Namespace: charts[0].Repo.Namespace,
+				Cluster:   s.globalPackagingCluster,
+			}
 		}
 		if len(charts[0].ChartVersions) > 0 {
 			cv := charts[0].ChartVersions[0]

@@ -1,4 +1,5 @@
 const utils = require("./lib/utils");
+const testName = "08-rollback";
 
 test("Rolls back an application", async () => {
   await utils.login(
@@ -11,8 +12,8 @@ test("Rolls back an application", async () => {
   );
 
   // Deploy the app
-  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-  await expect(page).toClick("a", { text: "apache" });
+  await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
+  await expect(page).toClick("a", { text: "Apache HTTP Server" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
