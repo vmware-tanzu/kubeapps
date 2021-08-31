@@ -13,7 +13,7 @@
     "@jest/test-sequencer": "^26.6.3",
     "axios": "^0.21.1",
     "expect-puppeteer": "^5.0.4",
-    "jest": "^26.6.3",
+    "jest": "^27.1.0",
     "jest-circus": "^26.6.3",
     "jest-puppeteer": "^5.0.4",
     "puppeteer": "^10.2.0",
