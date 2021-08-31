@@ -634,7 +634,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
 		}
-		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
+		// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
+		// Example: global + namespaced repo including an overlapping subset of packages.
+		if len(charts) > 0 && len(charts[0].ChartVersions) > 0 {
 			installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
 				PkgVersion: charts[0].ChartVersions[0].Version,
 				AppVersion: charts[0].ChartVersions[0].AppVersion,
@@ -742,6 +744,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
 	}
+	// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
+	// Example: global + namespaced repo including an overlapping subset of packages.
 	if len(charts) > 0 {
 		installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
 			Identifier: charts[0].ID,
