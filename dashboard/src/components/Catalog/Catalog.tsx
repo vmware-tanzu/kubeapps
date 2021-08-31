@@ -292,7 +292,7 @@ export default function Catalog() {
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search available packages..."
+            placeholder="search packages..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}
