@@ -78,7 +78,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
       {fetchError && <Alert theme="danger">An error occurred: {fetchError.message}</Alert>}
       {!fetchError && repos.length === 0 && (
         <Alert theme="warning">
-          <h5>Repositories not found.</h5>
+          <h5>Repositories not found. </h5>
           Manage your repositories in Kubeapps by visiting the{" "}
           <Link to={url.app.config.apprepositories(cluster, namespace)}>
             App repositories configuration

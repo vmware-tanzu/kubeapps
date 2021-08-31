@@ -156,7 +156,7 @@ describe("when an error exists", () => {
     expect(wrapper.find(SelectRepoForm).find(Alert)).toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
-    expect(wrapper.find(Alert).children().text()).toContain("Chart repositories not found");
+    expect(wrapper.find(Alert).children().text()).toContain("Repositories not found");
   });
 
   it("still renders the upgrade form even if there is an upgrade error", () => {
