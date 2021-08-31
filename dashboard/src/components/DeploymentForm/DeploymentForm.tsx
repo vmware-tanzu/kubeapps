@@ -42,6 +42,7 @@ export default function DeploymentForm() {
   } = useSelector((state: IStoreState) => state);
   const packageId = `${repo}/${id}`;
   const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
+  const chartCluster = global === "global" ? config.kubeappsCluster : cluster;
   const error = apps.error || selected.error;
   const kubeappsNamespace = config.kubeappsNamespace;
   const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
@@ -51,8 +52,8 @@ export default function DeploymentForm() {
   const [valuesModified, setValuesModified] = useState(false);
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, packageId));
-  }, [dispatch, cluster, chartNamespace, packageId]);
+    dispatch(actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId));
+  }, [dispatch, chartCluster, chartNamespace, packageId]);
 
   useEffect(() => {
     if (!valuesModified) {
@@ -61,8 +62,10 @@ export default function DeploymentForm() {
   }, [values, valuesModified]);
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, packageId, chartVersion));
-  }, [cluster, chartNamespace, packageId, chartVersion, dispatch]);
+    dispatch(
+      actions.charts.fetchChartVersion(chartCluster, chartNamespace, packageId, chartVersion),
+    );
+  }, [chartCluster, chartNamespace, packageId, chartVersion, dispatch]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
