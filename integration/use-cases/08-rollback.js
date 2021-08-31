@@ -1,6 +1,6 @@
 const utils = require("./lib/utils");
 
-test("Upgrades an application", async () => {
+test("Rolls back an application", async () => {
   await utils.login(
     page,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
