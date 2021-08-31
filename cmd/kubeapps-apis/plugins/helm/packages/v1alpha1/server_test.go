@@ -2022,6 +2022,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Namespace: releaseNamespace,
+						Cluster:   globalPackagingCluster,
 					},
 					Identifier: releaseName,
 				},
@@ -2031,6 +2032,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context: &corev1.Context{
 							Namespace: releaseNamespace,
+							Cluster:   globalPackagingCluster,
 						},
 						Identifier: releaseName,
 					},
@@ -2056,6 +2058,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context: &corev1.Context{
 							Namespace: releaseNamespace,
+							Cluster:   globalPackagingCluster,
 						},
 						Identifier: "myrepo/" + releaseName,
 						Plugin:     GetPluginDetail(),

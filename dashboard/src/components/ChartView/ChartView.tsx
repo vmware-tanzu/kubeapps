@@ -45,20 +45,23 @@ export default function ChartView() {
 
   const packageId = `${repo}/${id}`;
   const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
+  const chartCluster = global === "global" ? config.kubeappsCluster : cluster;
   const kubeappsNamespace = config.kubeappsNamespace;
 
   const location = ReactRouter.useLocation();
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersion(cluster, chartNamespace, packageId, queryVersion));
+    dispatch(
+      actions.charts.fetchChartVersion(chartCluster, chartNamespace, packageId, queryVersion),
+    );
     return;
-  }, [dispatch, packageId, chartNamespace, cluster, queryVersion]);
+  }, [dispatch, packageId, chartNamespace, chartCluster, queryVersion]);
 
   // Fetch all versions
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(cluster, chartNamespace, packageId));
-  }, [dispatch, packageId, chartNamespace, cluster]);
+    dispatch(actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId));
+  }, [dispatch, packageId, chartNamespace, chartCluster]);
 
   // Select version handler
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {

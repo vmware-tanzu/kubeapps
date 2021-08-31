@@ -336,7 +336,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	// Currently we support available packages on the kubeapps cluster only.
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "Requests for available packages on clusters other than %q not supported.", s.globalPackagingCluster)
+		return nil, status.Errorf(codes.InvalidArgument, "Requests for available packages on clusters other than %q not supported. Requested cluster was: %q", s.globalPackagingCluster, cluster)
 	}
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
@@ -400,7 +400,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	// Currently we support available packages on the kubeapps cluster only.
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "Requests for versions of available packages on clusters other than %q not supported.", s.globalPackagingCluster)
+		return nil, status.Errorf(codes.InvalidArgument, "Requests for versions of available packages on clusters other than %q not supported. Requested cluster was %q.", s.globalPackagingCluster, cluster)
 	}
 
 	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, request.AvailablePackageRef.Context.Namespace)
@@ -748,7 +748,10 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 			Plugin:     GetPluginDetail(),
 		}
 		if charts[0].Repo != nil {
-			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: charts[0].Repo.Namespace}
+			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{
+				Namespace: charts[0].Repo.Namespace,
+				Cluster:   s.globalPackagingCluster,
+			}
 		}
 		if len(charts[0].ChartVersions) > 0 {
 			cv := charts[0].ChartVersions[0]
