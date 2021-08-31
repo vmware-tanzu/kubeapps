@@ -23,10 +23,10 @@ all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubea
 # Currently the go projects include the whole repository as the docker context
 # only because the shared pkg/ directories?
 kubeapps/%:
-	DOCKER_BUILDKIT=1 docker build -t kubeapps/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
+	DOCKER_BUILDKIT=1 docker build -t antgamdia/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
 
 kubeapps/dashboard:
-	docker build -t kubeapps/dashboard$(IMG_MODIFIER):$(IMAGE_TAG) -f dashboard/Dockerfile dashboard/
+	docker build -t antgamdia/dashboard$(IMG_MODIFIER):$(IMAGE_TAG) -f dashboard/Dockerfile dashboard/
 
 test:
 	$(GO) test $(GO_PACKAGES)

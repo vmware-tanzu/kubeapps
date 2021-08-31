@@ -1,4 +1,5 @@
 import { JSONSchemaType } from "ajv";
+import { uniqBy } from "lodash";
 import { IChartState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -70,7 +71,10 @@ const chartsReducer = (
         isFetching: false,
         hasFinishedFetching: isLastPage,
         categories: action.payload.response.categories,
-        items: [...state.items, ...action.payload.response.availablePackageSummaries],
+        items: uniqBy(
+          [...state.items, ...action.payload.response.availablePackageSummaries],
+          "availablePackageRef.identifier",
+        ),
       };
     }
     case getType(actions.charts.receiveChartVersions):
