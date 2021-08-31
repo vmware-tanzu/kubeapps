@@ -1,3 +1,4 @@
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
@@ -37,10 +38,6 @@ export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
 });
 
-export const receiveReposSecrets = createAction("RECEIVE_REPOS_SECRETS", resolve => {
-  return (secrets: ISecret[]) => resolve(secrets);
-});
-
 export const receiveReposSecret = createAction("RECEIVE_REPOS_SECRET", resolve => {
   return (secret: ISecret) => resolve(secret);
 });
@@ -54,16 +51,6 @@ export const repoValidating = createAction("REPO_VALIDATING");
 export const repoValidated = createAction("REPO_VALIDATED", resolve => {
   return (data: any) => resolve(data);
 });
-
-// Clear repo is basically receiving an empty repo
-export const clearRepo = createAction("RECEIVE_REPO", resolve => {
-  return () => resolve({} as IAppRepository);
-});
-
-export const showForm = createAction("SHOW_FORM");
-export const hideForm = createAction("HIDE_FORM");
-export const resetForm = createAction("RESET_FORM");
-export const submitForm = createAction("SUBMIT_FROM");
 
 export const redirect = createAction("REDIRECT", resolve => {
   return (path: string) => resolve(path);
@@ -93,19 +80,13 @@ const allActions = [
   repoUpdated,
   repoValidating,
   repoValidated,
-  clearRepo,
   errorRepos,
   requestRepos,
   receiveRepo,
   receiveRepos,
-  receiveReposSecrets,
   receiveReposSecret,
-  resetForm,
   errorChart,
   requestRepo,
-  submitForm,
-  showForm,
-  hideForm,
   redirect,
   redirected,
   requestImagePullSecrets,
@@ -370,22 +351,41 @@ export const validateRepo = (
   };
 };
 
-export function checkChart(
+export function findPackageInRepo(
   cluster: string,
   repoNamespace: string,
-  repo: string,
-  chartName: string,
+  repoName: string,
+  app?: InstalledPackageDetail,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async dispatch => {
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(cluster, repoNamespace, repo);
-    try {
-      await Chart.fetchChartVersions(cluster, repoNamespace, `${repo}/${chartName}`);
-      dispatch(receiveRepo(appRepository));
-      return true;
-    } catch (e: any) {
+    if (app?.availablePackageRef?.context?.namespace && app?.availablePackageRef?.identifier) {
+      const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
+      try {
+        await Chart.getAvailablePackageVersions(
+          cluster,
+          repoNamespace,
+          app.availablePackageRef.identifier,
+        );
+        dispatch(receiveRepo(appRepository));
+        return true;
+      } catch (e: any) {
+        dispatch(
+          errorChart(
+            new NotFoundError(
+              `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+            ),
+          ),
+        );
+        return false;
+      }
+    } else {
       dispatch(
-        errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
+        errorChart(
+          new NotFoundError(
+            `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
+          ),
+        ),
       );
       return false;
     }

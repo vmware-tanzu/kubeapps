@@ -5,7 +5,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { push } from "connected-react-router";
-import * as qs from "qs";
+import qs from "qs";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -69,7 +69,7 @@ function AppList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
-    dispatch(actions.apps.fetchAppsWithUpdateInfo(cluster, namespace));
+    dispatch(actions.apps.fetchApps(cluster, namespace));
     dispatch(actions.operators.getResources(cluster, namespace));
   }, [dispatch, cluster, namespace]);
 

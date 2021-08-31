@@ -3,13 +3,13 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
-import { assignWith, get } from "lodash";
+import * as yaml from "js-yaml";
+import { assignWith } from "lodash";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import ResourceRef from "shared/ResourceRef";
 import {
   DeleteError,
   FetchError,
@@ -18,15 +18,17 @@ import {
   IResource,
   IStoreState,
 } from "shared/types";
+// TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
+import ResourceRef from "../../shared/ResourceRef";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
-import AppNotes from "./AppNotes";
+import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
 import ChartInfo from "./ChartInfo/ChartInfo";
@@ -135,15 +137,16 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: app },
+    apps: { error, selected: app, selectedDetails: appDetails },
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
+
   useEffect(() => {
-    dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName));
+    dispatch(actions.apps.getApp(cluster, namespace, releaseName));
   }, [cluster, dispatch, namespace, releaseName]);
 
   useEffect(() => {
-    if (!app?.manifest) {
+    if (!app || !app.manifest) {
       return;
     }
 
@@ -158,7 +161,12 @@ export default function AppView() {
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
-    const parsedRefs = parseResources(parsedManifest, kinds, cluster, app.namespace);
+    const parsedRefs = parseResources(
+      parsedManifest,
+      kinds,
+      cluster,
+      app.installedPackageRef?.context?.namespace || "",
+    );
     if (Object.values(parsedRefs).some(ref => ref.length)) {
       // Avoid setting refs if the manifest is empty
       setResourceRefs(parsedRefs);
@@ -181,7 +189,8 @@ export default function AppView() {
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
     resourceRefs;
-  const icon = get(app, "chart.metadata.icon", placeholder);
+  const revision = app?.revision ?? 0;
+  const icon = appDetails?.iconUrl ?? placeholder;
   return (
     <section>
       <PageHeader
@@ -195,22 +204,22 @@ export default function AppView() {
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
-            releaseStatus={app?.info?.status}
+            releaseStatus={app?.status}
           />,
           <RollbackButton
             key="rollback-button"
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
-            revision={app?.version || 0}
-            releaseStatus={app?.info?.status}
+            revision={revision}
+            releaseStatus={app?.status}
           />,
           <DeleteButton
             key="delete-button"
             cluster={cluster}
             namespace={namespace}
             releaseName={releaseName}
-            releaseStatus={app?.info?.status}
+            releaseStatus={app?.status}
           />,
         ]}
       />
@@ -220,12 +229,12 @@ export default function AppView() {
         ) : (
           <Alert theme="danger">An error occurred: {error.message}</Alert>
         ))}
-      {!app || !app.info ? (
+      {!app || !app?.status?.userReason ? (
         <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
       ) : (
         <Row>
           <Column span={3}>
-            <ChartInfo app={app} cluster={cluster} />
+            <ChartInfo app={app} appDetails={appDetails!} cluster={cluster} />
           </Column>
           <Column span={9}>
             <div className="appview-separator">
@@ -234,14 +243,14 @@ export default function AppView() {
                   deployRefs={deployments}
                   statefulsetRefs={statefulsets}
                   daemonsetRefs={daemonsets}
-                  info={app.info}
+                  info={app}
                 />
                 <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
                 <AppSecrets secretRefs={secrets} />
               </div>
             </div>
             <div className="appview-separator">
-              <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
+              <AppNotes notes={app?.postInstallationNotes} />
             </div>
             <div className="appview-separator">
               <ResourceTabs
@@ -249,7 +258,9 @@ export default function AppView() {
               />
             </div>
             <div className="appview-separator">
-              <AppValues values={(app.config && app.config.raw) || ""} />
+              <AppValues
+                values={app?.valuesApplied ? yaml.dump(yaml.load(app.valuesApplied)) : ""}
+              />
             </div>
           </Column>
         </Row>

@@ -7,13 +7,14 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
-import { ParsedQs } from "qs";
+import qs from "qs";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
+import { IClusterServiceVersion, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { IChartState, IClusterServiceVersion, IStoreState } from "../../shared/types";
-import { escapeRegExp } from "../../shared/utils";
+import { escapeRegExp } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -28,28 +29,6 @@ function getOperatorCategories(c: IClusterServiceVersion): string[] {
   return get(c, "metadata.annotations.categories", "")
     .split(",")
     .map((category: string) => categoryToReadable(category));
-}
-
-interface ICatalogProps {
-  charts: IChartState;
-  repo: string;
-  filter: ParsedQs;
-  fetchCharts: (
-    cluster: string,
-    namespace: string,
-    repos: string,
-    page: number,
-    size: number,
-    query?: string,
-  ) => void;
-  cluster: string;
-  namespace: string;
-  kubeappsNamespace: string;
-  fetchChartCategories: (cluster: string, namespace: string) => void;
-  fetchRepos: (namespace: string, listGlobal?: boolean) => void;
-  getCSVs: (cluster: string, namespace: string) => void;
-  resetRequestCharts: () => void;
-  csvs: IClusterServiceVersion[];
 }
 
 export const filterNames = {
@@ -78,48 +57,48 @@ export function filtersToQuery(filters: any) {
     // get parameters from the parsed and decoded query params
     // since some search filters could eventually have a ','
     // we need to temporary replace it by other arbitrary string '__'.
-    const filterQueries = activeFilters.map(
-      filter =>
-        `${filter}=${filters[filter]
-          .map((f: string) => encodeURIComponent(f.replace(commaRegex, tmpStr)))
-          .join(",")}`,
-    );
+    const filterQueries = activeFilters.map(filter => {
+      return `${filter}=${filters[filter]
+        .map((f: string) => encodeURIComponent(f?.replace(commaRegex, tmpStr)))
+        .join(",")}`;
+    });
     query = "?" + filterQueries.join("&");
   }
   return query;
 }
 
-function Catalog(props: ICatalogProps) {
+interface IRouteParams {
+  cluster: string;
+  namespace: string;
+}
+
+export default function Catalog() {
   const {
     charts: {
       hasFinishedFetching,
       selected: { error },
-      items: charts,
+      items: availablePackages,
       categories,
       size,
       isFetching,
     },
-    fetchCharts,
-    cluster,
-    namespace,
-    fetchChartCategories,
-    fetchRepos,
-    getCSVs,
-    resetRequestCharts,
-    csvs,
-    filter: propsFilter,
-  } = props;
-
-  const {
+    operators,
     repos: { repos },
     config: { kubeappsCluster, kubeappsNamespace },
   } = useSelector((state: IStoreState) => state);
-
+  const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
+  const location = ReactRouter.useLocation();
   const dispatch = useDispatch();
+
   const [filters, setFilters] = React.useState(initialFilterState());
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(0);
+  const [hasRequestedFirstPage, setHasRequestedFirstPage] = React.useState(false);
+  const [hasLoadedFirstPage, setHasLoadedFirstPage] = React.useState(false);
+
+  const csvs = operators.csvs;
 
   useEffect(() => {
+    const propsFilter = qs.parse(location.search, { ignoreQueryPrefix: true });
     const newFilters = {};
     Object.keys(propsFilter).forEach(filter => {
       const filterValue = propsFilter[filter]?.toString() || "";
@@ -129,19 +108,17 @@ function Catalog(props: ICatalogProps) {
       ...initialFilterState(),
       ...newFilters,
     });
-  }, [propsFilter]);
+  }, [location.search]);
 
   // Only one search filter can be set
-  const searchFilter = propsFilter[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
+  const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
-    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
-  }, [fetchCharts, page, size, cluster, namespace, reposFilter, searchFilter]);
+    dispatch(actions.charts.fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter));
+  }, [dispatch, page, size, cluster, namespace, reposFilter, searchFilter]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
   // requested first
-  const [hasRequestedFirstPage, setHasRequestedFirstPage] = React.useState(false);
-  const [hasLoadedFirstPage, setHasLoadedFirstPage] = React.useState(false);
   useEffect(() => {
     if (isFetching) {
       setHasRequestedFirstPage(true);
@@ -180,7 +157,7 @@ function Catalog(props: ICatalogProps) {
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
-      .map(c => categoryToReadable(c.name))
+      .map(c => categoryToReadable(c))
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
@@ -189,23 +166,23 @@ function Catalog(props: ICatalogProps) {
   useEffect(() => {
     if (!supportedCluster || namespace === kubeappsNamespace) {
       // Global namespace or other cluster, show global repos only
-      fetchRepos(kubeappsNamespace);
+      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
       return;
     }
     // In other case, fetch global and namespace repos
-    fetchRepos(namespace, true);
-  }, [fetchRepos, supportedCluster, namespace, kubeappsNamespace]);
+    dispatch(actions.repos.fetchRepos(namespace, true));
+  }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
-    fetchChartCategories(cluster, namespace);
-    getCSVs(cluster, namespace);
-  }, [getCSVs, fetchChartCategories, cluster, namespace]);
+    dispatch(actions.operators.getCSVs(cluster, namespace));
+  }, [dispatch, cluster, namespace]);
 
-  // detect changes in cluster/ns/repos/search and reset the current chart list
+  // detect changes in cluster/ns/repos/search and reset the current package list
   useEffect(() => {
-    setPage(1);
-    resetRequestCharts();
-  }, [resetRequestCharts, cluster, namespace, reposFilter, searchFilter]);
+    setPage(0);
+    dispatch(actions.charts.resetRequestCharts());
+    dispatch(actions.charts.resetChartVersion());
+  }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
     const newFilters = {
@@ -216,7 +193,7 @@ function Catalog(props: ICatalogProps) {
     pushFilters(newFilters);
   };
 
-  const filteredCharts = charts
+  const filteredCharts = availablePackages
     .filter(
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
@@ -224,12 +201,16 @@ function Catalog(props: ICatalogProps) {
     .filter(
       c =>
         filters[filterNames.REPO].length === 0 ||
-        filters[filterNames.REPO].includes(c.attributes.repo.name),
+        // TODO(agamez): get the repo name once available
+        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
+        filters[filterNames.REPO].includes(c.availablePackageRef?.identifier.split("/")[0]),
     )
     .filter(
       c =>
         filters[filterNames.CATEGORY].length === 0 ||
-        filters[filterNames.CATEGORY].includes(categoryToReadable(c.attributes.category)),
+        c.categories?.some(category =>
+          filters[filterNames.CATEGORY].includes(categoryToReadable(category)),
+        ),
     );
   const filteredCSVs = csvs
     .filter(
@@ -264,7 +245,7 @@ function Catalog(props: ICatalogProps) {
 
   const forceRetry = () => {
     dispatch(actions.charts.clearErrorChart());
-    fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter);
+    dispatch(actions.charts.fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter));
   };
 
   const increaseRequestedPage = () => {
@@ -311,7 +292,7 @@ function Catalog(props: ICatalogProps) {
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search charts..."
+            placeholder="search packages..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}
@@ -332,13 +313,13 @@ function Catalog(props: ICatalogProps) {
       {isEqual(filters, initialFilterState()) &&
       hasFinishedFetching &&
       searchFilter.length === 0 &&
-      charts.length === 0 &&
+      availablePackages.length === 0 &&
       csvs.length === 0 ? (
         <div className="empty-catalog">
           <CdsIcon shape="bundle" />
           <p>The current catalog is empty.</p>
           <p>
-            Manage your Helm chart repositories in Kubeapps by visiting the App repositories
+            Manage your Package Repositories in Kubeapps by visiting the App repositories
             configuration page.
           </p>
           <Link to={app.config.apprepositories(cluster, namespace)}>
@@ -469,5 +450,3 @@ function Catalog(props: ICatalogProps) {
     </section>
   );
 }
-
-export default Catalog;
