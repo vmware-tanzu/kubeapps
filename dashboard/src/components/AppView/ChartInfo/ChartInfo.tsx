@@ -39,7 +39,6 @@ function ChartInfo({ app, appDetails, cluster }: IChartInfoProps) {
             </h5>
             <span>{appDetails.shortDescription}</span>
           </section>
-          ,
         </>
       )}
     </section>
