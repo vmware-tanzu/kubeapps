@@ -94,7 +94,11 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        deployed: { ...state.deployed, ...action.payload.chartVersion },
+        deployed: {
+          chartVersion: action.payload.chartVersion,
+          schema: action.payload.schema as any,
+          values: action.payload.values,
+        },
       };
     case getType(actions.charts.resetRequestCharts):
       return {
