@@ -406,8 +406,25 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
+	if request.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+	}
+	if request.TargetContext == nil || request.TargetContext.Namespace == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
+	}
+	if request.TargetContext.Cluster != "" {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.TargetContext.Cluster: [%v]",
+			request.TargetContext.Cluster)
+	}
 
-	installedRef, err := s.newRelease(ctx, request.AvailablePackageRef)
+	targetName := types.NamespacedName{
+		Name:      request.Name,
+		Namespace: request.TargetContext.Namespace,
+	}
+
+	installedRef, err := s.newRelease(ctx, request.AvailablePackageRef, targetName)
 	if err != nil {
 		return nil, err
 	}
