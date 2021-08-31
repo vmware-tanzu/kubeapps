@@ -80,7 +80,7 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await utils.retryAndRefresh(page, 3, async () => {
+  await utils.retryAndRefresh(page, 2, async () => {
     await expect(page).toMatch("Update Now", { timeout: 60000 });
   }, testName);
 

@@ -34,8 +34,9 @@ test("Rolls back an application", async () => {
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   // Increase the number of replicas
-  await expect(page).toMatchElement("input[type='number']");
-  await page.focus("input[type='number']");
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatchElement("input[type='number']");
+  }, testName);
   await page.keyboard.press("Backspace");
   await page.keyboard.type("2");
 
@@ -43,7 +44,9 @@ test("Rolls back an application", async () => {
 
   await expect(page).toClick("li", { text: "Changes" });
   await expect(page).toMatch("replicaCount: 2");
-  await expect(page).toMatchElement("input[type='number']", { value: 2 });
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatchElement("input[type='number']", { value: 2 });
+  }, testName);
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
