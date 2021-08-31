@@ -78,12 +78,16 @@ function AppUpgrade() {
       />
     );
   }
-
   if (
-    app?.availablePackageRef?.identifier &&
     app?.currentVersion?.pkgVersion &&
-    repoName &&
-    repoNamespace
+    app?.valuesApplied &&
+    app?.availablePackageRef?.identifier &&
+    repoNamespace &&
+    namespace &&
+    cluster &&
+    releaseName &&
+    selected &&
+    deployed
   ) {
     return (
       <div>
