@@ -6,7 +6,7 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
 export class App {
   // TODO(agamez): move to the core 'PackagesServiceClientImpl' when pagination is ready there
-  private static client = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+  private static client = () => new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
     cluster: string,
@@ -14,7 +14,7 @@ export class App {
     page?: number,
     size?: number,
   ) {
-    return await this.client.GetInstalledPackageSummaries({
+    return await this.client().GetInstalledPackageSummaries({
       context: { cluster: cluster, namespace: namespace },
       paginationOptions: { pageSize: size || 0, pageToken: page?.toString() || "0" },
     });
@@ -25,7 +25,7 @@ export class App {
     namespace: string,
     releaseName: string,
   ) {
-    return await this.client.GetInstalledPackageDetail({
+    return await this.client().GetInstalledPackageDetail({
       installedPackageRef: {
         identifier: releaseName,
         context: { cluster: cluster, namespace: namespace },
