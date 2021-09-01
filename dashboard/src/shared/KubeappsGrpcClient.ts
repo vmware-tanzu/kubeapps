@@ -14,15 +14,6 @@ export class KubeappsGrpcClient {
   private grpcWebImpl!: GrpcWebImpl;
   private transport: grpc.TransportFactory;
 
-  // core apis
-  private packagesServiceClientImpl!: PackagesServiceClientImpl;
-  private pluginsServiceClientImpl!: PluginsServiceClientImpl;
-
-  // plugins package apis
-  private helmPackagesServiceClientImpl!: HelmPackagesServiceClientImpl;
-  private kappControllerPackagesServiceClientImpl!: KappControllerPackagesServiceClientImpl;
-  private fluxv2PackagesServiceClientImpl!: FluxV2PackagesServiceClientImpl;
-
   constructor(transport?: grpc.TransportFactory) {
     this.transport = transport ?? grpc.CrossBrowserHttpTransport({});
   }
@@ -49,33 +40,25 @@ export class KubeappsGrpcClient {
 
   // Core APIs
   public getPackagesServiceClientImpl() {
-    return this.packagesServiceClientImpl || new PackagesServiceClientImpl(this.getGrpcClient());
+    return new PackagesServiceClientImpl(this.getGrpcClient());
   }
 
   public getPluginsServiceClientImpl() {
-    return this.pluginsServiceClientImpl || new PluginsServiceClientImpl(this.getGrpcClient());
+    return new PluginsServiceClientImpl(this.getGrpcClient());
   }
 
   // Plugins (packages) APIs
   // TODO(agamez): ideally, these clients should be loaded automatically from a list of configured plugins
   public getHelmPackagesServiceClientImpl() {
-    return (
-      this.helmPackagesServiceClientImpl || new HelmPackagesServiceClientImpl(this.getGrpcClient())
-    );
+    return new HelmPackagesServiceClientImpl(this.getGrpcClient());
   }
 
   public getKappControllerPackagesServiceClientImpl() {
-    return (
-      this.kappControllerPackagesServiceClientImpl ||
-      new KappControllerPackagesServiceClientImpl(this.getGrpcClient())
-    );
+    return new KappControllerPackagesServiceClientImpl(this.getGrpcClient());
   }
 
   public getFluxv2PackagesServiceClientImpl() {
-    return (
-      this.fluxv2PackagesServiceClientImpl ||
-      new FluxV2PackagesServiceClientImpl(this.getGrpcClient())
-    );
+    return new FluxV2PackagesServiceClientImpl(this.getGrpcClient());
   }
 }
 
