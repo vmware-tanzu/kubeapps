@@ -129,7 +129,6 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-            - sync_chart_from_bitnami
       - GKE_1_20_LATEST_RELEASE:
           <<: *build_on_tag
           requires:
