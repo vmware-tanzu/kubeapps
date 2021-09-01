@@ -41,7 +41,7 @@ export function authenticate(
       if (oidc) {
         dispatch(setSessionExpired(false));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(authenticationError(e.toString()));
     }
   };

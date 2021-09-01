@@ -290,7 +290,7 @@ describe("getResourceKinds", () => {
     Kube.getResourceKinds = jest.fn().mockResolvedValue({});
   });
   afterEach(() => {
-    jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
 
   it("retrieves resource kinds", async () => {

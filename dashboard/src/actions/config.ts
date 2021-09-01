@@ -25,7 +25,7 @@ export function getConfig(): ThunkAction<Promise<void>, IStoreState, null, Confi
     try {
       const config = await Config.getConfig();
       dispatch(receiveConfig(config));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorConfig(e));
     }
   };
@@ -40,7 +40,7 @@ export function getTheme(): ThunkAction<Promise<void>, IStoreState, null, Config
       const theme = Config.getTheme(config);
       Config.setTheme(theme);
       dispatch(receiveTheme(theme));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorConfig(e));
     }
   };

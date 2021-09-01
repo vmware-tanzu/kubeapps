@@ -12,7 +12,7 @@ interface IAccessURLTableContainerProps {
   ingressRefs: ResourceRef[];
 }
 
-function mapStateToProps({ kube, config }: IStoreState, props: IAccessURLTableContainerProps) {
+function mapStateToProps({ kube }: IStoreState, props: IAccessURLTableContainerProps) {
   // Extract the Services and Ingresses form the Redux state using the keys for
   // each ResourceRef.
   return {

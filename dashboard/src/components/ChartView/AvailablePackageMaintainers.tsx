@@ -1,11 +1,11 @@
+import { Maintainer } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
-import { IChartAttributes } from "shared/types";
-interface IChartMaintainersProps {
-  maintainers: IChartAttributes["maintainers"];
+interface IAvailablePackageMaintainersProps {
+  maintainers: Maintainer[];
   githubIDAsNames?: boolean;
 }
 
-class ChartMaintainers extends React.Component<IChartMaintainersProps> {
+class AvailablePackageMaintainers extends React.Component<IAvailablePackageMaintainersProps> {
   public render() {
     const maintainerLinks = this.props.maintainers.map((v, i) => {
       let link: string | JSX.Element = v.name;
@@ -21,11 +21,11 @@ class ChartMaintainers extends React.Component<IChartMaintainersProps> {
       return <li key={i}>{link}</li>;
     });
     return (
-      <div className="ChartMaintainers">
-        <ul className="remove-style padding-l-reset margin-b-reset">{maintainerLinks}</ul>
+      <div>
+        <ul>{maintainerLinks}</ul>
       </div>
     );
   }
 }
 
-export default ChartMaintainers;
+export default AvailablePackageMaintainers;

@@ -1,3 +1,7 @@
+import {
+  AvailablePackageDetail,
+  InstalledPackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
@@ -29,154 +33,50 @@ describe("fetches applications", () => {
   let listAppsMock: jest.Mock;
   beforeEach(() => {
     listAppsMock = jest.fn(() => []);
-    App.listApps = listAppsMock;
+    App.GetInstalledPackageSummaries = listAppsMock;
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
   it("fetches applications", async () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps) },
-      { type: getType(actions.apps.receiveAppList), payload: [] },
+      {
+        type: getType(actions.apps.listApps),
+        payload: undefined,
+        meta: undefined,
+        error: undefined,
+      },
+      {
+        type: getType(actions.apps.receiveAppList),
+        payload: undefined,
+        meta: undefined,
+        error: undefined,
+      },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default"));
+    await store.dispatch(actions.apps.fetchApps("default-cluster", "default"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default"]);
   });
   it("fetches applications, ignore when no data", async () => {
-    App.listApps = jest.fn();
+    App.GetInstalledPackageSummaries = jest.fn();
     const expectedActions = [
-      { type: getType(actions.apps.listApps) },
-      { type: getType(actions.apps.receiveAppList), payload: undefined },
+      {
+        type: getType(actions.apps.listApps),
+        payload: undefined,
+        meta: undefined,
+        error: undefined,
+      },
+      {
+        type: getType(actions.apps.receiveAppList),
+        payload: undefined,
+        meta: undefined,
+        error: undefined,
+      },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default"));
-    App.listApps = listAppsMock;
+    await store.dispatch(actions.apps.fetchApps("default-cluster", "default"));
+    App.GetInstalledPackageSummaries = listAppsMock;
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toBeUndefined();
-  });
-
-  describe("fetches chart updates", () => {
-    it("gets a chart latest version", async () => {
-      const appsResponse = [
-        {
-          releaseName: "foobar",
-          namespace: "ns-1",
-          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
-        },
-      ];
-      const chartUpdatesResponse = [
-        {
-          attributes: { repo: { name: "bar" } },
-          relationships: {
-            latestChartVersion: { data: { app_version: "1.0.0", version: "1.1.0" } },
-          },
-        },
-      ];
-      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
-      App.listApps = jest.fn().mockReturnValue(appsResponse);
-      const expectedActions = [
-        { type: getType(actions.apps.listApps) },
-        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestAppUpdateInfo) },
-        {
-          type: getType(actions.apps.receiveAppUpdateInfo),
-          payload: {
-            releaseName: "foobar",
-            updateInfo: {
-              upToDate: false,
-              appLatestVersion: "1.0.0",
-              chartLatestVersion: "1.1.0",
-              repository: { name: "bar" },
-            },
-          },
-        },
-      ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
-      // It should use the app namespace
-      expect(Chart.listWithFilters).toHaveBeenCalledWith(
-        "default-c",
-        "ns-1",
-        "foo",
-        "1.0.0",
-        "0.1.0",
-      );
-      expect(store.getActions()).toEqual(expectedActions);
-    });
-
-    it("set up upToDate=true if the application is up to date", async () => {
-      const appsResponse = [
-        {
-          releaseName: "foobar",
-          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
-        },
-      ];
-      const chartUpdatesResponse = [
-        {
-          attributes: { repo: { name: "bar" } },
-          relationships: {
-            latestChartVersion: { data: { app_version: "0.1.0", version: "1.0.0" } },
-          },
-        },
-      ];
-      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
-      App.listApps = jest.fn().mockReturnValue(appsResponse);
-      const expectedActions = [
-        { type: getType(actions.apps.listApps) },
-        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestAppUpdateInfo) },
-        {
-          type: getType(actions.apps.receiveAppUpdateInfo),
-          payload: {
-            releaseName: "foobar",
-            updateInfo: {
-              upToDate: true,
-              appLatestVersion: "0.1.0",
-              chartLatestVersion: "1.0.0",
-              repository: { name: "bar" },
-            },
-          },
-        },
-      ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
-      expect(store.getActions()).toEqual(expectedActions);
-    });
-
-    it("set an error if the application version is not semver compatible", async () => {
-      const appsResponse = [
-        {
-          releaseName: "foobar",
-          chartMetadata: { name: "foo", version: "1.0", appVersion: "0.1.0" },
-        },
-      ];
-      const chartUpdatesResponse = [
-        {
-          attributes: { repo: { name: "bar" } },
-          relationships: { latestChartVersion: { data: { version: "1.0" } } },
-        },
-      ];
-      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
-      App.listApps = jest.fn().mockReturnValue(appsResponse);
-      const expectedActions = [
-        { type: getType(actions.apps.listApps) },
-        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestAppUpdateInfo) },
-        {
-          type: getType(actions.apps.receiveAppUpdateInfo),
-          payload: {
-            releaseName: "foobar",
-            updateInfo: {
-              error: new Error("Invalid Version: 1.0"),
-              upToDate: false,
-              chartLatestVersion: "",
-              appLatestVersion: "",
-              repository: { name: "", url: "", namespace: "" },
-            },
-          },
-        },
-      ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns"));
-      expect(store.getActions()).toEqual(expectedActions);
-    });
   });
 });
 
@@ -234,8 +134,9 @@ describe("deploy chart", () => {
       actions.apps.deployChart(
         "target-cluster",
         "target-namespace",
-        "my-version" as any,
-        "chart-namespace",
+        {
+          name: "my-version",
+        } as AvailablePackageDetail,
         "my-release",
       ),
     );
@@ -244,8 +145,9 @@ describe("deploy chart", () => {
       "target-cluster",
       "target-namespace",
       "my-release",
-      "chart-namespace",
-      "my-version",
+      {
+        name: "my-version",
+      } as AvailablePackageDetail,
       undefined,
     );
     const expectedActions = [
@@ -260,8 +162,7 @@ describe("deploy chart", () => {
       actions.apps.deployChart(
         "target-cluster",
         "default",
-        "my-version" as any,
-        "chart-namespace",
+        { name: "my-version" } as AvailablePackageDetail,
         "my-release",
         "foo: 1",
         {
@@ -362,17 +263,45 @@ describe("rollbackApp", () => {
   const provisionCMD = actions.apps.rollbackApp("default-c", "default-ns", "my-release", 1);
 
   it("success and re-request apps info", async () => {
+    const installedPackageDetail = {
+      availablePackageRef: {
+        context: { cluster: "default", namespace: "my-ns" },
+        identifier: "test",
+      },
+      currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
+    } as InstalledPackageDetail;
+
+    const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
+
     App.rollback = jest.fn().mockImplementationOnce(() => true);
-    App.getRelease = jest.fn().mockImplementationOnce(() => true);
+    App.getRelease = jest.fn().mockReturnValue({ manifest: {} });
+    App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
+      installedPackageDetail: installedPackageDetail,
+    });
+    Chart.getAvailablePackageDetail = jest.fn().mockReturnValue({
+      availablePackageDetail: availablePackageDetail,
+    });
     const res = await store.dispatch(provisionCMD);
     expect(res).toBe(true);
+
+    const selectCMD = actions.apps.selectApp(
+      installedPackageDetail as any,
+      {},
+      availablePackageDetail,
+    );
+    const res2 = await store.dispatch(selectCMD);
+    expect(res2).not.toBeNull();
 
     const expectedActions = [
       { type: getType(actions.apps.requestRollbackApp) },
       { type: getType(actions.apps.receiveRollbackApp) },
       { type: getType(actions.apps.requestApps) },
-      { type: getType(actions.apps.selectApp), payload: true },
+      {
+        type: getType(actions.apps.selectApp),
+        payload: { app: installedPackageDetail, manifest: {}, details: availablePackageDetail },
+      },
     ];
+
     expect(store.getActions()).toEqual(expectedActions);
     expect(App.rollback).toHaveBeenCalledWith("default-c", "default-ns", "my-release", 1);
     expect(App.getRelease).toHaveBeenCalledWith("default-c", "default-ns", "my-release");

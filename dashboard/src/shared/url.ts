@@ -1,20 +1,25 @@
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IServiceBroker } from "./ServiceCatalog";
-import { IChartVersion, IRepo } from "./types";
+import { IRepo } from "./types";
 
 export const app = {
   apps: {
     new: (
       cluster: string,
       namespace: string,
-      cv: IChartVersion,
+      availablePackageDetail: AvailablePackageDetail,
       version: string,
       globalNamespace: string,
     ) => {
-      const repoNamespace = cv.relationships.chart.data.repo.namespace;
+      const repoNamespace = availablePackageDetail.availablePackageRef?.context?.namespace;
       const newSegment = globalNamespace !== repoNamespace ? "new" : "new-from-global";
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${
-        cv.relationships.chart.data.repo.name
-      }/${encodeURIComponent(cv.relationships.chart.data.name)}/versions/${version}`;
+      // TODO(agamez): get the repo name once available
+      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
+      const repoName =
+        availablePackageDetail.availablePackageRef?.identifier.split("/")[0] ?? globalNamespace;
+      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${encodeURIComponent(
+        availablePackageDetail.name,
+      )}/versions/${version}`;
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (cluster: string, namespace: string, releaseName: string) =>
@@ -107,42 +112,6 @@ export const kubeops = {
 };
 
 export const api = {
-  charts: {
-    base: (cluster: string, namespace: string) =>
-      `api/assetsvc/v1/clusters/${cluster}/namespaces/${namespace}`,
-    get: (cluster: string, namespace: string, id: string) =>
-      `${api.charts.base(cluster, namespace)}/charts/${id}`,
-    getVersion: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.get(cluster, namespace, id)}/versions/${encodeURIComponent(version)}`,
-    list: (
-      cluster: string,
-      namespace: string,
-      repos: string,
-      page: number,
-      size: number,
-      query?: string,
-    ) =>
-      `${api.charts.base(cluster, namespace)}/charts?page=${page}&size=${size}${
-        query ? "&q=" + query : ""
-      }${repos ? `&repos=${repos}` : ""}`,
-    getChartCategories: (cluster: string, namespace: string) =>
-      `${api.charts.base(cluster, namespace)}/charts/categories`,
-    listVersions: (cluster: string, namespace: string, id: string) =>
-      `${api.charts.get(cluster, namespace, id)}/versions`,
-    getReadme: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
-        version,
-      )}/README.md`,
-    getValues: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
-        version,
-      )}/values.yaml`,
-    getSchema: (cluster: string, namespace: string, id: string, version: string) =>
-      `${api.charts.base(cluster, namespace)}/assets/${id}/versions/${encodeURIComponent(
-        version,
-      )}/values.schema.json`,
-  },
-
   // URLs which are accessing the k8s API server directly are grouped together
   // so we can clearly differentiate and possibly begin to remove.
   // Note that this list is not yet exhaustive (search for APIBase to find other call-sites which

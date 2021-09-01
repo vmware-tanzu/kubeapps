@@ -1,6 +1,7 @@
 const utils = require("./lib/utils");
+const testName = "08-rollback";
 
-test("Upgrades an application", async () => {
+test("Rolls back an application", async () => {
   await utils.login(
     page,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -11,8 +12,8 @@ test("Upgrades an application", async () => {
   );
 
   // Deploy the app
-  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-  await expect(page).toClick("a", { text: "apache" });
+  await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
+  await expect(page).toClick("a", { text: "Apache HTTP Server" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
@@ -34,21 +35,24 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   // Increase the number of replicas
-  await expect(page).toMatchElement("input[type='number']");
-  await page.focus("input[type='number']");
-  await page.keyboard.press("Backspace");
-  await page.keyboard.type("2");
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatchElement("input[type='number']");
+    // Increase the number of replicas
+    await page.focus("input[type='number']");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.type("2");
 
-  await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 500));
 
-  await expect(page).toClick("li", { text: "Changes" });
-  await expect(page).toMatch("replicaCount: 2");
-  await expect(page).toMatchElement("input[type='number']", { value: 2 });
+    // Check that the Changes tab reflects the change
+    await expect(page).toClick("li", { text: "Changes" });
+    await expect(page).toMatch("replicaCount: 2");
+  }, testName);
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   // Rollback to the previous revision (default selected value)
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
   await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready" });
   await expect(page).toClick("cds-button", { text: "Rollback" });
   await expect(page).not.toMatch("Loading");
@@ -56,7 +60,7 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("cds-modal-actions cds-button", { text: "Rollback" });
 
   // Check revision and rollback to a revision (manual selected value)
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
   await expect(page).toClick("cds-button", { text: "Rollback" });
   await expect(page).not.toMatch("Loading");
   await expect(page).toMatch("(current: 3)");
@@ -65,7 +69,7 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("cds-modal-actions cds-button", { text: "Rollback" });
 
   // Check revisions
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
   await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready" });
   await expect(page).toClick("cds-button", { text: "Rollback" });
   await expect(page).not.toMatch("Loading");
