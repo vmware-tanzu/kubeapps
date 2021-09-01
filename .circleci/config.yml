@@ -122,7 +122,7 @@ workflows:
       - sync_chart_from_bitnami:
           <<: *build_on_master
       - GKE_1_20_MASTER:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
@@ -500,7 +500,7 @@ gke_test: &gke_test
     - run: exit $TEST_RESULT
     - run:
         name: Cleanup GKE Cluster
-        command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
+        command: sleep 3600 && gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
         when: always
 local_e2e_steps: &local_e2e_steps
   steps:
