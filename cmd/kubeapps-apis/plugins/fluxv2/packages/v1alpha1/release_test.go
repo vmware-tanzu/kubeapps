@@ -689,6 +689,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			opts := cmpopts.IgnoreUnexported(
 				corev1.CreateInstalledPackageResponse{},
+				corev1.InstalledPackageReference{},
 				corev1.Context{})
 
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {

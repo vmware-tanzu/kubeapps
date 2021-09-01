@@ -316,8 +316,12 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName) (*corev1.InstalledPackageReference, error) {
-	// just for now assume HelmRelease CRD will live in the kubeapps namespace
+	// HACK: just for now assume HelmRelease CRD will live in the kubeapps namespace
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		// unit tests don't have this env var set
+		kubeappsNamespace = "kubeapps"
+	}
 	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
 	if err != nil {
 		return nil, err
@@ -423,7 +427,8 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
 			"kind":       fluxHelmRelease,
 			"metadata": map[string]interface{}{
-				"name": targetName.Name,
+				"name":      targetName.Name,
+				"namespace": releaseNamespace,
 			},
 			"spec": map[string]interface{}{
 				"chart": map[string]interface{}{
