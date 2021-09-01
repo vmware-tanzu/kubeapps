@@ -340,7 +340,8 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	newRelease, err := resourceIfc.Create(ctx, newFluxHelmRelease(chart, targetName), metav1.CreateOptions{})
+	fluxHelmRelease := newFluxHelmRelease(chart, kubeappsNamespace, targetName)
+	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +413,11 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 	}, nil
 }
 
-func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName) *unstructured.Unstructured {
+// Potentially, there are 3 different namespaces that can be specified here
+// 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
+// 2. metadata.namespace, where this HelmRelease CRD will exist
+// 3. spec.targetNamespace, where flux will install any artifacts from the release
+func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName) *unstructured.Unstructured {
 	unstructuredRel := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
