@@ -2,46 +2,46 @@
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
     /* Language and Environment */
-    "jsx": "react-jsx" /* Specify what JSX code is generated. */,
+    "jsx": "react-jsx", /* Specify what JSX code is generated. */
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
-    ] /* Specify a set of bundled library declaration files that describe the target runtime environment. */,
-    "target": "ES2020" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+    ], /* Specify a set of bundled library declaration files that describe the target runtime environment. */
+    "target": "ES2020", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     /* Modules */
-    "baseUrl": "src" /* Specify the base directory to resolve non-relative module names. */,
-    "module": "esnext" /* Specify what module code is generated. */,
-    "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
-    "resolveJsonModule": true /* Enable importing .json files */,
-    "rootDir": "src" /* Specify the root folder within your source files. */,
+    "baseUrl": "src", /* Specify the base directory to resolve non-relative module names. */
+    "module": "esnext", /* Specify what module code is generated. */
+    "moduleResolution": "node", /* Specify how TypeScript looks up a file from a given module specifier. */
+    "resolveJsonModule": true, /* Enable importing .json files */
+    "rootDir": "src", /* Specify the root folder within your source files. */
     /* JavaScript Support */
-    "allowJs": true /* Allow JavaScript files to be a part of your program. Use the `checkJS` option to get errors from these files. */,
+    "allowJs": true, /* Allow JavaScript files to be a part of your program. Use the `checkJS` option to get errors from these files. */
     /* Emit */
-    "noEmit": true /* Disable emitting files from a compilation. */,
-    "outDir": "build/dist" /* Specify an output folder for all emitted files. */,
-    "removeComments": true /* Disable emitting comments. */,
-    "sourceMap": true /* Create source map files for emitted JavaScript files. */,
+    "noEmit": true, /* Disable emitting files from a compilation. */
+    "outDir": "build/dist", /* Specify an output folder for all emitted files. */
+    "removeComments": true, /* Disable emitting comments. */
+    "sourceMap": true, /* Create source map files for emitted JavaScript files. */
     /* Interop Constraints */
-    "allowSyntheticDefaultImports": true /* Allow 'import x from y' when a module doesn't have a default export. */,
-    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables `allowSyntheticDefaultImports` for type compatibility. */,
-    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
-    "isolatedModules": true /* Ensure that each file can be safely transpiled without relying on other imports. */,
+    "allowSyntheticDefaultImports": true, /* Allow 'import x from y' when a module doesn't have a default export. */
+    "esModuleInterop": true, /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables `allowSyntheticDefaultImports` for type compatibility. */
+    "forceConsistentCasingInFileNames": true, /* Ensure that casing is correct in imports. */
+    "isolatedModules": true, /* Ensure that each file can be safely transpiled without relying on other imports. */
     /* Type Checking */
-    "noFallthroughCasesInSwitch": true /* Enable error reporting for fallthrough cases in switch statements. */,
-    "noImplicitAny": true /* Enable error reporting for expressions and declarations with an implied `any` type.. */,
-    "noImplicitReturns": true /* Enable error reporting for codepaths that do not explicitly return in a function. */,
-    "noImplicitThis": true /* Enable error reporting when `this` is given the type `any`. */,
+    "noFallthroughCasesInSwitch": true, /* Enable error reporting for fallthrough cases in switch statements. */
+    "noImplicitAny": true, /* Enable error reporting for expressions and declarations with an implied `any` type.. */
+    "noImplicitReturns": true, /* Enable error reporting for codepaths that do not explicitly return in a function. */
+    "noImplicitThis": true, /* Enable error reporting when `this` is given the type `any`. */
     // "noPropertyAccessFromIndexSignature": true, /* Enforces using indexed accessors for keys declared using an indexed type */
-    "noUnusedLocals": true /* Enable error reporting when a local variables aren't read. */,
-    "noUnusedParameters": true /* Raise an error when a function parameter isn't read */,
-    "strict": true /* Enable all strict type-checking options. */,
-    "strictBindCallApply": true /* Check that the arguments for `bind`, `call`, and `apply` methods match the original function. */,
-    "strictFunctionTypes": true /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */,
-    "strictNullChecks": true /* When type checking, take into account `null` and `undefined`. */,
-    "strictPropertyInitialization": true /* Check for class properties that are declared but not set in the constructor. */,
+    "noUnusedLocals": true, /* Enable error reporting when a local variables aren't read. */
+    "noUnusedParameters": true, /* Raise an error when a function parameter isn't read */
+    "strict": true, /* Enable all strict type-checking options. */
+    "strictBindCallApply": true, /* Check that the arguments for `bind`, `call`, and `apply` methods match the original function. */
+    "strictFunctionTypes": true, /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */
+    "strictNullChecks": true, /* When type checking, take into account `null` and `undefined`. */
+    "strictPropertyInitialization": true, /* Check for class properties that are declared but not set in the constructor. */
     /* Completeness */
-    "skipLibCheck": true /* Skip type checking all .d.ts files. */,
+    "skipLibCheck": true, /* Skip type checking all .d.ts files. */
     "suppressImplicitAnyIndexErrors": true /* Suppresses reporting the error about implicit anys when indexing into objects */
   },
   "exclude": [
@@ -53,5 +53,7 @@
     "webpack",
     "jest"
   ],
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }
