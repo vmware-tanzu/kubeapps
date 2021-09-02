@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -643,7 +644,11 @@ func TestCreateInstalledPackage(t *testing.T) {
 	}
 
 	// currently needed for CreateInstalledPackage func
-	t.Setenv("POD_NAMESPACE", "kubeapps")
+	// TODO (gfichtenholt) replace below with t.Setenv("POD_NAMESPACE", "kubeapps") when we switch to go 1.17
+	// to avoid compile error "t.Setenv undefined (type *"testing".T has no field or method Setenv)"
+	origVal := os.Getenv("POD_NAMESPACE")
+	os.Setenv("POD_NAMESPACE", "kubeapps")
+	t.Cleanup(func() { os.Setenv("POD_NAMESPACE", origVal) })
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
