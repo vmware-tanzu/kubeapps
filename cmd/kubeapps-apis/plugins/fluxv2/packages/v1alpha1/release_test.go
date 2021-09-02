@@ -642,6 +642,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
+	// currently needed for CreateInstalledPackage func
+	t.Setenv("POD_NAMESPACE", "kubeapps")
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs := []runtime.Object{}

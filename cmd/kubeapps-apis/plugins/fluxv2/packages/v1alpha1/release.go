@@ -318,10 +318,6 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName) (*corev1.InstalledPackageReference, error) {
 	// HACK: just for now assume HelmRelease CRD will live in the kubeapps namespace
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
-	if kubeappsNamespace == "" {
-		// unit tests don't have this env var set
-		kubeappsNamespace = "kubeapps"
-	}
 	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
 	if err != nil {
 		return nil, err
