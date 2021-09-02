@@ -30,6 +30,8 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -881,8 +883,10 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 		fluxHelmRepositories,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	clientGetter := func(context.Context) (dynamic.Interface, error) {
-		return dynamicClient, nil
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+
+	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+		return dynamicClient, apiextIfc, nil
 	}
 
 	s, mock, err := newServer(clientGetter, nil, repos...)

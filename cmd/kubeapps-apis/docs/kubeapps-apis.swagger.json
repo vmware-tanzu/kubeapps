@@ -364,6 +364,16 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageRequest"
+            }
+          }
+        ],
         "tags": [
           "PackagesService"
         ]
@@ -782,6 +792,16 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageRequest"
+            }
+          }
+        ],
         "tags": [
           "FluxV2PackagesService"
         ]
@@ -1217,6 +1237,16 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageRequest"
+            }
+          }
+        ],
         "tags": [
           "HelmPackagesService"
         ]
@@ -1609,6 +1639,16 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateInstalledPackageRequest"
+            }
+          }
+        ],
         "tags": [
           "KappControllerPackagesService"
         ]
@@ -2039,6 +2079,37 @@
       },
       "description": "A Context specifies the context of the message",
       "title": "Context"
+    },
+    "v1alpha1CreateInstalledPackageRequest": {
+      "type": "object",
+      "properties": {
+        "availablePackageRef": {
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
+          "description": "A reference uniquely identifying the package available for installation."
+        },
+        "targetContext": {
+          "$ref": "#/definitions/v1alpha1Context",
+          "description": "The target context where the package is intended to be installed."
+        },
+        "name": {
+          "type": "string",
+          "title": "A user-provided name for the installed package (eg. project-x-db)"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "description": "For helm this will be the exact version in VersionReference.version\nFor other plugins we can extend the VersionReference as needed."
+        },
+        "values": {
+          "type": "string",
+          "description": "An optional serialized values string to be included when templating a package\nin the format expected by the plugin. Included when the backend format doesn't\nuse secrets or configmaps for values or supports both. These values are layered\non top of any values refs above, when relevant."
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+        }
+      },
+      "description": "Request for CreateInstalledPackage",
+      "title": "CreateInstalledPackageRequest"
     },
     "v1alpha1CreateInstalledPackageResponse": {
       "type": "object",

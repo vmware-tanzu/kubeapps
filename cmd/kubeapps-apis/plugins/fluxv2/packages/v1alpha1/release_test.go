@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -35,6 +36,8 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -591,6 +594,124 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	}
 }
 
+type testSpecCreateInstalledPackage struct {
+	repoName      string
+	repoNamespace string
+	repoIndex     string
+	chartName     string
+	chartTarGz    string
+}
+
+func TestCreateInstalledPackage(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.CreateInstalledPackageRequest
+		existingObjs       testSpecCreateInstalledPackage
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.CreateInstalledPackageResponse
+	}{
+		{
+			name: "create simple package",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				Name: "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+				chartName:     "podinfo",
+				chartTarGz:    "testdata/podinfo-6.0.0.tgz",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo",
+				},
+			},
+		},
+	}
+
+	// currently needed for CreateInstalledPackage func
+	// TODO (gfichtenholt) replace below with t.Setenv("POD_NAMESPACE", "kubeapps") when we switch to go 1.17
+	// to avoid compile error "t.Setenv undefined (type *"testing".T has no field or method Setenv)"
+	origVal := os.Getenv("POD_NAMESPACE")
+	os.Setenv("POD_NAMESPACE", "kubeapps")
+	t.Cleanup(func() { os.Setenv("POD_NAMESPACE", origVal) })
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			runtimeObjs := []runtime.Object{}
+			tarGzBytes, err := ioutil.ReadFile(tc.existingObjs.chartTarGz)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			// stand up an http server just for the duration of this test
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(200)
+				w.Write(tarGzBytes)
+			}))
+			defer ts.Close()
+
+			ts2, repo, err := newRepoWithIndex(tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts2.Close()
+
+			runtimeObjs = append(runtimeObjs, repo)
+			s, mock, _, err := newServerWithRepos(runtimeObjs...)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			mock.ExpectGet(redisKey).SetVal(string(bytes))
+
+			response, err := s.CreateInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.CreateInstalledPackageResponse{},
+				corev1.InstalledPackageReference{},
+				corev1.Context{})
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
 func newRelease(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
 		"name":            name,
@@ -631,8 +752,10 @@ func newServerWithChartsAndReleases(actionConfig *action.Configuration, chartOrR
 		},
 		chartOrRelease...)
 
-	clientGetter := func(context.Context) (dynamic.Interface, error) {
-		return dynamicClient, nil
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+
+	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+		return dynamicClient, apiextIfc, nil
 	}
 
 	watcher := watch.NewFake()

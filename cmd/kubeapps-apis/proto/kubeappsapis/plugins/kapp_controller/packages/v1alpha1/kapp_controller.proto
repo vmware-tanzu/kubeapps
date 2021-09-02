@@ -54,6 +54,7 @@ service KappControllerPackagesService {
   rpc CreateInstalledPackage(kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse) {
     option (google.api.http) = {
       post: "/plugins/kapp_controller/packages/v1alpha1/installedpackages"
+      body: "*"
     };
   }
 }

@@ -151,7 +151,7 @@ func namespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedNa
 	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
 	if err != nil || !found {
 		return nil,
-			status.Errorf(codes.Internal, "required field metadata.name not found on resource: %v:\n%s",
+			status.Errorf(codes.Internal, "required field 'metadata.name' not found on resource: %v:\n%s",
 				err,
 				prettyPrintMap(unstructuredObj))
 	}
@@ -159,7 +159,7 @@ func namespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedNa
 	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
 	if err != nil || !found {
 		return nil,
-			status.Errorf(codes.Internal, "required field metadata.namespace not found on resource: %v:\n%s",
+			status.Errorf(codes.Internal, "required field 'metadata.namespace' not found on resource: %v:\n%s",
 				err,
 				prettyPrintMap(unstructuredObj))
 	}
