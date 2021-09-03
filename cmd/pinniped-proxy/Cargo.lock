@@ -627,6 +627,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "k8s-openapi"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "748acc444200aa3528dc131a8048e131a9e75a611a52d152e276e99199313d1a"
+dependencies = [
+ "base64",
+ "bytes",
+ "chrono",
+ "serde",
+ "serde-value",
+ "serde_json",
+]
+
+[[package]]
 name = "kube"
 version = "0.58.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -642,10 +656,42 @@ dependencies = [
  "http-body",
  "hyper",
  "hyper-timeout",
+ "jsonpath_lib",
+ "k8s-openapi 0.12.0",
+ "kube-core 0.58.1",
+ "pem",
+ "pin-project 1.0.8",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tower",
+ "tower-http",
+ "tracing",
+]
+
+[[package]]
+name = "kube"
+version = "0.60.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0ae4dcb1a65182551922303a2d292b463513a6727db5ad980afbd32df7f3c16"
+dependencies = [
+ "base64",
+ "bytes",
+ "chrono",
+ "dirs-next",
+ "either",
+ "futures",
+ "http",
+ "http-body",
+ "hyper",
+ "hyper-timeout",
  "hyper-tls",
  "jsonpath_lib",
- "k8s-openapi",
- "kube-core",
+ "k8s-openapi 0.13.0",
+ "kube-core 0.60.0",
  "openssl",
  "pem",
  "pin-project 1.0.8",
@@ -670,7 +716,22 @@ dependencies = [
  "form_urlencoded",
  "http",
  "json-patch",
- "k8s-openapi",
+ "k8s-openapi 0.12.0",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "kube-core"
+version = "0.60.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04ccd59635e9b21353da8d4a394bb5d3473b5965ed44496c8f857281b0625ffe"
+dependencies = [
+ "form_urlencoded",
+ "http",
+ "k8s-openapi 0.13.0",
+ "once_cell",
  "serde",
  "serde_json",
  "thiserror",
@@ -699,8 +760,8 @@ dependencies = [
  "derivative",
  "futures",
  "json-patch",
- "k8s-openapi",
- "kube",
+ "k8s-openapi 0.12.0",
+ "kube 0.58.1",
  "pin-project 1.0.8",
  "serde",
  "serde_json",
@@ -994,8 +1055,8 @@ dependencies = [
  "http",
  "hyper",
  "hyper-tls",
- "k8s-openapi",
- "kube",
+ "k8s-openapi 0.12.0",
+ "kube 0.60.0",
  "kube-derive",
  "kube-runtime",
  "log",
