@@ -1219,10 +1219,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.5.2":
-  version "5.5.2"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.2.tgz#916631e1c815e226d3b2f8137b4d13f889183131"
-  integrity sha512-QdHQ7VEStmJd8KYQNFFak5yWnj8asZ8mXLJPN/y76xenlkYrIl3P1Ui6QsjCjLcBUfprsCILX1yyyr4gcY1nmw==
+"@cds/core@^5.5.3":
+  version "5.5.3"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.3.tgz#23dfb122c0844d6b53c2c92e99efcae820395931"
+  integrity sha512-yrYiew2rdGVp22BfjeatYjIvjRPCprLWSbhg0BRDqHzDeS+ewu/rzkJp/bMEN65o5Z+XFpK26UFNyWAzzaQvDw==
   dependencies:
     lit "2.0.0-rc.2"
     ramda "^0.27.1"
@@ -1232,10 +1232,10 @@
     "@types/resize-observer-browser" "^0.1.5"
     modern-normalize "1.1.0"
 
-"@cds/react@^5.5.2":
-  version "5.5.2"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.2.tgz#23e8648f6e01869ab989c0abec4e3638613fa84a"
-  integrity sha512-bVQBFdyQC7k7B3Z69QlJ6TKpUXne5oecTpSoSkroxmUxu7V73pNiRR6Hg6X5tY6RRutF4PDdXd8iYFQf4ZG+lA==
+"@cds/react@^5.5.3":
+  version "5.5.3"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.3.tgz#738c3e4c546205dd56ae1c4a45faff6f55e5ffda"
+  integrity sha512-kC8U+jLeO9KVuPbl9ne0Yo7tB2QIffhgcsNfahTIwVDU62Qngu0fjUo5+Opy9Vv7XYVUoH4RipYA8qLN38jjXw==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
