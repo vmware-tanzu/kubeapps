@@ -25,6 +25,8 @@ import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
 import ChartInfo from "./ChartInfo/ChartInfo";
 import ResourceTabs from "./ResourceTabs";
+import { DEFAULT_CUSTOM_APP_PROPS } from "./CustomAppView/CustomAppView.test";
+import CustomAppView from "./CustomAppView/CustomAppView";
 
 const routeParams = {
   cluster: "cluster-1",
@@ -143,6 +145,18 @@ describe("AppView", () => {
     );
     expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(PageHeader)).not.toExist();
+  });
+
+  it("renders a custom component when chart is in customAppViews", () => {
+    const defaultState = {
+      config: { customAppViews: ["some-fake-chart"] },
+      app: { chart: { metadata: { name: "some-fake-chart" } } },
+    };
+    const wrapper = mountWrapper(
+      getStore(defaultState),
+      <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
+    );
+    expect(wrapper.find(CustomAppView)).toExist();
   });
 
   describe("State initialization", () => {

@@ -18,6 +18,7 @@ export interface IConfig {
   clusters: string[];
   theme: string;
   remoteComponentsUrl: string;
+  customAppViews: string[];
 }
 
 export default class Config {

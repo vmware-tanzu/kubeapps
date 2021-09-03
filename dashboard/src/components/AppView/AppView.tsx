@@ -36,6 +36,7 @@ import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
 import ChartInfo from "./ChartInfo/ChartInfo";
 import ResourceTabs from "./ResourceTabs";
+import CustomAppView from "./CustomAppView";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -145,6 +146,7 @@ export default function AppView() {
   const {
     apps: { error, selected: app, selectedDetails: appDetails },
     kube: { kinds },
+    config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
@@ -205,6 +207,11 @@ export default function AppView() {
     resourceRefs;
   const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
+  
+  // If chart is white listed,load custom view from external bundle
+  if (app?.chart?.metadata?.name && customAppViews.includes(app?.chart?.metadata?.name)) {
+    return <CustomAppView resourceRefs={resourceRefs} app={app} />;
+  }
 
   return (
     <LoadingWrapper loaded={!!app} loadingText="Retrieving application..." className="margin-t-xl">

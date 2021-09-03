@@ -438,6 +438,10 @@ dashboard:
   ##    }
   ##
   customStyle: ""
+  ## @param dashboard.customAppViews Chart names to signal a custom app view
+  ## e.g:
+  ##  customAppViews: ["ssh-server"]
+  customAppViews: []
   ## @param dashboard.customComponents Custom Form components injected into the BasicDeploymentForm
   ## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/developer/custom-form-component-support.md
   ##
