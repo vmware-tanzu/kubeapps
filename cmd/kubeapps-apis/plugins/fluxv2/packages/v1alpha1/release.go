@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	log "k8s.io/klog/v2"
 )
 
 const (
@@ -212,8 +213,11 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q due to: %v", name, err)
 	}
 
+	log.Infof("installedPackageDetail:\n[%s]", prettyPrintMap(unstructuredRelease.Object))
+
+	obj := unstructuredRelease.Object
 	var pkgVersionRef *corev1.VersionReference
-	version, found, err := unstructured.NestedString(unstructuredRelease.Object, "spec", "chart", "spec", "version")
+	version, found, err := unstructured.NestedString(obj, "spec", "chart", "spec", "version")
 	if found && err == nil && version != "" {
 		pkgVersionRef = &corev1.VersionReference{
 			Version: version,
@@ -221,7 +225,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	}
 
 	valuesApplied := ""
-	valuesMap, found, err := unstructured.NestedMap(unstructuredRelease.Object, "spec", "values")
+	valuesMap, found, err := unstructured.NestedMap(obj, "spec", "values")
 	if found && err == nil && len(valuesMap) != 0 {
 		bytes, err := json.Marshal(valuesMap)
 		if err != nil {
@@ -233,32 +237,28 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	// ValuesReference maybe a config map or a secret
 
 	// this will only be present if install/upgrade succeeded
-	pkgVersion, found, err := unstructured.NestedString(unstructuredRelease.Object, "status", "lastAppliedRevision")
+	pkgVersion, found, err := unstructured.NestedString(obj, "status", "lastAppliedRevision")
 	if !found || err != nil || pkgVersion == "" {
 		// this is the back-up option: will be there if the reconciliation is in progress or has failed
-		pkgVersion, _, _ = unstructured.NestedString(unstructuredRelease.Object, "status", "lastAttemptedRevision")
+		pkgVersion, _, _ = unstructured.NestedString(obj, "status", "lastAttemptedRevision")
 	}
 
-	availablePackageRef, err := installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease.Object)
+	availablePackageRef, err := installedPackageAvailablePackageRefFromUnstructured(obj)
 	if err != nil {
 		return nil, err
 	}
 
-	release, err := s.helmReleaseFromUnstructured(ctx, name, unstructuredRelease.Object)
-	if err != nil {
-		return nil, err
-	}
-
-	// a couple of fields only available via helm API
-	appVersion := ""
-	postInstallNotes := ""
-	if release != nil {
+	appVersion, postInstallNotes := "", ""
+	release, err := s.helmReleaseFromUnstructured(ctx, name, obj)
+	// err maybe NotFound if this object has just been created and flux hasn't had time
+	// to invoke helm layer yet
+	if err == nil && release != nil {
+		// a couple of fields currrently only available via helm API
 		appVersion = release.Chart.AppVersion()
 		if release.Info != nil {
 			postInstallNotes = release.Info.Notes
 		}
 	}
-
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
@@ -274,10 +274,10 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 			AppVersion: appVersion,
 		},
 		ValuesApplied:         valuesApplied,
-		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease.Object),
+		ReconciliationOptions: installedPackageReconciliationOptionsFromUnstructured(obj),
 		AvailablePackageRef:   availablePackageRef,
 		PostInstallationNotes: postInstallNotes,
-		Status:                installedPackageStatusFromUnstructured(unstructuredRelease.Object),
+		Status:                installedPackageStatusFromUnstructured(obj),
 	}, nil
 }
 
@@ -302,20 +302,20 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 
 	actionConfig, err := s.actionConfigGetter(ctx, name.Namespace)
 	if err != nil || actionConfig == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config in namespace [%s] due to: %v", name.Namespace, err)
 	}
 	cmd := action.NewGet(actionConfig)
 	release, err := cmd.Run(helmReleaseName)
 	if err != nil {
 		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release [%s]", helmReleaseName)
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release [%s] in namespace [%s]", helmReleaseName, name.Namespace)
 		}
-		return nil, status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s]: %v", helmReleaseName, err)
+		return nil, status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s] in namespace [%s]: %v", helmReleaseName, name.Namespace, err)
 	}
 	return release, nil
 }
 
-func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName) (*corev1.InstalledPackageReference, error) {
+func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values string) (*corev1.InstalledPackageReference, error) {
 	// HACK: just for now assume HelmRelease CRD will live in the kubeapps namespace
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
 	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
@@ -340,7 +340,13 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	fluxHelmRelease := newFluxHelmRelease(chart, kubeappsNamespace, targetName)
+	// TODO: values
+	// // An optional serialized values string to be included when templating a package
+	// in the format expected by the plugin. Included when the backend format doesn't
+	// use secrets or configmaps for values or supports both. These values are layered
+	// on top of any values refs above, when relevant.
+
+	fluxHelmRelease := newFluxHelmRelease(chart, kubeappsNamespace, targetName, versionRef, reconcile)
 	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -353,6 +359,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	return &corev1.InstalledPackageReference{
 		Context:    &corev1.Context{Namespace: name.Namespace},
 		Identifier: name.Name,
+		Plugin:     GetPluginDetail(),
 	}, nil
 }
 
@@ -417,7 +424,7 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 // 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
 // 2. metadata.namespace, where this HelmRelease CRD will exist
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
-func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName) *unstructured.Unstructured {
+func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions) *unstructured.Unstructured {
 	unstructuredRel := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
@@ -429,8 +436,7 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 			"spec": map[string]interface{}{
 				"chart": map[string]interface{}{
 					"spec": map[string]interface{}{
-						"chart":   chart.Name,
-						"version": "*",
+						"chart": chart.Name,
 						"sourceRef": map[string]interface{}{
 							"name":      chart.Repo.Name,
 							"kind":      fluxHelmRepository,
@@ -438,7 +444,6 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 						},
 					},
 				},
-				"interval": "1m",
 				"install": map[string]interface{}{
 					"createNamespace": true,
 				},
@@ -447,5 +452,21 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 			},
 		},
 	}
+	if versionRef != nil && versionRef.Version != "" {
+		unstructured.SetNestedField(unstructuredRel.Object, versionRef.Version, "spec", "chart", "spec", "version")
+	}
+	reconcileInterval := "1m" // unless explictly specified
+	if reconcile != nil {
+		if reconcile.Interval > 0 {
+			duration := time.Duration(reconcile.Interval * int32(time.Second))
+			reconcileInterval = duration.String()
+		}
+		unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend")
+		if reconcile.ServiceAccountName != "" {
+			unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName")
+		}
+	}
+	// required fields, without which flux controller will fail to create the CRD
+	unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval")
 	return &unstructuredRel
 }

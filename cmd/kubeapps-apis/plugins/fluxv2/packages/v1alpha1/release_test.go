@@ -53,7 +53,7 @@ type testSpecGetInstalledPackages struct {
 	repoIndex                 string
 	chartName                 string
 	chartTarGz                string
-	chartSpecVersion          string // could be semver, e.g. "<=6.7.1"
+	chartSpecVersion          string // could be semver constraint, e.g. "<=6.7.1"
 	chartArtifactVersion      string // must be specific, e.g. "6.7.1"
 	releaseName               string
 	releaseNamespace          string
@@ -611,7 +611,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 		expectedResponse   *corev1.CreateInstalledPackageResponse
 	}{
 		{
-			name: "create simple package",
+			name: "create package (simple)",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "podinfo/podinfo",
@@ -622,6 +622,76 @@ func TestCreateInstalledPackage(t *testing.T) {
 				Name: "my-podinfo",
 				TargetContext: &corev1.Context{
 					Namespace: "test",
+				},
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+				chartName:     "podinfo",
+				chartTarGz:    "testdata/podinfo-6.0.0.tgz",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo",
+				},
+			},
+		},
+		{
+			name: "create package (semver constraint)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				Name: "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "> 5",
+				},
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+				chartName:     "podinfo",
+				chartTarGz:    "testdata/podinfo-6.0.0.tgz",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo",
+				},
+			},
+		},
+		{
+			name: "create package (reconcile options)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				Name: "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					Interval:           60,
+					Suspend:            false,
+					ServiceAccountName: "foo",
 				},
 			},
 			existingObjs: testSpecCreateInstalledPackage{
@@ -1351,3 +1421,4 @@ var redis_detail_completed_with_values_and_reconciliation_options = &corev1.Inst
 	},
 	PostInstallationNotes: "some notes",
 }
+

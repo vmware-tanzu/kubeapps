@@ -419,12 +419,16 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 			request.TargetContext.Cluster)
 	}
 
-	targetName := types.NamespacedName{
-		Name:      request.Name,
-		Namespace: request.TargetContext.Namespace,
-	}
+	name := types.NamespacedName{Name: request.Name, Namespace: request.TargetContext.Namespace}
 
-	installedRef, err := s.newRelease(ctx, request.AvailablePackageRef, targetName)
+	installedRef, err := s.newRelease(
+		ctx,
+		request.AvailablePackageRef,
+		name,
+		request.PkgVersionReference,
+		request.ReconciliationOptions,
+		request.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
