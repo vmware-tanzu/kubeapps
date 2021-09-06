@@ -39,7 +39,7 @@
     "react-jsonschema-form": "^1.8.1",
     "react-markdown": "^7.0.0",
     "react-minimal-pie-chart": "^8.2.0",
-    "react-redux": "^7.2.4",
+    "react-redux": "^7.2.5",
     "react-router-dom": "^5.3.0",
     "react-router-hash-link": "^2.4.3",
     "react-switch": "^6.0.0",
