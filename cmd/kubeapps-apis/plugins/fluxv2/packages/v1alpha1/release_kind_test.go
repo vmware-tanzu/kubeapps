@@ -15,7 +15,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"os/exec"
 	"strings"
 	"testing"
@@ -27,6 +26,10 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc"
+)
+
+const (
+	k8s_context = "kind-kubeapps"
 )
 
 // pre-requisites for these tests to run:
@@ -82,7 +85,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				Status: &corev1.InstalledPackageStatus{
 					Ready:      true,
 					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-					UserReason: "ReconciliationSucceeded",
+					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 				},
 				PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo 8080:9898\n",
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -94,6 +97,114 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			expectedPodPrefix: "pod/test-my-podinfo-",
+		},
+		{
+			testName: "create package (semver constraint)",
+			repoUrl:  "https://stefanprodan.github.io/podinfo",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				},
+				Name: "my-podinfo-2",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "> 5",
+				},
+			},
+			expectedDetail: &corev1.InstalledPackageDetail{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo-2",
+					Plugin:     fluxPlugin,
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "> 5",
+				},
+				Name: "my-podinfo-2",
+				CurrentVersion: &corev1.PackageAppVersion{
+					PkgVersion: "6.0.0",
+					AppVersion: "6.0.0",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					Interval: 60,
+				},
+				Status: &corev1.InstalledPackageStatus{
+					Ready:      true,
+					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
+				},
+				PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-2 8080:9898\n",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Plugin: fluxPlugin,
+				},
+			},
+			expectedPodPrefix: "pod/test-my-podinfo-2-",
+		},
+		{
+			testName: "create package (reconcile options)",
+			repoUrl:  "https://stefanprodan.github.io/podinfo",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+				},
+				Name: "my-podinfo-3",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					Interval:           60,
+					Suspend:            false,
+					ServiceAccountName: "foo",
+				},
+			},
+			expectedDetail: &corev1.InstalledPackageDetail{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo-3",
+					Plugin:     fluxPlugin,
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "> 5",
+				},
+				Name: "my-podinfo-2",
+				CurrentVersion: &corev1.PackageAppVersion{
+					PkgVersion: "6.0.0",
+					AppVersion: "6.0.0",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					Interval: 60,
+				},
+				Status: &corev1.InstalledPackageStatus{
+					Ready:      true,
+					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
+				},
+				PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-3 8080:9898\n",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Plugin: fluxPlugin,
+				},
+			},
+			expectedPodPrefix: "pod/test-my-podinfo-3-",
 		},
 	}
 
@@ -114,6 +225,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
+			t.Cleanup(func() {
+				err = fluxCliDeleteSource(t, idParts[0], availablePackageRef.Context.Namespace)
+				if err != nil {
+					t.Logf("Failed to delete helm source due to [%v]", err)
+				}
+			})
+
 			// need to wait until repo is index by flux plugin
 			const maxWait = 10
 			for i := 0; i < maxWait; i++ {
@@ -129,10 +247,25 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 					time.Sleep(500 * time.Millisecond)
 				}
 			}
+
+			if tc.request.ReconciliationOptions != nil && tc.request.ReconciliationOptions.ServiceAccountName != "" {
+				err = kubectlCreateServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				t.Cleanup(func() {
+					err = kubectlDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+					if err != nil {
+						t.Logf("Failed to delete service account due to [%v]", err)
+					}
+				})
+			}
+
 			resp, err := fluxPluginClient.CreateInstalledPackage(context.TODO(), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
+
 			installedPackageRef := resp.InstalledPackageRef
 			opts := cmpopts.IgnoreUnexported(
 				corev1.InstalledPackageDetail{},
@@ -142,6 +275,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			if got, want := installedPackageRef, tc.expectedDetail.InstalledPackageRef; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
+
+			t.Cleanup(func() {
+				err = fluxCliDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
+				if err != nil {
+					t.Logf("Failed to delete helm release due to [%v]", err)
+				}
+			})
 
 			var actualDetail *corev1.InstalledPackageDetail
 			for i := 0; i < maxWait; i++ {
@@ -187,16 +327,6 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				t.Errorf("expected pod with prefix [%s] not found in namespace [%s]",
 					tc.expectedPodPrefix, tc.request.TargetContext.Namespace)
 			}
-
-			err = fluxCliDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
-
-			err = fluxCliDeleteSource(t, idParts[0], availablePackageRef.Context.Namespace)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
 		})
 	}
 }
@@ -209,12 +339,12 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 		t.Logf("%s", string(bytes))
 		return false, err
 	}
-	if string(bytes) != "kubeapps\n" {
+	if !strings.Contains(string(bytes), "kubeapps\n") {
 		return false, nil
 	}
 
 	// naively assume that if the api server reports nodes, the cluster is up
-	cmd = exec.Command("kubectl", "get", "nodes", "-o=name")
+	cmd = exec.Command("kubectl", "get", "nodes", "-o=name", "--context", k8s_context)
 	bytes, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
@@ -258,9 +388,9 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 
 // This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
 // the design
-func fluxCliCreateSource(t *testing.T, name, url, namespace string) (err error) {
+func fluxCliCreateSource(t *testing.T, name, url, namespace string) error {
 	t.Logf("+fluxCliCreateSource(%s)", name)
-	cmd := exec.Command("flux", "create", "source", "helm", name, "--url", url, "--namespace", namespace)
+	cmd := exec.Command("flux", "create", "source", "helm", name, "--url", url, "--namespace", namespace, "--context", k8s_context)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
@@ -274,17 +404,9 @@ func fluxCliCreateSource(t *testing.T, name, url, namespace string) (err error) 
 }
 
 // this should eventually be replaced with flux plugin's DeleteRepository()
-func fluxCliDeleteSource(t *testing.T, name, namespace string) (err error) {
-	t.Logf("+fluxCliDeleteHelmRelease(%s)", name)
-	cmd := exec.Command("flux", "delete", "source", "helm", name, "--namespace", namespace)
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, "y\n")
-	}()
+func fluxCliDeleteSource(t *testing.T, name, namespace string) error {
+	t.Logf("+fluxCliDeleteSource(%s)", name)
+	cmd := exec.Command("flux", "delete", "source", "helm", name, "--namespace", namespace, "--context", k8s_context, "--silent")
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
@@ -298,17 +420,9 @@ func fluxCliDeleteSource(t *testing.T, name, namespace string) (err error) {
 }
 
 // this should eventually be replaced with flux plugin's DeleteInstalledPackage()
-func fluxCliDeleteHelmRelease(t *testing.T, name, namespace string) (err error) {
-	t.Logf("+fluxCliDeleteHelmRelease(%s)", name)
-	cmd := exec.Command("flux", "delete", "helmrelease", name, "--namespace", namespace)
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, "y\n")
-	}()
+func fluxCliDeleteHelmRelease(t *testing.T, name, namespace string) error {
+	t.Logf("+fluxCliDeleteHelmRelease(%s,%s)", name, namespace)
+	cmd := exec.Command("flux", "delete", "helmrelease", name, "--namespace", namespace, "--context", k8s_context, "--silent")
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
@@ -323,11 +437,41 @@ func fluxCliDeleteHelmRelease(t *testing.T, name, namespace string) (err error) 
 
 func kubectlGetPods(t *testing.T, namespace string) (names []string, err error) {
 	t.Logf("+kubectlGetPods(%s)", namespace)
-	cmd := exec.Command("kubectl", "get", "pods", "-n", namespace, "-o=name")
+	cmd := exec.Command("kubectl", "get", "pods", "-n", namespace, "-o=name", "--context", k8s_context)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return nil, err
 	}
 	return strings.Split(string(bytes), " \n"), nil
+}
+
+func kubectlCreateServiceAccount(t *testing.T, name, namespace string) error {
+	t.Logf("+kubectlCreateServiceAccount(%s,%s)", name, namespace)
+	cmd := exec.Command("kubectl", "create", "serviceaccount", name, "-n", namespace, "--context", k8s_context)
+	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("%s", string(bytes))
+		return err
+	}
+	if strings.Contains(string(bytes), "serviceaccount/"+name+" created") {
+		return nil
+	} else {
+		return fmt.Errorf("Unexpected output from kubectl create serviceaccount: [%s]", string(bytes))
+	}
+}
+
+func kubectlDeleteServiceAccount(t *testing.T, name, namespace string) error {
+	t.Logf("+kubectlDeleteServiceAccount(%s,%s)", name, namespace)
+	cmd := exec.Command("kubectl", "delete", "serviceaccount", name, "-n", namespace, "--context", k8s_context)
+	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("%s", string(bytes))
+		return err
+	}
+	if strings.Contains(string(bytes), "serviceaccount \""+name+"\" deleted") {
+		return nil
+	} else {
+		return fmt.Errorf("Unexpected output from kubectl delete serviceaccount: [%s]", string(bytes))
+	}
 }

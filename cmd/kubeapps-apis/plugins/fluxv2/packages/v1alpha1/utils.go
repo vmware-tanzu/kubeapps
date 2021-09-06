@@ -129,8 +129,17 @@ func checkStatusReady(unstructuredObj map[string]interface{}) (complete bool, su
 	for _, conditionUnstructured := range conditions {
 		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
 			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
+				// this could be something like
+				// "reason": "InitFailed"
+				// i.e. not super-useful
 				if reasonString, ok := conditionAsMap["reason"]; ok {
 					reason = fmt.Sprintf("%v", reasonString)
+				}
+				// whereas this could be something like
+				// "message": "could not impersonate ServiceAccount 'foo': ServiceAccount \"foo\" not found"
+				// i.e. a little more useful, so we'll just return them both
+				if messageString, ok := conditionAsMap["message"]; ok {
+					reason += fmt.Sprintf(": %v", messageString)
 				}
 				if statusString, ok := conditionAsMap["status"]; ok {
 					if statusString == "True" {
