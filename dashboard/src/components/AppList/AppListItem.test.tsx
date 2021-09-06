@@ -67,7 +67,7 @@ it("should add a tooltip with the chart update available", () => {
   expect(tooltip.text()).toBe("A new package version is available: 1.1.0");
 });
 
-it("should add a second label with the app update available", () => {
+it("should add a tooltip with the app update available", () => {
   const props = {
     ...defaultProps,
     app: {
@@ -79,6 +79,21 @@ it("should add a second label with the app update available", () => {
   const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
   const tooltip = wrapper.find(Tooltip);
   expect(tooltip.text()).toBe("A new app version is available: 1.1.0");
+});
+
+it("should add a tooltip with the app update available without requiring semver versioning", () => {
+  // The AppVersion is not always required to be semver2, certainly not in Helm's Chart.yaml.
+  const props = {
+    ...defaultProps,
+    app: {
+      ...defaultProps.app,
+      latestVersion: { appVersion: "latest-crack", pkgVersion: "1.1.0" } as PackageAppVersion,
+      currentVersion: { appVersion: "1.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+    },
+  } as IAppListItemProps;
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  const tooltip = wrapper.find(Tooltip);
+  expect(tooltip.text()).toBe("A new app version is available: latest-crack");
 });
 
 it("doesn't include a double v prefix", () => {
