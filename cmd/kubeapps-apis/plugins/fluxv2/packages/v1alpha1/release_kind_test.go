@@ -180,15 +180,17 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 					Plugin:     fluxPlugin,
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "> 5",
+					Version: "*",
 				},
-				Name: "my-podinfo-2",
+				Name: "my-podinfo-3",
 				CurrentVersion: &corev1.PackageAppVersion{
 					PkgVersion: "6.0.0",
 					AppVersion: "6.0.0",
 				},
 				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval: 60,
+					Interval:           60,
+					Suspend:            false,
+					ServiceAccountName: "foo",
 				},
 				Status: &corev1.InstalledPackageStatus{
 					Ready:      true,
@@ -281,6 +283,10 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				if err != nil {
 					t.Logf("Failed to delete helm release due to [%v]", err)
 				}
+				err = kubectlDeleteNamespace(t, tc.request.TargetContext.Namespace)
+				if err != nil {
+					t.Logf("Failed to delete namespace due to [%v]", err)
+				}
 			})
 
 			var actualDetail *corev1.InstalledPackageDetail
@@ -292,7 +298,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 					t.Fatalf("%+v", err)
 				}
 				if resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_PENDING && i < maxWait-1 {
-					t.Logf("waiting 500ms for installation to complete...")
+					t.Logf("current state: [%s], waiting 500ms for installation to complete...", resp2.InstalledPackageDetail.Status.UserReason)
 					time.Sleep(500 * time.Millisecond)
 				} else if resp2.InstalledPackageDetail.Status.Ready == true && resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED {
 					actualDetail = resp2.InstalledPackageDetail
@@ -446,6 +452,7 @@ func kubectlGetPods(t *testing.T, namespace string) (names []string, err error) 
 	return strings.Split(string(bytes), " \n"), nil
 }
 
+// will create a service account with cluster-admin privs
 func kubectlCreateServiceAccount(t *testing.T, name, namespace string) error {
 	t.Logf("+kubectlCreateServiceAccount(%s,%s)", name, namespace)
 	cmd := exec.Command("kubectl", "create", "serviceaccount", name, "-n", namespace, "--context", k8s_context)
@@ -454,17 +461,38 @@ func kubectlCreateServiceAccount(t *testing.T, name, namespace string) error {
 		t.Logf("%s", string(bytes))
 		return err
 	}
-	if strings.Contains(string(bytes), "serviceaccount/"+name+" created") {
-		return nil
-	} else {
+	if !strings.Contains(string(bytes), "serviceaccount/"+name+" created") {
 		return fmt.Errorf("Unexpected output from kubectl create serviceaccount: [%s]", string(bytes))
 	}
+
+	cmd = exec.Command("kubectl", "create", "clusterrolebinding", name+"-binding",
+		"--clusterrole=cluster-admin", "--serviceaccount="+namespace+":"+name, "--context", k8s_context)
+	bytes, err = cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("%s", string(bytes))
+		return err
+	}
+	if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io/"+name+"-binding created") {
+		return fmt.Errorf("Unexpected output from kubectl create clusterrolebinding: [%s]", string(bytes))
+	}
+	return nil
 }
 
 func kubectlDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	t.Logf("+kubectlDeleteServiceAccount(%s,%s)", name, namespace)
-	cmd := exec.Command("kubectl", "delete", "serviceaccount", name, "-n", namespace, "--context", k8s_context)
+	cmd := exec.Command("kubectl", "delete", "clusterrolebinding", name+"-binding", "--context", k8s_context)
 	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("%s", string(bytes))
+		return err
+	}
+	//if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io \""+name+"\"-binding deleted") {
+	if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io") {
+		return fmt.Errorf("Unexpected output from kubectl delete clusterrolebinding: [%s]", string(bytes))
+	}
+
+	cmd = exec.Command("kubectl", "delete", "serviceaccount", name, "-n", namespace, "--context", k8s_context)
+	bytes, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return err
@@ -474,4 +502,18 @@ func kubectlDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	} else {
 		return fmt.Errorf("Unexpected output from kubectl delete serviceaccount: [%s]", string(bytes))
 	}
+}
+
+func kubectlDeleteNamespace(t *testing.T, namespace string) error {
+	t.Logf("+kubectlDeleteNamespace(%s)", namespace)
+	cmd := exec.Command("kubectl", "delete", "namespace", namespace, "--context", k8s_context)
+	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("%s", string(bytes))
+		return err
+	}
+	if !strings.Contains(string(bytes), "namespace \""+namespace+"\" deleted") {
+		return fmt.Errorf("Unexpected output from kubectl delete namespace: [%s]", string(bytes))
+	}
+	return nil
 }

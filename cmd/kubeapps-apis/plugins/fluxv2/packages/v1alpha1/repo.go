@@ -118,7 +118,7 @@ func isRepoReady(unstructuredRepo map[string]interface{}) bool {
 		return false
 	}
 
-	completed, success, _ := checkStatusReady(unstructuredRepo)
+	completed, success, _ := isHelmRepositoryReady(unstructuredRepo)
 	return completed && success
 }
 
@@ -205,6 +205,52 @@ func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.Pa
 		Namespace: name.Namespace,
 		Url:       url,
 	}, nil
+}
+
+// returns 3 things:
+// - complete whether the operation was completed
+// - success (only applicable when complete == true) whether the operation was successful or failed
+// - reason, if present
+// docs:
+// 1. https://fluxcd.io/docs/components/source/helmrepositories/#status-examples
+func isHelmRepositoryReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
+	if !checkGeneration(unstructuredObj) {
+		return false, false, ""
+	}
+
+	conditions, found, err := unstructured.NestedSlice(unstructuredObj, "status", "conditions")
+	if err != nil || !found {
+		return false, false, ""
+	}
+
+	for _, conditionUnstructured := range conditions {
+		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
+			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
+				// this could be something like
+				// "reason": "ChartPullFailed"
+				// i.e. not super-useful
+				if reasonString, ok := conditionAsMap["reason"]; ok {
+					reason = fmt.Sprintf("%v", reasonString)
+				}
+				// whereas this could be something like:
+				// "message": 'invalid chart URL format'
+				// i.e. a little more useful, so we'll just return them both
+				if messageString, ok := conditionAsMap["message"]; ok {
+					reason += fmt.Sprintf(": %v", messageString)
+				}
+				if statusString, ok := conditionAsMap["status"]; ok {
+					if statusString == "True" {
+						return true, true, reason
+					} else if statusString == "False" {
+						return true, false, reason
+					}
+					// statusString == "Unknown" falls in here
+				}
+				break
+			}
+		}
+	}
+	return false, false, reason
 }
 
 //

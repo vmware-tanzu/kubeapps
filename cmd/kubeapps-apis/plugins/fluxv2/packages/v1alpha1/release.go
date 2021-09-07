@@ -363,8 +363,85 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}, nil
 }
 
+// returns 3 things:
+// - complete whether the operation was completed
+// - success (only applicable when complete == true) whether the operation was successful or failed
+// - reason, if present
+// docs:
+// 1. https://fluxcd.io/docs/components/helm/helmreleases/#examples
+// 2. discussion on https://vmware.slack.com/archives/C4HEXCX3N/p1630907107078800. The upshot of which is
+//    I cannot rely on status.conditions.type.Ready field to tell when a task is complete
+//     (or "ready" in our terminology). In both use cases (PENDING described in previous scenario
+//	    and outright FAILURE in this one) it is set to false. So, we'll use this logic:
+//     - status.conditions.type.Released == true means ready = true and reason = success
+//     - status.conditions.type.Released == false means ready = false, and reason = faliure
+//     - otherwise, it's ready = false and reason = pending
+func isHelmReleaseReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
+	if !checkGeneration(unstructuredObj) {
+		return false, false, ""
+	}
+
+	conditions, found, err := unstructured.NestedSlice(unstructuredObj, "status", "conditions")
+	if err != nil || !found {
+		return false, false, ""
+	}
+
+	// testing shows that flux is not very consistent about the way status conditions are set on a
+	// HelmRelease so the goal of the code below is to extract as much information as possible from
+	// different conditions in HelmRelease and return it in a consistent way to the caller
+
+	for _, conditionUnstructured := range conditions {
+		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
+			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
+				// this could be something like
+				// "reason": "InstallFailed"
+				// i.e. not super-useful
+				if reasonString, ok := conditionAsMap["reason"]; ok {
+					reason = fmt.Sprintf("%v", reasonString)
+				}
+				// whereas this could be something like:
+				// "message": 'Helm install failed: unable to build kubernetes objects from
+				// release manifest: error validating "": error validating data:
+				// ValidationError(Deployment.spec.replicas): invalid type for
+				// io.k8s.api.apps.v1.DeploymentSpec.replicas: got "string", expected "integer"'
+				// i.e. a little more useful, so we'll just return them both
+				if messageString, ok := conditionAsMap["message"]; ok {
+					reason += fmt.Sprintf(": %v", messageString)
+				}
+				if statusString, ok := conditionAsMap["status"]; ok {
+					if statusString == "True" {
+						return true, true, reason
+					}
+				}
+			}
+
+			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Released" {
+				if reason == "" {
+					if reasonString, ok := conditionAsMap["reason"]; ok {
+						reason = fmt.Sprintf("%v", reasonString)
+					}
+					if messageString, ok := conditionAsMap["message"]; ok {
+						reason += fmt.Sprintf(": %v", messageString)
+					}
+				}
+				if statusString, ok := conditionAsMap["status"]; ok {
+					if statusString == "True" {
+						return true, true, reason
+					} else if statusString == "False" {
+						return true, false, reason
+					}
+					// statusString == "Unknown" falls in here
+				}
+				break
+			}
+		}
+	}
+	// this is a catch-all that basically means "pending"
+	return false, false, reason
+}
+
 func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
-	complete, success, reason := checkStatusReady(unstructuredRelease)
+	complete, success, reason := isHelmReleaseReady(unstructuredRelease)
 	status := &corev1.InstalledPackageStatus{
 		Ready:      complete && success,
 		UserReason: reason,
@@ -458,8 +535,7 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 	reconcileInterval := "1m" // unless explictly specified
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
-			duration := time.Duration(reconcile.Interval * int32(time.Second))
-			reconcileInterval = duration.String()
+			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()
 		}
 		unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend")
 		if reconcile.ServiceAccountName != "" {

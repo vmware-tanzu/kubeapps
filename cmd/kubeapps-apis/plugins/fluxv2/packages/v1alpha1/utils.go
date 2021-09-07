@@ -116,46 +116,6 @@ func checkGeneration(unstructuredObj map[string]interface{}) bool {
 	return generation == observedGeneration
 }
 
-// returns 3 things:
-// - complete whether the operation was completed
-// - success (only applicable when complete == true) whether the operation was successful or failed
-// - reason, if present
-func checkStatusReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
-	conditions, found, err := unstructured.NestedSlice(unstructuredObj, "status", "conditions")
-	if err != nil || !found {
-		return false, false, ""
-	}
-
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				// this could be something like
-				// "reason": "InitFailed"
-				// i.e. not super-useful
-				if reasonString, ok := conditionAsMap["reason"]; ok {
-					reason = fmt.Sprintf("%v", reasonString)
-				}
-				// whereas this could be something like
-				// "message": "could not impersonate ServiceAccount 'foo': ServiceAccount \"foo\" not found"
-				// i.e. a little more useful, so we'll just return them both
-				if messageString, ok := conditionAsMap["message"]; ok {
-					reason += fmt.Sprintf(": %v", messageString)
-				}
-				if statusString, ok := conditionAsMap["status"]; ok {
-					if statusString == "True" {
-						return true, true, reason
-					} else if statusString == "False" {
-						return true, false, reason
-					}
-					// statusString == "Unknown" falls in here
-				}
-				break
-			}
-		}
-	}
-	return false, false, reason
-}
-
 func namespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedName, error) {
 	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
 	if err != nil || !found {
