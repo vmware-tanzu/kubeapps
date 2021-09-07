@@ -91,7 +91,7 @@ installOLM() {
   retries=30
   until [[ $retries == 0 ]]; do
     new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
-    if [[ $new_csv_phase != "$csv_phase" ]]; then
+    if [[ $new_csv_phase != "${csv_phase:-}" ]]; then
       csv_phase=$new_csv_phase
       echo "CSV \"packageserver\" phase: $csv_phase"
     fi
