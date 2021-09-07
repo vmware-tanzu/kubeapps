@@ -26,6 +26,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -469,13 +470,19 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 }
 
 // makeServer returns a server backed with an sql mock and a cleanup function
-func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration) (*Server, sqlmock.Sqlmock, func()) {
+func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration, objects ...runtime.Object) (*Server, sqlmock.Sqlmock, func()) {
 	// Creating the dynamic client
+	scheme := runtime.NewScheme()
+	err := v1alpha1.AddToScheme(scheme)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
 	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
+		scheme,
 		map[schema.GroupVersionResource]string{
 			{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
 		},
+		objects...,
 	)
 
 	// Creating an authorized clientGetter
