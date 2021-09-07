@@ -1,4 +1,5 @@
 import {
+  ClarityIcons as Icons,
   angleIcon,
   applicationsIcon,
   backupRestoreIcon,
@@ -6,7 +7,6 @@ import {
   checkCircleIcon,
   circleArrowIcon,
   circleIcon,
-  ClarityIcons as Icons,
   clusterIcon,
   copyToClipboardIcon,
   deployIcon,
@@ -19,6 +19,7 @@ import {
   heartIcon,
   helpIcon,
   infoCircleIcon,
+  libraryIcon,
   moonIcon,
   networkGlobeIcon,
   plusCircleIcon,
@@ -33,7 +34,6 @@ import {
   uploadCloudIcon,
 } from "@cds/core/icon";
 import "@cds/core/icon/register.js";
-
 import "@clr/ui/clr-ui.min.css"; // light clarity UI theme
 
 Icons.addIcons(
@@ -56,6 +56,7 @@ Icons.addIcons(
   heartIcon,
   helpIcon,
   infoCircleIcon,
+  libraryIcon,
   moonIcon,
   networkGlobeIcon,
   plusCircleIcon,

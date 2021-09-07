@@ -1,25 +1,41 @@
 import { mount } from "enzyme";
-
 import ChartHeader from "./ChartHeader";
+import {
+  AvailablePackageDetail,
+  Context,
+  PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const testProps: any = {
   chartAttrs: {
-    description: "A Test Chart",
+    shortDescription: "A Test Chart",
     name: "test",
-    repo: {
-      name: "testrepo",
+    categories: [""],
+    displayName: "foo",
+    iconUrl: "api/assetsvc/test.jpg",
+    repoUrl: "",
+    homeUrl: "",
+    sourceUrls: [],
+    longDescription: "",
+    availablePackageRef: {
+      identifier: "testrepo/foo",
+      context: { cluster: "default", namespace: "kubeapps" } as Context,
     },
-    namespace: "kubeapps",
-    cluster: "default",
-    icon: "test.jpg",
-  },
+    valuesSchema: "",
+    defaultValues: "",
+    maintainers: [],
+    readme: "",
+    version: {
+      pkgVersion: "1.2.3",
+      appVersion: "4.5.6",
+    },
+  } as AvailablePackageDetail,
   versions: [
     {
-      attributes: {
-        app_version: "1.2.3",
-      },
+      pkgVersion: "0.1.2",
+      appVersion: "1.2.3",
     },
-  ],
+  ] as PackageAppVersion[],
   onSelect: jest.fn(),
 };
 
@@ -41,16 +57,14 @@ it("uses the icon", () => {
 });
 
 it("uses the first version as default in the select input", () => {
-  const versions = [
+  const versions: PackageAppVersion[] = [
     {
-      attributes: {
-        version: "1.2.3",
-      },
+      pkgVersion: "1.2.3",
+      appVersion: "10.0.0",
     },
     {
-      attributes: {
-        version: "1.2.4",
-      },
+      pkgVersion: "1.2.4",
+      appVersion: "10.0.0",
     },
   ];
   const wrapper = mount(<ChartHeader {...testProps} versions={versions} />);

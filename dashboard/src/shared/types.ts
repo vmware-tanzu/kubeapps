@@ -1,12 +1,18 @@
+import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-import * as jsonSchema from "json-schema";
+import {
+  AvailablePackageDetail,
+  AvailablePackageSummary,
+  GetAvailablePackageSummariesResponse,
+  InstalledPackageDetail,
+  InstalledPackageSummary,
+  PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
-import { hapi } from "./hapi/release";
-
 class CustomError extends Error {
   // The constructor is defined so we can later on compare the returned object
   // via err.contructor  == FOO
@@ -15,7 +21,9 @@ class CustomError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
+
 export class ForbiddenError extends CustomError {}
+
 export class UnauthorizedError extends CustomError {}
 
 export class NotFoundError extends CustomError {}
@@ -44,60 +52,9 @@ export interface IRepo {
   url: string;
 }
 
-export interface IChartCategory {
-  name: string;
-  count: number;
-}
-
-export interface IChartVersion {
-  id: string;
-  attributes: IChartVersionAttributes;
-  relationships: {
-    chart: {
-      data: IChartAttributes;
-    };
-  };
-}
-
-export interface IChartVersionAttributes {
-  version: string;
-  app_version: string;
-  created: string;
-}
-
-export interface IChart {
-  id: string;
-  attributes: IChartAttributes;
-  relationships: {
-    latestChartVersion: {
-      data: IChartVersionAttributes;
-    };
-  };
-}
-
-export interface IChartListMeta {
-  totalPages: number;
-}
-
 export interface IReceiveChartsActionPayload {
-  items: IChart[];
+  response: GetAvailablePackageSummariesResponse;
   page: number;
-  totalPages: number;
-}
-
-export interface IChartAttributes {
-  name: string;
-  description: string;
-  home?: string;
-  icon?: string;
-  keywords: string[];
-  maintainers: Array<{
-    name: string;
-    email?: string;
-  }>;
-  repo: IRepo;
-  sources: string[];
-  category: string;
 }
 
 export interface IChartState {
@@ -105,36 +62,23 @@ export interface IChartState {
   hasFinishedFetching: boolean;
   selected: {
     error?: FetchError | Error;
-    version?: IChartVersion;
-    versions: IChartVersion[];
+    availablePackageDetail?: AvailablePackageDetail;
+    pkgVersion?: string;
+    appVersion?: string;
+    versions: PackageAppVersion[];
     readme?: string;
     readmeError?: string;
     values?: string;
-    schema?: any;
+    schema?: JSONSchemaType<any>;
   };
   deployed: {
-    chartVersion?: IChartVersion;
+    chartVersion?: AvailablePackageDetail;
     values?: string;
-    schema?: jsonSchema.JSONSchema4;
+    schema?: JSONSchemaType<any>;
   };
-  items: IChart[];
-  categories: IChartCategory[];
+  items: AvailablePackageSummary[];
+  categories: string[];
   size: number;
-}
-
-export interface IChartUpdateInfo {
-  upToDate: boolean;
-  chartLatestVersion: string;
-  appLatestVersion: string;
-  repository: IRepo;
-  error?: Error;
-}
-
-export interface IDeployment {
-  metadata: {
-    name: string;
-    namespace: string;
-  };
 }
 
 export interface IServiceSpec {
@@ -160,9 +104,11 @@ export interface IPort {
 export interface IHTTPIngressPath {
   path: string;
 }
+
 export interface IIngressHTTP {
   paths: IHTTPIngressPath[];
 }
+
 export interface IIngressRule {
   host: string;
   http: IIngressHTTP;
@@ -208,41 +154,12 @@ export interface IResource {
   metadata: IResourceMetadata;
 }
 
-export interface IOwnerReference {
-  apiVersion: string;
-  blockOwnerDeletion: boolean;
-  kind: string;
-  name: string;
-  uid: string;
-}
-
 export interface ISecret {
   apiVersion: string;
   kind: string;
   type: string;
   data: { [s: string]: string };
   metadata: IResourceMetadata;
-}
-
-export interface IDeploymentStatus {
-  replicas: number;
-  updatedReplicas: number;
-  availableReplicas: number;
-}
-
-export interface IStatefulsetStatus {
-  replicas: number;
-  updatedReplicas: number;
-  readyReplicas: number;
-}
-
-export interface IDaemonsetStatus {
-  currentNumberScheduled: number;
-  numberReady: number;
-}
-
-export interface IRelease extends hapi.release.Release {
-  updateInfo?: IChartUpdateInfo;
 }
 
 export interface IPackageManifestChannel {
@@ -375,10 +292,11 @@ export interface IAppRepositoryFilter {
 export interface IAppState {
   isFetching: boolean;
   error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
-  // currently items are always Helm releases
-  items: IRelease[];
-  listOverview?: IAppOverview[];
-  selected?: IRelease;
+  items: InstalledPackageDetail[];
+  listOverview?: InstalledPackageSummary[];
+  selected?: CustomInstalledPackageDetail;
+  // TODO(agamez): add tests for this new state field
+  selectedDetails?: AvailablePackageDetail;
 }
 
 export interface IStoreState {
@@ -467,15 +385,6 @@ export interface ICreateAppRepositoryResponse {
   appRepository: IAppRepository;
 }
 
-export type IAppRepositoryList = IK8sList<
-  IAppRepository,
-  {
-    continue: string;
-    resourceVersion: string;
-    selfLink: string;
-  }
->;
-
 export interface IAppRepositoryKey {
   name: string;
   namespace: string;
@@ -511,46 +420,12 @@ interface IStatusCause {
   reason: string;
 }
 
-export interface IRouterPathname {
-  router: {
-    location: {
-      pathname: string;
-    };
-  };
-}
-
-export interface IRuntimeVersion {
-  name: string;
-  version: string;
-  runtimeImage: string;
-  initImage: string;
-}
-
-export interface IRuntime {
-  ID: string;
-  versions: IRuntimeVersion[];
-  depName: string;
-  fileNameSuffix: string;
-}
-
 export interface IRBACRole {
   apiGroup: string;
   namespace?: string;
   clusterWide?: boolean;
   resource: string;
   verbs: string[];
-}
-
-export interface IAppOverview {
-  releaseName: string;
-  namespace: string;
-  version: string;
-  icon?: string;
-  status: string;
-  chart: string;
-  chartMetadata: hapi.chart.Metadata;
-  // UpdateInfo is internally populated
-  updateInfo?: IChartUpdateInfo;
 }
 
 export interface IKubeItem<T> {
@@ -575,7 +450,7 @@ export interface IKubeState {
 
 export interface IBasicFormParam {
   path: string;
-  type?: jsonSchema.JSONSchema4TypeName | jsonSchema.JSONSchema4TypeName[];
+  type?: "string" | "number" | "integer" | "boolean" | "object" | "array" | "null" | "any";
   value?: any;
   title?: string;
   minimum?: number;
@@ -604,4 +479,9 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMax?: number;
   sliderStep?: number;
   sliderUnit?: string;
+}
+
+export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
+  manifest: any;
+  revision: number;
 }

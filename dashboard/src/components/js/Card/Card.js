@@ -1,6 +1,6 @@
-import React from "react";
 import cs from "classnames";
 import PropTypes from "prop-types";
+import React from "react";
 
 const Card = ({ children, clickable, htmlTag, onClick }) => {
   const cssClass = cs("card", {

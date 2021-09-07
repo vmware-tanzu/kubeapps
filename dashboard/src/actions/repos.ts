@@ -1,10 +1,10 @@
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
-import { ActionType, deprecated } from "typesafe-actions";
-import { AppRepository } from "../shared/AppRepository";
-import Chart from "../shared/Chart";
-import Secret from "../shared/Secret";
+import { AppRepository } from "shared/AppRepository";
+import Chart from "shared/Chart";
+import Secret from "shared/Secret";
 import {
   IAppRepository,
   IAppRepositoryFilter,
@@ -12,7 +12,8 @@ import {
   ISecret,
   IStoreState,
   NotFoundError,
-} from "../shared/types";
+} from "shared/types";
+import { ActionType, deprecated } from "typesafe-actions";
 import { errorChart } from "./charts";
 
 const { createAction } = deprecated;
@@ -37,10 +38,6 @@ export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
 });
 
-export const receiveReposSecrets = createAction("RECEIVE_REPOS_SECRETS", resolve => {
-  return (secrets: ISecret[]) => resolve(secrets);
-});
-
 export const receiveReposSecret = createAction("RECEIVE_REPOS_SECRET", resolve => {
   return (secret: ISecret) => resolve(secret);
 });
@@ -54,16 +51,6 @@ export const repoValidating = createAction("REPO_VALIDATING");
 export const repoValidated = createAction("REPO_VALIDATED", resolve => {
   return (data: any) => resolve(data);
 });
-
-// Clear repo is basically receiving an empty repo
-export const clearRepo = createAction("RECEIVE_REPO", resolve => {
-  return () => resolve({} as IAppRepository);
-});
-
-export const showForm = createAction("SHOW_FORM");
-export const hideForm = createAction("HIDE_FORM");
-export const resetForm = createAction("RESET_FORM");
-export const submitForm = createAction("SUBMIT_FROM");
 
 export const redirect = createAction("REDIRECT", resolve => {
   return (path: string) => resolve(path);
@@ -93,19 +80,13 @@ const allActions = [
   repoUpdated,
   repoValidating,
   repoValidated,
-  clearRepo,
   errorRepos,
   requestRepos,
   receiveRepo,
   receiveRepos,
-  receiveReposSecrets,
   receiveReposSecret,
-  resetForm,
   errorChart,
   requestRepo,
-  submitForm,
-  showForm,
-  hideForm,
   redirect,
   redirected,
   requestImagePullSecrets,
@@ -125,7 +106,7 @@ export const deleteRepo = (
     try {
       await AppRepository.delete(currentCluster, namespace, name);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "delete"));
       return false;
     }
@@ -142,7 +123,7 @@ export const resyncRepo = (
     } = getState();
     try {
       await AppRepository.resync(currentCluster, namespace, name);
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "update"));
     }
   };
@@ -151,7 +132,7 @@ export const resyncRepo = (
 export const resyncAllRepos = (
   repos: IAppRepositoryKey[],
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     repos.forEach(repo => {
       dispatch(resyncRepo(repo.name, repo.namespace));
     });
@@ -169,7 +150,7 @@ export const fetchRepoSecret = (
     try {
       const secret = await Secret.get(currentCluster, namespace, name);
       dispatch(receiveReposSecret(secret));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
     }
   };
@@ -198,7 +179,7 @@ export const fetchRepos = (
         totalRepos = uniqBy(totalRepos.concat(globalRepos.items), "metadata.uid");
         dispatch(receiveRepos(totalRepos));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
     }
   };
@@ -255,7 +236,7 @@ export const installRepo = (
       dispatch(addedRepo(data.appRepository));
 
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "create"));
       return false;
     }
@@ -320,7 +301,7 @@ export const updateRepo = (
         }
       }
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "update"));
       return false;
     }
@@ -363,29 +344,48 @@ export const validateRepo = (
         dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
         return false;
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "validate"));
       return false;
     }
   };
 };
 
-export function checkChart(
+export function findPackageInRepo(
   cluster: string,
   repoNamespace: string,
-  repo: string,
-  chartName: string,
+  repoName: string,
+  app?: InstalledPackageDetail,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(cluster, repoNamespace, repo);
-    try {
-      await Chart.fetchChartVersions(cluster, repoNamespace, `${repo}/${chartName}`);
-      dispatch(receiveRepo(appRepository));
-      return true;
-    } catch (e) {
+    if (app?.availablePackageRef?.context?.namespace && app?.availablePackageRef?.identifier) {
+      const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
+      try {
+        await Chart.getAvailablePackageVersions(
+          cluster,
+          repoNamespace,
+          app.availablePackageRef.identifier,
+        );
+        dispatch(receiveRepo(appRepository));
+        return true;
+      } catch (e: any) {
+        dispatch(
+          errorChart(
+            new NotFoundError(
+              `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+            ),
+          ),
+        );
+        return false;
+      }
+    } else {
       dispatch(
-        errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
+        errorChart(
+          new NotFoundError(
+            `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
+          ),
+        ),
       );
       return false;
     }
@@ -410,7 +410,7 @@ export function fetchImagePullSecrets(
         "type=kubernetes.io/dockerconfigjson",
       );
       dispatch(receiveImagePullSecrets(secrets.items));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
     }
   };
@@ -440,7 +440,7 @@ export function createDockerRegistrySecret(
       );
       dispatch(createImagePullSecret(secret));
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
       return false;
     }

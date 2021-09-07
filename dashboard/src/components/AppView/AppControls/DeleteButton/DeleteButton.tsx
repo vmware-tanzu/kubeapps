@@ -2,20 +2,20 @@ import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import { push } from "connected-react-router";
+import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { hapi } from "../../../../shared/hapi/release";
-import StatusAwareButton from "../StatusAwareButton";
+import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 
 interface IDeleteButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
-  releaseStatus: hapi.release.IStatus | undefined | null;
+  releaseStatus: InstalledPackageStatus | undefined | null;
 }
 
 export default function DeleteButton({

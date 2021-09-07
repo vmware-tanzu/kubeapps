@@ -1,8 +1,9 @@
-import React from "react";
 import { shallow } from "enzyme";
+import React from "react";
 import Checkbox from ".";
 
 const defaultProps = {
+  id: "test",
   name: "test",
   label: "I agree",
   value: false,

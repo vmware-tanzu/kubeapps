@@ -1,11 +1,9 @@
-import context from "jest-plugin-context";
-
-import * as ReactRedux from "react-redux";
-
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import context from "jest-plugin-context";
+import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
+import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "shared/types";
 import AccessURLTable from "./AccessURLTable";
 
 const defaultProps = {

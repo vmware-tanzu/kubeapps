@@ -136,12 +136,16 @@ export class Kube {
     verb: string,
     namespace: string,
   ) {
-    const { data } = await axiosWithAuth.post<{ allowed: boolean }>(url.backend.canI(cluster), {
-      group,
-      resource,
-      verb,
-      namespace,
-    });
-    return data.allowed;
+    try {
+      const { data } = await axiosWithAuth.post<{ allowed: boolean }>(url.backend.canI(cluster), {
+        group,
+        resource,
+        verb,
+        namespace,
+      });
+      return data?.allowed ? data.allowed : false;
+    } catch (e: any) {
+      return false;
+    }
   }
 }

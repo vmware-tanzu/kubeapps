@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"sort"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -28,10 +29,12 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -56,9 +59,12 @@ import (
 
 const (
 	globalPackagingNamespace = "kubeapps"
+	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
+	DefaultReleaseRevision   = 1
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
+	DefaultChartHomeURL      = "https://helm.sh/helm"
 	DefaultChartCategory     = "cat1"
 )
 
@@ -78,7 +84,7 @@ func TestGetClient(t *testing.T) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	testClientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+	testClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 			runtime.NewScheme(),
 			map[schema.GroupVersionResource]string{
@@ -118,7 +124,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:    "it returns failed-precondition when configGetter itself errors",
 			manager: manager,
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+			clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 				return nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCodeClient:  codes.FailedPrecondition,
@@ -135,7 +141,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
-			typedClient, dynamicClient, errClient := s.GetClients(context.Background())
+			typedClient, dynamicClient, errClient := s.GetClients(context.Background(), "")
 
 			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
@@ -321,10 +327,12 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
-				Name:             "foo",
-				DisplayName:      "foo",
-				LatestPkgVersion: "3.0.0",
-				LatestAppVersion: DefaultAppVersion,
+				Name:        "foo",
+				DisplayName: "foo",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
 				IconUrl:          "foo.bar/icon.svg",
 				ShortDescription: "best chart",
 				Categories:       []string{DefaultChartCategory},
@@ -353,11 +361,13 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
-				Name:             "foo",
-				DisplayName:      "foo",
-				LatestPkgVersion: "3.0.0",
-				LatestAppVersion: DefaultAppVersion,
-				Categories:       []string{""},
+				Name:        "foo",
+				DisplayName: "foo",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Categories: []string{""},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
@@ -387,7 +397,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -397,17 +407,20 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 }
 
 // makeChart makes a chart with specific input used in the test and default constants for other relevant data.
-func makeChart(chart_name, repo_name, namespace string, chart_versions []string) *models.Chart {
+func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions []string, category string) *models.Chart {
 	ch := &models.Chart{
 		Name:        chart_name,
 		ID:          fmt.Sprintf("%s/%s", repo_name, chart_name),
-		Category:    DefaultChartCategory,
+		Category:    category,
 		Description: DefaultChartDescription,
+		Home:        DefaultChartHomeURL,
 		Icon:        DefaultChartIconURL,
 		Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+		Sources:     []string{"http://source-1"},
 		Repo: &models.Repo{
 			Name:      repo_name,
 			Namespace: namespace,
+			URL:       repo_url,
 		},
 	}
 	versions := []models.ChartVersion{}
@@ -472,7 +485,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
 	})
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+	clientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 		return clientSet, dynamicClient, nil
 	}
 
@@ -483,7 +496,8 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		clientGetter:             clientGetter,
 		manager:                  manager,
 		globalPackagingNamespace: globalPackagingNamespace,
-		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
+		globalPackagingCluster:   globalPackagingCluster,
+		actionConfigGetter: func(context.Context, string, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
 	}, mock, cleanup
@@ -491,13 +505,14 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name             string
-		charts           []*models.Chart
-		expectDBQuery    bool
-		statusCode       codes.Code
-		request          *corev1.GetAvailablePackageSummariesRequest
-		expectedResponse *corev1.GetAvailablePackageSummariesResponse
-		authorized       bool
+		name                   string
+		charts                 []*models.Chart
+		expectDBQueryNamespace string
+		statusCode             codes.Code
+		request                *corev1.GetAvailablePackageSummariesRequest
+		expectedResponse       *corev1.GetAvailablePackageSummariesResponse
+		authorized             bool
+		expectedCategories     []*models.ChartCategory
 	}{
 		{
 			name:       "it returns a set of availablePackageSummary from the database (global ns)",
@@ -508,42 +523,64 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3-global", "repo-1", "http://chart-3", globalPackagingNamespace, []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-1",
-						DisplayName:      "chart-1",
-						LatestPkgVersion: "3.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-1",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
 					},
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
 					},
+					{
+						Name:        "chart-3-global",
+						DisplayName: "chart-3-global",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: globalPackagingNamespace},
+							Identifier: "repo-1/chart-3-global",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
 				},
+				Categories: []string{"cat1"},
 			},
 			statusCode: codes.OK,
 		},
@@ -552,46 +589,103 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			authorized: true,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
-					Cluster:   "",
 					Namespace: "my-ns",
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: "my-ns",
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-1",
-						DisplayName:      "chart-1",
-						LatestPkgVersion: "3.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-1",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
 					},
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
 					},
 				},
+				Categories: []string{"cat1"},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it returns a set of the global availablePackageSummary from the database (not the specific ns on other cluster)",
+			authorized: true,
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "other",
+					Namespace: "my-ns",
+				},
+			},
+			expectDBQueryNamespace: globalPackagingNamespace,
+			charts: []*models.Chart{
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					{
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
+							Identifier: "repo-1/chart-1",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+					{
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{DefaultChartCategory},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
+							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+				},
+				Categories: []string{"cat1"},
 			},
 			statusCode: codes.OK,
 		},
@@ -603,9 +697,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "",
 				},
 			},
-			expectDBQuery: false,
-			charts:        []*models.Chart{},
-			statusCode:    codes.Unimplemented,
+			charts:     []*models.Chart{},
+			statusCode: codes.Unimplemented,
 		},
 		{
 			name:       "it returns an internal error status if response does not contain version",
@@ -616,9 +709,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 			},
-			expectDBQuery: true,
-			charts:        []*models.Chart{makeChart("chart-1", "repo-1", "my-ns", []string{})},
-			statusCode:    codes.Internal,
+			expectDBQueryNamespace: globalPackagingNamespace,
+			charts:                 []*models.Chart{makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{}, DefaultChartCategory)},
+			statusCode:             codes.Internal,
 		},
 		{
 			name:       "it returns an unauthenticated status if the user doesn't have permissions",
@@ -628,9 +721,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "my-ns",
 				},
 			},
-			expectDBQuery: false,
-			charts:        []*models.Chart{{Name: "foo"}},
-			statusCode:    codes.Unauthenticated,
+			charts:     []*models.Chart{{Name: "foo"}},
+			statusCode: codes.Unauthenticated,
 		},
 		{
 			name:       "it returns only the requested page of results and includes the next page token",
@@ -645,30 +737,33 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					PageSize:  1,
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
-				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3", "repo-1", "http://chart-3", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						Categories:       []string{DefaultChartCategory},
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-2",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
 					},
 				},
 				NextPageToken: "3",
+				Categories:    []string{"cat1"},
 			},
 		},
 		{
@@ -686,30 +781,33 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					PageSize:  2,
 				},
 			},
-			expectDBQuery: true,
+			expectDBQueryNamespace: globalPackagingNamespace,
 			charts: []*models.Chart{
-				makeChart("chart-1", "repo-1", "my-ns", []string{"3.0.0"}),
-				makeChart("chart-2", "repo-1", "my-ns", []string{"2.0.0"}),
-				makeChart("chart-3", "repo-1", "my-ns", []string{"1.0.0"}),
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, DefaultChartCategory),
+				makeChart("chart-3", "repo-1", "http://chart-3", "my-ns", []string{"1.0.0"}, DefaultChartCategory),
 			},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-3",
-						DisplayName:      "chart-3",
-						LatestPkgVersion: "1.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-3",
+						DisplayName: "chart-3",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
 						AvailablePackageRef: &corev1.AvailablePackageReference{
-							Context:    &corev1.Context{Namespace: "my-ns"},
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
 							Identifier: "repo-1/chart-3",
 							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 						},
 					},
 				},
 				NextPageToken: "",
+				Categories:    []string{"cat1"},
 			},
 		},
 		{
@@ -725,8 +823,77 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					PageSize:  2,
 				},
 			},
-			expectDBQuery: false,
-			statusCode:    codes.InvalidArgument,
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name:       "it returns the proper chart categories",
+			authorized: true,
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: "my-ns",
+				},
+			},
+			expectDBQueryNamespace: "my-ns",
+			charts: []*models.Chart{
+				makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{"3.0.0"}, "foo"),
+				makeChart("chart-2", "repo-1", "http://chart-2", "my-ns", []string{"2.0.0"}, "bar"),
+				makeChart("chart-3", "repo-1", "http://chart-3", "my-ns", []string{"1.0.0"}, "bar"),
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					{
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{"foo"},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
+							Identifier: "repo-1/chart-1",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+					{
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{"bar"},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
+							Identifier: "repo-1/chart-2",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+					{
+						Name:        "chart-3",
+						DisplayName: "chart-3",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.0.0",
+							AppVersion: DefaultAppVersion,
+						},
+						IconUrl:          DefaultChartIconURL,
+						Categories:       []string{"bar"},
+						ShortDescription: DefaultChartDescription,
+						AvailablePackageRef: &corev1.AvailablePackageReference{
+							Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: "my-ns"},
+							Identifier: "repo-1/chart-3",
+							Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+						},
+					},
+				},
+				Categories: []string{"bar", "foo"},
+			},
+			statusCode: codes.OK,
 		},
 	}
 
@@ -744,17 +911,42 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				rows.AddRow(row)
 			}
 
-			if tc.expectDBQuery {
+			if tc.expectDBQueryNamespace != "" {
 				// Checking if the WHERE condtion is properly applied
+
+				// Check returned categories
+				catrows := sqlmock.NewRows([]string{"name", "count"})
+
+				// Generate the categories from the tc.charts input
+				dict := make(map[string]int)
+				for _, chart := range tc.charts {
+					dict[chart.Category] = dict[chart.Category] + 1
+				}
+				// Ensure we've got a fixed order for the results.
+				categories := []string{}
+				for category := range dict {
+					categories = append(categories, category)
+				}
+				sort.Strings(categories)
+				for _, category := range categories {
+					catrows.AddRow(category, dict[category])
+				}
+
+				mock.ExpectQuery("SELECT (info ->> 'category')*").
+					WithArgs(tc.expectDBQueryNamespace, server.globalPackagingNamespace).
+					WillReturnRows(catrows)
+
 				mock.ExpectQuery("SELECT info FROM").
-					WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
+					WithArgs(tc.expectDBQueryNamespace, server.globalPackagingNamespace).
 					WillReturnRows(rows)
+
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
 					mock.ExpectQuery("SELECT count").
 						WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
 						WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
 				}
 			}
+
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
@@ -762,7 +954,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -785,7 +977,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 	}{
 		{
 			name:  "it returns AvailablePackageDetail if the chart is correct",
-			chart: makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"}),
+			chart: makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 			chartFiles: &models.ChartFiles{
 				Readme: "chart readme",
 				Values: "chart values",
@@ -794,16 +986,21 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 			expected: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
+				RepoUrl:          "http://foo",
+				HomeUrl:          DefaultChartHomeURL,
 				IconUrl:          DefaultChartIconURL,
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
-				PkgVersion:       "3.0.0",
-				AppVersion:       DefaultAppVersion,
-				Readme:           "chart readme",
-				DefaultValues:    "chart values",
-				ValuesSchema:     "chart schema",
-				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				ValuesSchema:  "chart schema",
+				SourceUrls:    []string{"http://source-1"},
+				Maintainers:   []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "repo-1/foo",
@@ -833,7 +1030,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetail, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -860,20 +1057,24 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "repo-1%2Ffoo",
 				},
 			},
-			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0"})},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0"}, DefaultChartCategory)},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
+				HomeUrl:          DefaultChartHomeURL,
+				RepoUrl:          "http://foo",
 				IconUrl:          DefaultChartIconURL,
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
-				LongDescription:  "",
-				PkgVersion:       "3.0.0",
-				AppVersion:       DefaultAppVersion,
-				Readme:           "chart readme",
-				DefaultValues:    "chart values",
-				ValuesSchema:     "chart schema",
-				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				ValuesSchema:  "chart schema",
+				SourceUrls:    []string{"http://source-1"},
+				Maintainers:   []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "repo-1/foo",
@@ -892,20 +1093,25 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 				PkgVersion: "1.0.0",
 			},
-			charts: []*models.Chart{makeChart("foo", "repo-1", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			charts: []*models.Chart{makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
 			expectedPackage: &corev1.AvailablePackageDetail{
 				Name:             "foo",
 				DisplayName:      "foo",
+				HomeUrl:          DefaultChartHomeURL,
+				RepoUrl:          "http://foo",
 				IconUrl:          DefaultChartIconURL,
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
-				PkgVersion:       "1.0.0",
-				AppVersion:       DefaultAppVersion,
-				Readme:           "chart readme",
-				DefaultValues:    "chart values",
-				ValuesSchema:     "chart schema",
-				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "1.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				ValuesSchema:  "chart schema",
+				SourceUrls:    []string{"http://source-1"},
+				Maintainers:   []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "repo-1/foo",
@@ -913,6 +1119,29 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 			},
 			statusCode: codes.OK,
+		},
+		{
+			name:       "it returns an invalid arg error status if no context is provided",
+			authorized: true,
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "foo/bar",
+				},
+			},
+			charts:     []*models.Chart{{Name: "foo"}},
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name:       "it returns an invalid arg error status if cluster is not the global/kubeapps one",
+			authorized: true,
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Cluster: "other-cluster", Namespace: "my-ns"},
+					Identifier: "foo/bar",
+				},
+			},
+			charts:     []*models.Chart{{Name: "foo"}},
+			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:       "it returns an internal error status if the chart is invalid",
@@ -979,7 +1208,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				mock.ExpectQuery("SELECT info FROM charts").
 					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, chartIDUnescaped).
 					WillReturnRows(rows)
-				fileID := fileIDForChart(chartIDUnescaped, tc.expectedPackage.PkgVersion)
+				fileID := fileIDForChart(chartIDUnescaped, tc.expectedPackage.Version.PkgVersion)
 				fileJSON, err := json.Marshal(models.ChartFiles{
 					Readme: tc.expectedPackage.Readme,
 					Values: tc.expectedPackage.DefaultValues,
@@ -1002,7 +1231,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetails.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -1051,8 +1280,18 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
+			name: "it returns invalid argument if called with a cluster other than the global/kubeapps one",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Cluster: "other-cluster", Namespace: "kubeapps"},
+					Identifier: "bitnami/apache",
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
 			name:   "it returns the package version summary",
-			charts: []*models.Chart{makeChart("apache", "bitnami", "kubeapps", []string{"3.0.0", "2.0.0", "1.0.0"})},
+			charts: []*models.Chart{makeChart("apache", "bitnami", "http://apache", "kubeapps", []string{"3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
@@ -1063,7 +1302,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+				PackageAppVersions: []*corev1.PackageAppVersion{
 					{
 						PkgVersion: "3.0.0",
 						AppVersion: DefaultAppVersion,
@@ -1113,7 +1352,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1129,7 +1368,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 	testCases := []struct {
 		name            string
 		chart_versions  []models.ChartVersion
-		version_summary []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion
+		version_summary []*corev1.PackageAppVersion
 	}{
 		{
 			name: "it includes the latest three major versions only",
@@ -1139,7 +1378,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "6.5.6", AppVersion: DefaultAppVersion},
 				{Version: "5.5.6", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "7.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
@@ -1153,7 +1392,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "8.3.6", AppVersion: DefaultAppVersion},
 				{Version: "8.2.6", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
@@ -1167,7 +1406,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "8.5.4", AppVersion: DefaultAppVersion},
 				{Version: "8.5.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
@@ -1241,7 +1480,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "2.2.4", AppVersion: DefaultAppVersion},
 				{Version: "2.2.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
@@ -1273,7 +1512,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		},
 	}
 
-	opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+	opts := cmpopts.IgnoreUnexported(corev1.PackageAppVersion{})
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1303,17 +1542,20 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      2,
 				},
 				{
 					name:      "my-release-2",
 					namespace: "other-namespace",
 					status:    release.StatusDeployed,
+					version:   4,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-1",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      6,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1322,6 +1564,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1331,12 +1574,24 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.3",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.3",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-3",
@@ -1346,8 +1601,19 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "4.5.6",
 						},
-						CurrentPkgVersion: "4.5.6",
-						LatestPkgVersion:  "4.5.6",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "4.5.6",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "4.5.6",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 			},
@@ -1363,18 +1629,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1383,6 +1652,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1392,12 +1662,24 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.3",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.3",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
@@ -1407,12 +1689,24 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "3.4.5",
 						},
-						CurrentPkgVersion: "3.4.5",
-						LatestPkgVersion:  "3.4.5",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "3.4.5",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.4.5",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
@@ -1422,8 +1716,19 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "4.5.6",
 						},
-						CurrentPkgVersion: "4.5.6",
-						LatestPkgVersion:  "4.5.6",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "4.5.6",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "4.5.6",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 			},
@@ -1442,18 +1747,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1462,6 +1770,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1471,12 +1780,24 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.3",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.3",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
@@ -1486,8 +1807,19 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "3.4.5",
 						},
-						CurrentPkgVersion: "3.4.5",
-						LatestPkgVersion:  "3.4.5",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "3.4.5",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.4.5",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 				NextPageToken: "3",
@@ -1508,18 +1840,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1528,6 +1863,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
@@ -1537,8 +1873,19 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "4.5.6",
 						},
-						CurrentPkgVersion: "4.5.6",
-						LatestPkgVersion:  "4.5.6",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "4.5.6",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "4.5.6",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1555,6 +1902,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1563,6 +1911,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					{
 						InstalledPackageRef: &corev1.InstalledPackageReference{
 							Context: &corev1.Context{
+								Cluster:   globalPackagingCluster,
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
@@ -1572,8 +1921,19 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.5",
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.5",
+						},
+						Status: &corev1.InstalledPackageStatus{
+							Ready:      true,
+							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+							UserReason: "deployed",
+						},
 					},
 				},
 			},
@@ -1588,7 +1948,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			defer cleanup()
 
 			if tc.expectedStatusCode == codes.OK {
-				populateAssetDB(t, mock, tc.expectedResponse.InstalledPackageSummaries)
+				populateAssetDBWithSummaries(t, mock, tc.expectedResponse.InstalledPackageSummaries)
 			}
 
 			response, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
@@ -1602,7 +1962,149 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+func TestGetInstalledPackageDetail(t *testing.T) {
+	customDetailRevision2, err := anypb.New(&helmv1.InstalledPackageDetailCustomDataHelm{
+		ReleaseRevision: 2,
+	})
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	const (
+		releaseNamespace = "my-namespace-1"
+		releaseName      = "my-release-1"
+		releaseVersion   = "1.2.3"
+		releaseValues    = "{\"value\":\"new\"}"
+		releaseNotes     = "some notes"
+	)
+	testCases := []struct {
+		name               string
+		existingReleases   []releaseStub
+		request            *corev1.GetInstalledPackageDetailRequest
+		expectedResponse   *corev1.GetInstalledPackageDetailResponse
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "returns an installed package detail",
+			existingReleases: []releaseStub{
+				{
+					name:         releaseName,
+					namespace:    releaseNamespace,
+					chartVersion: releaseVersion,
+					values:       releaseValues,
+					notes:        releaseNotes,
+					status:       release.StatusSuperseded,
+					version:      1,
+				},
+				{
+					name:         releaseName,
+					namespace:    releaseNamespace,
+					chartVersion: releaseVersion,
+					values:       releaseValues,
+					notes:        releaseNotes,
+					status:       release.StatusDeployed,
+					version:      2,
+				},
+			},
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: releaseNamespace,
+						Cluster:   globalPackagingCluster,
+					},
+					Identifier: releaseName,
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: &corev1.InstalledPackageDetail{
+					InstalledPackageRef: &corev1.InstalledPackageReference{
+						Context: &corev1.Context{
+							Namespace: releaseNamespace,
+							Cluster:   globalPackagingCluster,
+						},
+						Identifier: releaseName,
+					},
+					PkgVersionReference: &corev1.VersionReference{
+						Version: releaseVersion,
+					},
+					Name: releaseName,
+					CurrentVersion: &corev1.PackageAppVersion{
+						PkgVersion: releaseVersion,
+						AppVersion: DefaultAppVersion,
+					},
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: releaseVersion,
+						AppVersion: DefaultAppVersion,
+					},
+					ValuesApplied:         releaseValues,
+					PostInstallationNotes: releaseNotes,
+					Status: &corev1.InstalledPackageStatus{
+						Ready:      true,
+						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+						UserReason: "deployed",
+					},
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: releaseNamespace,
+							Cluster:   globalPackagingCluster,
+						},
+						Identifier: "myrepo/" + releaseName,
+						Plugin:     GetPluginDetail(),
+					},
+					CustomDetail: customDetailRevision2,
+				},
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "returns a 404 if the installed package is not found",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: releaseNamespace,
+					},
+					Identifier: releaseName,
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			authorized := true
+			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases)
+			server, mock, cleanup := makeServer(t, authorized, actionConfig)
+			defer cleanup()
+
+			if tc.expectedStatusCode == codes.OK {
+				populateAssetDBWithDetail(t, mock, tc.expectedResponse.InstalledPackageDetail)
+			}
+
+			response, err := server.GetInstalledPackageDetail(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.AvailablePackageReference{}, plugins.Plugin{}, corev1.PackageAppVersion{}, anypb.Any{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1633,7 +2135,7 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 	}
 
 	for _, r := range rels {
-		rel := releaseForStub(r)
+		rel := releaseForStub(t, r)
 		err := actionConfig.Releases.Create(rel)
 		if err != nil {
 			t.Fatal(err)
@@ -1646,32 +2148,42 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 	return actionConfig
 }
 
-func releaseForStub(r releaseStub) *release.Release {
+func releaseForStub(t *testing.T, r releaseStub) *release.Release {
+	config := map[string]interface{}{}
+	if r.values != "" {
+		err := json.Unmarshal([]byte(r.values), &config)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
 	return &release.Release{
 		Name:      r.name,
 		Namespace: r.namespace,
 		Version:   r.version,
 		Info: &release.Info{
 			Status: r.status,
+			Notes:  r.notes,
 		},
 		Chart: &chart.Chart{
 			Metadata: &chart.Metadata{
-				Version: r.chartVersion,
-				Icon:    "https://example.com/icon.png",
+				Version:    r.chartVersion,
+				Icon:       "https://example.com/icon.png",
+				AppVersion: DefaultAppVersion,
 			},
 		},
+		Config: config,
 	}
 }
 
 func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
 	chartVersions := []models.ChartVersion{}
-	if pkg.LatestPkgVersion != "" {
+	if pkg.LatestVersion.PkgVersion != "" {
 		chartVersions = append(chartVersions, models.ChartVersion{
-			Version: pkg.LatestPkgVersion,
+			Version: pkg.LatestVersion.PkgVersion,
 		})
 	}
 	chartVersions = append(chartVersions, models.ChartVersion{
-		Version: pkg.CurrentPkgVersion,
+		Version: pkg.CurrentVersion.PkgVersion,
 	})
 
 	return &models.Chart{
@@ -1680,11 +2192,62 @@ func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
 	}
 }
 
-func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
+func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
+	chartVersions := []models.ChartVersion{}
+	if rel.latestVersion != "" {
+		chartVersions = append(chartVersions, models.ChartVersion{
+			Version: rel.latestVersion,
+		})
+	}
+	chartVersions = append(chartVersions, models.ChartVersion{
+		Version:    rel.chartVersion,
+		AppVersion: DefaultAppVersion,
+	})
+
+	return &models.Chart{
+		Name: rel.name,
+		ID:   rel.chartID,
+		Repo: &models.Repo{
+			Namespace: rel.namespace,
+		},
+		ChartVersions: chartVersions,
+	}
+}
+
+func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
+	rels := []*releaseStub{}
 	for _, pkg := range pkgs {
-		chartJSON, err := json.Marshal(chartAssetForPackage(pkg))
+		rels = append(rels, &releaseStub{
+			name:          pkg.Name,
+			namespace:     pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
+			chartVersion:  pkg.CurrentVersion.PkgVersion,
+			latestVersion: pkg.LatestVersion.PkgVersion,
+			version:       DefaultReleaseRevision,
+		})
+	}
+	populateAssetDB(t, mock, rels)
+}
+
+func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.InstalledPackageDetail) {
+	// The code currently executes one query per release in the paginated
+	// results and should receive a single row response.
+	rel := &releaseStub{
+		name:         pkg.Name,
+		namespace:    pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
+		chartVersion: pkg.CurrentVersion.PkgVersion,
+		chartID:      pkg.AvailablePackageRef.Identifier,
+		version:      DefaultReleaseRevision,
+	}
+	populateAssetDB(t, mock, []*releaseStub{rel})
+}
+
+func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []*releaseStub) {
+	// The code currently executes one query per release in the paginated
+	// results and should receive a single row response.
+	for _, rel := range rels {
+		chartJSON, err := json.Marshal(chartAssetForReleaseStub(rel))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -1700,6 +2263,9 @@ type releaseStub struct {
 	namespace     string
 	version       int
 	chartVersion  string
+	chartID       string
 	latestVersion string
+	values        string
+	notes         string
 	status        release.Status
 }

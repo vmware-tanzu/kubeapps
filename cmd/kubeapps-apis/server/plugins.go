@@ -47,7 +47,7 @@ const (
 )
 
 // KubernetesConfigGetter is a function type used by plugins to get a k8s config
-type KubernetesConfigGetter func(context.Context) (*rest.Config, error)
+type KubernetesConfigGetter func(ctx context.Context, cluster string) (*rest.Config, error)
 
 // pkgsPluginWithServer stores the plugin detail together with its implementation.
 type pkgsPluginWithServer struct {
@@ -67,6 +67,9 @@ type pluginsServer struct {
 	// TODO: Update the plugins server to be able to register different versions
 	// of core plugins.
 	packagesPlugins []*pkgsPluginWithServer
+
+	// The parsed config for clusters in a multi-cluster setup.
+	clustersConfig kube.ClustersConfig
 }
 
 func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*pluginsServer, error) {
@@ -79,6 +82,13 @@ func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, g
 	}
 
 	ps := &pluginsServer{}
+
+	// get the parsed kube.ClustersConfig from the serveOpts
+	clustersConfig, err := getClustersConfigFromServeOpts(serveOpts)
+	if err != nil {
+		return nil, err
+	}
+	ps.clustersConfig = clustersConfig
 
 	pluginDetails, err := ps.registerPlugins(pluginPaths, registrar, gwArgs, serveOpts)
 	if err != nil {
@@ -111,7 +121,7 @@ func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.Ge
 func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs, serveOpts ServeOptions) ([]*plugins.Plugin, error) {
 	pluginDetails := []*plugins.Plugin{}
 
-	configGetter, err := createConfigGetter(serveOpts)
+	configGetter, err := createConfigGetter(serveOpts, s.clustersConfig)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create a ClientGetter: %w", err)
 	}
@@ -148,15 +158,17 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter) (interface{}, error)
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter, kube.ClustersConfig) (interface{}, error)
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter) (interface{}, error) { return nil, nil }
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter, kube.ClustersConfig) (interface{}, error) {
+			return nil, nil
+		}
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
 
-	server, err := grpcFn(registrar, clientGetter)
+	server, err := grpcFn(registrar, clientGetter, s.clustersConfig)
 	if err != nil {
 		return fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)
 	} else if server == nil {
@@ -259,19 +271,13 @@ func listSOFiles(fsys fs.FS, pluginDirs []string) ([]string, error) {
 // createConfigGetter returns a function closure for creating the k8s config to interact with the cluster.
 // The returned function utilizes the user credential present in the request context.
 // The plugins just have to call this function passing the context in order to retrieve the configured k8s client
-func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) {
+func createConfigGetter(serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (KubernetesConfigGetter, error) {
 	var restConfig *rest.Config
-	var clustersConfig kube.ClustersConfig
 	var err error
 
-	if !serveOpts.UnsafeLocalDevKubeconfig {
-		// get the default rest inCluster config for the kube.NewClusterConfig function
-		restConfig, err = rest.InClusterConfig()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
-		}
-	} else {
-		// using the local kubeconfig instead of the inCluster config
+	if serveOpts.UnsafeLocalDevKubeconfig {
+		// if using the local kubeconfig, read it from the KUBECONFIG path and
+		// create the restConfig
 		log.Warningf("Using the local kubeconfig configuration (in KUBECONFIG='%s' envar) since you passed --unsafe-local-dev-kubeconfig=true", os.Getenv("KUBECONFIG"))
 		kubeconfigBytes, err := ioutil.ReadFile(os.Getenv("KUBECONFIG"))
 		if err != nil {
@@ -281,17 +287,12 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 		if err != nil {
 			return nil, fmt.Errorf("unable to get local KUBECONFIG='%s' file: %w", os.Getenv("KUBECONFIG"), err)
 		}
-	}
-
-	if !serveOpts.UnsafeUseDemoSA {
-		// get the parsed kube.ClustersConfig from the serveOpts
-		clustersConfig, err = getClustersConfigFromServeOpts(serveOpts)
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		// Just using the created SA, no user account nor clustersConfig is used here
-		clustersConfig = kube.ClustersConfig{}
+		// otherwise, get the default rest inCluster config for the kube.NewClusterConfig function
+		restConfig, err = rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
+		}
 	}
 
 	// return the closure fuction that takes the context, but preserving the required scope,
@@ -304,7 +305,7 @@ func createConfigGetter(serveOpts ServeOptions) (KubernetesConfigGetter, error) 
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeOptions, clustersConfig kube.ClustersConfig) (KubernetesConfigGetter, error) {
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return func(ctx context.Context) (*rest.Config, error) {
+	return func(ctx context.Context, cluster string) (*rest.Config, error) {
 		log.Infof("+clientGetter.GetClient")
 		var err error
 		token, err := extractToken(ctx)
@@ -313,16 +314,22 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 		}
 
 		var config *rest.Config
-		if !serveOpts.UnsafeUseDemoSA {
-			// We are using the KubeappsClusterName, but if the endpoint was cluster-scoped,
-			// we should pass the cluster name instead
-			config, err = kube.NewClusterConfig(inClusterConfig, token, clustersConfig.KubeappsClusterName, clustersConfig)
+
+		// Enable existing plugins to pass an empty cluster name to get the
+		// kubeapps cluster for now, until we support (or otherwise decide)
+		// multicluster configuration of all plugins.
+		if cluster == "" {
+			cluster = clustersConfig.KubeappsClusterName
+		}
+		if cluster == clustersConfig.KubeappsClusterName && serveOpts.UnsafeUseDemoSA {
+			// If using the priviledged servicceAccount, just use the default inClusterConfig
+			// instead of creating a user config with authentication
+			config = inClusterConfig
+		} else {
+			config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 			}
-		} else {
-			// Just using the created SA, no user account is used
-			config = inClusterConfig
 		}
 		return config, nil
 	}, nil
@@ -356,8 +363,14 @@ func extractToken(ctx context.Context) (string, error) {
 // returning a kube.ClustersConfig
 func getClustersConfigFromServeOpts(serveOpts ServeOptions) (kube.ClustersConfig, error) {
 	if serveOpts.ClustersConfigPath == "" {
-		return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+		if serveOpts.UnsafeLocalDevKubeconfig {
+			// if using a local kubeconfig (dev purposes), this ClusterConfig file is not strictly required
+			return kube.ClustersConfig{}, nil
+		} else {
+			return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+		}
 	}
+
 	var cleanupCAFiles func()
 	config, cleanupCAFiles, err := kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
 	if err != nil {

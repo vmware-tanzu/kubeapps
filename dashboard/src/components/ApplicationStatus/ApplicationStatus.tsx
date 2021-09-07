@@ -1,13 +1,15 @@
 import { CdsIcon } from "@cds/react/icon";
+import isSomeResourceLoading from "components/AppView/helpers";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import {
+  InstalledPackageDetail,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { flatten, get } from "lodash";
-
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
-
-import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import ReactTooltip from "react-tooltip";
-import isSomeResourceLoading from "../../components/AppView/helpers";
-import { hapi } from "../../shared/hapi/release";
 import { IK8sList, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
@@ -15,7 +17,7 @@ interface IApplicationStatusProps {
   deployments: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   statefulsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   daemonsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
-  info?: hapi.release.IInfo;
+  info?: InstalledPackageDetail;
 }
 
 interface IWorkload {
@@ -39,21 +41,17 @@ function flattenItemList(items: Array<IKubeItem<IResource | IK8sList<IResource, 
   ).filter(r => !!r);
 }
 
-function codeToString(status: hapi.release.IStatus | null | undefined) {
-  // Codes from https://github.com/helm/helm/blob/268695813ba957821e53a784ac849aa3ca7f70a3/_proto/hapi/release/status.proto
+function codeToString(status: InstalledPackageStatus | null | undefined) {
   const codes = {
-    0: "Unknown",
-    1: "Deployed",
-    2: "Deleted",
-    3: "Superseded",
-    4: "Failed",
-    5: "Deleting",
-    6: "Pending Install",
-    7: "Pending Upgrade",
-    8: "Pending Rollback",
+    [InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED]: "Unknown",
+    [InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED]: "Installed",
+    [InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED]: "Deleted",
+    [InstalledPackageStatus_StatusReason.STATUS_REASON_FAILED]: "Failed",
+    [InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING]: "Pending",
+    [InstalledPackageStatus_StatusReason.UNRECOGNIZED]: "Unknown",
   };
-  if (status && status.code) {
-    return codes[status.code];
+  if (status && status.reason) {
+    return codes[status.reason];
   }
   return codes[0];
 }
@@ -123,7 +121,7 @@ export default function ApplicationStatus({
       </div>
     );
   }
-  if (info && info.deleted) {
+  if (info?.status?.reason === InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED) {
     return (
       <div className="center">
         <div className="color-icon-danger">
@@ -134,12 +132,12 @@ export default function ApplicationStatus({
   }
   if (info && info.status) {
     // If the status code is different than "Deployed", display that status
-    const helmStatus = codeToString(info.status);
-    if (helmStatus !== "Deployed") {
+    const packageStatus = codeToString(info.status);
+    if (info.status.reason !== InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED) {
       return (
         <div className="center">
           <div className="color-icon-warning">
-            <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> Status: {helmStatus}
+            <CdsIcon shape="exclamation-triangle" size="md" solid={true} /> Status: {packageStatus}
           </div>
         </div>
       );

@@ -1,7 +1,7 @@
+import ResourceRef from "shared/ResourceRef";
+import { IKubeState, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import ResourceRef from "../shared/ResourceRef";
-import { IKubeState, IResource } from "../shared/types";
 import kubeReducer, { initialKinds } from "./kube";
 
 const clusterName = "cluster-name";

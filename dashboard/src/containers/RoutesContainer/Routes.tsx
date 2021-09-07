@@ -1,16 +1,17 @@
 import AppList from "components/AppList/AppList";
+import AppUpgrade from "components/AppUpgrade";
 import AppView from "components/AppView";
+import Catalog from "components/Catalog/Catalog";
+import ChartView from "components/ChartView";
 import AppRepoList from "components/Config/AppRepoList";
+import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
 import React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
+import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
-import AppNewContainer from "../../containers/AppNewContainer";
-import AppUpgradeContainer from "../../containers/AppUpgradeContainer";
-import CatalogContainer from "../../containers/CatalogContainer";
-import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
 import OperatorInstanceUpdateContainer from "../../containers/OperatorInstanceUpdateContainer";
@@ -19,24 +20,22 @@ import OperatorNewContainer from "../../containers/OperatorNewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
-import { app } from "../../shared/url";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
   "/c/:cluster/ns/:namespace/apps/:releaseName": AppView,
-  "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgradeContainer,
-  "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": AppNewContainer,
+  "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgrade,
+  "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": DeploymentForm,
   "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:id/versions/:version":
-    AppNewContainer,
-  "/c/:cluster/ns/:namespace/catalog": CatalogContainer,
-  "/c/:cluster/ns/:namespace/catalog/:repo": CatalogContainer,
-  "/c/:cluster/ns/:namespace/charts/:repo/:id": ChartViewContainer,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartViewContainer,
-  "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartViewContainer,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version":
-    ChartViewContainer,
+    DeploymentForm,
+  "/c/:cluster/ns/:namespace/catalog": Catalog,
+  "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,
+  "/c/:cluster/ns/:namespace/charts/:repo/:id": ChartView,
+  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartView,
+  "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartView,
+  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version": ChartView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
   "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,
@@ -81,10 +80,14 @@ class Routes extends React.Component<IRoutesProps> {
       if (!this.props.cluster || !this.props.currentNamespace) {
         return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Cluster Info..." />;
       }
-      return <Redirect to={app.apps.list(this.props.cluster, this.props.currentNamespace)} />;
+      return (
+        <Redirect
+          to={{ pathname: app.apps.list(this.props.cluster, this.props.currentNamespace) }}
+        />
+      );
     }
     // There is not a default namespace, redirect to login page
-    return <Redirect to={"/login"} />;
+    return <Redirect to={{ pathname: "/login" }} />;
   };
 }
 

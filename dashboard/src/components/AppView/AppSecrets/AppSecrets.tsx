@@ -1,9 +1,8 @@
+import LoadingWrapper from "components/LoadingWrapper";
 import { isEmpty } from "lodash";
 import { useSelector } from "react-redux";
-import { ISecret, IStoreState } from "shared/types";
-
-import LoadingWrapper from "components/LoadingWrapper";
 import ResourceRef from "shared/ResourceRef";
+import { ISecret, IStoreState } from "shared/types";
 import { flattenResources } from "shared/utils";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
 import "./AppSecrets.css";

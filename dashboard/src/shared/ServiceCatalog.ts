@@ -1,5 +1,5 @@
 import { JSONSchema6 } from "json-schema";
-import * as urls from "../shared/url";
+import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { IClusterServiceClass } from "./ClusterServiceClass";
 import { APIBase } from "./Kube";
@@ -26,7 +26,7 @@ export class ServiceCatalog {
 
   public static async syncBroker(cluster: string, broker: IServiceBroker) {
     const { data } = await axiosWithAuth.patch<IStatus>(
-      urls.api.k8s.clusterservicebrokers.sync(cluster, broker),
+      url.api.k8s.clusterservicebrokers.sync(cluster, broker),
       {
         spec: {
           relistRequests: broker.spec.relistRequests + 1,
@@ -34,7 +34,7 @@ export class ServiceCatalog {
       },
       {
         headers: { "Content-Type": "application/merge-patch+json" },
-        validateStatus: statusCode => true,
+        validateStatus: () => true,
       },
     );
     return data;
@@ -44,7 +44,7 @@ export class ServiceCatalog {
     try {
       const { status } = await axiosWithAuth.get(this.endpoint(cluster));
       return status === 200;
-    } catch (err) {
+    } catch (e: any) {
       return false;
     }
   }

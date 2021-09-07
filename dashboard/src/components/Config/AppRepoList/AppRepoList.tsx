@@ -1,26 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
-
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
+import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
 import qs from "qs";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { Kube } from "shared/Kube";
+import { IAppRepository, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { IAppRepository, IStoreState } from "../../../shared/types";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoControl } from "./AppRepoControl";
 import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
 import "./AppRepoList.css";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
-import Tooltip from "components/js/Tooltip";
 
 function AppRepoList() {
   const dispatch = useDispatch();
@@ -167,7 +166,7 @@ function AppRepoList() {
           </p>
           <p>
             The catalog of charts from AppRepositories on the default cluster which are available
-            for all namespaces will be avaialble on additional clusters also, but you can not
+            for all namespaces will be available on additional clusters also, but you can not
             currently create a private AppRepository for a particular namespace of an additional
             cluster. We may in the future support AppRepositories on additional clusters but for now
             you will need to switch back to your default cluster.

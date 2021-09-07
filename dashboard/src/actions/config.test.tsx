@@ -1,8 +1,8 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import Config, { SupportedThemes } from "shared/Config";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import Config, { SupportedThemes } from "../shared/Config";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 describe("getConfig", () => {
@@ -51,17 +51,17 @@ describe("getTheme", () => {
   });
 });
 
-describe("setTheme", () => {
+describe("setUserTheme", () => {
   it("dispatches request config and its returned value", async () => {
-    Config.setTheme = jest.fn();
+    Config.setUserTheme = jest.fn();
     const expectedActions = [
       {
         payload: SupportedThemes.dark,
-        type: getType(actions.config.setThemeState),
+        type: getType(actions.config.receiveTheme),
       },
     ];
 
-    await store.dispatch(actions.config.setTheme(SupportedThemes.dark));
+    await store.dispatch(actions.config.setUserTheme(SupportedThemes.dark));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

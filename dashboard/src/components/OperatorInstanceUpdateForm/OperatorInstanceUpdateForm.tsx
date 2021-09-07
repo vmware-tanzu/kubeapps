@@ -1,7 +1,3 @@
-import { push } from "connected-react-router";
-import * as yaml from "js-yaml";
-import { useEffect, useState } from "react";
-
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -9,12 +5,15 @@ import Row from "components/js/Row";
 import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
+import { push } from "connected-react-router";
+import * as yaml from "js-yaml";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { IClusterServiceVersionCRD, IResource, IStoreState } from "shared/types";
 import * as url from "shared/url";
 import placeholder from "../../placeholder.png";
-import { IClusterServiceVersionCRD, IResource, IStoreState } from "../../shared/types";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
 
 export interface IOperatorInstanceUpgradeFormProps {
@@ -115,7 +114,6 @@ function OperatorInstanceUpdateForm({
             <p>{crd?.description}</p>
             <OperatorInstanceFormBody
               isFetching={isFetching}
-              namespace={namespace}
               handleDeploy={handleDeploy}
               defaultValues={defaultValues}
               deployedValues={currentValues}

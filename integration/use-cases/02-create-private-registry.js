@@ -1,5 +1,6 @@
 const axios = require("axios");
 const utils = require("./lib/utils");
+const testName = "02-create-private-registry";
 
 test("Creates a private registry", async () => {
   var token =
@@ -63,23 +64,23 @@ test("Creates a private registry", async () => {
   await expect(page).toClick("a", { text: repoName });
 
   await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("apache");
-  });
-
-  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-  await expect(page).toClick("a", { text: "apache" });
+    await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 10000 });
+  }, testName);
+  await expect(page).toClick("a", { text: "Apache HTTP Server" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toSelect('select[name="chart-versions"]', "7.3.15");
+  await expect(page).toSelect('select[name="chart-versions"]', "8.6.2");
   const appName = "my-app" + randomNumber;
   await page.type("#releaseName", appName);
 
-  await expect(page).toMatch(/Deploy.*7.3.15/);
+  await expect(page).toMatch(/Deploy.*8.6.2/);
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Update Now", { timeout: 60000 });
+  await utils.retryAndRefresh(page, 2, async () => {
+    await expect(page).toMatch("Update Now", { timeout: 60000 });
+  }, testName);
 
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the kubernetes API to get info of the
@@ -113,7 +114,7 @@ test("Creates a private registry", async () => {
     );
     let chartVersionElementContent = await chartVersionElement.getProperty("value");
     let chartVersionValue = await chartVersionElementContent.jsonValue();
-    expect(chartVersionValue).toEqual("7.3.15");
+    expect(chartVersionValue).toEqual("8.6.2");
   } catch (e) {
     retries--;
     if (!retries) {
@@ -127,7 +128,7 @@ test("Creates a private registry", async () => {
 
   await expect(page).toSelect(
     '.upgrade-form-version-selector select[name="chart-versions"]',
-    "7.3.16",
+    "8.6.3",
   );
 
   await new Promise(r => setTimeout(r, 1000));
@@ -138,11 +139,11 @@ test("Creates a private registry", async () => {
   );
   chartVersionElementContent = await chartVersionElement.getProperty("value");
   chartVersionValue = await chartVersionElementContent.jsonValue();
-  expect(chartVersionValue).toEqual("7.3.16");
+  expect(chartVersionValue).toEqual("8.6.3");
 
   await expect(page).toClick("li", { text: "Changes" });
 
-  await expect(page).toMatch("tag: 2.4.43-debian-10-r54");
+  await expect(page).toMatch("tag: 2.4.48-debian-10-r75");
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

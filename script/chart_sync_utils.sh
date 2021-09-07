@@ -49,6 +49,7 @@ configUser() {
     git config user.signingkey "$gpg"
     git config --global commit.gpgSign true
     git config --global tag.gpgSign true
+    git config pull.rebase false
     cd -
 }
 
@@ -58,6 +59,16 @@ replaceImage_latestToProduction() {
     local repoName="bitnami-docker-kubeapps-${service}"
     local currentImageEscaped="kubeapps\/${service}"
     local targetImageEscaped="bitnami\/kubeapps-${service}"
+
+    # Prevent a wrong image name "bitnami/kubeapps-kubeapps-apis"
+    # with a manual rename to "bitnami/kubeapps-apis"
+    if [ $targetImageEscaped == "bitnami\/kubeapps-kubeapps-apis" ]; then
+        targetImageEscaped="bitnami\/kubeapps-apis"
+    fi
+
+    if [ $repoName == "bitnami-docker-kubeapps-kubeapps-apis" ]; then
+        repoName="bitnami-docker-kubeapps-apis"
+    fi
 
     echo "Replacing ${service}"...
 
@@ -88,6 +99,12 @@ replaceImage_productionToLatest() {
     local repoName="bitnami-docker-kubeapps-${service}"
     local currentImageEscaped="bitnami\/kubeapps-${service}"
     local targetImageEscaped="kubeapps\/${service}"
+
+    # Prevent a wrong image name "bitnami/kubeapps-kubeapps-apis"
+    # with a manual rename to "bitnami/kubeapps-apis"
+    if [ $currentImageEscaped == "bitnami\/kubeapps-kubeapps-apis" ]; then
+        currentImageEscaped="bitnami\/kubeapps-apis"
+    fi
 
     echo "Replacing ${service}"...
 
@@ -124,6 +141,7 @@ updateRepoWithLocalChanges() {
     replaceImage_latestToProduction assetsvc "${targetChartPath}/values.yaml"
     replaceImage_latestToProduction kubeops "${targetChartPath}/values.yaml"
     replaceImage_latestToProduction pinniped-proxy "${targetChartPath}/values.yaml"
+    replaceImage_latestToProduction kubeapps-apis "${targetChartPath}/values.yaml"
 }
 
 updateRepoWithRemoteChanges() {
@@ -141,7 +159,11 @@ updateRepoWithRemoteChanges() {
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
     git -C "${targetRepo}" pull upstream master
-    GIT_SSH_COMMAND="ssh -i ~/.ssh/${forkSSHKeyFilename}" git -C "${targetRepo}" push origin master
+
+    # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
+    git -C "${targetRepo}" config --local core.sshCommand "ssh -i ~/.ssh/${forkSSHKeyFilename} -F /dev/null"
+    git -C "${targetRepo}" push origin master
+
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
     # Update Chart.yaml with new version
@@ -154,6 +176,7 @@ updateRepoWithRemoteChanges() {
     replaceImage_productionToLatest assetsvc "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
     replaceImage_productionToLatest kubeops "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
     replaceImage_productionToLatest pinniped-proxy "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
+    replaceImage_productionToLatest kubeapps-apis "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
 }
 
 commitAndSendExternalPR() {

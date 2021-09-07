@@ -1,117 +1,136 @@
-import { shallow } from "enzyme";
-import context from "jest-plugin-context";
-
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
-import { hapi } from "shared/hapi/release";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
+  AvailablePackageReference,
+  Context,
+  InstalledPackageReference,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+  PackageAppVersion,
+  VersionReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import * as ReactRedux from "react-redux";
+import * as ReactRouter from "react-router";
+import { MemoryRouter, Route } from "react-router";
+import { IAppRepositoryState } from "reducers/repos";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import {
+  CustomInstalledPackageDetail,
   FetchError,
   IAppRepository,
-  IChartState,
-  IChartVersion,
-  IRelease,
+  IAppState,
   UpgradeError,
 } from "shared/types";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
-import AppUpgrade, { IAppUpgradeProps } from "./AppUpgrade";
-
-const versions = [
-  {
-    id: "foo",
-    attributes: { version: "1.2.3" },
-    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
-  },
-  {
-    id: "foo",
-    attributes: { version: "1.2.4" },
-    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
-  },
-] as IChartVersion[];
-const schema = { properties: { foo: { type: "string" } } };
+import AppUpgrade from "./AppUpgrade";
 
 const defaultProps = {
-  app: {} as hapi.release.Release,
-  appsIsFetching: false,
-  chartsIsFetching: false,
-  reposIsFetching: false,
-  repoName: "",
-  repoNamespace: "chart-namespace",
-  isFetching: false,
-  checkChart: jest.fn(),
-  clearRepo: jest.fn(),
-  appsError: undefined,
-  chartsError: undefined,
-  fetchChartVersions: jest.fn(),
-  fetchRepositories: jest.fn(),
-  getAppWithUpdateInfo: jest.fn(),
-  getChartVersion: jest.fn(),
-  deployed: {} as IChartState["deployed"],
-  getDeployedChartVersion: jest.fn(),
-  kubeappsNamespace: "kubeapps",
-  namespace: "default",
+  pkgName: "foo",
   cluster: "default",
-  push: jest.fn(),
-  goBack: jest.fn(),
-  releaseName: "foo",
-  repo: {} as IAppRepository,
-  repoError: undefined,
-  repos: [],
-  selected: { versions, version: versions[0], schema },
-  upgradeApp: jest.fn(),
-  version: "1.0.0",
-} as IAppUpgradeProps;
+  namespace: "default",
+  repoNamespace: "stable",
+  repo: "repo",
+  releaseName: "my-release",
+};
+
+const installedPackage1 = {
+  name: "test",
+  postInstallationNotes: "test",
+  valuesApplied: "test",
+  availablePackageRef: {
+    identifier: "stable/bar",
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
+  } as AvailablePackageReference,
+  currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+  installedPackageRef: {
+    identifier: "stable/bar",
+    pkgVersion: "1.0.0",
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
+  } as InstalledPackageReference,
+  latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+  latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+  pkgVersionReference: { version: "1" } as VersionReference,
+  reconciliationOptions: {},
+  status: {
+    ready: true,
+    reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+    userReason: "deployed",
+  } as InstalledPackageStatus,
+} as CustomInstalledPackageDetail;
+
+const repo1 = {
+  metadata: {
+    name: defaultProps.repo,
+    namespace: defaultProps.repoNamespace,
+  },
+} as IAppRepository;
+
+let spyOnUseDispatch: jest.SpyInstance;
+let spyOnUseHistory: jest.SpyInstance;
 
 beforeEach(() => {
-  jest.resetAllMocks();
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  spyOnUseHistory = jest
+    .spyOn(ReactRouter, "useHistory")
+    .mockReturnValue({ push: jest.fn() } as any);
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+  spyOnUseDispatch.mockRestore();
+  spyOnUseHistory.mockRestore();
+});
+
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/${defaultProps.releaseName}/upgrade`;
+const routePath = "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade";
+
 it("renders the repo selection form if not introduced", () => {
-  const wrapper = shallow(<AppUpgrade {...defaultProps} appsIsFetching={true} />);
+  const state = {
+    apps: {
+      isFetching: true,
+    } as IAppState,
+  };
+  const wrapper = mountWrapper(
+    getStore({ ...defaultStore, apps: { ...state.apps } }),
+    <AppUpgrade />,
+  );
   expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
 
 it("renders the repo selection form if not introduced when the app is loaded", () => {
-  const wrapper = shallow(
-    <AppUpgrade
-      {...defaultProps}
-      app={
-        {
-          chart: {
-            metadata: {
-              name: "bar",
-              version: "1.0.0",
-            },
-          },
-          name: "foo",
-          updateInfo: { repository: {} },
-        } as IRelease
-      }
-      repos={[
-        {
-          metadata: { name: "stable" },
-        } as IAppRepository,
-      ]}
-    />,
+  const state = {
+    repos: {
+      repos: [repo1],
+    } as IAppRepositoryState,
+  };
+  const wrapper = mountWrapper(
+    getStore({
+      ...defaultStore,
+      repos: { ...state.repos },
+    }),
+    <AppUpgrade />,
   );
   expect(wrapper.find(SelectRepoForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(UpgradeForm)).not.toExist();
 });
 
-context("when an error exists", () => {
+describe("when an error exists", () => {
   it("renders a generic error message", () => {
-    const repo = {
-      metadata: { name: "stable" },
-    } as IAppRepository;
-    const wrapper = shallow(
-      <AppUpgrade
-        {...defaultProps}
-        error={new FetchError("foo does not exist")}
-        repos={[repo]}
-        repo={repo}
-      />,
+    const state = {
+      apps: {
+        error: new FetchError("foo does not exist"),
+      } as IAppState,
+    };
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultStore,
+        apps: { ...state.apps },
+      }),
+      <AppUpgrade />,
     );
 
     expect(wrapper.find(Alert)).toExist();
@@ -122,83 +141,70 @@ context("when an error exists", () => {
   });
 
   it("renders a warning message if there are no repositories", () => {
+    const state = {
+      repos: {
+        repos: [] as IAppRepository[],
+      } as IAppRepositoryState,
+    };
     const wrapper = mountWrapper(
-      defaultStore,
-      <AppUpgrade
-        {...defaultProps}
-        app={
-          {
-            chart: {
-              metadata: {
-                name: "bar",
-                version: "1.0.0",
-              },
-            },
-            name: "foo",
-            updateInfo: { repository: {} },
-          } as IRelease
-        }
-        repos={[]}
-      />,
+      getStore({
+        ...defaultStore,
+        repos: { ...state.repos },
+      }),
+      <AppUpgrade />,
     );
-
     expect(wrapper.find(SelectRepoForm).find(Alert)).toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
-    expect(wrapper.find(Alert).children().text()).toContain("Chart repositories not found");
+    expect(wrapper.find(Alert).children().text()).toContain("Repositories not found");
   });
 
   it("still renders the upgrade form even if there is an upgrade error", () => {
-    const repo = {
-      metadata: { name: "stable" },
-    } as IAppRepository;
     const upgradeError = new UpgradeError("foo upgrade failed");
-    const wrapper = shallow(
-      <AppUpgrade
-        {...defaultProps}
-        error={upgradeError}
-        repos={[repo]}
-        repo={repo}
-        app={
-          {
-            chart: {
-              metadata: {
-                name: "bar",
-                version: "1.0.0",
-              },
-            },
-            name: "foo",
-            updateInfo: { repository: {} },
-          } as IRelease
-        }
-        repoName="foobar"
-      />,
+    const state = {
+      apps: {
+        error: upgradeError,
+        selected: installedPackage1,
+      } as IAppState,
+    };
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultStore,
+        apps: { ...state.apps },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
     );
-
     expect(wrapper.find(UpgradeForm)).toExist();
     expect(wrapper.find(UpgradeForm).prop("error")).toEqual(upgradeError);
   });
 });
 
 it("renders the upgrade form when the repo is available", () => {
+  const state = {
+    apps: {
+      selected: installedPackage1,
+    } as IAppState,
+    repos: {
+      repo: repo1,
+      repos: [repo1],
+      isFetching: false,
+    } as IAppRepositoryState,
+  };
   const wrapper = mountWrapper(
-    defaultStore,
-    <AppUpgrade
-      {...defaultProps}
-      app={
-        {
-          chart: {
-            metadata: {
-              name: "bar",
-              version: "1.0.0",
-            },
-          },
-          name: "foo",
-          updateInfo: { repository: {} },
-        } as IRelease
-      }
-      repoName="foobar"
-    />,
+    getStore({
+      ...defaultStore,
+      apps: { ...state.apps },
+      repos: { ...state.repos },
+    }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
@@ -206,27 +212,27 @@ it("renders the upgrade form when the repo is available", () => {
 });
 
 it("skips the repo selection form if the app contains upgrade info", () => {
-  const repo = {
-    metadata: { name: "stable" },
-  } as IAppRepository;
-  const app = {
-    chart: {
-      metadata: {
-        name: "bar",
-        version: "1.0.0",
-      },
-    },
-    name: "foo",
-    updateInfo: {
-      upToDate: true,
-      chartLatestVersion: "1.1.0",
-      appLatestVersion: "1.1.0",
-      repository: { name: "stable", url: "" },
-    },
-  } as IRelease;
+  const state = {
+    apps: {
+      selected: installedPackage1,
+    } as IAppState,
+    repos: {
+      repo: repo1,
+      repos: [repo1],
+      isFetching: false,
+    } as IAppRepositoryState,
+  };
   const wrapper = mountWrapper(
-    defaultStore,
-    <AppUpgrade {...defaultProps} repos={[repo]} app={app} />,
+    getStore({
+      ...defaultStore,
+      apps: { ...state.apps },
+      repos: { ...state.repos },
+    }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
@@ -235,24 +241,32 @@ it("skips the repo selection form if the app contains upgrade info", () => {
 
 describe("when receiving new props", () => {
   it("should request the deployed chart when the app and repo are populated", () => {
-    const app = {
-      chart: {
-        metadata: {
-          name: "bar",
-          version: "1.0.0",
-        },
-      },
-    } as IRelease;
     const getDeployedChartVersion = jest.fn();
+    actions.charts.getDeployedChartVersion = getDeployedChartVersion;
+
+    const state = {
+      apps: {
+        selected: installedPackage1,
+      } as IAppState,
+      repos: {
+        repo: repo1,
+        repos: [repo1],
+        isFetching: false,
+      } as IAppRepositoryState,
+    };
     mountWrapper(
-      defaultStore,
-      <AppUpgrade
-        {...defaultProps}
-        getDeployedChartVersion={getDeployedChartVersion}
-        repoName="stable"
-        app={app}
-      />,
+      getStore({
+        ...defaultStore,
+        apps: { ...state.apps },
+        repos: { ...state.repos },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
     );
+
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
       defaultProps.cluster,
       defaultProps.repoNamespace,
@@ -262,23 +276,30 @@ describe("when receiving new props", () => {
   });
 
   it("should request the deployed chart when the repo is populated later", () => {
-    const app = {
-      chart: {
-        metadata: {
-          name: "bar",
-          version: "1.0.0",
-        },
-      },
-    } as IRelease;
     const getDeployedChartVersion = jest.fn();
+    actions.charts.getDeployedChartVersion = getDeployedChartVersion;
+
+    const state = {
+      apps: {
+        selected: installedPackage1,
+      } as IAppState,
+      repos: {
+        repo: repo1,
+        repos: [repo1],
+        isFetching: false,
+      } as IAppRepositoryState,
+    };
     mountWrapper(
-      defaultStore,
-      <AppUpgrade
-        {...defaultProps}
-        app={app}
-        getDeployedChartVersion={getDeployedChartVersion}
-        repoName="stable"
-      />,
+      getStore({
+        ...defaultStore,
+        apps: { ...state.apps },
+        repos: { ...state.repos },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
     );
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
       defaultProps.cluster,

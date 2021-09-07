@@ -9,8 +9,8 @@ deploy-dex: devel/dex.crt devel/dex.key
 	kubectl --kubeconfig=${CLUSTER_CONFIG} -n dex create secret tls dex-web-server-tls \
 		--key ./devel/dex.key \
 		--cert ./devel/dex.crt
-	helm --kubeconfig=${CLUSTER_CONFIG} repo add stable https://charts.helm.sh/stable
-	helm --kubeconfig=${CLUSTER_CONFIG} install dex stable/dex --namespace dex  --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+	helm --kubeconfig=${CLUSTER_CONFIG} repo add dex https://charts.dexidp.io
+	helm --kubeconfig=${CLUSTER_CONFIG} install dex dex/dex --version 0.5.0 --namespace dex  --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
 deploy-openldap:
 	kubectl --kubeconfig=${CLUSTER_CONFIG} create namespace ldap
@@ -37,6 +37,14 @@ deploy-dev-kubeapps:
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
 
+deploy-dev-kubeapps-with-apis:
+	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
+		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
+		--set kubeappsapis.unsafeUseDemoSA=true
+
+
 deploy-dev: deploy-dependencies deploy-dev-kubeapps
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
@@ -57,7 +65,7 @@ deploy-kapp-controller:
 
 # Add the flux controllers used for testing the kubeapps-apis integration.
 deploy-flux-controllers:
-	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.16.0/install.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.17.0/install.yaml
 
 reset-dev:
 	helm --kubeconfig=${CLUSTER_CONFIG} -n kubeapps delete kubeapps  || true

@@ -1,10 +1,9 @@
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
 import actions from "../../actions";
 import ApplicationStatus from "../../components/ApplicationStatus";
-import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
 import { IStoreState } from "../../shared/types";
 import { filterByResourceRefs } from "../helpers";
@@ -13,10 +12,10 @@ interface IApplicationStatusContainerProps {
   deployRefs: ResourceRef[];
   statefulsetRefs: ResourceRef[];
   daemonsetRefs: ResourceRef[];
-  info?: hapi.release.IInfo;
+  info?: InstalledPackageDetail;
 }
 
-function mapStateToProps({ kube, config }: IStoreState, props: IApplicationStatusContainerProps) {
+function mapStateToProps({ kube }: IStoreState, props: IApplicationStatusContainerProps) {
   const { deployRefs, statefulsetRefs, daemonsetRefs, info } = props;
   return {
     deployments: filterByResourceRefs(deployRefs, kube.items),

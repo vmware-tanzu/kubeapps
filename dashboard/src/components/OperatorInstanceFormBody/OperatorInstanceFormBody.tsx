@@ -5,7 +5,7 @@ import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
-import { IResource } from "../../shared/types";
+import { IResource } from "shared/types";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import AdvancedDeploymentForm from "../DeploymentFormBody/AdvancedDeploymentForm";
 import Differential from "../DeploymentFormBody/Differential";
@@ -13,7 +13,6 @@ import LoadingWrapper from "../LoadingWrapper";
 
 export interface IOperatorInstanceFormProps {
   isFetching: boolean;
-  namespace: string;
   handleDeploy: (resource: IResource) => void;
   defaultValues: string;
   deployedValues?: string;
@@ -29,7 +28,6 @@ export interface IOperatorInstanceFormBodyState {
 function DeploymentFormBody({
   defaultValues,
   isFetching,
-  namespace,
   handleDeploy,
   deployedValues,
 }: IOperatorInstanceFormProps) {
@@ -59,7 +57,7 @@ function DeploymentFormBody({
     let resource: any = {};
     try {
       resource = yaml.load(values);
-    } catch (e) {
+    } catch (e: any) {
       setParseError(new Error(`Unable to parse the given YAML. Got: ${e.message}`));
       return;
     }

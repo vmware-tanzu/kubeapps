@@ -2,13 +2,16 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Alert from "components/js/Alert";
-
+import {
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import ReactTooltip from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError } from "shared/types";
 import DeleteButton from "./DeleteButton";
-import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",
@@ -74,8 +77,10 @@ it("should render a disabled button if when passing an in-progress status", asyn
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
-      code: 7,
-    },
+      ready: false,
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      userReason: "Pending",
+    } as InstalledPackageStatus,
   };
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
 

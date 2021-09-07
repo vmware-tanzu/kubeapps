@@ -1,8 +1,11 @@
-https: true
+https:
+  enabled: true
 certs:
   web:
     create: false
 config:
+  expiry:
+    signingKeys: 2160h
   # TODO: Don't assume that kind network will be the first non-default bridged network (ie. 172.18.0.2)
   # This means we'll need to generate the certs as well, rather than pre-configuring them.
   # Or check if we can use cert generated for tls with k8s node?
@@ -10,6 +13,9 @@ config:
   web:
     tlsCert: /etc/dex/tls/https/server/tls.crt
     tlsKey: /etc/dex/tls/https/server/tls.key
+  enablePasswordDB: true
+  storage:
+    type: memory
   # Instead of reading from an external storage, use this list of clients.
   staticClients:
     # The default client is in this setup the client used by Kubeapps'
@@ -21,6 +27,7 @@ config:
       redirectURIs:
         - "http://localhost/oauth2/callback"
         - "https://localhost/oauth2/callback"
+        - "http://kubeapps.kubeapps/oauth2/callback"
       name: "Default-Cluster"
       secret: ZXhhbXBsZS1hcHAtc2VjcmV0
     # The second-cluster clientid exists for the additional cluster but not used
@@ -30,6 +37,7 @@ config:
       redirectURIs:
         - "http://localhost/oauth2/callback"
         - "https://localhost/oauth2/callback"
+        - "http://kubeapps.kubeapps/oauth2/callback"
       name: "Second-Cluster"
       secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
       trustedPeers:
@@ -93,6 +101,18 @@ config:
 
           # The group name should be the "cn" value.
           nameAttr: cn
-grpc: false
+grpc:
+  enabled: false
 service:
   type: NodePort
+  ports:
+    https:
+      nodePort: 32000
+volumes:
+  - name: https-tls
+    secret:
+      defaultMode: 420
+      secretName: dex-web-server-tls
+volumeMounts:
+  - mountPath: /etc/dex/tls/https/server
+    name: https-tls

@@ -1,9 +1,8 @@
 import actions from "actions";
-
 import * as ReactRedux from "react-redux";
 import { NavLink } from "react-router-dom";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { app } from "../../shared/url";
+import { app } from "shared/url";
 import Header from "./Header";
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -19,7 +18,7 @@ beforeEach(() => {
 
 afterEach(() => {
   spyOnUseDispatch.mockRestore();
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 const defaultState = {

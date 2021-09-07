@@ -1,7 +1,6 @@
 import TableRenderer from "components/ChartView/TableRenderer";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
 import HeadingRenderer from "../ChartView/HeadingRenderer";
 import LinkRenderer from "../ChartView/LinkRenderer";
 
@@ -13,7 +12,7 @@ export default function OperatorDescription(props: IOperatorDescriptionProps) {
   return (
     <div className="application-readme">
       <ReactMarkdown
-        plugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm]}
         components={{
           h1: HeadingRenderer,
           h2: HeadingRenderer,

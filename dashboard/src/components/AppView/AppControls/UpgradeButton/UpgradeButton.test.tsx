@@ -1,10 +1,13 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
-
+import {
+  InstalledPackageStatus_StatusReason,
+  InstalledPackageStatus,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as ReactRedux from "react-redux";
+import ReactTooltip from "react-tooltip";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import UpgradeButton from "./UpgradeButton";
-import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
   cluster: "default",
@@ -33,8 +36,10 @@ it("should render a disabled button if when passing an in-progress status", asyn
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
-      code: 8,
-    },
+      ready: false,
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      userReason: "Pending",
+    } as InstalledPackageStatus,
   };
   const wrapper = mountWrapper(defaultStore, <UpgradeButton {...disabledProps} />);
 

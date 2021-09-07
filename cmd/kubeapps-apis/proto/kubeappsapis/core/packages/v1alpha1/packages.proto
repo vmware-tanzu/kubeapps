@@ -35,18 +35,20 @@ service PackagesService {
     };
   }
 
-  // TODO: remaining operations yet to be defined
+  rpc GetInstalledPackageDetail(GetInstalledPackageDetailRequest) returns (GetInstalledPackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/installedpackagedetails"
+    };
+  }
 
-  // rpc GetInstalledPackageDetail(GetInstalledPackageDetailRequest) returns (GetInstalledPackageDetailResponse) {
-  //   option (google.api.http) = {
-  //     get: "/core/packages/v1alpha1/installedpackagedetails"
-  //   };
-  // }
-  // rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
-  //   option (google.api.http) = {
-  //     post: "/core/packages/v1alpha1/installedpackages"
-  //   };
-  // }
+  rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
+    option (google.api.http) = {
+      post: "/core/packages/v1alpha1/installedpackages"
+      body: "*"
+    };
+  }
+
+  // TODO: remaining operations yet to be defined
   // rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
   //   option (google.api.http) = {
   //     put: "/core/packages/v1alpha1/installedpackages"
@@ -109,13 +111,50 @@ message GetAvailablePackageVersionsRequest {
 
 // GetInstalledPackageSummariesRequest
 //
-// Request for GetInstalledPackageSummeraies
+// Request for GetInstalledPackageSummaries
 message GetInstalledPackageSummariesRequest {
   // The context (cluster/namespace) for the request.
   Context context = 1;
 
   // Pagination options specifying where to start and how many results to include.
   PaginationOptions pagination_options = 2;
+}
+
+// GetInstalledPackageDetailRequest
+//
+// Request for GetInstalledPackageDetail
+message GetInstalledPackageDetailRequest {
+  // The information required to uniquely
+  // identify an installed package
+  InstalledPackageReference installed_package_ref = 1;
+}
+
+// CreateInstalledPackageRequest
+//
+// Request for CreateInstalledPackage
+message CreateInstalledPackageRequest {
+  // A reference uniquely identifying the package available for installation.
+  AvailablePackageReference available_package_ref = 1;
+
+  // The target context where the package is intended to be installed.
+  Context target_context = 2;
+
+  // A user-provided name for the installed package (eg. project-x-db)
+  string name = 3;
+
+  // For helm this will be the exact version in VersionReference.version
+  // For other plugins we can extend the VersionReference as needed.
+  VersionReference pkg_version_reference = 4;
+
+  // An optional serialized values string to be included when templating a package
+  // in the format expected by the plugin. Included when the backend format doesn't
+  // use secrets or configmaps for values or supports both. These values are layered
+  // on top of any values refs above, when relevant.
+  string values = 5;
+
+  // An optional field for specifying data common to systems that reconcile
+  // the package on the cluster.
+  ReconciliationOptions reconciliation_options = 6;
 }
 
 // -- Start definitions of the response messages --
@@ -139,6 +178,11 @@ message GetAvailablePackageSummariesResponse {
   // This field represents the pagination token to retrieve the next page of
   // results. If the value is "", it means no further results for the request.
   string next_page_token = 2;
+
+  // Categories
+  //
+  // This optional field contains the distinct category names considering the FilterOptions.
+  repeated string categories = 3;
 }
 
 // GetAvailablePackageDetailResponse
@@ -152,7 +196,7 @@ message GetAvailablePackageDetailResponse {
 
   // Available package detail
   //
-  // List of AvailablePackageDetail
+  // The requested AvailablePackageDetail
   AvailablePackageDetail available_package_detail = 1;
 }
 
@@ -164,21 +208,6 @@ message GetAvailablePackageVersionsResponse {
   // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
   //   example: '{"package_app_versions": [{}]}'
   // };
-
-  // Package AppVersion
-  //
-  // PackageAppVersion conveys both the package version and the packaged app version.
-  message PackageAppVersion {
-    // Package version
-    //
-    // Version of the package itself
-    string pkg_version = 1;
-
-    // Application version
-    //
-    // Version of the packaged application
-    string app_version = 2;
-  };
 
   // Package app versions
   //
@@ -222,6 +251,33 @@ message GetInstalledPackageSummariesResponse {
   string next_page_token = 2;
 }
 
+// GetInstalledPackageDetailResponse
+//
+// Response for GetInstalledPackageDetail
+message GetInstalledPackageDetailResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_detail": [{}]}'
+  // };
+
+  // InstalledPackageDetail
+  //
+  // The requested InstalledPackageDetail
+  InstalledPackageDetail installed_package_detail = 1;
+}
+
+// CreateInstalledPackageResponse
+//
+// Response for CreateInstalledPackage
+message CreateInstalledPackageResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_ref": {}}'
+  // };
+
+  InstalledPackageReference installed_package_ref = 1;
+}
+
 // -- Start definitions used in the responses  --
 
 // AvailablePackageSummary
@@ -244,38 +300,32 @@ message AvailablePackageSummary {
   // The name of the available package
   string name = 2;
 
-  // Latest available package version
+  // Latest available version
   //
   // The latest version available for this package. Often expected when viewing
   // a summary of many available packages.
-  string latest_pkg_version = 3;
-
-  // Latest available package app version
-  //
-  // The app version of the latest version available for this package. Often expected
-  // when viewing a summary of many available packages.
-  string latest_app_version = 4;
+  PackageAppVersion latest_version = 3;
 
   // Available package Icon URL
   //
   // A url for an icon.
-  string icon_url = 5;
+  string icon_url = 4;
 
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 6;
+  string display_name = 5;
 
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 7;
+  string short_description = 6;
 
   // Available package categories
   //
   // A user-facing list of category names useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  repeated string categories = 8;
+  repeated string categories = 7;
 }
 
 // AvailablePackageDetail
@@ -298,68 +348,76 @@ message AvailablePackageDetail {
   // The name of the available package
   string name = 2;
 
-  // Available package version
+  // Available version
   //
-  // The version of the package (eg. chart version)
-  string pkg_version = 3;
+  // The version of the package and application.
+  PackageAppVersion version = 3;
 
-  // Available package app version
-  //
-  // The version of the packaged application (eg. wordpress version or whatever).
-  string app_version = 4;
+  // the url of the package repository that contains this package
+  string repo_url = 4;
+
+  // the url of the “home” for the package
+  string home_url = 5;
 
   // Available package icon URL
   //
   // A url for an icon.
-  string icon_url = 5;
+  string icon_url = 6;
 
   // Available package display name
   //
   // A name as displayed to users
-  string display_name = 6;
+  string display_name = 7;
 
   // Available package short description
   //
   // A short description of the app provided by the package
-  string short_description = 7;
+  string short_description = 8;
 
   // Available package long description
   //
   // A longer description of the package, a few sentences.
-  string long_description = 8;
+  string long_description = 9;
 
   // Available package readme
   //
   // A longer README with potentially pages of formatted Markdown.
-  string readme = 9;
+  string readme = 10;
 
   // Available package default values
   //
   // An example of default values used during package templating that can serve
   // as documentation or a starting point for user customization.
-  string default_values = 10;
+  string default_values = 11;
 
   // Available package values schema
   //
   // An optional openapi/json schema that can be used to validate a user-provided values.
 
-  string values_schema = 11;
+  string values_schema = 12;
+
+  // source urls for the package
+  repeated string source_urls = 13;
 
   // Available package maintainers
   //
   // List of Maintainer
-  repeated Maintainer maintainers = 12;
+  repeated Maintainer maintainers = 14;
 
   // Available package categories
   //
   // A user-facing list of category names useful for creating richer user interfaces.
   // Plugins can choose not to implement this
-  repeated string categories = 13;
+  repeated string categories = 15;
 
   // Custom data added by the plugin
   //
-  // Some additional information added by the plugin
-  google.protobuf.Any custom_detail = 14;
+  // A plugin can define custom details for data which is not yet, or never will
+  // be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+  // of an `Any` field means that each plugin can define the structure of this
+  // message as required, while still satisfying the core interface.
+  // See https://developers.google.com/protocol-buffers/docs/proto3#any
+  google.protobuf.Any custom_detail = 16;
 }
 
 // InstalledPackageSummary
@@ -388,10 +446,14 @@ message InstalledPackageSummary {
   // matching package versions.
   VersionReference pkg_version_reference = 3;
 
-  // CurrentPkgVersion
+  // CurrentVersion
   //
-  // The version of the package which is currently installed.
-  string current_pkg_version = 4;
+  // The current version of the package being reconciled, which may be
+  // in one of these states:
+  //  - has been successfully installed/upgraded or 
+  //  - is currently being installed/upgraded or 
+  //  - has failed to install/upgrade
+  PackageAppVersion current_version = 4;
 
   // Installed package icon URL
   //
@@ -408,19 +470,102 @@ message InstalledPackageSummary {
   // A short description of the package (provided by the package)
   string short_description = 7;
 
-  // LatestMatchingPkgVersion
+  // LatestMatchingVersion
   //
   // Only non-empty if an available upgrade matches the specified pkg_version_reference.
   // For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
   // is installed, then:
   //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
   //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
-  string latest_matching_pkg_version = 8;
+  PackageAppVersion latest_matching_version = 8;
 
-  // LatestPkgVersion
+  // LatestVersion
   //
   // The latest version available for this package, regardless of the pkg_version_reference.
-  string latest_pkg_version = 9;
+  PackageAppVersion latest_version = 9;
+
+  // Status
+  //
+  // The current status of the installed package.
+  InstalledPackageStatus status = 10;
+}
+
+// InstalledPackageDetail
+//
+// An InstalledPackageDetail includes details about the installed package that are
+// typically useful when presenting a single installed package.
+message InstalledPackageDetail {
+  // InstalledPackageReference
+  //
+  // A reference uniquely identifying the installed package.
+  InstalledPackageReference installed_package_ref = 1;
+
+  // PkgVersionReference
+  //
+  // The package version reference defines a version or constraint limiting
+  // matching package versions.
+  VersionReference pkg_version_reference = 2;
+
+  // Installed package name
+  //
+  // The name given to the installed package
+  string name = 3;
+
+  // CurrentVersion
+  //
+  // The version of the package which is currently installed.
+  PackageAppVersion current_version = 4;
+
+  // ValuesApplied
+  //
+  // The values applied currently for the installed package.
+  string values_applied = 5;
+
+  // ReconciliationOptions
+  //
+  // An optional field specifying data common to systems that reconcile
+  // the package installation on the cluster asynchronously. In particular,
+  // this specifies the service account used to perform the reconcilliation.
+  ReconciliationOptions reconciliation_options = 6;
+
+  // Status
+  //
+  // The current status of the installed package.
+  InstalledPackageStatus status = 7;
+
+  // PostInstallationNotes
+  //
+  // Optional notes generated by package and intended for the user post installation.
+  string post_installation_notes = 8;
+
+  // Available package reference
+  //
+  // A reference to the available package for this installation.
+  // Useful to lookup the package display name, icon and other info.
+  AvailablePackageReference available_package_ref = 9;
+
+  // LatestMatchingVersion
+  //
+  // Only non-empty if an available upgrade matches the specified pkg_version_reference.
+  // For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
+  // is installed, then:
+  //   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
+  //   * if 10.4 is available while >10.3.1 is not, this should remain empty.
+  PackageAppVersion latest_matching_version = 10;
+
+  // LatestVersion
+  //
+  // The latest version available for this package, regardless of the pkg_version_reference.
+  PackageAppVersion latest_version = 11;
+
+  // Custom data added by the plugin
+  //
+  // A plugin can define custom details for data which is not yet, or never will
+  // be specified in the core.packaging.CreateInstalledPackageRequest fields. The use
+  // of an `Any` field means that each plugin can define the structure of this
+  // message as required, while still satisfying the core interface.
+  // See https://developers.google.com/protocol-buffers/docs/proto3#any
+  google.protobuf.Any custom_detail = 14;
 }
 
 // -- Start other definitions  --
@@ -605,3 +750,74 @@ message VersionReference {
   // for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
   string version = 1;
 }
+
+// InstalledPackageStatus
+//
+// An InstalledPackageStatus reports on the current status of the installation.
+message InstalledPackageStatus {
+  // Ready
+  //
+  // An indication of whether the installation is ready or not
+  bool ready = 1;
+
+  // StatusReason
+  //
+  // Generic reasons why an installed package may be ready or not.
+  // These should make sense across different packaging plugins.
+  enum StatusReason {
+    STATUS_REASON_UNSPECIFIED = 0;
+    STATUS_REASON_INSTALLED = 1;
+    STATUS_REASON_UNINSTALLED = 2;
+    STATUS_REASON_FAILED = 3;
+    STATUS_REASON_PENDING = 4;
+  }
+
+  // Reason
+  //
+  // An enum indicating the reason for the current status.
+  StatusReason reason = 2;
+
+  // UserReason
+  //
+  // Optional text to return for user context, which may be plugin specific.
+  string user_reason = 3;
+}
+
+// ReconciliationOptions
+//
+// ReconciliationOptions enable specifying standard fields for backends that continuously
+// reconcile a package install as new matching versions are released. Most of the naming
+// is from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's
+// InstalledPackage.
+message ReconciliationOptions {
+  // Reconciliation Interval
+  //
+  // The interval with which the package is checked for reconciliation (in seconds)
+  int32 interval = 1;
+
+  // Suspend
+  //
+  // Whether reconciliation should be suspended until otherwise enabled.
+  bool suspend = 2;
+
+  // ServiceAccountName
+  //
+  // A name for a service account in the same namespace which should be used
+  // to perform the reconciliation.
+  string service_account_name = 3;
+}
+
+// Package AppVersion
+//
+// PackageAppVersion conveys both the package version and the packaged app version.
+message PackageAppVersion {
+  // Package version
+  //
+  // Version of the package itself
+  string pkg_version = 1;
+
+  // Application version
+  //
+  // Version of the packaged application
+  string app_version = 2;
+};

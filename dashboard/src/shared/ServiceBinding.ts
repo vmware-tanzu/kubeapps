@@ -103,7 +103,7 @@ export class ServiceBinding {
           .then(response => {
             return { binding, secret: response.data };
           })
-          .catch(err => {
+          .catch(() => {
             // return with undefined secrets
             return { binding };
           });

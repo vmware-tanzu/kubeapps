@@ -1,26 +1,22 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { CSSTransition } from "react-transition-group";
-
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsToggle } from "@cds/react/toggle";
-import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
-
-import { IClustersState } from "../../reducers/cluster";
-import Row from "../js/Row";
-
 import actions from "actions";
 import { getThemeFile } from "components/HeadManager/HeadManager";
+import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { CSSTransition } from "react-transition-group";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import helmIcon from "../../icons/helm-white.svg";
 import operatorIcon from "../../icons/operator-framework-white.svg";
+import { IClustersState } from "../../reducers/cluster";
+import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
+import Row from "../js/Row";
 import "./Menu.css";
 
 export interface IContextSelectorProps {
@@ -46,7 +42,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
 
   const toggleTheme = () => {
     const newTheme = theme === SupportedThemes.dark ? SupportedThemes.light : SupportedThemes.dark;
-    dispatch(actions.config.setTheme(newTheme));
+    dispatch(actions.config.setUserTheme(newTheme));
   };
 
   useEffect(() => {
@@ -81,8 +77,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 onClick={toggleOpen}
               >
                 <div className="dropdown-menu-item" role="menuitem">
-                  <img src={helmIcon} alt="helm-icon" />
-                  <span>App Repositories</span>
+                  <CdsIcon solid={true} size="md" shape="library" /> <span>App Repositories</span>
                 </div>
               </Link>
               <div className="dropdown-divider" role="separator" />
@@ -92,7 +87,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 onClick={toggleOpen}
               >
                 <div className="dropdown-menu-item" role="menuitem">
-                  <img src={operatorIcon} alt="helm-icon" />
+                  <img src={operatorIcon} alt="operators-icon" />
                   <span>Operators</span>
                 </div>
               </Link>

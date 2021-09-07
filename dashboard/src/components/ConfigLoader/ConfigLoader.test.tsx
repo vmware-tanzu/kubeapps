@@ -2,7 +2,6 @@ import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import context from "jest-plugin-context";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-
 import ConfigLoader from ".";
 
 it("renders a loading wrapper", () => {

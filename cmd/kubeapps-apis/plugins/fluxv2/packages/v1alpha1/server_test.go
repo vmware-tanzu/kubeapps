@@ -25,6 +25,10 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -43,9 +47,9 @@ func TestBadClientGetter(t *testing.T) {
 			statusCode:   codes.FailedPrecondition,
 		},
 		{
-			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return nil, fmt.Errorf("Bang!")
+			name: "returns failed-precondition when clientGetter itself errors",
+			clientGetter: func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+				return nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
@@ -53,7 +57,7 @@ func TestBadClientGetter(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, mock, err := newServerWithClientGetter(tc.clientGetter)
+			_, mock, err := newServer(tc.clientGetter, nil)
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
 			}
@@ -198,10 +202,11 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 // utilities
 //
 
-// I wanted to emphasize the fact that this flavor of 'newServer...' is kind of unusual and should only
-// be used directly by tests to test edge cases (in a one-off negative test),
-// such as TestBadClientGetter(), hence the weird name. Most tests should just use newServerWithRepos() flavor
-func newServerWithClientGetter(clientGetter clientGetter, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
+// This func does not create a kubernetes dynamic client. It is meant to work in conjunction with
+// a call to fake.NewSimpleDynamicClientWithCustomListKinds. The reason for argument repos
+// (unlike charts or releases) is that repos are treated special because
+// a new instance of a Server object is only returned once the cache has been synced with indexed repos
+func newServer(clientGetter clientGetter, actionConfig *action.Configuration, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
 	mock.MatchExpectationsInOrder(false)
 
@@ -225,8 +230,7 @@ func newServerWithClientGetter(clientGetter clientGetter, repos ...runtime.Objec
 	eventProcessingWaitGroup := &sync.WaitGroup{}
 	for _, r := range repos {
 		eventProcessingWaitGroup.Add(1)
-		ready, ok := isRepoReady(r.(*unstructured.Unstructured).Object)
-		if ready && ok == nil {
+		if isRepoReady(r.(*unstructured.Unstructured).Object) {
 			key, bytes, err := redisKeyValueForRuntimeObject(r)
 			if err != nil {
 				continue
@@ -248,7 +252,10 @@ func newServerWithClientGetter(clientGetter clientGetter, repos ...runtime.Objec
 
 	s := &Server{
 		clientGetter: clientGetter,
-		cache:        cache,
+		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
+			return actionConfig, nil
+		},
+		cache: cache,
 	}
 	return s, mock, nil
 }
@@ -264,3 +271,20 @@ func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 
 // misc global vars that get re-used in multiple tests
 var fluxPlugin = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
+var fluxHelmRepositoryCRD = &apiextv1.CustomResourceDefinition{
+	TypeMeta: metav1.TypeMeta{
+		Kind:       "CustomResourceDefinition",
+		APIVersion: "apiextensions.k8s.io/v1",
+	},
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "helmrepositories.source.toolkit.fluxcd.io",
+	},
+	Status: apiextv1.CustomResourceDefinitionStatus{
+		Conditions: []apiextv1.CustomResourceDefinitionCondition{
+			{
+				Type:   "Established",
+				Status: "True",
+			},
+		},
+	},
+}

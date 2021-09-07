@@ -1,8 +1,8 @@
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
+import ResourceRef from "shared/ResourceRef";
+import { IK8sList, IResource, IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import ResourceRef from "../shared/ResourceRef";
-import { IK8sList, IResource, IStoreState } from "../shared/types";
 
 const { createAction } = deprecated;
 
@@ -77,7 +77,7 @@ export function getResourceKinds(
       const groups = await Kube.getAPIGroups(cluster);
       const kinds = await Kube.getResourceKinds(cluster, groups);
       dispatch(receiveResourceKinds(kinds));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(receiveKindsError(e));
     }
   };
@@ -108,7 +108,7 @@ export function getResource(
     try {
       const r = await ref.getResource();
       dispatch(receiveResource({ key, resource: r as IResource }));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(receiveResourceError({ key, error: e }));
     }
   };

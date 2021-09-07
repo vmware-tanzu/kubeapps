@@ -1,17 +1,17 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { ServiceBinding } from "shared/ServiceBinding";
+import { IServiceBroker, IServicePlan, ServiceCatalog } from "shared/ServiceCatalog";
+import { IServiceInstance, ServiceInstance } from "shared/ServiceInstance";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { ServiceBinding } from "../shared/ServiceBinding";
-import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
-import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 
 const { catalog: catalogActions } = actions;
 
 const mockStore = configureMockStore([thunk]);
 const broker = { metadata: { name: "wall-street" } } as IServiceBroker;
 const servicePlan = { metadata: { name: "bubble-it-up" } } as IServicePlan;
-const serviceInstance = { metadata: { name: "25-years-morgage" } } as IServiceInstance;
+const serviceInstance = { metadata: { name: "25-years-mortgage" } } as IServiceInstance;
 const bindingWithSecret = { binding: "binding", secret: "secret" } as any;
 const clusterClass = { metadata: { name: "cluster-class" } } as any;
 

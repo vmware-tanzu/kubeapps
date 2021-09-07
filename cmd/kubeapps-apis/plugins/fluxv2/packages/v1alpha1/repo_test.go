@@ -30,17 +30,20 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
 
-type testRepoStruct struct {
+type testSpecGetAvailablePackageSummaries struct {
 	name      string
 	namespace string
 	url       string
@@ -49,14 +52,14 @@ type testRepoStruct struct {
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		testName         string
+		name             string
 		request          *corev1.GetAvailablePackageSummariesRequest
-		testRepos        []testRepoStruct
+		repos            []testSpecGetAvailablePackageSummaries
 		expectedResponse *corev1.GetAvailablePackageSummariesResponse
 	}{
 		{
-			testName: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
-			testRepos: []testRepoStruct{
+			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -70,8 +73,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
-			testRepos: []testRepoStruct{
+			name: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -85,8 +88,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
-			testRepos: []testRepoStruct{
+			name: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -106,8 +109,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing repo",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing repo",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -134,8 +137,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing repo",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing repo",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "bitnami-1",
 					namespace: "default",
@@ -160,8 +163,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing categories",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing categories",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -182,8 +185,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing categories (2)",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing categories (2)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -202,8 +205,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing categories",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing categories",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -222,8 +225,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing appVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing appVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -244,8 +247,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing appVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing appVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -264,8 +267,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing pkgVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing pkgVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -286,8 +289,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing pkgVersion",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing pkgVersion",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -306,8 +309,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing query text (chart name)",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing query text (chart name)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -328,8 +331,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on existing query text (chart keywords)",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on existing query text (chart keywords)",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -350,8 +353,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "uses a filter based on non-existing query text",
-			testRepos: []testRepoStruct{
+			name: "uses a filter based on non-existing query text",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -370,8 +373,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns only the first page of results",
-			testRepos: []testRepoStruct{
+			name: "it returns only the first page of results",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -394,8 +397,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns only the requested page of results and includes the next page token",
-			testRepos: []testRepoStruct{
+			name: "it returns only the requested page of results and includes the next page token",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -418,8 +421,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "it returns the last page without a next page token",
-			testRepos: []testRepoStruct{
+			name: "it returns the last page without a next page token",
+			repos: []testSpecGetAvailablePackageSummaries{
 				{
 					name:      "index-with-categories-1",
 					namespace: "default",
@@ -442,36 +445,16 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			repos := []runtime.Object{}
 
-			for _, rs := range tc.testRepos {
-				indexYAMLBytes, err := ioutil.ReadFile(rs.index)
+			for _, rs := range tc.repos {
+				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
-
-				// stand up an http server just for the duration of this test
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					fmt.Fprintln(w, string(indexYAMLBytes))
-				}))
-				defer ts.Close()
-
-				repoSpec := map[string]interface{}{
-					"url":      rs.url,
-					"interval": "1m0s",
-				}
-				repoStatus := map[string]interface{}{
-					"conditions": []interface{}{
-						map[string]interface{}{
-							"type":   "Ready",
-							"status": "True",
-							"reason": "IndexationSucceed",
-						},
-					},
-					"url": ts.URL,
-				}
-				repos = append(repos, newRepo(rs.name, rs.namespace, repoSpec, repoStatus))
+				defer ts2.Close()
+				repos = append(repos, repo)
 			}
 
 			s, mock, _, err := newServerWithRepos(repos...)
@@ -492,7 +475,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -561,7 +544,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -609,34 +592,11 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
-		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-
-		// stand up an http server just for the duration of this test
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, string(indexYaml))
-		}))
-		defer ts.Close()
-
-		repoSpec := map[string]interface{}{
-			"url":      "https://example.repo.com/charts",
-			"interval": "1m0s",
-		}
-
-		repoStatus := map[string]interface{}{
-			"conditions": []interface{}{
-				map[string]interface{}{
-					"type":   "Ready",
-					"status": "True",
-					"reason": "IndexationSucceed",
-				},
-			},
-			"url": ts.URL,
-		}
-		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
-
+		defer ts2.Close()
 		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
@@ -657,7 +617,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -699,33 +659,11 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 // test that causes RetryWatcher to stop and the cache needs to resync
 func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
-		indexYaml, err := ioutil.ReadFile("testdata/valid-index.yaml")
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-
-		// stand up an http server just for the duration of this test
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, string(indexYaml))
-		}))
-		defer ts.Close()
-
-		repoSpec := map[string]interface{}{
-			"url":      "https://example.repo.com/charts",
-			"interval": "1m0s",
-		}
-
-		repoStatus := map[string]interface{}{
-			"conditions": []interface{}{
-				map[string]interface{}{
-					"type":   "Ready",
-					"status": "True",
-					"reason": "IndexationSucceed",
-				},
-			},
-			"url": ts.URL,
-		}
-		repo := newRepo("bitnami-1", "default", repoSpec, repoStatus)
+		defer ts2.Close()
 
 		s, mock, watcher, err := newServerWithRepos(repo)
 		if err != nil {
@@ -747,7 +685,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -945,11 +883,13 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 		fluxHelmRepositories,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	clientGetter := func(context.Context) (dynamic.Interface, error) {
-		return dynamicClient, nil
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+
+	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+		return dynamicClient, apiextIfc, nil
 	}
 
-	s, mock, err := newServerWithClientGetter(clientGetter, repos...)
+	s, mock, err := newServer(clientGetter, nil, repos...)
 	return s, mock, watcher, err
 }
 
@@ -1016,7 +956,7 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 					keys = append(keys, k)
 				}
 			}
-			mock.ExpectScan(0, "helmrepositories:*:"+r, 0).SetVal(keys, 0)
+			mock.ExpectScan(0, fluxHelmRepositories+":*:"+r, 0).SetVal(keys, 0)
 			for _, k := range keys {
 				mock.ExpectGet(k).SetVal(string(mapVals[k]))
 			}
@@ -1039,18 +979,56 @@ func redisKeyForRuntimeObject(r runtime.Object) string {
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s",
-		fluxHelmRepositories,
-		r.(*unstructured.Unstructured).GetNamespace(),
-		r.(*unstructured.Unstructured).GetName())
-
+	return redisKeyForNamespacedName(types.NamespacedName{
+		Namespace: r.(*unstructured.Unstructured).GetNamespace(),
+		Name:      r.(*unstructured.Unstructured).GetName()})
 }
 
-// misc global vars that get re-used in multiple tests
+func redisKeyForNamespacedName(name types.NamespacedName) string {
+	// redis convention on key format
+	// https://redis.io/topics/data-types-intro
+	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// We will use "helmrepository:ns:repoName"
+	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name)
+}
+
+func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Server, *unstructured.Unstructured, error) {
+	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// stand up an http server just for the duration of this test
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, string(indexYAMLBytes))
+	}))
+
+	repoSpec := map[string]interface{}{
+		"url":      "https://example.repo.com/charts",
+		"interval": "1m0s",
+	}
+
+	repoStatus := map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"type":   "Ready",
+				"status": "True",
+				"reason": "IndexationSucceed",
+			},
+		},
+		"url": ts.URL,
+	}
+	return ts, newRepo(repoName, repoNamespace, repoSpec, repoStatus), nil
+}
+
+// misc global vars that get re-used in multiple tests scenarios
 var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
-		DisplayName:      "acs-engine-autoscaler",
-		LatestPkgVersion: "2.1.1",
+		DisplayName: "acs-engine-autoscaler",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "2.1.1",
+			AppVersion: "2.1.1",
+		},
 		IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 		ShortDescription: "Scales worker nodes within agent pools",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1060,8 +1038,11 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 		},
 	},
 	{
-		DisplayName:      "wordpress",
-		LatestPkgVersion: "0.7.5",
+		DisplayName: "wordpress",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "0.7.5",
+			AppVersion: "4.9.1",
+		},
 		IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 		ShortDescription: "new description!",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1073,8 +1054,11 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 }
 
 var cert_manager_summary = &corev1.AvailablePackageSummary{
-	DisplayName:      "cert-manager",
-	LatestPkgVersion: "v1.4.0",
+	DisplayName: "cert-manager",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "v1.4.0",
+		AppVersion: "v1.4.0",
+	},
 	IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
 	ShortDescription: "A Helm chart for cert-manager",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1085,8 +1069,11 @@ var cert_manager_summary = &corev1.AvailablePackageSummary{
 }
 
 var elasticsearch_summary = &corev1.AvailablePackageSummary{
-	DisplayName:      "elasticsearch",
-	LatestPkgVersion: "15.5.0",
+	DisplayName: "elasticsearch",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "15.5.0",
+		AppVersion: "7.13.2",
+	},
 	IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
 	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1097,8 +1084,11 @@ var elasticsearch_summary = &corev1.AvailablePackageSummary{
 }
 
 var ghost_summary = &corev1.AvailablePackageSummary{
-	DisplayName:      "ghost",
-	LatestPkgVersion: "13.0.14",
+	DisplayName: "ghost",
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "13.0.14",
+		AppVersion: "4.7.0",
+	},
 	IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
 	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1115,8 +1105,10 @@ var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
 
 var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 	{
-		DisplayName:      "alpine",
-		LatestPkgVersion: "0.2.0",
+		DisplayName: "alpine",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "0.2.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1126,8 +1118,10 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 		},
 	},
 	{
-		DisplayName:      "nginx",
-		LatestPkgVersion: "1.1.0",
+		DisplayName: "nginx",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "1.1.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1140,8 +1134,10 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 
 var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 	{
-		DisplayName:      "alpine",
-		LatestPkgVersion: "0.3.0",
+		DisplayName: "alpine",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "0.3.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1151,8 +1147,10 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 		},
 	},
 	{
-		DisplayName:      "nginx",
-		LatestPkgVersion: "1.1.0",
+		DisplayName: "nginx",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "1.1.0",
+		},
 		IconUrl:          "",
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{

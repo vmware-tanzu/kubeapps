@@ -1,11 +1,10 @@
 import { ThunkAction } from "redux-thunk";
+import { IClusterServiceClass } from "shared/ClusterServiceClass";
+import { IServiceBindingWithSecret, ServiceBinding } from "shared/ServiceBinding";
+import { IServiceBroker, IServicePlan, ServiceCatalog } from "shared/ServiceCatalog";
+import { IServiceInstance, ServiceInstance } from "shared/ServiceInstance";
+import { IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-
-import { IClusterServiceClass } from "../shared/ClusterServiceClass";
-import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBinding";
-import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
-import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
-import { IStoreState } from "../shared/types";
 import helpers from "./helpers";
 
 const { createAction } = deprecated;
@@ -84,7 +83,7 @@ export function provision(
         filteredParams,
       );
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "create"));
       return false;
     }
@@ -111,7 +110,7 @@ export function addBinding(
         filteredParams,
       );
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "create"));
       return false;
     }
@@ -129,7 +128,7 @@ export function removeBinding(
     try {
       await ServiceBinding.delete(currentCluster, namespace, name);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "delete"));
       return false;
     }
@@ -146,7 +145,7 @@ export function deprovision(
     try {
       await ServiceCatalog.deprovisionInstance(currentCluster, instance);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "deprovision"));
       return false;
     }
@@ -162,7 +161,7 @@ export function sync(
     } = getState();
     try {
       await ServiceCatalog.syncBroker(kubeappsCluster, broker);
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "update"));
     }
   };
@@ -179,7 +178,7 @@ export function getBindings(
     try {
       const bindingsWithSecrets = await ServiceBinding.list(kubeappsCluster, ns);
       dispatch(receiveBindingsWithSecrets(bindingsWithSecrets));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "fetch"));
     }
   };
@@ -194,7 +193,7 @@ export function getBrokers(): ThunkAction<Promise<void>, IStoreState, null, Serv
     try {
       const brokers = await ServiceCatalog.getServiceBrokers(currentCluster);
       dispatch(receiveBrokers(brokers));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "fetch"));
     }
   };
@@ -209,7 +208,7 @@ export function getClasses(): ThunkAction<Promise<void>, IStoreState, null, Serv
     try {
       const classes = await ServiceCatalog.getServiceClasses(currentCluster);
       dispatch(receiveClasses(classes));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "fetch"));
     }
   };
@@ -226,7 +225,7 @@ export function getInstances(
     try {
       const instances = await ServiceInstance.list(currentCluster, ns);
       dispatch(receiveInstances(instances));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "fetch"));
     }
   };
@@ -241,7 +240,7 @@ export function getPlans(): ThunkAction<Promise<void>, IStoreState, null, Servic
     try {
       const plans = await ServiceCatalog.getServicePlans(currentCluster);
       dispatch(receivePlans(plans));
-    } catch (e) {
+    } catch (e: any) {
       dispatch(errorCatalog(e, "fetch"));
     }
   };

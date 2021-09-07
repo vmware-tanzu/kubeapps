@@ -39,6 +39,21 @@ service FluxV2PackagesService {
       get: "/plugins/fluxv2/packages/v1alpha1/installedpackagesummaries"
     };
   }
+
+  // GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin
+  rpc GetInstalledPackageDetail(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/fluxv2/packages/v1alpha1/installedpackagedetail"
+    };
+  }
+
+  // CreateInstalledPackage creates an installed package based on the request.
+  rpc CreateInstalledPackage(kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse) {
+    option (google.api.http) = {
+      post: "/plugins/fluxv2/packages/v1alpha1/installedpackages"
+      body: "*"
+    };
+  }
 }
 
 // Specific messages used by the 'fluxv2' plugin

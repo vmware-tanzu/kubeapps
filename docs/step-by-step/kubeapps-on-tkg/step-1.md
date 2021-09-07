@@ -14,7 +14,7 @@ TKG comes with Pinniped installed by default; you only need to configure an OIDC
 
 Begin by creating an OAuth2 application to retrieve the information required by Pinniped and, later on, Kubeapps. Follow the steps below:
 
-> **NOTE**: You must have _Developer_ access in the organization to perform these steps.
+> **NOTE**: You must have _Developer_ access in the organization to perform these steps. Also, note that if the organization is restricted, only users belonging to this organization will be able to log in.
 
 1. Navigate to the CSP Console at [https://console.cloud.vmware.com](https://console.cloud.vmware.com/).
 2. Click the drop-down menu in the top-right corner.
@@ -57,12 +57,12 @@ Since Pinniped manages this process, the only requirement is to a _JWTAuthentica
 
 1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
 
-- Replace the `OIDC-ISSUER-URL` with the issuer URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api`.
+- Replace the `OIDC-ISSUER-URL` with the _issuer_ URL of the OIDC provider. For CSP it is `https://gaz.csp-vidm-prod.com`.
 - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
 
 ```yaml
 ---
-apiVersion: authentication.concierge.dev/v1alpha1
+apiVersion: authentication.concierge.pinniped.dev/v1alpha1
 kind: JWTAuthenticator
 metadata:
   name: kubeapps-jwt-authenticator
@@ -72,6 +72,7 @@ spec:
   audience: CLIENT-ID
   claims:
     username: email
+    groups: groups
 #   tls:
 #     certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
 ```

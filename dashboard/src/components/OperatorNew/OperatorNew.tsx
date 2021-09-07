@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
@@ -7,13 +5,14 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import { push, RouterAction } from "connected-react-router";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { Operators } from "shared/Operators";
+import { IPackageManifest, IPackageManifestChannel, IStoreState } from "shared/types";
+import { api, app } from "shared/url";
 import { IOperatorsStateError } from "../../reducers/operators";
-import { Operators } from "../../shared/Operators";
-import { IPackageManifest, IPackageManifestChannel, IStoreState } from "../../shared/types";
-import { api, app } from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorHeader from "../OperatorView/OperatorHeader";
 import "./OperatorNew.css";
@@ -44,7 +43,7 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
     undefined as IPackageManifestChannel | undefined,
   );
   const [updateChannelGlobal, setUpdateChannelGlobal] = useState(false);
-  // Instalation mode: true for global, false for namespaced
+  // Installation mode: true for global, false for namespaced
   const [installationModeGlobal, setInstallationModeGlobal] = useState(false);
   // Approval strategy: true for automatic, false for manual
   const [approvalStrategyAutomatic, setApprovalStrategyAutomatic] = useState(true);

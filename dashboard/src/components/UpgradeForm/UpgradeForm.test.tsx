@@ -1,50 +1,112 @@
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import {
+  AvailablePackageDetail,
+  Context,
+  Maintainer,
+  PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
+import Chart from "shared/Chart";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IChartVersion } from "../../shared/types";
-import * as url from "../../shared/url";
+import { FetchError, IChartState } from "shared/types";
+import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
 
-const versions = [
+const testVersion: PackageAppVersion = {
+  pkgVersion: "1.2.3",
+  appVersion: "4.5.6",
+};
+
+const schema = { properties: { foo: { type: "string" } } };
+
+const availablePkgDetails = [
   {
-    id: "foo",
-    attributes: { version: "1.2.3" },
-    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
+    name: "foo",
+    categories: [""],
+    displayName: "foo",
+    iconUrl: "https://icon.com",
+    repoUrl: "https://repo.com",
+    homeUrl: "https://example.com",
+    sourceUrls: ["test"],
+    shortDescription: "test",
+    longDescription: "test",
+    availablePackageRef: {
+      identifier: "foo/foo",
+      context: { cluster: "", namespace: "chart-namespace" } as Context,
+    },
+    valuesSchema: "test",
+    defaultValues: "test",
+    maintainers: [{ name: "test", email: "test" }] as Maintainer[],
+    readme: "test",
+    version: {
+      appVersion: testVersion.appVersion,
+      pkgVersion: testVersion.pkgVersion,
+    } as PackageAppVersion,
   },
   {
-    id: "foo",
-    attributes: { version: "1.2.4" },
-    relationships: { chart: { data: { repo: { name: "bitnami" } } } },
+    name: "foo",
+    categories: [""],
+    displayName: "foo",
+    iconUrl: "https://icon.com",
+    repoUrl: "https://repo.com",
+    homeUrl: "https://example.com",
+    sourceUrls: ["test"],
+    shortDescription: "test",
+    longDescription: "test",
+    availablePackageRef: {
+      identifier: "foo/foo",
+      context: { cluster: "", namespace: "chart-namespace" } as Context,
+    },
+    valuesSchema: "test",
+    defaultValues: "test",
+    maintainers: [{ name: "test", email: "test" }] as Maintainer[],
+    readme: "test",
+    version: {
+      appVersion: testVersion.appVersion,
+      pkgVersion: testVersion.pkgVersion,
+    } as PackageAppVersion,
   },
-] as IChartVersion[];
+] as AvailablePackageDetail[];
 
 const defaultProps = {
   appCurrentVersion: "1.0.0",
   appCurrentValues: "foo: bar",
-  chartName: "my-chart",
+  packageId: "my-chart",
   chartsIsFetching: false,
   namespace: "default",
   cluster: "default",
   releaseName: "my-release",
   repo: "my-repo",
   repoNamespace: "kubeapps",
-  selected: { versions } as IChartState["selected"],
-  deployed: {} as IChartState["deployed"],
-  upgradeApp: jest.fn(),
-  push: jest.fn(),
-  goBack: jest.fn(),
-  fetchChartVersions: jest.fn(),
-  getChartVersion: jest.fn(),
   error: undefined,
+  selected: {
+    versions: [],
+  } as IChartState["selected"],
+  deployed: {} as IChartState["deployed"],
 } as IUpgradeFormProps;
-
-const schema = { properties: { foo: { type: "string" } } };
 
 const populatedProps = {
   ...defaultProps,
-  selected: { versions, version: versions[0], schema },
+  selected: {
+    error: undefined,
+    availablePackageDetail: availablePkgDetails[0],
+    pkgVersion: testVersion.pkgVersion,
+    appVersion: testVersion.appVersion,
+    readme: "readme",
+    readmeError: undefined,
+    values: "initial: values",
+    versions: [testVersion],
+    schema: schema as any,
+  } as IChartState["selected"],
+  deployed: {
+    chartVersion: availablePkgDetails[0],
+    schema: schema as any,
+    values: "foo:",
+  } as IChartState["deployed"],
 };
 
 describe("it behaves like a loading component", () => {
@@ -81,7 +143,7 @@ describe("it behaves like a loading component", () => {
         defaultStore,
         <UpgradeForm
           {...defaultProps}
-          selected={{ ...defaultProps.selected, version: undefined }}
+          selected={{ ...defaultProps.selected, availablePackageDetail: undefined }}
         />,
       ).find(LoadingWrapper),
     ).toExist();
@@ -89,63 +151,58 @@ describe("it behaves like a loading component", () => {
 });
 
 it("fetches the available versions", () => {
-  const fetchChartVersions = jest.fn();
-  mountWrapper(
-    defaultStore,
-    <UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />,
-  );
-  expect(fetchChartVersions).toHaveBeenCalledWith(
+  const getAvailablePackageVersions = jest.fn();
+  Chart.getAvailablePackageVersions = getAvailablePackageVersions;
+  mountWrapper(defaultStore, <UpgradeForm {...defaultProps} />);
+  expect(getAvailablePackageVersions).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.repoNamespace,
-    `${defaultProps.repo}/${defaultProps.chartName}`,
+    defaultProps.packageId,
   );
 });
 
 it("fetches the current chart version even if there is already one in the state", () => {
   const deployed = {
-    chartVersion: {
-      attributes: {
-        version: "1.0.0",
-      },
-    },
-  } as any;
-  const selected = {
-    version: { attributes: {}, relationships: { chart: { data: { repo: { name: "" } } } } },
-    versions: [{ id: "foo", attributes: {} }],
-  } as IChartState["selected"];
+    chartVersion: availablePkgDetails[1],
+  };
 
-  const getChartVersion = jest.fn();
+  const selected = {
+    availablePackageDetail: availablePkgDetails[0],
+    pkgVersion: testVersion.pkgVersion,
+    appVersion: testVersion.appVersion,
+    readme: "readme",
+    values: "values",
+    versions: [testVersion],
+    schema: schema as any,
+  };
+
+  const getAvailablePackageDetail = jest.fn();
+  Chart.getAvailablePackageDetail = getAvailablePackageDetail;
   mountWrapper(
     defaultStore,
-    <UpgradeForm
-      {...defaultProps}
-      selected={selected}
-      deployed={deployed}
-      getChartVersion={getChartVersion}
-    />,
+    <UpgradeForm {...defaultProps} selected={selected} deployed={deployed} />,
   );
-  expect(getChartVersion).toHaveBeenCalledWith(
+  expect(getAvailablePackageDetail).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.repoNamespace,
-    `${defaultProps.repo}/${defaultProps.chartName}`,
-    deployed.chartVersion.attributes.version,
+    defaultProps.packageId,
+    deployed.chartVersion.version?.pkgVersion,
   );
 });
 
 describe("renders an error", () => {
   it("renders an alert if the deployment failed", () => {
+    const selected = {
+      availablePackageDetail: undefined,
+      pkgVersion: "",
+      appVersion: "",
+      versions: [],
+      schema: schema as any,
+      error: new FetchError("wrong format!"),
+    };
     const wrapper = mountWrapper(
       defaultStore,
-      <UpgradeForm
-        {...defaultProps}
-        selected={
-          {
-            version: { attributes: {}, relationships: { chart: { data: { repo: { name: "" } } } } },
-            versions: [{ id: "foo", attributes: {} }],
-          } as IChartState["selected"]
-        }
-        error={new Error("wrong format!")}
-      />,
+      <UpgradeForm {...defaultProps} selected={selected} />,
     );
     expect(wrapper.find(Alert).exists()).toBe(true);
     expect(wrapper.find(Alert).html()).toContain("wrong format!");
@@ -157,50 +214,59 @@ it("defaults the upgrade version to the current version", () => {
   // often used by users to update values only, so we can't default to the
   // latest version on the assumption that they always want to upgrade.
   const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
-
   expect(wrapper.find(DeploymentFormBody).prop("chartVersion")).toBe("1.0.0");
 });
 
 it("forwards the appValues when modified", () => {
   const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
-  const handleValuesChange: (v: string) => void = wrapper
-    .find(DeploymentFormBody)
-    .prop("setValues");
-  handleValuesChange("foo: bar");
-
-  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+  act(() => {
+    const handleValuesChange: (v: string) => void = wrapper
+      .find(DeploymentFormBody)
+      .prop("setValues");
+    handleValuesChange("foo: bar");
+  });
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("initial: values\nfoo: bar\n");
 });
 
 it("triggers an upgrade when submitting the form", async () => {
+  const mockDispatch = jest.fn().mockReturnValue(true);
+  jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const { namespace, releaseName } = defaultProps;
-  const appValues = "foo: bar";
-  const upgradeApp = jest.fn().mockReturnValue(true);
-  const push = jest.fn();
+  const appValues = "initial: values\nfoo: bar\n";
+  const upgradeApp = jest.spyOn(actions.apps, "upgradeApp").mockImplementation(() => {
+    return jest.fn();
+  });
   const wrapper = mountWrapper(
     defaultStore,
-    <UpgradeForm {...populatedProps} upgradeApp={upgradeApp} push={push} namespace={namespace} />,
+    <UpgradeForm {...populatedProps} namespace={namespace} />,
   );
-  const handleValuesChange: (v: string) => void = wrapper
-    .find(DeploymentFormBody)
-    .prop("setValues");
-  handleValuesChange(appValues);
 
   await act(async () => {
+    const handleValuesChange: (v: string) => void = wrapper
+      .find(DeploymentFormBody)
+      .prop("setValues");
+    handleValuesChange(appValues);
     // Simulating "submit" causes a console.warning
-    await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<void>)({
+    (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<void>)({
       preventDefault: jest.fn(),
     });
   });
   expect(upgradeApp).toHaveBeenCalledWith(
     defaultProps.cluster,
     namespace,
-    versions[0],
+    availablePkgDetails[0],
     "kubeapps",
     releaseName,
     appValues,
     schema,
   );
-  expect(push).toHaveBeenCalledWith(url.app.apps.get(defaultProps.cluster, namespace, releaseName));
+  expect(mockDispatch).toHaveBeenCalledWith({
+    payload: {
+      args: [url.app.apps.get(defaultProps.cluster, namespace, releaseName)],
+      method: "push",
+    },
+    type: "@@router/CALL_HISTORY_METHOD",
+  });
 });
 
 describe("when receiving new props", () => {
@@ -212,8 +278,9 @@ describe("when receiving new props", () => {
       <UpgradeForm {...populatedProps} appCurrentValues={currentValues} />,
     );
     wrapper.setProps({ deployed: { values: defaultValues } });
-
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(currentValues);
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(
+      "initial: values\n" + currentValues,
+    );
   });
 
   it("should apply modifications if a new version is selected", () => {
@@ -226,7 +293,11 @@ describe("when receiving new props", () => {
         {...populatedProps}
         deployed={{ values: deployedValues }}
         appCurrentValues={currentValues}
-        selected={{ versions, version: versions[1], values: defaultValues }}
+        selected={{
+          versions: [testVersion],
+          availablePackageDetail: availablePkgDetails[1],
+          values: defaultValues,
+        }}
       />,
     );
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("a: b\nc: d\n");
@@ -245,9 +316,8 @@ describe("when receiving new props", () => {
         .prop("setValuesModified");
       setValuesModified();
     });
-    wrapper.setProps({ selected: { versions, version: versions[1] } });
+    wrapper.setProps({ selected: { versions: [testVersion], version: availablePkgDetails[1] } });
     wrapper.update();
-
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(userValues);
   });
 
@@ -280,21 +350,18 @@ describe("when receiving new props", () => {
     bar1: value1
 `,
       deployedValues: `foo:
-  - foo1: 
+  - foo1:
     bar1: value1
-  - foo2: 
+  - foo2:
     bar2: value2
 `,
       newDefaultValues: `foo:
     - foo1:
       bar1: value1
 `,
-      result: `foo:
-  - foo1: 
-    bar1: value1
-  - foo2: 
-    bar2: value2
-`,
+      result: [`foo:`, `  - foo1: `, `    bar1: value1`, `  - foo2: `, `    bar2: value2`, ``].join(
+        "\n",
+      ),
     },
     {
       description: "should delete an element in an array",
@@ -305,7 +372,7 @@ describe("when receiving new props", () => {
     bar2: value2
 `,
       deployedValues: `foo:
-  - foo1: 
+  - foo1:
     bar1: value1
 `,
       newDefaultValues: `foo:
@@ -314,10 +381,7 @@ describe("when receiving new props", () => {
   - foo2:
     bar2: value2
 `,
-      result: `foo:
-  - foo1: 
-    bar1: value1
-`,
+      result: [`foo:`, `  - foo1: `, `    bar1: value1`, ``].join("\n"),
     },
     {
       description: "set a value with dots and slashes in the key",
@@ -334,7 +398,7 @@ describe("when receiving new props", () => {
       };
       const newSelected = {
         ...populatedProps.selected,
-        version: versions[1],
+        version: availablePkgDetails[1],
         values: t.newDefaultValues,
       };
       const wrapper = mountWrapper(

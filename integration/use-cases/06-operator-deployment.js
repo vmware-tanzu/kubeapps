@@ -1,5 +1,7 @@
 const utils = require("./lib/utils");
 
+const testName = "06-operator-deployment";
+
 // The operator may take some minutes to be created
 jest.setTimeout(360000);
 
@@ -20,7 +22,7 @@ test("Deploys an Operator", async () => {
   await utils.retryAndRefresh(page, 3, async () => {
     // Sometimes this fails with: TypeError: Cannot read property 'click' of null
     await expect(page).toClick("cds-button", { text: "Deploy" });
-  });
+  }, testName);
 
   const isAlreadyDeployed = await page.evaluate(
     () => document.querySelector("cds-button[disabled]") !== null,
@@ -33,7 +35,7 @@ test("Deploys an Operator", async () => {
     await utils.retryAndRefresh(page, 4, async () => {
       // The CSV takes a bit to get populated
       await expect(page).toMatch("Installed");
-    });
+    }, testName);
   } else {
     console.log("Warning: the operator has already been deployed");
   }
@@ -51,12 +53,12 @@ test("Deploys an Operator", async () => {
     await expect(page).toMatch("Prometheus");
 
     await expect(page).toClick(".info-card-header", { text: "Prometheus" });
-  });
+  }, testName);
 
   await utils.retryAndRefresh(page, 2, async () => {
     // Found the error "prometheuses.monitoring.coreos.com not found in the definition of prometheusoperator"
     await expect(page).toMatch("Deploy");
-  });
+  }, testName);
 
   await utils.retryAndRefresh(
     page,
@@ -64,22 +66,20 @@ test("Deploys an Operator", async () => {
     async () => {
       await expect(page).toClick("cds-button", { text: "Deploy" });
       await expect(page).toMatch("Installation Values");
-    },
-    "operator-view",
-  );
+    }, testName);
 
   // Update
   await expect(page).toClick("cds-button", { text: "Update" });
 
   await utils.retryAndRefresh(page, 2, async () => {
     await expect(page).toMatch("creationTimestamp");
-  });
+  }, testName);
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await utils.retryAndRefresh(page, 2, async () => {
     await expect(page).toMatch("Installation Values");
-  });
+  }, testName);
 
   // Delete
   await expect(page).toClick("cds-button", { text: "Delete" });

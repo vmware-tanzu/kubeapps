@@ -1,6 +1,7 @@
 import Row from "components/js/Row";
+import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Link } from "react-router-dom";
-import { IAppOverview, IClusterServiceVersion, IResource } from "../../shared/types";
+import { IClusterServiceVersion, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
 import { escapeRegExp } from "../../shared/utils";
 import Alert from "../js/Alert";
@@ -9,7 +10,7 @@ import AppListItem from "./AppListItem";
 import CustomResourceListItem from "./CustomResourceListItem";
 
 export interface IAppListProps {
-  appList: IAppOverview[] | undefined;
+  appList: InstalledPackageSummary[] | undefined;
   cluster: string;
   namespace: string;
   filter: string;
@@ -21,7 +22,7 @@ export interface IAppListProps {
 function AppListGrid(props: IAppListProps) {
   const { appList, customResources, cluster, namespace, appVersion, filter } = props;
   const filteredReleases = (appList || []).filter(a =>
-    new RegExp(escapeRegExp(filter), "i").test(a.releaseName),
+    new RegExp(escapeRegExp(filter), "i").test(a.name),
   );
   const filteredCRs = customResources.filter(cr =>
     new RegExp(escapeRegExp(filter), "i").test(cr.metadata.name),
@@ -51,7 +52,7 @@ function AppListGrid(props: IAppListProps) {
     <Row>
       <>
         {filteredReleases.map(r => {
-          return <AppListItem key={`${r.namespace}/${r.releaseName}`} app={r} cluster={cluster} />;
+          return <AppListItem key={r.installedPackageRef?.identifier} app={r} cluster={cluster} />;
         })}
         {filteredCRs.map(r => {
           const csv = props.csvs.find(c =>

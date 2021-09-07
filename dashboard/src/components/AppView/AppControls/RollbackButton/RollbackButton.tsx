@@ -1,20 +1,20 @@
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
+import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
+import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 import RollbackDialog from "./RollbackDialog";
-import { hapi } from "../../../../shared/hapi/release";
-import StatusAwareButton from "../StatusAwareButton";
 
 export interface IRollbackButtonProps {
   cluster: string;
   namespace: string;
   releaseName: string;
   revision: number;
-  releaseStatus: hapi.release.IStatus | undefined | null;
+  releaseStatus: InstalledPackageStatus | undefined | null;
 }
 
 function RollbackButton({

@@ -1,19 +1,27 @@
-import * as yaml from "js-yaml";
-import * as ReactRedux from "react-redux";
-import * as ReactRouter from "react-router";
-
 import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
+import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
+import {
+  AvailablePackageReference,
+  Context,
+  InstalledPackageDetail,
+  InstalledPackageReference,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+  PackageAppVersion,
+  VersionReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import * as yaml from "js-yaml";
+import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router";
+import ResourceRef from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError, IResource } from "shared/types";
-import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
-import { hapi } from "../../shared/hapi/release";
-import ResourceRef from "../../shared/ResourceRef";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
-import AppNotes from "./AppNotes";
-import AppViewComponent from "./AppView";
+import AppNotes from "./AppNotes/AppNotes";
+import AppView from "./AppView";
 import ChartInfo from "./ChartInfo/ChartInfo";
 import ResourceTabs from "./ResourceTabs";
 
@@ -22,15 +30,16 @@ const routeParams = {
   namespace: "default",
   releaseName: "mr-sunshine",
 };
+const routePathParam = `/foo/${routeParams.cluster}/${routeParams.namespace}/${routeParams.releaseName}`;
+const routePath = "/foo/:cluster/:namespace/:releaseName";
 let spyOnUseDispatch: jest.SpyInstance;
-let spyOnUseParams: jest.SpyInstance;
 const appActions = { ...actions.apps };
 const kubeaActions = { ...actions.kube };
 
 beforeEach(() => {
   actions.apps = {
     ...actions.apps,
-    getAppWithUpdateInfo: jest.fn(),
+    getApp: jest.fn(),
   };
   actions.kube = {
     ...actions.kube,
@@ -39,17 +48,15 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseParams = jest.spyOn(ReactRouter, "useParams").mockReturnValue(routeParams);
 });
 
 afterEach(() => {
   actions.apps = { ...appActions };
   actions.kube = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-  spyOnUseParams.mockRestore();
 });
 
-describe("AppViewComponent", () => {
+describe("AppView", () => {
   // Generates a Yaml file separated by --- containing every object passed.
   const generateYamlManifest = (items: any[]): string => {
     let yamlManifest = "";
@@ -59,12 +66,32 @@ describe("AppViewComponent", () => {
     return yamlManifest;
   };
 
-  const appRelease = hapi.release.Release.create({
-    info: hapi.release.Info.create(),
-    namespace: "weee",
-  });
+  const installedPackage = {
+    name: "test",
+    postInstallationNotes: "test",
+    valuesApplied: "test",
+    availablePackageRef: {
+      identifier: "apache/1",
+      context: { cluster: "", namespace: "chart-namespace" } as Context,
+    } as AvailablePackageReference,
+    currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+    installedPackageRef: {
+      identifier: "apache/1",
+      pkgVersion: "1.0.0",
+      context: { cluster: "", namespace: "chart-namespace" } as Context,
+    } as InstalledPackageReference,
+    latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+    latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+    pkgVersionReference: { version: "1" } as VersionReference,
+    reconciliationOptions: {},
+    status: {
+      ready: true,
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+      userReason: "deployed",
+    } as InstalledPackageStatus,
+  } as InstalledPackageDetail;
 
-  const validState = { apps: { selected: appRelease } };
+  const validState = { apps: { selected: installedPackage } };
 
   const resources = {
     configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
@@ -98,14 +125,18 @@ describe("AppViewComponent", () => {
   };
 
   it("renders a loading wrapper", () => {
-    const wrapper = mountWrapper(defaultStore, <AppViewComponent />);
+    const wrapper = mountWrapper(defaultStore, <AppView />);
     expect(wrapper.find(LoadingWrapper)).toExist();
   });
 
   it("renders a fetch error only", () => {
     const wrapper = mountWrapper(
       getStore({ apps: { error: new FetchError("boom!") } }),
-      <AppViewComponent />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
     );
     expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(PageHeader)).not.toExist();
@@ -125,8 +156,12 @@ describe("AppViewComponent", () => {
       ]);
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
       );
 
       const tabs = wrapper.find(ResourceTabs);
@@ -136,7 +171,7 @@ describe("AppViewComponent", () => {
           routeParams.cluster,
           "deployments",
           true,
-          appRelease.namespace,
+          installedPackage.installedPackageRef?.context?.namespace,
         ),
       ]);
       expect(tabs.prop("services")).toEqual([
@@ -145,7 +180,7 @@ describe("AppViewComponent", () => {
           routeParams.cluster,
           "services",
           true,
-          appRelease.namespace,
+          installedPackage.installedPackageRef?.context?.namespace,
         ),
       ]);
       expect(tabs.prop("secrets")).toEqual([
@@ -154,7 +189,7 @@ describe("AppViewComponent", () => {
           routeParams.cluster,
           "secrets",
           true,
-          appRelease.namespace,
+          installedPackage.installedPackageRef?.context?.namespace,
         ),
       ]);
     });
@@ -173,7 +208,7 @@ describe("AppViewComponent", () => {
         apiVersion: resources.deployment.apiVersion,
         kind: resources.deployment.kind,
         name: resources.deployment.metadata.name,
-        namespace: appRelease.namespace,
+        namespace: installedPackage.installedPackageRef?.context?.namespace,
         namespaced: true,
         plural: "deployments",
       };
@@ -182,14 +217,18 @@ describe("AppViewComponent", () => {
         apiVersion: resources.service.apiVersion,
         kind: resources.service.kind,
         name: resources.service.metadata.name,
-        namespace: appRelease.namespace,
+        namespace: installedPackage.installedPackageRef?.context?.namespace,
         namespaced: true,
         plural: "services",
       };
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
       );
       expect(watchResource).toHaveBeenCalledWith(depResource);
       expect(watchResource).toHaveBeenCalledWith(svcResource);
@@ -207,8 +246,12 @@ describe("AppViewComponent", () => {
       ]);
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
       );
 
       const tabs = wrapper.find(ResourceTabs);
@@ -230,8 +273,12 @@ describe("AppViewComponent", () => {
       ]);
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...appRelease, manifest } } }),
-        <AppViewComponent />,
+        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
       );
 
       const tabs = wrapper.find(ResourceTabs);
@@ -254,8 +301,12 @@ describe("AppViewComponent", () => {
 
       expect(() => {
         mountWrapper(
-          getStore({ apps: { selected: { ...appRelease, manifest } } }),
-          <AppViewComponent />,
+          getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppView />
+            </Route>
+          </MemoryRouter>,
         );
       }).not.toThrow();
     });
@@ -270,8 +321,12 @@ describe("AppViewComponent", () => {
 
       expect(() => {
         const wrapper = mountWrapper(
-          getStore({ apps: { selected: { ...appRelease, manifest } } }),
-          <AppViewComponent />,
+          getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppView />
+            </Route>
+          </MemoryRouter>,
         );
         const tabs = wrapper.find(ResourceTabs);
         expect(tabs.prop("deployments")[0].name).toEqual("foo");
@@ -281,7 +336,7 @@ describe("AppViewComponent", () => {
 
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
-      const wrapper = mountWrapper(getStore(validState), <AppViewComponent />);
+      const wrapper = mountWrapper(getStore(validState), <AppView />);
       expect(wrapper.find(ChartInfo)).toExist();
       expect(wrapper.find(ApplicationStatusContainer)).toExist();
       expect(wrapper.find(".control-buttons")).toExist();
@@ -293,7 +348,11 @@ describe("AppViewComponent", () => {
     it("renders an error if error prop is set", () => {
       const wrapper = mountWrapper(
         getStore({ ...validState, apps: { ...validState.apps, error: new Error("Boom!") } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();
@@ -303,7 +362,11 @@ describe("AppViewComponent", () => {
     it("renders a delete-error", () => {
       const wrapper = mountWrapper(
         getStore({ ...validState, apps: { ...validState.apps, error: new DeleteError("Boom!") } }),
-        <AppViewComponent />,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
       );
       const err = wrapper.find(Alert);
       expect(err).toExist();
@@ -318,10 +381,13 @@ describe("AppViewComponent", () => {
       items: [obj, resources.deployment],
     };
     const manifest = generateYamlManifest([resources.service, list]);
-
     const wrapper = mountWrapper(
-      getStore({ apps: { selected: { ...appRelease, manifest } } }),
-      <AppViewComponent />,
+      getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
     );
 
     const tabs = wrapper.find(ResourceTabs);
@@ -332,7 +398,7 @@ describe("AppViewComponent", () => {
           routeParams.cluster,
           "deployments",
           true,
-          appRelease.namespace,
+          installedPackage.installedPackageRef?.context?.namespace,
         ),
       ],
       services: [
@@ -341,11 +407,17 @@ describe("AppViewComponent", () => {
           routeParams.cluster,
           "services",
           true,
-          appRelease.namespace,
+          installedPackage.installedPackageRef?.context?.namespace,
         ),
       ],
       otherResources: [
-        new ResourceRef(obj, routeParams.cluster, "clusterroles", false, appRelease.namespace),
+        new ResourceRef(
+          obj,
+          routeParams.cluster,
+          "clusterroles",
+          false,
+          installedPackage.installedPackageRef?.context?.namespace,
+        ),
       ],
     });
   });
@@ -359,8 +431,12 @@ describe("AppViewComponent", () => {
     const manifest = generateYamlManifest([resources.service, list]);
 
     const wrapper = mountWrapper(
-      getStore({ apps: { selected: { ...appRelease, manifest } } }),
-      <AppViewComponent />,
+      getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
     );
 
     const tabs = wrapper.find(ResourceTabs);
@@ -371,7 +447,7 @@ describe("AppViewComponent", () => {
           routeParams.cluster,
           "deployments",
           true,
-          appRelease.namespace,
+          installedPackage.installedPackageRef?.context?.namespace,
         ),
       ],
       services: [
@@ -380,11 +456,17 @@ describe("AppViewComponent", () => {
           routeParams.cluster,
           "services",
           true,
-          appRelease.namespace,
+          installedPackage.installedPackageRef?.context?.namespace,
         ),
       ],
       otherResources: [
-        new ResourceRef(obj, routeParams.cluster, "clusterroles", false, appRelease.namespace),
+        new ResourceRef(
+          obj,
+          routeParams.cluster,
+          "clusterroles",
+          false,
+          installedPackage.installedPackageRef?.context?.namespace,
+        ),
       ],
     });
   });
@@ -393,8 +475,12 @@ describe("AppViewComponent", () => {
     const r = [resources.statefulset, resources.daemonset];
     const manifest = generateYamlManifest(r);
     const wrapper = mountWrapper(
-      getStore({ apps: { selected: { ...appRelease, manifest } } }),
-      <AppViewComponent />,
+      getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
     );
 
     const applicationStatus = wrapper.find(ApplicationStatusContainer);
@@ -406,7 +492,7 @@ describe("AppViewComponent", () => {
         routeParams.cluster,
         "statefulsets",
         true,
-        appRelease.namespace,
+        installedPackage.installedPackageRef?.context?.namespace,
       ),
     ]);
     expect(applicationStatus.prop("daemonsetRefs")).toEqual([
@@ -415,7 +501,7 @@ describe("AppViewComponent", () => {
         routeParams.cluster,
         "daemonsets",
         true,
-        appRelease.namespace,
+        installedPackage.installedPackageRef?.context?.namespace,
       ),
     ]);
   });

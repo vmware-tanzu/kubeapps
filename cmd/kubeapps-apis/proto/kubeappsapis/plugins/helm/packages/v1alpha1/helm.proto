@@ -35,4 +35,31 @@ service HelmPackagesService {
       get: "/plugins/helm/packages/v1alpha1/installedpackagesummaries"
     };
   }
+
+  // GetInstalledPackageDetail returns the requested installed package managed by the 'helm' plugin
+  rpc GetInstalledPackageDetail(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/helm/packages/v1alpha1/installedpackagedetail"
+    };
+  }
+
+  // CreateInstalledPackage creates an installed package based on the request.
+  rpc CreateInstalledPackage(kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse) {
+    option (google.api.http) = {
+      post: "/plugins/helm/packages/v1alpha1/installedpackages"
+      body: "*"
+    };
+  }
+}
+
+// InstalledPackageDetailCustomDataHelm
+//
+// InstalledPackageDetailCustomDataHelm is a message type used for the
+// InstalledPackageDetail.CustomDetail field by the helm plugin.
+message InstalledPackageDetailCustomDataHelm {
+
+  // ReleaseRevision
+  //
+  // A number identifying the Helm revision
+  int32 release_revision = 1;
 }

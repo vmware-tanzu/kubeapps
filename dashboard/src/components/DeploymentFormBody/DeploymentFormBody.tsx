@@ -1,10 +1,9 @@
-import Tabs from "components/Tabs";
-import { useEffect, useState } from "react";
-
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
+import Tabs from "components/Tabs";
 import { isEqual } from "lodash";
+import { useEffect, useState } from "react";
 import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
@@ -17,7 +16,7 @@ import DifferentialTab from "./DifferentialTab";
 
 export interface IDeploymentFormBodyProps {
   deploymentEvent: DeploymentEvent;
-  chartID: string;
+  packageId: string;
   chartVersion: string;
   deployedValues?: string;
   chartsIsFetching: boolean;
@@ -29,7 +28,7 @@ export interface IDeploymentFormBodyProps {
 
 function DeploymentFormBody({
   deploymentEvent,
-  chartID,
+  packageId,
   chartVersion,
   deployedValues,
   chartsIsFetching,
@@ -42,7 +41,7 @@ function DeploymentFormBody({
   const [restoreModalIsOpen, setRestoreModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState("");
 
-  const { version, versions, schema, values } = selected;
+  const { availablePackageDetail, versions, schema, values, pkgVersion, error } = selected;
 
   useEffect(() => {
     const params = retrieveBasicFormParams(appValues, schema);
@@ -93,21 +92,21 @@ function DeploymentFormBody({
   };
 
   const restoreDefaultValues = () => {
-    if (selected.values) {
-      setValues(selected.values);
-      setBasicFormParameters(retrieveBasicFormParams(selected.values, selected.schema));
+    if (values) {
+      setValues(values);
+      setBasicFormParameters(retrieveBasicFormParams(values, schema));
     }
     setRestoreModalOpen(false);
   };
-  if (selected.error) {
+  if (error) {
     return (
       <Alert theme="danger">
-        Unable to fetch chart "{chartID}" ({chartVersion}): Got {selected.error.message}
+        Unable to fetch package "{packageId}" ({chartVersion}): Got {error.message}
       </Alert>
     );
   }
-  if (chartsIsFetching || !version || !versions.length) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${chartID}...`} />;
+  if (chartsIsFetching || !availablePackageDetail || !versions.length) {
+    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
   }
   const tabColumns = [
     "YAML",
@@ -126,7 +125,7 @@ function DeploymentFormBody({
       key="advanced-deployment-form"
     >
       <p>
-        <b>Note:</b> Only comments from the original chart values will be preserved.
+        <b>Note:</b> Only comments from the original package values will be preserved.
       </p>
     </AdvancedDeploymentForm>,
     <DifferentialSelector
@@ -160,7 +159,7 @@ function DeploymentFormBody({
         modalIsOpen={restoreModalIsOpen}
         loading={false}
         headerText={"Restore defaults"}
-        confirmationText={"Are you sure you want to restore the default chart values?"}
+        confirmationText={"Are you sure you want to restore the default package values?"}
         confirmationButtonText={"Restore"}
         onConfirm={restoreDefaultValues}
         closeModal={closeRestoreDefaultValuesModal}
@@ -170,7 +169,7 @@ function DeploymentFormBody({
       </div>
       <div className="deployment-form-control-buttons">
         <CdsButton status="primary" type="submit">
-          <CdsIcon shape="deploy" /> Deploy {version.attributes.version}
+          <CdsIcon shape="deploy" /> Deploy {pkgVersion}
         </CdsButton>
         {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
             https://github.com/vmware/clarity/issues/5038

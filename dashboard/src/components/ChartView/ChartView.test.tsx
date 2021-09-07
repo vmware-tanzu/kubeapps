@@ -1,14 +1,21 @@
-import * as ReactRedux from "react-redux";
-
 import actions from "actions";
 import Alert from "components/js/Alert";
-import { set } from "lodash";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState, IChartVersion } from "../../shared/types";
-import ChartMaintainers from "./ChartMaintainers";
-import ChartView, { IChartViewProps } from "./ChartView";
+import {
+  AvailablePackageDetail,
+  Context,
+  Maintainer,
+  PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { createMemoryHistory } from "history";
+import * as ReactRedux from "react-redux";
+import { Route, Router } from "react-router";
+import { IConfigState } from "reducers/config";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IChartState } from "../../shared/types";
+import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
+import ChartView from "./ChartView";
 
-const props: IChartViewProps = {
+const props = {
   chartID: "testrepo/test",
   chartNamespace: "kubeapps-namespace",
   isFetching: false,
@@ -17,28 +24,85 @@ const props: IChartViewProps = {
   selected: { versions: [] } as IChartState["selected"],
   version: undefined,
   kubeappsNamespace: "kubeapps",
+  repo: "testrepo",
+  id: "test",
 };
 
-const testChart: IChartVersion["relationships"]["chart"] = {
-  data: {
-    repo: {
-      name: "testrepo",
-    },
-  },
-} as IChartVersion["relationships"]["chart"];
-
-const testVersion: IChartVersion = {
-  attributes: {
-    version: "1.2.3",
-    app_version: "4.5.6",
-    created: "",
-  },
-  id: "1",
-  relationships: { chart: testChart },
+const testVersion: PackageAppVersion = {
+  pkgVersion: "1.2.3",
+  appVersion: "4.5.6",
 };
 
-const defaultSelected: IChartState["selected"] = {
-  versions: [testVersion],
+const defaultAvailablePkgDetail: AvailablePackageDetail = {
+  name: "foo",
+  categories: [""],
+  displayName: "foo",
+  iconUrl: "https://icon.com",
+  repoUrl: "https://repo.com",
+  homeUrl: "https://example.com",
+  sourceUrls: ["test"],
+  shortDescription: "test",
+  longDescription: "test",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
+  },
+  valuesSchema: "test",
+  defaultValues: "test",
+  maintainers: [{ name: "test", email: "test" }] as Maintainer[],
+  readme: "test",
+  version: {
+    appVersion: testVersion.appVersion,
+    pkgVersion: testVersion.pkgVersion,
+  } as PackageAppVersion,
+};
+
+const emptyAvailablePkg: AvailablePackageDetail = {
+  name: "foo",
+  categories: [""],
+  displayName: "foo",
+  iconUrl: "",
+  repoUrl: "",
+  homeUrl: "",
+  sourceUrls: [],
+  shortDescription: "",
+  longDescription: "",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
+  },
+  valuesSchema: "",
+  defaultValues: "",
+  maintainers: [],
+  readme: "",
+  version: {
+    appVersion: "",
+    pkgVersion: testVersion.pkgVersion,
+  },
+};
+
+const defaultChartsState = {
+  isFetching: false,
+  hasFinishedFetching: false,
+  selected: {
+    error: undefined,
+    availablePackageDetail: defaultAvailablePkgDetail,
+    pkgVersion: testVersion.pkgVersion,
+    appVersion: testVersion.appVersion,
+    readme: "readme",
+    readmeError: undefined,
+    values: "values",
+    versions: [testVersion],
+  } as IChartState["selected"],
+  deployed: {} as IChartState["deployed"],
+  items: [],
+  categories: [],
+  size: 20,
+} as IChartState;
+
+const defaultState = {
+  charts: defaultChartsState,
+  config: { kubeappsCluster: "default", kubeappsNamespace: "kubeapps" } as IConfigState,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -46,7 +110,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.charts = {
     ...actions.charts,
-    fetchChartVersionsAndSelectVersion: jest.fn(),
+    fetchChartVersions: jest.fn(),
     resetChartVersion: jest.fn(),
     selectChartVersion: jest.fn(),
   };
@@ -59,58 +123,83 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
+const routePathParam = `/c/${props.cluster}/ns/${props.chartNamespace}/charts/${props.repo}/${props.id}`;
+const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:id";
+const history = createMemoryHistory({ initialEntries: [routePathParam] });
+
+it("triggers the fetchChartVersions when mounting", () => {
   const spy = jest.fn();
-  actions.charts.fetchChartVersionsAndSelectVersion = spy;
-  mountWrapper(defaultStore, <ChartView {...props} />);
-  expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, "testrepo/test", undefined);
+  actions.charts.fetchChartVersions = spy;
+  mountWrapper(
+    getStore(defaultState),
+    <Router history={history}>
+      <Route path={routePath}>
+        <ChartView />
+      </Route>
+    </Router>,
+  );
+  expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, "testrepo/test");
 });
 
 describe("when receiving new props", () => {
   it("finds and selects the chart version when version changes", () => {
-    const versions = [{ attributes: { version: "1.2.3" } }] as IChartVersion[];
     const spy = jest.fn();
-    actions.charts = {
-      ...actions.charts,
-      selectChartVersion: spy,
-    };
-    mountWrapper(defaultStore, <ChartView {...props} selected={{ versions }} version={"1.2.3"} />);
-    expect(spy).toHaveBeenCalledWith(versions[0]);
+    actions.charts.fetchChartVersion = spy;
+    mountWrapper(
+      getStore(defaultState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <ChartView />
+        </Route>
+      </Router>,
+    );
+    expect(spy).toHaveBeenCalledWith(
+      props.cluster,
+      props.chartNamespace,
+      "testrepo/test",
+      undefined,
+    );
   });
 });
 
-it("triggers resetChartVersion when unmounting", () => {
-  const spy = jest.fn();
-  actions.charts = {
-    ...actions.charts,
-    resetChartVersion: spy,
-  };
-  const wrapper = mountWrapper(defaultStore, <ChartView {...props} />);
-  wrapper.unmount();
-  expect(spy).toHaveBeenCalled();
-});
-
 it("behaves as a loading component when fetching is false but no chart is available", () => {
-  const wrapper = mountWrapper(defaultStore, <ChartView {...props} isFetching={false} />);
+  const wrapper = mountWrapper(
+    getStore({
+      ...defaultState,
+      charts: { ...defaultChartsState, selected: {}, isFetching: false },
+    }),
+    <Router history={history}>
+      <Route path={routePath}>
+        <ChartView />
+      </Route>
+    </Router>,
+  );
   expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
 it("behaves as a loading component when fetching is true and chart is available", () => {
-  const versions = [{ attributes: { version: "1.2.3" } }] as IChartVersion[];
-
   const wrapper = mountWrapper(
-    defaultStore,
-    <ChartView {...props} isFetching={true} selected={{ versions, version: versions[0] }} />,
+    getStore({ ...defaultState, charts: { ...defaultChartsState, isFetching: false } }),
+    <Router history={history}>
+      <Route path={routePath}>
+        <ChartView />
+      </Route>
+    </Router>,
   );
   expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
 it("does not render the app version, home and sources sections if not set", () => {
-  const version = { ...testVersion, attributes: { ...testVersion.attributes } };
-  set(version, "attributes.app_version", undefined);
   const wrapper = mountWrapper(
-    defaultStore,
-    <ChartView {...props} selected={{ versions: [], version }} />,
+    getStore({
+      ...defaultChartsState,
+      charts: { selected: { availablePackageDetail: emptyAvailablePkg } },
+    }),
+    <Router history={history}>
+      <Route path={routePath}>
+        <ChartView />
+      </Route>
+    </Router>,
   );
   expect(wrapper.contains("App Version")).toBe(false);
   expect(wrapper.contains("Home")).toBe(false);
@@ -120,19 +209,25 @@ it("does not render the app version, home and sources sections if not set", () =
 
 it("renders the app version when set", () => {
   const wrapper = mountWrapper(
-    defaultStore,
-    <ChartView {...props} selected={{ ...defaultSelected, version: testVersion }} />,
+    getStore(defaultState),
+    <Router history={history}>
+      <Route path={routePath}>
+        <ChartView />
+      </Route>
+    </Router>,
   );
   expect(wrapper.contains("App Version")).toBe(true);
-  expect(wrapper.contains(<div>{testVersion.attributes.app_version}</div>)).toBe(true);
+  expect(wrapper.contains(<div>{testVersion.appVersion}</div>)).toBe(true);
 });
 
 it("renders the home link when set", () => {
-  const v = testVersion as IChartVersion;
-  v.relationships.chart.data.home = "https://example.com";
   const wrapper = mountWrapper(
-    defaultStore,
-    <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
+    getStore(defaultState),
+    <Router history={history}>
+      <Route path={routePath}>
+        <ChartView />
+      </Route>
+    </Router>,
   );
   expect(wrapper.contains("Home")).toBe(true);
   expect(
@@ -145,7 +240,6 @@ it("renders the home link when set", () => {
 });
 
 describe("ChartMaintainers githubIDAsNames prop value", () => {
-  const v = testVersion as IChartVersion;
   const tests: Array<{
     expected: boolean;
     name: string;
@@ -174,24 +268,41 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
 
   for (const t of tests) {
     it(`for ${t.name}`, () => {
-      v.relationships.chart.data.maintainers = [{ name: "John Smith" }];
-      v.relationships.chart.data.repo.url = t.repoURL;
+      const myAvailablePkgDetail = defaultAvailablePkgDetail;
+      myAvailablePkgDetail.maintainers = [{ name: "John Smith", email: "john@example.com" }];
+      myAvailablePkgDetail.repoUrl = t.repoURL;
+
       const wrapper = mountWrapper(
-        defaultStore,
-        <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
+        getStore({
+          ...defaultState,
+          charts: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+        }),
+        <Router history={history}>
+          <Route path={routePath}>
+            <ChartView />
+          </Route>
+        </Router>,
       );
-      const chartMaintainers = wrapper.find(ChartMaintainers);
+
+      const chartMaintainers = wrapper.find(AvailablePackageMaintainers);
       expect(chartMaintainers.props().githubIDAsNames).toBe(t.expected);
     });
   }
 });
 
 it("renders the sources links when set", () => {
-  const v = testVersion as IChartVersion;
-  v.relationships.chart.data.sources = ["https://example.com", "https://example2.com"];
+  const myAvailablePkgDetail = defaultAvailablePkgDetail;
+  myAvailablePkgDetail.sourceUrls = ["https://example.com", "https://example2.com"];
   const wrapper = mountWrapper(
-    defaultStore,
-    <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
+    getStore({
+      ...defaultState,
+      charts: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+    }),
+    <Router history={history}>
+      <Route path={routePath}>
+        <ChartView />
+      </Route>
+    </Router>,
   );
   expect(wrapper.contains("Related")).toBe(true);
   expect(
@@ -213,10 +324,17 @@ it("renders the sources links when set", () => {
 describe("renders errors", () => {
   it("renders a not found error if it exists", () => {
     const wrapper = mountWrapper(
-      defaultStore,
-      <ChartView {...props} selected={{ ...defaultSelected, error: new Error("Boom!") }} />,
+      getStore({
+        ...defaultState,
+        charts: { ...defaultChartsState, selected: { error: new Error("Boom!") } },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <ChartView />
+        </Route>
+      </Router>,
     );
     expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(Alert).text()).toContain("Unable to fetch chart: Boom!");
+    expect(wrapper.find(Alert).text()).toContain("Unable to fetch package: Boom!");
   });
 });

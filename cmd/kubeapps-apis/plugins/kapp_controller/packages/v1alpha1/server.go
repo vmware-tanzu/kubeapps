@@ -77,7 +77,10 @@ func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 			if configGetter == nil {
 				return nil, status.Errorf(codes.Internal, "configGetter arg required")
 			}
-			config, err := configGetter(ctx)
+			// The Kapp Controller plugin currently supports interactions with
+			// the default (kubeapps) cluster only:
+			cluster := ""
+			config, err := configGetter(ctx, cluster)
 			if err != nil {
 				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 			}
@@ -161,7 +164,7 @@ func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*co
 	if err != nil || !found {
 		return nil, status.Errorf(codes.Internal, "required field status.version not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
-	pkg.LatestPkgVersion = version
+	pkg.LatestVersion = &corev1.PackageAppVersion{PkgVersion: version}
 	return pkg, nil
 }
 
