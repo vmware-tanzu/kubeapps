@@ -52,7 +52,6 @@
     "redux-thunk": "^2.3.0",
     "remark-gfm": "^2.0.0",
     "seamless-immutable": "^7.1.4",
-    "semver": "^7.3.5",
     "swagger-ui-react": "^3.52.0",
     "typesafe-actions": "^5.1.0",
     "yaml": "^1.10.2"
@@ -114,7 +113,6 @@
     "@types/react-router-hash-link": "^2.4.1",
     "@types/react-transition-group": "^4.4.2",
     "@types/redux-mock-store": "^1.0.3",
-    "@types/semver": "^7.3.8",
     "@types/swagger-ui-react": "^3.35.2",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.3.0",
