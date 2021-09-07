@@ -16,7 +16,7 @@ export default function ChartUpdateInfo({ app, cluster }: IChartInfoProps) {
   if (
     app.latestVersion?.appVersion &&
     app.currentVersion?.appVersion &&
-    semver.gt(app.latestVersion?.appVersion, app.currentVersion?.appVersion)
+    app.currentVersion?.appVersion !== app.latestVersion?.appVersion
   ) {
     // There is a new application version
     alertContent = (
