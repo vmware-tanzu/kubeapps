@@ -168,7 +168,6 @@ installOrUpgradeKubeapps() {
   kubectl -n kubeapps delete secret localhost-tls || true
 
   cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
-    ${invalidateCacheFlag}
     "${img_flags[@]}"
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
