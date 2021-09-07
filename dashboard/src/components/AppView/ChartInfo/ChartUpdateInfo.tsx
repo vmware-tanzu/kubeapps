@@ -1,16 +1,17 @@
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { Link } from "react-router-dom";
 import * as semver from "semver";
 import { app as appURL } from "shared/url";
-
 interface IChartInfoProps {
   cluster: string;
   app: InstalledPackageDetail;
+  plugin: Plugin;
 }
 
-export default function ChartUpdateInfo({ app, cluster }: IChartInfoProps) {
+export default function ChartUpdateInfo({ app, cluster, plugin }: IChartInfoProps) {
   const namespace = app.installedPackageRef?.context?.namespace || "";
   let alertContent;
   if (
@@ -40,7 +41,7 @@ export default function ChartUpdateInfo({ app, cluster }: IChartInfoProps) {
   return alertContent ? (
     <Alert>
       {alertContent}
-      <Link to={appURL.apps.upgrade(cluster, namespace, app.name)}>Update Now</Link>
+      <Link to={appURL.apps.upgrade(cluster, namespace, app.name, plugin)}>Update Now</Link>
     </Alert>
   ) : (
     <div className="color-icon-success">

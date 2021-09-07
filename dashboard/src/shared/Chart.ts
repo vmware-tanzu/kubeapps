@@ -3,11 +3,11 @@ import {
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class Chart {
-  // TODO(agamez): move to the core 'PackagesServiceClientImpl' when pagination is ready there
-  private static client = () => new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+  private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
     cluster: string,
@@ -31,11 +31,13 @@ export default class Chart {
     cluster: string,
     namespace: string,
     id: string,
+    plugin: Plugin,
   ): Promise<GetAvailablePackageVersionsResponse> {
     return await this.client().GetAvailablePackageVersions({
       availablePackageRef: {
         context: { cluster: cluster, namespace: namespace },
         identifier: id,
+        plugin: plugin,
       },
     });
   }
@@ -44,6 +46,7 @@ export default class Chart {
     cluster: string,
     namespace: string,
     id: string,
+    plugin: Plugin,
     version?: string,
   ): Promise<GetAvailablePackageDetailResponse> {
     return await this.client().GetAvailablePackageDetail({
@@ -51,6 +54,7 @@ export default class Chart {
       availablePackageRef: {
         context: { cluster: cluster, namespace: namespace },
         identifier: id,
+        plugin: plugin,
       },
     });
   }

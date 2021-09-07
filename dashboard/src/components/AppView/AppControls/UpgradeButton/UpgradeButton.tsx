@@ -1,5 +1,6 @@
 import { CdsIcon } from "@cds/react/icon";
 import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { Link } from "react-router-dom";
 import * as url from "../../../../shared/url";
 import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
@@ -9,6 +10,7 @@ interface IUpgradeButtonProps {
   namespace: string;
   releaseName: string;
   releaseStatus: InstalledPackageStatus | undefined | null;
+  plugin: Plugin;
 }
 
 export default function UpgradeButton({
@@ -16,9 +18,10 @@ export default function UpgradeButton({
   namespace,
   releaseName,
   releaseStatus,
+  plugin,
 }: IUpgradeButtonProps) {
   return (
-    <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
+    <Link to={url.app.apps.upgrade(cluster, namespace, releaseName, plugin)}>
       <StatusAwareButton id="upgrade-button" status="primary" releaseStatus={releaseStatus}>
         <CdsIcon shape="upload-cloud" /> Upgrade
       </StatusAwareButton>

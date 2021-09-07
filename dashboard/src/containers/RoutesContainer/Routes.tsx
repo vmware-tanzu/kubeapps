@@ -25,17 +25,17 @@ type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
-  "/c/:cluster/ns/:namespace/apps/:releaseName": AppView,
-  "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade": AppUpgrade,
-  "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions/:version": DeploymentForm,
-  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:id/versions/:version":
+  "/c/:cluster/ns/:namespace/apps/:plugin/:releaseName": AppView,
+  "/c/:cluster/ns/:namespace/apps/:plugin/:releaseName/upgrade": AppUpgrade,
+  "/c/:cluster/ns/:namespace/apps/new/:repo/:plugin/:id/versions/:version": DeploymentForm,
+  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:plugin/:id/versions/:version":
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
   "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,
-  "/c/:cluster/ns/:namespace/charts/:repo/:id": ChartView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartView,
-  "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version": ChartView,
+  "/c/:cluster/ns/:namespace/charts/:repo/:plugin/:id": ChartView,
+  "/c/:cluster/ns/:namespace/charts/:repo/:plugin/:id/versions/:version": ChartView,
+  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:plugin/:id": ChartView,
+  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:plugin/:id/versions/:version": ChartView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
   "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,

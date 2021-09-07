@@ -3,9 +3,10 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { assignWith } from "lodash";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
@@ -122,11 +123,12 @@ interface IRouteParams {
   cluster: string;
   namespace: string;
   releaseName: string;
+  plugin: string;
 }
 
 export default function AppView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName } = ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace, releaseName, plugin } = ReactRouter.useParams() as IRouteParams;
   const [resourceRefs, setResourceRefs] = useState({
     ingresses: [],
     deployments: [],
@@ -141,9 +143,13 @@ export default function AppView() {
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
 
+  const pluginObj = useMemo(() => {
+    return { name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin;
+  }, [plugin]);
+
   useEffect(() => {
-    dispatch(actions.apps.getApp(cluster, namespace, releaseName));
-  }, [cluster, dispatch, namespace, releaseName]);
+    dispatch(actions.apps.getApp(cluster, namespace, releaseName, pluginObj));
+  }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
     if (!app || !app.manifest) {
@@ -205,6 +211,7 @@ export default function AppView() {
             namespace={namespace}
             releaseName={releaseName}
             releaseStatus={app?.status}
+            plugin={pluginObj}
           />,
           <RollbackButton
             key="rollback-button"
@@ -213,6 +220,7 @@ export default function AppView() {
             releaseName={releaseName}
             revision={revision}
             releaseStatus={app?.status}
+            plugin={pluginObj}
           />,
           <DeleteButton
             key="delete-button"
@@ -234,7 +242,7 @@ export default function AppView() {
       ) : (
         <Row>
           <Column span={3}>
-            <ChartInfo app={app} appDetails={appDetails!} cluster={cluster} />
+            <ChartInfo app={app} appDetails={appDetails!} cluster={cluster} plugin={pluginObj} />
           </Column>
           <Column span={9}>
             <div className="appview-separator">

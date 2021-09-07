@@ -4,6 +4,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageSummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { ThunkAction } from "redux-thunk";
 import Chart from "shared/Chart";
 import {
@@ -78,6 +79,7 @@ export function getApp(
   cluster: string,
   namespace: string,
   releaseName: string,
+  plugin: Plugin,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
@@ -89,17 +91,22 @@ export function getApp(
         cluster,
         namespace,
         releaseName,
+        plugin,
       );
       // For local packages with no references to any available packages (eg.a local chart for development)
       // we aren't able to get the details, but still want to display the available data so far
       let availablePackageDetail;
       if (installedPackageDetail) {
-        if (installedPackageDetail?.availablePackageRef?.identifier) {
+        if (
+          installedPackageDetail?.availablePackageRef?.identifier &&
+          installedPackageDetail?.availablePackageRef?.plugin
+        ) {
           // Get the details of the available package that corresponds to the installed package
           const resp = await Chart.getAvailablePackageDetail(
             installedPackageDetail.availablePackageRef.context?.cluster ?? cluster,
             installedPackageDetail.availablePackageRef.context?.namespace ?? namespace,
             installedPackageDetail.availablePackageRef.identifier,
+            installedPackageDetail.availablePackageRef.plugin,
             installedPackageDetail.currentVersion?.pkgVersion,
           );
           availablePackageDetail = resp.availablePackageDetail;
@@ -227,13 +234,14 @@ export function rollbackApp(
   namespace: string,
   releaseName: string,
   revision: number,
+  plugin: Plugin,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestRollbackApp());
     try {
       await App.rollback(cluster, namespace, releaseName, revision);
       dispatch(receiveRollbackApp());
-      dispatch(getApp(cluster, namespace, releaseName));
+      dispatch(getApp(cluster, namespace, releaseName, plugin));
       return true;
     } catch (e: any) {
       dispatch(errorApp(new RollbackError(e.message)));

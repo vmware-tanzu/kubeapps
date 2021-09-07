@@ -7,6 +7,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,6 +19,7 @@ import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
+
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
@@ -30,6 +32,7 @@ export interface IUpgradeFormProps {
   error?: Error;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
+  plugin: Plugin;
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -60,6 +63,7 @@ function UpgradeForm({
   error,
   selected,
   deployed,
+  plugin,
 }: IUpgradeFormProps) {
   const [appValues, setAppValues] = useState(appCurrentValues || "");
   const [isDeploying, setIsDeploying] = useState(false);
@@ -78,10 +82,11 @@ function UpgradeForm({
     charts: { isFetching: chartsFetching },
   } = useSelector((state: IStoreState) => state);
   const isFetching = appsFetching || chartsFetching;
+  const pluginObj = plugin ?? selected.availablePackageDetail?.availablePackageRef?.plugin;
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(cluster, repoNamespace, packageId));
-  }, [dispatch, cluster, repoNamespace, packageId]);
+    dispatch(actions.charts.fetchChartVersions(cluster, repoNamespace, packageId, pluginObj));
+  }, [dispatch, cluster, repoNamespace, packageId, pluginObj]);
 
   useEffect(() => {
     if (deployed.values && !modifications) {
@@ -109,10 +114,18 @@ function UpgradeForm({
         cluster,
         repoNamespace,
         packageId,
+        pluginObj,
         deployed.chartVersion?.version?.pkgVersion,
       ),
     );
-  }, [dispatch, cluster, repoNamespace, packageId, deployed.chartVersion]);
+  }, [
+    dispatch,
+    cluster,
+    repoNamespace,
+    packageId,
+    deployed.chartVersion?.version?.pkgVersion,
+    pluginObj,
+  ]);
 
   useEffect(() => {
     if (!valuesModified && values) {
@@ -134,7 +147,13 @@ function UpgradeForm({
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.charts.fetchChartVersion(cluster, repoNamespace, packageId, e.currentTarget.value),
+      actions.charts.fetchChartVersion(
+        cluster,
+        repoNamespace,
+        packageId,
+        pluginObj,
+        e.currentTarget.value,
+      ),
     );
   };
 
@@ -155,7 +174,7 @@ function UpgradeForm({
       );
       setIsDeploying(false);
       if (deployedSuccess) {
-        dispatch(push(url.app.apps.get(cluster, namespace, releaseName)));
+        dispatch(push(url.app.apps.get(cluster, namespace, releaseName, pluginObj)));
       }
     }
   };

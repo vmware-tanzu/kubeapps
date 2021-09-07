@@ -2,15 +2,16 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import ChartUpdateInfo from "./ChartUpdateInfo";
-
 interface IChartInfoProps {
   app: InstalledPackageDetail;
   appDetails?: AvailablePackageDetail;
   cluster: string;
+  plugin: Plugin;
 }
 
-function ChartInfo({ app, appDetails, cluster }: IChartInfoProps) {
+function ChartInfo({ app, appDetails, cluster, plugin }: IChartInfoProps) {
   return (
     <section className="left-menu">
       {app && (
@@ -28,7 +29,7 @@ function ChartInfo({ app, appDetails, cluster }: IChartInfoProps) {
               Package Version: <strong>{app.currentVersion?.pkgVersion}</strong>
             </span>
           </div>
-          <ChartUpdateInfo app={app} cluster={cluster} />
+          <ChartUpdateInfo app={app} cluster={cluster} plugin={plugin} />
         </section>
       )}
       {appDetails && (

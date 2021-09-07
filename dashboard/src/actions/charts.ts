@@ -2,6 +2,7 @@ import {
   AvailablePackageDetail,
   GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, deprecated } from "typesafe-actions";
 import Chart from "../shared/Chart";
@@ -90,11 +91,12 @@ export function fetchChartVersions(
   cluster: string,
   namespace: string,
   id: string,
+  plugin: Plugin,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
-      const response = await Chart.getAvailablePackageVersions(cluster, namespace, id);
+      const response = await Chart.getAvailablePackageVersions(cluster, namespace, id, plugin);
       dispatch(receiveChartVersions(response));
     } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
@@ -106,11 +108,18 @@ export function fetchChartVersion(
   cluster: string,
   namespace: string,
   id: string,
+  plugin: Plugin,
   version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const response = await Chart.getAvailablePackageDetail(cluster, namespace, id, version);
+      const response = await Chart.getAvailablePackageDetail(
+        cluster,
+        namespace,
+        id,
+        plugin,
+        version,
+      );
       if (response.availablePackageDetail?.version?.pkgVersion) {
         dispatch(selectChartVersion(response.availablePackageDetail));
       } else {
@@ -126,12 +135,19 @@ export function getDeployedChartVersion(
   cluster: string,
   namespace: string,
   id: string,
+  plugin: Plugin,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
       dispatch(requestDeployedChartVersion());
-      const response = await Chart.getAvailablePackageDetail(cluster, namespace, id, version);
+      const response = await Chart.getAvailablePackageDetail(
+        cluster,
+        namespace,
+        id,
+        plugin,
+        version,
+      );
       if (response.availablePackageDetail) {
         dispatch(
           receiveDeployedChartVersion(

@@ -1,7 +1,8 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { useEffect } from "react";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
@@ -34,11 +35,12 @@ interface IRouteParams {
   cluster: string;
   namespace: string;
   releaseName: string;
+  plugin: string;
 }
 
 function AppUpgrade() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName } = ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace, releaseName, plugin } = ReactRouter.useParams() as IRouteParams;
   const {
     apps: { selected: app, isFetching: appsIsFetching, error },
     charts: { isFetching: chartsIsFetching, selected, deployed },
@@ -48,17 +50,27 @@ function AppUpgrade() {
   const repoName = repo?.metadata?.name || app?.availablePackageRef?.context?.namespace;
   const repoNamespace = repo?.metadata?.namespace || app?.availablePackageRef?.context?.namespace;
 
-  useEffect(() => {
-    dispatch(actions.apps.getApp(cluster, namespace, releaseName));
-  }, [dispatch, cluster, namespace, releaseName]);
+  const pluginObj = useMemo(() => {
+    return { name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin;
+  }, [plugin]);
 
   useEffect(() => {
-    if (repoNamespace && app?.availablePackageRef?.identifier && app?.currentVersion?.pkgVersion) {
+    dispatch(actions.apps.getApp(cluster, namespace, releaseName, pluginObj));
+  }, [dispatch, cluster, namespace, releaseName, pluginObj]);
+
+  useEffect(() => {
+    if (
+      repoNamespace &&
+      app?.availablePackageRef?.identifier &&
+      app?.currentVersion?.pkgVersion &&
+      app?.availablePackageRef?.plugin
+    ) {
       dispatch(
         actions.charts.getDeployedChartVersion(
           cluster,
           repoNamespace,
           app.availablePackageRef.identifier,
+          app.availablePackageRef.plugin,
           app.currentVersion.pkgVersion,
         ),
       );
@@ -103,6 +115,7 @@ function AppUpgrade() {
           selected={selected}
           deployed={deployed}
           error={error}
+          plugin={pluginObj}
         />
       </div>
     );

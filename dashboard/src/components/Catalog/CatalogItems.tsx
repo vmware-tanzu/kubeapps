@@ -1,4 +1,5 @@
 import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useMemo } from "react";
 import { getIcon } from "shared/Operators";
 import { IClusterServiceVersion, IRepo } from "shared/types";
@@ -27,9 +28,13 @@ export default function CatalogItems({
     () =>
       charts.map(c => {
         return {
-          type: "chart",
+          // type: `${c.availablePackageRef?.plugin?.name ?? "chart"}-${
+          //   c.availablePackageRef?.plugin?.version ?? ""
+          // }`,
+          type: "hola",
           id: `chart/${c.availablePackageRef?.identifier}`,
           item: {
+            plugin: c.availablePackageRef?.plugin ?? ({ name: "", version: "" } as Plugin),
             id: `chart/${c.availablePackageRef?.identifier}/${c.latestVersion?.pkgVersion}`,
             name: c.displayName,
             icon: c.iconUrl,

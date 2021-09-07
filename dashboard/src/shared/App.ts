@@ -1,12 +1,12 @@
 import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
 export class App {
-  // TODO(agamez): move to the core 'PackagesServiceClientImpl' when pagination is ready there
-  private static client = () => new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+  private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
     cluster: string,
@@ -24,11 +24,13 @@ export class App {
     cluster: string,
     namespace: string,
     releaseName: string,
+    plugin: Plugin,
   ) {
     return await this.client().GetInstalledPackageDetail({
       installedPackageRef: {
         identifier: releaseName,
         context: { cluster: cluster, namespace: namespace },
+        plugin: plugin,
       },
     });
   }

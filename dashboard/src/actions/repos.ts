@@ -359,13 +359,18 @@ export function findPackageInRepo(
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async dispatch => {
     dispatch(requestRepo());
-    if (app?.availablePackageRef?.context?.namespace && app?.availablePackageRef?.identifier) {
+    if (
+      app?.availablePackageRef?.context?.namespace &&
+      app?.availablePackageRef?.identifier &&
+      app?.availablePackageRef?.plugin
+    ) {
       const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
       try {
         await Chart.getAvailablePackageVersions(
           cluster,
           repoNamespace,
           app.availablePackageRef.identifier,
+          app.availablePackageRef.plugin,
         );
         dispatch(receiveRepo(appRepository));
         return true;

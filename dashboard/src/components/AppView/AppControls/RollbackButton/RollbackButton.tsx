@@ -1,6 +1,7 @@
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -15,6 +16,7 @@ export interface IRollbackButtonProps {
   releaseName: string;
   revision: number;
   releaseStatus: InstalledPackageStatus | undefined | null;
+  plugin: Plugin;
 }
 
 function RollbackButton({
@@ -23,6 +25,7 @@ function RollbackButton({
   releaseName,
   revision,
   releaseStatus,
+  plugin,
 }: IRollbackButtonProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,7 +35,9 @@ function RollbackButton({
   const closeModal = () => setModalOpen(false);
   const handleRollback = async (r: number) => {
     setLoading(true);
-    const success = await dispatch(actions.apps.rollbackApp(cluster, namespace, releaseName, r));
+    const success = await dispatch(
+      actions.apps.rollbackApp(cluster, namespace, releaseName, r, plugin),
+    );
     setLoading(false);
     if (success) {
       closeModal();
