@@ -17,6 +17,7 @@ package chart
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
@@ -39,6 +40,8 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/fake"
 	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
@@ -707,7 +710,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 	testCases := []struct {
 		name             string
 		secretNames      []string
-		existingSecrets  []*corev1.Secret
+		existingSecrets  []runtime.Object
 		secretsPerDomain map[string]string
 		expectError      bool
 	}{
@@ -724,8 +727,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret is not a dockerConfigJSON type",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -741,8 +744,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret data does not have .dockerconfigjson key",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -758,8 +761,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret .dockerconfigjson value is not json decodable",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -775,8 +778,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns the registry secrets per domain",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -794,8 +797,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it includes secrets for multiple servers",
 			secretNames: []string{"bitnami-repo1", "bitnami-repo2"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo1",
 						Namespace: namespace,
@@ -805,7 +808,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 						dockerConfigJSONKey: []byte(indexDockerIOCred),
 					},
 				},
-				{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo2",
 						Namespace: namespace,
@@ -825,9 +828,9 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client := &kube.FakeHandler{Secrets: tc.existingSecrets}
+			client := fake.NewSimpleClientset(tc.existingSecrets...)
 
-			secretsPerDomain, err := RegistrySecretsPerDomain(tc.secretNames, "default", namespace, "token", client)
+			secretsPerDomain, err := RegistrySecretsPerDomain(context.Background(), tc.secretNames, namespace, client)
 			if got, want := err != nil, tc.expectError; !cmp.Equal(got, want) {
 				t.Fatalf("got: %t, want: %t, err was: %+v", got, want, err)
 			}

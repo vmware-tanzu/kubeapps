@@ -18,6 +18,7 @@ package chart
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -38,6 +39,8 @@ import (
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/helm/pkg/repo"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
@@ -347,15 +350,11 @@ func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, 
 
 // RegistrySecretsPerDomain checks the app repo and available secrets
 // to return the secret names per registry domain.
-func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
+func RegistrySecretsPerDomain(ctx context.Context, appRepoSecrets []string, namespace string, client kubernetes.Interface) (map[string]string, error) {
 	secretsPerDomain := map[string]string{}
-	client, err := authHandler.AsUser(token, cluster)
-	if err != nil {
-		return nil, err
-	}
 
 	for _, secretName := range appRepoSecrets {
-		secret, err := client.GetSecret(secretName, namespace)
+		secret, err := client.CoreV1().Secrets(namespace).Get(ctx, secretName, v1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
