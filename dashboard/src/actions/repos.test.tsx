@@ -1,3 +1,4 @@
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -51,7 +52,7 @@ beforeEach(() => {
   });
 });
 
-afterEach(jest.resetAllMocks);
+afterEach(jest.restoreAllMocks);
 
 // Regular action creators
 interface ITestCase {
@@ -70,11 +71,6 @@ const actionTestCases: ITestCase[] = [
   { name: "receiveRepos", action: repoActions.receiveRepos, args: [[repo]], payload: [repo] },
   { name: "requestRepo", action: repoActions.requestRepo },
   { name: "receiveRepo", action: repoActions.receiveRepo, args: repo, payload: repo },
-  { name: "clearRepo", action: repoActions.clearRepo, payload: {} },
-  { name: "showForm", action: repoActions.showForm },
-  { name: "hideForm", action: repoActions.hideForm },
-  { name: "resetForm", action: repoActions.resetForm },
-  { name: "submitForm", action: repoActions.submitForm },
   { name: "redirect", action: repoActions.redirect, args: "/foo", payload: "/foo" },
   { name: "redirected", action: repoActions.redirected },
   {
@@ -1008,9 +1004,15 @@ describe("updateRepo", () => {
   });
 });
 
-describe("checkChart", () => {
+describe("findPackageInRepo", () => {
+  const installedPackageDetail = {
+    availablePackageRef: {
+      context: { cluster: "default", namespace: "my-ns" },
+      identifier: "my-repo/my-chart",
+    },
+  } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
-    Chart.fetchChartVersions = jest.fn();
+    Chart.getAvailablePackageVersions = jest.fn();
     const expectedActions = [
       {
         type: getType(repoActions.requestRepo),
@@ -1020,12 +1022,16 @@ describe("checkChart", () => {
         payload: appRepo,
       },
     ];
-
     await store.dispatch(
-      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+      repoActions.findPackageInRepo(
+        "default",
+        "other-namespace",
+        "my-repo",
+        installedPackageDetail,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith(
+    expect(Chart.getAvailablePackageVersions).toBeCalledWith(
       "default",
       "other-namespace",
       "my-repo/my-chart",
@@ -1033,7 +1039,7 @@ describe("checkChart", () => {
   });
 
   it("dispatches requestRepo and errorChart if error fetching", async () => {
-    Chart.fetchChartVersions = jest.fn(() => {
+    Chart.getAvailablePackageVersions = jest.fn(() => {
       throw new Error();
     });
 
@@ -1043,15 +1049,22 @@ describe("checkChart", () => {
       },
       {
         type: getType(actions.charts.errorChart),
-        payload: new NotFoundError("Chart my-chart not found in the repository my-repo."),
+        payload: new NotFoundError(
+          "Package my-repo/my-chart not found in the repository other-namespace.",
+        ),
       },
     ];
 
     await store.dispatch(
-      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+      repoActions.findPackageInRepo(
+        "default",
+        "other-namespace",
+        "my-repo",
+        installedPackageDetail,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith(
+    expect(Chart.getAvailablePackageVersions).toBeCalledWith(
       "default",
       "other-namespace",
       "my-repo/my-chart",

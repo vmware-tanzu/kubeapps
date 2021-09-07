@@ -34,7 +34,7 @@ export class ServiceCatalog {
       },
       {
         headers: { "Content-Type": "application/merge-patch+json" },
-        validateStatus: statusCode => true,
+        validateStatus: () => true,
       },
     );
     return data;
@@ -44,7 +44,7 @@ export class ServiceCatalog {
     try {
       const { status } = await axiosWithAuth.get(this.endpoint(cluster));
       return status === 200;
-    } catch (err) {
+    } catch (e: any) {
       return false;
     }
   }

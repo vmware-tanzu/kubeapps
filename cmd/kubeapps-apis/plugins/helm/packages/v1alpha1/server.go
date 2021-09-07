@@ -336,7 +336,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	// Currently we support available packages on the kubeapps cluster only.
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "Requests for available packages on clusters other than %q not supported.", s.globalPackagingCluster)
+		return nil, status.Errorf(codes.InvalidArgument, "Requests for available packages on clusters other than %q not supported. Requested cluster was: %q", s.globalPackagingCluster, cluster)
 	}
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
@@ -400,7 +400,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	// Currently we support available packages on the kubeapps cluster only.
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "Requests for versions of available packages on clusters other than %q not supported.", s.globalPackagingCluster)
+		return nil, status.Errorf(codes.InvalidArgument, "Requests for versions of available packages on clusters other than %q not supported. Requested cluster was %q.", s.globalPackagingCluster, cluster)
 	}
 
 	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, request.AvailablePackageRef.Context.Namespace)
@@ -634,7 +634,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
 		}
-		if len(charts) == 1 && len(charts[0].ChartVersions) > 0 {
+		// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
+		// Example: global + namespaced repo including an overlapping subset of packages.
+		if len(charts) > 0 && len(charts[0].ChartVersions) > 0 {
 			installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
 				PkgVersion: charts[0].ChartVersions[0].Version,
 				AppVersion: charts[0].ChartVersions[0].AppVersion,
@@ -742,13 +744,18 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
 	}
-	if len(charts) == 1 {
+	// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
+	// Example: global + namespaced repo including an overlapping subset of packages.
+	if len(charts) > 0 {
 		installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
 			Identifier: charts[0].ID,
 			Plugin:     GetPluginDetail(),
 		}
 		if charts[0].Repo != nil {
-			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{Namespace: charts[0].Repo.Namespace}
+			installedPkgDetail.AvailablePackageRef.Context = &corev1.Context{
+				Namespace: charts[0].Repo.Namespace,
+				Cluster:   s.globalPackagingCluster,
+			}
 		}
 		if len(charts[0].ChartVersions) > 0 {
 			cv := charts[0].ChartVersions[0]

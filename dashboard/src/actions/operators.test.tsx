@@ -14,7 +14,7 @@ beforeEach(() => {
   store = mockStore({});
 });
 
-afterEach(jest.resetAllMocks);
+afterEach(jest.restoreAllMocks);
 
 describe("checkOLMInstalled", () => {
   it("dispatches OLM_INSTALLED when succeeded", async () => {

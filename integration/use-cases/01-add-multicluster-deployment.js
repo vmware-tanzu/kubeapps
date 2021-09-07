@@ -1,4 +1,5 @@
 const utils = require("./lib/utils");
+const testName = "01-add-multicluster-deployment";
 
 test("Deploys an application with the values by default", async () => {
   await utils.login(
@@ -19,15 +20,21 @@ test("Deploys an application with the values by default", async () => {
 
   await expect(page).toClick("a", { text: "Catalog" });
 
-  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-  await expect(page).toClick("a", { text: "apache" });
+  await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
+  await expect(page).toClick("a", { text: "Apache HTTP Server" });
 
-  await expect(page).toClick("cds-button", { text: "Deploy" });
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toClick("cds-button", { text: "Deploy" });
+  }, testName);
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
   await page.type("#releaseName", utils.getRandomName("my-app"));
 
-  await expect(page).toClick("cds-button", { text: "Deploy" });
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toClick("cds-button", { text: "Deploy" });
+  }, testName);
 
-  await expect(page).toMatch("Ready", { timeout: 60000 });
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatch("Ready", { timeout: 60000 });
+  }, testName);
 });

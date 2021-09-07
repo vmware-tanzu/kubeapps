@@ -26,6 +26,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,9 +47,9 @@ func TestBadClientGetter(t *testing.T) {
 			statusCode:   codes.FailedPrecondition,
 		},
 		{
-			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
-				return nil, fmt.Errorf("Bang!")
+			name: "returns failed-precondition when clientGetter itself errors",
+			clientGetter: func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+				return nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
@@ -268,3 +271,20 @@ func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 
 // misc global vars that get re-used in multiple tests
 var fluxPlugin = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
+var fluxHelmRepositoryCRD = &apiextv1.CustomResourceDefinition{
+	TypeMeta: metav1.TypeMeta{
+		Kind:       "CustomResourceDefinition",
+		APIVersion: "apiextensions.k8s.io/v1",
+	},
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "helmrepositories.source.toolkit.fluxcd.io",
+	},
+	Status: apiextv1.CustomResourceDefinitionStatus{
+		Conditions: []apiextv1.CustomResourceDefinitionCondition{
+			{
+				Type:   "Established",
+				Status: "True",
+			},
+		},
+	},
+}

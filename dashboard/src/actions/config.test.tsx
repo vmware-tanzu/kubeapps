@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 describe("getConfig", () => {

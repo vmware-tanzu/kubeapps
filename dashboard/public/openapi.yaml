@@ -45,6 +45,11 @@ tags:
     externalDocs:
       url: "https://kubernetes.io/docs/concepts/overview/kubernetes-api/"
     description: "Kubernetes API"
+  - name: PluginsService
+  - name: PackagesService
+  - name: FluxV2PackagesService
+  - name: HelmPackagesService
+  - name: KappControllerPackagesService
 externalDocs:
   description: Kuebapps GitHub repository
   url: "https://github.com/kubeapps/kubeapps"
@@ -1801,6 +1806,2170 @@ paths:
             text/plain:
               schema:
                 type: string
+  # Temporarily manually extracted from /cmd/kubeapps-apis/docs/kubeapps-apis.swagger.json
+  /apis/core/packages/v1alpha1/availablepackagedetails:
+    get:
+      operationId: PackagesService_GetAvailablePackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional specific version (or version reference) to request.
+
+            By default the latest version (or latest version matching the reference)
+
+            will be returned.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - PackagesService
+  /apis/core/packages/v1alpha1/availablepackagesummaries:
+    get:
+      operationId: PackagesService_GetAvailablePackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.query
+          description: Text query. Text query for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.categories
+          description: Categories. Collection of categories for the request
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.repositories
+          description: Repositories. Collection of repositories where the packages belong to
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.pkgVersion
+          description: Package version. Package version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.appVersion
+          description: App version. Packaged app version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - PackagesService
+  /apis/core/packages/v1alpha1/availablepackageversions:
+    get:
+      operationId: PackagesService_GetAvailablePackageVersions
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
+                  onse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional version reference for which full version history is
+            required.  By
+
+            default a summary of versions is returned as outlined in the response.
+
+            Plugins can choose not to implement this and provide the summary only, it
+
+            is provided for completeness only.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - PackagesService
+  /apis/core/packages/v1alpha1/installedpackagedetails:
+    get:
+      operationId: PackagesService_GetInstalledPackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - PackagesService
+  /apis/core/packages/v1alpha1/installedpackages:
+    post:
+      operationId: PackagesService_CreateInstalledPackage
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1CreateInstalledPackageResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      tags:
+        - PackagesService
+  /apis/core/packages/v1alpha1/installedpackagesummaries:
+    get:
+      operationId: PackagesService_GetInstalledPackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - PackagesService
+  /apis/core/plugins/v1alpha1/configured-plugins:
+    get:
+      summary: GetConfiguredPlugins returns a map of short and longnames for the
+        configured plugins.
+      operationId: PluginsService_GetConfiguredPlugins
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetConfiguredPluginsResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      tags:
+        - PluginsService
+  /apis/plugins/fluxv2/packages/v1alpha1/availablepackagedetails:
+    get:
+      summary: GetAvailablePackageDetail returns the package metadata managed by the
+        'fluxv2' plugin
+      operationId: FluxV2PackagesService_GetAvailablePackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional specific version (or version reference) to request.
+
+            By default the latest version (or latest version matching the reference)
+
+            will be returned.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - FluxV2PackagesService
+  /apis/plugins/fluxv2/packages/v1alpha1/availablepackagesummaries:
+    get:
+      summary: GetAvailablePackageSummaries returns the available packages managed by
+        the 'fluxv2' plugin
+      operationId: FluxV2PackagesService_GetAvailablePackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.query
+          description: Text query. Text query for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.categories
+          description: Categories. Collection of categories for the request
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.repositories
+          description: Repositories. Collection of repositories where the packages belong to
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.pkgVersion
+          description: Package version. Package version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.appVersion
+          description: App version. Packaged app version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - FluxV2PackagesService
+  /apis/plugins/fluxv2/packages/v1alpha1/availablepackageversions:
+    get:
+      summary: GetAvailablePackageVersions returns the package versions managed by the
+        'fluxv2' plugin
+      operationId: FluxV2PackagesService_GetAvailablePackageVersions
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
+                  onse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional version reference for which full version history is
+            required.  By
+
+            default a summary of versions is returned as outlined in the response.
+
+            Plugins can choose not to implement this and provide the summary only, it
+
+            is provided for completeness only.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - FluxV2PackagesService
+  /apis/plugins/fluxv2/packages/v1alpha1/installedpackagedetail:
+    get:
+      summary: GetInstalledPackageDetail returns the requested installed package
+        managed by the 'fluxv2' plugin
+      operationId: FluxV2PackagesService_GetInstalledPackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - FluxV2PackagesService
+  /apis/plugins/fluxv2/packages/v1alpha1/installedpackages:
+    post:
+      summary: CreateInstalledPackage creates an installed package based on the request.
+      operationId: FluxV2PackagesService_CreateInstalledPackage
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1CreateInstalledPackageResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      tags:
+        - FluxV2PackagesService
+  /apis/plugins/fluxv2/packages/v1alpha1/installedpackagesummaries:
+    get:
+      summary: GetInstalledPackageSummaries returns the installed packages managed by
+        the 'fluxv2' plugin
+      operationId: FluxV2PackagesService_GetInstalledPackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - FluxV2PackagesService
+  /apis/plugins/fluxv2/packages/v1alpha1/packagerepositories:
+    get:
+      summary: GetPackageRepositories returns the repositories managed by the 'fluxv2'
+        plugin
+      operationId: FluxV2PackagesService_GetPackageRepositories
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/pluginsfluxv2packagesv1alpha1GetPackage\
+                  RepositoriesResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - FluxV2PackagesService
+  /apis/plugins/helm/packages/v1alpha1/availablepackagedetails:
+    get:
+      summary: GetAvailablePackageDetail returns the package details managed by the
+        'helm' plugin
+      operationId: HelmPackagesService_GetAvailablePackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional specific version (or version reference) to request.
+
+            By default the latest version (or latest version matching the reference)
+
+            will be returned.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - HelmPackagesService
+  /apis/plugins/helm/packages/v1alpha1/availablepackagesummaries:
+    get:
+      summary: GetAvailablePackageSummaries returns the available packages managed by
+        the 'helm' plugin
+      operationId: HelmPackagesService_GetAvailablePackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.query
+          description: Text query. Text query for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.categories
+          description: Categories. Collection of categories for the request
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.repositories
+          description: Repositories. Collection of repositories where the packages belong to
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.pkgVersion
+          description: Package version. Package version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.appVersion
+          description: App version. Packaged app version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - HelmPackagesService
+  /apis/plugins/helm/packages/v1alpha1/availablepackageversions:
+    get:
+      summary: GetAvailablePackageVersions returns the package versions managed by the
+        'helm' plugin
+      operationId: HelmPackagesService_GetAvailablePackageVersions
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
+                  onse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional version reference for which full version history is
+            required.  By
+
+            default a summary of versions is returned as outlined in the response.
+
+            Plugins can choose not to implement this and provide the summary only, it
+
+            is provided for completeness only.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - HelmPackagesService
+  /apis/plugins/helm/packages/v1alpha1/installedpackagedetail:
+    get:
+      summary: GetInstalledPackageDetail returns the requested installed package
+        managed by the 'helm' plugin
+      operationId: HelmPackagesService_GetInstalledPackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - HelmPackagesService
+  /apis/plugins/helm/packages/v1alpha1/installedpackages:
+    post:
+      summary: CreateInstalledPackage creates an installed package based on the request.
+      operationId: HelmPackagesService_CreateInstalledPackage
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1CreateInstalledPackageResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      tags:
+        - HelmPackagesService
+  /apis/plugins/helm/packages/v1alpha1/installedpackagesummaries:
+    get:
+      summary: GetInstalledPackageSummaries returns the installed packages managed by
+        the 'helm' plugin
+      operationId: HelmPackagesService_GetInstalledPackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - HelmPackagesService
+  /apis/plugins/kapp_controller/packages/v1alpha1/availablepackagedetails:
+    get:
+      summary: GetAvailablePackageDetail returns the package details managed by the
+        'kapp_controller' plugin
+      operationId: KappControllerPackagesService_GetAvailablePackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional specific version (or version reference) to request.
+
+            By default the latest version (or latest version matching the reference)
+
+            will be returned.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - KappControllerPackagesService
+  /apis/plugins/kapp_controller/packages/v1alpha1/availablepackagesummaries:
+    get:
+      summary: GetAvailablePackageSummaries returns the available packages managed by
+        the 'kapp_controller' plugin
+      operationId: KappControllerPackagesService_GetAvailablePackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.query
+          description: Text query. Text query for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.categories
+          description: Categories. Collection of categories for the request
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.repositories
+          description: Repositories. Collection of repositories where the packages belong to
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filterOptions.pkgVersion
+          description: Package version. Package version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filterOptions.appVersion
+          description: App version. Packaged app version for the request
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - KappControllerPackagesService
+  /apis/plugins/kapp_controller/packages/v1alpha1/availablepackageversions:
+    get:
+      summary: GetAvailablePackageVersions returns the package versions managed by the
+        'kapp_controller' plugin
+      operationId: KappControllerPackagesService_GetAvailablePackageVersions
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
+                  onse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier. The fully qualified identifier for the
+            available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pkgVersion
+          description: >-
+            Optional version reference for which full version history is
+            required.  By
+
+            default a summary of versions is returned as outlined in the response.
+
+            Plugins can choose not to implement this and provide the summary only, it
+
+            is provided for completeness only.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - KappControllerPackagesService
+  /apis/plugins/kapp_controller/packages/v1alpha1/installedpackagedetail:
+    get:
+      summary: GetInstalledPackageDetail returns the requested installed package
+        managed by the 'kapp_controller' plugin
+      operationId: KappControllerPackagesService_GetInstalledPackageDetail
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
+                  se"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - KappControllerPackagesService
+  /apis/plugins/kapp_controller/packages/v1alpha1/installedpackages:
+    post:
+      summary: CreateInstalledPackage creates an installed package based on the request.
+      operationId: KappControllerPackagesService_CreateInstalledPackage
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1CreateInstalledPackageResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      tags:
+        - KappControllerPackagesService
+  /apis/plugins/kapp_controller/packages/v1alpha1/installedpackagesummaries:
+    get:
+      summary: GetInstalledPackageSummaries returns the installed packages managed by
+        the 'kapp_controller' plugin
+      operationId: KappControllerPackagesService_GetInstalledPackageSummaries
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
+                  ponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageToken
+          description: Page token. The client uses this field to request a specific page of
+            the list results.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: paginationOptions.pageSize
+          description: >-
+            Page size. Clients use this field to specify the maximum number of
+            results to be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - KappControllerPackagesService
+  /apis/plugins/kapp_controller/packages/v1alpha1/packagerepositories:
+    get:
+      summary: GetPackageRepositories returns the repositories managed by the
+        'kapp_controller' plugin
+      operationId: KappControllerPackagesService_GetPackageRepositories
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/pluginskapp_controllerpackagesv1alpha1G\
+                  etPackageRepositoriesResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster. A cluster name can be provided to target a specific cluster
+            if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - KappControllerPackagesService
 components:
   schemas:
     # pkg/chart/models/chart.go
@@ -2248,6 +4417,823 @@ components:
           format: int64
         message:
           type: string
+    # Temporarily manually extracted from /cmd/kubeapps-apis/docs/kubeapps-apis.swagger.json
+    InstalledPackageStatusStatusReason:
+      type: string
+      enum:
+        - STATUS_REASON_UNSPECIFIED
+        - STATUS_REASON_INSTALLED
+        - STATUS_REASON_UNINSTALLED
+        - STATUS_REASON_FAILED
+        - STATUS_REASON_PENDING
+      default: STATUS_REASON_UNSPECIFIED
+      description: |-
+        Generic reasons why an installed package may be ready or not.
+        These should make sense across different packaging plugins.
+      title: StatusReason
+    pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse:
+      type: object
+      example:
+        repositories:
+          - name: repo-name.example.com
+            namespace: ""
+            url: foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: "#/components/schemas/pluginsfluxv2packagesv1alpha1PackageReposit\
+              ory"
+          description: List of PackageRepository
+          title: Repositories
+      description: Response for GetPackageRepositories
+      title: GetPackageRepositories
+    pluginsfluxv2packagesv1alpha1PackageRepository:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name identifying package repository on the cluster.
+          title: Package repository name
+        namespace:
+          type: string
+          description: An optional namespace for namespaced package repositories.
+          title: Package repository namespace
+        url:
+          type: string
+          description: A url identifying the package repository location.
+          title: Package repository URL
+        plugin:
+          $ref: "#/components/schemas/v1alpha1Plugin"
+      description: A PackageRepository defines a repository of packages for installation.
+      title: PackageRepository
+    pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse:
+      type: object
+      example:
+        repositories:
+          - name: repo-name.example.com
+            namespace: ""
+            url: foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: "#/components/schemas/pluginskapp_controllerpackagesv1alpha1Packa\
+              geRepository"
+          description: List of PackageRepository
+          title: Repositories
+      description: Response for GetPackageRepositories
+      title: GetPackageRepositories
+    pluginskapp_controllerpackagesv1alpha1PackageRepository:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name identifying package repository on the cluster.
+          title: Package repository name
+        namespace:
+          type: string
+          description: An optional namespace for namespaced package repositories.
+          title: Package repository namespace
+        url:
+          type: string
+          description: A url identifying the package repository location.
+          title: Package repository URL
+        plugin:
+          $ref: "#/components/schemas/v1alpha1Plugin"
+      description: A PackageRepository defines a repository of packages for installation.
+      title: PackageRepository
+    protobufAny:
+      type: object
+      properties:
+        typeUrl:
+          type: string
+          description: >-
+            A URL/resource name that uniquely identifies the type of the
+            serialized
+
+            protocol buffer message. This string must contain at least
+
+            one "/" character. The last segment of the URL's path must represent
+
+            the fully qualified name of the type (as in
+
+            `path/google.protobuf.Duration`). The name should be in a canonical form
+
+            (e.g., leading "." is not accepted).
+
+
+            In practice, teams usually precompile into the binary all types that they
+
+            expect it to use in the context of Any. However, for URLs which use the
+
+            scheme `http`, `https`, or no scheme, one can optionally set up a type
+
+            server that maps type URLs to message definitions as follows:
+
+
+            * If no scheme is provided, `https` is assumed.
+
+            * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+              value in binary format, or produce an error.
+            * Applications are allowed to cache lookup results based on the
+              URL, or have them precompiled into a binary to avoid any
+              lookup. Therefore, binary compatibility needs to be preserved
+              on changes to types. (Use versioned type names to manage
+              breaking changes.)
+
+            Note: this functionality is not currently available in the official
+
+            protobuf release, and it is not used for type URLs beginning with
+
+            type.googleapis.com.
+
+
+            Schemes other than `http`, `https` (or the empty scheme) might be
+
+            used with implementation specific semantics.
+        value:
+          type: string
+          format: byte
+          description: Must be a valid serialized protocol buffer of the above specified
+            type.
+      description: >-
+        `Any` contains an arbitrary serialized protocol buffer message along
+        with a
+
+        URL that describes the type of the serialized message.
+
+
+        Protobuf library provides support to pack/unpack Any values in the form
+
+        of utility functions or additional generated methods of the Any type.
+
+
+        Example 1: Pack and unpack a message in C++.
+
+            Foo foo = ...;
+            Any any;
+            any.PackFrom(foo);
+            ...
+            if (any.UnpackTo(&foo)) {
+              ...
+            }
+
+        Example 2: Pack and unpack a message in Java.
+
+            Foo foo = ...;
+            Any any = Any.pack(foo);
+            ...
+            if (any.is(Foo.class)) {
+              foo = any.unpack(Foo.class);
+            }
+
+         Example 3: Pack and unpack a message in Python.
+
+            foo = Foo(...)
+            any = Any()
+            any.Pack(foo)
+            ...
+            if any.Is(Foo.DESCRIPTOR):
+              any.Unpack(foo)
+              ...
+
+         Example 4: Pack and unpack a message in Go
+
+             foo := &pb.Foo{...}
+             any, err := anypb.New(foo)
+             if err != nil {
+               ...
+             }
+             ...
+             foo := &pb.Foo{}
+             if err := any.UnmarshalTo(foo); err != nil {
+               ...
+             }
+
+        The pack methods provided by protobuf library will by default use
+
+        'type.googleapis.com/full.type.name' as the type URL and the unpack
+
+        methods only use the fully qualified type name after the last '/'
+
+        in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+        name "y.z".
+
+
+
+        JSON
+
+        ====
+
+        The JSON representation of an `Any` value uses the regular
+
+        representation of the deserialized, embedded message, with an
+
+        additional field `@type` which contains the type URL. Example:
+
+            package google.profile;
+            message Person {
+              string first_name = 1;
+              string last_name = 2;
+            }
+
+            {
+              "@type": "type.googleapis.com/google.profile.Person",
+              "firstName": ,
+              "lastName": 
+            }
+
+        If the embedded message type is well-known and has a custom JSON
+
+        representation, that representation will be embedded adding a field
+
+        `value` which holds the custom JSON in addition to the `@type`
+
+        field. Example (for message [google.protobuf.Duration][]):
+
+            {
+              "@type": "type.googleapis.com/google.protobuf.Duration",
+              "value": "1.212s"
+            }
+    rpcStatus:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/protobufAny"
+    v1alpha1AvailablePackageDetail:
+      type: object
+      properties:
+        availablePackageRef:
+          $ref: "#/components/schemas/v1alpha1AvailablePackageReference"
+        name:
+          type: string
+          description: The name of the available package
+          title: Available package name
+        version:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        repoUrl:
+          type: string
+          title: the url of the package repository that contains this package
+        homeUrl:
+          type: string
+          title: the url of the “home” for the package
+        iconUrl:
+          type: string
+          description: A url for an icon.
+          title: Available package icon URL
+        displayName:
+          type: string
+          description: A name as displayed to users
+          title: Available package display name
+        shortDescription:
+          type: string
+          description: A short description of the app provided by the package
+          title: Available package short description
+        longDescription:
+          type: string
+          description: A longer description of the package, a few sentences.
+          title: Available package long description
+        readme:
+          type: string
+          description: A longer README with potentially pages of formatted Markdown.
+          title: Available package readme
+        defaultValues:
+          type: string
+          description: >-
+            An example of default values used during package templating that can
+            serve
+
+            as documentation or a starting point for user customization.
+          title: Available package default values
+        valuesSchema:
+          type: string
+        sourceUrls:
+          type: array
+          items:
+            type: string
+          title: source urls for the package
+        maintainers:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1alpha1Maintainer"
+          description: List of Maintainer
+          title: Available package maintainers
+        categories:
+          type: array
+          items:
+            type: string
+          description: >-
+            A user-facing list of category names useful for creating richer user
+            interfaces.
+
+            Plugins can choose not to implement this
+          title: Available package categories
+        customDetail:
+          $ref: "#/components/schemas/protobufAny"
+      description: |-
+        An AvailablePackageDetail provides additional details required when
+        inspecting an individual package.
+      title: AvailablePackageDetail
+    v1alpha1AvailablePackageReference:
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/v1alpha1Context"
+        identifier:
+          type: string
+          description: >-
+            The fully qualified identifier for the available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          title: Available package identifier
+        plugin:
+          $ref: "#/components/schemas/v1alpha1Plugin"
+      description: >-
+        An AvailablePackageReference has the minimum information required to
+        uniquely
+
+        identify an available package. This is re-used on the summary and details of an
+
+        available package.
+      title: AvailablePackageReference
+    v1alpha1AvailablePackageSummary:
+      type: object
+      properties:
+        availablePackageRef:
+          $ref: "#/components/schemas/v1alpha1AvailablePackageReference"
+        name:
+          type: string
+          description: The name of the available package
+          title: Available package name
+        latestVersion:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        iconUrl:
+          type: string
+          description: A url for an icon.
+          title: Available package Icon URL
+        displayName:
+          type: string
+          description: A name as displayed to users
+          title: Available package display name
+        shortDescription:
+          type: string
+          description: A short description of the app provided by the package
+          title: Available package short description
+        categories:
+          type: array
+          items:
+            type: string
+          description: >-
+            A user-facing list of category names useful for creating richer user
+            interfaces.
+
+            Plugins can choose not to implement this
+          title: Available package categories
+      description: >-
+        An AvailablePackageSummary provides a summary of a package available for
+        installation
+
+        useful when aggregating many available packages.
+      title: AvailablePackageSummary
+    v1alpha1Context:
+      type: object
+      properties:
+        cluster:
+          type: string
+          description: >-
+            A cluster name can be provided to target a specific cluster if
+            multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          title: Cluster
+        namespace:
+          type: string
+          description: >-
+            A namespace must be provided if the context of the operation is for
+            a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          title: Namespace
+      description: A Context specifies the context of the message
+      title: Context
+    v1alpha1CreateInstalledPackageResponse:
+      type: object
+      properties:
+        installedPackageRef:
+          $ref: "#/components/schemas/v1alpha1InstalledPackageReference"
+      description: Response for CreateInstalledPackage
+      title: CreateInstalledPackageResponse
+    v1alpha1FilterOptions:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Text query for the request
+          title: Text query
+        categories:
+          type: array
+          items:
+            type: string
+          description: Collection of categories for the request
+          title: Categories
+        repositories:
+          type: array
+          items:
+            type: string
+          description: Collection of repositories where the packages belong to
+          title: Repositories
+        pkgVersion:
+          type: string
+          description: Package version for the request
+          title: Package version
+        appVersion:
+          type: string
+          description: Packaged app version for the request
+          title: App version
+      description: FilterOptions available when requesting summaries
+      title: FilterOptions
+    v1alpha1GetAvailablePackageDetailResponse:
+      type: object
+      properties:
+        availablePackageDetail:
+          $ref: "#/components/schemas/v1alpha1AvailablePackageDetail"
+      description: Response for GetAvailablePackageDetail
+      title: GetAvailablePackageDetailResponse
+    v1alpha1GetAvailablePackageSummariesResponse:
+      type: object
+      properties:
+        availablePackageSummaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1alpha1AvailablePackageSummary"
+          description: List of AvailablePackageSummary
+          title: Available packages summaries
+        nextPageToken:
+          type: string
+          description: >-
+            This field represents the pagination token to retrieve the next page
+            of
+
+            results. If the value is "", it means no further results for the request.
+          title: Next page token
+        categories:
+          type: array
+          items:
+            type: string
+          description: This optional field contains the distinct category names considering
+            the FilterOptions.
+          title: Categories
+      description: Response for GetAvailablePackageSummaries
+      title: GetAvailablePackageSummariesResponse
+    v1alpha1GetAvailablePackageVersionsResponse:
+      type: object
+      properties:
+        packageAppVersions:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+          description: >-
+            By default (when version_query is empty or ignored) the response
+
+            should contain an ordered summary of versions including the most recent three
+
+            patch versions of the most recent three minor versions of the most recent three
+
+            major versions when available, something like:
+
+            [
+              { pkg_version: "10.3.19", app_version: "2.16.8" },
+              { pkg_version: "10.3.18", app_version: "2.16.8" },
+              { pkg_version: "10.3.17", app_version: "2.16.7" },
+              { pkg_version: "10.2.6", app_version: "2.15.3" },
+              { pkg_version: "10.2.5", app_version: "2.15.2" },
+              { pkg_version: "10.2.4", app_version: "2.15.2" },
+              { pkg_version: "10.1.8", app_version: "2.13.5" },
+              { pkg_version: "10.1.7", app_version: "2.13.5" },
+              { pkg_version: "10.1.6", app_version: "2.13.5" },
+              { pkg_version: "9.5.4", app_version: "2.8.9" },
+              ...
+              { pkg_version: "8.2.5", app_version: "1.19.5" },
+              ...
+            ]
+
+            If a version_query is present and the plugin chooses to support it,
+
+            the full history of versions matching the version query should be returned.
+          title: Package app versions
+      description: Response for GetAvailablePackageVersions
+      title: GetAvailablePackageVersionsResponse
+    v1alpha1GetConfiguredPluginsResponse:
+      type: object
+      example:
+        plugins:
+          - name: kapp_controller.packages
+            version: v1alpha1
+      properties:
+        plugins:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1alpha1Plugin"
+          description: List of Plugin
+          title: Plugins
+      description: Response for GetConfiguredPlugins
+      title: GetConfiguredPluginsResponse
+    v1alpha1GetInstalledPackageDetailResponse:
+      type: object
+      properties:
+        installedPackageDetail:
+          $ref: "#/components/schemas/v1alpha1InstalledPackageDetail"
+      description: Response for GetInstalledPackageDetail
+      title: GetInstalledPackageDetailResponse
+    v1alpha1GetInstalledPackageSummariesResponse:
+      type: object
+      properties:
+        installedPackageSummaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1alpha1InstalledPackageSummary"
+          description: List of InstalledPackageSummary
+          title: Installed packages summaries
+        nextPageToken:
+          type: string
+          description: >-
+            This field represents the pagination token to retrieve the next page
+            of
+
+            results. If the value is "", it means no further results for the request.
+          title: Next page token
+      description: Response for GetInstalledPackageSummaries
+      title: GetInstalledPackageSummariesResponse
+    v1alpha1InstalledPackageDetail:
+      type: object
+      properties:
+        installedPackageRef:
+          $ref: "#/components/schemas/v1alpha1InstalledPackageReference"
+        pkgVersionReference:
+          $ref: "#/components/schemas/v1alpha1VersionReference"
+        name:
+          type: string
+          description: The name given to the installed package
+          title: Installed package name
+        currentVersion:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        valuesApplied:
+          type: string
+          description: The values applied currently for the installed package.
+          title: ValuesApplied
+        reconciliationOptions:
+          $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
+        status:
+          $ref: "#/components/schemas/v1alpha1InstalledPackageStatus"
+        postInstallationNotes:
+          type: string
+          description: Optional notes generated by package and intended for the user post
+            installation.
+          title: PostInstallationNotes
+        availablePackageRef:
+          $ref: "#/components/schemas/v1alpha1AvailablePackageReference"
+        latestMatchingVersion:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        latestVersion:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        customDetail:
+          $ref: "#/components/schemas/protobufAny"
+      description: >-
+        An InstalledPackageDetail includes details about the installed package
+        that are
+
+        typically useful when presenting a single installed package.
+      title: InstalledPackageDetail
+    v1alpha1InstalledPackageReference:
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/v1alpha1Context"
+        identifier:
+          type: string
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+        plugin:
+          $ref: "#/components/schemas/v1alpha1Plugin"
+      description: >-
+        An InstalledPackageReference has the minimum information required to
+        uniquely
+
+        identify an installed package.
+      title: InstalledPackageReference
+    v1alpha1InstalledPackageStatus:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: An indication of whether the installation is ready or not
+          title: Ready
+        reason:
+          $ref: "#/components/schemas/InstalledPackageStatusStatusReason"
+        userReason:
+          type: string
+          description: Optional text to return for user context, which may be plugin
+            specific.
+          title: UserReason
+      description: An InstalledPackageStatus reports on the current status of the
+        installation.
+      title: InstalledPackageStatus
+    v1alpha1InstalledPackageSummary:
+      type: object
+      properties:
+        installedPackageRef:
+          $ref: "#/components/schemas/v1alpha1InstalledPackageReference"
+        name:
+          type: string
+          description: A name given to the installation of the package (eg.
+            "my-postgresql-for-testing").
+          title: Name
+        pkgVersionReference:
+          $ref: "#/components/schemas/v1alpha1VersionReference"
+        currentVersion:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        iconUrl:
+          type: string
+          description: A url for an icon.
+          title: Installed package icon URL
+        pkgDisplayName:
+          type: string
+          description: The package name as displayed to users (provided by the package, eg.
+            "PostgreSQL")
+          title: PackageDisplayName
+        shortDescription:
+          type: string
+          description: A short description of the package (provided by the package)
+          title: ShortDescription
+        latestMatchingVersion:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        latestVersion:
+          $ref: "#/components/schemas/v1alpha1PackageAppVersion"
+        status:
+          $ref: "#/components/schemas/v1alpha1InstalledPackageStatus"
+      description: |-
+        An InstalledPackageSummary provides a summary of an installed package
+        useful when aggregating many installed packages.
+      title: InstalledPackageSummary
+    v1alpha1Maintainer:
+      type: object
+      properties:
+        name:
+          type: string
+          description: A maintainer name
+          title: Maintainer name
+        email:
+          type: string
+          description: A maintainer email
+          title: Maintainer email
+      description: Maintainers for the package.
+      title: Maintainer
+    v1alpha1PackageAppVersion:
+      type: object
+      properties:
+        pkgVersion:
+          type: string
+          description: Version of the package itself
+          title: Package version
+        appVersion:
+          type: string
+          description: Version of the packaged application
+          title: Application version
+      description: PackageAppVersion conveys both the package version and the packaged app
+        version.
+      title: Package AppVersion
+    v1alpha1PaginationOptions:
+      type: object
+      properties:
+        pageToken:
+          type: string
+          description: The client uses this field to request a specific page of the list
+            results.
+          title: Page token
+        pageSize:
+          type: integer
+          format: int32
+          description: >-
+            Clients use this field to specify the maximum number of results to
+            be
+
+            returned by the server. The server may further constrain the maximum number
+
+            of results returned in a single page. If the page_size is 0, the server
+
+            will decide the number of results to be returned.
+          title: Page size
+      description: >-
+        The PaginationOptions based on the example proto at:
+
+        https://cloud.google.com/apis/design/design_patterns#list_pagination
+
+        just encapsulated in a message so it can be reused on different request messages.
+      title: PaginationOptions
+    v1alpha1Plugin:
+      type: object
+      example:
+        name: kapp_controller.packages
+        version: v1alpha1
+      properties:
+        name:
+          type: string
+          description: The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          title: Plugin name
+        version:
+          type: string
+          description: The version of the plugin, such as v1alpha1
+          title: Plugin version
+      description: A plugin can implement multiple services and multiple versions of a
+        service.
+      title: Plugin
+    v1alpha1ReconciliationOptions:
+      type: object
+      properties:
+        interval:
+          type: integer
+          format: int32
+          description: The interval with which the package is checked for reconciliation
+            (in seconds)
+          title: Reconciliation Interval
+        suspend:
+          type: boolean
+          description: Whether reconciliation should be suspended until otherwise enabled.
+          title: Suspend
+        serviceAccountName:
+          type: string
+          description: >-
+            A name for a service account in the same namespace which should be
+            used
+
+            to perform the reconciliation.
+          title: ServiceAccountName
+      description: >-
+        ReconciliationOptions enable specifying standard fields for backends
+        that continuously
+
+        reconcile a package install as new matching versions are released. Most of the naming
+
+        is from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's
+
+        InstalledPackage.
+      title: ReconciliationOptions
+    v1alpha1VersionReference:
+      type: object
+      properties:
+        version:
+          type: string
+          description: >-
+            The format of the version constraint depends on the backend. For
+            example,
+
+            for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
+          title: Version
+      description: >-
+        A VersionReference defines a version or constraint limiting matching
+        versions.
+
+        The reason it is a separate message is so that in the future we can add other
+
+        fields as necessary (such as something similar to Carvel's `prereleases` option
+
+        to its versionSelection).
+      title: VersionReference
   securitySchemes:
     bearerAuth:
       type: http

@@ -44,6 +44,7 @@ service PackagesService {
   rpc CreateInstalledPackage(CreateInstalledPackageRequest) returns (CreateInstalledPackageResponse) {
     option (google.api.http) = {
       post: "/core/packages/v1alpha1/installedpackages"
+      body: "*"
     };
   }
 

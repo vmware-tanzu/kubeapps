@@ -1,9 +1,6 @@
 import { CdsIcon } from "@cds/react/icon";
-import actions from "actions";
 import Alert from "components/js/Alert";
-import { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import { useDispatch } from "react-redux";
 import remarkGfm from "remark-gfm";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import HeadingRenderer from "./HeadingRenderer";
@@ -11,20 +8,11 @@ import LinkRenderer from "./LinkRenderer";
 import TableRenderer from "./TableRenderer";
 
 interface IChartReadmeProps {
-  cluster: string;
-  namespace: string;
-  chartID: string;
-  version: string;
   error?: string;
   readme?: string;
 }
 
-function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IChartReadmeProps) {
-  const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(actions.charts.getChartReadme(cluster, namespace, chartID, version));
-  }, [dispatch, cluster, namespace, chartID, version]);
-
+function ChartReadme({ error, readme }: IChartReadmeProps) {
   if (error) {
     if (error.toLocaleLowerCase().includes("not found")) {
       return (
@@ -36,7 +24,7 @@ function ChartReadme({ chartID, error, cluster, namespace, readme, version }: IC
         </div>
       );
     }
-    return <Alert theme="danger">Unable to fetch chart README: {error}</Alert>;
+    return <Alert theme="danger">Unable to fetch package README: {error}</Alert>;
   }
   return (
     <LoadingWrapper
