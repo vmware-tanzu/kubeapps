@@ -24,8 +24,8 @@ email=${2:?}
 gpg=${3:?}
 forkSSHKeyFilename=${4:?}
 
-currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep -oP '(?<=^version: ).*' )
-externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/master/${CHART_REPO_PATH}/Chart.yaml | grep -oP '(?<=^version: ).*' )
+currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep -oP '(?<=^version: ).*')
+externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/master/${CHART_REPO_PATH}/Chart.yaml | grep -oP '(?<=^version: ).*')
 semverCompare=$(semver compare "${currentVersion}" "${externalVersion}")
 # If current version is less than the chart external version, then retrieve the changes and send an internal PR with them
 if [[ ${semverCompare} -lt 0 ]]; then

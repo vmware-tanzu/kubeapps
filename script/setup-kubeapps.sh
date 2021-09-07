@@ -5,7 +5,7 @@ set -o nounset
 set -o pipefail
 
 # Constants
-ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 RESET='\033[0m'
 GREEN='\033[38;5;2m'
 RED='\033[38;5;1m'
@@ -50,24 +50,27 @@ help_menu=0
 dry_run=0
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        -h|--help)
-            help_menu=1
-            ;;
-        -u|--dry-run)
-            dry_run=1
-            ;;
-        --initial-repos)
-            shift; repo_name="${1:?missing repo name}"
-            shift; repo_url="${1:?missing repo url}"
-            initial_repos=("${initial_repos[@]}" "$repo_name $repo_url")
-            ;;
-        -n|--namespace)
-            shift; namespace="${1:?missing namespace}"
-            ;;
-        *)
-            error "Invalid command line flag $1" >&2
-            exit 1
-            ;;
+    -h | --help)
+        help_menu=1
+        ;;
+    -u | --dry-run)
+        dry_run=1
+        ;;
+    --initial-repos)
+        shift
+        repo_name="${1:?missing repo name}"
+        shift
+        repo_url="${1:?missing repo url}"
+        initial_repos=("${initial_repos[@]}" "$repo_name $repo_url")
+        ;;
+    -n | --namespace)
+        shift
+        namespace="${1:?missing namespace}"
+        ;;
+    *)
+        error "Invalid command line flag $1" >&2
+        exit 1
+        ;;
     esac
     shift
 done
@@ -78,14 +81,16 @@ if [[ "$help_menu" -eq 1 ]]; then
 fi
 
 # Kubeapps values
-values="$(cat << EOF
+values="$(
+    cat <<EOF
 useHelm3: true
 apprepository:
   initialRepos:
 EOF
 )"
 for repo in "${initial_repos[@]}"; do
-    values="$(cat << EOF
+    values="$(
+        cat <<EOF
 $values
     - name: $(echo "$repo" | awk '{print $1}')
       url: $(echo "$repo" | awk '{print $2}')

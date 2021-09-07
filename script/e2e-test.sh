@@ -19,7 +19,7 @@ set -o nounset
 set -o pipefail
 
 # Constants
-ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
 DEV_TAG=${3:?missing dev tag}
@@ -75,36 +75,36 @@ isOperatorHubCatalogRunning() {
 # Returns: None
 #########################
 installOLM() {
-    local release=$1
-    info "Installing OLM ${release} ..."
-    url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
-    namespace=olm
+  local release=$1
+  info "Installing OLM ${release} ..."
+  url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
+  namespace=olm
 
-    kubectl apply -f "${url}/crds.yaml"
-    kubectl wait --for=condition=Established -f "${url}/crds.yaml"
-    kubectl apply -f "${url}/olm.yaml"
+  kubectl apply -f "${url}/crds.yaml"
+  kubectl wait --for=condition=Established -f "${url}/crds.yaml"
+  kubectl apply -f "${url}/olm.yaml"
 
-    # wait for deployments to be ready
-    kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
-    kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
+  # wait for deployments to be ready
+  kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
+  kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
 
-    retries=30
-    until [[ $retries == 0 ]]; do
-        new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
-        if [[ $new_csv_phase != "$csv_phase" ]]; then
-            csv_phase=$new_csv_phase
-            echo "CSV \"packageserver\" phase: $csv_phase"
-        fi
-        if [[ "$new_csv_phase" == "Succeeded" ]]; then
+  retries=30
+  until [[ $retries == 0 ]]; do
+    new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
+    if [[ $new_csv_phase != "$csv_phase" ]]; then
+      csv_phase=$new_csv_phase
+      echo "CSV \"packageserver\" phase: $csv_phase"
+    fi
+    if [[ "$new_csv_phase" == "Succeeded" ]]; then
       break
-        fi
-        sleep 10
-        retries=$((retries - 1))
-    done
+    fi
+    sleep 10
+    retries=$((retries - 1))
+  done
 
   if [ $retries == 0 ]; then
-      echo "CSV \"packageserver\" failed to reach phase succeeded"
-      exit 1
+    echo "CSV \"packageserver\" failed to reach phase succeeded"
+    exit 1
   fi
 
   kubectl rollout status -w deployment/packageserver --namespace="${namespace}"
@@ -119,15 +119,15 @@ installOLM() {
 # Returns: None
 #########################
 installChartmuseum() {
-    local user=$1
-    local password=$2
-    info "Installing ChartMuseum ..."
-    helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-2.14.2/chartmuseum-2.14.2.tgz \
-      --set env.open.DISABLE_API=false \
-      --set persistence.enabled=true \
-      --set secret.AUTH_USER=$user \
-      --set secret.AUTH_PASS=$password
-    kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
+  local user=$1
+  local password=$2
+  info "Installing ChartMuseum ..."
+  helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-2.14.2/chartmuseum-2.14.2.tgz \
+    --set env.open.DISABLE_API=false \
+    --set persistence.enabled=true \
+    --set secret.AUTH_USER=$user \
+    --set secret.AUTH_PASS=$password
+  kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
 }
 
 ########################
@@ -141,18 +141,18 @@ installChartmuseum() {
 # Returns: None
 #########################
 pushChart() {
-    local chart=$1
-    local version=$2
-    local user=$3
-    local password=$4
-    info "Adding ${chart}-${version} to ChartMuseum ..."
-    curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+  local chart=$1
+  local version=$2
+  local user=$3
+  local password=$4
+  info "Adding ${chart}-${version} to ChartMuseum ..."
+  curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
 
-    local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
-    /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
-    sleep 2
-    curl -u "${user}:${password}" --data-binary "@${chart}-${version}.tgz" http://localhost:8080/api/charts
-    pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
+  local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
+  /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
+  sleep 2
+  curl -u "${user}:${password}" --data-binary "@${chart}-${version}.tgz" http://localhost:8080/api/charts
+  pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
 }
 
 ########################
@@ -162,27 +162,27 @@ pushChart() {
 # Returns: None
 #########################
 installOrUpgradeKubeapps() {
-    local chartSource=$1
-    # Install Kubeapps
-    info "Installing Kubeapps from ${chartSource}..."
-    kubectl -n kubeapps delete secret localhost-tls || true
+  local chartSource=$1
+  # Install Kubeapps
+  info "Installing Kubeapps from ${chartSource}..."
+  kubectl -n kubeapps delete secret localhost-tls || true
 
-    cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
-      ${invalidateCacheFlag} \
-      "${img_flags[@]}" \
-      "${@:2}" \
-      "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}" \
-      --set frontend.replicaCount=1 \
-      --set kubeops.replicaCount=1 \
-      --set assetsvc.replicaCount=1 \
-      --set dashboard.replicaCount=1 \
-      --set postgresql.replication.enabled=false \
-      --set postgresql.postgresqlPassword=password \
-      --set redis.auth.password=password \
-      --wait)
+  cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
+    ${invalidateCacheFlag}
+    "${img_flags[@]}"
+    "${@:2}"
+    "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
+    --set frontend.replicaCount=1
+    --set kubeops.replicaCount=1
+    --set assetsvc.replicaCount=1
+    --set dashboard.replicaCount=1
+    --set postgresql.replication.enabled=false
+    --set postgresql.postgresqlPassword=password
+    --set redis.auth.password=password
+    --wait)
 
-    echo "${cmd[@]}"
-    "${cmd[@]}"
+  echo "${cmd[@]}"
+  "${cmd[@]}"
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -227,7 +227,7 @@ img_flags=(
   "--set" "kubeappsapis.image.repository=${images[6]}"
 )
 
-if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ] ; then
+if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   multiclusterFlags=(
     "--set" "ingress.enabled=true"
     "--set" "ingress.hostname=localhost"
@@ -337,7 +337,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
         kubectl logs -n kubeapps "$pod" nginx
         kubectl logs -n kubeapps "$pod" auth-proxy
       fi
-    done;
+    done
     echo
     warn "LOGS for assetsvc tests --------"
     kubectl logs kubeapps-ci-assetsvc-test --namespace kubeapps
