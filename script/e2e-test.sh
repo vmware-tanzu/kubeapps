@@ -29,7 +29,7 @@ ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
-if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
   DEV_TAG=${DEV_TAG/-beta.*/}
 fi
 
