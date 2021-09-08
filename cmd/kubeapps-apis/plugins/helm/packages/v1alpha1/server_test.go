@@ -31,6 +31,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
@@ -507,6 +508,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		actionConfigGetter: func(context.Context, string, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
+		chartClientFactory: &fake.ChartClientFactory{},
 	}, mock, cleanup
 }
 

@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,9 +54,11 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
+						Cluster:   "default",
 						Namespace: "default",
 					},
 					Identifier: "my-apache",
+					Plugin:     GetPluginDetail(),
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -77,11 +80,15 @@ func TestCreateInstalledPackage(t *testing.T) {
 	ignoredUnexported := cmpopts.IgnoreUnexported(
 		corev1.CreateInstalledPackageResponse{},
 		corev1.InstalledPackageReference{},
+		corev1.Context{},
+		plugins.Plugin{},
 	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			server, _, cleanup := makeServer(t, true, nil, &v1alpha1.AppRepository{
+			authorized := true
+			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil)
+			server, _, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "bitnami",
 					Namespace: globalPackagingNamespace,

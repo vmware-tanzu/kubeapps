@@ -73,6 +73,7 @@ type Server struct {
 	globalPackagingCluster   string
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
+	chartClientFactory       chart.ChartClientFactoryInterface
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -140,6 +141,7 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 		manager:                  manager,
 		globalPackagingNamespace: kubeappsNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
+		chartClientFactory:       &chart.ChartClientFactory{},
 	}
 }
 
@@ -827,14 +829,12 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, err
 	}
 
-	log.Errorf("Got here 1")
 	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
 	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, repoName, repoNamespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", repoName, repoNamespace, err)
 	}
 
-	log.Errorf("Got here 2. appRepo: %+v, caCertSecret: %+v, authSecret: %+v", appRepo, caCertSecret, authSecret)
 	// Grab the chart itself
 	ch, err := handlerutil.GetChart(
 		&chart.Details{
@@ -847,10 +847,9 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		caCertSecret, authSecret,
 		// TODO(minelson): add a useragent comment to kubeapps APIs and ensure it is passed
 		// through to be used here.
-		(&handlerutil.ClientResolver{}).New(appRepo.Spec.Type, "kubeapps-apis/devel"),
+		s.chartClientFactory.New(appRepo.Spec.Type, "kubeapps-apis/devel"),
 	)
 
-	log.Errorf("Got here 3. chart is: %+v", ch)
 	// Create an action config for the target namespace.
 	namespace := request.GetTargetContext().GetNamespace()
 	cluster := request.GetTargetContext().GetCluster()
@@ -862,7 +861,6 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	log.Errorf("Got here 4")
 	// We currently get app repositories on the kubeapps cluster only.
 	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
 	if err != nil {
@@ -872,14 +870,12 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to fetch registry secrets from the namespace %q: %v", appRepo.Namespace, err)
 	}
-	log.Errorf("Got here 5")
 
 	release, err := agent.CreateRelease(actionConfig, request.GetName(), namespace, request.GetValues(), ch, registrySecrets)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.GetName(), appRepo.Namespace, err)
 	}
 
-	log.Errorf("Got here 6")
 	return &corev1.CreateInstalledPackageResponse{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
@@ -887,6 +883,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 				Namespace: release.Namespace,
 			},
 			Identifier: release.Name,
+			Plugin:     GetPluginDetail(),
 		},
 	}, nil
 }
