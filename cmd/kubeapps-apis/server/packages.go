@@ -185,7 +185,7 @@ func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", pluginWithServer.plugin.Name)
+		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
@@ -231,7 +231,7 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", pluginWithServer.plugin.Name)
+		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
@@ -250,6 +250,11 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 		PackageAppVersions: response.PackageAppVersions,
 	}, nil
 }
+
+// TODO(agamez): implement CreateInstalledPackage core api operation too
+// func (s packagesServer) CreateInstalledPackage(ctx context.Context, request *packages.CreateInstalledPackageRequest) (*packages.CreateInstalledPackageResponse, error) {
+// 	return nil, nil
+// }
 
 // getPluginWithServer returns the *pkgsPluginWithServer from a given packagesServer
 // matching the plugin name
