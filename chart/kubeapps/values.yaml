@@ -702,28 +702,28 @@ apprepository:
   ## @param apprepository.initialRepos [array] Initial chart repositories to configure
   ## e.g:
   ## initialRepos:
-  ## - name: chartmuseum
-  ##   url: https://chartmuseum.default:8080
-  ##   nodeSelector:
-  ##     somelabel: somevalue
-  ##   # Specify an Authorization Header if you are using an authentication method:
-  ##   authorizationHeader: "Bearer xrxNC..."
-  ##   # Specify the credentials if you are using a basic authentication method:
-  ##   basicAuth:
-  ##     user:
-  ##     password:
-  ##   # If you're providing your own certificates, please use this to add the certificates as secrets.
-  ##   # It should start with -----BEGIN CERTIFICATE----- or
-  ##   # -----BEGIN RSA PRIVATE KEY-----
-  ##   caCert:
-  ##   # Create this apprepository in a custom namespace
-  ##   namespace:
-  ##   # In case of an OCI registry, specify the type
-  ##   type: oci
-  ##   # And specify the list of repositories
-  ##   ociRepositories:
-  ##     - nginx
-  ##     - jenkins
+  ##   - name: chartmuseum
+  ##     url: https://chartmuseum.default:8080
+  ##     nodeSelector:
+  ##       somelabel: somevalue
+  ##     # Specify an Authorization Header if you are using an authentication method:
+  ##     authorizationHeader: "Bearer xrxNC..."
+  ##     # Specify the credentials if you are using a basic authentication method:
+  ##     basicAuth:
+  ##       user:
+  ##       password:
+  ##     # If you're providing your own certificates, please use this to add the certificates as secrets.
+  ##     # It should start with -----BEGIN CERTIFICATE----- or
+  ##     # -----BEGIN RSA PRIVATE KEY-----
+  ##     caCert:
+  ##     # Create this apprepository in a custom namespace
+  ##     namespace:
+  ##     # In case of an OCI registry, specify the type
+  ##     type: oci
+  ##     # And specify the list of repositories
+  ##     ociRepositories:
+  ##       - nginx
+  ##       - jenkins
   ##
   initialRepos:
     - name: bitnami
