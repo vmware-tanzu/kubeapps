@@ -16,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Load Generic Libraries
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/liblog.sh"
@@ -59,7 +58,7 @@ k8s_wait_for_deployment() {
 }
 
 ########################
-# Checks if a service has N endpoints 
+# Checks if a service has N endpoints
 # Arguments:
 #   $1 - Namespace
 #   $2 - Service name
@@ -75,12 +74,12 @@ k8s_svc_endpoints() {
 
     silence kubectl get ep "$svc" -n "$namespace" -o jsonpath="{.subsets[0].addresses[$((number_of_endpoints - 1))]}" || exit_code=$?
     [[ "$exit_code" -eq 0 ]] && info "Endpoint ready!"
-    
+
     return $exit_code
 }
 
 ########################
-# Wait for a service to have N endpoints 
+# Wait for a service to have N endpoints
 # Arguments:
 #   $1 - Namespace
 #   $2 - Service name
@@ -96,7 +95,7 @@ k8s_wait_for_endpoints() {
 
     debug "Waiting for the endpoints of ${svc} to be at least ${number_of_endpoints}..."
     retry_while "k8s_svc_endpoints $namespace $svc $number_of_endpoints" "$TEST_MAX_RETRIES" "$TEXT_TIME_STEP" || exit_code=$?
-    
+
     return $exit_code
 }
 
@@ -116,7 +115,7 @@ k8s_ensure_image() {
     expectedPattern=${3:?expected pattern is missing}
     jsonpath=${4:-'{.spec.template.spec.containers[0].image}'}
     local -i exit_code=0
-    
+
     debug "Checking that $deployment uses an image matching $expectedPattern..."
     kubectl get deployment "$deployment" -n "$namespace" -o jsonpath="$jsonpath" | grep "$expectedPattern" || exit_code=$?
 
@@ -138,7 +137,7 @@ k8s_job_completed() {
 
     kubectl get jobs -l "$label_selector" -n "$namespace" -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True" || exit_code=$?
     [[ "$exit_code" -eq 0 ]] && debug "Job completed!"
-    
+
     return $exit_code
 }
 
@@ -157,6 +156,6 @@ k8s_wait_for_job_completed() {
 
     debug "Wait for job completion..."
     retry_while "k8s_job_completed $namespace $label_selector" "$TEST_MAX_RETRIES" "$TEXT_TIME_STEP" || exit_code=$?
-    
+
     return $exit_code
 }

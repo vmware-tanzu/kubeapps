@@ -3,7 +3,6 @@ import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { Link } from "react-router-dom";
-import * as semver from "semver";
 import { app as appURL } from "shared/url";
 interface IChartInfoProps {
   cluster: string;
@@ -28,7 +27,7 @@ export default function ChartUpdateInfo({ app, cluster, plugin }: IChartInfoProp
   } else if (
     app.latestVersion?.pkgVersion &&
     app.currentVersion?.pkgVersion &&
-    semver.gt(app.latestVersion?.pkgVersion, app.currentVersion?.pkgVersion)
+    app.latestVersion?.pkgVersion !== app.currentVersion?.pkgVersion
   ) {
     // There is a new package version
     alertContent = (

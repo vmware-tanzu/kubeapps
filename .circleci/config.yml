@@ -2,7 +2,7 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.16.7"
+    default: "1.17.0"
   NODE_VERSION:
     type: string
     default: "14"

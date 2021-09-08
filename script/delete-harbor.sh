@@ -5,7 +5,7 @@ set -o nounset
 set -o pipefail
 
 # Constants
-ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 
 # Load Libraries
 # shellcheck disable=SC1090
@@ -16,14 +16,14 @@ ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 namespace="harbor"
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        -n|--namespace)
-            shift
-            namespace="${1:?missing namespace}"
-            ;;
-        *)
-            echo "Invalid command line flag $1" >&2
-            return 1
-            ;;
+    -n | --namespace)
+        shift
+        namespace="${1:?missing namespace}"
+        ;;
+    *)
+        echo "Invalid command line flag $1" >&2
+        return 1
+        ;;
     esac
     shift
 done

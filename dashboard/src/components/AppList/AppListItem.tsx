@@ -1,7 +1,6 @@
 import Tooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import * as semver from "semver";
 import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
@@ -33,7 +32,7 @@ function AppListItem(props: IAppListItemProps) {
   } else if (
     app.latestVersion?.pkgVersion &&
     app.currentVersion?.pkgVersion &&
-    semver.gt(app.latestVersion?.pkgVersion, app.currentVersion?.pkgVersion)
+    app.latestVersion?.pkgVersion !== app.currentVersion?.pkgVersion
   ) {
     tooltipContent = (
       <>

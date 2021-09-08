@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeHandlerUtils "github.com/kubeapps/kubeapps/pkg/handlerutil/fake"
+	fakeChartUtils "github.com/kubeapps/kubeapps/pkg/chart/fake"
 	kubeappsKube "github.com/kubeapps/kubeapps/pkg/kube"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -57,7 +57,7 @@ func newConfigFixture(t *testing.T, k *kubefake.FailingKubeClient) *Config {
 				},
 			},
 		},
-		Resolver: &fakeHandlerUtils.ClientResolver{},
+		ChartClientFactory: &fakeChartUtils.ChartClientFactory{},
 		Options: Options{
 			ListLimit: defaultListLimit,
 		},

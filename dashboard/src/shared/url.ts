@@ -184,5 +184,5 @@ export const api = {
       `api/v1/clusters/${cluster}/namespaces/${namespace}/operator/${name}/logo`,
   },
 
-  kubeappsapis: "/apis",
+  kubeappsapis: "apis",
 };

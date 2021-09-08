@@ -18,6 +18,7 @@ package chart
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -38,6 +39,8 @@ import (
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/helm/pkg/repo"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
@@ -79,34 +82,34 @@ type Details struct {
 // LoadHelmChart returns a helm3 Chart struct from an IOReader
 type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
 
-// Resolver for exposed funcs
-type Resolver interface {
-	InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
+// ChartClient for exposed funcs
+type ChartClient interface {
+	Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
 	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
 }
 
-// Client struct contains the clients required to retrieve charts info
-type Client struct {
+// HelmRepoClient struct contains the clients required to retrieve charts info
+type HelmRepoClient struct {
 	userAgent string
 	netClient httpclient.Client
 }
 
 // NewChartClient returns a new ChartClient
-func NewChartClient(userAgent string) Resolver {
-	return &Client{
+func NewChartClient(userAgent string) ChartClient {
+	return &HelmRepoClient{
 		userAgent: userAgent,
 	}
 }
 
-// OCIClient struct contains the clients required to retrieve charts info from an OCI registry
-type OCIClient struct {
+// OCIRepoClient struct contains the clients required to retrieve charts info from an OCI registry
+type OCIRepoClient struct {
 	userAgent string
 	puller    helm.ChartPuller
 }
 
 // NewOCIClient returns a new OCIClient
-func NewOCIClient(userAgent string) Resolver {
-	return &OCIClient{
+func NewOCIClient(userAgent string) ChartClient {
+	return &OCIRepoClient{
 		userAgent: userAgent,
 	}
 }
@@ -310,9 +313,9 @@ func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler k
 	return appRepo, caCertSecret, authSecret, nil
 }
 
-// InitClient returns an HTTP client based on the chart details loading a
+// Init initialises the HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	var err error
 	c.netClient, err = kube.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
 	return err
@@ -320,9 +323,9 @@ func (c *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *core
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
 	if c.netClient == nil {
-		return nil, fmt.Errorf("unable to retrieve chart, InitClient should be called first")
+		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
 	var chart *helm3chart.Chart
 	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
@@ -347,15 +350,11 @@ func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, 
 
 // RegistrySecretsPerDomain checks the app repo and available secrets
 // to return the secret names per registry domain.
-func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
+func RegistrySecretsPerDomain(ctx context.Context, appRepoSecrets []string, namespace string, client kubernetes.Interface) (map[string]string, error) {
 	secretsPerDomain := map[string]string{}
-	client, err := authHandler.AsUser(token, cluster)
-	if err != nil {
-		return nil, err
-	}
 
 	for _, secretName := range appRepoSecrets {
-		secret, err := client.GetSecret(secretName, namespace)
+		secret, err := client.CoreV1().Secrets(namespace).Get(ctx, secretName, v1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -382,10 +381,10 @@ func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token
 	return secretsPerDomain, nil
 }
 
-// InitClient returns an HTTP client based on the chart details loading a
+// Init initialises the HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
 // TODO(andresmgot): Using a custom CA cert is not supported by ORAS (neither helm), only using the insecure flag
-func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	var err error
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
@@ -408,9 +407,9 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 }
 
 // GetChart retrieves and loads a Chart from a OCI registry
-func (c *OCIClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
 	if c.puller == nil {
-		return nil, fmt.Errorf("unable to retrieve chart, InitClient should be called first")
+		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
 	url, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
 	if err != nil {
@@ -424,4 +423,29 @@ func (c *OCIClient) GetChart(details *Details, repoURL string) (*helm3chart.Char
 	}
 
 	return helm3loader.LoadArchive(chartBuffer)
+}
+
+// ChartClientFactoryInterface defines how a ChartClientFactory implementation
+// can return a chart client.
+//
+// This can be implemented with a fake for tests.
+type ChartClientFactoryInterface interface {
+	New(repoType, userAgent string) ChartClient
+}
+
+// ChartClientFactory provides a real implementation of the ChartClientFactory interface
+// returning either an OCI repository client or a traditional helm repository chart client.
+type ChartClientFactory struct{}
+
+// New for ClientResolver
+func (c *ChartClientFactory) New(repoType, userAgent string) ChartClient {
+	var client ChartClient
+	switch repoType {
+	case "oci":
+		client = NewOCIClient(userAgent)
+		break
+	default:
+		client = NewChartClient(userAgent)
+	}
+	return client
 }
