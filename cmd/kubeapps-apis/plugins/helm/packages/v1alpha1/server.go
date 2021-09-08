@@ -592,6 +592,8 @@ func isValidChart(chart *models.Chart) (bool, error) {
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, namespace)
+	log.Infof("+helm GetInstalledPackageSummaries %s", contextMsg)
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
 	}
@@ -710,6 +712,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, namespace)
+	log.Infof("+helm GetInstalledPackageDetail %s, id: %q", contextMsg, identifier)
 	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
@@ -818,6 +822,8 @@ func splitChartIdentifier(chartID string) (repoName, chartName string, err error
 
 // CreateInstalledPackage creates an installed package.
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
+	log.Infof("+helm CreateInstalledPackage %s", contextMsg)
 	// Get the AppRepository for the available package.
 	// TODO: currently app repositories are only supported on the cluster on
 	// which Kubeapps is installed. #1982
