@@ -50,162 +50,23 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			testName: "create test (simplest case)",
 			// TODO: (gfichtenholt) stand up a pod that serves podinfo-index.yaml within the cluster
 			// instead of relying on github.io
-			repoUrl: "https://stefanprodan.github.io/podinfo",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				},
-				Name: "my-podinfo",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-			},
-			expectedDetail: &corev1.InstalledPackageDetail{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "my-podinfo",
-					Plugin:     fluxPlugin,
-				},
-				PkgVersionReference: &corev1.VersionReference{
-					Version: "*",
-				},
-				Name: "my-podinfo",
-				CurrentVersion: &corev1.PackageAppVersion{
-					PkgVersion: "6.0.0",
-					AppVersion: "6.0.0",
-				},
-				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval: 60,
-				},
-				Status: &corev1.InstalledPackageStatus{
-					Ready:      true,
-					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-				},
-				PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo 8080:9898\n",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-					Plugin: fluxPlugin,
-				},
-			},
+			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			request:           create_request_basic,
+			expectedDetail:    expected_detail_basic,
 			expectedPodPrefix: "pod/test-my-podinfo-",
 		},
 		{
-			testName: "create package (semver constraint)",
-			repoUrl:  "https://stefanprodan.github.io/podinfo",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				},
-				Name: "my-podinfo-2",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-				PkgVersionReference: &corev1.VersionReference{
-					Version: "> 5",
-				},
-			},
-			expectedDetail: &corev1.InstalledPackageDetail{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "my-podinfo-2",
-					Plugin:     fluxPlugin,
-				},
-				PkgVersionReference: &corev1.VersionReference{
-					Version: "> 5",
-				},
-				Name: "my-podinfo-2",
-				CurrentVersion: &corev1.PackageAppVersion{
-					PkgVersion: "6.0.0",
-					AppVersion: "6.0.0",
-				},
-				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval: 60,
-				},
-				Status: &corev1.InstalledPackageStatus{
-					Ready:      true,
-					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-				},
-				PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-2 8080:9898\n",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-					Plugin: fluxPlugin,
-				},
-			},
+			testName:          "create package (semver constraint)",
+			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			request:           create_request_semver_constraint,
+			expectedDetail:    expected_detail_semver_constraint,
 			expectedPodPrefix: "pod/test-my-podinfo-2-",
 		},
 		{
-			testName: "create package (reconcile options)",
-			repoUrl:  "https://stefanprodan.github.io/podinfo",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				},
-				Name: "my-podinfo-3",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval:           60,
-					Suspend:            false,
-					ServiceAccountName: "foo",
-				},
-			},
-			expectedDetail: &corev1.InstalledPackageDetail{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "my-podinfo-3",
-					Plugin:     fluxPlugin,
-				},
-				PkgVersionReference: &corev1.VersionReference{
-					Version: "*",
-				},
-				Name: "my-podinfo-3",
-				CurrentVersion: &corev1.PackageAppVersion{
-					PkgVersion: "6.0.0",
-					AppVersion: "6.0.0",
-				},
-				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval:           60,
-					Suspend:            false,
-					ServiceAccountName: "foo",
-				},
-				Status: &corev1.InstalledPackageStatus{
-					Ready:      true,
-					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-				},
-				PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-3 8080:9898\n",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-					Plugin: fluxPlugin,
-				},
-			},
+			testName:          "create package (reconcile options)",
+			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			request:           create_request_reconcile_options,
+			expectedDetail:    expected_detail_reconcile_options,
 			expectedPodPrefix: "pod/test-my-podinfo-3-",
 		},
 	}
@@ -515,4 +376,156 @@ func kubectlDeleteNamespace(t *testing.T, namespace string) error {
 		return fmt.Errorf("Unexpected output from kubectl delete namespace: [%s]", string(bytes))
 	}
 	return nil
+}
+
+// global vars
+var create_request_basic = &corev1.CreateInstalledPackageRequest{
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+	},
+	Name: "my-podinfo",
+	TargetContext: &corev1.Context{
+		Namespace: "test",
+	},
+}
+
+var expected_detail_basic = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "kubeapps",
+		},
+		Identifier: "my-podinfo",
+		Plugin:     fluxPlugin,
+	},
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "*",
+	},
+	Name: "my-podinfo",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "6.0.0",
+		AppVersion: "6.0.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
+	},
+	PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo 8080:9898\n",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+		Plugin: fluxPlugin,
+	},
+}
+
+var create_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+	},
+	Name: "my-podinfo-2",
+	TargetContext: &corev1.Context{
+		Namespace: "test",
+	},
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "> 5",
+	},
+}
+
+var expected_detail_semver_constraint = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "kubeapps",
+		},
+		Identifier: "my-podinfo-2",
+		Plugin:     fluxPlugin,
+	},
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "> 5",
+	},
+	Name: "my-podinfo-2",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "6.0.0",
+		AppVersion: "6.0.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
+	},
+	PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-2 8080:9898\n",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+		Plugin: fluxPlugin,
+	},
+}
+
+var create_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+	},
+	Name: "my-podinfo-3",
+	TargetContext: &corev1.Context{
+		Namespace: "test",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval:           60,
+		Suspend:            false,
+		ServiceAccountName: "foo",
+	},
+}
+
+var expected_detail_reconcile_options = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "kubeapps",
+		},
+		Identifier: "my-podinfo-3",
+		Plugin:     fluxPlugin,
+	},
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "*",
+	},
+	Name: "my-podinfo-3",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "6.0.0",
+		AppVersion: "6.0.0",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval:           60,
+		Suspend:            false,
+		ServiceAccountName: "foo",
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
+	},
+	PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-3 8080:9898\n",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+		Plugin: fluxPlugin,
+	},
 }
