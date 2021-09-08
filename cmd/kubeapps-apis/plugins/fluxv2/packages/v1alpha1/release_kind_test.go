@@ -15,6 +15,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -36,7 +39,6 @@ const (
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080
 // 3) kubectl CLI on client side
-// 4) flux CLI on client side
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
@@ -84,12 +86,12 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			availablePackageRef := tc.request.AvailablePackageRef
 			idParts := strings.Split(availablePackageRef.Identifier, "/")
-			err = fluxCliCreateSource(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
+			err = kubectlCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			t.Cleanup(func() {
-				err = fluxCliDeleteSource(t, idParts[0], availablePackageRef.Context.Namespace)
+				err = kubectlDeleteHelmRepository(t, idParts[0], availablePackageRef.Context.Namespace)
 				if err != nil {
 					t.Logf("Failed to delete helm source due to [%v]", err)
 				}
@@ -140,7 +142,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			}
 
 			t.Cleanup(func() {
-				err = fluxCliDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
+				err = kubectlDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
 				if err != nil {
 					t.Logf("Failed to delete helm release due to [%v]", err)
 				}
@@ -255,31 +257,61 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 
 // This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
 // the design
-func fluxCliCreateSource(t *testing.T, name, url, namespace string) error {
-	t.Logf("+fluxCliCreateSource(%s)", name)
-	cmd := exec.Command("flux", "create", "source", "helm", name, "--url", url, "--namespace", namespace, "--context", k8s_context)
+func kubectlCreateHelmRepository(t *testing.T, name, url, namespace string) error {
+	t.Logf("+kubectlCreateHelmRepository(%s,%s)", name, namespace)
+	file, err := ioutil.TempFile(os.TempDir(), "helmrepository-*.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(file.Name())
+
+	_, err = file.WriteString(fmt.Sprintf(
+		"apiVersion: source.toolkit.fluxcd.io/v1beta1\n"+
+			"kind: HelmRepository\n"+
+			"metadata:\n"+
+			"  name: %s\n"+
+			"  namespace: %s\n"+
+			"spec:\n"+
+			"   url: %s\n"+
+			"   interval: 1m", name, namespace, url))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cmd := exec.Command("kubectl", "apply", "-f", file.Name(), "--context", k8s_context)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return err
 	}
-	if strings.Contains(string(bytes), "fetched revision: ") {
+	if !strings.Contains(string(bytes), "helmrepository.source.toolkit.fluxcd.io/"+name+" created") {
+		return fmt.Errorf("Unexpected output from kubectl apply: [%s]", string(bytes))
+	}
+
+	cmd = exec.Command("kubectl", "wait", "--for=condition=Ready=true", "helmrepository/"+name,
+		"--namespace", namespace, "--context", k8s_context)
+	bytes, err = cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("%s", string(bytes))
+		return err
+	}
+	if strings.Contains(string(bytes), "helmrepository.source.toolkit.fluxcd.io/"+name+" condition met") {
 		return nil
 	} else {
-		return fmt.Errorf("Unexpected output from flux create: [%s]", string(bytes))
+		return fmt.Errorf("Unexpected output from kubectl wait: [%s]", string(bytes))
 	}
 }
 
 // this should eventually be replaced with flux plugin's DeleteRepository()
-func fluxCliDeleteSource(t *testing.T, name, namespace string) error {
-	t.Logf("+fluxCliDeleteSource(%s)", name)
-	cmd := exec.Command("flux", "delete", "source", "helm", name, "--namespace", namespace, "--context", k8s_context, "--silent")
+func kubectlDeleteHelmRepository(t *testing.T, name, namespace string) error {
+	t.Logf("+kubectlDeleteHelmRepository(%s,%s)", name, namespace)
+	cmd := exec.Command("kubectl", "delete", "helmrepository/"+name, "--namespace", namespace, "--context", k8s_context)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return err
 	}
-	if strings.Contains(string(bytes), "source helm deleted") {
+	if strings.Contains(string(bytes), "helmrepository.source.toolkit.fluxcd.io \""+name+"\" deleted") {
 		return nil
 	} else {
 		return fmt.Errorf("Unexpected output from flux delete source: [%s]", string(bytes))
@@ -287,18 +319,18 @@ func fluxCliDeleteSource(t *testing.T, name, namespace string) error {
 }
 
 // this should eventually be replaced with flux plugin's DeleteInstalledPackage()
-func fluxCliDeleteHelmRelease(t *testing.T, name, namespace string) error {
-	t.Logf("+fluxCliDeleteHelmRelease(%s,%s)", name, namespace)
-	cmd := exec.Command("flux", "delete", "helmrelease", name, "--namespace", namespace, "--context", k8s_context, "--silent")
+func kubectlDeleteHelmRelease(t *testing.T, name, namespace string) error {
+	t.Logf("+kubectlDeleteHelmRelease(%s,%s)", name, namespace)
+	cmd := exec.Command("kubectl", "delete", "helmrelease/"+name, "--namespace", namespace, "--context", k8s_context)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return err
 	}
-	if strings.Contains(string(bytes), "helmreleases deleted") {
+	if strings.Contains(string(bytes), "helmrelease.helm.toolkit.fluxcd.io \""+name+"\" deleted") {
 		return nil
 	} else {
-		return fmt.Errorf("Unexpected output from flux delete helmrelease: [%s]", string(bytes))
+		return fmt.Errorf("Unexpected output from kubectl delete: [%s]", string(bytes))
 	}
 }
 
