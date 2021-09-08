@@ -83,34 +83,13 @@ func ParseRequest(req *http.Request) (*chartUtils.Details, error) {
 	return chartDetails, nil
 }
 
-// ResolverFactory interface to return a resolver
-type ResolverFactory interface {
-	New(repoType, userAgent string) chartUtils.Resolver
-}
-
-// ClientResolver implements ResolverFactory
-type ClientResolver struct{}
-
-// New for ClientResolver
-func (c *ClientResolver) New(repoType, userAgent string) chartUtils.Resolver {
-	var cu chartUtils.Resolver
-	switch repoType {
-	case "oci":
-		cu = chartUtils.NewOCIClient(userAgent)
-		break
-	default:
-		cu = chartUtils.NewChartClient(userAgent)
-	}
-	return cu
-}
-
 // GetChart retrieves a chart
-func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, resolver chartUtils.Resolver) (*chart.Chart, error) {
-	err := resolver.InitClient(appRepo, caCertSecret, authSecret)
+func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, chartClient chartUtils.ChartClient) (*chart.Chart, error) {
+	err := chartClient.Init(appRepo, caCertSecret, authSecret)
 	if err != nil {
 		return nil, err
 	}
-	ch, err := resolver.GetChart(chartDetails, appRepo.Spec.URL)
+	ch, err := chartClient.GetChart(chartDetails, appRepo.Spec.URL)
 	if err != nil {
 		return nil, err
 	}

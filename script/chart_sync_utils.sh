@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+set -o errexit
+set -o nounset
+set -o pipefail
 
 # Remote github repostories for:
 ## the upstream chart repository fork (CHARTS_REPO)
@@ -24,7 +26,7 @@ CHARTS_REPO="kubeapps-bot/charts"
 KUBEAPPS_REPO="kubeapps/kubeapps"
 
 CHART_REPO_PATH="bitnami/kubeapps"
-PROJECT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
+PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
 PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/PR_internal_chart_template.md"
 PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/PR_external_chart_template.md"
@@ -34,7 +36,7 @@ latestReleaseTag() {
     local targetRepo=${1:?}
     git -C "${targetRepo}/.git" fetch --tags
     git -C "${targetRepo}/.git" describe --tags $(git rev-list --tags --max-count=1)
-    }
+}
 
 configUser() {
     local targetRepo=${1:?}
@@ -76,7 +78,7 @@ replaceImage_latestToProduction() {
     fi
 
     # Get the latest tag from the bitnami repository
-   local tag=`curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name'`
+    local tag=$(curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name')
 
     if [[ $tag == "" ]]; then
         echo "ERROR: Unable to obtain latest tag for ${repoName}. Aborting"
@@ -85,8 +87,8 @@ replaceImage_latestToProduction() {
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
-      's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n    tag: '${tag}'/g' \
-      ${file}
+        's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n    tag: '${tag}'/g' \
+        ${file}
     rm "${file}.bk"
 }
 
@@ -107,9 +109,9 @@ replaceImage_productionToLatest() {
     echo "Replacing ${service}"...
 
     # Replace image and tag from the values.yaml
-    sed -i.bk -e '1h;2,$H;$!d;g' -re  \
-      's/repository: '${currentImageEscaped}'\n    tag: \S*/repository: '${targetImageEscaped}'\n    tag: latest/g' \
-      ${file}
+    sed -i.bk -e '1h;2,$H;$!d;g' -re \
+        's/repository: '${currentImageEscaped}'\n    tag: \S*/repository: '${targetImageEscaped}'\n    tag: latest/g' \
+        ${file}
     rm "${file}.bk"
 }
 
@@ -120,7 +122,7 @@ updateRepoWithLocalChanges() {
     local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
     if [ ! -f "${chartYaml}" ]; then
-        echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
+        echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
@@ -151,7 +153,7 @@ updateRepoWithRemoteChanges() {
     local remoteChartYaml="${targetChartPath}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     if [ ! -f "${remoteChartYaml}" ]; then
-        echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
+        echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
@@ -184,22 +186,22 @@ commitAndSendExternalPR() {
     local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
     if [ ! -f "${chartYaml}" ]; then
-        echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
+        echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
     cd $targetRepo
     if [[ ! $(git diff-index HEAD) ]]; then
-        echo "Not found any change to commit" > /dev/stderr
+        echo "Not found any change to commit" >/dev/stderr
         cd -
         return 1
     fi
-    sed -i.bk -e "s/<USER>/`git config user.name`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
-    sed -i.bk -e "s/<EMAIL>/`git config user.email`/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
+    sed -i.bk -e "s/<USER>/$(git config user.name)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
+    sed -i.bk -e "s/<EMAIL>/$(git config user.email)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     git checkout -b $targetBranch
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
-    if [[ $(git ls-remote origin $targetBranch  | wc -l) -eq 0 ]] ; then
+    if [[ $(git ls-remote origin $targetBranch | wc -l) -eq 0 ]]; then
         git push -u origin $targetBranch
         gh pr create -d -B master -R ${CHARTS_REPO_ORIGINAL} -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
     else
@@ -216,12 +218,12 @@ commitAndSendInternalPR() {
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
 
     if [ ! -f "${localChartYaml}" ]; then
-        echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
+        echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
     cd $targetRepo
     if [[ ! $(git diff-index HEAD) ]]; then
-        echo "Not found any change to commit" > /dev/stderr
+        echo "Not found any change to commit" >/dev/stderr
         cd -
         return 1
     fi
@@ -229,7 +231,7 @@ commitAndSendInternalPR() {
     git add --all .
     git commit -m "bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
-    if [[ $(git ls-remote origin $targetBranch  | wc -l) -eq 0 ]] ; then
+    if [[ $(git ls-remote origin $targetBranch | wc -l) -eq 0 ]]; then
         git push -u origin $targetBranch
         gh pr create -d -B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
     else

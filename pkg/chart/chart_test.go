@@ -17,6 +17,7 @@ package chart
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
@@ -39,6 +40,8 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/fake"
 	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
@@ -543,7 +546,7 @@ func TestGetChart(t *testing.T) {
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
-			chUtils := Client{
+			chUtils := HelmRepoClient{
 				userAgent: tc.userAgent,
 			}
 			chUtils.netClient = httpClient
@@ -590,7 +593,7 @@ func TestGetChart(t *testing.T) {
 	t.Run("it should fail if the netClient is not instantiated", func(t *testing.T) {
 		cli := NewChartClient("")
 		_, err := cli.GetChart(nil, "")
-		assert.Err(t, fmt.Errorf("unable to retrieve chart, InitClient should be called first"), err)
+		assert.Err(t, fmt.Errorf("unable to retrieve chart, Init should be called first"), err)
 	})
 }
 
@@ -707,7 +710,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 	testCases := []struct {
 		name             string
 		secretNames      []string
-		existingSecrets  []*corev1.Secret
+		existingSecrets  []runtime.Object
 		secretsPerDomain map[string]string
 		expectError      bool
 	}{
@@ -724,8 +727,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret is not a dockerConfigJSON type",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -741,8 +744,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret data does not have .dockerconfigjson key",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -758,8 +761,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret .dockerconfigjson value is not json decodable",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -775,8 +778,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns the registry secrets per domain",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
@@ -794,8 +797,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it includes secrets for multiple servers",
 			secretNames: []string{"bitnami-repo1", "bitnami-repo2"},
-			existingSecrets: []*corev1.Secret{
-				{
+			existingSecrets: []runtime.Object{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo1",
 						Namespace: namespace,
@@ -805,7 +808,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 						dockerConfigJSONKey: []byte(indexDockerIOCred),
 					},
 				},
-				{
+				&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bitnami-repo2",
 						Namespace: namespace,
@@ -825,9 +828,9 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client := &kube.FakeHandler{Secrets: tc.existingSecrets}
+			client := fake.NewSimpleClientset(tc.existingSecrets...)
 
-			secretsPerDomain, err := RegistrySecretsPerDomain(tc.secretNames, "default", namespace, "token", client)
+			secretsPerDomain, err := RegistrySecretsPerDomain(context.Background(), tc.secretNames, namespace, client)
 			if got, want := err != nil, tc.expectError; !cmp.Equal(got, want) {
 				t.Fatalf("got: %t, want: %t, err was: %+v", got, want, err)
 			}
@@ -845,8 +848,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 func TestOCIClient(t *testing.T) {
 	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		cli.InitClient(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
-		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "User-Agent", "foo")
+		cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "User-Agent", "foo")
 	})
 
 	t.Run("InitClient - Creates puller with Authorization", func(t *testing.T) {
@@ -868,8 +871,8 @@ func TestOCIClient(t *testing.T) {
 				"custom-secret-key": []byte("Basic Auth"),
 			},
 		}
-		cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
-		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "Authorization", "Basic Auth")
+		cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "Authorization", "Basic Auth")
 	})
 
 	t.Run("InitClient - Creates puller with Docker Creds Authorization", func(t *testing.T) {
@@ -891,23 +894,23 @@ func TestOCIClient(t *testing.T) {
 				".dockerconfigjson": []byte(`{"auths":{"foo":{"username":"foo","password":"bar"}}}`),
 			},
 		}
-		err := cli.InitClient(appRepo, &corev1.Secret{}, authSecret)
+		err := cli.Init(appRepo, &corev1.Secret{}, authSecret)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
 		// Authorization: Basic base64('foo:bar')
-		helmtest.CheckHeader(t, cli.(*OCIClient).puller, "Authorization", "Basic Zm9vOmJhcg==")
+		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "Authorization", "Basic Zm9vOmJhcg==")
 	})
 
 	t.Run("GetChart - Fails if the puller has not been instantiated", func(t *testing.T) {
 		cli := NewOCIClient("foo")
 		_, err := cli.GetChart(nil, "")
-		assert.Err(t, fmt.Errorf("unable to retrieve chart, InitClient should be called first"), err)
+		assert.Err(t, fmt.Errorf("unable to retrieve chart, Init should be called first"), err)
 	})
 
 	t.Run("GetChart - Fails if the URL is not valid", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		cli.(*OCIClient).puller = &helmfake.OCIPuller{}
+		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{}
 		_, err := cli.GetChart(nil, "foo")
 		if !strings.Contains(err.Error(), "invalid URI for request") {
 			t.Errorf("Unexpected error %v", err)
@@ -918,7 +921,7 @@ func TestOCIClient(t *testing.T) {
 		cli := NewOCIClient("foo")
 		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
 		assert.NoErr(t, err)
-		cli.(*OCIClient).puller = &helmfake.OCIPuller{
+		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{
 			ExpectedName: "foo/bar/nginx:5.1.1",
 			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
 		}

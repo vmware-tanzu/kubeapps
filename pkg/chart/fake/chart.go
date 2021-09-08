@@ -24,11 +24,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// Client implements Resolver inteface
-type Client struct{}
+// ChartClient implements Resolver inteface
+type ChartClient struct{}
 
 // GetChart fake
-func (f *Client) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
+func (f *ChartClient) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
@@ -50,7 +50,15 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 	return values, nil
 }
 
-// InitClient fake
-func (f *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+// Init fake
+func (f *ChartClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	return nil
+}
+
+// ChartClientFactory is a fake implementation of the ChartClientFactory interface.
+type ChartClientFactory struct{}
+
+// New returns a fake ChartClient
+func (c *ChartClientFactory) New(repoType, userAgent string) chartUtils.ChartClient {
+	return &ChartClient{}
 }

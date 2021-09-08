@@ -96,6 +96,20 @@ it("should add a tooltip with the app update available without requiring semver 
   expect(tooltip.text()).toBe("A new app version is available: latest-crack");
 });
 
+it("should add a tooltip with the pkg update available without requiring semver versioning", () => {
+  const props = {
+    ...defaultProps,
+    app: {
+      ...defaultProps.app,
+      latestVersion: { appVersion: "1.0.0", pkgVersion: "latest" } as PackageAppVersion,
+      currentVersion: { appVersion: "1.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+    },
+  } as IAppListItemProps;
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  const tooltip = wrapper.find(Tooltip);
+  expect(tooltip.text()).toBe("A new package version is available: latest");
+});
+
 it("doesn't include a double v prefix", () => {
   const props = {
     ...defaultProps,

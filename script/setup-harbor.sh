@@ -5,7 +5,7 @@ set -o nounset
 set -o pipefail
 
 # Constants
-ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 RESET='\033[0m'
 GREEN='\033[38;5;2m'
 RED='\033[38;5;1m'
@@ -54,28 +54,29 @@ help_menu=0
 dry_run=0
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        -h|--help)
-            help_menu=1
-            ;;
-        -u|--dry-run)
-            dry_run=1
-            ;;
-        --disable-chartmuseum)
-            disable_chartmuseum=1
-            ;;
-        --disable-clair)
-            disable_clair=1
-            ;;
-        --disable-notary)
-            disable_notary=1
-            ;;
-        -n|--namespace)
-            shift; namespace="${1:?missing namespace}"
-            ;;
-        *)
-            error "Invalid command line flag $1" >&2
-            exit 1
-            ;;
+    -h | --help)
+        help_menu=1
+        ;;
+    -u | --dry-run)
+        dry_run=1
+        ;;
+    --disable-chartmuseum)
+        disable_chartmuseum=1
+        ;;
+    --disable-clair)
+        disable_clair=1
+        ;;
+    --disable-notary)
+        disable_notary=1
+        ;;
+    -n | --namespace)
+        shift
+        namespace="${1:?missing namespace}"
+        ;;
+    *)
+        error "Invalid command line flag $1" >&2
+        exit 1
+        ;;
     esac
     shift
 done
@@ -86,7 +87,8 @@ if [[ "$help_menu" -eq 1 ]]; then
 fi
 
 # Harbor values
-values="$(cat << EOF
+values="$(
+    cat <<EOF
 service:
   tls:
     enabled: false
@@ -134,7 +136,7 @@ for dep in "${deployments[@]}"; do
     info "Deployment ${dep} ready!"
 done
 echo
-    
+
 info "Use this command for port-forwading to Harbor:"
 info "kubectl port-forward --namespace $namespace svc/harbor 8888:80 >/dev/null 2>&1 &"
 info "Harbor URL: http://127.0.0.1:8888/"

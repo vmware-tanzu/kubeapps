@@ -5,7 +5,7 @@ set -o nounset
 set -o pipefail
 
 # Constants
-ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 
 # Load Libraries
 # shellcheck disable=SC1090
