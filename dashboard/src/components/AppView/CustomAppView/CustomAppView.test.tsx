@@ -1,26 +1,19 @@
-import CustomAppView from ".";
-import { IRelease } from "shared/types";
-import { CustomComponent } from "../../../RemoteComponent";
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import CustomAppView from ".";
+import { CustomComponent } from "../../../RemoteComponent";
 import { IAppViewResourceRefs } from "../AppView";
 
 const defaultState = {
   config: { remoteComponentsUrl: "" },
 };
 
-const DEFAULT_CUSTOM_APP_PROPS = {
+const defaultProps = {
   app: {
-    chart: {
-      metadata: {
-        name: "bar",
-        appVersion: "0.0.1",
-        description: "test chart",
-        icon: "icon.png",
-        version: "1.0.0",
-      },
+    availablePackageRef: {
+      identifier: "bar",
     },
-    name: "foo",
-  } as IRelease,
+  } as InstalledPackageDetail,
   resourceRefs: {
     ingresses: [],
     deployments: [
@@ -63,26 +56,17 @@ const DEFAULT_CUSTOM_APP_PROPS = {
 };
 
 it("should render a custom app view", () => {
-  const wrapper = mountWrapper(
-    getStore(defaultState),
-    <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
-  );
+  const wrapper = mountWrapper(getStore(defaultState), <CustomAppView {...defaultProps} />);
   expect(wrapper.find(CustomAppView)).toExist();
 });
 
 it("should render the remote component", () => {
-  const wrapper = mountWrapper(
-    getStore(defaultState),
-    <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
-  );
+  const wrapper = mountWrapper(getStore(defaultState), <CustomAppView {...defaultProps} />);
   expect(wrapper.find(CustomComponent)).toExist();
 });
 
 it("should render the remote component with the default URL", () => {
-  const wrapper = mountWrapper(
-    getStore(defaultState),
-    <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
-  );
+  const wrapper = mountWrapper(getStore(defaultState), <CustomAppView {...defaultProps} />);
   expect(wrapper.find(CustomComponent)).toExist();
   expect(wrapper.find(CustomComponent).prop("url")).toContain("custom_components.js");
 });
@@ -92,7 +76,7 @@ it("should render the remote component with the URL if set in the config", () =>
     getStore({
       config: { remoteComponentsUrl: "www.thiswebsite.com" },
     }),
-    <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
+    <CustomAppView {...defaultProps} />,
   );
   expect(wrapper.find(CustomComponent).prop("url")).toBe("www.thiswebsite.com");
 });

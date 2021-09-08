@@ -1,12 +1,13 @@
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useMemo } from "react";
-import { IAppViewResourceRefs } from "../AppView";
-import { IRelease, IStoreState } from "shared/types";
 import { useSelector } from "react-redux";
 import { CustomComponent } from "RemoteComponent";
+import { IStoreState } from "shared/types";
+import { IAppViewResourceRefs } from "../AppView";
 
 export interface ICustomAppViewProps {
   resourceRefs: IAppViewResourceRefs;
-  app: IRelease;
+  app: InstalledPackageDetail;
 }
 
 function CustomAppView({ resourceRefs, app }: ICustomAppViewProps) {

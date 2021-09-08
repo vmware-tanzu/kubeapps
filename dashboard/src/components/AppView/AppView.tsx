@@ -35,8 +35,8 @@ import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
 import ChartInfo from "./ChartInfo/ChartInfo";
-import ResourceTabs from "./ResourceTabs";
 import CustomAppView from "./CustomAppView";
+import ResourceTabs from "./ResourceTabs";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -208,8 +208,12 @@ export default function AppView() {
   const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
 
-  // If chart is white listed,load custom view from external bundle
-  if (app?.chart?.metadata?.name && customAppViews.includes(app?.chart?.metadata?.name)) {
+  // If the package identifier matches the current list of loaded customAppViews,
+  // then load the custom view from external bundle instead of the default one.
+  if (
+    app?.availablePackageRef?.identifier &&
+    customAppViews.includes(app.availablePackageRef.identifier)
+  ) {
     return <CustomAppView resourceRefs={resourceRefs} app={app} />;
   }
 

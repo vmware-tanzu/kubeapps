@@ -24,9 +24,8 @@ import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
 import ChartInfo from "./ChartInfo/ChartInfo";
-import ResourceTabs from "./ResourceTabs";
-import { DEFAULT_CUSTOM_APP_PROPS } from "./CustomAppView/CustomAppView.test";
 import CustomAppView from "./CustomAppView/CustomAppView";
+import ResourceTabs from "./ResourceTabs";
 
 const routeParams = {
   cluster: "cluster-1",
@@ -148,15 +147,33 @@ describe("AppView", () => {
   });
 
   it("renders a custom component when chart is in customAppViews", () => {
-    const defaultState = {
-      config: { customAppViews: ["some-fake-chart"] },
-      app: { chart: { metadata: { name: "some-fake-chart" } } },
-    };
     const wrapper = mountWrapper(
-      getStore(defaultState),
-      <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
+      getStore({
+        apps: { selected: { ...installedPackage } },
+        config: { customAppViews: ["apache/1"] },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
     );
     expect(wrapper.find(CustomAppView)).toExist();
+  });
+
+  it("does not renders a custom component when chart is not in customAppViews", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        apps: { selected: { ...installedPackage } },
+        config: { customAppViews: ["foo"] },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
+    );
+    expect(wrapper.find(CustomAppView)).not.toExist();
   });
 
   describe("State initialization", () => {
