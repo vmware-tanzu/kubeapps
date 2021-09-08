@@ -67,7 +67,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
       ...defaultProps.app,
       latestVersion: {
         pkgVersion: "1.0.1",
-        appVersion: "0.0.1",
+        appVersion: "10.0.0",
       },
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
@@ -76,7 +76,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     );
     expect(wrapper.find(Alert).text()).toContain("A new package version is available: 1.0.1");
   });
-  it("renders an new version found message if the app latest version is newer", () => {
+  it("renders an new version found message if the app latest version is different", () => {
     const appWithUpdates = {
       ...defaultProps.app,
       latestVersion: {
@@ -89,5 +89,19 @@ context("ChartUpdateInfo: when information about updates is available", () => {
       <ChartInfo {...defaultProps} app={appWithUpdates} />,
     );
     expect(wrapper.find(Alert).text()).toContain("A new app version is available: 10.1.0");
+  });
+  it("renders an new version found message if the app latest version is different without being semver", () => {
+    const appWithUpdates = {
+      ...defaultProps.app,
+      latestVersion: {
+        pkgVersion: "1.0.1",
+        appVersion: "latest",
+      },
+    } as InstalledPackageDetail;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <ChartInfo {...defaultProps} app={appWithUpdates} />,
+    );
+    expect(wrapper.find(Alert).text()).toContain("A new app version is available: latest");
   });
 });

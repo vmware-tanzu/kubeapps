@@ -64,6 +64,10 @@ replaceImage_latestToProduction() {
         targetImageEscaped="bitnami\/kubeapps-apis"
     fi
 
+    if [ $repoName == "bitnami-docker-kubeapps-kubeapps-apis" ]; then
+        repoName="bitnami-docker-kubeapps-apis"
+    fi
+
     echo "Replacing ${service}"...
 
     local curl_opts=()

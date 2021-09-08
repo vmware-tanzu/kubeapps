@@ -1219,10 +1219,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.5.2":
-  version "5.5.2"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.2.tgz#916631e1c815e226d3b2f8137b4d13f889183131"
-  integrity sha512-QdHQ7VEStmJd8KYQNFFak5yWnj8asZ8mXLJPN/y76xenlkYrIl3P1Ui6QsjCjLcBUfprsCILX1yyyr4gcY1nmw==
+"@cds/core@^5.5.3":
+  version "5.5.3"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.3.tgz#23dfb122c0844d6b53c2c92e99efcae820395931"
+  integrity sha512-yrYiew2rdGVp22BfjeatYjIvjRPCprLWSbhg0BRDqHzDeS+ewu/rzkJp/bMEN65o5Z+XFpK26UFNyWAzzaQvDw==
   dependencies:
     lit "2.0.0-rc.2"
     ramda "^0.27.1"
@@ -1232,10 +1232,10 @@
     "@types/resize-observer-browser" "^0.1.5"
     modern-normalize "1.1.0"
 
-"@cds/react@^5.5.2":
-  version "5.5.2"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.2.tgz#23e8648f6e01869ab989c0abec4e3638613fa84a"
-  integrity sha512-bVQBFdyQC7k7B3Z69QlJ6TKpUXne5oecTpSoSkroxmUxu7V73pNiRR6Hg6X5tY6RRutF4PDdXd8iYFQf4ZG+lA==
+"@cds/react@^5.5.3":
+  version "5.5.3"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.3.tgz#738c3e4c546205dd56ae1c4a45faff6f55e5ffda"
+  integrity sha512-kC8U+jLeO9KVuPbl9ne0Yo7tB2QIffhgcsNfahTIwVDU62Qngu0fjUo5+Opy9Vv7XYVUoH4RipYA8qLN38jjXw==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
@@ -1243,10 +1243,10 @@
     "@cds/city" "^1.1.0"
     modern-normalize "^1.1.0"
 
-"@clr/ui@^12.0.2":
-  version "12.0.2"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.2.tgz#5b77cb2700a70ee803b49c3adfd943b2101b45b0"
-  integrity sha512-/FPixRTOBg0VnPBY3P4+TDL5HmKqaE3uQ/6a0PtxXT9ng7LhdhN55dA+i9vNeiKzP9+H/BMiiJbWyk0IlW3fFQ==
+"@clr/ui@^12.0.3":
+  version "12.0.3"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.3.tgz#5f0d6f42b7064c0cf5ddfb3e4ee7db4cdbab5aed"
+  integrity sha512-BzEXZn21IBBWt5ihSwMiFBa59H/gZ9QL0KPlw4buezUyU1TV9pCZdHrQeN1VvmNpTpygS+fa2VcdrqcdxVKOZA==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -3364,12 +3364,12 @@ axe-core@^4.0.2:
   resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.3.3.tgz#b55cd8e8ddf659fe89b064680e1c6a4dceab0325"
   integrity sha512-/lqqLAmuIPi79WYfRpy2i8z+x+vxU3zX2uAm0gs1q52qTuKwolOj1P8XbufpXcsydrpKx2yGn2wzAnxCMV86QA==
 
-axios@^0.21.1:
-  version "0.21.1"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.1.tgz#22563481962f4d6bde9a76d516ef0e5d3c09b2b8"
-  integrity sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
+axios@^0.21.1, axios@^0.21.4:
+  version "0.21.4"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.4.tgz#c67b90dc0568e5c1cf2b0b858c43ba28e2eda575"
+  integrity sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==
   dependencies:
-    follow-redirects "^1.10.0"
+    follow-redirects "^1.14.0"
 
 axobject-query@^2.2.0:
   version "2.2.0"
@@ -6511,10 +6511,10 @@ flush-write-stream@^1.0.0:
     inherits "^2.0.3"
     readable-stream "^2.3.6"
 
-follow-redirects@^1.0.0, follow-redirects@^1.10.0:
-  version "1.14.2"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.2.tgz#cecb825047c00f5e66b142f90fed4f515dec789b"
-  integrity sha512-yLR6WaE2lbF0x4K2qE2p9PEXKLDjUjnR/xmjS3wHAYxtlsI9MLLBJUZirAHKzUZDGLxje7w/cXR49WOUo4rbsA==
+follow-redirects@^1.0.0, follow-redirects@^1.14.0:
+  version "1.14.3"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.3.tgz#6ada78118d8d24caee595595accdc0ac6abd022e"
+  integrity sha512-3MkHxknWMUtb23apkgz/83fDoe+y+qr0TdgacGIA7bew+QLBo3vdgEN2xEsuXNivpFy4CyDhBBZnNZOtalmenw==
 
 for-each@^0.3.3:
   version "0.3.3"
@@ -12448,10 +12448,10 @@ react-redux@=4.4.10:
     loose-envify "^1.4.0"
     prop-types "^15.7.2"
 
-react-redux@^7.2.4:
-  version "7.2.4"
-  resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-7.2.4.tgz#1ebb474032b72d806de2e0519cd07761e222e225"
-  integrity sha512-hOQ5eOSkEJEXdpIKbnRyl04LhaWabkDPV+Ix97wqQX3T3d2NQ8DUblNXXtNMavc7DpswyQM6xfaN4HQDKNY2JA==
+react-redux@^7.2.5:
+  version "7.2.5"
+  resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-7.2.5.tgz#213c1b05aa1187d9c940ddfc0b29450957f6a3b8"
+  integrity sha512-Dt29bNyBsbQaysp6s/dN0gUodcq+dVKKER8Qv82UrpeygwYeX1raTtil7O/fftw/rFqzaf6gJhDZRkkZnn6bjg==
   dependencies:
     "@babel/runtime" "^7.12.1"
     "@types/react-redux" "^7.1.16"
@@ -12465,10 +12465,10 @@ react-refresh@^0.8.3:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.8.3.tgz#721d4657672d400c5e3c75d063c4a85fb2d5d68f"
   integrity sha512-X8jZHc7nCMjaCqoU+V2I0cOhNW+QMBwSUkeXnTi8IPe6zaRWfn60ZzvFDZqWPfmSJfjub7dDW1SP0jaHWLu/hg==
 
-react-router-dom@^5.2.1:
-  version "5.2.1"
-  resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-5.2.1.tgz#34af8b551a4ce17487d3f80e651b91651978dff6"
-  integrity sha512-xhFFkBGVcIVPbWM2KEYzED+nuHQPmulVa7sqIs3ESxzYd1pYg8N8rxPnQ4T2o1zu/2QeDUWcaqST131SO1LR3w==
+react-router-dom@^5.3.0:
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-5.3.0.tgz#da1bfb535a0e89a712a93b97dd76f47ad1f32363"
+  integrity sha512-ObVBLjUZsphUUMVycibxgMdh5jJ1e3o+KpAZBVeHcNQZ4W+uUGGWsokurzlF4YOldQYRQL4y6yFRWM4m3svmuQ==
   dependencies:
     "@babel/runtime" "^7.12.13"
     history "^4.9.0"
@@ -13307,10 +13307,10 @@ sass-loader@^10.0.5:
     schema-utils "^3.0.0"
     semver "^7.3.2"
 
-sass@^1.38.2:
-  version "1.38.2"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.38.2.tgz#970045d9966180002a8c8f3820fc114cddb42822"
-  integrity sha512-Bz1fG6qiyF0FX6m/I+VxtdVKz1Dfmg/e9kfDy2PhWOkq3T384q2KxwIfP0fXpeI+EyyETdOauH+cRHQDFASllA==
+sass@^1.39.0:
+  version "1.39.0"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.39.0.tgz#6c64695d1c437767c8f1a4e471288e831f81d035"
+  integrity sha512-F4o+RhJkNOIG0b6QudYU8c78ZADKZjKDk5cyrf8XTKWfrgbtyVVXImFstJrc+1pkQDCggyidIOytq6gS4gCCZg==
   dependencies:
     chokidar ">=3.0.0 <4.0.0"
 

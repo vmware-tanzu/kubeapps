@@ -21,7 +21,7 @@ function AppListItem(props: IAppListItemProps) {
   if (
     app.latestVersion?.appVersion &&
     app.currentVersion?.appVersion &&
-    semver.gt(app.latestVersion?.appVersion, app.currentVersion?.appVersion)
+    app.currentVersion?.appVersion !== app.latestVersion?.appVersion
   ) {
     tooltipContent = (
       <>

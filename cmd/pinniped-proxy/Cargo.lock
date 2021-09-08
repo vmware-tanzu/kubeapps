@@ -486,9 +486,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "0.14.11"
+version = "0.14.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b61cf2d1aebcf6e6352c97b81dc2244ca29194be1b276f5d8ad5c6330fffb11"
+checksum = "13f67199e765030fa08fe0bd581af683f0d5bc04ea09c2b1102012c5fb90e7fd"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -614,9 +614,9 @@ dependencies = [
 
 [[package]]
 name = "k8s-openapi"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbff78f6da26dde0d74188966d23fc763431d730d0f766ecf7699209f8fc243c"
+checksum = "748acc444200aa3528dc131a8048e131a9e75a611a52d152e276e99199313d1a"
 dependencies = [
  "base64",
  "bytes",
@@ -628,9 +628,9 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.58.1"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21d3c79fb97a822a63ce9422f7302484748032c808954898ba248705e99ea110"
+checksum = "a0ae4dcb1a65182551922303a2d292b463513a6727db5ad980afbd32df7f3c16"
 dependencies = [
  "base64",
  "bytes",
@@ -663,14 +663,15 @@ dependencies = [
 
 [[package]]
 name = "kube-core"
-version = "0.58.1"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffbce0d890efc42abb31e974419e25a643a97ab7c6b3b9498bda686d10b55f8d"
+checksum = "04ccd59635e9b21353da8d4a394bb5d3473b5965ed44496c8f857281b0625ffe"
 dependencies = [
  "form_urlencoded",
  "http",
  "json-patch",
  "k8s-openapi",
+ "once_cell",
  "serde",
  "serde_json",
  "thiserror",
@@ -678,9 +679,9 @@ dependencies = [
 
 [[package]]
 name = "kube-derive"
-version = "0.58.1"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95a28be5ca4f233b5dd872f426fdc75d6765c34576b590c44564982c05fdb400"
+checksum = "e4191660b8e26f6e6cb06f21b5372bdbc2c76b54f7c3d65e7a8c8708f9c36ed5"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -691,9 +692,9 @@ dependencies = [
 
 [[package]]
 name = "kube-runtime"
-version = "0.58.1"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4f034d330a0849e1603e285389e3f0ed93b9a86017d46e851c9e49e6d0b99e2"
+checksum = "eec378b03890f9f2bfa9448a51aa0f6a4299f6bb2ed0d180330e628c7a395918"
 dependencies = [
  "dashmap",
  "derivative",
@@ -1262,9 +1263,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.129"
+version = "1.0.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1f72836d2aa753853178eda473a3b9d8e4eefdaf20523b919677e6de489f8f1"
+checksum = "f12d06de37cf59146fbdecab66aa99f9fe4f78722e3607577a5375d66bd0c913"
 dependencies = [
  "serde_derive",
 ]
@@ -1281,9 +1282,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.129"
+version = "1.0.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e57ae87ad533d9a56427558b516d0adac283614e347abf85b0dc0cbbf0a249f3"
+checksum = "d7bc1a1ab1961464eae040d96713baa5a724a8152c1222492465b54322ec508b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1292,9 +1293,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.66"
+version = "1.0.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "336b10da19a12ad094b59d870ebde26a45402e5b470add4b5fd03c5048a32127"
+checksum = "a7f9e390c27c3c0ce8bc5d725f6e4d30a29d26659494aa4b17535f7522c5c950"
 dependencies = [
  "indexmap",
  "itoa",
@@ -1416,9 +1417,9 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "structopt"
-version = "0.3.22"
+version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69b041cdcb67226aca307e6e7be44c8806423d83e018bd662360a93dabce4d71"
+checksum = "bf9d950ef167e25e0bdb073cf1d68e9ad2795ac826f2f3f59647817cf23c0bfa"
 dependencies = [
  "clap",
  "lazy_static",
@@ -1427,9 +1428,9 @@ dependencies = [
 
 [[package]]
 name = "structopt-derive"
-version = "0.4.15"
+version = "0.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7813934aecf5f51a54775e00068c237de98489463968231a51746bbbc03f9c10"
+checksum = "134d838a2c9943ac3125cf6df165eda53493451b719f3255b2a26b85f772d0ba"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -1483,18 +1484,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.26"
+version = "1.0.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93119e4feac1cbe6c798c34d3a53ea0026b0b1de6a120deef895137c0529bfe2"
+checksum = "602eca064b2d83369e2b2f34b09c70b605402801927c65c11071ac911d299b88"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.26"
+version = "1.0.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "060d69a0afe7796bf42e9e2ff91f5ee691fb15c53d38b4b62a9a53eb23164745"
+checksum = "bad553cc2c78e8de258400763a647e80e6d1b31ee237275d756f6836d204494c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1529,9 +1530,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.10.1"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92036be488bb6594459f2e03b60e42df6f937fe6ca5c5ffdcb539c6b84dc40f5"
+checksum = "b4efe6fc2395938c8155973d7be49fe8d03a843726e285e100a8a383cc0154ce"
 dependencies = [
  "autocfg",
  "bytes",
