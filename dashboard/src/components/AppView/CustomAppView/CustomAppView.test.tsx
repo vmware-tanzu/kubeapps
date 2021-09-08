@@ -8,7 +8,7 @@ const defaultState = {
   config: { remoteComponentsUrl: "" },
 };
 
-export const DEFAULT_CUSTOM_APP_PROPS = {
+const DEFAULT_CUSTOM_APP_PROPS = {
   app: {
     chart: {
       metadata: {
@@ -63,17 +63,26 @@ export const DEFAULT_CUSTOM_APP_PROPS = {
 };
 
 it("should render a custom app view", () => {
-  const wrapper = mountWrapper(getStore(defaultState), <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />);
+  const wrapper = mountWrapper(
+    getStore(defaultState),
+    <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
+  );
   expect(wrapper.find(CustomAppView)).toExist();
 });
 
 it("should render the remote component", () => {
-  const wrapper = mountWrapper(getStore(defaultState), <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />);
+  const wrapper = mountWrapper(
+    getStore(defaultState),
+    <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
+  );
   expect(wrapper.find(CustomComponent)).toExist();
 });
 
 it("should render the remote component with the default URL", () => {
-  const wrapper = mountWrapper(getStore(defaultState), <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />);
+  const wrapper = mountWrapper(
+    getStore(defaultState),
+    <CustomAppView {...DEFAULT_CUSTOM_APP_PROPS} />,
+  );
   expect(wrapper.find(CustomComponent)).toExist();
   expect(wrapper.find(CustomComponent).prop("url")).toContain("custom_components.js");
 });

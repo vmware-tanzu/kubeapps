@@ -207,7 +207,7 @@ export default function AppView() {
     resourceRefs;
   const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
-  
+
   // If chart is white listed,load custom view from external bundle
   if (app?.chart?.metadata?.name && customAppViews.includes(app?.chart?.metadata?.name)) {
     return <CustomAppView resourceRefs={resourceRefs} app={app} />;

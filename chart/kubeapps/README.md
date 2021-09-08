@@ -176,6 +176,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.image.pullSecrets`                     | Dashboard image pull secrets                                                               | `[]`                 |
 | `dashboard.image.debug`                           | Enable image debug mode                                                                    | `false`              |
 | `dashboard.customStyle`                           | Custom CSS injected to the Dashboard to customize Kubeapps look and feel                   | `""`                 |
+| `dashboard.customAppViews`                        | Chart names to signal a custom app view                                                    | `[]`                 |
 | `dashboard.customComponents`                      | Custom Form components injected into the BasicDeploymentForm                               | `""`                 |
 | `dashboard.remoteComponentsUrl`                   | Remote URL that can be used to load custom components vs loading from the local filesystem | `""`                 |
 | `dashboard.customLocale`                          | Custom translations injected to the Dashboard to customize the strings used in Kubeapps    | `""`                 |
