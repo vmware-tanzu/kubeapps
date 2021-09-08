@@ -702,23 +702,24 @@ Have a look at the [dashboard documentation](https://github.com/kubeapps/kubeapp
 The example below will match the URL `http://example.com` to the Kubeapps dashboard. For further configuration, please refer to your specific Ingress configuration docs (e.g., [NGINX](https://github.com/kubernetes/ingress-nginx) or [HAProxy](https://github.com/haproxytech/kubernetes-ingress)).
 
 ```bash
-helm install kubeapps --namespace kubeapps \
+helm install kubeapps bitnami/kubeapps \
+  --namespace kubeapps \
   --set ingress.enabled=true \
   --set ingress.hostname=example.com \
-    bitnami/kubeapps
+  --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
 ```
 
 #### Serving Kubeapps in a subpath
 
-You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.extraHosts` parameter:
+You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.hostname` and `path` parameters:
 
 ```bash
-helm install kubeapps --namespace kubeapps \
-    --set ingress.enabled=true
-    --set ingress.hostname=""
-    --set ingress.extraHosts[0].name="console.example.com"
-    --set ingress.extraHosts[0].path="/catalog"
-    bitnami/kubeapps
+helm install kubeapps bitnami/kubeapps \
+  --namespace kubeapps \
+  --set ingress.enabled=true \
+  --set ingress.hostname=example.com \
+  --set ingress.path=/subpath \
+  --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
 ```
 
 Besides, if you are using the OAuth2/OIDC login (more information at the [using an OIDC provider documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
@@ -726,7 +727,7 @@ Besides, if you are using the OAuth2/OIDC login (more information at the [using 
 ```bash
 helm install kubeapps bitnami/kubeapps \
   --namespace kubeapps \
-  # ... other OIDC flags
+  # ... other OIDC and ingress flags
   --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
   --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
   --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
