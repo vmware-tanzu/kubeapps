@@ -26,7 +26,12 @@ import (
 
 // Set the pluginDetail once during a module init function so the single struct
 // can be used throughout the plugin.
-var pluginDetail plugins.Plugin
+var (
+	pluginDetail plugins.Plugin
+	// This version var is updated during the build (see the -ldflags option
+	// in the cmd/kubeapps-apis/Dockerfile)
+	version = "devel"
+)
 
 func init() {
 	pluginDetail = plugins.Plugin{
