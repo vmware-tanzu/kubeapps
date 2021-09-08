@@ -104,4 +104,18 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     );
     expect(wrapper.find(Alert).text()).toContain("A new app version is available: latest");
   });
+  it("renders an new version found message if the pkg latest version is different without being semver", () => {
+    const appWithUpdates = {
+      ...defaultProps.app,
+      latestVersion: {
+        pkgVersion: "latest",
+        appVersion: "10.0.0",
+      },
+    } as InstalledPackageDetail;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <ChartInfo {...defaultProps} app={appWithUpdates} />,
+    );
+    expect(wrapper.find(Alert).text()).toContain("A new package version is available: latest");
+  });
 });
