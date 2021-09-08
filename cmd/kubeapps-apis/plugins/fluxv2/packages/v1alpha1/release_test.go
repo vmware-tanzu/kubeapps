@@ -101,6 +101,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 		},
 		{
+			name: "returns installed packages when install is in progress (2)",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "namespace-1"},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_pending_2,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					redis_summary_pending_2,
+				},
+			},
+		},
+		{
 			name: "returns installed packages in a specific namespace",
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: "namespace-1"},
@@ -736,7 +751,7 @@ var redis_summary_installed = &corev1.InstalledPackageSummary{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded",
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
@@ -766,7 +781,7 @@ var redis_summary_failed = &corev1.InstalledPackageSummary{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
-		UserReason: "InstallFailed",
+		UserReason: "InstallFailed: install retries exhausted",
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
@@ -796,7 +811,37 @@ var redis_summary_pending = &corev1.InstalledPackageSummary{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
-		UserReason: "Progressing",
+		UserReason: "Progressing: reconciliation in progress",
+	},
+	LatestVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.6.1",
+		AppVersion: "6.2.4",
+	},
+}
+
+var redis_summary_pending_2 = &corev1.InstalledPackageSummary{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
+		},
+		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
+	},
+	Name:    "my-redis",
+	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "14.4.0",
+	},
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "6.2.4",
+	},
+	PkgDisplayName:   "redis",
+	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      false,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+		UserReason: "ArtifactFailed: HelmChart 'default/kubeapps-my-redis' is not ready",
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
@@ -830,7 +875,7 @@ var airflow_summary_installed = &corev1.InstalledPackageSummary{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded",
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
 }
 
@@ -856,7 +901,7 @@ var redis_summary_latest = &corev1.InstalledPackageSummary{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded",
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "14.6.1",
@@ -890,7 +935,7 @@ var airflow_summary_semver = &corev1.InstalledPackageSummary{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded",
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
 }
 
@@ -989,11 +1034,22 @@ var redis_existing_spec_failed = testSpecGetInstalledPackages{
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Ready",
-				"status": "False",
-				"reason": "InstallFailed",
+				"lastTransitionTime": "2021-09-06T10:24:34Z",
+				"type":               "Ready",
+				"status":             "False",
+				"message":            "install retries exhausted",
+				"reason":             "InstallFailed",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-09-06T10:24:34Z",
+				"type":               "Released",
+				"status":             "False",
+				"message":            "Helm install failed: unable to build kubernetes objects from release manifest: error validating \"\": error validating data: ValidationError(Deployment.spec.replicas): invalid type for io.k8s.api.apps.v1.DeploymentSpec.replicas: got \"string\", expected \"integer\"",
+				"reason":             "InstallFailed",
 			},
 		},
+		"failures":              "14",
+		"installFailures":       "1",
 		"lastAttemptedRevision": "14.4.0",
 	},
 }
@@ -1019,9 +1075,18 @@ var airflow_existing_spec_completed = testSpecGetInstalledPackages{
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Ready",
-				"status": "True",
-				"reason": "ReconciliationSucceeded",
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "True",
+				"reason":             "ReconciliationSucceeded",
+				"message":            "Release reconciliation succeeded",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Released",
+				"status":             "True",
+				"reason":             "InstallSucceeded",
+				"message":            "Helm install succeeded",
 			},
 		},
 		"lastAppliedRevision":   "6.7.1",
@@ -1042,9 +1107,18 @@ var airflow_existing_spec_semver = testSpecGetInstalledPackages{
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Ready",
-				"status": "True",
-				"reason": "ReconciliationSucceeded",
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "True",
+				"reason":             "ReconciliationSucceeded",
+				"message":            "Release reconciliation succeeded",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Released",
+				"status":             "True",
+				"reason":             "InstallSucceeded",
+				"message":            "Helm install succeeded",
 			},
 		},
 		"lastAppliedRevision":   "6.7.1",
@@ -1065,11 +1139,38 @@ var redis_existing_spec_pending = testSpecGetInstalledPackages{
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Ready",
-				"status": "Unknown",
-				"reason": "Progressing",
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "Unknown",
+				"reason":             "Progressing",
+				"message":            "reconciliation in progress",
 			},
 		},
+		"lastAttemptedRevision": "14.4.0",
+	},
+}
+
+var redis_existing_spec_pending_2 = testSpecGetInstalledPackages{
+	repoName:             "bitnami-1",
+	repoNamespace:        "default",
+	repoIndex:            "testdata/redis-many-versions.yaml",
+	chartName:            "redis",
+	chartTarGz:           "testdata/redis-14.4.0.tgz",
+	chartSpecVersion:     "14.4.0",
+	chartArtifactVersion: "14.4.0",
+	releaseName:          "my-redis",
+	releaseNamespace:     "namespace-1",
+	releaseStatus: map[string]interface{}{
+		"conditions": []interface{}{
+			map[string]interface{}{
+				"lastTransitionTime": "2021-09-06T05:26:52Z",
+				"message":            "HelmChart 'default/kubeapps-my-redis' is not ready",
+				"reason":             "ArtifactFailed",
+				"status":             "False",
+				"type":               "Ready",
+			},
+		},
+		"failures":              "2",
 		"lastAttemptedRevision": "14.4.0",
 	},
 }
@@ -1095,9 +1196,18 @@ var redis_existing_spec_latest = testSpecGetInstalledPackages{
 	releaseStatus: map[string]interface{}{
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Ready",
-				"status": "True",
-				"reason": "ReconciliationSucceeded",
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Ready",
+				"status":             "True",
+				"reason":             "ReconciliationSucceeded",
+				"message":            "Release reconciliation succeeded",
+			},
+			map[string]interface{}{
+				"lastTransitionTime": "2021-08-11T08:46:03Z",
+				"type":               "Released",
+				"status":             "True",
+				"reason":             "InstallSucceeded",
+				"message":            "Helm install succeeded",
 			},
 		},
 		"lastAppliedRevision":   "14.4.0",
@@ -1127,7 +1237,7 @@ var redis_detail_failed = &corev1.InstalledPackageDetail{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
-		UserReason: "InstallFailed",
+		UserReason: "InstallFailed: install retries exhausted",
 	},
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "bitnami-1/redis",
@@ -1159,7 +1269,7 @@ var redis_detail_pending = &corev1.InstalledPackageDetail{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      false,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
-		UserReason: "Progressing",
+		UserReason: "Progressing: reconciliation in progress",
 	},
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "bitnami-1/redis",
@@ -1191,7 +1301,7 @@ var redis_detail_completed = &corev1.InstalledPackageDetail{
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded",
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "bitnami-1/redis",
@@ -1225,7 +1335,7 @@ var redis_detail_completed_with_values_and_reconciliation_options = &corev1.Inst
 	Status: &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded",
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
 	ValuesApplied: "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
 	AvailablePackageRef: &corev1.AvailablePackageReference{

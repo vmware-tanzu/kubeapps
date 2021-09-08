@@ -486,8 +486,7 @@ func kubectlDeleteServiceAccount(t *testing.T, name, namespace string) error {
 		t.Logf("%s", string(bytes))
 		return err
 	}
-	//if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io \""+name+"\"-binding deleted") {
-	if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io") {
+	if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io \""+name+"-binding\" deleted") {
 		return fmt.Errorf("Unexpected output from kubectl delete clusterrolebinding: [%s]", string(bytes))
 	}
 
