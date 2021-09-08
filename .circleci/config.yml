@@ -116,9 +116,12 @@ workflows:
           requires:
             - test_go
             - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_master
       - GKE_1_20_MASTER:
@@ -126,6 +129,8 @@ workflows:
           requires:
             - test_go
             - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
@@ -135,6 +140,8 @@ workflows:
           requires:
             - test_go
             - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
@@ -144,6 +151,8 @@ workflows:
           requires:
             - test_go
             - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
@@ -153,6 +162,8 @@ workflows:
           requires:
             - test_go
             - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
@@ -172,6 +183,7 @@ workflows:
       - release:
           <<: *build_on_tag
           requires:
+            - sync_chart_to_bitnami
             - local_e2e_tests
             - GKE_1_20_MASTER
             - GKE_1_20_LATEST_RELEASE
