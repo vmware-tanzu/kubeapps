@@ -32,10 +32,10 @@ describe(useOutsideClick, () => {
     const listeners = {};
     document.addEventListener = jest.fn((event, cb) => {
       listeners[event] = cb;
-    });
+    }, { capture: true });
 
     mount(<TestComponent />);
-    expect(Object.keys(listeners).length).toBe(1);
+    expect(Object.keys(listeners).length).toBe(2);
     expect(listeners["mousedown"]).toBeDefined();
   });
 
@@ -44,7 +44,7 @@ describe(useOutsideClick, () => {
     const listeners = {};
     document.addEventListener = jest.fn((event, cb) => {
       listeners[event] = cb;
-    });
+    }, { capture: true });
 
     const wrapper = mount(<TestComponent enabled={false} />);
     expect(Object.keys(listeners).length).toBe(0);
