@@ -88,21 +88,21 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	pkgsR := []*packages.AvailablePackageSummary{}
 
-	if pageSize > 0 {
-		// Using https://github.com/ahmetb/go-linq for simplicity
-		From(pkgs).Skip(pageOffset*int(pageSize) - 1).Take(int(pageSize)).ToSlice(&pkgsR)
-	}
-
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
-	if pageSize > 0 && len(pkgsR) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	if pageSize > 0 {
+		// Using https://github.com/ahmetb/go-linq for simplicity
+		From(pkgs).Skip(pageOffset*int(pageSize) - 1).Take(int(pageSize)).ToSlice(&pkgsR)
+		if len(pkgsR) == int(pageSize) {
+			nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		}
+		pkgs = pkgsR
 	}
 
 	// TODO: Sort via default sort order or that specified in request.
 	return &packages.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: pkgsR,
+		AvailablePackageSummaries: pkgs,
 		Categories:                categories,
 		NextPageToken:             nextPageToken,
 	}, nil
