@@ -30,9 +30,12 @@ describe(useOutsideClick, () => {
   it("should attach the event to the global event listener", () => {
     // Mock addEventListener
     const listeners = {};
-    document.addEventListener = jest.fn((event, cb) => {
-      listeners[event] = cb;
-    }, { capture: true });
+    document.addEventListener = jest.fn(
+      (event, cb) => {
+        listeners[event] = cb;
+      },
+      { capture: true },
+    );
 
     mount(<TestComponent />);
     expect(Object.keys(listeners).length).toBe(2);
@@ -42,9 +45,12 @@ describe(useOutsideClick, () => {
   it("should attach the event only when enabled is true", async () => {
     // Mock addEventListener
     const listeners = {};
-    document.addEventListener = jest.fn((event, cb) => {
-      listeners[event] = cb;
-    }, { capture: true });
+    document.addEventListener = jest.fn(
+      (event, cb) => {
+        listeners[event] = cb;
+      },
+      { capture: true },
+    );
 
     const wrapper = mount(<TestComponent enabled={false} />);
     expect(Object.keys(listeners).length).toBe(0);
