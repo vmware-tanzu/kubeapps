@@ -5,6 +5,7 @@ WORKDIR /go/src/github.com/kubeapps/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
 COPY cmd cmd
+ARG VERSION="devel"
 
 ARG BUF_VERSION="0.52.0"
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
@@ -42,6 +43,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
     -o /helm-packages-v1alpha1-plugin.so -buildmode=plugin \
+    -ldflags "-X main.version=$VERSION" \
     ./cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/*.go
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
