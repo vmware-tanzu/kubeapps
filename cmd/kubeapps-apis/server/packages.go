@@ -15,7 +15,9 @@ package server
 import (
 	"context"
 	"fmt"
+	"strconv"
 
+	. "github.com/ahmetb/go-linq/v3"
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
@@ -47,12 +49,26 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
 
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+	}
+
+	// TODO(agamez): temporarily fetching all the results (size=0) and then paginate them
+	// ideally, paginate each plugin request and then aggregate results.
+	requestN := request
+	requestN.PaginationOptions = &packages.PaginationOptions{
+		PageToken: "0",
+		PageSize:  0,
+	}
+
 	pkgs := []*packages.AvailablePackageSummary{}
 	categories := []string{}
 
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.plugins {
-		response, err := p.server.GetAvailablePackageSummaries(ctx, request)
+		response, err := p.server.GetAvailablePackageSummaries(ctx, requestN)
 		if err != nil {
 			return nil, err
 		}
@@ -70,10 +86,25 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		pkgs = append(pkgs, pluginPkgs...)
 	}
 
+	pkgsR := []*packages.AvailablePackageSummary{}
+
+	if pageSize > 0 {
+		// Using https://github.com/ahmetb/go-linq for simplicity
+		From(pkgs).Skip(pageOffset*int(pageSize) - 1).Take(int(pageSize)).ToSlice(&pkgsR)
+	}
+
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(pkgsR) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	}
+
 	// TODO: Sort via default sort order or that specified in request.
 	return &packages.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: pkgs,
+		AvailablePackageSummaries: pkgsR,
 		Categories:                categories,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 
@@ -265,4 +296,22 @@ func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgsPlugin
 		}
 	}
 	return nil
+}
+
+// pageOffsetFromPageToken converts a page token to an integer offset
+// representing the page of results.
+// TODO(mnelson): When aggregating results from different plugins, we'll
+// need to update the actual query in GetPaginatedChartListWithFilters to
+// use a row offset rather than a page offset (as not all rows may be consumed
+// for a specific plugin when combining).
+func pageOffsetFromPageToken(pageToken string) (int, error) {
+	if pageToken == "" {
+		return 0, nil
+	}
+	offset, err := strconv.ParseUint(pageToken, 10, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(offset), nil
 }
