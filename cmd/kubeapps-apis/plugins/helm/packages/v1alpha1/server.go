@@ -60,6 +60,7 @@ const (
 	MajorVersionsInSummary = 3
 	MinorVersionsInSummary = 3
 	PatchVersionsInSummary = 3
+	UserAgentPrefix        = "kubeapps-apis/plugins"
 )
 
 // Server implements the helm packages v1alpha1 interface.
@@ -841,6 +842,10 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", repoName, repoNamespace, err)
 	}
 
+	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
+
+	log.Infof("+helm CreateInstalledPackage fetching chart %q with user-agent %q", chartID, userAgentString)
+
 	// Grab the chart itself
 	ch, err := handlerutil.GetChart(
 		&chart.Details{
@@ -851,9 +856,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		},
 		appRepo,
 		caCertSecret, authSecret,
-		// TODO(minelson): add a useragent comment to kubeapps APIs and ensure it is passed
-		// through to be used here.
-		s.chartClientFactory.New(appRepo.Spec.Type, "kubeapps-apis/devel"),
+		s.chartClientFactory.New(appRepo.Spec.Type, userAgentString),
 	)
 
 	// Create an action config for the target namespace.
