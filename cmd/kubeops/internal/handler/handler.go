@@ -52,13 +52,13 @@ type Options struct {
 // Config represents data needed by each handler to be able to create Helm 3 actions.
 // It cannot be created without a bearer token, so a new one must be created upon each HTTP request.
 type Config struct {
-	ActionConfig  *action.Configuration
-	Options       Options
-	KubeHandler   kube.AuthHandler
-	Resolver      handlerutil.ResolverFactory
-	Cluster       string
-	Token         string
-	userClientSet kubernetes.Interface
+	ActionConfig       *action.Configuration
+	Options            Options
+	KubeHandler        kube.AuthHandler
+	ChartClientFactory chartUtils.ChartClientFactoryInterface
+	Cluster            string
+	Token              string
+	userClientSet      kubernetes.Interface
 }
 
 // WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
@@ -110,13 +110,13 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			}
 
 			cfg := Config{
-				Options:       options,
-				ActionConfig:  actionConfig,
-				KubeHandler:   kubeHandler,
-				Cluster:       cluster,
-				Token:         token,
-				Resolver:      &handlerutil.ClientResolver{},
-				userClientSet: userKubeClient,
+				Options:            options,
+				ActionConfig:       actionConfig,
+				KubeHandler:        kubeHandler,
+				Cluster:            cluster,
+				Token:              token,
+				ChartClientFactory: &chartUtils.ChartClientFactory{},
+				userClientSet:      userKubeClient,
 			}
 			f(cfg, w, req, params)
 		}
@@ -191,7 +191,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		chartDetails,
 		appRepo,
 		caCertSecret, authSecret,
-		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+		cfg.ChartClientFactory.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
 	if err != nil {
 		returnErrMessage(err, w)
@@ -245,7 +245,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		chartDetails,
 		appRepo,
 		caCertSecret, authSecret,
-		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+		cfg.ChartClientFactory.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
 	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
 	if err != nil {

@@ -2,7 +2,6 @@ import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Link } from "react-router-dom";
-import * as semver from "semver";
 import { app as appURL } from "shared/url";
 
 interface IChartInfoProps {
@@ -27,7 +26,7 @@ export default function ChartUpdateInfo({ app, cluster }: IChartInfoProps) {
   } else if (
     app.latestVersion?.pkgVersion &&
     app.currentVersion?.pkgVersion &&
-    semver.gt(app.latestVersion?.pkgVersion, app.currentVersion?.pkgVersion)
+    app.latestVersion?.pkgVersion !== app.currentVersion?.pkgVersion
   ) {
     // There is a new package version
     alertContent = (

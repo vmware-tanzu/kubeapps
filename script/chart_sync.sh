@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+set -o errexit
+set -o nounset
+set -o pipefail
 
 source $(dirname $0)/chart_sync_utils.sh
 
@@ -21,10 +23,10 @@ user=${1:?}
 email=${2:?}
 gpg=${3:?}
 
-currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep -oP '(?<=^version: ).*' )
-externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/master/${CHART_REPO_PATH}/Chart.yaml | grep -oP '(?<=^version: ).*' )
+currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep -oP '(?<=^version: ).*')
+externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/master/${CHART_REPO_PATH}/Chart.yaml | grep -oP '(?<=^version: ).*')
 semverCompare=$(semver compare "${currentVersion}" "${externalVersion}")
-# If current version is greater than the chart external version, then send a PR bumping up the version externally 
+# If current version is greater than the chart external version, then send a PR bumping up the version externally
 if [[ ${semverCompare} -gt 0 ]]; then
     echo "Current chart version ("${currentVersion}") is greater than the chart external version ("${externalVersion}")"
     tempDir=$(mktemp -u)/charts

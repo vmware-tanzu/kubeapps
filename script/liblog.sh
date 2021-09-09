@@ -71,10 +71,10 @@ error() {
 #   None
 #########################
 debug() {
-    local -r bool="${DEBUG_MODE:-false}"
-    # comparison is performed without regard to the case of alphabetic characters
-    shopt -s nocasematch
-    if [[ "$bool" = 1 || "$bool" =~ ^(yes|true)$ ]]; then
-        log "${MAGENTA}DEBUG${RESET} ==> ${*}"
-    fi
+  local -r bool="${DEBUG_MODE:-false}"
+  # comparison is performed without regard to the case of alphabetic characters
+  shopt -s nocasematch
+  if [[ "$bool" = 1 || "$bool" =~ ^(yes|true)$ ]]; then
+    log "${MAGENTA}DEBUG${RESET} ==> ${*}"
+  fi
 }
