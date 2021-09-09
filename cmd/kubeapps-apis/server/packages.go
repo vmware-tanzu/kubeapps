@@ -117,17 +117,7 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 
 	log.Infof("+core GetAvailablePackageDetail %s", contextMsg)
 
-	// Check prerequsites
-	if request.AvailablePackageRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the available package reference (missing AvailablePackageRef)")
-	}
-	if request.AvailablePackageRef.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the context (missing AvailablePackageRef.Context)")
-	}
-	if request.AvailablePackageRef.Identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the identifier (missing AvailablePackageRef.Identifier)")
-	}
-	if request.AvailablePackageRef.Plugin == nil {
+	if request.AvailablePackageRef == nil || request.AvailablePackageRef.Plugin == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
@@ -199,17 +189,7 @@ func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *
 
 	log.Infof("+core GetInstalledPackageDetail %s", contextMsg)
 
-	// Check prerequsites
-	if request.InstalledPackageRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the available package reference (missing InstalledPackageRef)")
-	}
-	if request.InstalledPackageRef.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the context (missing InstalledPackageRef.Context)")
-	}
-	if request.InstalledPackageRef.Identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the identifier (missing InstalledPackageRef.Identifier)")
-	}
-	if request.InstalledPackageRef.Plugin == nil {
+	if request.InstalledPackageRef == nil || request.InstalledPackageRef.Plugin == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
 	}
 
@@ -245,17 +225,7 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 
 	log.Infof("+core GetAvailablePackageVersions %s", contextMsg)
 
-	// Check prerequsites
-	if request.AvailablePackageRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the available package reference (missing AvailablePackageRef)")
-	}
-	if request.AvailablePackageRef.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the context (missing AvailablePackageRef.Context)")
-	}
-	if request.AvailablePackageRef.Identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the identifier (missing AvailablePackageRef.Identifier)")
-	}
-	if request.AvailablePackageRef.Plugin == nil {
+	if request.AvailablePackageRef == nil || request.AvailablePackageRef.Plugin == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
