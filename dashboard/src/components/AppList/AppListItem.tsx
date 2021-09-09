@@ -1,7 +1,7 @@
 import Tooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import helmIcon from "../../icons/helm.svg";
+import { getPluginIcon } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
@@ -84,7 +84,7 @@ function AppListItem(props: IAppListItemProps) {
       tag1Content={appStatus}
       tag1Class={appStatus === "deployed" ? "label-success" : "label-warning"}
       tooltip={tooltip}
-      bgIcon={helmIcon}
+      bgIcon={getPluginIcon(app.installedPackageRef?.plugin ?? "chart")}
     />
   );
 }

@@ -1,9 +1,7 @@
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useSelector } from "react-redux";
 import { IRepo, IStoreState } from "shared/types";
 import * as url from "shared/url";
-import { trimDescription } from "shared/utils";
-import helmIcon from "../../icons/helm.svg";
+import { getPluginIcon, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
 import { IChartCatalogItem } from "./CatalogItem";
@@ -37,13 +35,4 @@ export default function ChartCatalogItem(props: IChartCatalogItem) {
       bgIcon={bgIcon}
     />
   );
-}
-
-function getPluginIcon(plugin: Plugin) {
-  switch (plugin.name) {
-    case "helm.packages":
-      return helmIcon;
-    default:
-      return placeholder;
-  }
 }

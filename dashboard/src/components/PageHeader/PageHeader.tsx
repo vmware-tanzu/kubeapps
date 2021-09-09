@@ -1,8 +1,7 @@
 import Icon from "components/Icon/Icon";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import olmIcon from "icons/operator-framework.svg";
-import helmIcon from "../../icons/helm.svg";
+import { getPluginIcon } from "shared/utils";
 import "./PageHeader.css";
 
 export interface IPageHeaderProps {
@@ -36,13 +35,13 @@ function PageHeader({
                 {titleSize === "lg" ? <h1>{title}</h1> : <h3>{title}</h3>}
                 {helm && (
                   <div className="kubeapps-header-subtitle">
-                    <img src={helmIcon} alt="helm-icon" />
+                    <img src={getPluginIcon("chart")} alt="helm-icon" />
                     <span>Helm Chart</span>
                   </div>
                 )}
                 {operator && (
                   <div className="kubeapps-header-subtitle">
-                    <img src={olmIcon} alt="olm-icon" />
+                    <img src={getPluginIcon("operator")} alt="olm-icon" />
                     <span>Operator</span>
                   </div>
                 )}

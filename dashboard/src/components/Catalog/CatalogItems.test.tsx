@@ -1,3 +1,4 @@
+import InfoCard from "components/InfoCard";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -99,4 +100,52 @@ it("order elements by name", () => {
   const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
   const items = wrapper.find(CatalogItem).map(i => i.prop("item").name);
   expect(items).toEqual(["bar", "foo", "foo-cluster"]);
+});
+
+it("changes the bgIcon based on the plugin name - default", () => {
+  const pluginName = "my.plugin";
+  const populatedProps = {
+    ...defaultProps,
+    charts: [
+      {
+        ...chartItem,
+        availablePackageRef: {
+          ...chartItem.availablePackageRef,
+          plugin: { ...chartItem.availablePackageRef?.plugin, name: pluginName },
+        },
+      } as AvailablePackageSummary,
+    ],
+  };
+
+  const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
+  expect(
+    wrapper
+      .find(InfoCard)
+      .findWhere(s => s.prop("link")?.includes(pluginName))
+      .prop("bgIcon"),
+  ).toBe("placeholder.png");
+});
+
+it("changes the bgIcon based on the plugin name - helm", () => {
+  const pluginName = "helm.packages";
+  const populatedProps = {
+    ...defaultProps,
+    charts: [
+      {
+        ...chartItem,
+        availablePackageRef: {
+          ...chartItem.availablePackageRef,
+          plugin: { ...chartItem.availablePackageRef?.plugin, name: pluginName },
+        },
+      } as AvailablePackageSummary,
+    ],
+  };
+
+  const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
+  expect(
+    wrapper
+      .find(InfoCard)
+      .findWhere(s => s.prop("link")?.includes(pluginName))
+      .prop("bgIcon"),
+  ).toBe("helm.svg");
 });

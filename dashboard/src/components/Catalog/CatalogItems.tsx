@@ -28,10 +28,9 @@ export default function CatalogItems({
     () =>
       charts.map(c => {
         return {
-          // type: `${c.availablePackageRef?.plugin?.name ?? "chart"}-${
-          //   c.availablePackageRef?.plugin?.version ?? ""
-          // }`,
-          type: "hola",
+          type: `${c.availablePackageRef?.plugin?.name ?? "helm.packages"}-${
+            c.availablePackageRef?.plugin?.version ?? "v1alpha1"
+          }`,
           id: `chart/${c.availablePackageRef?.identifier}`,
           item: {
             plugin: c.availablePackageRef?.plugin ?? ({ name: "", version: "" } as Plugin),
