@@ -144,8 +144,8 @@ export default function AppView() {
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({
-    name: plugin.split("-")[0],
-    version: plugin.split("-")[1],
+    name: plugin?.split("-")[0],
+    version: plugin?.split("-")[1],
   } as Plugin);
 
   useEffect(() => {

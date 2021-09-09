@@ -54,8 +54,8 @@ export default function ChartView() {
   const location = ReactRouter.useLocation();
 
   const [pluginObj] = useState({
-    name: plugin.split("-")[0],
-    version: plugin.split("-")[1],
+    name: plugin?.split("-")[0],
+    version: plugin?.split("-")[1],
   } as Plugin);
 
   // Fetch the selected/latest version on the initial load
@@ -76,8 +76,8 @@ export default function ChartView() {
   useEffect(() => {
     dispatch(
       actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId, {
-        name: plugin.split("-")[0],
-        version: plugin.split("-")[1],
+        name: plugin?.split("-")[0],
+        version: plugin?.split("-")[1],
       }),
     );
   }, [dispatch, packageId, chartNamespace, chartCluster, plugin]);

@@ -55,7 +55,7 @@ export default function DeploymentForm() {
   const [valuesModified, setValuesModified] = useState(false);
   const [pluginObj] = useState(
     selected.availablePackageDetail?.availablePackageRef?.plugin ??
-      ({ name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin),
+      ({ name: plugin?.split("-")[0], version: plugin?.split("-")[1] } as Plugin),
   );
 
   useEffect(() => {
