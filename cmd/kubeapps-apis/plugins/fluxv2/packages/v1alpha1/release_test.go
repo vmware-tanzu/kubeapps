@@ -37,6 +37,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -608,8 +609,196 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	}
 }
 
-// .CreateInstalledPackage() tests are done against a real k8s cluster with flux deployed
-// in release_kind_test.go, TestKindClusterCreateInstalledPackage
+type testSpecCreateInstalledPackage struct {
+	repoName      string
+	repoNamespace string
+	repoIndex     string
+}
+
+func TestCreateInstalledPackage(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.CreateInstalledPackageRequest
+		existingObjs       testSpecCreateInstalledPackage
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.CreateInstalledPackageResponse
+		expectedRelease    map[string]interface{}
+	}{
+		{
+			name: "create package (simple)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				Name: "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo",
+					Plugin:     fluxPlugin,
+				},
+			},
+			expectedRelease: flux_helm_release_basic,
+		},
+		{
+			name: "create package (semver constraint)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				Name: "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "> 5",
+				},
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo",
+					Plugin:     fluxPlugin,
+				},
+			},
+			expectedRelease: flux_helm_release_semver_constraint,
+		},
+		{
+			name: "create package (reconcile options)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				Name: "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					Interval:           60,
+					Suspend:            false,
+					ServiceAccountName: "foo",
+				},
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+					Identifier: "my-podinfo",
+					Plugin:     fluxPlugin,
+				},
+			},
+			expectedRelease: flux_helm_release_reconcile_options,
+		},
+	}
+
+	// currently needed for CreateInstalledPackage func
+	t.Setenv("POD_NAMESPACE", "kubeapps")
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			runtimeObjs := []runtime.Object{}
+
+			ts, repo, err := newRepoWithIndex(tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts.Close()
+
+			runtimeObjs = append(runtimeObjs, repo)
+			s, mock, _, err := newServerWithRepos(runtimeObjs...)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			mock.ExpectGet(redisKey).SetVal(string(bytes))
+
+			response, err := s.CreateInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.CreateInstalledPackageResponse{},
+				corev1.InstalledPackageReference{},
+				plugins.Plugin{},
+				corev1.Context{})
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			// check expected HelmReleass CRD has been created
+			dynamicClient, _, err = s.clientGetter(context.Background())
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			releaseObj, err := dynamicClient.Resource(releasesGvr).Namespace("kubeapps").Get(
+				context.Background(),
+				tc.request.Name,
+				v1.GetOptions{})
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := releaseObj.Object, tc.expectedRelease; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
 
 func newRelease(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
 	metadata := map[string]interface{}{
@@ -729,6 +918,12 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 }
 
 // misc global vars that get re-used in multiple tests scenarios
+var releasesGvr = schema.GroupVersionResource{
+	Group:    fluxHelmReleaseGroup,
+	Version:  fluxHelmReleaseVersion,
+	Resource: fluxHelmReleases,
+}
+
 var redis_summary_installed = &corev1.InstalledPackageSummary{
 	InstalledPackageRef: &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
@@ -1344,4 +1539,85 @@ var redis_detail_completed_with_values_and_reconciliation_options = &corev1.Inst
 		Plugin:     fluxPlugin,
 	},
 	PostInstallationNotes: "some notes",
+}
+
+var flux_helm_release_basic = map[string]interface{}{
+	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+	"kind":       "HelmRelease",
+	"metadata": map[string]interface{}{
+		"name":      "my-podinfo",
+		"namespace": "kubeapps",
+	},
+	"spec": map[string]interface{}{
+		"chart": map[string]interface{}{
+			"spec": map[string]interface{}{
+				"chart": "podinfo",
+				"sourceRef": map[string]interface{}{
+					"kind":      "HelmRepository",
+					"name":      "podinfo",
+					"namespace": "namespace-1",
+				},
+			},
+		},
+		"install": map[string]interface{}{
+			"createNamespace": true,
+		},
+		"interval":        "1m",
+		"targetNamespace": "test",
+	},
+}
+
+var flux_helm_release_semver_constraint = map[string]interface{}{
+	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+	"kind":       "HelmRelease",
+	"metadata": map[string]interface{}{
+		"name":      "my-podinfo",
+		"namespace": "kubeapps",
+	},
+	"spec": map[string]interface{}{
+		"chart": map[string]interface{}{
+			"spec": map[string]interface{}{
+				"chart": "podinfo",
+				"sourceRef": map[string]interface{}{
+					"kind":      "HelmRepository",
+					"name":      "podinfo",
+					"namespace": "namespace-1",
+				},
+				"version": "> 5",
+			},
+		},
+		"install": map[string]interface{}{
+			"createNamespace": true,
+		},
+		"interval":        "1m",
+		"targetNamespace": "test",
+	},
+}
+
+var flux_helm_release_reconcile_options = map[string]interface{}{
+	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+	"kind":       "HelmRelease",
+	"metadata": map[string]interface{}{
+		"name":      "my-podinfo",
+		"namespace": "kubeapps",
+	},
+	"spec": map[string]interface{}{
+		"chart": map[string]interface{}{
+			"spec": map[string]interface{}{
+				"chart": "podinfo",
+				"sourceRef": map[string]interface{}{
+					"kind":      "HelmRepository",
+					"name":      "podinfo",
+					"namespace": "namespace-1",
+				},
+			},
+		},
+		"install": map[string]interface{}{
+			"createNamespace": true,
+		},
+		"interval":           "1m0s",
+		"serviceAccountName": "foo",
+		"suspend":            false,
+		"targetNamespace":    "test",
+	},
 }

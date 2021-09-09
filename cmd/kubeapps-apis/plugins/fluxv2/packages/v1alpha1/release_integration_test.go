@@ -43,7 +43,10 @@ import (
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
 // pre-requisites for these tests to run:
 // 1) kind cluster with flux deployed
-// 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080
+// 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
+//      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
+//    Didn't want to spend cycles writing port-forwarding code programmatically like https://github.com/anthhub/forwarder
+//    at this point.
 
 // if one or more of the above pre-requisites is not satisfied, the tests are simply skipped
 
@@ -257,15 +260,16 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 	opts = append(opts, grpc.WithBlock())
-	conn, err := grpc.Dial("localhost:8080", opts...)
+	target := "localhost:8080"
+	conn, err := grpc.Dial(target, opts...)
 	if err != nil {
-		t.Fatalf("fail to dial: %v", err)
+		t.Fatalf("failed to dial [%s] due to: %v", target, err)
 	}
 	t.Cleanup(func() { conn.Close() })
 	pluginsCli := plugins.NewPluginsServiceClient(conn)
 	response, err := pluginsCli.GetConfiguredPlugins(context.TODO(), &plugins.GetConfiguredPluginsRequest{})
 	if err != nil {
-		t.Fatalf("fail to dial: %v", err)
+		t.Fatalf("failed to GetConfiguredPlugins due to: %v", err)
 	}
 	found := false
 	for _, p := range response.Plugins {
@@ -445,18 +449,28 @@ func kubeGetHelmRepositoryResourceInterface(namespace string) (dynamic.ResourceI
 }
 
 func kubeGetDynamicClient() (dynamic.Interface, error) {
-	if config, err := restConfig(); err != nil {
-		return nil, err
+	if dynamicClient != nil {
+		return dynamicClient, nil
 	} else {
-		return dynamic.NewForConfig(config)
+		if config, err := restConfig(); err != nil {
+			return nil, err
+		} else {
+			dynamicClient, err = dynamic.NewForConfig(config)
+			return dynamicClient, err
+		}
 	}
 }
 
 func kubeGetTypedClient() (kubernetes.Interface, error) {
-	if config, err := restConfig(); err != nil {
-		return nil, err
+	if typedClient != nil {
+		return typedClient, nil
 	} else {
-		return kubernetes.NewForConfig(config)
+		if config, err := restConfig(); err != nil {
+			return nil, err
+		} else {
+			typedClient, err = kubernetes.NewForConfig(config)
+			return typedClient, err
+		}
 	}
 }
 
@@ -475,6 +489,9 @@ func randSeq(n int) string {
 
 // global vars
 var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+
+var typedClient kubernetes.Interface
+var dynamicClient dynamic.Interface
 
 var create_request_basic = &corev1.CreateInstalledPackageRequest{
 	AvailablePackageRef: &corev1.AvailablePackageReference{
