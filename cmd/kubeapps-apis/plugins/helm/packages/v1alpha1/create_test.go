@@ -24,6 +24,8 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,9 +35,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 		request            *corev1.CreateInstalledPackageRequest
 		expectedResponse   *corev1.CreateInstalledPackageResponse
 		expectedStatusCode codes.Code
+		expectedRelease    *release.Release
 	}{
 		{
-			name: "creates the installed package",
+			name: "creates the installed package from repo without credentials",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
@@ -50,6 +53,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.18.3",
 				},
+				Values: "{\"foo\": \"bar\"}",
 			},
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -62,6 +66,20 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			expectedStatusCode: codes.OK,
+			expectedRelease: &release.Release{
+				Name: "my-apache",
+				Info: &release.Info{
+					Description: "Install complete",
+					Status:      release.StatusDeployed,
+				},
+				Chart: &chart.Chart{
+					Metadata: &chart.Metadata{Name: "apache"},
+					Values:   map[string]interface{}{},
+				},
+				Config:    map[string]interface{}{"foo": "bar"},
+				Version:   1,
+				Namespace: "default",
+			},
 		},
 		{
 			name: "returns invalid if available package ref invalid",
@@ -82,6 +100,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 		corev1.InstalledPackageReference{},
 		corev1.Context{},
 		plugins.Plugin{},
+		chart.Chart{},
 	)
 
 	for _, tc := range testCases {
@@ -102,8 +121,25 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
+			// Verify the expected response (our contract to the caller).
 			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
+			}
+
+			if tc.expectedRelease != nil {
+				// Verify the expected request was made to Helm (our contract to the helm lib).
+				releases, err := actionConfig.Releases.Driver.List(func(*release.Release) bool { return true })
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				if got, want := len(releases), 1; got != want {
+					t.Fatalf("got: %d, want: %d", got, want)
+				}
+
+				ignoredFields := cmpopts.IgnoreFields(release.Info{}, "FirstDeployed", "LastDeployed")
+				if got, want := releases[0], tc.expectedRelease; !cmp.Equal(got, want, ignoredUnexported, ignoredFields) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported, ignoredFields))
+				}
 			}
 		})
 	}
