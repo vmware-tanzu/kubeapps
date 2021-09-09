@@ -624,7 +624,7 @@ In the first two cases, it's needed a certificate and a key. We would expect the
   ```
 
 - If you are going to use Helm to manage the certificates based on the parameters, please copy these values into the `certificate` and `key` values for a given `ingress.secrets` entry.
-- In case you are going to manage TLS secrets separately, please know that you must use a TLS secret with name *INGRESS_HOSTNAME-tls* (where *INGRESS_HOSTNAME* is a placeholder to be replaced with the hostname you set using the `ingress.hostname` parameter).
+- In case you are going to manage TLS secrets separately, please know that you must use a TLS secret with name _INGRESS_HOSTNAME-tls_ (where _INGRESS_HOSTNAME_ is a placeholder to be replaced with the hostname you set using the `ingress.hostname` parameter).
 - To use self-signed certificates created by Helm, set both `ingress.tls` and `ingress.selfSigned` to `true`.
 - If your cluster has a [cert-manager](https://github.com/jetstack/cert-manager) add-on to automate the management and issuance of TLS certificates, set `ingress.certManager` boolean to true to enable the corresponding annotations for cert-manager.
 
@@ -702,23 +702,24 @@ Have a look at the [dashboard documentation](https://github.com/kubeapps/kubeapp
 The example below will match the URL `http://example.com` to the Kubeapps dashboard. For further configuration, please refer to your specific Ingress configuration docs (e.g., [NGINX](https://github.com/kubernetes/ingress-nginx) or [HAProxy](https://github.com/haproxytech/kubernetes-ingress)).
 
 ```bash
-helm install kubeapps --namespace kubeapps \
+helm install kubeapps bitnami/kubeapps \
+  --namespace kubeapps \
   --set ingress.enabled=true \
   --set ingress.hostname=example.com \
-    bitnami/kubeapps
+  --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
 ```
 
 #### Serving Kubeapps in a subpath
 
-You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.extraHosts` parameter:
+You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.hostname` and `path` parameters:
 
 ```bash
-helm install kubeapps --namespace kubeapps \
-    --set ingress.enabled=true
-    --set ingress.hostname=""
-    --set ingress.extraHosts[0].name="console.example.com"
-    --set ingress.extraHosts[0].path="/catalog"
-    bitnami/kubeapps
+helm install kubeapps bitnami/kubeapps \
+  --namespace kubeapps \
+  --set ingress.enabled=true \
+  --set ingress.hostname=example.com \
+  --set ingress.path=/subpath \
+  --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
 ```
 
 Besides, if you are using the OAuth2/OIDC login (more information at the [using an OIDC provider documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
@@ -726,7 +727,7 @@ Besides, if you are using the OAuth2/OIDC login (more information at the [using 
 ```bash
 helm install kubeapps bitnami/kubeapps \
   --namespace kubeapps \
-  # ... other OIDC flags
+  # ... other OIDC and ingress flags
   --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
   --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
   --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
@@ -922,9 +923,9 @@ $ helm upgrade kubeapps bitnami/kubeapps -n kubeapps --set postgresql.postgresql
 **What changes were introduced in this major version?**
 
 - Previous versions of this Helm Chart use `apiVersion: v1` (installable by both Helm 2 and 3), this Helm Chart was updated to `apiVersion: v2` (installable by Helm 3 only). [Here](https://helm.sh/docs/topics/charts/#the-apiversion-field) you can find more information about the `apiVersion` field.
-- Move dependency information from the *requirements.yaml* to the *Chart.yaml*
-- After running `helm dependency update`, a *Chart.lock* file is generated containing the same structure used in the previous *requirements.lock*
-- The different fields present in the *Chart.yaml* file has been ordered alphabetically in a homogeneous way for all the Bitnami Helm Charts
+- Move dependency information from the _requirements.yaml_ to the _Chart.yaml_
+- After running `helm dependency update`, a _Chart.lock_ file is generated containing the same structure used in the previous _requirements.lock_
+- The different fields present in the _Chart.yaml_ file has been ordered alphabetically in a homogeneous way for all the Bitnami Helm Charts
 - In the case of PostgreSQL subchart, apart from the same changes that are described in this section, there are also other major changes due to the master/slave nomenclature was replaced by primary/readReplica. [Here](https://github.com/bitnami/charts/pull/4385) you can find more information about the changes introduced.
 
 **Considerations when upgrading to this version**
