@@ -23,13 +23,16 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/kubeapps/common/datastore"
+	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/agent"
+	"github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -38,7 +41,10 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	authorizationv1 "k8s.io/api/authorization/v1"
+	corek8sv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
@@ -67,6 +73,7 @@ type Server struct {
 	globalPackagingCluster   string
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
+	chartClientFactory       chart.ChartClientFactoryInterface
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -134,6 +141,7 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 		manager:                  manager,
 		globalPackagingNamespace: kubeappsNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
+		chartClientFactory:       &chart.ChartClientFactory{},
 	}
 }
 
@@ -311,7 +319,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 func getUnescapedChartID(chartID string) (string, error) {
 	unescapedChartID, err := url.QueryUnescape(chartID)
 	if err != nil {
-		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
+		return "", status.Errorf(codes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
 	}
 	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
 	chartIDParts := strings.Split(unescapedChartID, "/")
@@ -584,6 +592,8 @@ func isValidChart(chart *models.Chart) (bool, error) {
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, namespace)
+	log.Infof("+helm GetInstalledPackageSummaries %s", contextMsg)
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
 	}
@@ -702,6 +712,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, namespace)
+	log.Infof("+helm GetInstalledPackageDetail %s, id: %q", contextMsg, identifier)
 	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
@@ -796,4 +808,139 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 		},
 		CustomDetail: customDetailHelm,
 	}, nil
+}
+
+func splitChartIdentifier(chartID string) (repoName, chartName string, err error) {
+	// getUnescapedChartID also ensures that there are two parts (ie. repo/chart-name only)
+	unescapedChartID, err := getUnescapedChartID(chartID)
+	if err != nil {
+		return "", "", err
+	}
+	chartIDParts := strings.Split(unescapedChartID, "/")
+	return chartIDParts[0], chartIDParts[1], nil
+}
+
+// CreateInstalledPackage creates an installed package.
+func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
+	log.Infof("+helm CreateInstalledPackage %s", contextMsg)
+	// Get the AppRepository for the available package.
+	// TODO: currently app repositories are only supported on the cluster on
+	// which Kubeapps is installed. #1982
+	chartID := request.GetAvailablePackageRef().GetIdentifier()
+	repoNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	repoName, chartName, err := splitChartIdentifier(chartID)
+	chartVersion := request.GetPkgVersionReference().GetVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
+	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, repoName, repoNamespace)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", repoName, repoNamespace, err)
+	}
+
+	// Grab the chart itself
+	ch, err := handlerutil.GetChart(
+		&chart.Details{
+			AppRepositoryResourceName:      appRepo.Name,
+			AppRepositoryResourceNamespace: appRepo.Namespace,
+			ChartName:                      chartName,
+			Version:                        chartVersion,
+		},
+		appRepo,
+		caCertSecret, authSecret,
+		// TODO(minelson): add a useragent comment to kubeapps APIs and ensure it is passed
+		// through to be used here.
+		s.chartClientFactory.New(appRepo.Spec.Type, "kubeapps-apis/devel"),
+	)
+
+	// Create an action config for the target namespace.
+	namespace := request.GetTargetContext().GetNamespace()
+	cluster := request.GetTargetContext().GetCluster()
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	// We currently get app repositories on the kubeapps cluster only.
+	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
+	}
+	registrySecrets, err := chart.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, typedClient)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch registry secrets from the namespace %q: %v", appRepo.Namespace, err)
+	}
+
+	release, err := agent.CreateRelease(actionConfig, request.GetName(), namespace, request.GetValues(), ch, registrySecrets)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.GetName(), appRepo.Namespace, err)
+	}
+
+	return &corev1.CreateInstalledPackageResponse{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Cluster:   cluster,
+				Namespace: release.Namespace,
+			},
+			Identifier: release.Name,
+			Plugin:     GetPluginDetail(),
+		},
+	}, nil
+}
+
+// GetAppRepoAndRelatedSecrets retrieves the given repo from its namespace
+// Depending on the repo namespace and the
+func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, error) {
+
+	// We currently get app repositories on the kubeapps cluster only.
+	typedClient, dynClient, err := s.GetClients(ctx, s.globalPackagingCluster)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Using the dynamic client to get the AppRepository rather than updating the interface
+	// returned by the client getter, then converting the result back to a typed AppRepository
+	// since our existing code that we're re-using expects one.
+	gvr := schema.GroupVersionResource{
+		Group:    "kubeapps.com",
+		Version:  "v1alpha1",
+		Resource: "apprepositories",
+	}
+	appRepoUnstructured, err := dynClient.Resource(gvr).Namespace(appRepoNamespace).Get(ctx, appRepoName, metav1.GetOptions{})
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("unable to get app repository %s/%s: %v", appRepoNamespace, appRepoName, err)
+	}
+
+	var appRepo appRepov1.AppRepository
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(appRepoUnstructured.UnstructuredContent(), &appRepo)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to convert unstructured AppRepository for %s/%s to a structured AppRepository: %v", appRepoNamespace, appRepoName, err)
+	}
+
+	auth := appRepo.Spec.Auth
+	var caCertSecret *corek8sv1.Secret
+	if auth.CustomCA != nil {
+		secretName := auth.CustomCA.SecretKeyRef.Name
+		caCertSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
+		}
+	}
+
+	var authSecret *corek8sv1.Secret
+	if auth.Header != nil {
+		secretName := auth.Header.SecretKeyRef.Name
+		authSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", secretName, err)
+		}
+	}
+
+	return &appRepo, caCertSecret, authSecret, nil
 }
