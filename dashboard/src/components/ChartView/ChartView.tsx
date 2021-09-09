@@ -8,7 +8,7 @@ import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import { push } from "connected-react-router";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
@@ -53,9 +53,10 @@ export default function ChartView() {
 
   const location = ReactRouter.useLocation();
 
-  const pluginObj = useMemo(() => {
-    return { name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin;
-  }, [plugin]);
+  const [pluginObj] = useState({
+    name: plugin.split("-")[0],
+    version: plugin.split("-")[1],
+  } as Plugin);
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {

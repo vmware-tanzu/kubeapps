@@ -6,7 +6,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import "react-tabs/style/react-tabs.css";
@@ -53,17 +53,14 @@ export default function DeploymentForm() {
   const [releaseName, setReleaseName] = useState("");
   const [appValues, setAppValues] = useState(values || "");
   const [valuesModified, setValuesModified] = useState(false);
-
-  const pluginObj = useMemo(() => {
-    return (
-      selected.availablePackageDetail?.availablePackageRef?.plugin ??
-      ({ name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin)
-    );
-  }, [plugin, selected.availablePackageDetail?.availablePackageRef?.plugin]);
+  const [pluginObj] = useState(
+    selected.availablePackageDetail?.availablePackageRef?.plugin ??
+      ({ name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin),
+  );
 
   useEffect(() => {
     dispatch(actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId, pluginObj));
-  }, [dispatch, chartCluster, chartNamespace, packageId, selected, pluginObj]);
+  }, [dispatch, chartCluster, chartNamespace, packageId, pluginObj]);
 
   useEffect(() => {
     if (!valuesModified) {

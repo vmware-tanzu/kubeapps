@@ -6,7 +6,7 @@ import PageHeader from "components/PageHeader/PageHeader";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { assignWith } from "lodash";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
@@ -143,9 +143,10 @@ export default function AppView() {
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
 
-  const pluginObj = useMemo(() => {
-    return { name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin;
-  }, [plugin]);
+  const [pluginObj] = useState({
+    name: plugin.split("-")[0],
+    version: plugin.split("-")[1],
+  } as Plugin);
 
   useEffect(() => {
     dispatch(actions.apps.getApp(cluster, namespace, releaseName, pluginObj));

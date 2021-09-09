@@ -2,7 +2,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
@@ -50,9 +50,10 @@ function AppUpgrade() {
   const repoName = repo?.metadata?.name || app?.availablePackageRef?.context?.namespace;
   const repoNamespace = repo?.metadata?.namespace || app?.availablePackageRef?.context?.namespace;
 
-  const pluginObj = useMemo(() => {
-    return { name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin;
-  }, [plugin]);
+  const [pluginObj] = useState(
+    selected.availablePackageDetail?.availablePackageRef?.plugin ??
+      ({ name: plugin.split("-")[0], version: plugin.split("-")[1] } as Plugin),
+  );
 
   useEffect(() => {
     dispatch(actions.apps.getApp(cluster, namespace, releaseName, pluginObj));
