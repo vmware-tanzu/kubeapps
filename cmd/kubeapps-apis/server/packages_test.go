@@ -28,9 +28,6 @@ const (
 	globalPackagingNamespace = "kubeapps"
 )
 
-// TODO(agamez): currently, these tests are just calling the packaging core api functions,
-// however, I have to figure out how to fake the load of the plugins for each test case
-
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
@@ -42,27 +39,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		{
 			name: "it should successfully call the core GetAvailablePackageSummaries operation",
 			configuredPlugins: []*pkgsPluginWithServer{
-				{
-					plugin: &plugins.Plugin{
-						Name:    "fluxv2.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "helm.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "kapp_controller.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
+				makeTestPackagingPlugin("mock1"),
+				makeTestPackagingPlugin("mock2"),
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
@@ -72,8 +50,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
-				Categories:                []string{},
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					makeAvailablePackageSummary("pkg-1", makeTestPackagingPlugin("mock1").plugin),
+					makeAvailablePackageSummary("pkg-2", makeTestPackagingPlugin("mock1").plugin),
+					makeAvailablePackageSummary("pkg-1", makeTestPackagingPlugin("mock2").plugin),
+					makeAvailablePackageSummary("pkg-2", makeTestPackagingPlugin("mock2").plugin),
+				},
+				Categories: []string{"cat1", "cat1"},
 			},
 			statusCode: codes.OK,
 		},
@@ -91,7 +74,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -111,27 +94,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		{
 			name: "it should successfully call the core GetAvailablePackageDetail operation",
 			configuredPlugins: []*pkgsPluginWithServer{
-				{
-					plugin: &plugins.Plugin{
-						Name:    "fluxv2.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "helm.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "kapp_controller.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
+				makeTestPackagingPlugin("mock1"),
+				makeTestPackagingPlugin("mock2"),
 			},
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -139,9 +103,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
-					Identifier: "test",
+					Identifier: "pkg-1",
 					Plugin: &plugins.Plugin{
-						Name:    "helm.packages",
+						Name:    "mock1",
 						Version: "v1alpha1",
 					},
 				},
@@ -149,9 +113,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageDetailResponse{
-				AvailablePackageDetail: &corev1.AvailablePackageDetail{},
+				AvailablePackageDetail: makeAvailablePackageDetail("pkg-1", makeTestPackagingPlugin("mock1").plugin),
 			},
-			statusCode: codes.Internal,
+			statusCode: codes.OK,
 		},
 	}
 
@@ -167,7 +131,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported()
+				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetail, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -187,27 +151,8 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name: "it should successfully call the core GetInstalledPackageSummaries operation",
 			configuredPlugins: []*pkgsPluginWithServer{
-				{
-					plugin: &plugins.Plugin{
-						Name:    "fluxv2.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "helm.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "kapp_controller.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
+				makeTestPackagingPlugin("mock1"),
+				makeTestPackagingPlugin("mock2"),
 			},
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{
@@ -217,7 +162,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{},
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					makeInstalledPackageSummary("pkg-1", makeTestPackagingPlugin("mock1").plugin),
+					makeInstalledPackageSummary("pkg-2", makeTestPackagingPlugin("mock1").plugin),
+					makeInstalledPackageSummary("pkg-1", makeTestPackagingPlugin("mock2").plugin),
+					makeInstalledPackageSummary("pkg-2", makeTestPackagingPlugin("mock2").plugin),
+				},
 			},
 			statusCode: codes.OK,
 		},
@@ -235,7 +185,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := installedPackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -255,27 +205,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		{
 			name: "it should successfully call the core GetInstalledPackageDetail operation",
 			configuredPlugins: []*pkgsPluginWithServer{
-				{
-					plugin: &plugins.Plugin{
-						Name:    "fluxv2.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "helm.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "kapp_controller.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
+				makeTestPackagingPlugin("mock1"),
+				makeTestPackagingPlugin("mock2"),
 			},
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -283,18 +214,18 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
-					Identifier: "test",
+					Identifier: "pkg-1",
 					Plugin: &plugins.Plugin{
-						Name:    "helm.packages",
+						Name:    "mock1",
 						Version: "v1alpha1",
 					},
 				},
 			},
 
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: &corev1.InstalledPackageDetail{},
+				InstalledPackageDetail: makeInstalledPackageDetail("pkg-1", makeTestPackagingPlugin("mock1").plugin),
 			},
-			statusCode: codes.Internal,
+			statusCode: codes.OK,
 		},
 	}
 
@@ -310,7 +241,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported()
+				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := installedPackageDetail, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -330,27 +261,8 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		{
 			name: "it should successfully call the core GetAvailablePackageVersions operation",
 			configuredPlugins: []*pkgsPluginWithServer{
-				{
-					plugin: &plugins.Plugin{
-						Name:    "fluxv2.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "helm.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
-				{
-					plugin: &plugins.Plugin{
-						Name:    "kapp_controller.packages",
-						Version: "v1alpha1",
-					},
-					server: &packagesServer{},
-				},
+				makeTestPackagingPlugin("mock1"),
+				makeTestPackagingPlugin("mock2"),
 			},
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -360,16 +272,29 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					},
 					Identifier: "test",
 					Plugin: &plugins.Plugin{
-						Name:    "helm.packages",
+						Name:    "mock1",
 						Version: "v1alpha1",
 					},
 				},
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.PackageAppVersion{},
+				PackageAppVersions: []*corev1.PackageAppVersion{
+					{
+						PkgVersion: "3.0.0/mock1",
+						AppVersion: defaultAppVersion,
+					},
+					{
+						PkgVersion: "2.0.0/mock1",
+						AppVersion: defaultAppVersion,
+					},
+					{
+						PkgVersion: "1.0.0/mock1",
+						AppVersion: defaultAppVersion,
+					},
+				},
 			},
-			statusCode: codes.Internal,
+			statusCode: codes.OK,
 		},
 	}
 
@@ -385,7 +310,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := AvailablePackageVersions, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -394,6 +319,6 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	}
 }
 
-// TODO: implement this test
+// TODO: implement this test once we implement the core operation
 // func TestCreateInstalledPackage(t *testing.T) {
 // }
