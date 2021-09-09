@@ -8,6 +8,7 @@ import Secret from "shared/Secret";
 import { IAppRepository, NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 
 const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
@@ -1009,6 +1010,7 @@ describe("findPackageInRepo", () => {
     availablePackageRef: {
       context: { cluster: "default", namespace: "my-ns" },
       identifier: "my-repo/my-chart",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
@@ -1035,6 +1037,7 @@ describe("findPackageInRepo", () => {
       "default",
       "other-namespace",
       "my-repo/my-chart",
+      { name: "my.plugin", version: "0.0.1" } as Plugin,
     );
   });
 
@@ -1068,6 +1071,7 @@ describe("findPackageInRepo", () => {
       "default",
       "other-namespace",
       "my-repo/my-chart",
+      { name: "my.plugin", version: "0.0.1" } as Plugin,
     );
   });
 });

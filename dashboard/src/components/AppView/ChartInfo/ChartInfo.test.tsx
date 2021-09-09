@@ -10,6 +10,7 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import ChartInfo from "./ChartInfo";
@@ -22,12 +23,14 @@ const defaultProps = {
     availablePackageRef: {
       identifier: "apache/1",
       context: { cluster: "", namespace: "chart-namespace" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference,
     currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     installedPackageRef: {
       identifier: "apache/1",
       pkgVersion: "1.0.0",
       context: { cluster: "", namespace: "chart-namespace" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
     latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -41,6 +44,7 @@ const defaultProps = {
   } as InstalledPackageDetail,
   appDetails: {} as AvailablePackageDetail,
   cluster: "default",
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
 it("renders an app item", () => {

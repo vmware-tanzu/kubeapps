@@ -1,4 +1,5 @@
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { IChartState, IReceiveChartsActionPayload } from "../shared/types";
@@ -16,6 +17,7 @@ describe("chartReducer", () => {
     availablePackageRef: {
       identifier: "foo/foo",
       context: { cluster: "", namespace: "chart-namespace" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   };
 
@@ -29,6 +31,7 @@ describe("chartReducer", () => {
     availablePackageRef: {
       identifier: "bar/bar",
       context: { cluster: "", namespace: "chart-namespace" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   };
 

@@ -7,6 +7,7 @@ import {
   Maintainer,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import Chart from "shared/Chart";
@@ -37,6 +38,7 @@ const availablePkgDetails = [
     availablePackageRef: {
       identifier: "foo/foo",
       context: { cluster: "", namespace: "chart-namespace" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
     valuesSchema: "test",
     defaultValues: "test",
@@ -60,6 +62,7 @@ const availablePkgDetails = [
     availablePackageRef: {
       identifier: "foo/foo",
       context: { cluster: "", namespace: "chart-namespace" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
     valuesSchema: "test",
     defaultValues: "test",
@@ -87,6 +90,7 @@ const defaultProps = {
     versions: [],
   } as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 } as IUpgradeFormProps;
 
 const populatedProps = {
@@ -158,6 +162,7 @@ it("fetches the available versions", () => {
     defaultProps.cluster,
     defaultProps.repoNamespace,
     defaultProps.packageId,
+    defaultProps.plugin,
   );
 });
 
@@ -186,6 +191,7 @@ it("fetches the current chart version even if there is already one in the state"
     defaultProps.cluster,
     defaultProps.repoNamespace,
     defaultProps.packageId,
+    defaultProps.plugin,
     deployed.chartVersion.version?.pkgVersion,
   );
 });
@@ -262,7 +268,12 @@ it("triggers an upgrade when submitting the form", async () => {
   );
   expect(mockDispatch).toHaveBeenCalledWith({
     payload: {
-      args: [url.app.apps.get(defaultProps.cluster, namespace, releaseName)],
+      args: [
+        url.app.apps.get(defaultProps.cluster, namespace, releaseName, {
+          name: "my.plugin",
+          version: "0.0.1",
+        }),
+      ],
       method: "push",
     },
     type: "@@router/CALL_HISTORY_METHOD",

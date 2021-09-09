@@ -6,6 +6,7 @@ import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import ReactTooltip from "react-tooltip";
@@ -19,6 +20,7 @@ const defaultProps = {
   releaseName: "foo",
   revision: 3,
   releaseStatus: null,
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -63,6 +65,7 @@ it("rolls back an application", async () => {
     defaultProps.namespace,
     defaultProps.releaseName,
     1,
+    defaultProps.plugin,
   );
 });
 

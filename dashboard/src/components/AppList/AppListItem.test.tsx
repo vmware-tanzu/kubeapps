@@ -9,6 +9,7 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
 import InfoCard from "../InfoCard/InfoCard";
@@ -22,6 +23,7 @@ const defaultProps = {
       identifier: "apache/1",
       pkgVersion: "1.0.0",
       context: { cluster: "", namespace: "chart-namespace" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
     status: {
       ready: true,
@@ -46,6 +48,7 @@ it("renders an app item", () => {
       defaultProps.cluster,
       defaultProps.app.installedPackageRef?.context?.namespace ?? "",
       defaultProps.app.name,
+      { name: "my.plugin", version: "0.0.1" } as Plugin,
     ),
     tag1Class: "label-success",
     tag1Content: "deployed",

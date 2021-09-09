@@ -1,4 +1,5 @@
 import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
 import { App, KUBEOPS_ROOT_URL } from "./App";
 import { axiosWithAuth } from "./AxiosInstance";
@@ -21,6 +22,7 @@ const availablePackageDetail: AvailablePackageDetail = {
   availablePackageRef: {
     identifier: "default",
     context: { cluster: "default", namespace: "kubeapps" },
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
 

@@ -1,9 +1,10 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import {
-  InstalledPackageStatus_StatusReason,
   InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import ReactTooltip from "react-tooltip";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -14,6 +15,7 @@ const defaultProps = {
   namespace: "kubeapps",
   releaseName: "foo",
   releaseStatus: null,
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;

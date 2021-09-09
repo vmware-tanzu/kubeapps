@@ -1,4 +1,5 @@
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IClusterServiceVersion } from "shared/types";
 import CatalogItem from "./CatalogItem";
@@ -14,6 +15,7 @@ const chartItem: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
 const chartItem2: AvailablePackageSummary = {
@@ -26,6 +28,7 @@ const chartItem2: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "bar/bar",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
 const csv = {

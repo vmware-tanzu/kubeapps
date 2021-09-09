@@ -2,6 +2,7 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
@@ -260,13 +261,17 @@ describe("upgradeApp", () => {
 });
 
 describe("rollbackApp", () => {
-  const provisionCMD = actions.apps.rollbackApp("default-c", "default-ns", "my-release", 1);
+  const provisionCMD = actions.apps.rollbackApp("default-c", "default-ns", "my-release", 1, {
+    name: "my.plugin",
+    version: "0.0.1",
+  });
 
   it("success and re-request apps info", async () => {
     const installedPackageDetail = {
       availablePackageRef: {
         context: { cluster: "default", namespace: "my-ns" },
         identifier: "test",
+        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
       },
       currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
     } as InstalledPackageDetail;

@@ -4,6 +4,7 @@ import {
   GetAvailablePackageVersionsResponse,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
 import Chart from "./Chart";
@@ -108,6 +109,7 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           id: "mypackage",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         },
       },
     ].forEach(t => {
@@ -126,6 +128,7 @@ describe("App", () => {
           t.args.cluster,
           t.args.namespace,
           t.args.id,
+          t.args.plugin,
         );
         expect(availablePackageVersions).toStrictEqual({
           packageAppVersions: [
@@ -144,6 +147,7 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           id: "mypackage",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           version: "v1",
         },
       },
@@ -153,6 +157,7 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           id: "mypackage",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           version: undefined,
         },
       },
@@ -170,6 +175,7 @@ describe("App", () => {
           t.args.cluster,
           t.args.namespace,
           t.args.id,
+          t.args.plugin,
           t.args.version,
         );
         expect(availablePackageDetail).toStrictEqual({

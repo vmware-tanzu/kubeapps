@@ -5,6 +5,7 @@ import {
   AvailablePackageDetail,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -21,9 +22,10 @@ const defaultProps = {
   namespace: "default",
   repo: "repo",
   releaseName: "my-release",
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.repo}/${defaultProps.pkgName}/versions/`;
-const routePath = "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.repo}/${defaultProps.plugin.name}-${defaultProps.plugin.version}/${defaultProps.pkgName}/versions/`;
+const routePath = "/c/:cluster/ns/:namespace/apps/new/:repo/:plugin/:id/versions";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -60,6 +62,7 @@ it("fetches the available versions", () => {
     defaultProps.cluster,
     defaultProps.namespace,
     `${defaultProps.repo}/${defaultProps.pkgName}`,
+    defaultProps.plugin,
     undefined,
   );
 });
@@ -163,7 +166,7 @@ describe("renders an error", () => {
       getStore({ charts: { selected: selected } }),
 
       <Router history={history}>
-        <Route path="/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions">
+        <Route path={routePath}>
           <DeploymentForm />
         </Route>
       </Router>,
@@ -203,6 +206,8 @@ describe("renders an error", () => {
       schema,
     );
 
-    expect(history.location.pathname).toBe("/c/default/ns/default/apps/new/repo/foo/versions/");
+    expect(history.location.pathname).toBe(
+      "/c/default/ns/default/apps/new/repo/my.plugin-0.0.1/foo/versions/",
+    );
   });
 });
