@@ -15,8 +15,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
@@ -29,16 +28,24 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc"
+	kubecorev1 "k8s.io/api/core/v1"
+	kuberbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-const (
-	k8s_context = "kind-kubeapps"
-)
-
+// This is an integration test: it tests the full integration of flux plugin with flux back-end
 // pre-requisites for these tests to run:
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080
-// 3) kubectl CLI on client side
+
+// if one or more of the above pre-requisites is not satisfied, the tests are simply skipped
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
@@ -55,21 +62,21 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoUrl:           "https://stefanprodan.github.io/podinfo",
 			request:           create_request_basic,
 			expectedDetail:    expected_detail_basic,
-			expectedPodPrefix: "pod/test-my-podinfo-",
+			expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
 		},
 		{
 			testName:          "create package (semver constraint)",
 			repoUrl:           "https://stefanprodan.github.io/podinfo",
 			request:           create_request_semver_constraint,
 			expectedDetail:    expected_detail_semver_constraint,
-			expectedPodPrefix: "pod/test-my-podinfo-2-",
+			expectedPodPrefix: "@TARGET_NS@-my-podinfo-2-",
 		},
 		{
 			testName:          "create package (reconcile options)",
 			repoUrl:           "https://stefanprodan.github.io/podinfo",
 			request:           create_request_reconcile_options,
 			expectedDetail:    expected_detail_reconcile_options,
-			expectedPodPrefix: "pod/test-my-podinfo-3-",
+			expectedPodPrefix: "@TARGET_NS@-my-podinfo-3-",
 		},
 	}
 
@@ -82,23 +89,25 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		t.Skipf("skipping tests due to failure to get fluxv2 plugin: [%v]", err)
 	}
 
+	rand.Seed(time.Now().UnixNano())
+
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			availablePackageRef := tc.request.AvailablePackageRef
 			idParts := strings.Split(availablePackageRef.Identifier, "/")
-			err = kubectlCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
+			err = kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			t.Cleanup(func() {
-				err = kubectlDeleteHelmRepository(t, idParts[0], availablePackageRef.Context.Namespace)
+				err = kubeDeleteHelmRepository(t, idParts[0], availablePackageRef.Context.Namespace)
 				if err != nil {
 					t.Logf("Failed to delete helm source due to [%v]", err)
 				}
 			})
 
 			// need to wait until repo is index by flux plugin
-			const maxWait = 10
+			const maxWait = 25
 			for i := 0; i < maxWait; i++ {
 				_, err := fluxPluginClient.GetAvailablePackageDetail(
 					context.TODO(),
@@ -108,22 +117,26 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				} else if i == maxWait-1 {
 					t.Fatalf("Timed out waiting for available package [%s], last error: [%v]", availablePackageRef, err)
 				} else {
-					t.Logf("waiting 500ms for repository to be indexed...")
+					t.Logf("waiting 500ms for repository [%s] to be indexed [%d/%d]...", idParts[0], i, maxWait)
 					time.Sleep(500 * time.Millisecond)
 				}
 			}
 
 			if tc.request.ReconciliationOptions != nil && tc.request.ReconciliationOptions.ServiceAccountName != "" {
-				err = kubectlCreateServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+				err = kubeCreateServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
 				t.Cleanup(func() {
-					err = kubectlDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+					err = kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
 					if err != nil {
 						t.Logf("Failed to delete service account due to [%v]", err)
 					}
 				})
+			}
+
+			if tc.request.TargetContext.Namespace != "" {
+				tc.request.TargetContext.Namespace += "-" + randSeq(4)
 			}
 
 			resp, err := fluxPluginClient.CreateInstalledPackage(context.TODO(), tc.request)
@@ -142,13 +155,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			}
 
 			t.Cleanup(func() {
-				err = kubectlDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
+				err = kubeDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
 				if err != nil {
 					t.Logf("Failed to delete helm release due to [%v]", err)
 				}
-				err = kubectlDeleteNamespace(t, tc.request.TargetContext.Namespace)
+				err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace)
 				if err != nil {
-					t.Logf("Failed to delete namespace due to [%v]", err)
+					t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)
 				}
 			})
 
@@ -161,7 +174,8 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 					t.Fatalf("%+v", err)
 				}
 				if resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_PENDING && i < maxWait-1 {
-					t.Logf("current state: [%s], waiting 500ms for installation to complete...", resp2.InstalledPackageDetail.Status.UserReason)
+					t.Logf("current state: [%s], waiting 500ms for installation to complete [%d/%d]...",
+						resp2.InstalledPackageDetail.Status.UserReason, i, maxWait)
 					time.Sleep(500 * time.Millisecond)
 				} else if resp2.InstalledPackageDetail.Status.Ready == true && resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED {
 					actualDetail = resp2.InstalledPackageDetail
@@ -170,6 +184,9 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 					t.Fatalf("Unexpected response: [%v]", resp2)
 				}
 			}
+			tc.expectedDetail.PostInstallationNotes = strings.ReplaceAll(
+				tc.expectedDetail.PostInstallationNotes, "@TARGET_NS@", tc.request.TargetContext.Namespace)
+
 			opts = cmpopts.IgnoreUnexported(
 				corev1.GetInstalledPackageDetailResponse{},
 				corev1.InstalledPackageDetail{},
@@ -186,15 +203,17 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			}
 
 			// check artifacts in target namespace:
-			pods, err := kubectlGetPods(t, tc.request.TargetContext.Namespace)
+			tc.expectedPodPrefix = strings.ReplaceAll(
+				tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
+			pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			if len(pods) != 1 {
 				t.Errorf("expected 1 pod, got: %s", pods)
 			} else if !strings.HasPrefix(pods[0], tc.expectedPodPrefix) {
-				t.Errorf("expected pod with prefix [%s] not found in namespace [%s]",
-					tc.expectedPodPrefix, tc.request.TargetContext.Namespace)
+				t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
+					tc.expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
 			}
 		})
 	}
@@ -213,16 +232,22 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	}
 
 	// naively assume that if the api server reports nodes, the cluster is up
-	cmd = exec.Command("kubectl", "get", "nodes", "-o=name", "--context", k8s_context)
-	bytes, err = cmd.CombinedOutput()
+	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return false, err
 	}
-	if string(bytes) == "node/kubeapps-control-plane\n" {
+
+	nodeList, err := typedClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		t.Logf("%s", string(bytes))
+		return false, err
+	}
+
+	if len(nodeList.Items) == 1 || nodeList.Items[0].Name == "node/kubeapps-control-plane" {
 		return true, nil
 	} else {
-		return false, nil
+		return false, fmt.Errorf("Unexpected cluster nodes: [%v]", nodeList)
 	}
 }
 
@@ -257,170 +282,210 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 
 // This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
 // the design
-func kubectlCreateHelmRepository(t *testing.T, name, url, namespace string) error {
-	t.Logf("+kubectlCreateHelmRepository(%s,%s)", name, namespace)
-	file, err := ioutil.TempFile(os.TempDir(), "helmrepository-*.yaml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.Remove(file.Name())
-
-	_, err = file.WriteString(fmt.Sprintf(
-		"apiVersion: source.toolkit.fluxcd.io/v1beta1\n"+
-			"kind: HelmRepository\n"+
-			"metadata:\n"+
-			"  name: %s\n"+
-			"  namespace: %s\n"+
-			"spec:\n"+
-			"   url: %s\n"+
-			"   interval: 1m", name, namespace, url))
-	if err != nil {
-		log.Fatal(err)
+func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
+	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
+	unstructuredRepo := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
+			"kind":       fluxHelmRepository,
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"spec": map[string]interface{}{
+				"url":      url,
+				"interval": "1m",
+			},
+		},
 	}
 
-	cmd := exec.Command("kubectl", "apply", "-f", file.Name(), "--context", k8s_context)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
+		return err
+	} else if _, err = ifc.Create(context.TODO(), &unstructuredRepo, metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if !strings.Contains(string(bytes), "helmrepository.source.toolkit.fluxcd.io/"+name+" created") {
-		return fmt.Errorf("Unexpected output from kubectl apply: [%s]", string(bytes))
-	}
-
-	cmd = exec.Command("kubectl", "wait", "--for=condition=Ready=true", "helmrepository/"+name,
-		"--namespace", namespace, "--context", k8s_context)
-	bytes, err = cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
-		return err
-	}
-	if strings.Contains(string(bytes), "helmrepository.source.toolkit.fluxcd.io/"+name+" condition met") {
-		return nil
-	} else {
-		return fmt.Errorf("Unexpected output from kubectl wait: [%s]", string(bytes))
-	}
+	return nil
 }
 
 // this should eventually be replaced with flux plugin's DeleteRepository()
-func kubectlDeleteHelmRepository(t *testing.T, name, namespace string) error {
-	t.Logf("+kubectlDeleteHelmRepository(%s,%s)", name, namespace)
-	cmd := exec.Command("kubectl", "delete", "helmrepository/"+name, "--namespace", namespace, "--context", k8s_context)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteHelmRepository(%s,%s)", name, namespace)
+	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
+		return err
+	} else if err = ifc.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
-	if strings.Contains(string(bytes), "helmrepository.source.toolkit.fluxcd.io \""+name+"\" deleted") {
-		return nil
-	} else {
-		return fmt.Errorf("Unexpected output from flux delete source: [%s]", string(bytes))
-	}
+	return nil
 }
 
 // this should eventually be replaced with flux plugin's DeleteInstalledPackage()
-func kubectlDeleteHelmRelease(t *testing.T, name, namespace string) error {
-	t.Logf("+kubectlDeleteHelmRelease(%s,%s)", name, namespace)
-	cmd := exec.Command("kubectl", "delete", "helmrelease/"+name, "--namespace", namespace, "--context", k8s_context)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
+	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
+		return err
+		// remove finalizer on HelmRelease cuz sometimes it gets stuck indefinitely
+	} else if _, err = ifc.Patch(context.TODO(), name, types.JSONPatchType,
+		[]byte("[ { \"op\": \"remove\", \"path\": \"/metadata/finalizers\" } ]"), metav1.PatchOptions{}); err != nil {
+		return err
+	} else if err = ifc.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
-	if strings.Contains(string(bytes), "helmrelease.helm.toolkit.fluxcd.io \""+name+"\" deleted") {
-		return nil
-	} else {
-		return fmt.Errorf("Unexpected output from kubectl delete: [%s]", string(bytes))
-	}
+	return nil
 }
 
-func kubectlGetPods(t *testing.T, namespace string) (names []string, err error) {
-	t.Logf("+kubectlGetPods(%s)", namespace)
-	cmd := exec.Command("kubectl", "get", "pods", "-n", namespace, "-o=name", "--context", k8s_context)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error) {
+	t.Logf("+kubeGetPodNames(%s)", namespace)
+	if typedClient, err := kubeGetTypedClient(); err != nil {
 		return nil, err
+	} else if podList, err := typedClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{}); err != nil {
+		return nil, err
+	} else {
+		names := []string{}
+		for _, p := range podList.Items {
+			names = append(names, p.GetName())
+		}
+		return names, nil
 	}
-	return strings.Split(string(bytes), " \n"), nil
 }
 
 // will create a service account with cluster-admin privs
-func kubectlCreateServiceAccount(t *testing.T, name, namespace string) error {
-	t.Logf("+kubectlCreateServiceAccount(%s,%s)", name, namespace)
-	cmd := exec.Command("kubectl", "create", "serviceaccount", name, "-n", namespace, "--context", k8s_context)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeCreateServiceAccount(%s,%s)", name, namespace)
+	if typedClient, err := kubeGetTypedClient(); err != nil {
 		return err
-	}
-	if !strings.Contains(string(bytes), "serviceaccount/"+name+" created") {
-		return fmt.Errorf("Unexpected output from kubectl create serviceaccount: [%s]", string(bytes))
-	}
-
-	cmd = exec.Command("kubectl", "create", "clusterrolebinding", name+"-binding",
-		"--clusterrole=cluster-admin", "--serviceaccount="+namespace+":"+name, "--context", k8s_context)
-	bytes, err = cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+	} else if _, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
+		context.TODO(),
+		&kubecorev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		},
+		metav1.CreateOptions{}); err != nil {
 		return err
-	}
-	if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io/"+name+"-binding created") {
-		return fmt.Errorf("Unexpected output from kubectl create clusterrolebinding: [%s]", string(bytes))
+	} else if _, err = typedClient.RbacV1().ClusterRoleBindings().Create(
+		context.TODO(),
+		&kuberbacv1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name + "-binding",
+			},
+			Subjects: []kuberbacv1.Subject{
+				{
+					Kind:      kuberbacv1.ServiceAccountKind,
+					Name:      name,
+					Namespace: namespace,
+				},
+			},
+			RoleRef: kuberbacv1.RoleRef{
+				Kind: "ClusterRole",
+				Name: "cluster-admin",
+			},
+		},
+		metav1.CreateOptions{}); err != nil {
+		return err
 	}
 	return nil
 }
 
-func kubectlDeleteServiceAccount(t *testing.T, name, namespace string) error {
-	t.Logf("+kubectlDeleteServiceAccount(%s,%s)", name, namespace)
-	cmd := exec.Command("kubectl", "delete", "clusterrolebinding", name+"-binding", "--context", k8s_context)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteServiceAccount(%s,%s)", name, namespace)
+	if typedClient, err := kubeGetTypedClient(); err != nil {
+		return err
+	} else if err = typedClient.RbacV1().ClusterRoleBindings().Delete(
+		context.TODO(),
+		name+"-binding",
+		metav1.DeleteOptions{}); err != nil {
+		return err
+	} else if err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
+		context.TODO(),
+		name,
+		metav1.DeleteOptions{}); err != nil {
 		return err
 	}
-	if !strings.Contains(string(bytes), "clusterrolebinding.rbac.authorization.k8s.io \""+name+"-binding\" deleted") {
-		return fmt.Errorf("Unexpected output from kubectl delete clusterrolebinding: [%s]", string(bytes))
-	}
+	return nil
+}
 
-	cmd = exec.Command("kubectl", "delete", "serviceaccount", name, "-n", namespace, "--context", k8s_context)
-	bytes, err = cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
+func kubeDeleteNamespace(t *testing.T, namespace string) error {
+	t.Logf("+kubeDeleteNamespace(%s)", namespace)
+	if typedClient, err := kubeGetTypedClient(); err != nil {
+		return err
+	} else if typedClient.CoreV1().Namespaces().Delete(
+		context.TODO(),
+		namespace,
+		metav1.DeleteOptions{}); err != nil {
 		return err
 	}
-	if strings.Contains(string(bytes), "serviceaccount \""+name+"\" deleted") {
-		return nil
+	return nil
+}
+
+func kubeGetHelmReleaseResourceInterface(namespace string) (dynamic.ResourceInterface, error) {
+	clientset, err := kubeGetDynamicClient()
+	if err != nil {
+		return nil, err
+	}
+	relResource := schema.GroupVersionResource{
+		Group:    fluxHelmReleaseGroup,
+		Version:  fluxHelmReleaseVersion,
+		Resource: fluxHelmReleases,
+	}
+	return clientset.Resource(relResource).Namespace(namespace), nil
+}
+
+func kubeGetHelmRepositoryResourceInterface(namespace string) (dynamic.ResourceInterface, error) {
+	clientset, err := kubeGetDynamicClient()
+	if err != nil {
+		return nil, err
+	}
+	repoResource := schema.GroupVersionResource{
+		Group:    fluxGroup,
+		Version:  fluxVersion,
+		Resource: fluxHelmRepositories,
+	}
+	return clientset.Resource(repoResource).Namespace(namespace), nil
+}
+
+func kubeGetDynamicClient() (dynamic.Interface, error) {
+	if config, err := restConfig(); err != nil {
+		return nil, err
 	} else {
-		return fmt.Errorf("Unexpected output from kubectl delete serviceaccount: [%s]", string(bytes))
+		return dynamic.NewForConfig(config)
 	}
 }
 
-func kubectlDeleteNamespace(t *testing.T, namespace string) error {
-	t.Logf("+kubectlDeleteNamespace(%s)", namespace)
-	cmd := exec.Command("kubectl", "delete", "namespace", namespace, "--context", k8s_context)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("%s", string(bytes))
-		return err
+func kubeGetTypedClient() (kubernetes.Interface, error) {
+	if config, err := restConfig(); err != nil {
+		return nil, err
+	} else {
+		return kubernetes.NewForConfig(config)
 	}
-	if !strings.Contains(string(bytes), "namespace \""+namespace+"\" deleted") {
-		return fmt.Errorf("Unexpected output from kubectl delete namespace: [%s]", string(bytes))
+}
+
+func restConfig() (*rest.Config, error) {
+	kubeconfig := os.Getenv("KUBECONFIG")
+	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+}
+
+func randSeq(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
 	}
-	return nil
+	return string(b)
 }
 
 // global vars
+var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+
 var create_request_basic = &corev1.CreateInstalledPackageRequest{
 	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "podinfo/podinfo",
+		Identifier: "podinfo-1/podinfo",
 		Context: &corev1.Context{
 			Namespace: "default",
 		},
 	},
 	Name: "my-podinfo",
 	TargetContext: &corev1.Context{
-		Namespace: "test",
+		Namespace: "test-1",
 	},
 }
 
@@ -448,9 +513,11 @@ var expected_detail_basic = &corev1.InstalledPackageDetail{
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
-	PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo 8080:9898\n",
+	PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+		"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+		"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo 8080:9898\n",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "podinfo/podinfo",
+		Identifier: "podinfo-1/podinfo",
 		Context: &corev1.Context{
 			Namespace: "default",
 		},
@@ -460,14 +527,14 @@ var expected_detail_basic = &corev1.InstalledPackageDetail{
 
 var create_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
 	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "podinfo/podinfo",
+		Identifier: "podinfo-2/podinfo",
 		Context: &corev1.Context{
 			Namespace: "default",
 		},
 	},
 	Name: "my-podinfo-2",
 	TargetContext: &corev1.Context{
-		Namespace: "test",
+		Namespace: "test-2",
 	},
 	PkgVersionReference: &corev1.VersionReference{
 		Version: "> 5",
@@ -498,9 +565,11 @@ var expected_detail_semver_constraint = &corev1.InstalledPackageDetail{
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
-	PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-2 8080:9898\n",
+	PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+		"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+		"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-2 8080:9898\n",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "podinfo/podinfo",
+		Identifier: "podinfo-2/podinfo",
 		Context: &corev1.Context{
 			Namespace: "default",
 		},
@@ -510,14 +579,14 @@ var expected_detail_semver_constraint = &corev1.InstalledPackageDetail{
 
 var create_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
 	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "podinfo/podinfo",
+		Identifier: "podinfo-3/podinfo",
 		Context: &corev1.Context{
 			Namespace: "default",
 		},
 	},
 	Name: "my-podinfo-3",
 	TargetContext: &corev1.Context{
-		Namespace: "test",
+		Namespace: "test-3",
 	},
 	ReconciliationOptions: &corev1.ReconciliationOptions{
 		Interval:           60,
@@ -552,9 +621,11 @@ var expected_detail_reconcile_options = &corev1.InstalledPackageDetail{
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	},
-	PostInstallationNotes: "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n test port-forward deploy/test-my-podinfo-3 8080:9898\n",
+	PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+		"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+		"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-3 8080:9898\n",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "podinfo/podinfo",
+		Identifier: "podinfo-3/podinfo",
 		Context: &corev1.Context{
 			Namespace: "default",
 		},
