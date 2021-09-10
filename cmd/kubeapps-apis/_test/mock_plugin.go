@@ -10,7 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package server
+package _test
 
 import (
 	"context"
@@ -23,27 +23,27 @@ import (
 )
 
 const (
-	globalPackagingCluster  = "default"
-	defaultAppVersion       = "1.2.6"
-	defaultCategory         = "cat-1"
-	defaultIconURL          = "https://example.com/package.svg"
-	defaultHomeURL          = "https://example.com/home"
-	defaultRepoURL          = "https://example.com/repo"
-	defaultDescription      = "description"
-	defaultId               = "repo-1/package-id"
-	defaultNamespace        = "my-namespace-1"
-	defaultPkgVersion       = "1.0.0"
-	defaultPkgUpdateVersion = "2.0.0"
-	defaultReleaseName      = "my-release-1"
-	defaultReleaseNamespace = "my-release-namespace-1"
-	defaultReleaseNotes     = "some notes"
-	defaultReleaseValues    = "{\"value\":\"new\"}"
-	defaultReleaseVersion   = "1.2.3"
-	defaultValuesSchema     = "\"$schema\": \"http://json-schema.org/schema#\""
-	defaultReadme           = "#readme"
-	defaultValues           = "key: value"
-	defaultMaintainerName   = "me"
-	defaultMaintainerEmail  = "me@example.com"
+	GlobalPackagingCluster  = "default"
+	DefaultAppVersion       = "1.2.6"
+	DefaultCategory         = "cat-1"
+	DefaultIconURL          = "https://example.com/package.svg"
+	DefaultHomeURL          = "https://example.com/home"
+	DefaultRepoURL          = "https://example.com/repo"
+	DefaultDescription      = "description"
+	DefaultId               = "repo-1/package-id"
+	DefaultNamespace        = "my-namespace-1"
+	DefaultPkgVersion       = "1.0.0"
+	DefaultPkgUpdateVersion = "2.0.0"
+	DefaultReleaseName      = "my-release-1"
+	DefaultReleaseNamespace = "my-release-namespace-1"
+	DefaultReleaseNotes     = "some notes"
+	DefaultReleaseValues    = "{\"value\":\"new\"}"
+	DefaultReleaseVersion   = "1.2.3"
+	DefaultValuesSchema     = "\"$schema\": \"http://json-schema.org/schema#\""
+	DefaultReadme           = "#readme"
+	DefaultValues           = "key: value"
+	DefaultMaintainerName   = "me"
+	DefaultMaintainerEmail  = "me@example.com"
 )
 
 var defaultInstalledPackageStatus = &corev1.InstalledPackageStatus{
@@ -65,6 +65,11 @@ type TestPackagingPlugin struct {
 	status                    codes.Code
 }
 
+type MockPkgsPluginWithServer struct {
+	Plugin *plugins.Plugin
+	Server packages.PackagesServiceServer
+}
+
 func NewTestPackagingPlugin(plugin *plugins.Plugin) *TestPackagingPlugin {
 	return &TestPackagingPlugin{
 		plugin: plugin,
@@ -81,10 +86,10 @@ func MakeTestPackagingPlugin(
 	nextPageToken string,
 	categories []string,
 	status codes.Code,
-) *PkgsPluginWithServer {
-	return &PkgsPluginWithServer{
-		plugin: plugin,
-		server: &TestPackagingPlugin{
+) *MockPkgsPluginWithServer {
+	return &MockPkgsPluginWithServer{
+		Plugin: plugin,
+		Server: &TestPackagingPlugin{
 			plugin:                    plugin,
 			availablePackageSummaries: availablePackageSummaries,
 			availablePackageDetail:    availablePackageDetail,
@@ -103,15 +108,15 @@ func MakeAvailablePackageSummary(name string, plugin *plugins.Plugin) *corev1.Av
 		Name:        name,
 		DisplayName: name,
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: defaultPkgVersion,
-			AppVersion: defaultAppVersion,
+			PkgVersion: DefaultPkgVersion,
+			AppVersion: DefaultAppVersion,
 		},
-		IconUrl:          defaultIconURL,
-		Categories:       []string{defaultCategory},
-		ShortDescription: defaultDescription,
+		IconUrl:          DefaultIconURL,
+		Categories:       []string{DefaultCategory},
+		ShortDescription: DefaultDescription,
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: defaultNamespace},
-			Identifier: defaultId,
+			Context:    &corev1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
+			Identifier: DefaultId,
 			Plugin:     plugin,
 		},
 	}
@@ -121,26 +126,26 @@ func MakeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.In
 	return &corev1.InstalledPackageSummary{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: defaultNamespace,
+				Namespace: DefaultNamespace,
 			},
 			Identifier: name,
 			Plugin:     plugin,
 		},
 		Name:    name,
-		IconUrl: defaultIconURL,
+		IconUrl: DefaultIconURL,
 		PkgVersionReference: &corev1.VersionReference{
-			Version: defaultPkgVersion,
+			Version: DefaultPkgVersion,
 		},
 		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: defaultPkgVersion,
-			AppVersion: defaultAppVersion,
+			PkgVersion: DefaultPkgVersion,
+			AppVersion: DefaultAppVersion,
 		},
 		PkgDisplayName:   name,
-		ShortDescription: defaultDescription,
+		ShortDescription: DefaultDescription,
 		Status:           defaultInstalledPackageStatus,
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: defaultPkgVersion,
-			AppVersion: defaultAppVersion,
+			PkgVersion: DefaultPkgVersion,
+			AppVersion: DefaultAppVersion,
 		},
 	}
 }
@@ -148,26 +153,26 @@ func MakeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.In
 func MakeAvailablePackageDetail(name string, plugin *plugins.Plugin) *corev1.AvailablePackageDetail {
 	return &corev1.AvailablePackageDetail{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: defaultNamespace},
-			Identifier: defaultId,
+			Context:    &corev1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
+			Identifier: DefaultId,
 			Plugin:     plugin,
 		},
 		Name: name,
 		Version: &corev1.PackageAppVersion{
-			PkgVersion: defaultPkgVersion,
-			AppVersion: defaultAppVersion,
+			PkgVersion: DefaultPkgVersion,
+			AppVersion: DefaultAppVersion,
 		},
-		RepoUrl:          defaultRepoURL,
-		IconUrl:          defaultIconURL,
-		HomeUrl:          defaultHomeURL,
+		RepoUrl:          DefaultRepoURL,
+		IconUrl:          DefaultIconURL,
+		HomeUrl:          DefaultHomeURL,
 		DisplayName:      name,
-		Categories:       []string{defaultCategory},
-		ShortDescription: defaultDescription,
-		Readme:           defaultReadme,
-		DefaultValues:    defaultValues,
-		ValuesSchema:     defaultValuesSchema,
-		SourceUrls:       []string{defaultHomeURL},
-		Maintainers:      []*corev1.Maintainer{{Name: defaultMaintainerName, Email: defaultMaintainerEmail}},
+		Categories:       []string{DefaultCategory},
+		ShortDescription: DefaultDescription,
+		Readme:           DefaultReadme,
+		DefaultValues:    DefaultValues,
+		ValuesSchema:     DefaultValuesSchema,
+		SourceUrls:       []string{DefaultHomeURL},
+		Maintainers:      []*corev1.Maintainer{{Name: DefaultMaintainerName, Email: DefaultMaintainerEmail}},
 	}
 }
 
@@ -175,32 +180,32 @@ func MakeInstalledPackageDetail(name string, plugin *plugins.Plugin) *corev1.Ins
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: defaultReleaseNamespace,
-				Cluster:   globalPackagingCluster,
+				Namespace: DefaultReleaseNamespace,
+				Cluster:   GlobalPackagingCluster,
 			},
-			Identifier: defaultReleaseName,
+			Identifier: DefaultReleaseName,
 		},
 		PkgVersionReference: &corev1.VersionReference{
-			Version: defaultReleaseVersion,
+			Version: DefaultReleaseVersion,
 		},
-		Name: defaultReleaseName,
+		Name: DefaultReleaseName,
 		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: defaultReleaseVersion,
-			AppVersion: defaultAppVersion,
+			PkgVersion: DefaultReleaseVersion,
+			AppVersion: DefaultAppVersion,
 		},
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: defaultReleaseVersion,
-			AppVersion: defaultAppVersion,
+			PkgVersion: DefaultReleaseVersion,
+			AppVersion: DefaultAppVersion,
 		},
-		ValuesApplied:         defaultReleaseValues,
-		PostInstallationNotes: defaultReleaseNotes,
+		ValuesApplied:         DefaultReleaseValues,
+		PostInstallationNotes: DefaultReleaseNotes,
 		Status:                defaultInstalledPackageStatus,
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
-				Namespace: defaultReleaseNamespace,
-				Cluster:   globalPackagingCluster,
+				Namespace: DefaultReleaseNamespace,
+				Cluster:   GlobalPackagingCluster,
 			},
-			Identifier: defaultId,
+			Identifier: DefaultId,
 			Plugin:     plugin,
 		},
 		CustomDetail: nil,

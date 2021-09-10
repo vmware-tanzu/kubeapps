@@ -49,8 +49,8 @@ const (
 // KubernetesConfigGetter is a function type used by plugins to get a k8s config
 type KubernetesConfigGetter func(ctx context.Context, cluster string) (*rest.Config, error)
 
-// PkgsPluginWithServer stores the plugin detail together with its implementation.
-type PkgsPluginWithServer struct {
+// pkgsPluginWithServer stores the plugin detail together with its implementation.
+type pkgsPluginWithServer struct {
 	plugin *plugins.Plugin
 	server packages.PackagesServiceServer
 }
@@ -66,7 +66,7 @@ type pluginsServer struct {
 	// the core server packages.v1alpha1 interface.
 	// TODO: Update the plugins server to be able to register different versions
 	// of core plugins.
-	packagesPlugins []*PkgsPluginWithServer
+	packagesPlugins []*pkgsPluginWithServer
 
 	// The parsed config for clusters in a multi-cluster setup.
 	clustersConfig kube.ClustersConfig
@@ -193,7 +193,7 @@ func (s *pluginsServer) registerPluginsSatisfyingCoreAPIs(pluginSrv interface{},
 		if !ok {
 			return fmt.Errorf("Unable to convert plugin %v to core PackagesServicesServer although it implements the same.", pluginDetail)
 		}
-		s.packagesPlugins = append(s.packagesPlugins, &PkgsPluginWithServer{
+		s.packagesPlugins = append(s.packagesPlugins, &pkgsPluginWithServer{
 			plugin: pluginDetail,
 			server: pkgsSrv,
 		})
