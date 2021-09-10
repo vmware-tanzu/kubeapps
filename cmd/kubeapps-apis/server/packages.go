@@ -99,7 +99,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 			OrderBy(func(pkg interface{}) interface{} {
 				return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
 			}).
-			Skip(pageOffset*int(pageSize) - 1).
+			Skip(pageOffset * int(pageSize)).
 			Take(int(pageSize)).
 			ToSlice(&pkgs)
 

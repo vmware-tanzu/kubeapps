@@ -169,7 +169,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it should successfully call and paginate (last page+1) the core GetAvailablePackageSummaries operation",
+			name: "it should successfully call and paginate (last page - 1) the core GetAvailablePackageSummaries operation",
 			configuredPlugins: []*pkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
@@ -179,13 +179,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				PaginationOptions: &corev1.PaginationOptions{PageToken: "5", PageSize: 1},
+				PaginationOptions: &corev1.PaginationOptions{PageToken: "3", PageSize: 1},
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
-				Categories:                []string{"cat-1"},
-				NextPageToken:             "",
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+				},
+				Categories:    []string{"cat-1"},
+				NextPageToken: "4",
 			},
 			statusCode: codes.OK,
 		},
@@ -200,7 +202,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				PaginationOptions: &corev1.PaginationOptions{PageToken: "4", PageSize: 1},
+				PaginationOptions: &corev1.PaginationOptions{PageToken: "3", PageSize: 1},
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
@@ -208,7 +210,28 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories:    []string{"cat-1"},
-				NextPageToken: "5",
+				NextPageToken: "4",
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it should successfully call and paginate (last page+1) the core GetAvailablePackageSummaries operation",
+			configuredPlugins: []*pkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{PageToken: "4", PageSize: 1},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+				Categories:                []string{"cat-1"},
+				NextPageToken:             "",
 			},
 			statusCode: codes.OK,
 		},
